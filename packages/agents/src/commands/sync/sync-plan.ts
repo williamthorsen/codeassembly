@@ -8,6 +8,7 @@ import type { PlannedAmbientHost } from './ambient-hosts.ts';
 import type { DroppedHarnessRetraction } from './harness-retraction.ts';
 import type { GuidanceHookAdvisory } from './hook-bindings.ts';
 import type { Retirement } from './legacy-retirement.ts';
+import type { SizeReportOutcome } from './record-deployed-sizes.ts';
 import type { HarnessSkillTarget, HarnessSubagentTarget } from './render-contexts.ts';
 import type { SourceSupportPlan } from './source-support.ts';
 
@@ -30,8 +31,14 @@ export interface ResolutionEntry {
   readonly shadowsLibrary: boolean;
 }
 
-/** What a sync resolved and what it did, or what it would have done under `--dry-run`. */
-export type SyncOutcome = MissingDeclaration | { readonly kind: 'reconciled'; readonly plan: SyncPlan };
+/**
+ * What a sync resolved and what it did, or what it would have done under `--dry-run`.
+ *
+ * `sizes` rides the outcome rather than the plan, because the plan describes what a sync resolved and would do, and
+ * a dry run shares it; sizes exist only on a live run, which is the one that deployed something to measure.
+ */
+export type SyncOutcome =
+  MissingDeclaration | { readonly kind: 'reconciled'; readonly plan: SyncPlan; readonly sizes?: SizeReportOutcome };
 
 /**
  * Everything a sync resolved, and every write, retraction, and warning that it produced. Both reports render from this

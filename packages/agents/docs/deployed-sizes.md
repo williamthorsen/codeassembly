@@ -83,7 +83,55 @@ The compared measurement is `files` and `aggregates` together. Comparing the fil
 
 Which tree the ancestry probes follows the domain. The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch is the one judged; the home domain's comes from the running package, so the package root is. The default branch resolves from `origin/HEAD`, falling back to `origin/main`. When neither resolves, and when the probed tree is not a git tree at all, the ancestry condition is unanswerable and the append goes through: A tree with no branch has none to be wrong about, and refusing there would stop the record entirely.
 
-`--dry-run` measures nothing and appends nothing. No size condition can fail a sync: A failure in the pass prints one warning and leaves the sync's report and exit status unchanged.
+`--dry-run` measures nothing, appends nothing, and prints no size line. No size condition can fail a sync: A failure in the pass prints one warning in place of the block and leaves the sync's exit status unchanged.
+
+## What a sync reports
+
+A live sync closes its report with the size block, after the advisories and last of everything it prints.
+
+```console
+Deployed sizes:
+  +1.3 KiB  claude/skills/plan/SKILL.md  (12.4 KiB)
+    +512 B  claude/skills/consult-style/SKILL.md  (added, 512 B)
+  -8.1 KiB  claude/skills/retired/SKILL.md  (removed)
+
+Always loaded:  16.1 KiB
+  ambient regions:       13.4 KiB
+  skill descriptions:    2.7 KiB
+  subagent descriptions: 0 B
+On invocation:  164.9 KiB across 16 document(s)
+Assets:         2378.5 KiB
+
+Run `codeassembly sizes` to rank every deployed document by size.
+```
+
+Each line states the change, the deployed path, and the size after the deployment. A removed document states no size, and a removal's delta is its previous bytes negated, which puts a large removal where a large addition would be. The list is ordered by the size of the change, largest first, and by path where two changes are equal. Assets contribute no line, matching what `sizes` ranks.
+
+The list is uncapped. A partial or guidance-hook edit fans out to dozens of documents, and a cap would hide exactly the fan-out that the reader needs to see.
+
+A deployment whose vector is unchanged states the aggregates and the closing line alone. One for which the record holds no previous snapshot states, beneath the header, that it is the first recorded deployment here.
+
+### The growth warning
+
+A warning fires on a **crossing**: the previous snapshot recorded the document below the ceiling and this deployment puts it at or above, a newly deployed document above the ceiling included. A document already at or above the ceiling raises none, which keeps the warning to one appearance per document on the default branch and is what lets the ceiling sit low. A first recorded deployment raises none at all, since it has no crossing to observe.
+
+The ceiling is 5 KiB, held in `GROWTH_CEILING_BYTES` in `src/deployed-sizes/build-size-report.ts`.
+
+```console
+⚠️ claude/skills/plan/SKILL.md has passed the 5.0 KiB growth ceiling (12.4 KiB). Run the `streamline-guidance` skill on its source to reduce it.
+```
+
+The warning names `streamline-guidance` only when the reader can act on it: the document's source resolves inside the current repository and outside `node_modules`. In a consumer repo a library artifact resolves under the repository root and is not the consumer's to edit, which is what the `node_modules` exclusion covers; a `workspace:*` source resolves through a `node_modules` symlink and is the reader's, which is why containment is tested against canonical paths. A warning that cannot name the skill still states the crossing.
+
+### Off the default branch
+
+A snapshot is appended only from a tree that the default branch contains, so on a feature branch the baseline does not advance: each sync re-reports the same change and re-fires the same warning until the branch merges. That repetition is accepted rather than fixed with a second record stream, so that the report and `sizes` read one baseline and cannot disagree about what the last deployment was.
+
+### What the block does not repeat
+
+The block labels the three totals separately and prints no combined total, so nothing implies that they sum. The overlap disclaimer stays with `sizes`, at which the closing line points.
+
+Warnings reach stderr and the rest of the block reaches stdout, as every other warning in the sync report does, so the two interleave only on a terminal. Each warning names its document and reads correctly on its own.
 
 ## Reading the record
 

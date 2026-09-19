@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { GROWTH_CEILING_BYTES, type SizeReport } from '../../../deployed-sizes/build-size-report.ts';
+import type { SizeAggregates } from '../../../deployed-sizes/types.ts';
+import type { SizeReportOutcome } from '../record-deployed-sizes.ts';
 import { renderDryRunReport, renderSyncReport } from '../report.ts';
 import type { SyncOutcome, SyncPlan } from '../sync-plan.ts';
 import { buildSyncPlan } from '../test-utils/build-sync-plan.ts';
@@ -21,6 +24,31 @@ const ADVISORY_ANCHORS = {
 /** Wraps a plan as the outcome returned by a completed reconciliation. */
 function reconciled(overrides: Partial<SyncPlan> = {}): SyncOutcome {
   return { kind: 'reconciled', plan: buildSyncPlan(overrides) };
+}
+
+/** Aggregates stating zero throughout, which a size assertion overrides where it reads them. */
+function zeroAggregates(): SizeAggregates {
+  return {
+    alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },
+    onInvocation: 0,
+    assets: 0,
+  };
+}
+
+/** A reconciled outcome carrying one measured size report, stated only in the fields that an assertion reads. */
+function withSizes(report: Partial<SizeReport>): SyncOutcome {
+  const sizes: SizeReportOutcome = {
+    kind: 'measured',
+    report: {
+      changes: [],
+      warnings: [],
+      aggregates: zeroAggregates(),
+      documentCount: 0,
+      isFirstRecorded: false,
+      ...report,
+    },
+  };
+  return { kind: 'reconciled', plan: buildSyncPlan(), sizes };
 }
 
 /** The text of every line produced by one renderer, joined as the terminal would show it. */
@@ -297,6 +325,114 @@ describe('targeting', () => {
 
     expect(textOf(renderDryRunReport(outcome))).toContain('Targeting claude, rovo (detected in ~).');
     expect(textOf(renderSyncReport(outcome))).toContain('Targeting claude, rovo (detected in ~).');
+  });
+});
+
+describe('deployed sizes', () => {
+  it('states each changed document, its change, and its size after the deployment', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          changes: [
+            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 12_698, delta: 1_331 },
+            { kind: 'added', key: 'claude/skills/new/SKILL.md', bytes: 512, delta: 512 },
+            { kind: 'removed', key: 'claude/skills/old/SKILL.md', bytes: 0, delta: -8_294 },
+          ],
+        }),
+      ),
+    );
+
+    expect(output).toContain('Deployed sizes:');
+    expect(output).toContain('+1.3 KiB  claude/skills/plan/SKILL.md  (12.4 KiB)');
+    expect(output).toContain('+512 B  claude/skills/new/SKILL.md  (added, 512 B)');
+    expect(output).toContain('-8.1 KiB  claude/skills/old/SKILL.md  (removed)');
+  });
+
+  it('states the three aggregates and the command that ranks every document', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          documentCount: 3,
+          aggregates: {
+            alwaysLoaded: { total: 3_072, ambientRegions: 1_024, skillDescriptions: 1_536, subagentDescriptions: 512 },
+            onInvocation: 2_048,
+            assets: 600_000,
+          },
+        }),
+      ),
+    );
+
+    expect(output).toContain('Always loaded:  3.0 KiB');
+    expect(output).toContain('On invocation:  2.0 KiB across 3 document(s)');
+    expect(output).toContain('Assets:         585.9 KiB');
+    expect(output).toContain('Run `codeassembly sizes` to rank every deployed document by size.');
+  });
+
+  it('states the aggregates and the closing line alone when nothing changed', () => {
+    const lines = renderSyncReport(withSizes({}));
+    const output = textOf(lines);
+
+    expect(output).toContain('Deployed sizes:');
+    expect(output).toContain('Always loaded:');
+    expect(lines.filter((line) => line.text.includes('  ('))).toEqual([]);
+  });
+
+  it('says that a deployment is the first recorded one, and warns about nothing', () => {
+    const output = textOf(renderSyncReport(withSizes({ isFirstRecorded: true })));
+
+    expect(output).toContain('This is the first recorded deployment here, so nothing is compared to it.');
+  });
+
+  it('names the streamlining skill for a document whose source the reader maintains', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({ warnings: [{ key: 'claude/skills/plan/SKILL.md', bytes: 12_698, mayStreamline: true }] }),
+      ),
+    );
+
+    expect(output).toContain('claude/skills/plan/SKILL.md has passed the 5.0 KiB growth ceiling (12.4 KiB).');
+    expect(output).toContain('Run the `streamline-guidance` skill on its source to reduce it.');
+  });
+
+  it('withholds the streamlining skill for a document whose source the reader does not maintain', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({ warnings: [{ key: 'claude/skills/plan/SKILL.md', bytes: 12_698, mayStreamline: false }] }),
+      ),
+    );
+
+    expect(output).toContain('has passed the 5.0 KiB growth ceiling');
+    expect(output).not.toContain('streamline-guidance');
+  });
+
+  it('sends each growth warning to the warning stream and the rest of the block to the info stream', () => {
+    const lines = renderSyncReport(
+      withSizes({
+        changes: [{ kind: 'resized', key: 'a.md', bytes: GROWTH_CEILING_BYTES, delta: 1 }],
+        warnings: [{ key: 'a.md', bytes: GROWTH_CEILING_BYTES, mayStreamline: false }],
+      }),
+    );
+
+    expect(lines.filter((line) => line.level === 'warn').map((line) => line.text)).toEqual([
+      '⚠️ a.md has passed the 5.0 KiB growth ceiling (5.0 KiB).',
+    ]);
+  });
+
+  it('states one warning and nothing else when the pass failed', () => {
+    const outcome: SyncOutcome = {
+      kind: 'reconciled',
+      plan: buildSyncPlan(),
+      sizes: { kind: 'failed', message: 'EACCES: permission denied' },
+    };
+    const output = textOf(renderSyncReport(outcome));
+
+    expect(output).toContain("⚠️ The deployment's sizes were not recorded: EACCES: permission denied");
+    expect(output).not.toContain('Deployed sizes:');
+  });
+
+  it('states nothing at all for an outcome carrying no sizes, as a dry run does', () => {
+    expect(textOf(renderSyncReport(reconciled()))).not.toContain('Deployed sizes:');
+    expect(textOf(renderDryRunReport(reconciled()))).not.toContain('Deployed sizes:');
   });
 });
 

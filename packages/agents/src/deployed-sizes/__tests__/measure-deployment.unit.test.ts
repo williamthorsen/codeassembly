@@ -190,7 +190,7 @@ function emptySet(): DeployedPathSet {
 
 /** One collected file, in the `other` role that contributes to no description total. */
 function file(absPath: string, key: string, kind: 'asset' | 'document'): DeployedPath {
-  return { key, absPath, kind, role: 'other', harnessId: 'claude' };
+  return { key, absPath, kind, role: 'other', harnessId: 'claude', sourceRoot: undefined };
 }
 
 /** A Markdown file whose frontmatter declares a name, a description, and optionally one harness-rewritten key. */

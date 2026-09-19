@@ -1,15 +1,14 @@
 import { homedir } from 'node:os';
 import process from 'node:process';
 
+import { formatBytes } from '../deployed-sizes/format-bytes.ts';
 import { readLatestSnapshot } from '../deployed-sizes/read-record.ts';
+import { renderAggregates } from '../deployed-sizes/render-aggregates.ts';
 import { resolveRecordPath } from '../deployed-sizes/resolve-record-path.ts';
 import type { SizeSnapshot } from '../deployed-sizes/types.ts';
 import { emitReport } from '../lib/emit-report.ts';
 import type { ReportLine } from '../lib/report-line.ts';
 import { resolveRepo } from '../shared/resolve-repo.ts';
-
-/** Bytes in one kibibyte, the unit in which a deployment's sizes are readable. */
-const BYTES_PER_KIB = 1_024;
 
 /**
  * Reports the latest snapshot of the domain matching the working directory, or of the home domain under `--global`,
@@ -45,14 +44,6 @@ export function renderSizesReport(snapshot: SizeSnapshot | undefined, global: bo
 
 // region | Helpers
 
-/**
- * Renders one byte count at the scale that keeps it readable: kibibytes to one decimal place above a kibibyte, and
- * bytes below it, so that a description of a few dozen bytes is distinguishable from nothing at all.
- */
-function formatBytes(bytes: number): string {
-  return bytes < BYTES_PER_KIB ? `${bytes} B` : `${(bytes / BYTES_PER_KIB).toFixed(1)} KiB`;
-}
-
 /** Renders one snapshot's document ranking and the three aggregates beneath it. */
 function renderSnapshot(snapshot: SizeSnapshot): ReadonlyArray<ReportLine> {
   const documents = Object.entries(snapshot.files)
@@ -69,15 +60,9 @@ function renderSnapshot(snapshot: SizeSnapshot): ReadonlyArray<ReportLine> {
     lines.push({ level: 'info', text: `  ${formatBytes(document.bytes).padStart(width)}  ${document.key}` });
   }
 
-  const { alwaysLoaded, onInvocation, assets } = snapshot.aggregates;
   lines.push(
     { level: 'info', text: '' },
-    { level: 'info', text: `Always loaded:  ${formatBytes(alwaysLoaded.total)}` },
-    { level: 'info', text: `  ambient regions:       ${formatBytes(alwaysLoaded.ambientRegions)}` },
-    { level: 'info', text: `  skill descriptions:    ${formatBytes(alwaysLoaded.skillDescriptions)}` },
-    { level: 'info', text: `  subagent descriptions: ${formatBytes(alwaysLoaded.subagentDescriptions)}` },
-    { level: 'info', text: `On invocation:  ${formatBytes(onInvocation)} across ${documents.length} document(s)` },
-    { level: 'info', text: `Assets:         ${formatBytes(assets)}` },
+    ...renderAggregates(snapshot.aggregates, documents.length),
     { level: 'info', text: '' },
     {
       level: 'info',

@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { realpath } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -8,7 +9,7 @@ import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../../lib/content-sources.ts';
 import { listDeclaredGuidanceHooks } from '../../lib/declared-guidance-hooks.ts';
-import { resolveDeclaredSources } from '../../lib/declared-sources.ts';
+import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
@@ -444,28 +445,25 @@ async function reconcileDomain(
 
   await refreshPromptsYml(harnessIds, domain);
 
-  // Last of all, so that the measurement reads the tree that every pass above left. Reports nothing and cannot fail:
-  // The record is the `sizes` command's input, not this command's output.
-  await recordDeployedSizes(plan, domain, homeDir, resolveRunningPackageRoot());
+  // Resolved once per declared source rather than once per deployed file, so that the report can test containment
+  // lexically. A `workspace:*` source resolves through a `node_modules` symlink; its canonical directory is the path
+  // inside the repository that maintains it.
+  const sourceRoots = await resolveCanonicalSourceRoots(sources, contentDir);
 
-  return { kind: 'reconciled', plan };
+  // Last of all, so that the measurement reads the tree that every pass above left. Cannot fail: No size condition
+  // may fail a sync.
+  const sizes = await recordDeployedSizes({
+    plan,
+    domain,
+    homeDir,
+    packageRoot: resolveRunningPackageRoot(),
+    resolveSourceRoot: (source) => sourceRoots.get(source),
+  });
+
+  return { kind: 'reconciled', plan, sizes };
 }
 
 // region | Helpers
-
-/**
- * Concatenates per-type seed sets into the one set that seeds closure resolution, leaving duplicates in: `resolveClosure`
- * dedupes by slug as it walks.
- */
-function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
-  const merged: Record<ArtifactType, Array<string>> = { rulebook: [], skill: [], subagent: [], collection: [] };
-  for (const set of sets) {
-    for (const type of ARTIFACT_TYPE_VALUES) {
-      merged[type].push(...(set[type] ?? []));
-    }
-  }
-  return merged;
-}
 
 /**
  * Attributes each deployed rulebook, skill, and subagent to the source from which it resolved, flagging any
@@ -494,6 +492,42 @@ async function buildResolutionReport(
       shadowsLibrary:
         artifact.source !== undefined && (await hasLibraryArtifact(resolver, artifact.type, artifact.slug)),
     })),
+  );
+}
+
+/**
+ * Concatenates per-type seed sets into the one set that seeds closure resolution, leaving duplicates in: `resolveClosure`
+ * dedupes by slug as it walks.
+ */
+function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
+  const merged: Record<ArtifactType, Array<string>> = { rulebook: [], skill: [], subagent: [], collection: [] };
+  for (const set of sets) {
+    for (const type of ARTIFACT_TYPE_VALUES) {
+      merged[type].push(...(set[type] ?? []));
+    }
+  }
+  return merged;
+}
+
+/** The directory with its symlinks resolved, or the path as given when it cannot be resolved, as a missing source cannot. */
+async function resolveCanonicalDir(dir: string): Promise<string> {
+  try {
+    return await realpath(dir);
+  } catch {
+    return dir;
+  }
+}
+
+/**
+ * Maps each declared source's name, and `undefined` for the built-in library, to the canonical directory behind it.
+ */
+async function resolveCanonicalSourceRoots(
+  sources: ReadonlyArray<DeclaredSource>,
+  contentDir: string,
+): Promise<ReadonlyMap<string | undefined, string>> {
+  const roots: Array<{ name: string | undefined; dir: string }> = [{ name: undefined, dir: contentDir }, ...sources];
+  return new Map(
+    await Promise.all(roots.map(async (root) => [root.name, await resolveCanonicalDir(root.dir)] as const)),
   );
 }
 

@@ -7,8 +7,16 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { resolveHarnessPaths } from '../../../lib/harness.ts';
 import { getManifestPath, writeManifest } from '../../../lib/manifest.ts';
 import type { AgentsManifest, ManifestEntry } from '../../../lib/types.ts';
-import { collectDeployedPaths, type DeployedPathSet, type DeployedPathSources } from '../collect-deployed-paths.ts';
+import {
+  collectDeployedPaths,
+  type DeployedPathSet,
+  type DeployedPathSources,
+  type ResolveSourceRoot,
+} from '../collect-deployed-paths.ts';
 import type { SyncDomain } from '../sync-domain.ts';
+
+/** The directory to which a library-resolved artifact attributes, distinct from every declared source's. */
+const LIBRARY_DIR = '/library/content';
 
 describe(collectDeployedPaths, () => {
   let baseDir: string;
@@ -31,6 +39,7 @@ describe(collectDeployedPaths, () => {
       buildSources({ skillsDir, skillSlugs: ['plan'] }),
       projectDomain(baseDir),
       baseDir,
+      resolveSourceRoot,
     );
 
     expect(sortedKeys(set)).toEqual([
@@ -49,6 +58,7 @@ describe(collectDeployedPaths, () => {
       buildSources({ skillsDir, skillSlugs: ['plan'] }),
       projectDomain(baseDir),
       baseDir,
+      resolveSourceRoot,
     );
 
     expect(set.files.map((file) => `${file.key} ${file.kind}`).toSorted()).toEqual([
@@ -66,6 +76,7 @@ describe(collectDeployedPaths, () => {
       buildSources({ skillsDir, skillSlugs: ['plan'] }),
       projectDomain(baseDir),
       baseDir,
+      resolveSourceRoot,
     );
 
     expect(sortedKeys(set)).toEqual(['claude/skills/plan/SKILL.md']);
@@ -76,7 +87,7 @@ describe(collectDeployedPaths, () => {
     await writeDeployedFile(path.join(skillsDir, 'consult-comments', 'SKILL.md'), 'body');
     const sources = buildSources({ skillsDir, rulebookSkillNames: ['consult-comments'] });
 
-    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
 
     expect(sortedKeys(set)).toEqual(['claude/skills/consult-comments/SKILL.md']);
   });
@@ -86,10 +97,10 @@ describe(collectDeployedPaths, () => {
     await writeDeployedFile(path.join(skillsDir, 'ambient-only', 'SKILL.md'), 'body');
     const sources = {
       ...buildSources({ skillsDir }),
-      resolved: [{ skill: false, skillName: 'ambient-only' }],
+      resolved: [{ skill: false, skillName: 'ambient-only', source: undefined }],
     };
 
-    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
 
     expect(set.files).toEqual([]);
   });
@@ -111,7 +122,7 @@ describe(collectDeployedPaths, () => {
       ],
     };
 
-    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
 
     expect(sortedKeys(set)).toEqual(['claude/skills/_sources/acme/guide.md']);
   });
@@ -122,10 +133,10 @@ describe(collectDeployedPaths, () => {
     const sources = {
       ...buildSources({ skillsDir: '' }),
       harnessSubagentTargets: [{ harnessId: 'claude' as const, subagentsDir }],
-      resolvedSubagents: [{ slug: 'prose-reviser' }],
+      resolvedSubagents: [{ slug: 'prose-reviser', source: undefined }],
     };
 
-    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
 
     expect(sortedKeys(set)).toEqual(['claude/agents/prose-reviser.md']);
   });
@@ -134,7 +145,7 @@ describe(collectDeployedPaths, () => {
     const hostPath = path.join(baseDir, 'CLAUDE.local.md');
     const sources = { ...buildSources({ skillsDir: '' }), ambientHosts: [{ hostPath }] };
 
-    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
 
     expect(set).toEqual({ files: [], ambientHostPaths: [hostPath] });
   });
@@ -148,7 +159,12 @@ describe(collectDeployedPaths, () => {
       { relativePath: 'scripts/describe-change.mjs', contentHash: 'sha256:abc', linked: false },
     ]);
 
-    const set = await collectDeployedPaths(buildSources({ skillsDir: '' }), homeDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(
+      buildSources({ skillsDir: '' }),
+      homeDomain(baseDir),
+      baseDir,
+      resolveSourceRoot,
+    );
 
     expect(sortedKeys(set)).toEqual(['claude/scripts/describe-change.mjs', 'claude/skills/_data/work-types.json']);
   });
@@ -162,9 +178,105 @@ describe(collectDeployedPaths, () => {
       { relativePath: 'scripts/gone.mjs', contentHash: 'sha256:def', linked: false },
     ]);
 
-    const set = await collectDeployedPaths(buildSources({ skillsDir: '' }), homeDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(
+      buildSources({ skillsDir: '' }),
+      homeDomain(baseDir),
+      baseDir,
+      resolveSourceRoot,
+    );
 
     expect(sortedKeys(set)).toEqual(['claude/scripts/present.mjs']);
+  });
+
+  it('attributes a declared skill to the directory of the source from which it resolved', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', baseDir);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'run.mjs'), 'code');
+    const sources = buildSources({ skillsDir, skillSlugs: ['plan'], source: 'acme' });
+
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
+
+    expect(sourceRootsByKey(set)).toStrictEqual({
+      'claude/skills/plan/SKILL.md': '/sources/acme',
+      'claude/skills/plan/run.mjs': '/sources/acme',
+    });
+  });
+
+  it('attributes a rulebook-delivered skill to the directory of the source from which it resolved', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', baseDir);
+    await writeDeployedFile(path.join(skillsDir, 'consult-comments', 'SKILL.md'), 'body');
+    const sources = buildSources({ skillsDir, rulebookSkillNames: ['consult-comments'], source: 'acme' });
+
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
+
+    expect(sourceRootsByKey(set)).toStrictEqual({ 'claude/skills/consult-comments/SKILL.md': '/sources/acme' });
+  });
+
+  it('attributes a subagent to the directory of the source from which it resolved', async () => {
+    const { subagentsDir } = resolveHarnessPaths('claude', baseDir);
+    await writeDeployedFile(path.join(subagentsDir, 'prose-reviser.md'), 'body');
+    const sources = {
+      ...buildSources({ skillsDir: '' }),
+      harnessSubagentTargets: [{ harnessId: 'claude' as const, subagentsDir }],
+      resolvedSubagents: [{ slug: 'prose-reviser', source: 'acme' }],
+    };
+
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
+
+    expect(sourceRootsByKey(set)).toStrictEqual({ 'claude/agents/prose-reviser.md': '/sources/acme' });
+  });
+
+  it('attributes an artifact that resolved from no declared source to the library', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', baseDir);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+
+    const set = await collectDeployedPaths(
+      buildSources({ skillsDir, skillSlugs: ['plan'] }),
+      projectDomain(baseDir),
+      baseDir,
+      resolveSourceRoot,
+    );
+
+    expect(sourceRootsByKey(set)).toStrictEqual({ 'claude/skills/plan/SKILL.md': LIBRARY_DIR });
+  });
+
+  it('attributes a delivered support entry to no source, since no artifact backs it', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', baseDir);
+    const destDir = path.join(skillsDir, '_sources', 'acme');
+    await writeDeployedFile(path.join(destDir, 'guide.md'), 'guide');
+    const sources = {
+      ...buildSources({ skillsDir }),
+      sourceSupportPlans: [
+        {
+          sourcesRoot: path.join(skillsDir, '_sources'),
+          name: 'acme',
+          destDir,
+          entries: [{ relPath: 'guide.md' }],
+          kind: 'deliver' as const,
+        },
+      ],
+    };
+
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
+
+    expect(sourceRootsByKey(set)).toStrictEqual({ 'claude/skills/_sources/acme/guide.md': undefined });
+  });
+
+  it('attributes a manifest-contributed file to no source, since no artifact backs it', async () => {
+    const { harnessHome } = resolveHarnessPaths('claude', baseDir);
+    await writeDeployedFile(path.join(harnessHome, 'scripts', 'describe-change.mjs'), 'code');
+    await writeInstallManifest(baseDir, [
+      { relativePath: 'scripts/describe-change.mjs', contentHash: 'sha256:abc', linked: false },
+    ]);
+
+    const set = await collectDeployedPaths(
+      buildSources({ skillsDir: '' }),
+      homeDomain(baseDir),
+      baseDir,
+      resolveSourceRoot,
+    );
+
+    expect(sourceRootsByKey(set)).toStrictEqual({ 'claude/scripts/describe-change.mjs': undefined });
   });
 
   it('reads the plan alone in the repo domain, leaving the home manifest out', async () => {
@@ -174,7 +286,12 @@ describe(collectDeployedPaths, () => {
       { relativePath: 'scripts/describe-change.mjs', contentHash: 'sha256:abc', linked: false },
     ]);
 
-    const set = await collectDeployedPaths(buildSources({ skillsDir: '' }), projectDomain(baseDir), baseDir);
+    const set = await collectDeployedPaths(
+      buildSources({ skillsDir: '' }),
+      projectDomain(baseDir),
+      baseDir,
+      resolveSourceRoot,
+    );
 
     expect(set.files).toEqual([]);
   });
@@ -187,17 +304,18 @@ function buildSources(input: {
   skillsDir: string;
   skillSlugs?: ReadonlyArray<string>;
   rulebookSkillNames?: ReadonlyArray<string>;
+  source?: string;
 }): DeployedPathSources {
   return {
     ambientHosts: [],
     harnessSkillTargets: [{ harnessId: 'claude', skillsDir: input.skillsDir }],
     harnessSubagentTargets: [],
-    resolved: (input.rulebookSkillNames ?? []).map((skillName) => ({ skill: true, skillName })),
+    resolved: (input.rulebookSkillNames ?? []).map((skillName) => ({ skill: true, skillName, source: input.source })),
     resolvedSkills: (input.skillSlugs ?? []).map((slug) => ({
       slug,
       srcDir: '',
       contentRoot: '',
-      source: undefined,
+      source: input.source,
     })),
     resolvedSubagents: [],
     sourceSupportPlans: [],
@@ -215,9 +333,17 @@ function projectDomain(projectRoot: string): SyncDomain {
   return { baseDir: projectRoot, ambient: 'project-local', anchorBase: projectRoot };
 }
 
+/** Maps each declared source's name to a directory named after it, and the library to its own. */
+const resolveSourceRoot: ResolveSourceRoot = (source) => (source === undefined ? LIBRARY_DIR : `/sources/${source}`);
+
 /** The collected keys, ordered so that an assertion does not depend on collection order. */
 function sortedKeys(set: DeployedPathSet): ReadonlyArray<string> {
   return set.files.map((file) => file.key).toSorted();
+}
+
+/** The source root attributed to each collected file, keyed by the key under which it is recorded. */
+function sourceRootsByKey(set: DeployedPathSet): Record<string, string | undefined> {
+  return Object.fromEntries(set.files.map((file) => [file.key, file.sourceRoot]));
 }
 
 /** Writes one deployed file, creating its enclosing directories. */
