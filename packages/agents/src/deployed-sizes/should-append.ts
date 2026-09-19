@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
+import { isRecord } from '../lib/type-guards.ts';
 import type { DeploymentMeasurement } from './measure-deployment.ts';
 import type { DeployedFile, SizeAggregates, SizeSnapshot } from './types.ts';
 
@@ -39,16 +40,14 @@ export async function shouldAppend(input: {
 
 // region | Helpers
 
-/** Reports whether two aggregate blocks state the same totals, component by component. */
+/**
+ * Reports whether two aggregate blocks state the same totals. Compared as text with every key in a fixed order, so
+ * that an aggregate or an always-loaded component added later is compared without an edit here: What the gate covers
+ * then follows from the type rather than from a list kept in step with it. `haveSameFiles` takes the other route
+ * because its keys are hundreds of deployed paths, which this one would sort on every comparison.
+ */
 function haveSameAggregates(aggregates: SizeAggregates, previous: SizeAggregates): boolean {
-  return (
-    aggregates.onInvocation === previous.onInvocation &&
-    aggregates.assets === previous.assets &&
-    aggregates.alwaysLoaded.total === previous.alwaysLoaded.total &&
-    aggregates.alwaysLoaded.ambientRegions === previous.alwaysLoaded.ambientRegions &&
-    aggregates.alwaysLoaded.skillDescriptions === previous.alwaysLoaded.skillDescriptions &&
-    aggregates.alwaysLoaded.subagentDescriptions === previous.alwaysLoaded.subagentDescriptions
-  );
+  return stringifyWithSortedKeys(aggregates) === stringifyWithSortedKeys(previous);
 }
 
 /**
@@ -119,6 +118,13 @@ async function resolveDefaultBranch(sourceRoot: string): Promise<string | undefi
   } catch {
     return undefined;
   }
+}
+
+/** Serializes a nested block of numbers with every object's keys in a fixed order, so that key order decides nothing. */
+function stringifyWithSortedKeys(value: unknown): string {
+  return JSON.stringify(value, (_key, item: unknown) =>
+    isRecord(item) ? Object.fromEntries(Object.entries(item).toSorted(([a], [b]) => a.localeCompare(b))) : item,
+  );
 }
 
 // endregion | Helpers

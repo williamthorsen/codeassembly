@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { DeploymentMeasurement } from '../measure-deployment.ts';
-import { SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
+import { parseSnapshotLine, SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
 import { shouldAppend } from '../should-append.ts';
 import type { DeployedFile, SizeAggregates, SizeSnapshot } from '../types.ts';
 
@@ -83,6 +83,13 @@ describe(shouldAppend, () => {
     const measured = measure(VECTOR, { ambientRegions: 2_000, skillDescriptions: 40, subagentDescriptions: 12 });
 
     expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot })).toBe(false);
+  });
+
+  it('reads an unchanged previous snapshot back out of a record line as unchanged', async () => {
+    const measured = measure(VECTOR, { ambientRegions: 2_000, skillDescriptions: 40, subagentDescriptions: 12 });
+    const previous = parseSnapshotLine(JSON.stringify(snapshotOf(measured)));
+
+    expect(await shouldAppend({ measured, previous, sourceRoot })).toBe(false);
   });
 
   it('does not append from a commit that the default branch does not contain', async () => {
