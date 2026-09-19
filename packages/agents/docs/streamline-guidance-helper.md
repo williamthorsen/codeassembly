@@ -32,12 +32,13 @@ A target's transitive files are its includes, recursively, and the Markdown file
   "ok": true,
   "root": "/path/to/repository",
   "targets": [
-    { "file": "skills/demo/SKILL.md", "bytes": 9412, "dirty": false, "generatedRegions": [] }
+    { "file": "skills/demo/SKILL.md", "bytes": 9412, "deployedBytes": 11048, "dirty": false, "generatedRegions": [] }
   ],
   "transitive": [
     {
       "file": "_partials/shared.md",
       "bytes": 812,
+      "deployedBytes": 2436,
       "dirty": false,
       "generatedRegions": [],
       "via": [{ "from": "skills/demo/SKILL.md", "kind": "include" }]
@@ -47,6 +48,8 @@ A target's transitive files are its includes, recursively, and the Markdown file
   "rejected": [{ "path": "notes.txt", "reason": "not-markdown" }]
 }
 ```
+
+`deployedBytes` is what the file deploys. For a document, which is any Markdown file under the content root outside `_partials/`, `_harnesses/`, and the test directories, it is the size of the body once its includes are expanded. For a partial, which deploys only inside the documents that include it, it is the file's own size times the number of documents that it reaches, at any depth: the example's partial is 812 bytes reaching three documents. The field is absent for a file that lies in no content root, and for one whose includes do not resolve. It excludes the transforms that a deployment applies per harness -- the provenance header, the ownership marker, path rewriting, and guidance-hook injection -- because a guidance hook's bound rulebooks are declared outside the content root and the rest add a constant of a few hundred bytes.
 
 `dirty` is true when git reports uncommitted changes to the file, an untracked file included. `generatedRegions` lists 1-based, inclusive line ranges, each running from a `<!-- codeassembly-ambient:start -->` or `<!-- codeassembly-guidance-hook:<name>:start -->` marker through its end marker, or to the end of the file when no end marker follows. A target named as a deployed copy also contains `redirectedFrom`, the path as named. `declined` lists the recorded entries whose file is in the run and still contains the phrase.
 
