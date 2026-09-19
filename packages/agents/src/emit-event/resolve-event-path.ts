@@ -1,6 +1,7 @@
 import path from 'node:path';
 
 import { sanitizeBranch } from '../shared/branch-helpers.ts';
+import { REPO_SEGMENT_PLACEHOLDER, splitRepo, toSafeSegment } from '../shared/repo-segments.ts';
 
 const EVENTS_ROOT = ['.codeassembly', 'events'];
 
@@ -9,7 +10,7 @@ const EVENTS_ROOT = ['.codeassembly', 'events'];
  * readable log when its context is incomplete.
  */
 export const PLACEHOLDERS = {
-  repo: '_no-repo',
+  repo: REPO_SEGMENT_PLACEHOLDER,
   branch: '_no-branch',
   session: '_no-session',
 } as const;
@@ -32,22 +33,3 @@ export function resolveEventPath(input: { home: string; repo?: string; branch?: 
 
   return path.join(input.home, ...EVENTS_ROOT, owner, name, branch, `${session}.jsonl`);
 }
-
-// region | Helpers
-
-/** Splits an `owner/name` repo into its two path segments, falling back to the placeholder for either half. */
-function splitRepo(repo: string | undefined): [owner: string, name: string] {
-  const [owner, name] = (repo ?? '').split('/', 2);
-  return [toSafeSegment(owner ?? '', PLACEHOLDERS.repo), toSafeSegment(name ?? '', PLACEHOLDERS.repo)];
-}
-
-/**
- * Reduces `value` to one path component: Separators are flattened to hyphens, and a value that names no directory
- * (empty, or dots only, which would traverse upward) is replaced by `placeholder`.
- */
-function toSafeSegment(value: string, placeholder: string): string {
-  const flattened = value.trim().replaceAll(/[/\\]/g, '-');
-  return flattened === '' || /^\.+$/.test(flattened) ? placeholder : flattened;
-}
-
-// endregion | Helpers
