@@ -446,8 +446,8 @@ async function reconcileDomain(
   await refreshPromptsYml(harnessIds, domain);
 
   // Resolved once per declared source rather than once per deployed file, so that the report can test containment
-  // lexically. A `workspace:*` source resolves through a `node_modules` symlink that names the repo maintaining it
-  // nowhere, and its canonical directory does.
+  // lexically. A `workspace:*` source resolves through a `node_modules` symlink; its canonical directory is the path
+  // inside the repository that maintains it.
   const sourceRoots = await resolveCanonicalSourceRoots(sources, contentDir);
 
   // Last of all, so that the measurement reads the tree that every pass above left. Cannot fail: No size condition
@@ -509,7 +509,7 @@ function mergeSeeds(sets: ReadonlyArray<DirectArtifacts>): DirectArtifacts {
   return merged;
 }
 
-/** The directory with its symlinks resolved, or the path as given when it resolves to nothing, as a missing source does. */
+/** The directory with its symlinks resolved, or the path as given when it cannot be resolved, as a missing source cannot. */
 async function resolveCanonicalDir(dir: string): Promise<string> {
   try {
     return await realpath(dir);
