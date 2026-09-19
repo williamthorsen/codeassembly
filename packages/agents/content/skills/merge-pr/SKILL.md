@@ -275,30 +275,13 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes a title that `defects` blocks, or a `prompt` sentinel, to the delegate: All values are concrete by this point.
 
-If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture two things from the delegate's completion report and continue: whether it reported a merge, and the merge commit SHA if it reported one. Step 10 branches on both, and they are not the same signal.
+If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture one thing from the delegate's completion report and continue: whether it reported a merge. Step 10 reports the outcome from it.
 
-### 10. Record the lede decision
+### 10. Report the outcome
 
-Skip this step when the delegate reported no merge: Nothing was merged, so there is no lede to decide about. Emit `skill.completed` (payload `{"outcome":"not merged"}`) per [Lifecycle events](#lifecycle-events) and stop.
+Emit `skill.completed` per [Lifecycle events](#lifecycle-events): payload `{"outcome":"merged"}` when the delegate reported a merge, and `{"outcome":"not merged"}` when it did not. A merge whose commit SHA is unavailable is still a merge, and is reported as `merged`.
 
-Skip it too, for a different reason, when the delegate reported a merge whose commit SHA is unavailable. Because `capture-lede-decision` requires `--merge-commit`, the record cannot be written; the merge still happened. Say so, and emit `skill.completed` (payload `{"outcome":"merged: lede decision skipped, no SHA"}`). Never fold this case into "not merged", which would report a completed merge as one that did not happen.
-
-Otherwise the merge has already happened, so this step can only add a record. Declining loses a data point and nothing else, and nothing here can undo or re-run the merge; never present a failure at this step as a merge failure.
-
-Invoke `{skill:capture-lede-decision}` with:
-
-| Input            | Value                                                              |
-| ---------------- | ------------------------------------------------------------------ |
-| `--artifact-dir` | `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` |
-| `--pr`           | Resolved PR number                                                 |
-| `--merge-commit` | The merge commit SHA from the delegate's completion report         |
-| `--type`         | The approved `effective_record`'s type                             |
-| `--scope`        | The approved `effective_record`'s scope, only if it names one      |
-| `--breaking`     | Only if the approved `effective_record` is breaking                |
-
-That skill owns the prompt and the record: It asks once, writes one event on a rating, and writes nothing on a skip. Do not ask again, and never supply a rating that the author did not give: A lede that was merged unchanged under time pressure is not a rated lede.
-
-Then emit `skill.completed` (payload `{"outcome":"merged"}`) per [Lifecycle events](#lifecycle-events).
+Report nothing else here, and invoke nothing. The merge flow records no lede decision and makes no offer to record one; a capture is the author's own request, made whenever they choose.
 
 ## Important
 
