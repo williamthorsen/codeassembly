@@ -10,7 +10,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import { DirectiveExpansionError, listIncludeTargets } from '../lib/directive-expander.ts';
+import { expandIncludes } from '../lib/directive-expander.ts';
+import { buildIncludeGraph, type IncludeGraph } from '../lib/include-graph.ts';
 import { MARKDOWN_LINK_REGEX } from '../lib/path-rewriter.ts';
 import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
 import { findDeployedSource, isDeployedCopy } from './deployed-source.ts';
@@ -58,6 +59,7 @@ export async function resolveGuidance(input: {
   const context: ResolutionContext = {
     artifactBaseDir: resolveRealPath(await resolveRootArtifactBaseDir(input.root, input.home)),
     contentRoots: listContentRoots(input.root),
+    graphs: new Map(),
     home: input.home,
     root: input.root,
   };
@@ -84,18 +86,21 @@ export async function resolveGuidance(input: {
   }
 
   const files = [...named.keys(), ...edges.keys()];
-  const dirty = listDirtyFiles(input.root, files);
+  const measures: FileMeasures = {
+    deployedBytes: await measureDeployedBytes(files, context),
+    dirty: listDirtyFiles(input.root, files),
+  };
 
   const targets = named
     .values()
     .map(({ file, redirectedFrom }) => ({
-      ...describeFile(file, context, dirty),
+      ...describeFile(file, context, measures),
       ...(redirectedFrom !== undefined && { redirectedFrom }),
     }))
     .toArray();
   const transitive: TransitiveFile[] = [...edges]
     .toSorted(([left], [right]) => left.localeCompare(right))
-    .map(([file, via]) => ({ ...describeFile(file, context, dirty), via }));
+    .map(([file, via]) => ({ ...describeFile(file, context, measures), via }));
 
   return {
     ok: true,
@@ -126,6 +131,8 @@ const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 interface ResolutionContext {
   artifactBaseDir: string;
   contentRoots: readonly string[];
+  /** The include graph of each content root that the run has reached, built once per root. */
+  graphs: Map<string, IncludeGraph>;
   home: string;
   root: string;
 }
@@ -135,6 +142,12 @@ interface AcceptedFile {
   file: string;
   namedPath: string;
   redirectedFrom?: string;
+}
+
+/** The per-file measurements that one run takes in a batch, keyed by repository-relative path. */
+interface FileMeasures {
+  deployedBytes: ReadonlyMap<string, number>;
+  dirty: ReadonlySet<string>;
 }
 
 /**
@@ -197,17 +210,19 @@ async function collectTransitiveEdges(
   for (const target of targets) {
     const targetPath = path.join(context.root, target);
     const contentRoot = findContentRoot(targetPath, context.contentRoots);
-    const expansion =
-      contentRoot === undefined ? { files: [targetPath], includes: [] } : await expandTarget(targetPath, contentRoot);
-    if (expansion === undefined) {
+    const graph = contentRoot === undefined ? undefined : await loadIncludeGraph(contentRoot, context);
+    if (graph?.hasUnresolvedIncludes(targetPath) === true) {
       unresolved.push(target);
       continue;
     }
 
-    for (const { file, includer } of expansion.includes) {
+    const closure = graph?.listClosure(targetPath);
+    const includes = closure?.includes ?? [];
+    const reached = closure?.files ?? [targetPath];
+    for (const { file, includer } of includes) {
       addEdge(path.relative(context.root, file), { from: path.relative(context.root, includer), kind: 'include' });
     }
-    for (const file of expansion.files) {
+    for (const file of reached) {
       const linked = listLinkedPaths(readFileSync(file, 'utf8'), {
         contentRoot,
         home: context.home,
@@ -226,45 +241,16 @@ async function collectTransitiveEdges(
 }
 
 /** Describes one repository-relative file. */
-function describeFile(file: string, context: ResolutionContext, dirty: ReadonlySet<string>): GuidanceFile {
+function describeFile(file: string, context: ResolutionContext, measures: FileMeasures): GuidanceFile {
   const absolutePath = path.join(context.root, file);
+  const deployedBytes = measures.deployedBytes.get(file);
   return {
     file,
     bytes: statSync(absolutePath).size,
-    dirty: dirty.has(file),
+    ...(deployedBytes !== undefined && { deployedBytes }),
+    dirty: measures.dirty.has(file),
     generatedRegions: findGeneratedRegions(readFileSync(absolutePath, 'utf8')),
   };
-}
-
-/**
- * Lists a target and every file that its includes reach, in discovery order, with each include edge found on the way.
- * Returns undefined when a directive in any of those files does not resolve, such as an example directive in
- * documentation that deployment never expands.
- */
-async function expandTarget(
-  target: string,
-  contentRoot: string,
-): Promise<{ files: string[]; includes: Array<{ file: string; includer: string }> } | undefined> {
-  const visited = new Set<string>([target]);
-  const includes: Array<{ file: string; includer: string }> = [];
-  const pending = [target];
-  for (let file = pending.shift(); file !== undefined; file = pending.shift()) {
-    let targets: string[];
-    try {
-      targets = await listIncludeTargets(file, contentRoot);
-    } catch (error) {
-      if (!(error instanceof DirectiveExpansionError)) throw error;
-      return undefined;
-    }
-    for (const include of targets) {
-      includes.push({ file: include, includer: file });
-      if (!visited.has(include)) {
-        visited.add(include);
-        pending.push(include);
-      }
-    }
-  }
-  return { files: [...visited], includes };
 }
 
 /** Returns the innermost content root containing a file, or undefined when none does. */
@@ -362,6 +348,51 @@ function listMarkdownFilesUnder(root: string, directory: string): string[] {
   return listWorkingTreeFiles(root, [directory === '' ? '.' : directory]).filter(
     (file) => path.extname(file).toLowerCase() === '.md',
   );
+}
+
+/** Returns the include graph of a content root, building it on the run's first file inside that root. */
+async function loadIncludeGraph(contentRoot: string, context: ResolutionContext): Promise<IncludeGraph> {
+  const cached = context.graphs.get(contentRoot);
+  if (cached !== undefined) {
+    return cached;
+  }
+  const graph = await buildIncludeGraph(contentRoot);
+  context.graphs.set(contentRoot, graph);
+  return graph;
+}
+
+/**
+ * Measures what each file deploys: for a document, its size once its includes are expanded; for a partial, its own
+ * size times the number of documents that it reaches. A file in no content root, and one whose includes do not
+ * resolve, is absent from the result, which reports it as deploying nothing.
+ *
+ * The per-harness transforms -- the provenance header, the ownership marker, and path rewriting -- are excluded.
+ * Expansion is the whole of the difference between a file's source size and its deployed size; those transforms add a
+ * constant of a few hundred bytes, and reading it would tie this helper to a deployment's harness context.
+ */
+async function measureDeployedBytes(
+  files: readonly string[],
+  context: ResolutionContext,
+): Promise<Map<string, number>> {
+  const measured = new Map<string, number>();
+  for (const file of files) {
+    const absolutePath = path.join(context.root, file);
+    const contentRoot = findContentRoot(absolutePath, context.contentRoots);
+    if (contentRoot === undefined) {
+      continue;
+    }
+    const graph = await loadIncludeGraph(contentRoot, context);
+    if (graph.hasUnresolvedIncludes(absolutePath)) {
+      continue;
+    }
+    measured.set(
+      file,
+      graph.documents.has(absolutePath)
+        ? new TextEncoder().encode(await expandIncludes(absolutePath, contentRoot)).length
+        : statSync(absolutePath).size * graph.countReach(absolutePath),
+    );
+  }
+  return measured;
 }
 
 /** Resolves a Markdown link target to an absolute path, or undefined for a target naming no local file. */

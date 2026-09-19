@@ -193,6 +193,37 @@ describe(runResolve, () => {
     ]);
   });
 
+  describe('deployed bytes', () => {
+    it("reports a document's deployed bytes as the size of its body once its includes are expanded", async () => {
+      const source = ['xy', '', '<!-- include: ../../_partials/tiny.md / -->', ''].join('\n');
+      await writeFiles(repository, { 'lib/_partials/tiny.md': 'ab\n', 'lib/skills/sized/SKILL.md': source });
+
+      const result = expectSuccess(await resolve('lib/skills/sized/SKILL.md'));
+
+      expect(result.targets).toMatchObject([{ bytes: source.length, deployedBytes: 'xy\n\nab\n'.length }]);
+    });
+
+    it("reports a partial's deployed bytes as its own bytes times the documents that it reaches", async () => {
+      await writeFiles(repository, {
+        'lib/skills/second/SKILL.md': '<!-- include: ../../_partials/shared.md / -->\n',
+      });
+
+      const result = expectSuccess(await resolve('lib/_partials/inner.md'));
+
+      // Both skills reach the partial, the second of them through `shared.md`.
+      expect(result.targets).toMatchObject([
+        { bytes: 'Inner text.\n'.length, deployedBytes: 'Inner text.\n'.length * 2 },
+      ]);
+    });
+
+    it('omits the field for a file that lies in no content root', async () => {
+      const result = expectSuccess(await resolve('AGENTS.md'));
+
+      expect(result.targets).toHaveLength(1);
+      expect(result.targets[0]).not.toHaveProperty('deployedBytes');
+    });
+  });
+
   describe('failures', () => {
     it('if the working directory is not in a repository, fails as not-a-repository', async () => {
       const result = await runResolve({ argv: ['loose.md'], cwd: home, home });

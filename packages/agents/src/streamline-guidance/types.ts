@@ -48,6 +48,11 @@ export interface GuidanceFile {
   /** Path relative to the repository root. */
   file: string;
   bytes: number;
+  /**
+   * The bytes that the file deploys: for a file that deploys as a document, its size once its includes are expanded;
+   * for a partial, its own size times the number of documents that it reaches. Absent when the file deploys nothing.
+   */
+  deployedBytes?: number;
   /** Whether git reports uncommitted changes to the file, including an untracked file. */
   dirty: boolean;
   /** Line ranges that a deployment rewrites, such as an ambient region, inside which no cut may fall. */
