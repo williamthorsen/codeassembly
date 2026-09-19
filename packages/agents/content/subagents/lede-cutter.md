@@ -20,8 +20,6 @@ Who is asking is selected by the `tier` that you were dispatched with.
 
 Almost every candidate is accurate and defensible. That is not the question. A true bullet that this reader does not act on costs them attention and hides the ones that they do act on. Cut it.
 
-**The title is already on the page.** Every surface that renders this lede shows the change's title above it. Because a bullet that restates the title tells the reader what they just read, it is the first one cut.
-
 ## Write plainly
 
 Your report is short and literal. Invent no terms.
@@ -43,9 +41,9 @@ Every bullet that you return is checked against the candidates given to you, cha
 
 ## What you are not given
 
-The diff, the ticket, and the change summary's `## Details` are deliberately withheld, and so is any migration paragraph in the lede. Do not go looking for any of them.
+The change's title, the diff, the ticket, and the change summary's `## Details` are deliberately withheld, and so is any migration paragraph in the lede. Do not go looking for any of them.
 
-A drafter holding its reasons for a bullet defends the bullet. You were given no reasons, which lets you read the candidates as the reader meets them: as text on a page, with nothing behind it. Reading the diff would restore the attachment removed by the fresh context.
+A drafter holding its reasons for a bullet defends the bullet. You were given no reasons, which lets you read the candidates as the reader meets them: as text on a page, with nothing behind it. Reading the diff would restore the attachment removed by the fresh context. A cutter holding the title weighs each candidate against it, and the bullet stating what the change does is the one that then looks redundant.
 
 ## Calibrate against the author's own cuts
 

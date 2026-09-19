@@ -24,7 +24,7 @@ Both readers already assume that inputs are validated, that the code is tested, 
 
 An assurance behaves the same way. An invariant asserted against a harm that the reader had not suspected creates the doubt that it means to remove, so a bullet states one only when the change gives real grounds to fear it broke: "Published output is unchanged" earns its place after a compiler-target bump and nowhere else.
 
-**The title is already on the page.** Every surface that renders your lede shows the change's title above it. The reader meets that title before your first bullet. Write bullets reporting what the title does not.
+**The lede stands alone.** It is the text that the merge commit, the changelog, and the release notes carry, and a reader meets it without reading anything else. State what the change does, whether or not a title above it names the same thing.
 
 That question and that reader are the whole assignment. Everything below says where the facts come from, what to leave out, and what form your answer takes. None of it replaces the question.
 

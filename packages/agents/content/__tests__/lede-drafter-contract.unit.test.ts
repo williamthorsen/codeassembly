@@ -70,9 +70,6 @@ const PRESCRIBED_CONNECTIVE = 'Separately,';
 /** The phrase excluding how a change was produced, which a commit body carries and a bullet does not. */
 const PROCESS_NARRATION_PHRASE = 'review mechanics, ticket and finding numbers';
 
-/** The statement that the writer composes against a title that the reader has already read. */
-const TITLE_PHRASE = 'The title is already on the page';
-
 /** Every code under which the caller redispatches, each of which the drafter has to be able to act on. */
 const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', 'unsupported-claim', 'voice'];
 
@@ -91,6 +88,9 @@ const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'one replacement per passage',
   'revise those passages and nothing else',
 ];
+
+/** The rule directing the writer to state the change, whether or not a title above the lede names it too. */
+const STANDALONE_PHRASE = 'The lede stands alone';
 
 /**
  * Phrases stating the subject test, which decides a bullet's subject without the doctrine. Lowercased, so that a
@@ -269,12 +269,12 @@ describe('lede-drafter contract', () => {
     expect(await EXPANDED, message).toContain(PROCESS_NARRATION_PHRASE);
   });
 
-  it('states that the title is already on the page', async () => {
+  it('states that the lede stands alone', async () => {
     const message =
-      "Every surface renders the change title above the lede, so a sentence restating it spends the reader's " +
-      'opening seconds on what they already know, and a deletion-only cut cannot repair a bullet that opens by ' +
-      'restating the title.';
-    expect(await EXPANDED, message).toContain(TITLE_PHRASE);
+      '`## What` is the text that the merge commit, the changelog, and the release notes carry, so a lede leaving ' +
+      'the statement of the change to a title reads as details under a heading. Without this the drafter reports ' +
+      'around the title again, and every bullet that it writes is true.';
+    expect(await EXPANDED, message).toContain(STANDALONE_PHRASE);
   });
 
   it('prescribes no connective phrase', async () => {
