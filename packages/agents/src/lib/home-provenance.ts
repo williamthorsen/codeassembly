@@ -76,8 +76,7 @@ export function getHomeProvenancePath(homeDir?: string): string {
 
 /**
  * Reads the provenance stamp, or `undefined` when none can be read: No stamp has been written, or the one on disk
- * is truncated or malformed. A stamp that cannot be read reports nothing, so a damaged file costs `status` one line
- * rather than the whole report.
+ * is truncated or malformed. `status` then omits one line rather than failing the whole report.
  */
 export async function readHomeProvenance(homeDir?: string): Promise<HomeProvenance | undefined> {
   return readHomeProvenanceAt(getHomeProvenancePath(homeDir));
@@ -105,6 +104,22 @@ export async function readHomeProvenanceAt(provenancePath: string): Promise<Home
     return undefined;
   }
   return normalizeProvenance(parsed);
+}
+
+/**
+ * Reads the commit that `packageRoot` is on, or `undefined` when the question has no answer: The path is not a git
+ * tree, or git is absent. A published install has no commit to report, so the lookup must never fail the write that
+ * it describes.
+ */
+export async function readSourceCommit(packageRoot: string): Promise<string | undefined> {
+  try {
+    const { stdout } = await execFileAsync('git', ['-C', packageRoot, 'rev-parse', 'HEAD'], {
+      timeout: COMMIT_LOOKUP_TIMEOUT_MS,
+    });
+    return stdout.trim() || undefined;
+  } catch {
+    return undefined;
+  }
 }
 
 /**
@@ -215,22 +230,6 @@ function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
     ...(lastWrite !== undefined && { lastWrite, ...lastWrite }),
     ...(lastAttempt !== undefined && { lastAttempt }),
   };
-}
-
-/**
- * Reads the commit that `packageRoot` is on, or `undefined` when the question has no answer: The path is not a git
- * tree, or git is absent. A published install has no commit to report, so the lookup must never fail the write that
- * it describes.
- */
-async function readSourceCommit(packageRoot: string): Promise<string | undefined> {
-  try {
-    const { stdout } = await execFileAsync('git', ['-C', packageRoot, 'rev-parse', 'HEAD'], {
-      timeout: COMMIT_LOOKUP_TIMEOUT_MS,
-    });
-    return stdout.trim() || undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 /**

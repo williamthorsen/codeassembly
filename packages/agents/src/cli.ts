@@ -9,6 +9,7 @@ import { generateLabelMap, printGenerateUsage } from './commands/generate-label-
 import { initCommand, initGlobalCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
 import { libraryListCommand, printLibraryUsage } from './commands/library-list.ts';
+import { sizesCommand } from './commands/sizes.ts';
 import { statusCommand } from './commands/status.ts';
 import { renderDryRunReport, renderSyncReport } from './commands/sync/report.ts';
 import { syncCommand, syncGlobalCommand } from './commands/sync/sync.ts';
@@ -56,6 +57,9 @@ async function main(): Promise<void> {
         break;
       case 'uninstall':
         await uninstallCommand({ harness: options.harness, force: options.force });
+        break;
+      case 'sizes':
+        await sizesCommand({ global });
         break;
       case 'status':
         await statusCommand({ harness: options.harness });
@@ -253,6 +257,7 @@ Commands:
   init             Scaffold .agents/codeassembly.yaml (or --global for ~/.agents/codeassembly.yaml)
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks, skills, and subagents
   uninstall        Remove installed guidance, skills, subagents, and hook entries
+  sizes            Rank the last recorded deployment's documents by size, with the context aggregates beneath them
   status           Show the current state of installed items, including hook entries
   validate         Check a content root for defects that reach a consumer; writes nothing
   library list     List available library artifacts (rulebooks, skills, subagents)
@@ -266,7 +271,7 @@ Options:
   --dry-run          Show what would be done without making changes (install, sync, init)
   --skip-hooks       Leave harness configs untouched during install (install only)
   --print            Print the hook entries instead of writing them (configure-hooks only)
-  --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init
+  --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init, and reads the home deployment's record under sizes
   --override-writer  Write the home domain from an installation not designated by \`home-writer\` (install and sync --global only)
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
   --help, -h         Show this help message`);
@@ -308,7 +313,7 @@ async function runLibrary(subcommand: string): Promise<void> {
 
 /**
  * Dispatches sync to the requested domain. Under `warnOnly`, a failure is reported and the process still exits 0 --
- * the posture that a package-manager lifecycle hook needs, because aborting the install costs far more than stale
+ * the posture that a package-manager lifecycle hook needs, because aborting the install is far more disruptive than stale
  * guidance. The default exits 1, so an explicitly invoked sync still fails closed on every guard raised by the
  * command.
  */
