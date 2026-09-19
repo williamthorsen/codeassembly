@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '22'
+version: '23'
 ---
 
 # CodeAssembly content specification
@@ -172,6 +172,8 @@ A `codeassembly-` prefix marks guidance for working in the CodeAssembly reposito
 Correct a behavior at the fewest surfaces that plausibly account for it, deploy that change, and observe. Extend to further surfaces only after the minimal change has been seen to fail. Changing every contributing surface at once means no single edit can be credited with the improvement, so the cheapest sufficient fix is never learned, and each surface touched permanently adds tokens to every later invocation.
 
 A proposal justifies its breadth rather than assuming it. A contributing surface left unaddressed is recorded as an observation for a later pass rather than offered as an option to adopt now. Before adding exposition to a rulebook, check whether its existing examples already teach the point. _(Convention; not enforced.)_
+
+Before making any change to a guidance file, identify whether the new text makes any existing text redundant (whether in that file or any other) and trim the redundancy in the same change. If the file is larger after the change than before, offer to run {skill:streamline-guidance} against it. _(Convention; not enforced.)_
 
 ## Changing the sweep's own doctrine
 
