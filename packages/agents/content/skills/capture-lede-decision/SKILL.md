@@ -1,6 +1,6 @@
 ---
 name: capture-lede-decision
-description: Record the author's rating of a merged pull request's lede into the lede-decision corpus. Use after a merge, or to record a pull request merged outside the merge flow.
+description: Record the author's rating of a merged pull request's lede into the lede-decision corpus. Invoke only when the author asks for it.
 user-invocable: true
 ---
 
