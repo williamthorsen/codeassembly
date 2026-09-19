@@ -13,6 +13,15 @@ import type { SyncDomain } from './sync-domain.ts';
 /** Sentinel hash under which the install manifest records a directory rather than a file. */
 const DIRECTORY_HASH_PREFIX = 'sha256:dir:';
 
+/** Filename of a deployed skill's body, at the root of the directory under which the skill deploys. */
+const SKILL_FILENAME = 'SKILL.md';
+
+/**
+ * What a deployed file is to a harness. `skill` and `subagent` mark the two files whose `description` a harness reads
+ * into every session's listing; `other` covers everything a harness reads only once something opens it.
+ */
+export type DeployedFileRole = 'other' | 'skill' | 'subagent';
+
 /** One deployed file: where it is, the key under which it is recorded, and whether a harness loads it into context. */
 export interface DeployedPath {
   /**
@@ -22,6 +31,7 @@ export interface DeployedPath {
   readonly key: string;
   readonly absPath: string;
   readonly kind: DeployedFileKind;
+  readonly role: DeployedFileRole;
   readonly harnessId: HarnessId;
 }
 
@@ -81,7 +91,7 @@ export async function collectDeployedPaths(
       ...rulebookSkillDirs,
     ];
     for (const dir of skillDirs) {
-      await collectDirectory(collected, path.join(skillsDir, dir), harnessId, base);
+      await collectDirectory(collected, path.join(skillsDir, dir), harnessId, base, true);
     }
     // Delivered support entries are named file by file, so they are read from the plan rather than walked.
     const sourcesRoot = path.join(skillsDir, SOURCE_SUPPORT_DIR);
@@ -97,7 +107,7 @@ export async function collectDeployedPaths(
 
   for (const target of plan.harnessSubagentTargets) {
     for (const subagent of plan.resolvedSubagents) {
-      addPath(collected, path.join(target.subagentsDir, `${subagent.slug}.md`), target.harnessId, base);
+      addPath(collected, path.join(target.subagentsDir, `${subagent.slug}.md`), target.harnessId, base, 'subagent');
     }
   }
 
@@ -117,7 +127,13 @@ export async function collectDeployedPaths(
  * Records one deployed file under its absolute path, dropping one already collected: The skill walk and the install
  * manifest can name one file twice, and a size vector counts each file once.
  */
-function addPath(collected: Map<string, DeployedPath>, absPath: string, harnessId: HarnessId, base: string): void {
+function addPath(
+  collected: Map<string, DeployedPath>,
+  absPath: string,
+  harnessId: HarnessId,
+  base: string,
+  role: DeployedFileRole = 'other',
+): void {
   if (collected.has(absPath)) {
     return;
   }
@@ -125,6 +141,7 @@ function addPath(collected: Map<string, DeployedPath>, absPath: string, harnessI
     key: resolveKey(absPath, harnessId, base),
     absPath,
     kind: classifyFile(absPath),
+    role,
     harnessId,
   });
 }
@@ -137,18 +154,26 @@ function classifyFile(absPath: string): DeployedFileKind {
   return path.extname(absPath).toLowerCase() === '.md' ? 'document' : 'asset';
 }
 
-/** Records every file inside one deployed directory, at every depth. An absent directory contributes nothing. */
+/**
+ * Records every file inside one deployed directory, at every depth. An absent directory contributes nothing.
+ *
+ * `skillRoot` marks the directory as a deployed skill, whose `SKILL.md` carries the description that a harness lists;
+ * a directory walked from the install manifest names no skill and passes it as false.
+ */
 async function collectDirectory(
   collected: Map<string, DeployedPath>,
   dir: string,
   harnessId: HarnessId,
   base: string,
+  skillRoot: boolean,
 ): Promise<void> {
   const entries = await readDirEntriesRecursively(dir);
   for (const entry of entries) {
-    if (entry.isFile()) {
-      addPath(collected, path.join(entry.parentPath, entry.name), harnessId, base);
+    if (!entry.isFile()) {
+      continue;
     }
+    const isSkillBody = skillRoot && entry.parentPath === dir && entry.name === SKILL_FILENAME;
+    addPath(collected, path.join(entry.parentPath, entry.name), harnessId, base, isSkillBody ? 'skill' : 'other');
   }
 }
 
@@ -169,7 +194,7 @@ async function collectManifestPaths(
     for (const entry of entries) {
       const absPath = path.join(harnessHome, entry.relativePath);
       if (entry.contentHash.startsWith(DIRECTORY_HASH_PREFIX)) {
-        await collectDirectory(collected, absPath, harnessId, homeDir);
+        await collectDirectory(collected, absPath, harnessId, homeDir, false);
         continue;
       }
       if (existsSync(absPath)) {
