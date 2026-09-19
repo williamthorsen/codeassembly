@@ -28,6 +28,7 @@ const RULES: ReadonlyArray<TitleRule> = [
   { label: 'the character bound', pattern: /\b72[\s-]?char/i },
   { label: 'the forbidden occasion titles', pattern: /address review findings|apply feedback/i },
   { label: 'the imperative-voice contrast', pattern: /task-oriented/i },
+  { label: 'the jargon prohibition', pattern: /coined to describe/i },
   { label: 'the no-backticks rule', pattern: /no backticks/i },
   { label: 'the ticket-reference prohibition', pattern: /no ticket reference/i },
 ];
