@@ -150,7 +150,6 @@ The block contains scalars only, and only these keys. Compose no prose into it: 
 Then cut that draft. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
 ```dispatch
-title: {the report's effective_record.title}
 tier: {the tier resolved above}
 ```
 

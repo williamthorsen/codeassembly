@@ -120,7 +120,6 @@ Both are optional, and each is recorded as an override beside the consolidated r
 7. **Cut `## What` via `lede-cutter`**: The verified draft reports every fact that the drafter judged worth writing; a lede contains only the ones on which its reader acts. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
    ```dispatch
-   title: {the title composed in step 3, without the ticket reference}
    tier: {the tier resolved in step 5}
    ```
 
