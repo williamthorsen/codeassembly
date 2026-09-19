@@ -22,8 +22,8 @@ const GIT_LOOKUP_TIMEOUT_MS = 5_000;
  * comparing the aggregates is what lets an edit confined to one be recorded. Any later measured quantity that no
  * single file backs is covered by the same comparison.
  *
- * The ancestry condition keeps a feature branch's deployment out of the record, so that the record tracks what the
- * default branch costs rather than what each branch under development costs. A source tree that is not a git tree
+ * The ancestry condition keeps a feature branch's deployment out of the record, so that the record tracks the
+ * default branch's sizes rather than those of each branch under development. A source tree that is not a git tree
  * has no branch to be wrong about, and a published install is exactly that case, so an unanswerable ancestry test
  * lets the append through: Refusing there would stop the record entirely.
  */

@@ -24,8 +24,9 @@ export const PRUNE_THRESHOLD_BYTES = 8 * 1_024 * 1_024;
  *
  * The append is a single `O_APPEND` write of one line, as the event log's is: Two syncs can run against one record at
  * once, and a lone write at this size interleaves whole lines rather than corrupting them. A prune rewrites the file
- * and forfeits that guarantee for the moment it runs, which can cost a concurrent appender its line. The record is
- * machine-local telemetry, and losing one line there is cheaper than an unbounded file that every reader loads whole.
+ * and forfeits that guarantee for the moment it runs, which can drop a concurrent appender's line. The record is
+ * machine-local telemetry, and one dropped line matters less than a file that grows without bound and that every
+ * reader loads whole.
  */
 export async function appendSnapshot(recordPath: string, snapshot: SizeSnapshot): Promise<void> {
   await mkdir(path.dirname(recordPath), { recursive: true });

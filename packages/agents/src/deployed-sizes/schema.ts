@@ -39,8 +39,8 @@ const SizeSnapshotSchema = z.object({
  * Parses one record line into a snapshot, or `undefined` when it is not one: a truncated or malformed line, a line of
  * another `kind`, or a line written by a schema version that this build does not read.
  *
- * The record is machine-local telemetry, so a line that cannot be read costs the reader that line rather than the
- * whole record.
+ * The record is machine-local telemetry, so a reader skips a line that it cannot read and keeps the rest of the
+ * record.
  */
 export function parseSnapshotLine(line: string): SizeSnapshot | undefined {
   let parsed: unknown;

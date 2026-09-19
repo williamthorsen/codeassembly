@@ -76,8 +76,7 @@ export function getHomeProvenancePath(homeDir?: string): string {
 
 /**
  * Reads the provenance stamp, or `undefined` when none can be read: No stamp has been written, or the one on disk
- * is truncated or malformed. A stamp that cannot be read reports nothing, so a damaged file costs `status` one line
- * rather than the whole report.
+ * is truncated or malformed. `status` then omits one line rather than failing the whole report.
  */
 export async function readHomeProvenance(homeDir?: string): Promise<HomeProvenance | undefined> {
   return readHomeProvenanceAt(getHomeProvenancePath(homeDir));

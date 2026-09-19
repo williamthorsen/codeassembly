@@ -13,7 +13,7 @@ The record is a JSONL file under `~/.codeassembly/deployed-sizes/`, one per doma
 
 `{owner}` and `{name}` come from the repo's git remote. A repo whose remote does not resolve takes `_no-repo` for both segments, which keeps it out of the home domain's record.
 
-The record lives outside every repository so that it does not become a commit candidate in each consumer repo, and so that a home-domain deployment records separately from a repo-domain one. Nothing else reads or writes it, and deleting it costs the history alone: The next sync starts a new one.
+The record lives outside every repository so that it does not become a commit candidate in each consumer repo, and so that a home-domain deployment records separately from a repo-domain one. Nothing else reads or writes it, and deleting it discards the history alone: The next sync starts a new one.
 
 The record is capped. Every reader loads it whole, so an append that carries the file past 8 MiB rewrites it with its 200 most recent snapshots and drops the rest. The cap is what keeps a year of appends from becoming a file that every sync and every `sizes` invocation reads end to end.
 
@@ -56,11 +56,11 @@ A skill deploys as a directory, so the entries inside each directory that the pl
 
 ## The three aggregates
 
-| Aggregate      | What it sums                                                          |
-| -------------- | --------------------------------------------------------------------- |
-| `alwaysLoaded` | The bytes a session pays before it invokes anything                   |
-| `onInvocation` | Every document's bytes, which is what a session pays as it opens them |
-| `assets`       | Every asset's bytes, which no session pays for as context             |
+| Aggregate      | What it sums                                                  |
+| -------------- | ------------------------------------------------------------- |
+| `alwaysLoaded` | The bytes that load into a session before it invokes anything |
+| `onInvocation` | Every document's bytes, which load as a session opens them    |
+| `assets`       | Every asset's bytes, which load into no session's context     |
 
 `alwaysLoaded` names its three components separately, because each is reduced by different work:
 
@@ -68,7 +68,7 @@ A skill deploys as a directory, so the entries inside each directory that the pl
 - `skillDescriptions`: the `description` frontmatter value of each deployed skill.
 - `subagentDescriptions`: the `description` frontmatter value of each deployed subagent.
 
-**The aggregates overlap rather than partition.** A description's bytes count in `alwaysLoaded` and again inside its document's bytes in `onInvocation`, because a session pays for the description in the harness's listing and pays for it a second time when the body loads. The three totals do not sum to a whole, and nothing that presents them may imply that they do.
+**The aggregates overlap rather than partition.** A description's bytes count in `alwaysLoaded` and again inside its document's bytes in `onInvocation`, because the description loads with the harness's listing and loads again inside the body. The three totals do not sum to a whole, and nothing that presents them may imply that they do.
 
 `ambientRegions` is the one measured quantity that no file row backs. An ambient region is a span inside a guidance file that the deployment does not own outright, so the region's bytes reach this aggregate and no entry in `files`.
 
@@ -77,7 +77,7 @@ A skill deploys as a directory, so the entries inside each directory that the pl
 Both conditions must hold:
 
 1. The measurement differs from the previous snapshot. A sync that rewrites nothing appends nothing.
-2. The tree whose content was deployed is on a commit that the remote-tracking default branch contains, so that the record tracks what the default branch costs rather than what each branch under development costs.
+2. The tree whose content was deployed is on a commit that the remote-tracking default branch contains, so that the record tracks the default branch's sizes rather than those of each branch under development.
 
 The compared measurement is `files` and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which deploys no file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that no file backs.
 

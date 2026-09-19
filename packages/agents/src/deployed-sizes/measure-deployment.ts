@@ -19,12 +19,11 @@ export interface DeploymentMeasurement {
  * Measures every collected file and derives the three aggregates.
  *
  * The always-loaded aggregate and the on-invocation total overlap rather than partition: A description's bytes count
- * in the always-loaded total and again inside its document's bytes, because a session pays for the description in the
- * harness's listing and pays for it a second time when the body loads. Whatever presents these totals must not imply
- * that they sum to a whole.
+ * in the always-loaded total and again inside its document's bytes, because the description loads with the harness's
+ * listing and loads again inside the body. Whatever presents these totals must not imply that they sum to a whole.
  *
- * A collected file that is no longer on disk costs its own row rather than the whole measurement, which keeps one
- * file removed between the deployment and the measurement from dropping the snapshot.
+ * The measurement skips a collected file that is no longer on disk, so one file removed between the deployment and
+ * the measurement does not drop the snapshot.
  */
 export async function measureDeployment(set: DeployedPathSet): Promise<DeploymentMeasurement> {
   const files: Record<string, DeployedFile> = {};

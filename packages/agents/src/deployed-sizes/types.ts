@@ -3,7 +3,7 @@ export type DeployedFileKind = 'asset' | 'document';
 
 /** The three totals that a snapshot states, each derived from the measured files. */
 export interface SizeAggregates {
-  /** Bytes a session pays before it invokes anything, named by component. */
+  /** Bytes that load into a session before it invokes anything, named by component. */
   readonly alwaysLoaded: AlwaysLoadedAggregate;
   /** Sum of every document's bytes. Overlaps `alwaysLoaded`, which counts each document's description a second time. */
   readonly onInvocation: number;

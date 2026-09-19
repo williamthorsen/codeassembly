@@ -313,7 +313,7 @@ async function runLibrary(subcommand: string): Promise<void> {
 
 /**
  * Dispatches sync to the requested domain. Under `warnOnly`, a failure is reported and the process still exits 0 --
- * the posture that a package-manager lifecycle hook needs, because aborting the install costs far more than stale
+ * the posture that a package-manager lifecycle hook needs, because aborting the install is far more disruptive than stale
  * guidance. The default exits 1, so an explicitly invoked sync still fails closed on every guard raised by the
  * command.
  */
