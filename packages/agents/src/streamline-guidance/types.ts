@@ -50,7 +50,8 @@ export interface GuidanceFile {
   bytes: number;
   /**
    * The bytes that the file deploys: for a file that deploys as a document, its size once its includes are expanded;
-   * for a partial, its own size times the number of documents that it reaches. Absent when the file deploys nothing.
+   * for a partial, its own size times the number of documents that it reaches. Absent for a file that lies in no
+   * content root, and for one whose includes do not resolve.
    */
   deployedBytes?: number;
   /** Whether git reports uncommitted changes to the file, including an untracked file. */

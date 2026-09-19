@@ -366,9 +366,10 @@ async function loadIncludeGraph(contentRoot: string, context: ResolutionContext)
  * size times the number of documents that it reaches. A file in no content root, and one whose includes do not
  * resolve, is absent from the result, which reports it as deploying nothing.
  *
- * The per-harness transforms -- the provenance header, the ownership marker, and path rewriting -- are excluded.
- * Expansion is the whole of the difference between a file's source size and its deployed size; those transforms add a
- * constant of a few hundred bytes, and reading it would tie this helper to a deployment's harness context.
+ * The transforms that a deployment applies per harness are excluded: the provenance header, the ownership marker,
+ * path rewriting, and guidance-hook injection. A hook's bound rulebooks are declared in the machine's agent
+ * configuration rather than in the content root, so their bytes are not computable from the repository, and their
+ * text lands in a generated region that no cut may touch. The rest add a constant of a few hundred bytes.
  */
 async function measureDeployedBytes(
   files: readonly string[],
