@@ -83,11 +83,11 @@ When the `action: "merge"` response contains `state`, `merge_commit.hash`, `link
 
 `updated_on` after a successful merge is the time at which the PR was merged, and it stands in for GitHub's `mergedAt`.
 
-Success in step 4 means that the PR was merged, so a `merge_commit.hash` absent from both the merge response and the fallback read is an anomaly rather than evidence of no merge. Report it as such: When `state` is `MERGED` and the hash is absent, say the merge succeeded and the hash is unavailable, and write `unavailable` into the artifact's `Merge commit:` line. Never report an absent hash as a merge that did not happen. `merge-pr` reads a missing SHA in the completion report as "nothing merged" and skips the lede decision on that basis. A silent omission here would make it classify a successful merge as no merge at all.
+Success in step 4 means that the PR was merged, so a `merge_commit.hash` absent from both the merge response and the fallback read is an anomaly rather than evidence of no merge. Report it as such: When `state` is `MERGED` and the hash is absent, say the merge succeeded and the hash is unavailable, and write `unavailable` into the artifact's `Merge commit:` line. Never report an absent hash as a merge that did not happen. `merge-pr` reads this report for whether a merge happened, so an absent hash reported as no merge would have it report a completed merge as one that did not happen.
 
 ### 6. Save merge artifact
 
-Save a `merge` artifact in the ticket directory, in the same format that `merge-gh-pr` writes, so that `merge-pr`'s lede-decision step reads it on this platform as it does on GitHub.
+Save a `merge` artifact in the ticket directory, in the same format that `merge-gh-pr` writes, so that `capture-lede-decision` reads it on this platform as it does on GitHub.
 
 Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 
