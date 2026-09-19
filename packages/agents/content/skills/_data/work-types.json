@@ -64,7 +64,7 @@
     {
       "aliases": ["utility"],
       "breakingPolicy": "forbidden",
-      "description": "A change that adds or extends a capability that consumers do not use directly, such as a helper or an internal module.",
+      "description": "A change that adds, extends, or repairs a capability that consumers do not use directly, such as a helper or an internal module.",
       "emoji": "🏗️",
       "key": "internal",
       "label": "Internal features",
@@ -144,5 +144,5 @@
       "tier": "process"
     }
   ],
-  "version": "1.1.0"
+  "version": "1.2.0"
 }
