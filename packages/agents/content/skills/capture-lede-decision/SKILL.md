@@ -1,6 +1,6 @@
 ---
 name: capture-lede-decision
-description: Record the author's rating of a merged pull request's lede into the lede-decision corpus. Use after a merge, or to record a pull request merged outside the merge flow.
+description: Record the author's rating of a merged pull request's lede into the lede-decision corpus. Invoke only when the author asks for it.
 user-invocable: true
 ---
 
@@ -57,7 +57,13 @@ The change's identity comes wholly from one source. If any of `--type`, `--scope
 
 ## Process
 
-### 1. Inspect the episode
+### 1. Resolve the inputs
+
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `artifact_base_dir`, `project_slug`, `ticket_id`, and `pr_url` from it. `--artifact-dir` is `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`, and `--pr` is the number that `pr_url` ends with.
+
+The newest `*_merge.md` artifact in that directory supplies the rest: its `Merge commit:` line is `--merge-commit`, and its `PR:` line is `--pr` when the manifest stored none, which is what the default branch stores.
+
+### 2. Inspect the episode
 
 ```bash
 node {harness_home_dir}/skills/capture-lede-decision/capture-lede-decision.mjs \
@@ -74,7 +80,7 @@ On `ok: false`, report the `message` on one line and stop. The merge has already
 
 On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The skill cannot reach the corpus, so it can record no decision; asking for one would spend the author's attention on an answer that this skill would then discard.
 
-### 2. Present what shipped and ask
+### 3. Present what shipped and ask
 
 Read `episode.differ`. When it is `true`, show the agent's lede and the merged lede; when it is `false`, show the single lede. Then ask for a rating of the lede in the merged pull request, adding a comment if the author wants to say what was wrong:
 
@@ -87,7 +93,7 @@ Read `episode.differ`. When it is `true`, show the agent's lede and the merged l
 
 Ask once. A skip is a complete answer, not a prompt to re-ask or to persuade: The corpus is better off one record smaller than storing a rating that the author did not make.
 
-### 3. Record the decision
+### 4. Record the decision
 
 On a skip, write nothing and say nothing further.
 
@@ -125,7 +131,7 @@ gh pr view <number> --json body --jq '.body' \
 echo "$lede_path"
 ```
 
-Read the printed path and pass it to `--merged-lede-file` as literal text, because no shell variable outlives the invocation that set it: A later call naming `$lede_path` would find nothing. Continue from step 2; everything else resolves from the ticket's artifacts as usual.
+Read the printed path and pass it to `--merged-lede-file` as literal text, because no shell variable outlives the invocation that set it: A later call naming `$lede_path` would find nothing. Continue from step 3; everything else resolves from the ticket's artifacts as usual.
 
 ## The record
 
