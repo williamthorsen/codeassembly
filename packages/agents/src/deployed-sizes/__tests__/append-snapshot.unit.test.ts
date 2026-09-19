@@ -1,10 +1,10 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, stat } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { appendSnapshot, pruneRecord, RETAINED_SNAPSHOTS } from '../append-snapshot.ts';
+import { appendSnapshot, PRUNE_THRESHOLD_BYTES, pruneRecord, RETAINED_SNAPSHOTS } from '../append-snapshot.ts';
 import { parseSnapshotLine, SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
 import type { SizeSnapshot } from '../types.ts';
 
@@ -44,7 +44,50 @@ describe(pruneRecord, () => {
   });
 });
 
+describe(appendSnapshot, () => {
+  let recordDir: string;
+  let recordPath: string;
+
+  beforeEach(async () => {
+    recordDir = await mkdtemp(path.join(tmpdir(), 'append-snapshot-'));
+    recordPath = path.join(recordDir, 'owner', 'name.jsonl');
+  });
+
+  afterEach(async () => {
+    await rm(recordDir, { recursive: true, force: true });
+  });
+
+  // A deployment whose lines are large enough for the retained count to exceed the threshold. Without the byte bound
+  // the prune would return a record still over it, leaving every later append to prune again.
+  it('prunes to under the threshold when the retained count alone would leave the record over it', async () => {
+    const bulky = buildBulkySnapshot();
+    const lineBytes = Buffer.byteLength(`${JSON.stringify(bulky)}\n`, 'utf8');
+    // States that the count limit is not what bounds this record: the byte limit is.
+    expect(lineBytes * RETAINED_SNAPSHOTS).toBeGreaterThan(PRUNE_THRESHOLD_BYTES);
+    const appends = Math.ceil(PRUNE_THRESHOLD_BYTES / lineBytes) + 1;
+
+    for (let appended = 0; appended < appends; appended++) {
+      await appendSnapshot(recordPath, bulky);
+    }
+
+    expect((await stat(recordPath)).size).toBeLessThanOrEqual(PRUNE_THRESHOLD_BYTES);
+    expect((await readTotals(recordPath)).length).toBeLessThan(appends);
+  });
+});
+
 // region | Helpers
+
+/**
+ * A snapshot of a deployment large enough that `RETAINED_SNAPSHOTS` of its lines weigh more than the threshold,
+ * which is the case the byte bound exists for.
+ */
+function buildBulkySnapshot(): SizeSnapshot {
+  const files: Record<string, { bytes: number; kind: 'document' }> = {};
+  for (let i = 0; i < 600; i++) {
+    files[`claude/skills/consult-some-deployed-skill-${i}/SKILL.md`] = { bytes: 4_096, kind: 'document' };
+  }
+  return { ...buildSnapshot(1), files };
+}
 
 /** A snapshot whose on-invocation total identifies it within a record. */
 function buildSnapshot(onInvocation: number): SizeSnapshot {
