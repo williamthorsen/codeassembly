@@ -1,6 +1,11 @@
 # Worktrunk configuration file
 # See https://github.com/max-sixty/worktrunk
-[post-create]
+
+# Pipeline form: each [[pre-start]] block runs after the previous one completes.
+# Keys within a block run concurrently.
+[[pre-start]]
 direnv = "direnv allow"
 deps = "pnpm install"
+
+[[pre-start]]
 bootstrap = "pnpm run bootstrap"
