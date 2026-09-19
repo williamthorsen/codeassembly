@@ -74,7 +74,7 @@ function buildSnapshot(overrides: { onInvocation: number }): SizeSnapshot {
     kind: 'snapshot',
     recordedAt: '2026-09-19T08:00:00.000Z',
     version: '0.15.0',
-    documents: { 'skills/plan/SKILL.md': { bytes: overrides.onInvocation, kind: 'document' } },
+    files: { 'skills/plan/SKILL.md': { bytes: overrides.onInvocation, kind: 'document' } },
     aggregates: {
       alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },
       onInvocation: overrides.onInvocation,

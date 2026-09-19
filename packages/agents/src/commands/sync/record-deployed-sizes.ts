@@ -17,8 +17,8 @@ import type { SyncDomain } from './sync-domain.ts';
  * Measures what the run deployed and appends a snapshot to the domain's record, when the gate allows it. Prints
  * nothing on success: The record is read by the `sizes` command rather than reported by the sync.
  *
- * `packageRoot` is the source tree from which the deploying binary ran, which the gate probes for the commit that it
- * is on.
+ * `packageRoot` is the source tree from which the deploying binary ran. It stamps every snapshot's `sourceCommit`,
+ * and it is the tree that the append gate judges in the home domain, whose content comes from that package.
  *
  * Every failure is swallowed after one warning naming what could not be recorded. The pass runs after the last write,
  * where a throw would report a completed deployment as a failure, and no size condition may fail a sync.
@@ -37,7 +37,10 @@ export async function recordDeployedSizes(
     );
     const measured = await measureDeployment(await collectDeployedPaths(plan, domain, homeDir));
     const previous = await readLatestSnapshot(recordPath);
-    if (!(await shouldAppend({ documents: measured.documents, previous, packageRoot }))) {
+    // The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch
+    // is the one the gate must judge; the home domain's comes from the running package.
+    const sourceRoot = domain.ambient === 'harness-home' ? packageRoot : domain.baseDir;
+    if (!(await shouldAppend({ measured, previous, sourceRoot }))) {
       return;
     }
 
@@ -48,7 +51,7 @@ export async function recordDeployedSizes(
       recordedAt: new Date().toISOString(),
       version: readRunningPackageVersion(),
       ...(sourceCommit !== undefined && { sourceCommit }),
-      documents: measured.documents,
+      files: measured.files,
       aggregates: measured.aggregates,
     };
     await appendSnapshot(recordPath, snapshot);

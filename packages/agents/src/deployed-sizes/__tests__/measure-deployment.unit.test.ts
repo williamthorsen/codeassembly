@@ -31,7 +31,7 @@ describe(measureDeployment, () => {
       ambientHostPaths: [],
     });
 
-    expect(measured.documents).toEqual({
+    expect(measured.files).toEqual({
       'claude/skills/plan/SKILL.md': { bytes: 40, kind: 'document' },
       'claude/skills/plan/run.mjs': { bytes: 15, kind: 'asset' },
     });
@@ -140,11 +140,26 @@ describe(measureDeployment, () => {
     expect(measured.aggregates.alwaysLoaded.skillDescriptions).toBe(0);
   });
 
+  it('skips a collected file that is no longer on disk, keeping the rest of the measurement', async () => {
+    const present = await writeDeployed('skills/plan/SKILL.md', 'a'.repeat(40));
+
+    const measured = await measureDeployment({
+      files: [
+        file(present, 'claude/skills/plan/SKILL.md', 'document'),
+        file(path.join(baseDir, 'skills/gone/SKILL.md'), 'claude/skills/gone/SKILL.md', 'document'),
+      ],
+      ambientHostPaths: [],
+    });
+
+    expect(measured.files).toEqual({ 'claude/skills/plan/SKILL.md': { bytes: 40, kind: 'document' } });
+    expect(measured.aggregates.onInvocation).toBe(40);
+  });
+
   it('measures an empty deployment as zero throughout', async () => {
     const measured = await measureDeployment(emptySet());
 
     expect(measured).toEqual({
-      documents: {},
+      files: {},
       aggregates: {
         alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },
         onInvocation: 0,

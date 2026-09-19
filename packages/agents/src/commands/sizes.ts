@@ -55,9 +55,9 @@ function formatBytes(bytes: number): string {
 
 /** Renders one snapshot's document ranking and the three aggregates beneath it. */
 function renderSnapshot(snapshot: SizeSnapshot): ReadonlyArray<ReportLine> {
-  const documents = Object.entries(snapshot.documents)
-    .filter(([, document]) => document.kind === 'document')
-    .map(([key, document]) => ({ key, bytes: document.bytes }))
+  const documents = Object.entries(snapshot.files)
+    .filter(([, file]) => file.kind === 'document')
+    .map(([key, file]) => ({ key, bytes: file.bytes }))
     .toSorted((left, right) => right.bytes - left.bytes || left.key.localeCompare(right.key));
 
   const width = Math.max(0, ...documents.map((document) => formatBytes(document.bytes).length));

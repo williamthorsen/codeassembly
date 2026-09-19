@@ -46,7 +46,7 @@ describe(recordDeployedSizes, () => {
     await recordDeployedSizes(planWithSkill('plan', skillsDir), homeDomain(homeDir), homeDir, packageRoot);
 
     const snapshot = await readLatestSnapshot(resolveRecordPath({ home: homeDir, domain: 'home' }));
-    expect(snapshot?.documents).toEqual({
+    expect(snapshot?.files).toEqual({
       'claude/skills/plan/SKILL.md': { bytes: Buffer.byteLength(body, 'utf8'), kind: 'document' },
     });
   });
@@ -60,7 +60,7 @@ describe(recordDeployedSizes, () => {
     const homeRecord = resolveRecordPath({ home: homeDir, domain: 'home' });
     const repoRecord = resolveRecordPath({ home: homeDir, domain: 'repo', repo: undefined });
     expect(existsSync(homeRecord)).toBe(false);
-    expect((await readLatestSnapshot(repoRecord))?.documents).not.toEqual({});
+    expect((await readLatestSnapshot(repoRecord))?.files).not.toEqual({});
   });
 
   it('stamps each snapshot with the deploying build and the commit that its source sat on', async () => {
@@ -96,6 +96,25 @@ describe(recordDeployedSizes, () => {
     await recordDeployedSizes(plan, homeDomain(homeDir), homeDir, packageRoot);
 
     expect(await countLines(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(2);
+  });
+
+  it('judges a repo domain by its own tree, not by the tree the binary ran from', async () => {
+    const consumerRoot = await initRepoOnFeatureBranch(scratch);
+    const { skillsDir } = resolveHarnessPaths('claude', consumerRoot);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+
+    await recordDeployedSizes(planWithSkill('plan', skillsDir), repoDomain(consumerRoot), homeDir, packageRoot);
+
+    expect(existsSync(recordRoot(homeDir))).toBe(false);
+  });
+
+  it('judges the home domain by the tree the binary ran from', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', homeDir);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+
+    await recordDeployedSizes(planWithSkill('plan', skillsDir), homeDomain(homeDir), homeDir, packageRoot);
+
+    expect(existsSync(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(true);
   });
 
   it('prints one warning and throws nothing when the pass fails', async () => {
@@ -211,6 +230,26 @@ async function initRepoOnDefaultBranch(scratch: string): Promise<string> {
   await git(packageRoot, ['fetch', '--quiet', 'origin']);
   await git(packageRoot, ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main']);
   return packageRoot;
+}
+
+/**
+ * Builds a disposable repository whose `HEAD` sits on a branch that the default branch does not contain, which is
+ * what the append gate refuses. Never the working repository.
+ */
+async function initRepoOnFeatureBranch(scratch: string): Promise<string> {
+  const root = path.join(scratch, 'consumer');
+  await git(scratch, ['init', '--quiet', '--initial-branch', 'main', 'consumer']);
+  await writeFile(path.join(root, 'file.txt'), 'content\n', 'utf8');
+  await git(root, ['add', '.']);
+  await commit(root, 'initial');
+  await git(root, ['remote', 'add', 'origin', root]);
+  await git(root, ['fetch', '--quiet', 'origin']);
+  await git(root, ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main']);
+  await git(root, ['checkout', '--quiet', '-b', 'feature']);
+  await writeFile(path.join(root, 'feature.txt'), 'unmerged\n', 'utf8');
+  await git(root, ['add', '.']);
+  await commit(root, 'unmerged work');
+  return root;
 }
 
 /** Sync options for a live run, overridden per test. */

@@ -9,7 +9,7 @@ const SNAPSHOT: SizeSnapshot = {
   recordedAt: '2026-09-19T08:00:00.000Z',
   version: '0.15.0',
   sourceCommit: '9b4f4b9a',
-  documents: { 'skills/plan/SKILL.md': { bytes: 1_200, kind: 'document' } },
+  files: { 'skills/plan/SKILL.md': { bytes: 1_200, kind: 'document' } },
   aggregates: {
     alwaysLoaded: { total: 300, ambientRegions: 100, skillDescriptions: 150, subagentDescriptions: 50 },
     onInvocation: 1_200,
@@ -51,7 +51,7 @@ describe(parseSnapshotLine, () => {
   });
 
   it('rejects a document whose size is not a whole count of bytes', () => {
-    const fractional = { ...SNAPSHOT, documents: { 'a.md': { bytes: 1.5, kind: 'document' } } };
+    const fractional = { ...SNAPSHOT, files: { 'a.md': { bytes: 1.5, kind: 'document' } } };
 
     expect(parseSnapshotLine(JSON.stringify(fractional))).toBeUndefined();
   });

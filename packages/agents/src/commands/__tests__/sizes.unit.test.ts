@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../../deployed-sizes/schema.ts';
-import type { DeployedDocument, SizeSnapshot } from '../../deployed-sizes/types.ts';
+import type { DeployedFile, SizeSnapshot } from '../../deployed-sizes/types.ts';
 import { renderSizesReport, sizesCommand } from '../sizes.ts';
 
 describe(renderSizesReport, () => {
@@ -142,14 +142,14 @@ function aggregates(overrides: Partial<SizeSnapshot['aggregates']> = {}): SizeSn
   };
 }
 
-/** A snapshot stating `documents` as its size vector. */
-function buildSnapshot(documents: Record<string, DeployedDocument>): SizeSnapshot {
+/** A snapshot stating `files` as its size vector. */
+function buildSnapshot(files: Record<string, DeployedFile>): SizeSnapshot {
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,
     kind: 'snapshot',
     recordedAt: '2026-09-19T08:00:00.000Z',
     version: '0.15.0',
-    documents,
+    files,
     aggregates: aggregates(),
   };
 }

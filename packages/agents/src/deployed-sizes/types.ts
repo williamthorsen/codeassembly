@@ -23,7 +23,7 @@ export interface AlwaysLoadedAggregate {
 }
 
 /** One measured file: its size in bytes and whether a harness loads it into context. */
-export interface DeployedDocument {
+export interface DeployedFile {
   readonly bytes: number;
   readonly kind: DeployedFileKind;
 }
@@ -43,6 +43,6 @@ export interface SizeSnapshot {
   readonly version: string;
   /** Commit that the source tree was on, absent when the source is not a git tree (an npm install has none). */
   readonly sourceCommit?: string | undefined;
-  readonly documents: Readonly<Record<string, DeployedDocument>>;
+  readonly files: Readonly<Record<string, DeployedFile>>;
   readonly aggregates: SizeAggregates;
 }

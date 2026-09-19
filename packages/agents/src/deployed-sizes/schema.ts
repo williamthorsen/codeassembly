@@ -7,7 +7,7 @@ export const SNAPSHOT_SCHEMA_VERSION = 1;
 
 const ByteCountSchema = z.number().int().nonnegative();
 
-const DeployedDocumentSchema = z.object({
+const DeployedFileSchema = z.object({
   bytes: ByteCountSchema,
   kind: z.enum(['asset', 'document']),
 });
@@ -31,7 +31,7 @@ const SizeSnapshotSchema = z.object({
   recordedAt: z.string().min(1),
   version: z.string().min(1),
   sourceCommit: z.string().min(1).optional(),
-  documents: z.record(z.string().min(1), DeployedDocumentSchema),
+  files: z.record(z.string().min(1), DeployedFileSchema),
   aggregates: SizeAggregatesSchema,
 });
 

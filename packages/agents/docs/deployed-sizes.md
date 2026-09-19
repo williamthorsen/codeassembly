@@ -15,6 +15,8 @@ The record is a JSONL file under `~/.codeassembly/deployed-sizes/`, one per doma
 
 The record lives outside every repository so that it does not become a commit candidate in each consumer repo, and so that a home-domain deployment records separately from a repo-domain one. Nothing else reads or writes it, and deleting it costs the history alone: The next sync starts a new one.
 
+The record is capped. Every reader loads it whole, so an append that carries the file past 8 MiB rewrites it with its 200 most recent snapshots and drops the rest. The cap is what keeps a year of appends from becoming a file that every sync and every `sizes` invocation reads end to end.
+
 ## What a line states
 
 Each line is one complete size vector rather than a change, because the deltas that a report derives compare complete states.
@@ -26,7 +28,7 @@ Each line is one complete size vector rather than a change, because the deltas t
   "recordedAt": "2026-09-19T08:48:11.489Z",
   "version": "0.15.0",
   "sourceCommit": "9b4f4b9a…",
-  "documents": {
+  "files": {
     "claude/skills/plan/SKILL.md": { "bytes": 4096, "kind": "document" },
     "claude/skills/plan/run.mjs": { "bytes": 611000, "kind": "asset" }
   },
@@ -42,9 +44,9 @@ Each line is one complete size vector rather than a change, because the deltas t
 
 `version` and `sourceCommit` name the build that deployed and the commit that its source sat on, matching what `home-provenance.json` stamps. A published install is not a git tree and states no `sourceCommit`.
 
-`documents` is keyed by deployed path relative to the harness home, or to the domain base for a file deployed outside it, prefixed by the harness that loads it. The prefix is what keeps two harnesses' copies of one skill distinct. The key is a path rather than a slug, because a rulebook deploys as `consult-<slug>` and a skill deploys as a directory of several files. Each value is an object rather than a bare number, which leaves room for later constituent fields without a migration.
+`files` is keyed by deployed path relative to the harness home, or to the domain base for a file deployed outside it, prefixed by the harness that loads it. The prefix is what keeps two harnesses' copies of one skill distinct. The key is a path rather than a slug, because a rulebook deploys as `consult-<slug>` and a skill deploys as a directory of several files. Each value is an object rather than a bare number, which leaves room for later constituent fields without a migration.
 
-`kind` inside a document value states whether a harness loads the file into context. Classification is by extension: `.md` is a document, everything else an asset. A helper bundle loads into no context, so a ranking that placed it beside a skill body would bury the signal.
+A file's own `kind` states whether a harness loads it into context. Classification is by extension: `.md` is a document, everything else an asset. A helper bundle loads into no context, so a ranking that placed it beside a skill body would bury the signal.
 
 ## What is measured
 
@@ -68,14 +70,18 @@ A skill deploys as a directory, so the entries inside each directory that the pl
 
 **The aggregates overlap rather than partition.** A description's bytes count in `alwaysLoaded` and again inside its document's bytes in `onInvocation`, because a session pays for the description in the harness's listing and pays for it a second time when the body loads. The three totals do not sum to a whole, and nothing that presents them may imply that they do.
 
+`ambientRegions` is the one measured quantity that no file row backs. An ambient region is a span inside a guidance file that the deployment does not own outright, so the region's bytes reach this aggregate and no entry in `files`.
+
 ## When a snapshot is appended
 
 Both conditions must hold:
 
-1. The measured vector differs from the previous snapshot. A sync that rewrites nothing appends nothing.
-2. The deploying source tree's `HEAD` is an ancestor of the remote-tracking default branch, so that the record tracks what the default branch costs rather than what each branch under development costs.
+1. The measurement differs from the previous snapshot. A sync that rewrites nothing appends nothing.
+2. The tree whose content was deployed is on a commit that the remote-tracking default branch contains, so that the record tracks what the default branch costs rather than what each branch under development costs.
 
-The default branch resolves from `origin/HEAD`, falling back to `origin/main`. When neither resolves, and when the source is not a git tree at all, the ancestry condition is unanswerable and the append goes through: A published install has no branch to be wrong about, and refusing there would stop the record entirely.
+The compared measurement is `files` and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which deploys no file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that no file backs.
+
+Which tree the ancestry probes follows the domain. The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch is the one judged; the home domain's comes from the running package, so the package root is. The default branch resolves from `origin/HEAD`, falling back to `origin/main`. When neither resolves, and when the probed tree is not a git tree at all, the ancestry condition is unanswerable and the append goes through: A tree with no branch has none to be wrong about, and refusing there would stop the record entirely.
 
 `--dry-run` measures nothing and appends nothing. No size condition can fail a sync: A failure in the pass prints one warning and leaves the sync's report and exit status unchanged.
 
