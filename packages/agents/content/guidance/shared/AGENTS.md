@@ -30,7 +30,7 @@ A saved artifact records what its author produced at that moment. Correct one th
 
 Two artifacts are the exception, because a rewrite of either destroys evidence silently: `capture-lede-decision` reads the `pull-request` artifact's `## What` and the `merge` artifact's `## Body` to recover what was published. Each carries a marker saying so, and each names the out-of-band flag to reach for instead.
 
-The same restraint applies to the remote ticket, from the point its work is handed to implementation. Design comes before that point: `design-and-plan` refines a raw ticket, and it may rewrite any section or the whole ticket.
+That restraint on editing a record applies to the remote ticket as well, from the point its work is handed to implementation. Design comes before that point: `design-and-plan` refines a raw ticket, and it may rewrite any section or the whole ticket.
 
 From that point on, the ticket's `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when the work began, so they are never revised toward the outcome: A proposal does not become wrong because the implementer did something else, and revising it destroys the only record of what was foreseen. Report a divergence between one of those sections and the implementation in the pull-request description, whose job is to describe the change under review.
 
