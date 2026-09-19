@@ -108,6 +108,22 @@ export async function readHomeProvenanceAt(provenancePath: string): Promise<Home
 }
 
 /**
+ * Reads the commit that `packageRoot` is on, or `undefined` when the question has no answer: The path is not a git
+ * tree, or git is absent. A published install has no commit to report, so the lookup must never fail the write that
+ * it describes.
+ */
+export async function readSourceCommit(packageRoot: string): Promise<string | undefined> {
+  try {
+    const { stdout } = await execFileAsync('git', ['-C', packageRoot, 'rev-parse', 'HEAD'], {
+      timeout: COMMIT_LOOKUP_TIMEOUT_MS,
+    });
+    return stdout.trim() || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Records a failed home-domain attempt, keeping whatever write the stamp already reports. Swallows its own failure:
  * An error is already on its way to the caller, and losing the record must not replace it with a different one.
  */
@@ -215,22 +231,6 @@ function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
     ...(lastWrite !== undefined && { lastWrite, ...lastWrite }),
     ...(lastAttempt !== undefined && { lastAttempt }),
   };
-}
-
-/**
- * Reads the commit that `packageRoot` is on, or `undefined` when the question has no answer: The path is not a git
- * tree, or git is absent. A published install has no commit to report, so the lookup must never fail the write that
- * it describes.
- */
-async function readSourceCommit(packageRoot: string): Promise<string | undefined> {
-  try {
-    const { stdout } = await execFileAsync('git', ['-C', packageRoot, 'rev-parse', 'HEAD'], {
-      timeout: COMMIT_LOOKUP_TIMEOUT_MS,
-    });
-    return stdout.trim() || undefined;
-  } catch {
-    return undefined;
-  }
 }
 
 /**

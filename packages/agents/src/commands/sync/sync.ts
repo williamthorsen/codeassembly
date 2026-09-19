@@ -44,6 +44,7 @@ import {
   type UnresolvableSlugs,
 } from './pre-write-gates.ts';
 import { refreshPromptsYml, resolvePromptsYmlPaths } from './prompts-index.ts';
+import { recordDeployedSizes } from './record-deployed-sizes.ts';
 import {
   buildRulebookInvocationCatalog,
   createAnchorContextResolver,
@@ -442,6 +443,10 @@ async function reconcileDomain(
   );
 
   await refreshPromptsYml(harnessIds, domain);
+
+  // Last of all, so that the measurement reads the tree that every pass above left. Reports nothing and cannot fail:
+  // The record is the `sizes` command's input, not this command's output.
+  await recordDeployedSizes(plan, domain, homeDir, resolveRunningPackageRoot());
 
   return { kind: 'reconciled', plan };
 }
