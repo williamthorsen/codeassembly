@@ -11,6 +11,7 @@ The rules apply to both authored strings: the ticket string, which becomes the i
   - Change: Fix playback stutter at speeds higher than 32x
 - **The subject, not the occasion.** A change string names what the diff does; a ticket string names the work wanted, or the symptom of a bug. Neither names the review, the meeting, or the conversation that raised it: never "Address review findings" or "Apply feedback".
 - **Specific over categorical.** "Disambiguate phase name mismatch between agents and factory layers", not "Phase name disambiguation".
+- **No jargon.** Use plain speech and the project's own vocabulary. Never use a term coined to describe the change.
 - **No ephemeral references.** The title must make sense to a reader who has only a `git log`: no ticket ID, pull-request number, review-finding ID, or run identifier. It contains no ticket reference; a template adds one to any surface that shows it.
 - **No backticks.** Write an identifier bare: "Add listConsoleLines to toolbelt.vitest". In a body, backtick identifiers as usual.
 - **No external actions.** Neither string mentions an action such as updating a ticket or sending a notification.
