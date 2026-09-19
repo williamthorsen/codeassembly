@@ -3,6 +3,7 @@ import type { FeedbackMemorySummary, ProjectSummary, SkippedMemory } from './typ
 const EMOJI = '📦';
 const GAP = '  ';
 const INDENT = ' '.repeat(3);
+const GRAPHEME_SEGMENTER = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
 
 /**
  * Renders a feedback-memory summary as human-readable text: a three-column table by default, or, under `verbose`, each
@@ -85,12 +86,18 @@ function pad2(value: number): string {
   return String(value).padStart(2, '0');
 }
 
-/** Truncates text to `max` display columns, replacing the tail with an ellipsis; yields empty text when max is not positive. */
+/**
+ * Truncates text to `max` grapheme clusters, replacing the tail with an ellipsis that counts toward `max`; yields
+ * empty text when max is not positive. Cutting on cluster boundaries keeps an emoji, a ZWJ sequence, or a combining
+ * mark whole rather than splitting it. The count is clusters, not display columns, so a line holding a wide character
+ * can still render past `max`.
+ */
 function truncate(text: string, max: number): string {
   if (max <= 0) {
     return '';
   }
-  return text.length <= max ? text : `${text.slice(0, max - 1)}…`;
+  const clusters = Array.from(GRAPHEME_SEGMENTER.segment(text), (segment) => segment.segment);
+  return clusters.length <= max ? text : `${clusters.slice(0, max - 1).join('')}…`;
 }
 
 /** Returns the singular or plural word for a count. */
