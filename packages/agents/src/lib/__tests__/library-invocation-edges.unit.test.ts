@@ -35,6 +35,17 @@ describe('library invocation edges', () => {
     expect(closure.skills).not.toContain('create-bitbucket-pr');
   });
 
+  it('leaves capture-lede-decision out of merge-pr’s closure and in triage’s', async () => {
+    // The merge flow records no lede decision, so no body token pulls the skill in. It reaches consumers through the
+    // triage collection alone, and both halves are asserted: without the second, deleting the skill from the library
+    // would satisfy the first.
+    const mergePr = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
+    const triage = await resolveClosure({ collection: ['triage'] }, libraryResolver(contentDir));
+
+    expect(mergePr.skills).not.toContain('capture-lede-decision');
+    expect(triage.skills).toContain('capture-lede-decision');
+  });
+
   it('pulls orchestrate dispatched subagents declared in frontmatter', async () => {
     const closure = await resolveClosure({ skill: ['orchestrate'] }, libraryResolver(contentDir));
 
