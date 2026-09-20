@@ -2185,6 +2185,11 @@ rejections:
     ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
   - rule: plain-speech
     rule-version: '6'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: earns its place after a compiler-target bump
+    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
+  - rule: plain-speech
+    rule-version: '6'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: A drafter holding its reasons for a bullet defends the bullet.
     ground: the repair would pick the memory reading, and the next sentence suggests the original means attachment as well
@@ -2192,11 +2197,6 @@ rejections:
     rule-version: '6'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: when every candidate earns its place, keep them all
-    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: earns its place after a compiler-target bump
     ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
   - rule: plain-speech
     rule-version: '6'
@@ -2430,6 +2430,16 @@ rejections:
     ground: 'not the construction: object plus predicative complement of "makes"'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/agents/content/__tests__/entry-drafter-contract.unit.test.ts
+    phrase: a flag that this pipeline passes internally is
+    ground: 'not the construction: the relativizer "that" is already present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/__tests__/entry-drafter-contract.unit.test.ts
+    phrase: without the bound a migration grows a worked example per call shape
+    ground: 'not the construction: "grows" is the main clause''s own verb and "the bound" is the object of "without"'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/agents/content/__tests__/gh-body-file-reach.unit.test.ts
     phrase: a Markdown file's fenced `bash` blocks
     ground: 'not the construction: no relative clause, only a possessive noun phrase'
@@ -2463,16 +2473,6 @@ rejections:
     file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
     phrase: granting the cutter license to reword would lose
     ground: 'not the construction: "cutter" is the indirect object of "granting", and the clause has no relative gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/lede-drafter-contract.unit.test.ts
-    phrase: a flag that this pipeline passes internally is
-    ground: 'not the construction: the relativizer "that" is already present'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/lede-drafter-contract.unit.test.ts
-    phrase: without the bound a migration grows a worked example per call shape
-    ground: 'not the construction: "grows" is the main clause''s own verb and "the bound" is the object of "without"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/__tests__/nested-list-indent-reach.unit.test.ts
@@ -3965,6 +3965,31 @@ rejections:
     ground: 'not the construction: an imperative whose object is "your last 3 turns"'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: codebase it changed
+    ground: 'not the construction: an embedded interrogative, which admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: entry a few seconds
+    ground: 'not the construction: "give your entry a few seconds" is ditransitive'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: in the order the fence listed them
+    ground: 'outside the rule: the gap fills an adjunct rather than an argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: what form your answer takes
+    ground: 'not the construction: "what form" fronts an embedded interrogative, which admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: worth the reader's seconds
+    ground: 'not the construction: a predicative adjective phrase and its complement'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: codebase it changed
     ground: 'not the construction: "which part of the codebase it changed" is an embedded interrogative, which admits no relativizer'
@@ -3978,31 +4003,6 @@ rejections:
     file: packages/agents/content/subagents/lede-cutter.md
     phrase: worth the reader's seconds
     ground: 'not the construction: "worth" heads a predicative adjective phrase, and "the reader''s seconds" is its complement'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: codebase it changed
-    ground: 'not the construction: an embedded interrogative, which admits no relativizer'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: entry a few seconds
-    ground: 'not the construction: "give your entry a few seconds" is ditransitive'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: in the order the fence listed them
-    ground: 'outside the rule: the gap fills an adjunct rather than an argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: what form your answer takes
-    ground: 'not the construction: "what form" fronts an embedded interrogative, which admits no relativizer'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: worth the reader's seconds
-    ground: 'not the construction: a predicative adjective phrase and its complement'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/subagents/orchestrated-architect.md
@@ -6817,11 +6817,6 @@ rejections:
     ground: states a direct result, and no earlier clause-joining so remains within three sentences
   - rule: so
     rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
-    phrase: is usually what the change accomplished, so a bullet that names it reports the change rather than its implementation
-    ground: four sentences separate it from the previous one, and the second clause states a direct result
-  - rule: so
-    rule-version: '1'
     file: packages/agents/content/subagents/orchestrated-planner.md
     phrase: Not so small that they're trivial, not so large that they're hard to verify.
     ground: 'outside the rule: a degree adverb, not a clause-joining connective'
@@ -7916,12 +7911,12 @@ rejections:
     ground: 'outside the rule: the word names a place, a filesystem path'
   - rule: where
     rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
+    file: packages/agents/content/subagents/entry-drafter.md
     phrase: an exception that the replacement throws where the predecessor returned
     ground: 'outside the rule: the word names the point in the code path at which the predecessor returned'
   - rule: where
     rule-version: '1'
-    file: packages/agents/content/subagents/lede-drafter.md
+    file: packages/agents/content/subagents/entry-drafter.md
     phrase: Everything below says where the facts come from
     ground: 'outside the rule: the word names a source, the locative use, inside an embedded question'
   - rule: where
