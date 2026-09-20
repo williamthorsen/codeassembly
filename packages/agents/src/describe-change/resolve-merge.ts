@@ -28,26 +28,7 @@ import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from 
  * keep the rule that the commits win, as the fresher of two consolidations of the same branch.
  */
 export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
-  const notices: MergeNotice[] = [];
-  if (input.block.kind === 'malformed') {
-    notices.push({ kind: 'malformed-block', defect: input.block.defect });
-  }
-  if (input.block.kind === 'read' && input.block.entriesDefect !== undefined) {
-    notices.push({ kind: 'malformed-entries', defect: input.block.entriesDefect });
-  }
-  if (input.commits.kind === 'unavailable') {
-    notices.push({ kind: 'commits-unavailable', reason: input.commits.reason });
-  }
-
-  const block = input.block.kind === 'read' ? input.block.block : undefined;
-  const entriesFresh = block !== undefined && areEntriesFresh(block, input.pr.headCommit);
-  if (block !== undefined && (block.entries?.length ?? 0) > 0 && !entriesFresh) {
-    notices.push({
-      kind: 'stale-entries',
-      entries_commit: block.entriesCommit ?? null,
-      head_commit: input.pr.headCommit,
-    });
-  }
+  const { block, entriesFresh, notices } = readSources(input);
   const commits = input.commits.kind === 'read' ? readCommitsRecord(input.commits.consolidatedRecord) : undefined;
   const base =
     block === undefined
@@ -202,19 +183,6 @@ export interface SourceRecordOutcome {
 
 // region | Helpers
 
-/**
- * Reports whether the block's entries were derived at the pull request's head: The block records entries, it records
- * the commit at which they were derived, and the head SHA starts with that commit. The comparison is a prefix test
- * rather than an equality, since the block records a short SHA and the pull request reports a full one.
- */
-function areEntriesFresh(block: ChangeRecordBlock, headCommit: string): boolean {
-  const entriesCommit = block.entriesCommit;
-  if (block.entries === undefined || block.entries.length === 0 || entriesCommit === undefined) {
-    return false;
-  }
-  return entriesCommit !== '' && headCommit.toLowerCase().startsWith(entriesCommit.toLowerCase());
-}
-
 /** Applies overrides to a record, attributing each field that they set to `source`. */
 function applySourcedOverrides(
   attributed: AttributedRecord,
@@ -229,6 +197,19 @@ function applySourcedOverrides(
       type: overrides.type === undefined ? attributed.sources.type : source,
     },
   };
+}
+
+/**
+ * Reports whether the block's entries were derived at the pull request's head: The block records entries, it records
+ * the commit at which they were derived, and the head SHA starts with that commit. The comparison is a prefix test
+ * rather than an equality, since the block records a short SHA and the pull request reports a full one.
+ */
+function areEntriesFresh(block: ChangeRecordBlock, headCommit: string): boolean {
+  const entriesCommit = block.entriesCommit;
+  if (block.entries === undefined || block.entries.length === 0 || entriesCommit === undefined) {
+    return false;
+  }
+  return entriesCommit !== '' && headCommit.toLowerCase().startsWith(entriesCommit.toLowerCase());
 }
 
 /** A consolidated record, with each of its fields attributed to the source that set it. */
@@ -397,6 +378,40 @@ function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undef
     breaking: titleBorne.breaking === true,
     title: titleBorne.title ?? inverted.title,
   };
+}
+
+/**
+ * Reads the block out of its reading and raises every notice that reading the sources produces, before any record
+ * resolves: a block that could not be read, an entry list that could not be read, commits that could not be read, and
+ * entries that were not derived at the pull request's head. It also reports whether those entries are fresh, which
+ * `chooseFromBlock` weighs.
+ */
+function readSources(input: MergeInput): {
+  block: ChangeRecordBlock | undefined;
+  entriesFresh: boolean;
+  notices: MergeNotice[];
+} {
+  const notices: MergeNotice[] = [];
+  if (input.block.kind === 'malformed') {
+    notices.push({ kind: 'malformed-block', defect: input.block.defect });
+  }
+  if (input.block.kind === 'read' && input.block.entriesDefect !== undefined) {
+    notices.push({ kind: 'malformed-entries', defect: input.block.entriesDefect });
+  }
+  if (input.commits.kind === 'unavailable') {
+    notices.push({ kind: 'commits-unavailable', reason: input.commits.reason });
+  }
+
+  const block = input.block.kind === 'read' ? input.block.block : undefined;
+  const entriesFresh = block !== undefined && areEntriesFresh(block, input.pr.headCommit);
+  if (block !== undefined && (block.entries?.length ?? 0) > 0 && !entriesFresh) {
+    notices.push({
+      kind: 'stale-entries',
+      entries_commit: block.entriesCommit ?? null,
+      head_commit: input.pr.headCommit,
+    });
+  }
+  return { block, entriesFresh, notices };
 }
 
 /** Renders the effective record through `merge.title_format`, falling back to the bare title when that template is empty. */
