@@ -223,7 +223,7 @@ Render each notice there as one line. When a line says where a field came from, 
 - **`pr-title-divergence`**: The PR title's prefix differs from the proposal on the fields that the notice's `fields` lists. Name the prefix's values for those fields, read from `sources.pr_title`.
 - **`pr-title-unparsed`**: The PR title did not parse, so the title comes from the source that `effective_sources.title` names.
 - **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries. Its title and consolidated record still stand.
-- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the commits' consolidated record decides the proposal rather than the block's.
+- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the block's record takes no precedence over the commits', and `effective_sources` names the one that stood.
 
 **A `stale-entries` notice is reported and nothing is re-derived.** Nothing in the skill library updates a pull-request description, and commits pushed after the body was composed are already out of scope here, as step 8 states.
 
