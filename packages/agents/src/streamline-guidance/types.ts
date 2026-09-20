@@ -71,6 +71,24 @@ export interface HelperFailure {
   message: string;
 }
 
+/** What one run reports to `mark`: when the review ran, and the repository-relative files that it read. */
+export interface MarkInput {
+  /** ISO 8601 instant at which the review ran. */
+  reviewedAt: string;
+  files: string[];
+}
+
+export interface MarkSuccess {
+  ok: true;
+  recordedAt: string;
+  /** Content-root-relative POSIX paths that the marker names. */
+  reviewed: string[];
+  /** Absolute paths of the records that the marker was appended to. */
+  records: string[];
+  /** Named files lying in no content root, which the marker does not name. */
+  unrooted: string[];
+}
+
 /** A 1-based, inclusive range of lines. */
 export interface LineRange {
   start: number;

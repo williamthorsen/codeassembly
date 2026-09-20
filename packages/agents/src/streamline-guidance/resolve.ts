@@ -112,6 +112,20 @@ export async function resolveGuidance(input: {
   };
 }
 
+/** Returns the innermost content root containing a file, or undefined when none does. */
+export function findContentRoot(file: string, contentRoots: readonly string[]): string | undefined {
+  return contentRoots
+    .filter((contentRoot) => isInside(file, contentRoot))
+    .toSorted((left, right) => right.length - left.length)[0];
+}
+
+/** Lists the absolute directories of every content root in the repository. */
+export function listContentRoots(root: string): string[] {
+  return listWorkingTreeFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
+    .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
+    .map((file) => path.join(root, path.dirname(file)));
+}
+
 // region | Helpers
 
 /** Names the manifest file that marks a directory as a content root. */
@@ -253,13 +267,6 @@ function describeFile(file: string, context: ResolutionContext, measures: FileMe
   };
 }
 
-/** Returns the innermost content root containing a file, or undefined when none does. */
-function findContentRoot(file: string, contentRoots: readonly string[]): string | undefined {
-  return contentRoots
-    .filter((contentRoot) => isInside(file, contentRoot))
-    .toSorted((left, right) => right.length - left.length)[0];
-}
-
 /** Returns the line ranges of every region that a deployment rewrites, running to the end when no end marker closes one. */
 function findGeneratedRegions(content: string): LineRange[] {
   const lines = content.split('\n');
@@ -284,13 +291,6 @@ function findGeneratedRegions(content: string): LineRange[] {
 function isInside(child: string, parent: string): boolean {
   const relative = path.relative(parent, child);
   return !relative.startsWith('..') && !path.isAbsolute(relative);
-}
-
-/** Lists the absolute directories of every content root in the repository. */
-function listContentRoots(root: string): string[] {
-  return listWorkingTreeFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
-    .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
-    .map((file) => path.join(root, path.dirname(file)));
 }
 
 /** Returns the repository-relative files that git reports as changed or untracked, among the given files. */
