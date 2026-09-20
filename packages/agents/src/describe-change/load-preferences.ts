@@ -35,8 +35,8 @@ export async function loadPreferences(input: { home: string; projectRoot: string
 }
 
 /**
- * Resolves the directory at which the `.agents/` lookup is anchored: the repository root, so the templates that a run
- * reads do not depend on which subdirectory the caller invoked it from. Falls back to `cwd` outside a repository,
+ * Resolves the directory at which a run's repository-relative lookups are anchored: the repository root, so what a
+ * run reads does not depend on which subdirectory the caller invoked it from. Falls back to `cwd` outside a repository,
  * reporting git's own diagnostic so that a misanchored run is debuggable rather than silent.
  */
 export async function resolveProjectRoot(cwd: string): Promise<{ projectRoot: string; warning?: string }> {
@@ -47,7 +47,7 @@ export async function resolveProjectRoot(cwd: string): Promise<{ projectRoot: st
     const diagnostic = error instanceof Error ? error.message.trim().split('\n').at(-1) : String(error);
     return {
       projectRoot: cwd,
-      warning: `git could not resolve the repository root (${diagnostic}); anchoring the .agents/ lookup at ${cwd}`,
+      warning: `git could not resolve the repository root (${diagnostic}); anchoring at ${cwd}`,
     };
   }
 }
