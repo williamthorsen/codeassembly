@@ -45,7 +45,7 @@ Eight shapes recur in this corpus. Each is a search pattern rather than a rule: 
 
 ### Words to look for
 
-Nine words recur in this corpus in uses for which a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is no candidate.
+Ten words recur in this corpus in uses for which a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is no candidate.
 
 - **carry**: "the change carries a flag". Instead: has, includes, declares, sets, states.
 - **cost**: "a cost to you", "the token cost". Instead: the unit itself, as in "takes 12 ms", "one round trip", "spends the reader's attention".
@@ -55,4 +55,5 @@ Nine words recur in this corpus in uses for which a word naming the relation exi
 - **route**: "route the finding to PR-prep". Instead: send to, assign to, report to.
 - **ship**: "ships without a test". Instead: is merged, is released.
 - **sit**: "sits outside the body". Instead: is, is in, is next to.
+- **stand**: "stands up a fixture". Instead: builds, creates. Stays as "stands in for", and when a claim or a passive stands.
 - **surface**: "a review surfaces findings". Instead: reports, raises, reveals. Stays as the noun: a documentation surface.
