@@ -163,7 +163,7 @@ function classifyFile(
     return { path: namedPath, reason: 'not-markdown' };
   }
   if (isInsideArtifactBaseDir(absolutePath, context.artifactBaseDir)) {
-    return { path: namedPath, reason: 'sealed-artifact' };
+    return { path: namedPath, reason: 'saved-artifact' };
   }
 
   const content = readFileSync(absolutePath, 'utf8');

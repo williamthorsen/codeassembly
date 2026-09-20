@@ -283,7 +283,7 @@ function buildGeneratorMarkers(openerPattern: string): readonly RegExp[] {
 
 /**
  * Builds the vendor marker for one file kind, held to a comment line as the generator markers are. Both phrases are
- * required, because an authored file can say "Do not edit" alone, as a sealed record does.
+ * required, because an authored file can say "Do not edit" alone.
  */
 function buildVendorMarker(openerPattern: string): RegExp {
   return new RegExp(String.raw`${buildCommentAnchor(openerPattern)}extracted verbatim from\b.*\bdo not edit\b`, 'im');

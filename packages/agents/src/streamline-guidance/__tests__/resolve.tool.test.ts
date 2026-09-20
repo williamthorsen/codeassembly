@@ -13,9 +13,10 @@ const TARGET = 'lib/skills/demo/SKILL.md';
 
 /** A repository containing one content root, whose skill includes a partial that includes and links onward. */
 const REPOSITORY_FILES: Readonly<Record<string, string>> = {
-  '.agents/preferences.yaml': 'artifacts:\n  base_dir: sealed\n',
+  '.agents/preferences.yaml': 'artifacts:\n  base_dir: artifacts\n',
   'AGENTS.md':
     '# Guide\n\n<!-- codeassembly-ambient:start -->\nGenerated.\n<!-- codeassembly-ambient:end -->\n\nAuthored.\n',
+  'artifacts/note.md': 'A saved artifact.\n',
   'lib/codeassembly-content.yaml': 'format: 2\n',
   'lib/_partials/inner.md': 'Inner text.\n',
   'lib/_partials/shared.md': 'Shared text. See [ref](../_data/ref.md).\n\n<!-- include: ./inner.md / -->\n',
@@ -36,7 +37,6 @@ const REPOSITORY_FILES: Readonly<Record<string, string>> = {
     '',
   ].join('\n'),
   'notes.txt': 'Not guidance.\n',
-  'sealed/note.md': 'A sealed artifact.\n',
 };
 
 /** Files outside the repository: deployed copies in a harness home, and an authored file that is not in git. */
@@ -106,7 +106,7 @@ describe(runResolve, () => {
   it.each([
     { named: () => path.join(home, 'loose.md'), reason: 'outside-repository' },
     { named: () => path.join(home, '.claude/skills/orphan/SKILL.md'), reason: 'source-not-in-repository' },
-    { named: () => 'sealed/note.md', reason: 'sealed-artifact' },
+    { named: () => 'artifacts/note.md', reason: 'saved-artifact' },
     { named: () => 'notes.txt', reason: 'not-markdown' },
     { named: () => 'missing.md', reason: 'not-found' },
   ])('if a named path cannot be a target, rejects it as $reason', async ({ named, reason }) => {

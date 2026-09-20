@@ -50,7 +50,7 @@ Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_i
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
-`capture-lede-decision` reads this artifact later to recover the `## What` lede published by this pull request, and it is the only record of that text once the description is revised. When the lede is needed and the artifact does not contain it, that skill takes `--agent-lede-file`; the artifact is not edited to supply it.
+When the lede is needed and the artifact does not contain it, `capture-lede-decision` takes `--agent-lede-file`; the artifact is not edited to supply it.
 
 Filename format:
 
@@ -61,7 +61,7 @@ Filename format:
 Artifact content:
 
 ```markdown
-<!-- include: ../../_partials/seal-marker.md / -->
+<!-- include: ../../_partials/record-marker.md / -->
 
 # {title}
 

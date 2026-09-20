@@ -103,7 +103,7 @@ export type RejectReason =
   | 'not-found'
   | 'not-markdown'
   | 'outside-repository'
-  | 'sealed-artifact'
+  | 'saved-artifact'
   | 'source-not-in-repository'
   | 'unresolved-include';
 

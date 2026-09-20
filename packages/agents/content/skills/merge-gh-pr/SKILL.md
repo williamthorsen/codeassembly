@@ -149,12 +149,12 @@ Use `YYYYMMDD-HHMMSSZ` for `{timestamp}` (UTC).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 
-`capture-lede-decision` reads this artifact's `## Body` later to recover the lede that was merged, and it is the only record of that text once the pull request is edited. When the lede is needed and the artifact does not contain it, that skill takes `--merged-lede-file`; the artifact is not edited to supply it.
+When the lede is needed and the artifact does not contain it, `capture-lede-decision` takes `--merged-lede-file`; the artifact is not edited to supply it.
 
 Artifact content:
 
 ```markdown
-<!-- include: ../../_partials/seal-marker.md / -->
+<!-- include: ../../_partials/record-marker.md / -->
 
 # {title}
 
