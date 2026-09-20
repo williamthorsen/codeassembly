@@ -46,7 +46,7 @@ At any level, in any file:
 - The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since every description loads into the skill index of every session.
 - Text inside a generated region, which the next deployment rewrites.
 
-Edit no file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 7 updates.
+Edit no file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 8 updates.
 
 ## Process
 
@@ -103,13 +103,25 @@ Drop every candidate that touches an output shape or its skill-local reinforceme
 - At any level, propose at most two cuts in transitive files, ranked the same way.
 - Otherwise, propose every remaining candidate.
 
-If nothing remains, report that the files have no cut to propose at this level, and stop.
+If nothing remains, report that the files have no cut to propose at this level, then mark the review per step 5 and stop.
 
-### 5. Present the cuts
+### 5. Mark the review
+
+Record what this run read, whether or not it proposes or applies a cut. The marker sets the baseline against which a later deployment reports each document's growth, and a run that proposes nothing has still reviewed the files.
+
+```bash
+cat <<'EOF' | node {harness_home_dir}/skills/streamline-guidance/streamline-guidance.mjs mark
+{"reviewedAt":"{now}","files":["{file}"]}
+EOF
+```
+
+`reviewedAt` is the current instant as an ISO 8601 timestamp. `files` names every target and every transitive file from step 1: A transitive file is read whole, so it was reviewed. The result's `unrooted` names each file lying in no content root, which the marker leaves out.
+
+### 6. Present the cuts
 
 Present one numbered table per [Cut table](#cut-table), then ask which rows to apply and which to decline, in the form `apply 1, 3; decline 2`. A row named in neither list is deferred: You do nothing with it, and a later run may propose it again.
 
-### 6. Apply and record
+### 7. Apply and record
 
 1. Apply each row named to apply with {tool:Edit}, phrase to phrase. Stop at the first edit that does not match, and report which row diverged.
 2. If any row was declined, compose the fold and pipe it to `record`, the only write path of `.agents/streamline-guidance.yaml`:
@@ -124,7 +136,7 @@ Present one numbered table per [Cut table](#cut-table), then ask which rows to a
 
 If no row was applied or declined, skip to the summary.
 
-### 7. Bump versions and run the quality gate
+### 8. Bump versions and run the quality gate
 
 Skip this step if no row was applied.
 
@@ -133,11 +145,11 @@ Skip this step if no row was applied.
    - If it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone if no cut changed what the rulebook asks.
    - If it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again. If the restored cut was the only cut to change what its rulebook asks, also restore that rulebook's `version`, and its pin if this step updated it.
 
-### 8. Commit
+### 9. Commit
 
-Commit per {skill:create-commit}, staging only the edited guidance files, any pin or version that step 7 updated, and the record. The body names each applied cut by file, class, and the text removed or reworded.
+Commit per {skill:create-commit}, staging only the edited guidance files, any pin or version that step 8 updated, and the record. The body names each applied cut by file, class, and the text removed or reworded.
 
-### 9. Emit the summary
+### 10. Emit the summary
 
 Emit the summary per [Summary format](#summary-format). For the sizes after the run, run `resolve` again with the same paths.
 
