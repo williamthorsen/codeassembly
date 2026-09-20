@@ -46,6 +46,7 @@ The bundle has no shebang, so the `node` prefix is required. Each subcommand acc
 
 - A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, and `resolve-scopes` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
+- Malformed YAML in `pnpm-workspace.yaml` stops `resolve-scopes`, naming the file.
 - An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `resolve-effective-record`, and `resolve-merge`.
 - Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s workspace discovery, which then finds none.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
