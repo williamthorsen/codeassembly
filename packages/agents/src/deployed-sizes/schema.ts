@@ -1,6 +1,12 @@
 import { z } from 'zod';
 
-import type { SizeSnapshot } from './types.ts';
+import type { ReviewMarker, SizeSnapshot } from './types.ts';
+
+/**
+ * Schema version written by this build, and the only one that `parseReviewMarkerLine` accepts. Versioned apart from
+ * the snapshot, because the two line kinds share a record and evolve independently.
+ */
+export const REVIEW_MARKER_SCHEMA_VERSION = 1;
 
 /** Schema version written by this build, and the only one that `parseSnapshotLine` accepts. */
 export const SNAPSHOT_SCHEMA_VERSION = 1;
@@ -30,6 +36,13 @@ const SizeAggregatesSchema = z.object({
   assets: ByteCountSchema,
 });
 
+const ReviewMarkerSchema = z.object({
+  schemaVersion: z.literal(REVIEW_MARKER_SCHEMA_VERSION),
+  kind: z.literal('review'),
+  recordedAt: z.string().min(1),
+  reviewed: z.array(z.string().min(1)),
+});
+
 const SizeSnapshotSchema = z.object({
   schemaVersion: z.literal(SNAPSHOT_SCHEMA_VERSION),
   kind: z.literal('snapshot'),
@@ -44,6 +57,16 @@ const SizeSnapshotSchema = z.object({
 });
 
 /**
+ * Parses one record line into a review marker, or `undefined` when it is not one, on the same terms as
+ * {@link parseSnapshotLine}.
+ */
+export function parseReviewMarkerLine(line: string): ReviewMarker | undefined {
+  const parsed = parseJsonLine(line);
+  const result = ReviewMarkerSchema.safeParse(parsed);
+  return result.success ? result.data : undefined;
+}
+
+/**
  * Parses one record line into a snapshot, or `undefined` when it is not one: a truncated or malformed line, a line of
  * another `kind`, or a line written by a schema version that this build does not read.
  *
@@ -51,12 +74,20 @@ const SizeSnapshotSchema = z.object({
  * record.
  */
 export function parseSnapshotLine(line: string): SizeSnapshot | undefined {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(line);
-  } catch {
-    return undefined;
-  }
+  const parsed = parseJsonLine(line);
   const result = SizeSnapshotSchema.safeParse(parsed);
   return result.success ? result.data : undefined;
 }
+
+// region | Helpers
+
+/** Parses one record line as JSON, or `undefined` when it is malformed or truncated. */
+function parseJsonLine(line: string): unknown {
+  try {
+    return JSON.parse(line);
+  } catch {
+    return undefined;
+  }
+}
+
+// endregion | Helpers

@@ -63,3 +63,19 @@ export interface SizeSnapshot {
   readonly expansions?: Readonly<Record<string, ExpansionUnit>> | undefined;
   readonly aggregates: SizeAggregates;
 }
+
+/**
+ * One streamlining review, naming the documents that it read. A later report compares each named document's current
+ * bytes against the snapshot standing at or before `recordedAt`, which is the baseline that the review set.
+ *
+ * A document is named by its path relative to the content root that holds it, and carries no source name: A source's
+ * name comes from the consumer's declaration rather than from the content root, so the same content root is the
+ * library in one record and a named source in another.
+ */
+export interface ReviewMarker {
+  readonly schemaVersion: number;
+  readonly kind: 'review';
+  readonly recordedAt: string;
+  /** Content-root-relative POSIX paths of the documents that the review read. */
+  readonly reviewed: ReadonlyArray<string>;
+}
