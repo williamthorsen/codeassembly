@@ -71,8 +71,9 @@ function readEntry(item: unknown, index: number): { defect: string } | { entry: 
   if (scopes !== undefined && scopes !== null && !Array.isArray(scopes)) {
     return { defect: `\`${at}.scopes\` is not a list` };
   }
+  const declared: unknown[] = scopes ?? [];
   const read: string[] = [];
-  for (const [position, scope] of (scopes ?? []).entries()) {
+  for (const [position, scope] of declared.entries()) {
     if (typeof scope !== 'string') {
       return { defect: `\`${at}.scopes[${position}]\` is not a string` };
     }

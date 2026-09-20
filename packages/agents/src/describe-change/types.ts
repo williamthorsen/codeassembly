@@ -26,6 +26,11 @@ export interface ConsolidatedRecordOutcome {
   type: string | null;
 }
 
+/** What a change's entries consolidated to, in the shape that the JSON output names. */
+export interface ConsolidateEntriesOutcome {
+  consolidated_record: ConsolidatedRecordOutcome;
+}
+
 /** An effective record, in the shape that the JSON output names: every field of a record, each `null` when nothing sets it. */
 export interface EffectiveRecordOutcome {
   breaking: boolean;
@@ -52,7 +57,8 @@ export interface EntryOutcome {
 /** What the invocation asks for: the subcommand that it names, and what that subcommand reads from its arguments. */
 export type ParsedArgs =
   | { baseRef: string; subcommand: 'consolidate-branch' }
-  | { block: ChangeRecordBlock; subcommand: 'render-block' }
+  | { block: ChangeRecordBlock; entriesFile?: string; subcommand: 'render-block' }
+  | { entriesFile: string; subcommand: 'consolidate-entries' }
   | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
   | { overrides: RecordOverrides; record: ChangeRecord; subcommand: 'resolve-effective-record' }
   | { paths: string[]; subcommand: 'resolve-scopes' }

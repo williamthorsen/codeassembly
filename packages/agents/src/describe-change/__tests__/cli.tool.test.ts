@@ -13,6 +13,18 @@ import { renderChangeRecordBlock } from '../change-record-block.ts';
 import { parseArgs, runDescribe } from '../cli.ts';
 import type { ConsolidateBranchOutcome, EntryOutcome } from '../types.ts';
 
+/** An entries file in the shape that `entry-drafter` returns, naming one scope and one type. */
+const ENTRIES_YAML = [
+  '- type: feat',
+  '  scopes: [agents]',
+  '  breaking: false',
+  '  text: Adds the store-qualified wikilink',
+  '- type: fix',
+  '  scopes: [agents]',
+  '  breaking: false',
+  '  text: Stops the sync from deleting a subagent',
+].join('\n');
+
 const execFileAsync = promisify(execFile);
 
 /** The helper's source, which the running Node executes directly. */
@@ -38,6 +50,7 @@ const SUBCOMMAND_NAMES = [
   'render-titles',
   'parse-title',
   'consolidate-branch',
+  'consolidate-entries',
   'resolve-ticket-type',
   'resolve-effective-record',
   'render-block',
@@ -474,6 +487,120 @@ describe('consolidate-branch', () => {
   });
 });
 
+describe('consolidate-entries', () => {
+  it('reads the entries file', () => {
+    expect(parseArgs(['consolidate-entries', '--entries-file', 'entries.yaml'])).toEqual({
+      entriesFile: 'entries.yaml',
+      subcommand: 'consolidate-entries',
+    });
+  });
+
+  it.each([
+    ['is missing', []],
+    ['is blank', ['--entries-file', ' ']],
+  ])('if --entries-file %s, refuses the invocation', (_label, flags) => {
+    expect(() => parseArgs(['consolidate-entries', ...flags])).toThrow('consolidate-entries requires --entries-file');
+  });
+
+  it.each(['--title', '--entries-commit', '--base'])('if %s is passed, refuses it as unknown', (flag) => {
+    expect(() => parseArgs(['consolidate-entries', flag, 'value'])).toThrow(`unknown flag: ${flag}`);
+  });
+
+  it('consolidates the entries to the scope that they agree on and their highest-ranked type', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(ENTRIES_YAML);
+
+    const { output } = await runDescribe({
+      argv: ['consolidate-entries', '--entries-file', entriesFile],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({ consolidated_record: { breaking: false, scope: 'agents', type: 'feat' } });
+  });
+
+  it('drops the scope when the entries name different ones, and reports a breaking entry', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(
+      [
+        '- type: feat',
+        '  scopes: [agents]',
+        '  breaking: true',
+        '  text: Adds foo',
+        '- type: fix',
+        '  scopes: [kb]',
+        '  breaking: false',
+        '  text: Corrects the guard',
+      ].join('\n'),
+    );
+
+    const { output } = await runDescribe({
+      argv: ['consolidate-entries', '--entries-file', entriesFile],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({ consolidated_record: { breaking: true, scope: null, type: 'feat' } });
+  });
+
+  it('determines nothing from an empty list', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries('[]');
+
+    const { output } = await runDescribe({
+      argv: ['consolidate-entries', '--entries-file', entriesFile],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({ consolidated_record: { breaking: null, scope: null, type: null } });
+  });
+
+  it('if the entries file cannot be read, refuses the invocation', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    await expect(
+      runDescribe({
+        argv: ['consolidate-entries', '--entries-file', join(cwd, 'absent.yaml')],
+        cwd,
+        dataDir: DATA_DIR,
+        home,
+      }),
+    ).rejects.toThrow(/--entries-file .*absent\.yaml cannot be read/);
+  });
+
+  it('if the entries file is malformed, refuses the invocation and names the defect', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries('- type: feat');
+
+    await expect(
+      runDescribe({ argv: ['consolidate-entries', '--entries-file', entriesFile], cwd, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(/is malformed: `entries\[0\]\.text` is missing/);
+  });
+
+  it('if the entries file is not valid YAML, refuses the invocation', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries('- type: [unclosed');
+
+    await expect(
+      runDescribe({ argv: ['consolidate-entries', '--entries-file', entriesFile], cwd, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(/is not valid YAML/);
+  });
+
+  it('if no taxonomy is readable, refuses the invocation', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(ENTRIES_YAML);
+    const dataDir = join(cwd, 'absent-data');
+
+    await expect(
+      runDescribe({ argv: ['consolidate-entries', '--entries-file', entriesFile], cwd, dataDir, home }),
+    ).rejects.toThrow(/consolidate-entries ranks types against the taxonomy; none is readable/);
+  });
+});
+
 describe('resolve-scopes', () => {
   it('reads every path', () => {
     expect(parseArgs(['resolve-scopes', '--path', 'packages/kb/a.ts', '--path', 'AGENTS.md'])).toEqual({
@@ -601,6 +728,113 @@ describe('resolve-ticket-type', () => {
     const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toStrictEqual({ ticket_type: null });
+  });
+
+  it('reads the entries file and the derivation commit', () => {
+    const parsed = parseArgs([
+      'render-block',
+      '--title',
+      'Add foo',
+      '--entries-file',
+      'entries.yaml',
+      '--entries-commit',
+      'e5029924',
+    ]);
+
+    expect(parsed).toEqual({
+      block: { consolidatedRecord: {}, entriesCommit: 'e5029924', overrides: {}, title: 'Add foo' },
+      entriesFile: 'entries.yaml',
+      subcommand: 'render-block',
+    });
+  });
+
+  it('if --entries-commit is passed without --entries-file, refuses the invocation', () => {
+    expect(() => parseArgs(['render-block', '--title', 'Add foo', '--entries-commit', 'e5029924'])).toThrow(
+      '--entries-commit records the commit at which the entries were derived; pass --entries-file too',
+    );
+  });
+
+  it.each(['entries-commit', 'entries-file'])('if --%s is blank, refuses the invocation', (name) => {
+    expect(() => parseArgs(['render-block', '--title', 'Add foo', `--${name}`, ' '])).toThrow(
+      `--${name} requires a value`,
+    );
+  });
+
+  it('records the entries and the derivation commit in the rendered block', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(ENTRIES_YAML);
+
+    const { output } = await runDescribe({
+      argv: [
+        'render-block',
+        '--scope',
+        'agents',
+        '--type',
+        'feat',
+        '--title',
+        'Add the parser',
+        '--entries-file',
+        entriesFile,
+        '--entries-commit',
+        'e5029924',
+      ],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({
+      block: renderChangeRecordBlock({
+        consolidatedRecord: { scope: 'agents', type: 'feat' },
+        entries: [
+          { breaking: false, scopes: ['agents'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+          { breaking: false, scopes: ['agents'], text: 'Stops the sync from deleting a subagent', type: 'fix' },
+        ],
+        entriesCommit: 'e5029924',
+        title: 'Add the parser',
+      }),
+    });
+  });
+
+  it('consolidates nothing, so the record it records is the one that the flags pass', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(ENTRIES_YAML);
+
+    const { output } = await runDescribe({
+      argv: ['render-block', '--type', 'docs', '--title', 'Add the parser', '--entries-file', entriesFile],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({ block: expect.stringContaining('type: docs') });
+  });
+
+  it('if the entries file cannot be read, refuses the invocation', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    await expect(
+      runDescribe({
+        argv: ['render-block', '--title', 'Add foo', '--entries-file', join(cwd, 'absent.yaml')],
+        cwd,
+        dataDir: DATA_DIR,
+        home,
+      }),
+    ).rejects.toThrow(/--entries-file .*absent\.yaml cannot be read/);
+  });
+
+  it('if the entries file is malformed, refuses the invocation and names the defect', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries('- text: Adds foo');
+
+    await expect(
+      runDescribe({
+        argv: ['render-block', '--title', 'Add foo', '--entries-file', entriesFile],
+        cwd,
+        dataDir: DATA_DIR,
+        home,
+      }),
+    ).rejects.toThrow(/is malformed: `entries\[0\]\.type` is missing/);
   });
 
   it('succeeds when a configured title template is defective', async () => {
@@ -1222,6 +1456,14 @@ async function writeBody(content: string): Promise<string> {
   const bodyFile = join(dir, 'body.md');
   await writeFile(bodyFile, content, 'utf8');
   return bodyFile;
+}
+
+/** Writes `content` to an entries file under a scratch directory and returns its path. */
+async function writeEntries(content: string): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), 'describe-change-entries-'));
+  const entriesFile = join(dir, 'entries.yaml');
+  await writeFile(entriesFile, `${content}\n`, 'utf8');
+  return entriesFile;
 }
 
 /** Writes `labelMap` to the repository's `.meta/label-map.json`. */

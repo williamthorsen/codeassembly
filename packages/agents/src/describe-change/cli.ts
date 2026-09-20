@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
+import { parse as parseYaml } from 'yaml';
 
 import { applyOverrides } from '../change-grammar/apply-overrides.ts';
 import { compileTemplate } from '../change-grammar/compile-template.ts';
@@ -19,7 +20,13 @@ import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadTaxonomy } from '../lib/work-types.ts';
-import { readChangeRecordBlock, type RecordOverrides, renderChangeRecordBlock } from './change-record-block.ts';
+import { type ChangeEntry, consolidateChangeEntries, readChangeEntries } from './change-entries.ts';
+import {
+  type ChangeRecordBlock,
+  readChangeRecordBlock,
+  type RecordOverrides,
+  renderChangeRecordBlock,
+} from './change-record-block.ts';
 import { consolidateBranch } from './consolidate-branch.ts';
 import { findDefects } from './find-defects.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
@@ -30,6 +37,7 @@ import { discoverWorkspaceDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
 import {
   type ConsolidateBranchOutcome,
+  type ConsolidateEntriesOutcome,
   isSurface,
   type ParsedArgs,
   type ParseTitleOutcome,
@@ -74,9 +82,18 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
   },
   'parse-title': { flags: [], read: readParseTitleArgs },
   'consolidate-branch': { flags: [{ name: 'base', takesValue: true }], read: readConsolidateBranchArgs },
+  'consolidate-entries': { flags: [{ name: 'entries-file', takesValue: true }], read: readConsolidateEntriesArgs },
   'resolve-ticket-type': { flags: [{ name: 'ticket-label', takesValue: true }], read: readResolveTicketTypeArgs },
   'resolve-effective-record': { flags: [...RECORD_FLAGS, ...OVERRIDE_FLAGS], read: readResolveEffectiveRecordArgs },
-  'render-block': { flags: [...RECORD_FLAGS, ...OVERRIDE_FLAGS], read: readRenderBlockArgs },
+  'render-block': {
+    flags: [
+      ...RECORD_FLAGS,
+      ...OVERRIDE_FLAGS,
+      { name: 'entries-commit', takesValue: true },
+      { name: 'entries-file', takesValue: true },
+    ],
+    read: readRenderBlockArgs,
+  },
   'resolve-merge': {
     flags: [
       { name: 'base', takesValue: true },
@@ -151,10 +168,12 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
   switch (args.subcommand) {
     case 'consolidate-branch':
       return runConsolidateBranch(args.baseRef, input);
+    case 'consolidate-entries':
+      return runConsolidateEntries(args.entriesFile, input);
     case 'parse-title':
       return runParseTitle(args.surface, args.subject, input);
     case 'render-block':
-      return { output: { block: renderChangeRecordBlock(args.block) }, warnings: [] };
+      return runRenderBlock(args, input);
     case 'render-titles':
       return runRenderTitles(args.record, input);
     case 'resolve-effective-record':
@@ -180,6 +199,7 @@ export interface DescribeInput {
 export interface DescribeResult {
   output:
     | ConsolidateBranchOutcome
+    | ConsolidateEntriesOutcome
     | ParseTitleOutcome
     | RenderBlockOutcome
     | RenderedTitles
@@ -304,6 +324,37 @@ function readConsolidateBranchArgs({ flags, positionals }: ScanResult): ParsedAr
   };
 }
 
+/** Reads the `consolidate-entries` invocation: the path of the entries file to consolidate. */
+function readConsolidateEntriesArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return {
+    entriesFile: readRequiredValue('consolidate-entries', valueFlagMap(flags), 'entries-file'),
+    subcommand: 'consolidate-entries',
+  };
+}
+
+/** Reads the entries that a YAML file declares, refusing a file that cannot be read, cannot be parsed, or is malformed. */
+async function readEntriesFile(input: { cwd: string; filePath: string }): Promise<ChangeEntry[]> {
+  const resolved = path.resolve(input.cwd, input.filePath);
+  let text: string;
+  try {
+    text = await readFile(resolved, 'utf8');
+  } catch (error) {
+    throw chainError(`--entries-file ${resolved} cannot be read`, error);
+  }
+  let value: unknown;
+  try {
+    value = parseYaml(text);
+  } catch (error) {
+    throw chainError(`--entries-file ${resolved} is not valid YAML`, error);
+  }
+  const read = readChangeEntries(value);
+  if ('defect' in read) {
+    throw new Error(`--entries-file ${resolved} is malformed: ${read.defect}`);
+  }
+  return read.entries;
+}
+
 /** Reads `--override-type`, refusing a type spelled with the breaking marker. */
 function readOverrideType(values: Record<string, string>): string | undefined {
   const type = values['override-type']?.trim();
@@ -355,15 +406,36 @@ function readRecordWithOverrides(flags: readonly MatchedFlag[]): { overrides: Re
   return { overrides, record: readRecordFlags(flags) };
 }
 
-/** Reads the `render-block` invocation: the required title, the consolidated record's flags, and the author's overrides. */
+/**
+ * Reads the `render-block` invocation: the required title, the consolidated record's flags, the author's overrides, and
+ * the entries file and derivation commit that the block records.
+ *
+ * `--entries-commit` requires `--entries-file`, since a derivation commit with nothing derived at it records a claim
+ * about nothing.
+ */
 function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
-  const title = readRequiredValue('render-block', valueFlagMap(flags), 'title');
+  const values = valueFlagMap(flags);
+  const title = readRequiredValue('render-block', values, 'title');
   const {
     overrides,
     record: { title: _title, ...consolidatedRecord },
   } = readRecordWithOverrides(flags);
-  return { block: { consolidatedRecord, overrides, title }, subcommand: 'render-block' };
+  for (const name of ['entries-commit', 'entries-file']) {
+    if (values[name]?.trim() === '') {
+      throw new Error(`--${name} requires a value`);
+    }
+  }
+  const entriesCommit = values['entries-commit']?.trim();
+  const entriesFile = values['entries-file']?.trim();
+  if (entriesCommit !== undefined && entriesFile === undefined) {
+    throw new Error('--entries-commit records the commit at which the entries were derived; pass --entries-file too');
+  }
+  return {
+    block: { consolidatedRecord, overrides, title, ...(entriesCommit !== undefined && { entriesCommit }) },
+    ...(entriesFile !== undefined && { entriesFile }),
+    subcommand: 'render-block',
+  };
 }
 
 /**
@@ -544,6 +616,31 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
   return { output, warnings };
 }
 
+/**
+ * Consolidates a change's entries into the record that represents the change. Only the taxonomy is loaded, which ranks
+ * the types, so the run reads no title template and no repository. An empty list determines nothing, as a branch with
+ * no commit entry does.
+ */
+async function runConsolidateEntries(entriesFile: string, input: DescribeInput): Promise<DescribeResult> {
+  const taxonomy = await loadTaxonomy(input.dataDir);
+  if (taxonomy === null) {
+    throw new Error(`consolidate-entries ranks types against the taxonomy; none is readable under ${input.dataDir}`);
+  }
+  const entries = await readEntriesFile({ cwd: input.cwd, filePath: entriesFile });
+  const consolidated = consolidateChangeEntries(entries, taxonomy);
+  const output: ConsolidateEntriesOutcome = {
+    consolidated_record:
+      entries.length === 0
+        ? { breaking: null, scope: null, type: null }
+        : {
+            breaking: consolidated.breaking === true,
+            scope: consolidated.scope ?? null,
+            type: consolidated.type ?? null,
+          },
+  };
+  return { output, warnings: [] };
+}
+
 /** Reads a subject back through the named surface's template. */
 async function runParseTitle(surface: Surface, subject: string, input: DescribeInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
@@ -551,6 +648,20 @@ async function runParseTitle(surface: Surface, subject: string, input: DescribeI
     'parse-title resolves the type against the taxonomy',
   );
   return { output: readSubject(surface, templates[surface], subject, taxonomy), warnings };
+}
+
+/**
+ * Renders the block from the invocation, reading the entries from their file when one is named. The run consolidates
+ * nothing and reads no taxonomy, so a defective template does not stop it; the record is what the flags pass.
+ */
+async function runRenderBlock(
+  args: { block: ChangeRecordBlock; entriesFile?: string },
+  input: DescribeInput,
+): Promise<DescribeResult> {
+  const entries =
+    args.entriesFile === undefined ? [] : await readEntriesFile({ cwd: input.cwd, filePath: args.entriesFile });
+  const block = { ...args.block, ...(entries.length > 0 && { entries }) };
+  return { output: { block: renderChangeRecordBlock(block) }, warnings: [] };
 }
 
 /** Renders every surface's title from the record, warning rather than refusing when no taxonomy verifies the templates. */
