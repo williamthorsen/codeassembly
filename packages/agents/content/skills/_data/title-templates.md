@@ -344,13 +344,13 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes \
 
 **`path_scopes` maps each path as given to its scope**, under the spelling that the invocation passed, so a caller can look a result up by the path that it asked about. **`scopes` is the sorted set** of the scopes that those paths name between them.
 
-**The derivation**: The run resolves `pnpm-workspace.yaml`'s `packages` globs against the repository root and keeps the matches holding a `package.json`. A path's scope is the basename of the longest of those directories that contains it, so a nested workspace wins over the one enclosing it. A path that no workspace directory contains resolves to `root`.
+**The derivation**: `@williamthorsen/nmr/workspace` resolves the repository root's workspace directories, honoring the `packages` patterns that `pnpm-workspace.yaml` declares, negative patterns included. A path's scope is the basename of the longest of those directories that contains it, so a nested workspace wins over the one enclosing it. A path that no workspace directory contains resolves to `root`.
 
-**A repository declaring no workspaces yields `root` for every path.** A root with no `pnpm-workspace.yaml`, no `packages` list, or a list matching nothing discovers no directories, and this is how a consumer detects that the repository has no scope vocabulary. A repository on another package manager reads the same way.
+**A repository declaring no workspaces yields `root` for every path.** A root that is not a pnpm workspace, and one whose patterns match no directory, both discover none, and this is how a consumer detects that the repository has no scope vocabulary. A repository on another package manager reads the same way.
 
 **A path is read relative to the repository root**, which git resolves from the invoking directory, so an absolute path and a root-relative one resolve alike whatever subdirectory the caller ran from. A path outside the root resolves to `root`. When git resolves no repository root, the run warns and anchors at the invoking directory.
 
-**The rule reproduces release-kit's contract** rather than defining one: `discoverWorkspaces()` resolves the globs and applies the `package.json` filter, and `deriveWorkspaceConfig()` names each directory by its basename. The deployed bundle runs in repositories that have no release-kit installed, so it cannot delegate. `scope-labels.unit.test.ts` in `packages/agents` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the rule belongs upstream first.
+**The subcommand defines no rule of its own.** It delegates discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/agents` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the discovery rule belongs upstream, in nmr.
 
 ## Supported tokens
 

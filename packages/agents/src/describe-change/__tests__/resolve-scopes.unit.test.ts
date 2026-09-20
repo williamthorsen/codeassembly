@@ -6,80 +6,56 @@ import { describe, expect, it } from 'vitest';
 
 import { discoverWorkspaceDirs, resolveScopes } from '../resolve-scopes.ts';
 
-/** The workspace directories of a fixture root declaring `packages/*`. */
-const FIXTURE_DIRS = ['packages/agents', 'packages/kb'];
-
 describe(discoverWorkspaceDirs, () => {
-  it('keeps the glob matches holding a package.json, in sorted order', async () => {
-    const root = await writeFixtureRoot({
-      dirs: [...FIXTURE_DIRS, 'packages/scripts'],
-      manifests: FIXTURE_DIRS,
-      patterns: ['packages/*'],
-    });
+  it('discovers the directories that the root declares as workspaces', async () => {
+    const root = await writeWorkspaceRoot();
 
-    expect(await discoverWorkspaceDirs(root)).toEqual(FIXTURE_DIRS);
+    expect(discoverWorkspaceDirs(root)).toEqual(fixtureDirs(root));
   });
 
-  it('resolves every declared pattern, reporting a directory matched by two of them once', async () => {
-    const root = await writeFixtureRoot({
-      dirs: FIXTURE_DIRS,
-      manifests: FIXTURE_DIRS,
-      patterns: ['packages/*', 'packages/kb'],
-    });
+  it('honors a negative pattern, which excludes a directory that an earlier pattern matched', async () => {
+    const root = await writeWorkspaceRoot(["  - 'packages/*'", "  - '!packages/kb'"]);
 
-    expect(await discoverWorkspaceDirs(root)).toEqual(FIXTURE_DIRS);
+    expect(discoverWorkspaceDirs(root)).toEqual([join(root, 'packages/agents')]);
   });
 
-  it('discovers nothing when the root declares no workspace file', async () => {
+  it('discovers nothing when the root declares no pnpm workspace', async () => {
     const root = await mkdtemp(join(tmpdir(), 'resolve-scopes-'));
 
-    expect(await discoverWorkspaceDirs(root)).toEqual([]);
+    expect(discoverWorkspaceDirs(root)).toEqual([]);
   });
 
-  it('discovers nothing when the workspace file declares no packages list', async () => {
-    const root = await writeFixtureRoot({ dirs: FIXTURE_DIRS, manifests: FIXTURE_DIRS, patterns: undefined });
+  it('discovers nothing when the declared patterns match no directory', async () => {
+    const root = await writeWorkspaceRoot(["  - 'libs/*'"]);
 
-    expect(await discoverWorkspaceDirs(root)).toEqual([]);
-  });
-
-  it('discovers nothing when the declared patterns resolve to nothing', async () => {
-    const root = await writeFixtureRoot({ dirs: FIXTURE_DIRS, manifests: FIXTURE_DIRS, patterns: ['libs/*'] });
-
-    expect(await discoverWorkspaceDirs(root)).toEqual([]);
+    expect(discoverWorkspaceDirs(root)).toEqual([]);
   });
 });
 
 describe(resolveScopes, () => {
   const projectRoot = '/repo';
+  const workspaceDirs = ['/repo/packages/agents', '/repo/packages/kb'];
 
   it('resolves a path inside a workspace to that directory’s basename', () => {
-    const resolution = resolveScopes({
-      paths: ['packages/kb/src/index.ts'],
-      projectRoot,
-      workspaceDirs: FIXTURE_DIRS,
-    });
+    const resolution = resolveScopes({ paths: ['packages/kb/src/index.ts'], projectRoot, workspaceDirs });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb/src/index.ts': 'kb' });
   });
 
   it('resolves the workspace directory itself to its basename', () => {
-    const resolution = resolveScopes({ paths: ['packages/kb'], projectRoot, workspaceDirs: FIXTURE_DIRS });
+    const resolution = resolveScopes({ paths: ['packages/kb'], projectRoot, workspaceDirs });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb': 'kb' });
   });
 
   it('resolves a path outside every workspace to root', () => {
-    const resolution = resolveScopes({
-      paths: ['AGENTS.md', 'packages/README.md'],
-      projectRoot,
-      workspaceDirs: FIXTURE_DIRS,
-    });
+    const resolution = resolveScopes({ paths: ['AGENTS.md', 'packages/README.md'], projectRoot, workspaceDirs });
 
     expect(resolution.pathScopes).toEqual({ 'AGENTS.md': 'root', 'packages/README.md': 'root' });
   });
 
   it('does not let a workspace claim a sibling path sharing its prefix', () => {
-    const resolution = resolveScopes({ paths: ['packages/kb-tools/x.ts'], projectRoot, workspaceDirs: FIXTURE_DIRS });
+    const resolution = resolveScopes({ paths: ['packages/kb-tools/x.ts'], projectRoot, workspaceDirs });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb-tools/x.ts': 'root' });
   });
@@ -88,24 +64,27 @@ describe(resolveScopes, () => {
     const resolution = resolveScopes({
       paths: ['packages/kb/plugins/tagger/src/index.ts'],
       projectRoot,
-      workspaceDirs: [...FIXTURE_DIRS, 'packages/kb/plugins/tagger'],
+      workspaceDirs: [...workspaceDirs, '/repo/packages/kb/plugins/tagger'],
     });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb/plugins/tagger/src/index.ts': 'tagger' });
   });
 
-  it('reads an absolute path relative to the project root', () => {
+  it('reads an absolute path the same way as the root-relative one naming the same file', () => {
     const resolution = resolveScopes({
-      paths: ['/repo/packages/agents/src/cli.ts'],
+      paths: ['/repo/packages/agents/src/cli.ts', 'packages/agents/src/cli.ts'],
       projectRoot,
-      workspaceDirs: FIXTURE_DIRS,
+      workspaceDirs,
     });
 
-    expect(resolution.pathScopes).toEqual({ '/repo/packages/agents/src/cli.ts': 'agents' });
+    expect(resolution.pathScopes).toEqual({
+      '/repo/packages/agents/src/cli.ts': 'agents',
+      'packages/agents/src/cli.ts': 'agents',
+    });
   });
 
   it('resolves a path outside the project root to root', () => {
-    const resolution = resolveScopes({ paths: ['../elsewhere/x.ts', '..'], projectRoot, workspaceDirs: FIXTURE_DIRS });
+    const resolution = resolveScopes({ paths: ['../elsewhere/x.ts', '..'], projectRoot, workspaceDirs });
 
     expect(resolution.pathScopes).toEqual({ '../elsewhere/x.ts': 'root', '..': 'root' });
   });
@@ -127,43 +106,33 @@ describe(resolveScopes, () => {
     const resolution = resolveScopes({
       paths: ['packages/kb/a.ts', 'AGENTS.md', 'packages/agents/b.ts', 'packages/kb/c.ts'],
       projectRoot,
-      workspaceDirs: FIXTURE_DIRS,
+      workspaceDirs,
     });
 
     expect(resolution.scopes).toEqual(['agents', 'kb', 'root']);
   });
 
   it('reports no scopes when given no paths', () => {
-    expect(resolveScopes({ paths: [], projectRoot, workspaceDirs: FIXTURE_DIRS })).toEqual({
-      pathScopes: {},
-      scopes: [],
-    });
+    expect(resolveScopes({ paths: [], projectRoot, workspaceDirs })).toEqual({ pathScopes: {}, scopes: [] });
   });
 });
 
 // region | Helpers
 
-/** Writes a fixture root with the given directories, a `package.json` in each named manifest, and a workspace file. */
-async function writeFixtureRoot(fixture: {
-  dirs: readonly string[];
-  manifests: readonly string[];
-  patterns: readonly string[] | undefined;
-}): Promise<string> {
-  const root = await mkdtemp(join(tmpdir(), 'resolve-scopes-'));
-  for (const dir of fixture.dirs) {
-    await mkdir(join(root, dir), { recursive: true });
-  }
-  for (const dir of fixture.manifests) {
-    await writeFile(join(root, dir, 'package.json'), '{}', 'utf8');
-  }
-  const declaration = fixture.patterns === undefined ? 'catalog: {}' : `packages:\n${indentList(fixture.patterns)}`;
-  await writeFile(join(root, 'pnpm-workspace.yaml'), `${declaration}\n`, 'utf8');
-  return root;
+/** The workspace directories of a fixture root, as absolute paths under it. */
+function fixtureDirs(root: string): string[] {
+  return [join(root, 'packages/agents'), join(root, 'packages/kb')];
 }
 
-/** Renders patterns as a YAML block sequence. */
-function indentList(patterns: readonly string[]): string {
-  return patterns.map((pattern) => `  - '${pattern}'`).join('\n');
+/** Writes a fixture root declaring the given workspace patterns, with `packages/agents` and `packages/kb` holding a manifest. */
+async function writeWorkspaceRoot(patterns: readonly string[] = ["  - 'packages/*'"]): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'resolve-scopes-'));
+  for (const dir of ['packages/agents', 'packages/kb']) {
+    await mkdir(join(root, dir), { recursive: true });
+    await writeFile(join(root, dir, 'package.json'), '{}', 'utf8');
+  }
+  await writeFile(join(root, 'pnpm-workspace.yaml'), `packages:\n${patterns.join('\n')}\n`, 'utf8');
+  return root;
 }
 
 // endregion | Helpers

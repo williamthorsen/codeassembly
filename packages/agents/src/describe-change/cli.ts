@@ -641,7 +641,7 @@ async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Pr
  */
 async function runResolveScopes(paths: readonly string[], input: DescribeInput): Promise<DescribeResult> {
   const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
-  const workspaceDirs = await discoverWorkspaceDirs(projectRoot);
+  const workspaceDirs = discoverWorkspaceDirs(projectRoot);
   const { pathScopes, scopes } = resolveScopes({ paths, projectRoot, workspaceDirs });
   return { output: { path_scopes: pathScopes, scopes }, warnings: warning === undefined ? [] : [warning] };
 }

@@ -13,7 +13,7 @@ const RELEASE_KIT_CONFIG = new URL('../../../../../.config/release-kit.config.ts
 
 describe('scope vocabulary', () => {
   it('derives exactly the scopes that the release-kit config declares as labels', async () => {
-    const workspaceDirs = await discoverWorkspaceDirs(REPOSITORY_ROOT);
+    const workspaceDirs = discoverWorkspaceDirs(REPOSITORY_ROOT);
     const { scopes } = resolveScopes({ paths: [...workspaceDirs, '.'], projectRoot: REPOSITORY_ROOT, workspaceDirs });
 
     expect(scopes).toEqual(await readDeclaredScopes());
@@ -31,11 +31,14 @@ describe('scope vocabulary', () => {
  */
 async function readDeclaredScopes(): Promise<string[]> {
   const content = await readFile(RELEASE_KIT_CONFIG, 'utf8');
-  const scopes = [...content.matchAll(/(?<=['"])scope:([\w.-]+)(?=['"])/g)].map(([, scope]) => scope ?? '');
+  const scopes = content
+    .matchAll(/(?<=['"])scope:([\w.-]+)(?=['"])/g)
+    .map(([, scope]) => scope ?? '')
+    .toArray();
   if (scopes.length === 0) {
     throw new Error(`${fileURLToPath(RELEASE_KIT_CONFIG)} declares no scope: label`);
   }
-  return scopes.sort();
+  return scopes.toSorted();
 }
 
 // endregion | Helpers

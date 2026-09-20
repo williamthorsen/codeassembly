@@ -47,7 +47,6 @@
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
-    "glob": "catalog:",
     "ulid": "3.0.2",
     "yaml": "catalog:",
     "zod": "catalog:"
@@ -55,6 +54,7 @@
   "devDependencies": {
     "@hyperjump/json-schema": "1.17.8",
     "@types/node": "catalog:",
+    "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.strings": "8.0.1",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",

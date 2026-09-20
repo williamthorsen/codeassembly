@@ -50,7 +50,7 @@
     "eslint-plugin-jest-dom": "5.10.1",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-testing-library": "7.16.2",
-    "glob": "catalog:",
+    "glob": "13.0.6",
     "lefthook": "2.1.12",
     "prettier": "catalog:",
     "readyup": "catalog:",
