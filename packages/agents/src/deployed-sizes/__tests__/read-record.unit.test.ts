@@ -5,9 +5,67 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { appendReviewMarker, appendSnapshot } from '../append-snapshot.ts';
-import { findSnapshotAtOrBefore, listReviewMarkers, readRecordLines, selectLatestSnapshot } from '../read-record.ts';
+import {
+  findSnapshotAfter,
+  findSnapshotAtOrBefore,
+  listReviewMarkers,
+  readRecordLines,
+  selectLatestSnapshot,
+} from '../read-record.ts';
 import { REVIEW_MARKER_SCHEMA_VERSION, SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
 import type { ReviewMarker, SizeSnapshot } from '../types.ts';
+
+describe(findSnapshotAfter, () => {
+  let recordDir: string;
+  let recordPath: string;
+
+  beforeEach(async () => {
+    recordDir = await mkdtemp(path.join(tmpdir(), 'deployed-sizes-'));
+    recordPath = path.join(recordDir, 'owner', 'name.jsonl');
+  });
+
+  afterEach(async () => {
+    await rm(recordDir, { recursive: true, force: true });
+  });
+
+  it('returns the first snapshot recorded after the instant', async () => {
+    await appendSnapshot(recordPath, buildSnapshot({ onInvocation: 10, recordedAt: '2026-09-01T00:00:00.000Z' }));
+    const first = buildSnapshot({ onInvocation: 20, recordedAt: '2026-09-10T00:00:00.000Z' });
+    await appendSnapshot(recordPath, first);
+    await appendSnapshot(recordPath, buildSnapshot({ onInvocation: 30, recordedAt: '2026-09-20T00:00:00.000Z' }));
+
+    expect(findSnapshotAfter(await readRecordLines(recordPath), '2026-09-05T00:00:00.000Z')).toEqual(first);
+  });
+
+  it('excludes a snapshot standing on the instant', async () => {
+    const onTheInstant = buildSnapshot({ onInvocation: 10, recordedAt: '2026-09-10T00:00:00.000Z' });
+    await appendSnapshot(recordPath, onTheInstant);
+    const later = buildSnapshot({ onInvocation: 20, recordedAt: '2026-09-11T00:00:00.000Z' });
+    await appendSnapshot(recordPath, later);
+
+    expect(findSnapshotAfter(await readRecordLines(recordPath), '2026-09-10T00:00:00.000Z')).toEqual(later);
+  });
+
+  it('returns undefined when every snapshot precedes the instant', async () => {
+    await appendSnapshot(recordPath, buildSnapshot({ onInvocation: 10, recordedAt: '2026-09-01T00:00:00.000Z' }));
+
+    expect(findSnapshotAfter(await readRecordLines(recordPath), '2026-09-10T00:00:00.000Z')).toBeUndefined();
+  });
+
+  it('returns undefined for an instant that is not a timestamp', async () => {
+    await appendSnapshot(recordPath, buildSnapshot({ onInvocation: 10, recordedAt: '2026-09-10T00:00:00.000Z' }));
+
+    expect(findSnapshotAfter(await readRecordLines(recordPath), 'whenever')).toBeUndefined();
+  });
+
+  it('skips a review marker standing after the instant', async () => {
+    await appendReviewMarker(recordPath, buildMarker('2026-09-11T00:00:00.000Z', ['skills/plan/SKILL.md']));
+    const later = buildSnapshot({ onInvocation: 20, recordedAt: '2026-09-12T00:00:00.000Z' });
+    await appendSnapshot(recordPath, later);
+
+    expect(findSnapshotAfter(await readRecordLines(recordPath), '2026-09-10T00:00:00.000Z')).toEqual(later);
+  });
+});
 
 describe(findSnapshotAtOrBefore, () => {
   let recordDir: string;

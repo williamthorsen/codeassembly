@@ -4,6 +4,7 @@ import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
 import { buildSizeReport, type SizeReport } from '../../deployed-sizes/build-size-report.ts';
 import { measureDeployment } from '../../deployed-sizes/measure-deployment.ts';
 import {
+  findSnapshotAfter,
   findSnapshotAtOrBefore,
   listReviewMarkers,
   readRecordLines,
@@ -88,19 +89,25 @@ export async function recordDeployedSizes(input: {
   }
 }
 
-// region | Helpers
-
 /**
- * Pairs each review marker the record holds with the snapshot standing at or before it, dropping a marker whose
- * baseline the record no longer holds. Each distinct instant is resolved once, since a run's two markers into one
- * record share a timestamp.
+ * Pairs each review marker the record holds with its baseline snapshot, dropping a marker whose baseline the record
+ * no longer holds. Each distinct instant is resolved once, since a run's two markers into one record share a
+ * timestamp.
+ *
+ * The first snapshot recorded after the marker is preferred, because it states the size that the review left the
+ * document at; measuring from the snapshot before the marker would count the review's own reduction as headroom and
+ * hide a regrowth of that size. A marker with no later snapshot falls back to the one standing at or before it,
+ * which is the state a freshly-marked document is in until the next deployment records it.
+ *
+ * @internal - Exported to allow testing.
  */
-function resolveReviewBaselines(lines: ReadonlyArray<string>): ReadonlyArray<ReviewBaseline> {
+export function resolveReviewBaselines(lines: ReadonlyArray<string>): ReadonlyArray<ReviewBaseline> {
   const baselines = new Map<string, SizeSnapshot | undefined>();
   const reviews: Array<ReviewBaseline> = [];
   for (const marker of listReviewMarkers(lines)) {
     if (!baselines.has(marker.recordedAt)) {
-      baselines.set(marker.recordedAt, findSnapshotAtOrBefore(lines, marker.recordedAt));
+      const after = findSnapshotAfter(lines, marker.recordedAt);
+      baselines.set(marker.recordedAt, after ?? findSnapshotAtOrBefore(lines, marker.recordedAt));
     }
     const snapshot = baselines.get(marker.recordedAt);
     if (snapshot !== undefined) {
@@ -109,5 +116,3 @@ function resolveReviewBaselines(lines: ReadonlyArray<string>): ReadonlyArray<Rev
   }
   return reviews;
 }
-
-// endregion | Helpers

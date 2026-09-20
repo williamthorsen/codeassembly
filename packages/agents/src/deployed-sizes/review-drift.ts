@@ -14,7 +14,7 @@ export interface ReviewBaseline {
   readonly recordedAt: string;
   /** Content-root-relative POSIX paths of the documents that the review read. */
   readonly reviewed: ReadonlyArray<string>;
-  /** Files of the snapshot standing at or before the review, which the growth is measured against. */
+  /** Files of the review's baseline snapshot, which the growth is measured against. */
   readonly files: Readonly<Record<string, DeployedFile>>;
 }
 
@@ -45,8 +45,8 @@ export interface ReviewDriftRow {
  * path alone, so a document that this deployment does not carry `authored` for takes no row: an asset, a delivered
  * support entry, and a manifest-contributed file.
  *
- * Growth alone is reported. A document at or below the bytes it held at its review has not drifted, and a review
- * whose baseline snapshot did not hold the document has nothing to measure against.
+ * Growth alone is reported. A document at or below its baseline bytes has not drifted, and a review whose baseline
+ * snapshot did not hold the document has nothing to measure against.
  *
  * Pure, and takes no I/O: The caller resolved each review's baseline snapshot.
  */

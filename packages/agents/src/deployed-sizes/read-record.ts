@@ -5,6 +5,27 @@ import { parseReviewMarkerLine, parseSnapshotLine } from './schema.ts';
 import type { ReviewMarker, SizeSnapshot } from './types.ts';
 
 /**
+ * Finds the first snapshot recorded after `instant`, or `undefined` when the record holds none.
+ *
+ * The scan runs forward and stops at the first match, because the record's lines are in the order that they were
+ * appended.
+ */
+export function findSnapshotAfter(lines: ReadonlyArray<string>, instant: string): SizeSnapshot | undefined {
+  const limit = Date.parse(instant);
+  if (Number.isNaN(limit)) {
+    return undefined;
+  }
+  for (const line of lines) {
+    const snapshot = parseLine(line, parseSnapshotLine);
+    const recordedAt = snapshot === undefined ? NaN : Date.parse(snapshot.recordedAt);
+    if (!Number.isNaN(recordedAt) && recordedAt > limit) {
+      return snapshot;
+    }
+  }
+  return undefined;
+}
+
+/**
  * Finds the snapshot standing at or before `instant`, or `undefined` when the record holds none. A marker older than
  * every surviving snapshot therefore resolves to no baseline, which is the case a pruned record leaves behind.
  *
