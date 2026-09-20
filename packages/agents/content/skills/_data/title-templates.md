@@ -40,13 +40,14 @@ The bundle has no shebang, so the `node` prefix is required. Each subcommand acc
 | [`resolve-effective-record`](#resolve-effective-record) | A record with its overrides applied, and its defects    | The taxonomy                                                |
 | [`render-block`](#render-block)                         | The `change-record` block that ends a pull-request body | Nothing                                                     |
 | [`resolve-merge`](#resolve-merge)                       | What a pull request merges as                           | The templates, the taxonomy, the label map, and the commits |
+| [`resolve-scopes`](#resolve-scopes)                     | The scope that owns each given path                     | The workspace layout                                        |
 
 ### What stops a run and what only warns
 
-- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, and `render-block` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, and `resolve-scopes` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
 - An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `resolve-effective-record`, and `resolve-merge`.
-- Outside a repository, a subcommand that reads the templates or the label map warns on stderr and anchors the `.agents/` and `.meta/label-map.json` lookups at the working directory, so the global templates still render.
+- Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s workspace discovery, which then finds none.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
 
 ## `render-titles`
@@ -327,6 +328,29 @@ Each field names the step that set it last, as [Where the record is read](./chan
 **A head commit that the local repository lacks is not an error.** The run reports `commits-unavailable` and resolves from the block or the labels without checking them against the commits, so fetch the head commit before resolving. Any other git failure stops the run.
 
 The run refuses if no taxonomy is readable and if the body file cannot be read. With an empty `commit.title_format`, the run reports `commits-unavailable` rather than refusing. `--override-type` refuses a type spelled with `!`, and the run refuses `--override-breaking` together with `--no-override-breaking`.
+
+## `resolve-scopes`
+
+`resolve-scopes` reports the scope that owns each given path, so a consumer can attribute a set of changed files to the workspaces that own them. `--path` is its one flag, repeatable and optional.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes \
+  --path packages/kb/src/index.ts --path AGENTS.md
+```
+
+```json
+{ "path_scopes": { "packages/kb/src/index.ts": "kb", "AGENTS.md": "root" }, "scopes": ["kb", "root"] }
+```
+
+**`path_scopes` maps each path as given to its scope**, under the spelling that the invocation passed, so a caller can look a result up by the path that it asked about. **`scopes` is the sorted set** of the scopes that those paths name between them.
+
+**The derivation**: The run resolves `pnpm-workspace.yaml`'s `packages` globs against the repository root and keeps the matches holding a `package.json`. A path's scope is the basename of the longest of those directories that contains it, so a nested workspace wins over the one enclosing it. A path that no workspace directory contains resolves to `root`.
+
+**A repository declaring no workspaces yields `root` for every path.** A root with no `pnpm-workspace.yaml`, no `packages` list, or a list matching nothing discovers no directories, and this is how a consumer detects that the repository has no scope vocabulary. A repository on another package manager reads the same way.
+
+**A path is read relative to the repository root**, which git resolves from the invoking directory, so an absolute path and a root-relative one resolve alike whatever subdirectory the caller ran from. A path outside the root resolves to `root`. When git resolves no repository root, the run warns and anchors at the invoking directory.
+
+**The rule reproduces release-kit's contract** rather than defining one: `discoverWorkspaces()` resolves the globs and applies the `package.json` filter, and `deriveWorkspaceConfig()` names each directory by its basename. The deployed bundle runs in repositories that have no release-kit installed, so it cannot delegate. `scope-labels.unit.test.ts` in `packages/agents` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the rule belongs upstream first.
 
 ## Supported tokens
 
