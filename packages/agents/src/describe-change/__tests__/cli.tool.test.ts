@@ -1237,6 +1237,8 @@ describe('resolve-merge', () => {
           title: 'Add the parser',
           consolidated_record: { scope: 'agents', type: 'feat', breaking: false },
           overrides: {},
+          entries_commit: null,
+          entries: [],
         },
         commits: { scope: 'agents', type: 'feat', breaking: false },
         labels: { scope: null, type: 'docs', breaking: false },
