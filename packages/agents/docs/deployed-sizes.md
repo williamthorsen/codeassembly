@@ -1,6 +1,6 @@
 # Deployed sizes
 
-Every live `sync` measures what it and `install` deployed and appends a snapshot to a machine-local record. The `sizes` command reads that record and ranks the deployment's documents.
+Every live `sync` measures what it and `install` deployed and appends a snapshot to a machine-local record. A `streamline-guidance` run appends a review marker to the same record. The `sizes` command reads the record and ranks the deployment's documents.
 
 ## Where the record lives
 
@@ -15,11 +15,11 @@ The record is a JSONL file under `~/.codeassembly/deployed-sizes/`, one per doma
 
 The record lives outside every repository so that it does not become a commit candidate in each consumer repo, and so that a home-domain deployment records separately from a repo-domain one. Nothing else reads or writes it, and deleting it discards the history alone: The next sync starts a new one.
 
-The record is capped. Every reader loads it whole, so an append that carries the file past 8 MiB rewrites it with its 200 most recent snapshots and drops the rest. The cap is what keeps a year of appends from becoming a file that every sync and every `sizes` invocation reads end to end.
+The record is capped. Every reader loads it whole, so an append that carries the file past 8 MiB rewrites it with its 200 most recent lines and drops the rest. The cap is what keeps a year of appends from becoming a file that every sync and every `sizes` invocation reads end to end. Retention counts lines of either kind, so a record that prunes often loses its older review markers along with its older snapshots.
 
 ## What a line states
 
-Each line is one complete size vector rather than a change, because the deltas that a report derives compare complete states.
+The record holds two line kinds, which `kind` discriminates: a `snapshot`, and the `review` marker described below. Each snapshot is one complete size vector rather than a change, because the deltas that a report derives compare complete states.
 
 ```json
 {
@@ -43,7 +43,7 @@ Each line is one complete size vector rather than a change, because the deltas t
 }
 ```
 
-`kind` discriminates the line. A reader returns the last line whose `kind` is `snapshot` and reads past anything else, so a later marker written into the same record does not disturb it. A malformed or truncated final line is skipped the same way: The record is machine-local telemetry, and losing one line must not fail a deployment or a report.
+A reader of snapshots returns the last line whose `kind` is `snapshot` and reads past anything else, so a review marker in the same record does not disturb it. A malformed or truncated final line is skipped the same way: The record is machine-local telemetry, and losing one line must not fail a deployment or a report.
 
 `version` and `sourceCommit` name the build that deployed and the commit that its source sat on, matching what `home-provenance.json` stamps. A published install is not a git tree and states no `sourceCommit`.
 
@@ -67,6 +67,27 @@ A key is `{kind}:{source}/{relPath}`, where `{source}` names the declared source
 The block is optional at schema version 1. Absent means that nothing was measured, which is what a line written before the block existed states; empty means that the measurement ran and found none. Bumping the schema version instead would make every earlier line unreadable, and every document would be re-reported once.
 
 The measurement builds one include graph per distinct content root and reuses it across that root's documents, since a graph walks every `.md` beneath its root. A root whose graph cannot be built contributes no unit and fails nothing.
+
+## The review marker
+
+A `streamline-guidance` run appends one marker naming every document that it read, whether or not it applied a cut.
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "review",
+  "recordedAt": "2026-09-19T08:48:11.489Z",
+  "reviewed": ["skills/plan/SKILL.md", "_partials/plain-speech.md"]
+}
+```
+
+`reviewed` names each document by its path relative to the content root that holds it, written with forward slashes on every platform, and carries no source name. A source's name comes from the consumer's declaration rather than from the content root, so the same content root is `library` in the home record and a named source in a project record.
+
+The run writes the same marker to the repository's record and to the home record. A marker names what it reviewed, so one landing in a record whose snapshots hold none of those documents matches nothing, which is what makes writing to both safe. A global marker was rejected: A run that reads two files would reset the baseline for every document in the record.
+
+The marker's own schema version is separate from the snapshot's, since the two line kinds share a record and evolve independently.
+
+Snapshots store nothing new to support the marker. A source key on every document entry would be the obvious join, and it was rejected: It measured 5,430 bytes against a 13,268-byte snapshot line, to support a join that runs only at report time and only over documents that the current deployment already describes.
 
 ## What is measured
 
@@ -117,6 +138,10 @@ Deployed sizes:
     +512 B  claude/skills/consult-style/SKILL.md  (added, 512 B)
   -8.1 KiB  claude/skills/retired/SKILL.md  (removed)
 
+Grown since last streamlined:
+  +2.0 KiB  claude/skills/plan/SKILL.md  (reviewed 2026-09-01)
+    +512 B  claude/skills/wrap-up/SKILL.md  (reviewed 2026-08-12)
+
 Always loaded:  16.1 KiB
   ambient regions:       13.4 KiB
   skill descriptions:    2.7 KiB
@@ -152,6 +177,16 @@ Two further cases leave bytes in the residual rather than in the unit's line, an
 The growth warning keeps reading a document whole rather than its residual. A crossing is about what a session loads, not about who caused it.
 
 A deployment whose vector is unchanged states the aggregates and the closing line alone. One for which the record holds no previous snapshot states, beneath the header, that it is the first recorded deployment here.
+
+### The drift block
+
+The drift block answers a different question from the change list: how far each document has grown since the streamlining review that last read it, which a deployment that moved nothing still reports. A second column on the change rows was rejected: A document that drifted but that this deployment did not move has no change row, and that document is the block's subject.
+
+Per document, the newest marker naming it wins, and the baseline is the snapshot standing at or before that marker. The join runs at report time through the current deployment's authored provenance: each deployed document's authored file relative to its content root, which is how a marker names what it read. A deployed file that renders from no single authored document takes no row, as an asset, a delivered support entry, and a manifest-contributed file do.
+
+Growth alone is reported. A document at or below the bytes it held at its review has not drifted, and one whose newest marker has no surviving snapshot at or before it has no baseline to measure against. That second case is what a pruned record leaves behind, and it is silent: The document simply stops reporting drift.
+
+The rows are ranked by growth, largest first, and capped at 20. Documents past the cap are stated as a tail count rather than dropped. No grown document means no block and no heading, and a record carrying no marker reports the delta since the previous snapshot alone.
 
 ### The growth warning
 
