@@ -3,9 +3,15 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
 import { buildSizeReport, type SizeReport } from '../../deployed-sizes/build-size-report.ts';
 import { measureDeployment } from '../../deployed-sizes/measure-deployment.ts';
-import { readRecordLines, selectLatestSnapshot } from '../../deployed-sizes/read-record.ts';
+import {
+  findSnapshotAtOrBefore,
+  listReviewMarkers,
+  readRecordLines,
+  selectLatestSnapshot,
+} from '../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
 import { resolveRepoRoot } from '../../deployed-sizes/resolve-repo-root.ts';
+import type { ReviewBaseline } from '../../deployed-sizes/review-drift.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../../deployed-sizes/schema.ts';
 import { shouldAppend } from '../../deployed-sizes/should-append.ts';
 import type { SizeSnapshot } from '../../deployed-sizes/types.ts';
@@ -59,7 +65,8 @@ export async function recordDeployedSizes(input: {
     // is the one the gate must judge and its repository the one whose artifacts the reader can edit; the home
     // domain's comes from the running package, so both answers are that package's tree.
     const sourceRoot = domain.ambient === 'harness-home' ? packageRoot : domain.baseDir;
-    const report = buildSizeReport({ measured, previous, set, repoRoot: await resolveRepoRoot(sourceRoot) });
+    const reviews = resolveReviewBaselines(lines);
+    const report = buildSizeReport({ measured, previous, reviews, set, repoRoot: await resolveRepoRoot(sourceRoot) });
 
     if (await shouldAppend({ measured, previous, sourceRoot })) {
       const sourceCommit = await readSourceCommit(packageRoot);
@@ -80,3 +87,27 @@ export async function recordDeployedSizes(input: {
     return { kind: 'failed', message: describeError(error) };
   }
 }
+
+// region | Helpers
+
+/**
+ * Pairs each review marker the record holds with the snapshot standing at or before it, dropping a marker whose
+ * baseline the record no longer holds. Each distinct instant is resolved once, since a run's two markers into one
+ * record share a timestamp.
+ */
+function resolveReviewBaselines(lines: ReadonlyArray<string>): ReadonlyArray<ReviewBaseline> {
+  const baselines = new Map<string, SizeSnapshot | undefined>();
+  const reviews: Array<ReviewBaseline> = [];
+  for (const marker of listReviewMarkers(lines)) {
+    if (!baselines.has(marker.recordedAt)) {
+      baselines.set(marker.recordedAt, findSnapshotAtOrBefore(lines, marker.recordedAt));
+    }
+    const snapshot = baselines.get(marker.recordedAt);
+    if (snapshot !== undefined) {
+      reviews.push({ recordedAt: marker.recordedAt, reviewed: marker.reviewed, files: snapshot.files });
+    }
+  }
+  return reviews;
+}
+
+// endregion | Helpers

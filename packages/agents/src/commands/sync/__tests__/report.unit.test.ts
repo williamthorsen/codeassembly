@@ -42,6 +42,7 @@ function withSizes(report: Partial<SizeReport>): SyncOutcome {
     report: {
       changes: [],
       warnings: [],
+      drift: { rows: [], omittedCount: 0 },
       aggregates: zeroAggregates(),
       documentCount: 0,
       isFirstRecorded: false,

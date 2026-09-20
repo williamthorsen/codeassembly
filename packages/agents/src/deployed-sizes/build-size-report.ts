@@ -2,6 +2,7 @@ import path from 'node:path';
 
 import type { DeployedPathSet } from '../commands/sync/collect-deployed-paths.ts';
 import type { DeploymentMeasurement } from './measure-deployment.ts';
+import { buildReviewDrift, type ReviewBaseline, type ReviewDrift } from './review-drift.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from './types.ts';
 
 /** Size at or above which a document that has just grown past it draws a warning. */
@@ -67,6 +68,8 @@ export interface GrowthWarning {
 export interface SizeReport {
   readonly changes: ReadonlyArray<SizeChange>;
   readonly warnings: ReadonlyArray<GrowthWarning>;
+  /** Documents that have grown since the streamlining review that last read each. */
+  readonly drift: ReviewDrift;
   readonly aggregates: SizeAggregates;
   readonly documentCount: number;
   /** Whether the record held no previous snapshot, which leaves this deployment with nothing to compare against. */
@@ -93,16 +96,20 @@ export interface SizeReport {
  * once per record. A first recorded deployment has no crossing to observe, and warns not at all rather than warning
  * on every document that is already large.
  *
+ * The drift block answers a different question from the changes: how far each document has grown since the review
+ * that last read it, which a deployment that moved nothing still reports.
+ *
  * Pure, and takes no I/O: `repoRoot` and each file's `sourceRoot` are canonical paths that the caller resolved, so
  * containment here is lexical.
  */
 export function buildSizeReport(input: {
   measured: DeploymentMeasurement;
   previous: SizeSnapshot | undefined;
+  reviews: ReadonlyArray<ReviewBaseline>;
   set: DeployedPathSet;
   repoRoot: string | undefined;
 }): SizeReport {
-  const { measured, previous, set, repoRoot } = input;
+  const { measured, previous, reviews, set, repoRoot } = input;
   const current = selectDocuments(measured.files);
   const before = selectDocuments(previous?.files ?? {});
   const isFirstRecorded = previous === undefined;
@@ -134,6 +141,7 @@ export function buildSizeReport(input: {
   return {
     changes: changes.toSorted(compareChanges),
     warnings: warnings.toSorted((left, right) => right.bytes - left.bytes || left.key.localeCompare(right.key)),
+    drift: buildReviewDrift({ current, files: set.files, reviews }),
     aggregates: measured.aggregates,
     documentCount: current.size,
     isFirstRecorded,
