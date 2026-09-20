@@ -55,6 +55,7 @@ export type ParsedArgs =
   | { block: ChangeRecordBlock; subcommand: 'render-block' }
   | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
   | { overrides: RecordOverrides; record: ChangeRecord; subcommand: 'resolve-effective-record' }
+  | { paths: string[]; subcommand: 'resolve-scopes' }
   | { record: ChangeRecord; subcommand: 'render-titles' }
   | { subcommand: 'parse-title'; subject: string; surface: Surface }
   | { subcommand: 'resolve-ticket-type'; ticketLabels: string[] };
@@ -97,6 +98,12 @@ export interface ResolveMergeArgs {
   prTitle: string;
   /** The ticket reference to be used when the pull-request title does not contain one. */
   ticketRef?: string;
+}
+
+/** Every given path's scope and the union of those scopes, under the keys that the JSON output names. */
+export interface ResolveScopesOutcome {
+  path_scopes: Record<string, string>;
+  scopes: string[];
 }
 
 /** One subcommand of the helper. */

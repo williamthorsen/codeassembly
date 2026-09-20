@@ -26,6 +26,7 @@ import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readLabelMap, resolveLabeledRecord } from './read-label-map.ts';
 import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOutcome } from './resolve-merge.ts';
+import { discoverWorkspaceDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
 import {
   type ConsolidateBranchOutcome,
@@ -36,6 +37,7 @@ import {
   type RenderedTitles,
   type ResolveEffectiveRecordOutcome,
   type ResolveMergeArgs,
+  type ResolveScopesOutcome,
   type Subcommand,
   type Surface,
   SURFACES,
@@ -90,6 +92,7 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
     ],
     read: readResolveMergeArgs,
   },
+  'resolve-scopes': { flags: [{ name: 'path', takesValue: true }], read: readResolveScopesArgs },
 };
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -158,6 +161,8 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
       return runResolveEffectiveRecord(args, input);
     case 'resolve-merge':
       return runResolveMerge(args.merge, input);
+    case 'resolve-scopes':
+      return runResolveScopes(args.paths, input);
     case 'resolve-ticket-type':
       return runResolveTicketType(args.ticketLabels, input);
   }
@@ -180,6 +185,7 @@ export interface DescribeResult {
     | RenderedTitles
     | ResolveEffectiveRecordOutcome
     | ResolveMergeOutcome
+    | ResolveScopesOutcome
     | TicketTypeOutcome;
   warnings: string[];
 }
@@ -434,6 +440,12 @@ function readResolveMergeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   return { merge, subcommand: 'resolve-merge' };
 }
 
+/** Reads the `resolve-scopes` invocation: every path whose scope the run resolves. */
+function readResolveScopesArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return { paths: readRepeatedValues(flags, 'path'), subcommand: 'resolve-scopes' };
+}
+
 /** Reads the `resolve-ticket-type` invocation: every label on the ticket. */
 function readResolveTicketTypeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
@@ -621,6 +633,17 @@ async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Pr
     ...(args.ticketRef !== undefined && { ticketRef: args.ticketRef }),
   });
   return { output, warnings };
+}
+
+/**
+ * Resolves each given path's scope from the repository's workspace layout. The run is anchored at the repository root,
+ * so a path is read the same way whatever subdirectory the caller invoked it from.
+ */
+async function runResolveScopes(paths: readonly string[], input: DescribeInput): Promise<DescribeResult> {
+  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+  const workspaceDirs = await discoverWorkspaceDirs(projectRoot);
+  const { pathScopes, scopes } = resolveScopes({ paths, projectRoot, workspaceDirs });
+  return { output: { path_scopes: pathScopes, scopes }, warnings: warning === undefined ? [] : [warning] };
 }
 
 /** Resolves the work type that the ticket's labels name through the repository's label map. */

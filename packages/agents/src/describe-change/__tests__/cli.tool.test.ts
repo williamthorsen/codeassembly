@@ -42,6 +42,7 @@ const SUBCOMMAND_NAMES = [
   'resolve-effective-record',
   'render-block',
   'resolve-merge',
+  'resolve-scopes',
 ];
 
 describe('subcommand dispatch', () => {
@@ -470,6 +471,78 @@ describe('consolidate-branch', () => {
     await expect(runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir, home })).rejects.toThrow(
       /consolidate-branch ranks types against the taxonomy/,
     );
+  });
+});
+
+describe('resolve-scopes', () => {
+  it('reads every path', () => {
+    expect(parseArgs(['resolve-scopes', '--path', 'packages/kb/a.ts', '--path', 'AGENTS.md'])).toEqual({
+      paths: ['packages/kb/a.ts', 'AGENTS.md'],
+      subcommand: 'resolve-scopes',
+    });
+  });
+
+  it('reads an invocation with no path', () => {
+    expect(parseArgs(['resolve-scopes'])).toEqual({ paths: [], subcommand: 'resolve-scopes' });
+  });
+
+  it('refuses --base, which consolidate-branch takes', () => {
+    expect(() => parseArgs(['resolve-scopes', '--base', 'main'])).toThrow('unknown flag: --base');
+  });
+
+  it('refuses a positional argument', () => {
+    expect(() => parseArgs(['resolve-scopes', 'packages/kb/a.ts'])).toThrow('unexpected argument: packages/kb/a.ts');
+  });
+
+  it('reports each path’s scope and the union of those scopes', async () => {
+    const { cwd, home } = await makeWorkspaceRepo();
+
+    const argv = ['resolve-scopes', '--path', 'packages/kb/src/index.ts', '--path', 'AGENTS.md'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({
+      path_scopes: { 'packages/kb/src/index.ts': 'kb', 'AGENTS.md': 'root' },
+      scopes: ['kb', 'root'],
+    });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('reads the workspace layout from the repository root rather than the invoking directory', async () => {
+    const { cwd, home } = await makeWorkspaceRepo();
+    const nested = join(cwd, 'packages', 'agents');
+
+    const argv = ['resolve-scopes', '--path', 'packages/kb/src/index.ts'];
+    const { output } = await runDescribe({ argv, cwd: nested, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ path_scopes: { 'packages/kb/src/index.ts': 'kb' }, scopes: ['kb'] });
+  });
+
+  it('resolves every path to root when the repository declares no workspaces', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    const argv = ['resolve-scopes', '--path', 'packages/kb/src/index.ts'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ path_scopes: { 'packages/kb/src/index.ts': 'root' }, scopes: ['root'] });
+  });
+
+  it('reports no scopes when given no path', async () => {
+    const { cwd, home } = await makeWorkspaceRepo();
+
+    const { output } = await runDescribe({ argv: ['resolve-scopes'], cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ path_scopes: {}, scopes: [] });
+  });
+
+  it('warns and anchors at the invoking directory when git resolves no repository root', async () => {
+    const cwd = await mkdtemp(join(tmpdir(), 'describe-change-bare-'));
+    const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
+
+    const argv = ['resolve-scopes', '--path', 'AGENTS.md'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ path_scopes: { 'AGENTS.md': 'root' }, scopes: ['root'] });
+    expect(warnings[0]).toMatch(/^git could not resolve the repository root/);
   });
 });
 
@@ -1085,6 +1158,22 @@ async function makeRepo(content: string): Promise<{ cwd: string; home: string }>
   await execFileAsync('git', ['-C', cwd, 'init', '--quiet']);
   await writeAgentsPreferences(cwd, content);
   const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
+  return { cwd, home };
+}
+
+/**
+ * Creates a throwaway repository declaring `packages/*` as its workspaces, with `packages/agents` and `packages/kb`
+ * holding a manifest and `packages/scripts` holding none.
+ */
+async function makeWorkspaceRepo(): Promise<{ cwd: string; home: string }> {
+  const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+  for (const dir of ['packages/agents', 'packages/kb', 'packages/scripts']) {
+    await mkdir(join(cwd, dir), { recursive: true });
+  }
+  for (const dir of ['packages/agents', 'packages/kb']) {
+    await writeFile(join(cwd, dir, 'package.json'), '{}', 'utf8');
+  }
+  await writeFile(join(cwd, 'pnpm-workspace.yaml'), "packages:\n  - 'packages/*'\n", 'utf8');
   return { cwd, home };
 }
 
