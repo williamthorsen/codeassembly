@@ -62,7 +62,8 @@ export function buildReviewDrift(input: {
   const newestReview = new Map<string, ReviewBaseline>();
   for (const review of reviews) {
     for (const reviewed of review.reviewed) {
-      for (const key of keysByAuthored.get(reviewed) ?? []) {
+      const keys = keysByAuthored.get(reviewed) ?? [];
+      for (const key of keys) {
         const held = newestReview.get(key);
         if (held === undefined || toInstant(held.recordedAt) <= toInstant(review.recordedAt)) {
           newestReview.set(key, review);

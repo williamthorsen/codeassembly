@@ -18,7 +18,7 @@ export function findSnapshotAtOrBefore(lines: ReadonlyArray<string>, instant: st
   }
   for (let i = lines.length - 1; i >= 0; i--) {
     const snapshot = parseLine(lines[i], parseSnapshotLine);
-    const recordedAt = snapshot === undefined ? Number.NaN : Date.parse(snapshot.recordedAt);
+    const recordedAt = snapshot === undefined ? NaN : Date.parse(snapshot.recordedAt);
     if (!Number.isNaN(recordedAt) && recordedAt <= limit) {
       return snapshot;
     }

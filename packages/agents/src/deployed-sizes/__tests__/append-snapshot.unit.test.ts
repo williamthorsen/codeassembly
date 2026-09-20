@@ -79,7 +79,7 @@ describe(appendReviewMarker, () => {
   it('writes a marker that a reader of snapshots skips', async () => {
     await appendReviewMarker(recordPath, buildMarker(['skills/plan/SKILL.md']));
 
-    const [line] = (await readFile(recordPath, 'utf8')).split('\n');
+    const [line] = (await readFile(recordPath, 'utf8')).split('\n', 1);
 
     expect(parseSnapshotLine(line ?? '')).toBeUndefined();
   });
