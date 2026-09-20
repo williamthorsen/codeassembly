@@ -910,7 +910,7 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. Correct one that got its own subject wrong; never edit one toward what has happened since, whether a later human edit to the remote to which it was published, a rebase that leaves `baseSha` and `commit` unresolvable, or a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-The `pull-request` and `merge` records carry a marker that states this in the file rather than only in standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. No other artifact carries one.
+The `pull-request` and `merge` records carry a marker naming that damage in the file rather than leaving it to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. No other artifact carries one.
 
 A flow still composing its own artifact has reached nothing downstream of it: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` is not a record at all, being the planning loop's working state.
 
