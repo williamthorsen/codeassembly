@@ -178,10 +178,13 @@ Both are optional, and each is recorded as an override beside the consolidated r
       --override-type "{override_type}" \
       --override-breaking \
       --entries-file "$entries_path" \
-      --entries-commit "{the short SHA from step 7}"
+      --entries-commit "{the short SHA from step 7}" \
+      | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
     ```
 
-    Pass the step-7 consolidated record through `--scope`, `--type`, and `--breaking`, never the effective record: The block records the consolidation and the overrides separately, and `resolve-merge` applies the overrides itself. Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`. [`render-block`](../_data/title-templates.md#render-block) states the output; take `block` from it and write it verbatim below `## Details`, separated by one blank line.
+    Pass the step-7 consolidated record through `--scope`, `--type`, and `--breaking`, never the effective record: The block records the consolidation and the overrides separately, and `resolve-merge` applies the overrides itself. Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`.
+
+    [`render-block`](../_data/title-templates.md#render-block) states the output, which is JSON; the last command decodes it and prints the `block` field. Render and decode in one Bash invocation, and write the printed block verbatim below `## Details`, separated by one blank line. Never copy the block out of the raw JSON: `text` is arbitrary prose, and JSON escapes its quotes and backslashes a second time.
 
     `create-pr` carries this block into the pull-request body rather than rendering one of its own, so a body saved without one reaches the pull request without one. If the helper is unavailable or the call fails, relay its error, say that the summary carries no block, and save the body without one.
 
