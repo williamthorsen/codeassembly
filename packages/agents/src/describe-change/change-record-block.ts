@@ -47,8 +47,8 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
  *
  * The consolidated record and the overrides are normalized as the engine normalizes any record. A field that the
  * branch did not determine is absent rather than empty, a marker spelled on a type splits into the type and `breaking`,
- * and `breaking` appears only when it is true. Each group is omitted when it is empty, as are the entries and their
- * derivation commit.
+ * and `breaking` appears only when it is true. Each group is omitted when it is empty, as are the entries. The
+ * derivation commit appears only beside entries, since it records a claim about them.
  *
  * The scalars precede the entry list, so the bulky list does not separate them from each other.
  */
@@ -61,8 +61,10 @@ export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
     title: block.title.trim(),
     ...(Object.keys(consolidatedRecord).length > 0 && { consolidated_record: consolidatedRecord }),
     ...(Object.keys(overrides).length > 0 && { overrides }),
-    ...(entriesCommit !== undefined && entriesCommit !== '' && { entries_commit: entriesCommit }),
-    ...(entries.length > 0 && { entries: entries.map(toEntryPayload) }),
+    ...(entries.length > 0 && {
+      ...(entriesCommit !== undefined && entriesCommit !== '' && { entries_commit: entriesCommit }),
+      entries: entries.map(toEntryPayload),
+    }),
   };
   return `${FENCE}${INFO_STRING}\n${stringifyYaml(payload)}${FENCE}`;
 }

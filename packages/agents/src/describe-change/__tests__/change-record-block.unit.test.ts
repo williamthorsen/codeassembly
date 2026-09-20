@@ -327,6 +327,12 @@ describe(renderChangeRecordBlock, () => {
     expect(readBlock(rendered)).toStrictEqual({ title: 'Add foo' });
   });
 
+  it('omits the derivation commit when the block records no entries', () => {
+    const rendered = renderChangeRecordBlock({ entries: [], entriesCommit: 'e5029924', title: 'Add foo' });
+
+    expect(readBlock(rendered)).toStrictEqual({ title: 'Add foo' });
+  });
+
   it('quotes a title containing the colon that would otherwise open a mapping', () => {
     const title = 'Add a parser: the reader, the writer, and the verifier';
     const rendered = renderChangeRecordBlock({ title });
