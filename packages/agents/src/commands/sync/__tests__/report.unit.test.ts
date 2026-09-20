@@ -42,6 +42,7 @@ function withSizes(report: Partial<SizeReport>): SyncOutcome {
     report: {
       changes: [],
       warnings: [],
+      drift: { rows: [], omittedCount: 0 },
       aggregates: zeroAggregates(),
       documentCount: 0,
       isFirstRecorded: false,
@@ -493,6 +494,72 @@ describe('deployed sizes', () => {
     expect(lines.filter((line) => line.level === 'warn').map((line) => line.text)).toEqual([
       '⚠️ a.md has passed the 5.0 KiB growth ceiling (5.0 KiB).',
     ]);
+  });
+
+  it("lists each document that has grown since the review that last read it, with that review's date", () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          drift: {
+            rows: [
+              {
+                key: 'claude/skills/plan/SKILL.md',
+                bytes: 12_698,
+                growth: 2_048,
+                reviewedAt: '2026-09-01T08:00:00.000Z',
+              },
+              {
+                key: 'claude/skills/wrap-up/SKILL.md',
+                bytes: 4_096,
+                growth: 512,
+                reviewedAt: '2026-08-12T08:00:00.000Z',
+              },
+            ],
+            omittedCount: 0,
+          },
+        }),
+      ),
+    );
+
+    expect(output).toContain('Grown since last streamlined:');
+    expect(output).toContain('+2.0 KiB  claude/skills/plan/SKILL.md  (reviewed 2026-09-01)');
+    expect(output).toContain('+512 B  claude/skills/wrap-up/SKILL.md  (reviewed 2026-08-12)');
+  });
+
+  it('counts one grown document past the cap in the singular', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          drift: {
+            rows: [{ key: 'a.md', bytes: 2_048, growth: 1_024, reviewedAt: '2026-09-01T08:00:00.000Z' }],
+            omittedCount: 1,
+          },
+        }),
+      ),
+    );
+
+    expect(output).toContain('and 1 more document grown since its review');
+  });
+
+  it('counts the grown documents past the cap rather than listing them', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          drift: {
+            rows: [{ key: 'a.md', bytes: 2_048, growth: 1_024, reviewedAt: '2026-09-01T08:00:00.000Z' }],
+            omittedCount: 3,
+          },
+        }),
+      ),
+    );
+
+    expect(output).toContain('and 3 more documents grown since their review');
+  });
+
+  it('prints no drift block when nothing has grown since its review', () => {
+    const output = textOf(renderSyncReport(withSizes({})));
+
+    expect(output).not.toContain('Grown since last streamlined:');
   });
 
   it('states one warning and nothing else when the pass failed', () => {

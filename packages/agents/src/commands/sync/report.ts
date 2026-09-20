@@ -11,6 +11,7 @@ import {
 } from '../../deployed-sizes/build-size-report.ts';
 import { formatBytes, formatDelta } from '../../deployed-sizes/format-bytes.ts';
 import { renderAggregates } from '../../deployed-sizes/render-aggregates.ts';
+import type { ReviewDrift } from '../../deployed-sizes/review-drift.ts';
 import type { ArtifactType } from '../../lib/artifact-types.ts';
 import { describeMissingSource } from '../../lib/declared-sources.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
@@ -447,6 +448,33 @@ function describeRetirement(retirement: Retirement, performed: boolean): ReportL
   };
 }
 
+/**
+ * The block naming every document that has grown since the streamlining review that last read it, ranked by growth.
+ * A document counts from its own review, so each row states the date that its growth is measured from. No grown
+ * document means no block and no heading.
+ */
+function describeReviewDrift(drift: ReviewDrift): ReadonlyArray<ReportLine> {
+  if (drift.rows.length === 0) {
+    return [];
+  }
+  const growthWidth = Math.max(...drift.rows.map((row) => formatDelta(row.growth).length));
+  const lines: Array<ReportLine> = [
+    { level: 'info', text: '' },
+    { level: 'info', text: 'Grown since last streamlined:' },
+    ...drift.rows.map((row): ReportLine => {
+      const growth = formatDelta(row.growth).padStart(growthWidth);
+      return { level: 'info', text: `  ${growth}  ${row.key}  (reviewed ${toReviewDate(row.reviewedAt)})` };
+    }),
+  ];
+  const omitted = drift.omittedCount;
+  if (omitted > 0) {
+    const plural = omitted === 1 ? '' : 's';
+    const possessive = omitted === 1 ? 'its' : 'their';
+    lines.push({ level: 'info', text: `  and ${omitted} more document${plural} grown since ${possessive} review` });
+  }
+  return lines;
+}
+
 /** One change's line: the bytes that it accounts for, the name that it is reported under, and its own detail. */
 function describeSizeChangeLine(change: SizeChange, deltaWidth: number, name: string, detail: string): ReportLine {
   const accounted = formatDelta(countAccountedBytes(change)).padStart(deltaWidth);
@@ -570,6 +598,7 @@ function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
         : describeDocumentChange(change, deltaWidth),
     ),
     ...report.warnings.map(describeGrowthWarning),
+    ...describeReviewDrift(report.drift),
     { level: 'info', text: '' },
     ...renderAggregates(report.aggregates, report.documentCount),
     { level: 'info', text: '' },
@@ -582,6 +611,11 @@ function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
 function stripKeyKind(key: string): string {
   const separator = key.indexOf(':');
   return separator === -1 ? key : key.slice(separator + 1);
+}
+
+/** The calendar date of a review, which is the resolution a reader of a drift row acts on. */
+function toReviewDate(recordedAt: string): string {
+  return recordedAt.slice(0, 10);
 }
 
 // endregion | Helpers

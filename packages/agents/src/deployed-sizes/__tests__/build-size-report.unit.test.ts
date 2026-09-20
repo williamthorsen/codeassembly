@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 import type { DeployedPath, DeployedPathSet } from '../../commands/sync/collect-deployed-paths.ts';
 import { buildSizeReport, GROWTH_CEILING_BYTES, type SizeReport } from '../build-size-report.ts';
 import type { DeploymentMeasurement } from '../measure-deployment.ts';
+import type { ReviewBaseline } from '../review-drift.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from '../types.ts';
 
@@ -59,6 +60,7 @@ describe(buildSizeReport, () => {
     const report = buildSizeReport({
       measured: measurement({ 'claude/skills/plan/run.mjs': { bytes: 900_000, kind: 'asset' } }),
       previous: snapshot({ 'claude/skills/plan/run.mjs': { bytes: 10, kind: 'asset' } }),
+      reviews: [],
       set: { files: [], ambientHostPaths: [] },
       repoRoot: undefined,
     });
@@ -110,10 +112,36 @@ describe(buildSizeReport, () => {
     expect(report.warnings).toEqual([]);
   });
 
+  it('reports drift for a document that this deployment left unchanged', () => {
+    const key = 'claude/skills/plan/SKILL.md';
+    const authored = {
+      file: path.join(IN_REPO_SOURCE, 'skills', 'plan', 'SKILL.md'),
+      contentRoot: IN_REPO_SOURCE,
+      sourceName: undefined,
+    };
+    const report = buildSizeReport({
+      measured: measurement({ [key]: { bytes: 3_000, kind: 'document' } }),
+      previous: snapshot({ [key]: { bytes: 3_000, kind: 'document' } }),
+      reviews: [
+        {
+          recordedAt: '2026-09-01T00:00:00.000Z',
+          reviewed: ['skills/plan/SKILL.md'],
+          files: { [key]: { bytes: 2_000, kind: 'document' } },
+        },
+      ],
+      set: { files: [{ ...collected(key, IN_REPO_SOURCE), authored }], ambientHostPaths: [] },
+      repoRoot: REPO_ROOT,
+    });
+
+    expect(report.changes).toEqual([]);
+    expect(report.drift.rows).toEqual([{ key, bytes: 3_000, growth: 1_000, reviewedAt: '2026-09-01T00:00:00.000Z' }]);
+  });
+
   it('raises no warning at all on a first recorded deployment, which has no crossing to observe', () => {
     const report = buildSizeReport({
       measured: measurement({ 'a.md': { bytes: AT_CEILING * 10, kind: 'document' } }),
       previous: undefined,
+      reviews: [],
       set: { files: [collected('a.md', IN_REPO_SOURCE)], ambientHostPaths: [] },
       repoRoot: REPO_ROOT,
     });
@@ -326,6 +354,7 @@ describe(buildSizeReport, () => {
         aggregates: aggregates({ onInvocation: 10, assets: 20 }),
       },
       previous: undefined,
+      reviews: [],
       set: { files: [], ambientHostPaths: [] },
       repoRoot: undefined,
     });
@@ -359,6 +388,7 @@ function build(input: {
   previousExpansions?: Record<string, ExpansionUnit> | undefined;
   documentExpansions?: Record<string, ReadonlyArray<string>>;
   statesNoPreviousExpansions?: boolean;
+  reviews?: ReadonlyArray<ReviewBaseline>;
   sourceRoot?: string | undefined;
   repoRoot?: string | undefined;
 }): SizeReport {
@@ -379,6 +409,7 @@ function build(input: {
       input.statesNoPreviousExpansions === true
         ? previous
         : { ...previous, expansions: input.previousExpansions ?? {} },
+    reviews: input.reviews ?? [],
     set,
     repoRoot: input.repoRoot,
   });

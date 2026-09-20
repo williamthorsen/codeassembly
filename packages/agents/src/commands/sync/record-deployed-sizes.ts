@@ -3,9 +3,16 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
 import { buildSizeReport, type SizeReport } from '../../deployed-sizes/build-size-report.ts';
 import { measureDeployment } from '../../deployed-sizes/measure-deployment.ts';
-import { readLatestSnapshot } from '../../deployed-sizes/read-record.ts';
+import {
+  findSnapshotAfter,
+  findSnapshotAtOrBefore,
+  listReviewMarkers,
+  readRecordLines,
+  selectLatestSnapshot,
+} from '../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
 import { resolveRepoRoot } from '../../deployed-sizes/resolve-repo-root.ts';
+import type { ReviewBaseline } from '../../deployed-sizes/review-drift.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../../deployed-sizes/schema.ts';
 import { shouldAppend } from '../../deployed-sizes/should-append.ts';
 import type { SizeSnapshot } from '../../deployed-sizes/types.ts';
@@ -53,12 +60,14 @@ export async function recordDeployedSizes(input: {
     );
     const set = await collectDeployedPaths(plan, domain, homeDir, resolveSourceRoot);
     const measured = await measureDeployment(set);
-    const previous = await readLatestSnapshot(recordPath);
+    const lines = await readRecordLines(recordPath);
+    const previous = selectLatestSnapshot(lines);
     // The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch
     // is the one the gate must judge and its repository the one whose artifacts the reader can edit; the home
     // domain's comes from the running package, so both answers are that package's tree.
     const sourceRoot = domain.ambient === 'harness-home' ? packageRoot : domain.baseDir;
-    const report = buildSizeReport({ measured, previous, set, repoRoot: await resolveRepoRoot(sourceRoot) });
+    const reviews = resolveReviewBaselines(lines);
+    const report = buildSizeReport({ measured, previous, reviews, set, repoRoot: await resolveRepoRoot(sourceRoot) });
 
     if (await shouldAppend({ measured, previous, sourceRoot })) {
       const sourceCommit = await readSourceCommit(packageRoot);
@@ -78,4 +87,32 @@ export async function recordDeployedSizes(input: {
   } catch (error: unknown) {
     return { kind: 'failed', message: describeError(error) };
   }
+}
+
+/**
+ * Pairs each review marker the record holds with its baseline snapshot, dropping a marker whose baseline the record
+ * no longer holds. Each distinct instant is resolved once, since a run's two markers into one record share a
+ * timestamp.
+ *
+ * The first snapshot recorded after the marker is preferred, because it states the size that the review left the
+ * document at; measuring from the snapshot before the marker would count the review's own reduction as headroom and
+ * hide a regrowth of that size. A marker with no later snapshot falls back to the one standing at or before it,
+ * which is the state a freshly-marked document is in until the next deployment records it.
+ *
+ * @internal - Exported to allow testing.
+ */
+export function resolveReviewBaselines(lines: ReadonlyArray<string>): ReadonlyArray<ReviewBaseline> {
+  const baselines = new Map<string, SizeSnapshot | undefined>();
+  const reviews: Array<ReviewBaseline> = [];
+  for (const marker of listReviewMarkers(lines)) {
+    if (!baselines.has(marker.recordedAt)) {
+      const after = findSnapshotAfter(lines, marker.recordedAt);
+      baselines.set(marker.recordedAt, after ?? findSnapshotAtOrBefore(lines, marker.recordedAt));
+    }
+    const snapshot = baselines.get(marker.recordedAt);
+    if (snapshot !== undefined) {
+      reviews.push({ recordedAt: marker.recordedAt, reviewed: marker.reviewed, files: snapshot.files });
+    }
+  }
+  return reviews;
 }

@@ -1,7 +1,19 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseSnapshotLine, SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
-import type { SizeSnapshot } from '../types.ts';
+import {
+  parseReviewMarkerLine,
+  parseSnapshotLine,
+  REVIEW_MARKER_SCHEMA_VERSION,
+  SNAPSHOT_SCHEMA_VERSION,
+} from '../schema.ts';
+import type { ReviewMarker, SizeSnapshot } from '../types.ts';
+
+const MARKER: ReviewMarker = {
+  schemaVersion: REVIEW_MARKER_SCHEMA_VERSION,
+  kind: 'review',
+  recordedAt: '2026-09-19T08:00:00.000Z',
+  reviewed: ['guidance/rulebooks/anti-patterns.md', 'skills/plan/SKILL.md'],
+};
 
 const SNAPSHOT: SizeSnapshot = {
   schemaVersion: SNAPSHOT_SCHEMA_VERSION,
@@ -17,6 +29,32 @@ const SNAPSHOT: SizeSnapshot = {
     assets: 0,
   },
 };
+
+describe(parseReviewMarkerLine, () => {
+  it('parses a whole marker line', () => {
+    expect(parseReviewMarkerLine(JSON.stringify(MARKER))).toEqual(MARKER);
+  });
+
+  it('parses a marker that names nothing, as a run reading no file in a content root writes', () => {
+    const empty = { ...MARKER, reviewed: [] };
+
+    expect(parseReviewMarkerLine(JSON.stringify(empty))).toEqual(empty);
+  });
+
+  it('rejects a snapshot line', () => {
+    expect(parseReviewMarkerLine(JSON.stringify(SNAPSHOT))).toBeUndefined();
+  });
+
+  it('rejects a truncated line', () => {
+    expect(parseReviewMarkerLine(JSON.stringify(MARKER).slice(0, 20))).toBeUndefined();
+  });
+
+  it('rejects a line written by a later schema version', () => {
+    expect(
+      parseReviewMarkerLine(JSON.stringify({ ...MARKER, schemaVersion: REVIEW_MARKER_SCHEMA_VERSION + 1 })),
+    ).toBeUndefined();
+  });
+});
 
 describe(parseSnapshotLine, () => {
   it('parses a whole snapshot line', () => {

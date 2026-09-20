@@ -2,7 +2,7 @@ import { homedir } from 'node:os';
 import process from 'node:process';
 
 import { formatBytes } from '../deployed-sizes/format-bytes.ts';
-import { readLatestSnapshot } from '../deployed-sizes/read-record.ts';
+import { readRecordLines, selectLatestSnapshot } from '../deployed-sizes/read-record.ts';
 import { renderAggregates } from '../deployed-sizes/render-aggregates.ts';
 import { resolveRecordPath } from '../deployed-sizes/resolve-record-path.ts';
 import type { SizeSnapshot } from '../deployed-sizes/types.ts';
@@ -27,7 +27,7 @@ export async function sizesCommand(
       ? { home: homeDir, domain: 'home' }
       : { home: homeDir, domain: 'repo', repo: await resolveRepo(cwd) },
   );
-  emitReport(renderSizesReport(await readLatestSnapshot(recordPath), options.global));
+  emitReport(renderSizesReport(selectLatestSnapshot(await readRecordLines(recordPath)), options.global));
 }
 
 /**

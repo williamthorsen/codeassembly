@@ -16,6 +16,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { scanFlags } from '../lib/parse-flags.ts';
 import { checkCuts, parseCheckInput } from './check.ts';
+import { markReviewed, parseMarkInput } from './mark.ts';
 import { composeRecord, parseFold, parseRecord, RECORD_PATH, stringifyRecord } from './record.ts';
 import { findRepositoryRoot, NotARepositoryError, resolveGuidance } from './resolve.ts';
 import type {
@@ -24,6 +25,8 @@ import type {
   DeclineFold,
   DeclineRecord,
   HelperFailure,
+  MarkInput,
+  MarkSuccess,
   RecordSuccess,
   ResolveSuccess,
 } from './types.ts';
@@ -77,13 +80,17 @@ export async function runCommand(input: {
   cwd: string;
   home: string;
   readStdin: () => Promise<string>;
-}): Promise<CheckSuccess | HelperFailure | RecordSuccess | ResolveSuccess> {
+}): Promise<CheckSuccess | HelperFailure | MarkSuccess | RecordSuccess | ResolveSuccess> {
   const [command, ...rest] = input.argv;
   switch (command) {
     case 'check':
       return rest.length === 0
         ? runCheck({ cwd: input.cwd, inputJson: await input.readStdin() })
         : rejectArguments('check');
+    case 'mark':
+      return rest.length === 0
+        ? runMark({ cwd: input.cwd, home: input.home, inputJson: await input.readStdin() })
+        : rejectArguments('mark');
     case 'record':
       return rest.length === 0
         ? runRecord({ cwd: input.cwd, foldJson: await input.readStdin() })
@@ -94,9 +101,37 @@ export async function runCommand(input: {
       return {
         ok: false,
         error: 'invalid-args',
-        message: `expected a command (check, record, resolve), got ${command ?? 'none'}`,
+        message: `expected a command (check, mark, record, resolve), got ${command ?? 'none'}`,
       };
   }
+}
+
+/**
+ * Appends the run's review marker to the repository's record and to the home record.
+ *
+ * @internal - Exported to allow testing.
+ */
+export async function runMark(input: {
+  cwd: string;
+  home: string;
+  inputJson: string;
+}): Promise<HelperFailure | MarkSuccess> {
+  let mark: MarkInput;
+  try {
+    mark = parseMarkInput(input.inputJson);
+  } catch (error) {
+    return { ok: false, error: 'invalid-input', message: describeError(error) };
+  }
+
+  let root: string;
+  try {
+    root = findRepositoryRoot(input.cwd);
+  } catch (error) {
+    if (!(error instanceof NotARepositoryError)) throw error;
+    return { ok: false, error: 'not-a-repository', message: error.message };
+  }
+
+  return markReviewed({ home: input.home, root, mark });
 }
 
 /**
