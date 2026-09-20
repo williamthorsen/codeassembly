@@ -3,7 +3,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
 import { buildSizeReport, type SizeReport } from '../../deployed-sizes/build-size-report.ts';
 import { measureDeployment } from '../../deployed-sizes/measure-deployment.ts';
-import { readLatestSnapshot } from '../../deployed-sizes/read-record.ts';
+import { readRecordLines, selectLatestSnapshot } from '../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
 import { resolveRepoRoot } from '../../deployed-sizes/resolve-repo-root.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../../deployed-sizes/schema.ts';
@@ -53,7 +53,8 @@ export async function recordDeployedSizes(input: {
     );
     const set = await collectDeployedPaths(plan, domain, homeDir, resolveSourceRoot);
     const measured = await measureDeployment(set);
-    const previous = await readLatestSnapshot(recordPath);
+    const lines = await readRecordLines(recordPath);
+    const previous = selectLatestSnapshot(lines);
     // The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch
     // is the one the gate must judge and its repository the one whose artifacts the reader can edit; the home
     // domain's comes from the running package, so both answers are that package's tree.

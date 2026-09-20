@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { readLatestSnapshot } from '../../../deployed-sizes/read-record.ts';
+import { readRecordLines, selectLatestSnapshot } from '../../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../../deployed-sizes/resolve-record-path.ts';
 import { resolveHarnessPaths } from '../../../lib/harness.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
@@ -52,7 +52,7 @@ describe(recordDeployedSizes, () => {
       resolveSourceRoot,
     });
 
-    const snapshot = await readLatestSnapshot(resolveRecordPath({ home: homeDir, domain: 'home' }));
+    const snapshot = selectLatestSnapshot(await readRecordLines(resolveRecordPath({ home: homeDir, domain: 'home' })));
     expect(snapshot?.files).toEqual({
       'claude/skills/plan/SKILL.md': { bytes: Buffer.byteLength(body, 'utf8'), kind: 'document' },
     });
@@ -82,7 +82,7 @@ describe(recordDeployedSizes, () => {
       resolveSourceRoot,
     });
 
-    const snapshot = await readLatestSnapshot(resolveRecordPath({ home: homeDir, domain: 'home' }));
+    const snapshot = selectLatestSnapshot(await readRecordLines(resolveRecordPath({ home: homeDir, domain: 'home' })));
     expect(snapshot?.expansions).toEqual({
       'partial:library/_partials/shared.md': { bytes: Buffer.byteLength(partial, 'utf8'), reach: 1 },
     });
@@ -103,7 +103,7 @@ describe(recordDeployedSizes, () => {
     const homeRecord = resolveRecordPath({ home: homeDir, domain: 'home' });
     const repoRecord = resolveRecordPath({ home: homeDir, domain: 'repo', repo: undefined });
     expect(existsSync(homeRecord)).toBe(false);
-    expect((await readLatestSnapshot(repoRecord))?.files).not.toEqual({});
+    expect(selectLatestSnapshot(await readRecordLines(repoRecord))?.files).not.toEqual({});
   });
 
   it('stamps each snapshot with the deploying build and the commit that its source sat on', async () => {
@@ -118,7 +118,7 @@ describe(recordDeployedSizes, () => {
       resolveSourceRoot,
     });
 
-    const snapshot = await readLatestSnapshot(resolveRecordPath({ home: homeDir, domain: 'home' }));
+    const snapshot = selectLatestSnapshot(await readRecordLines(resolveRecordPath({ home: homeDir, domain: 'home' })));
     expect(snapshot?.version).toMatch(/^\d+\.\d+\.\d+/);
     expect(snapshot?.sourceCommit).toMatch(/^[0-9a-f]{40}$/);
   });
