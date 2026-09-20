@@ -32,6 +32,9 @@ Each line is one complete size vector rather than a change, because the deltas t
     "claude/skills/plan/SKILL.md": { "bytes": 4096, "kind": "document" },
     "claude/skills/plan/run.mjs": { "bytes": 611000, "kind": "asset" }
   },
+  "expansions": {
+    "partial:library/_partials/plain-speech.md": { "bytes": 1229, "reach": 17 }
+  },
   "aggregates": {
     "alwaysLoaded": { "total": 45, "ambientRegions": 0, "skillDescriptions": 45, "subagentDescriptions": 0 },
     "onInvocation": 4096,
@@ -47,6 +50,23 @@ Each line is one complete size vector rather than a change, because the deltas t
 `files` is keyed by deployed path relative to the harness home, or to the domain base for a file deployed outside it, prefixed by the harness that loads it. The prefix is what keeps two harnesses' copies of one skill distinct. The key is a path rather than a slug, because a rulebook deploys as `consult-<slug>` and a skill deploys as a directory of several files. Each value is an object rather than a bare number, which leaves room for later constituent fields without a migration.
 
 A file's own `kind` states whether a harness loads it into context. Classification is by extension: `.md` is a document, everything else an asset. A helper bundle loads into no context, so a ranking that placed it beside a skill body would bury the signal.
+
+## The expansions block
+
+`expansions` states every unit that deploys inside the documents rather than as a file of its own. A partial is the one kind that it holds today: The expander inlines a partial into each document that includes it, so no partial exists in the deployed tree and the deployed vector alone cannot say which partial moved a document.
+
+A key is `{kind}:{source}/{relPath}`, where `{source}` names the declared source that owns the content root, or `library` for the built-in one, and `{relPath}` is the unit's path relative to that root, written with forward slashes on every platform. A value states two fields:
+
+| Field   | What it states                                              |
+| ------- | ----------------------------------------------------------- |
+| `bytes` | The unit's own bytes on disk, never its expanded bytes      |
+| `reach` | The deployed documents whose include closure holds the unit |
+
+`reach` counts deployed documents rather than source documents, so one skill deployed to two harnesses counts twice. It states the deployment as measured; what a change to the unit explains is derived separately, from the documents whose bytes it actually moved.
+
+The block is optional at schema version 1. Absent means that nothing was measured, which is what a line written before the block existed states; empty means that the measurement ran and found none. Bumping the schema version instead would make every earlier line unreadable, and every document would be re-reported once.
+
+The measurement builds one include graph per distinct content root and reuses it across that root's documents, since a graph walks every `.md` beneath its root. A root whose graph cannot be built contributes no unit and fails nothing.
 
 ## What is measured
 
@@ -79,7 +99,7 @@ Both conditions must hold:
 1. The measurement differs from the previous snapshot. A sync that rewrites nothing appends nothing.
 2. The tree whose content was deployed is on a commit that the remote-tracking default branch contains, so that the record tracks the default branch's sizes rather than those of each branch under development.
 
-The compared measurement is `files` and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which deploys no file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that no file backs.
+The compared measurement is `files`, `expansions`, and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which deploys no file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that no file backs. Comparing the expansions covers a rewiring that moves a partial's reach without moving anyone's bytes, and it makes the first measurement taken after the block existed differ from a previous snapshot that states none.
 
 Which tree the ancestry probes follows the domain. The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch is the one judged; the home domain's comes from the running package, so the package root is. The default branch resolves from `origin/HEAD`, falling back to `origin/main`. When neither resolves, and when the probed tree is not a git tree at all, the ancestry condition is unanswerable and the append goes through: A tree with no branch has none to be wrong about, and refusing there would stop the record entirely.
 
@@ -91,7 +111,9 @@ A live sync closes its report with the size block, after the advisories and last
 
 ```console
 Deployed sizes:
+  +2.2 KiB  library/_partials/plain-speech.md  (+132 B × 17 documents, 1.2 KiB)
   +1.3 KiB  claude/skills/plan/SKILL.md  (12.4 KiB)
+    +600 B  claude/skills/review/SKILL.md  (residual, 71.9 KiB)
     +512 B  claude/skills/consult-style/SKILL.md  (added, 512 B)
   -8.1 KiB  claude/skills/retired/SKILL.md  (removed)
 
@@ -105,9 +127,29 @@ Assets:         2378.5 KiB
 Run `codeassembly sizes` to rank every deployed document by size.
 ```
 
-Each line states the change, the deployed path, and the size after the deployment. A removed document states no size, and a removal's delta is its previous bytes negated, which puts a large removal where a large addition would be. The list is ordered by the size of the change, largest first, and by path where two changes are equal. Assets contribute no line, matching what `sizes` ranks.
+Each line leads with the bytes that it accounts for. A document's line then states its deployed path and its size after the deployment; a removed document states no size, and a removal's figure is its previous bytes negated, which puts a large removal where a large addition would be. An expansion's line states the unit under its key's `{source}/{relPath}` tail, then its own per-document delta, the documents whose change it explains, and its own size. That document count is the one that makes the line's own arithmetic check out, and it is the unit's `reach` less the documents that the collapse never reduces. The two kinds interleave in one list ordered by the bytes that each accounts for, largest first, and by key where two are equal, so a one-byte partial edit sorts by the deployment that it caused rather than by its own size. Assets contribute no line, matching what `sizes` ranks.
 
 The list is uncapped. A partial or guidance-hook edit fans out to dozens of documents, and a cap would hide exactly the fan-out that the reader needs to see.
+
+### The collapse
+
+A changed unit is reported once. For each resized document, the report sums the byte deltas of the changed units in that document's current closure:
+
+- A document whose delta equals that sum is explained in full and contributes no line, which is what keeps one partial edit from printing one line per includer.
+- A document that moved beyond that sum reports the residual: its line is led by the bytes that its own content accounts for and marked `(residual, …)`.
+- A unit that explains no document's delta contributes no line either. Extracting a partial from text that already stood in its includers leaves every deployed document byte-identical, since the expander inlines a partial to the same bytes that it replaced; a line claiming the extracted bytes as growth would head a block that states what a deployment cost.
+
+A unit's line therefore accounts for the bytes that it removed from the document lines, never for its own delta across every document that holds it. The two kinds of line sum to the deployment's whole document delta: Every byte that one accounts for is a byte that the other does not.
+
+Three cases attribute nothing, and report as they did before the block existed:
+
+- **An added or removed document**, whose whole bytes are not a change for a unit to explain. A unit reaching only such a document explains nothing and states no line.
+- **A unit that the previous snapshot held and this measurement does not.** Attributing a deleted partial needs each document's previous closure, which no snapshot records, and crediting it against the current closures would count the same bytes twice.
+- **A previous snapshot stating no `expansions`**, which suppresses the pass entirely and leaves every document to report its own change.
+
+Two further cases leave bytes in the residual rather than in the unit's line, and code handles neither. A document naming one partial in two directives is inlined twice and held in the closure once, so half of the change lands in the residual. A partial whose edit adds or removes its `<!-- children -->` placeholder shifts its includer by that line, for the same reason. Nothing is hidden in either case: The unit's line appears, and the document's line appears beside it.
+
+The growth warning keeps reading a document whole rather than its residual. A crossing is about what a session loads, not about who caused it.
 
 A deployment whose vector is unchanged states the aggregates and the closing line alone. One for which the record holds no previous snapshot states, beneath the header, that it is the first recorded deployment here.
 

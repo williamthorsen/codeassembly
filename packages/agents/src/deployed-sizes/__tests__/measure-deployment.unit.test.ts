@@ -160,6 +160,8 @@ describe(measureDeployment, () => {
 
     expect(measured).toEqual({
       files: {},
+      expansions: {},
+      documentExpansions: {},
       aggregates: {
         alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },
         onInvocation: 0,
@@ -190,7 +192,7 @@ function emptySet(): DeployedPathSet {
 
 /** One collected file, in the `other` role that contributes to no description total. */
 function file(absPath: string, key: string, kind: 'asset' | 'document'): DeployedPath {
-  return { key, absPath, kind, role: 'other', harnessId: 'claude', sourceRoot: undefined };
+  return { key, absPath, kind, role: 'other', harnessId: 'claude', sourceRoot: undefined, authored: undefined };
 }
 
 /** A Markdown file whose frontmatter declares a name, a description, and optionally one harness-rewritten key. */

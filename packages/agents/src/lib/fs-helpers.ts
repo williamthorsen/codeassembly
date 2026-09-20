@@ -1,8 +1,8 @@
 import type { Dirent } from 'node:fs';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
+import { readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { isEnoent } from './type-guards.ts';
+import { isEnoent, isMissingFile } from './type-guards.ts';
 
 /**
  * The directory names holding test code. Fixture data nests inside `__tests__` rather than having a directory of
@@ -85,6 +85,18 @@ export async function readFileOrEmpty(filePath: string): Promise<string> {
   } catch (error: unknown) {
     if (isEnoent(error)) {
       return '';
+    }
+    throw error;
+  }
+}
+
+/** Reads one file's size in bytes, returning `undefined` when it does not exist. */
+export async function readFileSize(filePath: string): Promise<number | undefined> {
+  try {
+    return (await stat(filePath)).size;
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return undefined;
     }
     throw error;
   }

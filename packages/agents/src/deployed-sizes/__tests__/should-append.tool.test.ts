@@ -9,9 +9,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import type { DeploymentMeasurement } from '../measure-deployment.ts';
 import { parseSnapshotLine, SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
 import { shouldAppend } from '../should-append.ts';
-import type { DeployedFile, SizeAggregates, SizeSnapshot } from '../types.ts';
+import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from '../types.ts';
 
 const execFileAsync = promisify(execFile);
+
+/** One expansion key, whose bytes and reach the attribution cases vary. */
+const SHARED = 'partial:library/_partials/shared.md';
 
 const VECTOR: Record<string, DeployedFile> = {
   'claude/skills/plan/SKILL.md': { bytes: 1_200, kind: 'document' },
@@ -92,6 +95,25 @@ describe(shouldAppend, () => {
     expect(await shouldAppend({ measured, previous, sourceRoot })).toBe(false);
   });
 
+  it('appends a rewiring that moves a reach without moving any bytes', async () => {
+    const previous = snapshotOf(measure(VECTOR, {}, { [SHARED]: { bytes: 300, reach: 4 } }));
+    const rewired = measure(VECTOR, {}, { [SHARED]: { bytes: 300, reach: 5 } });
+
+    expect(await shouldAppend({ measured: rewired, previous, sourceRoot })).toBe(true);
+  });
+
+  it('appends a measurement whose expansions the previous snapshot does not state', async () => {
+    const { expansions, ...withoutExpansions } = snapshotOf(measure(VECTOR));
+
+    expect(await shouldAppend({ measured: measure(VECTOR), previous: withoutExpansions, sourceRoot })).toBe(true);
+  });
+
+  it('does not append when the files, the expansions, and every aggregate are unchanged', async () => {
+    const measured = measure(VECTOR, { ambientRegions: 2_000 }, { [SHARED]: { bytes: 300, reach: 4 } });
+
+    expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot })).toBe(false);
+  });
+
   it('does not append from a commit that the default branch does not contain', async () => {
     await git(sourceRoot, ['checkout', '--quiet', '-b', 'feature']);
     await writeFile(path.join(sourceRoot, 'feature.txt'), 'unmerged\n', 'utf8');
@@ -170,11 +192,14 @@ async function initRepoOnDefaultBranch(scratch: string): Promise<string> {
 function measure(
   files: Record<string, DeployedFile>,
   alwaysLoaded: Partial<Omit<SizeAggregates['alwaysLoaded'], 'total'>> = {},
+  expansions: Record<string, ExpansionUnit> = {},
 ): DeploymentMeasurement {
   const components = { ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0, ...alwaysLoaded };
   const total = components.ambientRegions + components.skillDescriptions + components.subagentDescriptions;
   return {
     files,
+    expansions,
+    documentExpansions: {},
     aggregates: {
       alwaysLoaded: { total, ...components },
       onInvocation: Object.values(files).reduce((sum, file) => sum + (file.kind === 'document' ? file.bytes : 0), 0),
@@ -191,6 +216,7 @@ function snapshotOf(measured: DeploymentMeasurement): SizeSnapshot {
     recordedAt: '2026-09-19T08:00:00.000Z',
     version: '0.15.0',
     files: measured.files,
+    expansions: measured.expansions,
     aggregates: measured.aggregates,
   };
 }

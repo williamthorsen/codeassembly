@@ -29,6 +29,20 @@ export type DeployedFileRole = 'other' | 'skill' | 'subagent';
  */
 export type ResolveSourceRoot = (source: string | undefined) => string | undefined;
 
+/**
+ * The authored Markdown behind one deployed document, and the tree against which its include directives resolved.
+ * Report-time provenance alone, from which a measurement reads the partials that the document inlines; no snapshot
+ * records it.
+ */
+export interface AuthoredSource {
+  /** Absolute path of the authored file. */
+  readonly file: string;
+  /** Absolute content root against which the file's include directives resolved. */
+  readonly contentRoot: string;
+  /** Name of the declared source owning the content root, or `undefined` for the built-in library. */
+  readonly sourceName: string | undefined;
+}
+
 /** One deployed file: where it is, the key under which it is recorded, and whether a harness loads it into context. */
 export interface DeployedPath {
   /**
@@ -46,6 +60,12 @@ export interface DeployedPath {
    * what lets a report decide whether the reader can edit what a deployed file came from; no snapshot records it.
    */
   readonly sourceRoot: string | undefined;
+  /**
+   * The authored Markdown that this file rendered from, on the three authored bodies alone (a skill's `SKILL.md`, a
+   * rulebook-delivered skill's `SKILL.md`, and a subagent file). `undefined` on every file that renders from no
+   * single authored document: an asset, a delivered support entry, and a manifest-contributed file.
+   */
+  readonly authored: AuthoredSource | undefined;
 }
 
 /**
@@ -60,9 +80,16 @@ export interface DeployedPathSources {
     readonly skill: boolean;
     readonly skillName: string;
     readonly source: string | undefined;
+    readonly srcPath: string;
+    readonly contentRoot: string;
   }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
-  readonly resolvedSubagents: ReadonlyArray<{ readonly slug: string; readonly source: string | undefined }>;
+  readonly resolvedSubagents: ReadonlyArray<{
+    readonly slug: string;
+    readonly source: string | undefined;
+    readonly srcPath: string;
+    readonly contentRoot: string;
+  }>;
   readonly sourceSupportPlans: ReadonlyArray<{
     readonly sourcesRoot: string;
     readonly destDir: string;
@@ -80,6 +107,8 @@ interface CollectionContext {
   readonly harnessId: HarnessId;
   readonly base: string;
   readonly sourceRoot: string | undefined;
+  /** The authored source that the pass attributes its one authored body to, absent where the pass has none. */
+  readonly authored: AuthoredSource | undefined;
 }
 
 /** One deployment's measurable surface: the files it wrote, and the guidance files whose ambient region it fills. */
@@ -113,17 +142,20 @@ export async function collectDeployedPaths(
 
   const rulebookSkillDirs = plan.resolved
     .filter((rulebook) => rulebook.skill)
-    .map((rulebook) => ({ dir: rulebook.skillName, source: rulebook.source }));
+    .map((rulebook) => ({ dir: rulebook.skillName, authored: describeAuthoredSource(rulebook) }));
   for (const target of plan.harnessSkillTargets) {
     const { harnessId, skillsDir } = target;
     const skillDirs = [
       ...plan.resolvedSkills
         .filter((skill) => skillTargetsHarness(skill, harnessId))
-        .map((skill) => ({ dir: skill.slug, source: skill.source })),
+        .map((skill) => ({
+          dir: skill.slug,
+          authored: describeAuthoredSource({ ...skill, srcPath: path.join(skill.srcDir, SKILL_FILENAME) }),
+        })),
       ...rulebookSkillDirs,
     ];
-    for (const { dir, source } of skillDirs) {
-      const context = { harnessId, base, sourceRoot: resolveSourceRoot(source) };
+    for (const { dir, authored } of skillDirs) {
+      const context = { harnessId, base, sourceRoot: resolveSourceRoot(authored.sourceName), authored };
       await collectDirectory(collected, path.join(skillsDir, dir), context, true);
     }
     // Delivered support entries are named file by file, so they are read from the plan rather than walked.
@@ -134,14 +166,19 @@ export async function collectDeployedPaths(
       }
       for (const entry of supportPlan.entries) {
         const destPath = path.join(supportPlan.destDir, ...entry.relPath.split('/'));
-        addPath(collected, destPath, { harnessId, base, sourceRoot: undefined });
+        addPath(collected, destPath, { harnessId, base, sourceRoot: undefined, authored: undefined });
       }
     }
   }
 
   for (const target of plan.harnessSubagentTargets) {
     for (const subagent of plan.resolvedSubagents) {
-      const context = { harnessId: target.harnessId, base, sourceRoot: resolveSourceRoot(subagent.source) };
+      const context = {
+        harnessId: target.harnessId,
+        base,
+        sourceRoot: resolveSourceRoot(subagent.source),
+        authored: describeAuthoredSource(subagent),
+      };
       addPath(collected, path.join(target.subagentsDir, `${subagent.slug}.md`), context, 'subagent');
     }
   }
@@ -178,6 +215,9 @@ function addPath(
     role,
     harnessId: context.harnessId,
     sourceRoot: context.sourceRoot,
+    // The authored body is the one file of the pass that renders from an authored document; every other file the
+    // pass collects is an asset beside it or a support entry, and attributes nothing.
+    authored: role === 'other' ? undefined : context.authored,
   });
 }
 
@@ -227,7 +267,7 @@ async function collectManifestPaths(
     const entries = manifest.harnesses[harnessId]?.entries ?? [];
     for (const entry of entries) {
       const absPath = path.join(harnessHome, entry.relativePath);
-      const context = { harnessId, base: homeDir, sourceRoot: undefined };
+      const context = { harnessId, base: homeDir, sourceRoot: undefined, authored: undefined };
       if (entry.contentHash.startsWith(DIRECTORY_HASH_PREFIX)) {
         await collectDirectory(collected, absPath, context, false);
         continue;
@@ -237,6 +277,15 @@ async function collectManifestPaths(
       }
     }
   }
+}
+
+/** Names the authored Markdown behind one resolved artifact, and the content root against which it resolved. */
+function describeAuthoredSource(artifact: {
+  readonly srcPath: string;
+  readonly contentRoot: string;
+  readonly source: string | undefined;
+}): AuthoredSource {
+  return { file: artifact.srcPath, contentRoot: artifact.contentRoot, sourceName: artifact.source };
 }
 
 /**

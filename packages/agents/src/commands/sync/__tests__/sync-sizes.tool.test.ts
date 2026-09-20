@@ -58,6 +58,36 @@ describe(recordDeployedSizes, () => {
     });
   });
 
+  it("carries the deployed documents' partials in the snapshot that it appends", async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', homeDir);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+    const contentRoot = path.join(scratch, 'content');
+    const partial = 'Shared.\n';
+    await writeDeployedFile(path.join(contentRoot, '_partials', 'shared.md'), partial);
+    await writeDeployedFile(
+      path.join(contentRoot, 'skills', 'plan', 'SKILL.md'),
+      'Plan.\n\n<!-- include: ../../_partials/shared.md / -->\n',
+    );
+
+    await recordDeployedSizes({
+      plan: {
+        ...planWithSkill('plan', skillsDir),
+        resolvedSkills: [
+          { slug: 'plan', srcDir: path.join(contentRoot, 'skills', 'plan'), contentRoot, source: undefined },
+        ],
+      },
+      domain: homeDomain(homeDir),
+      homeDir,
+      packageRoot,
+      resolveSourceRoot,
+    });
+
+    const snapshot = await readLatestSnapshot(resolveRecordPath({ home: homeDir, domain: 'home' }));
+    expect(snapshot?.expansions).toEqual({
+      'partial:library/_partials/shared.md': { bytes: Buffer.byteLength(partial, 'utf8'), reach: 1 },
+    });
+  });
+
   it('appends a repo domain snapshot to its own record rather than to the home record', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', projectRoot);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), '---\nname: plan\n---\n\n# Plan\n');
@@ -189,6 +219,7 @@ describe(recordDeployedSizes, () => {
         key: 'claude/skills/plan/SKILL.md',
         bytes: after.length,
         delta: after.length - before.length,
+        explained: 0,
       },
     ]);
   });
@@ -386,14 +417,17 @@ function options(overrides: Partial<InstallOptions> = {}): InstallOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
 }
 
-/** Plan sources naming one declared skill deployed into `skillsDir`. */
+/**
+ * Plan sources naming one declared skill deployed into `skillsDir`. The skill is authored under `skillsDir` itself,
+ * which gives the expansion pass a small content root to walk rather than the directory that the suite runs from.
+ */
 function planWithSkill(slug: string, skillsDir: string): DeployedPathSources {
   return {
     ambientHosts: [],
     harnessSkillTargets: [{ harnessId: 'claude', skillsDir }],
     harnessSubagentTargets: [],
     resolved: [],
-    resolvedSkills: [{ slug, srcDir: '', contentRoot: '', source: undefined }],
+    resolvedSkills: [{ slug, srcDir: path.join(skillsDir, slug), contentRoot: skillsDir, source: undefined }],
     resolvedSubagents: [],
     sourceSupportPlans: [],
     targets: { harnessIds: ['claude'] },
