@@ -66,7 +66,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
    Calibrate each entry against the exemplars drawn for its own type. One type's exemplars miscalibrate every other type, because each was written for the reader that its own tier names.
 
-   When you cannot resolve an outcome's type against the taxonomy, put `--tier {tier}` in place of `--type {type}` for that outcome, keep `--min-quality strong`, and name the omission in your report. Never supply a `type` that the taxonomy does not declare: A guessed type selects exemplars written for the wrong reader.
+   When you cannot resolve an outcome's type against the taxonomy, put `--tier {tier}` in place of `--type {type}` for that outcome, keep `--min-quality strong`, and name the omission in your report. `{tier}` is the `tier` scalar in your dispatch, which names the branch's reader: The outcome resolved to no type, so the taxonomy names no tier for it either. Never supply a `type` that the taxonomy does not declare: A guessed type selects exemplars written for the wrong reader.
 
 Writing follows.
 

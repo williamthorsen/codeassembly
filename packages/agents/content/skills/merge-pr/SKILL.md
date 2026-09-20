@@ -135,7 +135,7 @@ If the body is thin, compose fresh content through the drafter and cutter that `
 
 Resolve the tier by looking up the report's `effective_record.type` in [work-types.json](../_data/work-types.json).
 
-If `defects` shows that the effective record has no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change requires for a public-tier reader, in a body that appears in the merge commit, the changelog, and release notes.
+If `defects` shows that the effective record has no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the cutter keeps a bullet for, and the type it resolves from is the one that the effective record carries into the merge, in a body that appears in the merge commit, the changelog, and release notes.
 
 Dispatch the `{subagent:entry-drafter}` subagent via the {tool:Task} tool with this block:
 
