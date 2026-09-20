@@ -195,7 +195,8 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 - **Subsections.** One per distinct `type` among the entries, headed `{emoji} {label}` from that type's [work-types.json](../_data/work-types.json) `types[]` entry. Order them by tier (public → internal → process) and, within a tier, in the order that `work-types.json` lists the types. A type with no entry gets no subsection.
 - **Bullets.** Under each subsection, one bullet per entry of that type, in the order the drafter returned them. The bullet is `🚨 **Breaking:** ` (from `markers.breaking`, rendered as `{emoji} **{label}:** `) when the entry's `breaking` is `true`, followed by the entry's `text`. The prefix tags the entry inline rather than relocating it to a separate section.
-- **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, no bullet carries tags, since the consolidated record already names that scope. `## What` carries no tags in either case.
+- **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, no bullet carries tags, since the consolidated record already names that scope.
+- **`## What`.** `## What` is a selection of these same bullets, carrying no scope tags in either case. Which bullets it keeps is settled in step 8; the contract is that it takes some of them and writes none of its own.
 - **An unknown type.** A `type` naming no key in `work-types.json` has no `emoji` or `label` to head a subsection with. Report it to the developer per step 5 and head that subsection with the bare `type`, so that the entry stays visible rather than being dropped or reassigned.
 
 ## Guidance
