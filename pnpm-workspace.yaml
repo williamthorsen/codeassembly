@@ -16,6 +16,7 @@ catalog:
   esbuild: '0.28.2'
   eslint: '10.10.0'
   eslint-plugin-react: '7.37.5'
+  glob: '13.0.6'
   hono: '4.13.7'
   jsdom: '30.0.1'
   prettier: '3.9.6'

@@ -206,6 +206,9 @@ catalogs:
     eslint-plugin-react:
       specifier: 7.37.5
       version: 7.37.5
+    glob:
+      specifier: 13.0.6
+      version: 13.0.6
     hono:
       specifier: 4.13.7
       version: 4.13.7
@@ -305,7 +308,7 @@ importers:
         specifier: 7.16.2
         version: 7.16.2(eslint@10.10.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
       glob:
-        specifier: 13.0.6
+        specifier: 'catalog:'
         version: 13.0.6
       lefthook:
         specifier: 2.1.12
@@ -346,6 +349,9 @@ importers:
       codeassembly-lifecycle:
         specifier: workspace:*
         version: link:../lifecycle
+      glob:
+        specifier: 'catalog:'
+        version: 13.0.6
       ulid:
         specifier: 3.0.2
         version: 3.0.2
