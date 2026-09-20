@@ -47,7 +47,7 @@ export async function resolveProjectRoot(cwd: string): Promise<{ projectRoot: st
     const diagnostic = error instanceof Error ? error.message.trim().split('\n').at(-1) : String(error);
     return {
       projectRoot: cwd,
-      warning: `git could not resolve the repository root (${diagnostic}); anchoring the .agents/ lookup at ${cwd}`,
+      warning: `git could not resolve the repository root (${diagnostic}); anchoring at ${cwd}`,
     };
   }
 }
