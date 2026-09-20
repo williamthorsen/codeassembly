@@ -466,8 +466,11 @@ function describeReviewDrift(drift: ReviewDrift): ReadonlyArray<ReportLine> {
       return { level: 'info', text: `  ${growth}  ${row.key}  (reviewed ${toReviewDate(row.reviewedAt)})` };
     }),
   ];
-  if (drift.omittedCount > 0) {
-    lines.push({ level: 'info', text: `  and ${drift.omittedCount} more document(s) grown since their review` });
+  const omitted = drift.omittedCount;
+  if (omitted > 0) {
+    const plural = omitted === 1 ? '' : 's';
+    const possessive = omitted === 1 ? 'its' : 'their';
+    lines.push({ level: 'info', text: `  and ${omitted} more document${plural} grown since ${possessive} review` });
   }
   return lines;
 }

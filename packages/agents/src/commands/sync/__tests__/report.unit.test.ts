@@ -526,6 +526,21 @@ describe('deployed sizes', () => {
     expect(output).toContain('+512 B  claude/skills/wrap-up/SKILL.md  (reviewed 2026-08-12)');
   });
 
+  it('counts one grown document past the cap in the singular', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({
+          drift: {
+            rows: [{ key: 'a.md', bytes: 2_048, growth: 1_024, reviewedAt: '2026-09-01T08:00:00.000Z' }],
+            omittedCount: 1,
+          },
+        }),
+      ),
+    );
+
+    expect(output).toContain('and 1 more document grown since its review');
+  });
+
   it('counts the grown documents past the cap rather than listing them', () => {
     const output = textOf(
       renderSyncReport(
@@ -538,7 +553,7 @@ describe('deployed sizes', () => {
       ),
     );
 
-    expect(output).toContain('and 3 more document(s) grown since their review');
+    expect(output).toContain('and 3 more documents grown since their review');
   });
 
   it('prints no drift block when nothing has grown since its review', () => {
