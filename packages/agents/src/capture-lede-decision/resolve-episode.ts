@@ -19,10 +19,10 @@ const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
 
 /**
  * Subagent bodies that govern a draft, in the fixed order on which the combined digest depends. The drafter writes the
- * lede and the cutter decides which of its bullets survive, so a change to either changes the doctrine under which a
- * lede was written.
+ * entries and the cutter decides which of them survive into the lede, so a change to either changes the doctrine under
+ * which a lede was written.
  */
-const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['lede-cutter.md', 'lede-drafter.md'];
+const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter.md', 'lede-cutter.md'];
 
 /** Artifact filename suffix holding the lede that merged, and the heading under which it appears. */
 const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;

@@ -5,12 +5,13 @@ const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'sav
 
 /**
  * Subagents whose genre is served by dropping true facts, which the shared concision rule forbids: It tells a writer
- * to keep every decision, constraint, and actionable fact and to compose tight rather than trim. Because a lede is
- * selected from a change whose facts are nearly all accurate and nearly all beneath the reader's notice, the rule
- * reaches these two as a license to keep them. Each states its own rule instead: the drafter in "What to leave out",
- * and the cutter in the assignment that admits a candidate only when the reader acts on it.
+ * to keep every decision, constraint, and actionable fact and to compose tight rather than trim. Because an entry list
+ * reports a change whose facts are nearly all accurate and nearly all beneath the reader's notice, and a lede is
+ * selected from it, the rule reaches these two as a license to keep them. Each states its own rule instead: the
+ * drafter in "What to leave out", and the cutter in the assignment that admits a candidate only when the reader acts
+ * on it.
  */
-const CUTTING_SUBAGENTS: ReadonlySet<string> = new Set(['lede-cutter', 'lede-drafter']);
+const CUTTING_SUBAGENTS: ReadonlySet<string> = new Set(['entry-drafter', 'lede-cutter']);
 
 /**
  * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section kept

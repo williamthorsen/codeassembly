@@ -43,7 +43,7 @@ describe(planDroppedHarnessRetractions, () => {
     const { harnessHome, skillsDir, subagentsDir } = await scaffoldHarnessTree('rovo', baseDir);
     const rulebookSkill = await writeRulebookSkill(skillsDir, 'writing-prefs', 'writing-preferences');
     const declaredSkill = await writeDeclaredSkill(skillsDir, 'create-commit');
-    const subagent = await writeSubagent(subagentsDir, 'lede-drafter');
+    const subagent = await writeSubagent(subagentsDir, 'entry-drafter');
     await writeSourceSupport(skillsDir, 'acme', 'reference.md');
     await writeFile(path.join(baseDir, 'AGENTS.local.md'), `# Local\n\n${AMBIENT_REGION}\n`, 'utf8');
     await writeFile(path.join(harnessHome, 'prompts.yml'), `prompts:\n${PROMPTS_REGION}\n`, 'utf8');
@@ -233,7 +233,7 @@ describe(retractDroppedHarnesses, () => {
     const { harnessHome, skillsDir, subagentsDir } = await scaffoldHarnessTree('rovo', baseDir);
     const rulebookSkill = await writeRulebookSkill(skillsDir, 'writing-prefs', 'writing-preferences');
     const declaredSkill = await writeDeclaredSkill(skillsDir, 'create-commit');
-    const subagent = await writeSubagent(subagentsDir, 'lede-drafter');
+    const subagent = await writeSubagent(subagentsDir, 'entry-drafter');
     const foreignSkill = await writeForeignSkill(skillsDir, 'hand-authored');
     const foreignSubagent = await writeForeignSubagent(subagentsDir, 'hand-authored');
     await writeSourceSupport(skillsDir, 'acme', 'reference.md');
