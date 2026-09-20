@@ -71,6 +71,12 @@ export interface HelperFailure {
   message: string;
 }
 
+/** A 1-based, inclusive range of lines. */
+export interface LineRange {
+  start: number;
+  end: number;
+}
+
 /** What one run reports to `mark`: when the review ran, and the repository-relative files that it read. */
 export interface MarkInput {
   /** ISO 8601 instant at which the review ran. */
@@ -87,12 +93,6 @@ export interface MarkSuccess {
   records: string[];
   /** Named files lying in no content root, which the marker does not name. */
   unrooted: string[];
-}
-
-/** A 1-based, inclusive range of lines. */
-export interface LineRange {
-  start: number;
-  end: number;
 }
 
 /** A commit that changed how often a phrase occurs in its file. */

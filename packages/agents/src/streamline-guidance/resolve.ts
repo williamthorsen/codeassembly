@@ -28,8 +28,12 @@ import type {
   TransitiveFile,
 } from './types.ts';
 
-/** Raised when the helper runs somewhere git does not track. */
-export class NotARepositoryError extends Error {}
+/** Returns the innermost content root containing a file, or undefined when none does. */
+export function findContentRoot(file: string, contentRoots: readonly string[]): string | undefined {
+  return contentRoots
+    .filter((contentRoot) => isInside(file, contentRoot))
+    .toSorted((left, right) => right.length - left.length)[0];
+}
 
 /** Returns the real path of the repository's top level. Throws {@link NotARepositoryError} outside a working tree. */
 export function findRepositoryRoot(cwd: string): string {
@@ -44,6 +48,16 @@ export function findRepositoryRoot(cwd: string): string {
     throw new NotARepositoryError(`${cwd} is not inside a git working tree`, { cause: error });
   }
 }
+
+/** Lists the absolute directories of every content root in the repository. */
+export function listContentRoots(root: string): string[] {
+  return listWorkingTreeFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
+    .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
+    .map((file) => path.join(root, path.dirname(file)));
+}
+
+/** Raised when the helper runs somewhere git does not track. */
+export class NotARepositoryError extends Error {}
 
 /**
  * Resolves the named paths into targets and transitive files, with the record's live declined cuts against them. A
@@ -110,20 +124,6 @@ export async function resolveGuidance(input: {
     declined: selectLiveDeclined(input.record, new Set(files), input.root),
     rejected,
   };
-}
-
-/** Returns the innermost content root containing a file, or undefined when none does. */
-export function findContentRoot(file: string, contentRoots: readonly string[]): string | undefined {
-  return contentRoots
-    .filter((contentRoot) => isInside(file, contentRoot))
-    .toSorted((left, right) => right.length - left.length)[0];
-}
-
-/** Lists the absolute directories of every content root in the repository. */
-export function listContentRoots(root: string): string[] {
-  return listWorkingTreeFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
-    .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
-    .map((file) => path.join(root, path.dirname(file)));
 }
 
 // region | Helpers
