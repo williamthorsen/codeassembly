@@ -82,7 +82,7 @@ The payload is YAML rather than a surface template because `consolidated_record`
 
 **The block carries the change entries as data**, which is how a reader downstream of the merge gets them without parsing them back out of the rendered `## Details` prose. The change summary's `changes` frontmatter field is a different list: It holds the commit entries, which record what the branch's commits declared.
 
-**The block is the body's last element.** A reader takes the last `change-record` fence in the body, and a body composed from the change summary excludes the block itself.
+**The block is the body's last element.** A reader takes the last `change-record` fence in the body, and the merge body that `resolve-merge` composes from the pull request excludes every block.
 
 ## The effective record
 
