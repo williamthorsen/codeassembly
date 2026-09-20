@@ -507,6 +507,15 @@ describe('resolve-scopes', () => {
     expect(warnings).toStrictEqual([]);
   });
 
+  it('resolves a pattern-matched directory holding no manifest to root', async () => {
+    const { cwd, home } = await makeWorkspaceRepo();
+
+    const argv = ['resolve-scopes', '--path', 'packages/scripts/build.ts'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ path_scopes: { 'packages/scripts/build.ts': 'root' }, scopes: ['root'] });
+  });
+
   it('reads the workspace layout from the repository root rather than the invoking directory', async () => {
     const { cwd, home } = await makeWorkspaceRepo();
     const nested = join(cwd, 'packages', 'agents');
