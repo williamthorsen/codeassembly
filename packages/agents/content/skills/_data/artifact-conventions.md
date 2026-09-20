@@ -290,21 +290,25 @@ tickets_created:
 
 This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extensions consumed by downstream PR-creation skills (`create-pr`, `create-gh-pr`, `create-bitbucket-pr`):
 
-| Field               | Required | Description                                                                                                                             |
-| ------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`             | yes      | The change-summary title, used as the proposed PR title.                                                                                |
-| `scope`             | no       | The consolidated record's scope (e.g., `agents`, `root`). Omitted if the branch's entries name more than one scope, or no entry exists. |
-| `type`              | no       | The consolidated record's work type (see `work-types.json`). Omitted if the branch has no entries.                                      |
-| `breaking`          | no       | `true` if the consolidated record is breaking. Omitted otherwise; there is no `false`.                                                  |
-| `changes`           | no       | Each entry rendered through `commit.title_format`, oldest first. Omitted if the branch has no entries.                                  |
-| `ticket_type`       | no       | The work type that the linked ticket's labels name. Omitted if they name none or more than one, or if no labels were read.              |
-| `override_scope`    | no       | The scope that the author set by hand, or `*` if the author set no scope.                                                               |
-| `override_type`     | no       | The work type that the author set by hand, without a marker.                                                                            |
-| `override_breaking` | no       | `true` if the author added the breaking marker by hand. Omitted otherwise.                                                              |
+| Field               | Required | Description                                                                                                                                |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| `title`             | yes      | The change-summary title, used as the proposed PR title.                                                                                   |
+| `scope`             | no       | The consolidated record's scope (e.g., `agents`, `root`). Omitted if the change entries name more than one scope, or if there is no entry. |
+| `type`              | no       | The consolidated record's work type (see `work-types.json`). Omitted if the change has no entries.                                         |
+| `breaking`          | no       | `true` if the consolidated record is breaking. Omitted otherwise; there is no `false`.                                                     |
+| `changes`           | no       | Each commit entry rendered through `commit.title_format`, oldest first. Omitted if the branch has no commit entry.                         |
+| `ticket_type`       | no       | The work type that the linked ticket's labels name. Omitted if they name none or more than one, or if no labels were read.                 |
+| `override_scope`    | no       | The scope that the author set by hand, or `*` if the author set no scope.                                                                  |
+| `override_type`     | no       | The work type that the author set by hand, without a marker.                                                                               |
+| `override_breaking` | no       | `true` if the author added the breaking marker by hand. Omitted otherwise.                                                                 |
 
-`scope`, `type`, and `breaking` contain the [consolidated record](change-record.md#terms), and each override is recorded beside the field that it overrides rather than in its place. A skill that needs the effective record reads it from [`resolve-effective-record`](title-templates.md#resolve-effective-record) rather than applying the overrides itself.
+`scope`, `type`, and `breaking` contain the [consolidated record](change-record.md#terms), consolidated from the [change entries](change-record.md#terms) that the change summary drafted, so the labels, the pull-request title, and the `change-record` block all follow one record. `changes` is the separate commit-derived list: It records what the branch's commits declared, which a reviewer reads for a different question than the change entries answer.
 
-The frontmatter stays flat, whereas the `change-record` block nests the consolidated record and the overrides, because the artifact store is an Obsidian vault and Obsidian's Properties editor does not handle nested maps.
+Each override is recorded beside the field that it overrides rather than in its place. A skill that needs the effective record reads it from [`resolve-effective-record`](title-templates.md#resolve-effective-record) rather than applying the overrides itself.
+
+**The change summary's body ends with the rendered `change-record` block**, which carries the change entries and the consolidated record to the pull request. `create-pr` copies the body from `## What` onward, so the block reaches the pull-request body without being rendered again.
+
+The frontmatter stays flat, whereas the `change-record` block nests the consolidated record, the overrides, and the entries, because the artifact store is an Obsidian vault and Obsidian's Properties editor does not handle nested maps. That is also why the entries are recorded in the block rather than as a nested frontmatter field.
 
 The unified frontmatter shape places `provenance:` first, then top-level canonical fields (`branch`, `commit`, `pr`, `ticket_id`, `ticket_ref`, `run_id`), then the consumer extensions in the order the table above lists them. `commit:` and `ticket_id:` appear exactly once each and serve a dual role: canonical identity fields that downstream consumers may also read. This is the canonical example for any future skill that adds consumer-specific fields alongside canonical ones.
 
