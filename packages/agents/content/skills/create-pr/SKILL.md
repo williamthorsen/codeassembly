@@ -11,7 +11,7 @@ dependencies:
 
 Create a pull request on the appropriate platform. This is the user-facing entry point that orchestrates the full PR creation flow, delegating platform-specific API calls to internal skills (`create-gh-pr`, `create-bitbucket-pr`).
 
-The pull request includes the change's consolidated record and overrides as [the change record](../_data/change-record.md) states them.
+The pull request carries the change's entries, consolidated record, and overrides in the `change-record` block that the change summary's body ends with, as [the change record](../_data/change-record.md) states them.
 
 ## Optional arguments
 
@@ -107,41 +107,31 @@ Read `scm` from the session context manifest:
 - `"bitbucket"` -> delegate to `{skill?:create-bitbucket-pr}`
 - Unknown or missing -> ask the user which platform to use. On this branch only, emit `input.requested` (payload `{"prompt":"platform"}`) per [Lifecycle events](#lifecycle-events) before asking.
 
-### 9. Append the closing line and the record block
+### 9. Insert the closing line above the record block
 
-If `ticket_ref` is non-null, append `\n\nCloses {ticket_ref}` to the body. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when no auto-close integration is wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
+The body copied from the change summary already ends with the rendered `change-record` block, which `summarize-change` writes from the change entries. Carry it through unchanged: Render no block here, and never re-render one from the frontmatter, which records no entries.
+
+If `ticket_ref` is non-null, insert `Closes {ticket_ref}` above that block, separated from the text before it and from the block by one blank line each. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when no auto-close integration is wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
 
 If `ticket_ref` is null, skip: no closing line.
 
-Then render the `change-record` block from the change summary's consolidated record and its overrides as recorded, never from the effective record:
+The closing line goes above the block rather than below it because the block is the body's last element, as [The `change-record` block](../_data/change-record.md#the-change-record-block) states. A merge reads the last `change-record` fence wherever it sits, so the order costs nothing to keep and the convention stays true.
 
-```bash
-node {harness_home_dir}/scripts/describe-change.mjs render-block \
-  --title "{title}" \
-  --scope "{scope}" \
-  --type "{type}" \
-  --breaking \
-  --override-scope "{override_scope}" \
-  --override-type "{override_type}" \
-  --override-breaking \
-  | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
-```
-
-Always pass `--title`, which the block requires. Omit each other flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only if that field is `true`. Render and parse in one Bash invocation, as the title step does. Append the printed block to the body after a blank line, so it is the body's last element, and write it even if the block contains only a title. [The `change-record` block](../_data/change-record.md#the-change-record-block) states its grammar. If the script is not found or the call fails, leave the block out and say so.
+If the change summary's body ends with no block, append the closing line as the body's last line and say that the pull request carries no change record. A body reaches this step without one when `summarize-change` reported that `render-block` was unavailable or failed.
 
 ### 10. Call delegate
 
 Pass the following inputs to the selected delegate per the delegate interface:
 
-| Input               | Value                                                                                                |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `title`             | Rendered `pr_title` from step 6 (or bare `title` if the script was unavailable)                      |
-| `body`              | Content from `## What` onward in the change summary, then the closing line and the block from step 9 |
-| `labels`            | Resolved label names (may be empty list)                                                             |
-| `base_branch`       | Bare branch name derived from `default_branch` (strip remote prefix, e.g., `origin/main` -> `main`)  |
-| `ticket_id`         | From session context                                                                                 |
-| `project_slug`      | From session context                                                                                 |
-| `artifact_base_dir` | From session context                                                                                 |
+| Input               | Value                                                                                               |
+| ------------------- | --------------------------------------------------------------------------------------------------- |
+| `title`             | Rendered `pr_title` from step 6 (or bare `title` if the script was unavailable)                     |
+| `body`              | Content from `## What` onward in the change summary, with the closing line inserted per step 9      |
+| `labels`            | Resolved label names (may be empty list)                                                            |
+| `base_branch`       | Bare branch name derived from `default_branch` (strip remote prefix, e.g., `origin/main` -> `main`) |
+| `ticket_id`         | From session context                                                                                |
+| `project_slug`      | From session context                                                                                |
+| `artifact_base_dir` | From session context                                                                                |
 
 ### 11. Persist the PR URL
 
