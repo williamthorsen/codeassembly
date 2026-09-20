@@ -135,9 +135,9 @@ If the body is thin, compose fresh content through the drafter and cutter that `
 
 Resolve the tier by looking up the report's `effective_record.type` in [work-types.json](../_data/work-types.json).
 
-If `defects` shows that the effective record has no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the draft is written for, and `feat` and `fix` are both `public`, so a draft composed at `internal` while the type is unresolved can drop the migration paragraph that a breaking change requires for a public-tier reader, in a body that appears in the merge commit, the changelog, and release notes.
+If `defects` shows that the effective record has no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier decides which reader the cutter keeps a bullet for, and the type it resolves from is the one that the effective record carries into the merge, in a body that appears in the merge commit, the changelog, and release notes.
 
-Dispatch the `{subagent:lede-drafter}` subagent via the {tool:Task} tool with this block:
+Dispatch the `{subagent:entry-drafter}` subagent via the {tool:Task} tool with this block:
 
 ```dispatch
 type: {resolved type}
@@ -145,20 +145,22 @@ tier: {resolved tier}
 ticket-source: {ticket URL or reference}
 ```
 
-The block contains scalars only, and only these keys. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here introduces this session's weighting into the draft. Take its `## Lede` section as the body candidate, and read its `## Report` for any source that it could not access.
+The block contains scalars only, and only these keys. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here introduces this session's weighting into the draft. Parse its `## Entries` fence as YAML, hold any `Migration:` paragraph below the fence aside, and read its `## Report` for any source that it could not access.
 
-Then cut that draft. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
+Each entry's bullet is `🚨 **Breaking:** ` (from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `) when its `breaking` is `true`, followed by its `text`. The bullets are the body candidate. Never render an entry's `scopes`: A merge-commit body carries no scope tags.
+
+Then cut those bullets. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
 ```dispatch
 tier: {the tier resolved above}
 ```
 
 ```candidates
-- {the first bullet of the draft}
+- {the first bullet}
 - {the second bullet}
 ```
 
-Copy each candidate character for character, one per line, and number none of them: The cutter returns the survivors verbatim, and anything added here has to be stripped back out. Hold any `Migration:` paragraph aside and re-attach it below the surviving bullets, since it is the only text addressed to a consumer whose build just broke. Skip this dispatch for a single-bullet draft, because the cut leaves at least one bullet.
+Copy each candidate character for character, one per line, and number none of them: The cutter returns the survivors verbatim, and anything added here has to be stripped back out. Re-attach the migration paragraph below the surviving bullets, since it is the only text addressed to a consumer whose build just broke. Skip this dispatch for a single-entry draft, because the cut leaves at least one bullet.
 
 **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them, naming each file by the absolute path to which it was written:
 
@@ -168,7 +170,7 @@ grep -Fxv -f "{candidates_file}" "{returned_file}"
 
 Each printed line is a bullet that the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case. Read the printed lines rather than the exit status. Count the returned bullets too: The comparison above passes a return containing none, because the empty set is a subset.
 
-Redispatch on either failure -- `rejection: not-a-subset` for a bullet written by the cutter, `rejection: empty-cut` for a return containing none -- at most twice across the two. After a second failure, take the draft uncut and report the failure to the user.
+Redispatch on either failure -- `rejection: not-a-subset` for a bullet written by the cutter, `rejection: empty-cut` for a return containing none -- at most twice across the two. After a second failure, take every candidate uncut and report the failure to the user.
 
 Do not audit the draft here: The user reads the composed body at the approval gate in step 6, before anything is published.
 

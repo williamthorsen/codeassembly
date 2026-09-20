@@ -10,7 +10,7 @@ export const FIXTURE_MERGED_LEDE =
   'Rulebooks can now address a file by linking to it: a Markdown link reaches each harness.';
 
 /** Filenames of the subagent bodies in the fixture's doctrine directory. */
-export const FIXTURE_DOCTRINE_FILENAMES: ReadonlyArray<string> = ['lede-cutter.md', 'lede-drafter.md'];
+export const FIXTURE_DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter.md', 'lede-cutter.md'];
 
 /**
  * A temporary fixture tree: the ticket's artifact directory, the `_data` directory, the deployed subagents directory,

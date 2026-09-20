@@ -61,7 +61,7 @@ describe('dropped-harness retraction', () => {
   const DROPPED = {
     harnessId: 'rovo',
     skillDirs: ['/project/.rovo/skills/consult-alpha'],
-    subagentFiles: ['/project/.rovo/agents/lede-drafter.md'],
+    subagentFiles: ['/project/.rovo/agents/entry-drafter.md'],
     supportPaths: ['/project/.rovo/skills/_sources'],
     ambientHost: { kind: 'delete', path: '/project/AGENTS.local.md' },
     promptsYml: { kind: 'rewrite', path: '/project/.rovo/prompts.yml', content: 'prompts:\n' },
@@ -72,7 +72,7 @@ describe('dropped-harness retraction', () => {
 
     expect(output).toContain('Retracted harness dropped from the declaration: rovo');
     expect(output).toContain('  removed skill /project/.rovo/skills/consult-alpha');
-    expect(output).toContain('  removed subagent /project/.rovo/agents/lede-drafter.md');
+    expect(output).toContain('  removed subagent /project/.rovo/agents/entry-drafter.md');
     expect(output).toContain('  removed source support /project/.rovo/skills/_sources');
     expect(output).toContain('  removed /project/AGENTS.local.md');
     expect(output).toContain('  stripped the codeassembly region from /project/.rovo/prompts.yml');
