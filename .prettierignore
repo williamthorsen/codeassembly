@@ -1,35 +1,6 @@
 pnpm-lock.yaml
 **/.readyup/manifest.json
 
-# Generated esbuild bundles of skill helpers, not authored source. Prettier exhibits a
-# non-idempotent reformatting bug on long ternary expressions emitted by the bundler (the
-# `yaml` package surfaces the pattern), so the bundles are excluded at the root level too.
-packages/agents/content/scripts/**/*.mjs
-packages/agents/content/skills/**/*.mjs
-
-# Harness artifacts deployed by `codeassembly sync`: generated, gitignored, and carrying
-# copies of the skill-helper bundles excluded above, which sync copies verbatim into each
-# deployed skill directory. The exclusion above covers the source path only.
-.claude/agents/
-.claude/skills/
-.rovo/prompts.yml
-.rovo/skills/
-.rovo/subagents/
-
-# Subagent partials and the files that consume them must preserve exact whitespace around
-# `<!-- include: ... -->` open/close directives and
-# `<!-- children -->` placeholders.
-# Prettier's auto-insertion of blank lines around HTML-comment lines breaks slot substitution semantics;
-# see packages/agents/content/_partials/README.md.
-packages/agents/content/_partials/
-packages/agents/content/subagents/_partials/
-packages/agents/content/subagents/aspect-code-reviewer.md
-packages/agents/content/subagents/aspect-silent-failure-reviewer.md
-packages/agents/content/subagents/aspect-test-reviewer.md
-packages/agents/content/subagents/code-simplification-reviewer.md
-packages/agents/content/subagents/orchestrated-coder.md
-packages/agents/content/subagents/orchestrated-reviewer.md
-
 # Test fixtures no parser can read, marked by a `.malformed` infix. Prettier cannot parse
 # them, and reformatting would erase the defect they exist to test.
 **/__tests__/**/fixtures/**/*.malformed/
