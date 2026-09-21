@@ -130,7 +130,7 @@ Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `b
 
 The report's `body` is the merge-commit **lede** candidate. The published body is that lede followed by the block's trailers, which the last part of this step composes.
 
-A lede is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic; proceed with a shorter body if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
+A lede is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic; proceed with a shorter lede if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
 
 If the lede is thin, compose fresh content through the drafter and cutter that `summarize-change` dispatches, rather than writing it here. Those two contain the lede doctrine.
 
@@ -148,7 +148,7 @@ ticket-source: {ticket URL or reference}
 
 The block contains scalars only, and only these keys. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here introduces this session's weighting into the draft. Parse its `## Entries` fence as YAML, hold any `Migration:` paragraph below the fence aside, and read its `## Report` for any source that it could not access.
 
-Each entry's bullet is `🚨 **Breaking:** ` (from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `) when its `breaking` is `true`, followed by its `text`. The bullets are the body candidate. Never render an entry's `scopes`: A merge-commit body carries no scope tags.
+Each entry's bullet is `🚨 **Breaking:** ` (from `markers.breaking` in [work-types.json](../_data/work-types.json), rendered as `{emoji} **{label}:** `) when its `breaking` is `true`, followed by its `text`. The bullets are the lede candidate. Never render an entry's `scopes`: A merge-commit body carries no scope tags.
 
 Then cut those bullets. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
@@ -268,15 +268,20 @@ This step exists because a published merge-commit title and body cannot be amend
 Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's platform dispatch, then re-run step 3 over them: a fresh body file, the new title, the `headRefOid` read in step 2, and the override set as settled at the approval gate. Then compare the two values that the merge publishes:
 
 - **Title**: Compare the new `merge_title` with the approved one.
-- **Body**: Compare the new report's `body` with the `body` of the report behind the body that the user most recently approved. If it is unchanged, keep the approved body. If it changed, re-run step 5 over it in full, the thin-body fallback included, so that a description that has since gained a real `## What` is picked up. The baseline advances with each approval, as the title's does; if it stayed at the pre-gate report, every pass would re-run the fallback and the loop would never converge.
+- **Lede**: Compare the new report's `body` with the `body` of the report behind the body that the user most recently approved. If it changed, re-run step 5 over it in full, the thin-lede fallback included, so that a description that has since gained a real `## What` is picked up. The baseline advances with each approval, as the title's does; if it stayed at the pre-gate report, every pass would re-run the fallback and the loop would never converge.
+- **Trailers**: Compare the new report's `trailers` with the approved report's, element by element. If they changed, recompose the published body from the approved lede and the new trailers, dispatching neither the drafter nor the cutter, since the lede is unaffected.
+
+If neither the lede nor the trailers changed, keep the approved body.
 
 If the new report contains a defect, return to step 6 and settle it before comparing.
 
-The body comparison keys on the report's `body` rather than on the composed body because step 5's thin-body fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would have no fixed point to reach. The helper's extraction is deterministic, so it has one. Keying on the `## What` section rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` appears in the merge commit.
+The lede comparison keys on the report's `body` rather than on the composed lede because step 5's thin-lede fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would have no fixed point to reach. The helper's extraction is deterministic, so it has one. Keying on the `## What` section rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` appears in the merge commit.
+
+The trailers take a comparison of their own because `body` excludes the `change-record` block: An edit confined to that block leaves `body` identical while changing what the merge publishes, and `merge_title` catches only the subset of such edits that move the consolidated record. `trailers` is rendered by the helper rather than drafted, so comparing it has the fixed point that the lede comparison needs `body` to supply.
 
 The window that this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope: The re-run reads the commits up to the head commit read in step 2, and a generated body is not recomposed on account of later commits. The delegate's own branch-sync check reports local and remote divergence.
 
-If both re-read values match the approved ones, continue to step 9 without saying anything. If either differs, re-render step 6's gate with the new values and ask again, and repeat this step after each approval until the values stop changing. Merging the newest version silently would publish text that the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with no merge and no artifact, exactly as step 6 does.
+If every re-read value matches the approved one, continue to step 9 without saying anything. If any differs, re-render step 6's gate with the new values and ask again, and repeat this step after each approval until the values stop changing. Merging the newest version silently would publish text that the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with no merge and no artifact, exactly as step 6 does.
 
 ### 9. Call delegate
 
