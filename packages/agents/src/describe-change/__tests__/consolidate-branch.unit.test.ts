@@ -108,6 +108,17 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
+  it('reads a trailer naming several scopes as one entry that carries them all', () => {
+    const commits: RawCommit[] = [
+      { hash: 'condensed', subject: 'agents|feat: Squashed', trailers: ['agents,kb|feat: Add the reader'] },
+    ];
+
+    const result = consolidateBranch(commits, NODES, TAXONOMY);
+
+    expect(result.entries.map((entry) => entry.record.scope)).toStrictEqual(['agents,kb']);
+    expect(result.consolidatedRecord).toStrictEqual({ type: 'feat' });
+  });
+
   it('reads a subject alongside another commit’s trailers', () => {
     const commits: RawCommit[] = [
       { hash: 'condensed', subject: 'agents|fix: Squashed', trailers: ['agents|feat: Add the parser'] },
