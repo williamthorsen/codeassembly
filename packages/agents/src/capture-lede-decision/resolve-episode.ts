@@ -24,7 +24,10 @@ const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
  */
 const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter.md', 'lede-cutter.md'];
 
-/** Artifact filename suffix holding the lede that merged, and the heading under which it appears. */
+/**
+ * Artifact filename suffix holding the body that merged, and the heading under which it appears. The section records
+ * the published whole, so the lede is what remains once `stripChangeTrailers` removes the entry records below it.
+ */
 const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;
 
 /** Result of digesting the doctrine: the combined fingerprint, or the first body that could not be read. */
@@ -80,18 +83,19 @@ export async function resolveEpisode(input: {
     };
   }
 
-  const mergedLede = await readLede({
+  const mergedBody = await readLede({
     artifactDir: input.artifactDir,
     source: MERGED_LEDE_SOURCE,
     ...(input.mergedLedeFile !== undefined && { overrideFile: input.mergedLedeFile }),
   });
-  if (mergedLede === null) {
+  if (mergedBody === null) {
     return {
       ok: false,
       error: 'no-merged-lede',
       message: `no "## ${MERGED_LEDE_SOURCE.heading}" section in a ${MERGED_LEDE_SOURCE.suffix}.md artifact under ${input.artifactDir}`,
     };
   }
+  const mergedLede = stripChangeTrailers(mergedBody);
 
   const doctrine = await hashDoctrine(input.subagentsDir);
   if (!doctrine.ok) {
@@ -177,6 +181,9 @@ async function isDirectory(dirPath: string): Promise<boolean> {
     throw error;
   }
 }
+
+/** Matches one `Change:` trailer line, on the key that Git matches case-insensitively. */
+const CHANGE_TRAILER = /^change:[ \t]/iu;
 
 /** Collapses runs of whitespace so that two ledes differing only by reflow compare equal. */
 function normalizeLede(value: string): string {
@@ -363,6 +370,26 @@ async function resolveIdentity(input: {
       ...(ticket !== null && { ticket }),
     },
   };
+}
+
+/**
+ * Removes the trailing `Change:` trailer block from a merge commit's body, leaving the lede that stands above it.
+ *
+ * Only a run at the end qualifies, and only when every line of it is a trailer: a body whose last paragraph is prose
+ * keeps every line, and one that is trailers alone leaves nothing. A body containing no trailer block is returned
+ * whole, which is what a merge recording no change entry writes.
+ */
+function stripChangeTrailers(body: string): string {
+  const lines = body.split('\n');
+  let end = lines.length;
+  while (end > 0 && (lines[end - 1] ?? '').trim() === '') {
+    end -= 1;
+  }
+  const beforeTrailers = end;
+  while (end > 0 && CHANGE_TRAILER.test(lines[end - 1] ?? '')) {
+    end -= 1;
+  }
+  return end === beforeTrailers ? body : lines.slice(0, end).join('\n').trimEnd();
 }
 
 // endregion | Helpers

@@ -41,6 +41,30 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture)).differ).toBe(false);
   });
 
+  it('cuts the Change: trailers that a merge body carries below its lede', async () => {
+    const fixture = await createLedeFixture({
+      mergedLede: `${FIXTURE_AGENT_LEDE}\n\nChange: agents|feat: Adds the link\nChange: agents|fix: Corrects the guard`,
+    });
+
+    const episode = expectEpisode(await resolveEpisode(inputFor(fixture)));
+
+    expect(episode.mergedLede).toBe(FIXTURE_AGENT_LEDE);
+    expect(episode.differ).toBe(false);
+  });
+
+  it('keeps a body whose last paragraph is prose', async () => {
+    const fixture = await createLedeFixture({ mergedLede: `${FIXTURE_AGENT_LEDE}\n\nA closing paragraph.` });
+
+    expect((await resolveFor(fixture)).mergedLede).toBe(`${FIXTURE_AGENT_LEDE}\n\nA closing paragraph.`);
+  });
+
+  it('keeps a Change: line that prose follows, which is no trailer block', async () => {
+    const merged = `Change: agents|feat: Adds the link\n\n${FIXTURE_AGENT_LEDE}`;
+    const fixture = await createLedeFixture({ mergedLede: merged });
+
+    expect((await resolveFor(fixture)).mergedLede).toBe(merged);
+  });
+
   it('reads the newest artifact of each kind', async () => {
     const fixture = await createLedeFixture();
     await writeArtifact(fixture.artifactDir, '20260731-090000Z_later_merge.md', renderSection('Body', 'A later lede.'));
