@@ -269,7 +269,7 @@ Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's 
 
 - **Title**: Compare the new `merge_title` with the approved one.
 - **Lede**: Compare the new report's `body` with the `body` of the report behind the body that the user most recently approved. If it changed, re-run step 5 over it in full, the thin-lede fallback included, so that a description that has since gained a real `## What` is picked up. The baseline advances with each approval, as the title's does; if it stayed at the pre-gate report, every pass would re-run the fallback and the loop would never converge.
-- **Trailers**: Compare the new report's `trailers` with the approved report's, element by element. If they changed, recompose the published body from the approved lede and the new trailers, dispatching neither the drafter nor the cutter, since the lede is unaffected.
+- **Trailers**: Compare the new report's `trailers` with the approved report's, element by element. If they changed and the lede did not, recompose the published body from the approved lede and the new trailers, dispatching neither the drafter nor the cutter, since the lede is unaffected.
 
 If neither the lede nor the trailers changed, keep the approved body.
 
