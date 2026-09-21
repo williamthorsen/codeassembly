@@ -102,6 +102,7 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 - `effective_sources`: the source that supplied each field of `effective_record` apart from `pr_number`, such as `block`, `commits`, `labels`, `pr_title`, or `flags`.
 - `merge_title`: the rendered merge-commit title, which includes the breaking marker.
 - `body`: the PR's `## What` section, without the `change-record` block and without the `Closes` line.
+- `trailers`: the block's change entries rendered as trailer values, one per entry, without the `Change: ` prefix.
 - `sources`: what the block, the commits, the labels, and the PR title each name, whether or not the resolution used them, each `null` if it was not read.
 - `defects`: each condition of `effective_record` that the author must override before approval.
 - `notices`: what the gate shows beside the proposal.
@@ -127,11 +128,11 @@ Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `b
 
 ### 5. Compose merge-commit body
 
-The report's `body` is the merge-commit body candidate.
+The report's `body` is the merge-commit **lede** candidate. The published body is that lede followed by the block's trailers, which the last part of this step composes.
 
-A body is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic; proceed with a shorter body if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
+A lede is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic; proceed with a shorter body if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
 
-If the body is thin, compose fresh content through the drafter and cutter that `summarize-change` dispatches, rather than writing it here. The whole body is the lede, and those two contain the lede doctrine.
+If the lede is thin, compose fresh content through the drafter and cutter that `summarize-change` dispatches, rather than writing it here. Those two contain the lede doctrine.
 
 Resolve the tier by looking up the report's `effective_record.type` in [work-types.json](../_data/work-types.json).
 
@@ -172,7 +173,18 @@ Each printed line is a bullet that the cutter wrote rather than kept. `grep` exi
 
 Redispatch on either failure -- `rejection: not-a-subset` for a bullet written by the cutter, `rejection: empty-cut` for a return containing none -- at most twice across the two. After a second failure, take every candidate uncut and report the failure to the user.
 
-Do not audit the draft here: The user reads the composed body at the approval gate in step 6, before anything is published.
+**Compose the published body**: the lede, a blank line, and one `Change: {value}` line per entry of the report's `trailers`, in the order that the report lists them.
+
+```
+{lede}
+
+Change: {first trailer}
+Change: {second trailer}
+```
+
+The trailers append to whichever lede won, the drafted one included, since they come from the block rather than from the body. A report whose `trailers` is empty publishes the lede alone, with neither the blank line nor any trailer.
+
+Do not audit the draft here: The user reads the published body at the approval gate in step 6, before anything is published.
 
 <!-- include: ../_partials/nested-list-indent.md / -->
 
@@ -205,7 +217,7 @@ Proposed merge for PR #{pr_number}:
   Delete:   {deletion_strategy}
 
   ▼ Body
-  {body}
+  {published body}
   ▲
 
 {notices}
@@ -213,7 +225,7 @@ Proposed merge for PR #{pr_number}:
 {confirmation}
 ```
 
-The triangle delimiters wrap the title and body, the parts that will actually be published. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `{confirmation}` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
+`{published body}` is step 5's composed whole, the lede and its `Change:` trailers together. The triangle delimiters wrap the title and body, the parts that will actually be published, and a squash merge writes them to a protected default branch where they cannot be amended. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `{confirmation}` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
 
 Render each notice there as one line. When a line says where a field came from, name the source that `effective_sources` gives for that field:
 
@@ -274,7 +286,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 | ------------------- | -------------------------------------------------------------------- |
 | `pr_number`         | Resolved PR number                                                   |
 | `title`             | Rendered `merge_title` as step 8 last resolved and the user approved |
-| `body`              | Composed body as step 8 last resolved and the user approved          |
+| `body`              | Published body as step 8 last resolved and the user approved         |
 | `strategy`          | Resolved strategy from step 4                                        |
 | `deletion_strategy` | Resolved value from step 4 (`both` \| `remote` \| `none`)            |
 | `ticket_id`         | From session context                                                 |
