@@ -1,5 +1,37 @@
 [
   {
+    "version": "0.2.9",
+    "date": "2026-09-21",
+    "sections": [
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Sweep the agents CLI, README, and scripts against the writing rules (#1735)",
+            "body": "- Repairs the writing-rule violations in the agents package's CLI, commands and tests, README, build and shell scripts, and `.readyup` kit, and extends those repairs to the `packages/kb` and `packages/mcp` bin wrappers, which copy the agents wrapper's comments.\n- Changes the wording of printed CLI lines, among them `status`'s `Not installed`, `install`'s warnings, and the sync report's ambient-host and rulebook-retirement lines, together with the test assertions that pin them.",
+            "hash": "855de41defa48f0067962c2b36bb4fc705bd35e9"
+          },
+          {
+            "description": "Apply comment discipline outside packages/agents (#1750)",
+            "body": "- Fixes three defects: The `mcp` staleness scan reported a stale build after an edit under `__fixtures__`, `__mocks__`, or `test-utils`, its stale-build warning named a rebuild command that does not exist, and `scripts/replace-separator-comments.ts` skipped the `.config` directory.\n- Derives the expected event types in the `mcp` protocol test from `runEventSchema`, so that a type added to the schema fails the test until the flow emits it.",
+            "hash": "642e567a353c036918dd8f7207b8e26d39d3ee04"
+          },
+          {
+            "description": "Align prose outside packages/agents with the writing rules (#1752)",
+            "body": "- Aligns the `kb create` help text and the `kb taxonomy` output and the `taxonomy.undeclared` and `taxonomy.unused` lint messages to align with writing conventions.",
+            "hash": "2a9fe297af7f6403dc89f8647b7656252ef0156c"
+          },
+          {
+            "description": "Apply comment discipline to the agents tooling and the bin wrappers (#1769)",
+            "body": "- Deletes from the 14 `make-*-smoke-test.ts` builders the three rules that they repeated, leaving each header with the fixture that it creates and the pipeline that its own run covers. Each rule is documented once: two already on `SmokeTestInvocation` and in the smoke-test runner's header, and the third now on `SmokeTestInvocation`.\n- Converges the comment blocks of `packages/agents/bin/codeassembly.js`, `packages/kb/bin/kb.js`, and `packages/mcp/bin/codeassembly-mcp.js` on one wording, and deletes from all three the wrapper rationale that `packages/agents/README.md` documents.\n- Corrects two comments that stated something false: `install-launchers.sh`'s manual-`--help` rationale named `getopts`, which that script never calls, and `make-emit-event-smoke-test.ts` pointed at a PATH hazard that the file that it named does not document.",
+            "hash": "4806835e1661a2b693b27e2c46ff3b87027ad461"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.8",
     "date": "2026-09-13",
     "sections": [

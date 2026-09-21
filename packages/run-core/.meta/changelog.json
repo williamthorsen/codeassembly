@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.4.1",
+    "date": "2026-09-21",
+    "sections": [
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Apply comment discipline outside packages/agents (#1750)",
+            "body": "- Fixes three defects: The `mcp` staleness scan reported a stale build after an edit under `__fixtures__`, `__mocks__`, or `test-utils`, its stale-build warning named a rebuild command that does not exist, and `scripts/replace-separator-comments.ts` skipped the `.config` directory.\n- Derives the expected event types in the `mcp` protocol test from `runEventSchema`, so that a type added to the schema fails the test until the flow emits it.",
+            "hash": "642e567a353c036918dd8f7207b8e26d39d3ee04"
+          },
+          {
+            "description": "Align prose outside packages/agents with the writing rules (#1752)",
+            "body": "- Aligns the `kb create` help text and the `kb taxonomy` output and the `taxonomy.undeclared` and `taxonomy.unused` lint messages to align with writing conventions.",
+            "hash": "2a9fe297af7f6403dc89f8647b7656252ef0156c"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.4.0",
     "date": "2026-09-13",
     "sections": [

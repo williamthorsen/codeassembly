@@ -2,6 +2,269 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.16.0 — 2026-09-21
+
+### 🎉 Features
+
+- Declare a report id for every prose rule, detected or not (#1687)
+
+  - Adds `williamthorsen-comment-preferences` to the rulebooks that `revise-prose` sweeps and that `prose-reviser` applies.
+  - Directs `revise-prose` and `prose-reviser` to take each rule's id from the `<!-- rule: <id> -->` marker beneath its heading, rather than from a list kept by hand, and adds that marker to each rule in `williamthorsen-writing-preferences` and `williamthorsen-comment-preferences` that lacked one.
+  - Specifies that a rule without a marker, such as one in a rulebook from outside this repository, takes the kebab-case form of its heading as its id.
+  - Makes `revise-prose.mjs detect` accept a `--rule` naming a rule that has no mechanical detector, and list such rules under `rules.undetected`, which the sweep summary reports to make a misspelt marker id visible.
+
+- Sweep prose in the content guidance, partials, and collections (#1703)
+
+  - Revises prose across guidance documents.
+  - Bumps the version of the 12 rulebooks whose deployed text changed and of the `plain-speech` unit, which re-opens every repository's recorded sweep coverage for the `plain-speech` unit and the comment and writing preferences.
+
+- Forbid giving an action to a subject that does not perform it (#1707)
+
+  - Extends the `plain-speech` rule to forbid making data, a file, or a part of a document the subject of an action that an agent or a command performs, and to forbid a passive that omits an actor needed by the reader.
+  - Stops the second-person rule in `williamthorsen-writing-preferences` from recommending a recast that makes an artifact the subject of an action that it does not perform.
+  - Bumps the `plain-speech` unit to version 6, so that a `revise-prose` sweep covers again the files that a sweep covered at an earlier version.
+
+- Sweep content guidance and partials at current writing-rule versions (#1708)
+
+  - Adds a rule to the "Version bumps" section of `codeassembly-content-specification`, now at version 21: The author of a `revise-prose` repair keeps the rulebook's version, because a raised version stops `revise-prose` from counting the coverage recorded by the same sweep.
+
+- Exclude verbatim extracts from the prose sweep and fix skills m to z (#1720)
+
+  - Revises prose in a range of skill files to align with writing rules.
+  - Adds a `vendored` skip reason to `revise-prose`, which excludes from the sweep any file that has a comment line containing both "Extracted verbatim from" and "Do not edit" and reports it under that reason in `filesSkipped`.
+
+- Declare a sweep version on each prose rule and pin each rule's section (#1727)
+
+  - Adds a version to the rule marker, written `<!-- rule: <id> <version> -->` and set to `1` on every rule in the library, as a first step toward keying `revise-prose` coverage per rule rather than per rulebook.
+  - States in `codeassembly-content-specification` when a rule's sweep version rises: when some text that complied with the old wording could fail the new one, or when unsure, but not for a relaxation, a clarification, or a rewording.
+
+- Key prose-sweep coverage and rejections per rule (#1728)
+
+  - Makes a raised sweep version reset coverage and mark rejections stale for that rule alone in the `.agents/revise-prose.yaml` sweep record, and stops a change to a rulebook's `version` from doing so for every rule in the rulebook.
+  - Excludes from the record any rule that declares no sweep version, and adds a "Not recorded" line naming each such rule to `revise-prose`'s closing summary.
+  - Changes the record's shape, which a `revise-prose` installed before this change reads as covering nothing, or refuses as `invalid-record` when the record holds a rejection.
+
+- Apply only the unswept rules in each prose-sweep batch (#1729)
+
+  - Limits the rules that `prose-reviser` applies and reports in each `revise-prose` batch to the versioned rules still unswept in at least one of the batch's files, plus every rule without a sweep version, so that raising one rule's sweep version no longer re-sweeps the other versioned rules.
+
+- Allow the where that defines a symbol in the writing preferences (#1731)
+
+  - Specifies that the `where` rule in `williamthorsen-writing-preferences` permits the word only for a place or for stating what a symbol, variable, placeholder, or value in a preceding expression stands for, and that a `where` that states a condition, such as "the entry where `role` is `coder`", remains a violation.
+  - Raises the `williamthorsen-writing-preferences` version from 8 to 9 without raising the `where` rule's sweep version, so its recorded coverage and rejections stay current in a `revise-prose` record keyed on each rule's sweep version and no longer count in a record still keyed on the rulebook version.
+  - Stops `revise-prose` from writing a `roots` list shared by several rules as a YAML anchor and aliases, which the next `record` run expanded into full lists in its diff.
+
+- Add a derivation test to the comment-discipline audit (#1740)
+
+  - Adds a fourth test to the comment-discipline audit: A doc comment that lists the items below it now fails, because that list copies each item's own description and goes out of date. The test directs the author to state the one rule that the items follow, and to leave the rest to each item's own description.
+
+- Close the plain-speech settled-term exemption to an enumerated list (#1741)
+
+  - Closes the settled-term exemption in the `plain-speech` writing rule to the six terms that its sweep calibration enumerates.
+  - Limits the calibration's mannered-prose test to constructed figures, so plain technical vocabulary such as "inlines the partial" is not a candidate for repair.
+  - Raises `unit-version: plain-speech` from 6 to 7, which re-opens the `plain-speech` coverage that `revise-prose` recorded for every repository swept at 6.
+
+- Sweep the sweep, change, and lede helpers against the writing rules (#1742)
+
+  - Changes the lines that `select-lede-exemplars` prints, among them the warning for a work type that neither the taxonomy nor the corpus record gives a tier.
+
+- Replace the abbreviation ban with a test for obscure abbreviations (#1754)
+
+  - Replaces the blanket abbreviation ban in `naming-conventions.md` with a test that permits abbreviations used in ordinary speech.
+  - Permits `fn` because `function` is a reserved word.
+  - Replaces the looser test in the file's "Unit-of-measure suffixes" section with the rule that decides an unlisted unit, namely that the suffix takes the unit's conventional written form.
+
+- Direct the planner to read the skills that a plan's tasks invoke (#1768)
+
+  - Directs the planner, through the plan template shared by the `plan` and `design-and-plan` skills, to read each skill that a task invokes and to record in the task's key decisions that skill's ordering relative to other skills, its default target when the task passes no argument, and the preconditions that it states.
+  - Requires the planner to add the missing task when an ordering constraint names a skill that no task invokes.
+
+- Size streamlining targets by what they deploy (#1778)
+
+  - Adds `deployedBytes` beside `bytes` in the output of `streamline-guidance resolve`, sizing each file by what an agent loads: a document's size once its includes are expanded, and a partial's own size times the number of documents that reach it.
+  - Restates the `streamline-guidance` skill's Before/After/Saved summary in deployed bytes, so a run reports what its cuts removed from what agents load rather than from the source.
+
+- Keep the statement of the change in the lede when the title names it (#1787)
+
+  - Modifies the `lede-drafter` subagent so that it is no longer instructed to avoid duplicating the title's content in the lede bullets.
+
+- Ban jargon in an authored title (#1788)
+
+  - Adds a "No jargon" rule to `title-voice.md`, the guidance for a title authored for a ticket, commit, pull request, or squash merge.
+
+- Cut ticket splits finer and raise an oversized ticket before design (#1790)
+
+  - Directs a ticket split, in the `williamthorsen-ticketing-preferences` rulebook, to err toward more and smaller tickets when the count is a judgment, and gives the test that decides a piece: whether it ships and can be verified on its own.
+  - Extends ticket evaluation with that test, so that an agent raises the split for a ticket holding two or more independently shippable pieces before design begins rather than once its tasks are decomposed.
+
+- Record each deployment's sizes and rank them with a sizes command (#1789)
+
+  - Adds a size-recording pass at the end of every live `sync`, which measures every file that `sync` and `install` deployed and appends a snapshot to a JSONL record under `~/.codeassembly/deployed-sizes/`, outside every repository.
+  - Adds a `sizes` command, which ranks the last recorded deployment's documents by size and reports three totals beneath them: the bytes that load into every session, the bytes that load when something opens a document, and the files that load into no context.
+  - Gates that append on two conditions, a measurement differing from the previous snapshot and a deployed source commit that is an ancestor of the default branch, so that the record tracks the default branch's sizes rather than those of each branch under development.
+
+- Report each live sync's size change (#1793)
+
+  - Adds a size report to each live `sync`, listing every document that the deployment added, removed, or resized with its change in bytes and, when it remains, its size after the deployment, then the always-loaded, on-invocation, and asset totals and a closing line naming the `sizes` command.
+  - Adds a growth warning for each document that the deployment takes from below 5 KiB to at or above it, naming the `streamline-guidance` skill only for a document whose source sits inside the current repository and outside `node_modules`.
+
+- Stop merge-pr from prompting for a lede rating after every merge (#1798)
+
+  - Stops `merge-pr` from asking the author to rate the lede, the "What"-section bullets of the merged pull request; the flow now ends by reporting whether the merge happened.
+  - Restricts `capture-lede-decision` to the author's own invocation.
+
+- Attribute a partial's fan-out to one report line (#1800)
+
+  - Attributes an edit to a partial, the shared content that the expander inlines into every document that includes it, to one report line naming the partial, its per-document delta, and the number of deployed documents whose growth it explains, in place of the near-identical line that each of those documents used to print.
+  - Reports as a residual the part of a resized document's delta that its changed partials do not explain, and orders partial and document lines together by the bytes that each accounts for.
+
+- Report each document's growth since its last streamlining review (#1807)
+
+  - Adds a "Grown since last streamlined:" block to the live sync's size report, listing each guidance document that has grown since the streamlining review that last read it, ranked by growth and stating the date of that review.
+  - Extends the `streamline-guidance` process with a marking step, which appends to the deployed-size records a review marker naming every document that the run read, whether or not the run applied a cut.
+
+- Add stand to the plain-speech watchlist (#1808)
+
+  - Adds `stand` to the plain-speech calibration's "Words to look for" list, which gives `builds` and `creates` as the plain replacements for the figure "stands up" and names the senses that stay: "stands in for" a substitute, and a claim or a passive that stands.
+
+- Add a resolve-scopes subcommand that maps paths to their workspaces (#1811)
+
+  - Adds a `resolve-scopes` subcommand to `describe-change.mjs`, which maps each `--path` given to the scope that owns it, the basename of the innermost workspace directory containing it or `root` for a path that no workspace contains, and reports the sorted union of those scopes alongside the per-path mapping.
+
+- Derive the change summary's Details and What from a drafted entry list (#1812)
+
+  - Stops `summarize-change` from restating the diff in prose under `## Details`, which now renders one bullet per outcome of the change, grouped into a subsection per work type.
+  - Makes `## What` a selection of those same bullets, so the lede and `## Details` state each outcome in one wording rather than two.
+  - Adds bare `#scope` tags to the `## Details` bullets of a branch whose outcomes do not all name the same scopes.
+  - Extends the breaking prefix to the merge-commit body and the changelog, where a breaking outcome previously appeared as an unmarked bullet above a migration paragraph.
+  - Rebuilds `merge-pr`'s fallback merge-commit body from the same entries, for a pull request whose own body is too thin to use.
+
+  Migration: Replace `lede-drafter` with `entry-drafter` in every skill, collection, tool grant, and dispatch that names it, and read the subagent's return as the fenced YAML entry list under `## Entries` rather than as a bullet list. A redispatch after a rejection still returns plain text, one replacement per rejected passage, so a caller that parses YAML unconditionally fails on that path.
+
+- Record change entries in the change-record block and consolidate them (#1815)
+
+  - Adds `entries` and `entries_commit` to the `change-record` block: the entries drafted by `entry-drafter`, each with its `type`, `scopes`, `breaking`, and `text`, and the short SHA of the commit at which they were drafted, both reported by `describe-change.mjs resolve-merge` under `sources.block`, so that a tool gets the entries as data instead of parsing the rendered `## Details` list.
+  - Makes `summarize-change` consolidate the change summary's `scope`, `type`, and `breaking` from the entries drafted by `entry-drafter` rather than from the commit subjects, so that the scope is resolved from the paths touched and not read from the prefix that the author typed.
+  - Moves the rendering of the `change-record` block from `create-pr` to `summarize-change`, which ends the change summary's body with it, and makes `create-pr` copy that block into the pull-request body, or report that the pull request has no change record when the summary contains no block, which is the case for a summary saved before this change.
+  - Changes which record `describe-change.mjs resolve-merge` uses, and `merge-pr` therefore proposes, when the `change-record` block's consolidated record and the commits' disagree: the block's record if its entries were drafted at the pull request's head commit, and the commits' record otherwise, as previously in every case.
+
+### 🐛 Bug fixes
+
+- Allow a result-stating so and detect only bare or repeated uses (#1701)
+
+  - Drops the previously proposed repairs and adds a quantitative requirement: at least three sentences between one clause-joining `so` and the next.
+  - Narrows the `revise-prose` `so` detector.
+
+- Keep live rejections and retire reviewed stale ones on a re-sweep (#1705)
+
+  - Fixes that issue that `revise-prose` deleted earlier sweeps' rejections (recorded decisions not to repair a flagged phrase) in the files that it swept again. A new sweep now preserves a rejection if its phrase still appears in its file.
+  - Fixes the issue that `revise-prose` kept rejections made under an older version of the rules after a sweep under a new version covered their files.
+  - Stops counting stale candidates toward either the rejected count or the total of `prose-reviser`'s "a file that is mostly rejections" ground, which reported every remaining repair in a file as questionable when the swept rules had changed version and the subagent rejected most of those candidates again.
+
+- Fix writing-rule violations in skill data, partials, and skills a to l (#1711)
+
+  - Fixes writing-rule violations in shared skill data, skill partials, and a range of skills.
+
+- Describe each work type and inline the test that decides between them (#1713)
+
+  - Adds a `description` to every type in `work-types.json`, and includes in `commit-conventions`, `create-commit`, `create-ticket`, `merge-pr`, and `summarize-change` a work-type test under which guidance written for any repository takes the type of the same change to source code, guidance on working in one repository and that repository's agent configuration take `ai`, and a change confined to code comments takes `docs`.
+  - Changes `revise-prose` to commit each batch with the type and scope that `create-commit` derives from its files, rather than with `docs` for every batch.
+
+- Reduce title-voice.md to the rules of an authored title (#1714)
+
+  - Fixes violations of writing rules in `title-voice.md` and reduces its size by 60%.
+
+- Write and remove orchestrate's run breadcrumb on every path (#1722)
+
+  - Fixes the issue that artifacts saved during an `orchestrate` run with the MCP server unavailable contained no `run_id` in their frontmatter, although the run had one.
+  - Fixes the issue that artifacts saved in a worktree after an `orchestrate` run whose MCP connection dropped mid-run could receive that run's `run_id`, because the skill did not say whether to remove `.claude/tmp/active-run-dir` in that case.
+
+- Fix stale run_id on artifacts written after an interrupted run (#1726)
+
+  - Stops `resolve-frontmatter.sh` from adding an interrupted orchestrated run's `run_id` to every artifact that a skill or subagent later wrote in the same worktree, a defect caused by the `.claude/tmp/active-run-dir` file that `orchestrate` removed only when a run finished.
+  - Makes `resolve-frontmatter.sh` emit `run_id` only when a caller passes `--override run_id=<id>`, and makes `orchestrate` and the subagents that it dispatches pass that override for the artifacts of a run.
+
+- Fix writing-rule violations in the content subagents, scripts, and tests (#1733)
+
+  - Fixes writing-rule violations in the subagent bodies that `codeassembly` deploys, in the shell helpers that its skills invoke, and in the content test suites and their helpers.
+
+- Require a real bug before a change is typed as a fix (#1770)
+
+  - Fixes the typing error that published deliberate improvements as bug fixes, by adding to `commit-conventions`, `create-commit`, `create-ticket`, `merge-pr`, and `summarize-change` a test that admits `fix` only when a consumer meets the changed behavior and that behavior differed from what its author intended.
+  - Corrects the tier tiebreak in `commit-conventions`, which read as a direction to promote a change to the higher tier: it applies only when more than one type genuinely applies, and it governs a pull request and a merge commit as well as a single commit.
+  - Admits a repair into `internal` in `work-types.json`, since the test routes a repair that no consumer meets away from `fix` and `internal` previously covered only adding or extending a capability that consumers do not use directly.
+
+- Say that a feedback capture records evidence rather than changing behavior (#1791)
+
+  - Fixes the `williamthorsen-workflow-preferences` rulebook's claim that capturing feedback propagates a correction to every project and machine, which led agents to report a captured correction as already in force; the rulebook now states that `capture-feedback` records evidence and that behavior is unchanged until a later refinement pass writes the lesson into deployed guidance.
+
+- Truncate on grapheme boundaries and share one terminal-width rule (#1795)
+
+  - Stops `feedback-memories list --verbose` from cutting a truncated description in the middle of a character, which yielded fewer emoji than the width allowed and turned a joined emoji sequence into a replacement character.
+  - Widens `library-list`'s output to 120 columns when it is piped rather than written to a terminal, matching `feedback-memories` and wrapping each description onto fewer lines.
+
+- Permit correcting a saved artifact and stop agents narrating the rule (#1801)
+
+  - Fixes the issue that agents refused to correct a saved plan, review, or summary that nothing had consumed yet and proposed a duplicate artifact instead; the guidance now applies a motive test, which permits correction of a record that got its own subject wrong and forbids editing one to reflect what has happened since.
+  - Fixes the issue that agents announced an edit that they had declined to make; the guidance now forbids mentioning the doctrine, announcing an unmade write, and offering to reconcile a record with current state.
+
+### 🤖 Agentic support
+
+- Require guidance edits to cut what new text makes redundant (#1776)
+
+  - Adds a convention to the "Adding guidance" section of the `codeassembly-content-specification` rulebook: An author who changes a guidance file is instructed to identify what the new text makes redundant, in that file or in any other, and trim it in the same change.
+  - Adds an offer of a `streamline-guidance` run when the change leaves the guidance file larger than before, which gives that skill its first reference from an authoring surface.
+
+### 📚 Documentation
+
+- Sweep the agents library modules against the writing rules (#1734)
+
+  - Revises the comments, doc comments, and test names across `packages/agents/src/lib` and its tests to align with the writing rule set.
+  - Changes message text in ten of the library modules, among them `anchor-resolution.ts`'s unresolvable-anchor report and `declared-sources.ts`'s missing-source remedy.
+
+- Sweep the agents CLI, README, and scripts against the writing rules (#1735)
+
+  - Repairs the writing-rule violations in the agents package's CLI, commands and tests, README, build and shell scripts, and `.readyup` kit, and extends those repairs to the `packages/kb` and `packages/mcp` bin wrappers, which copy the agents wrapper's comments.
+  - Changes the wording of printed CLI lines, among them `status`'s `Not installed`, `install`'s warnings, and the sync report's ambient-host and rulebook-retirement lines, together with the test assertions that pin them.
+
+- Apply comment discipline to the kb, event, and session helpers (#1746)
+
+  - Deletes comments that restated the declaration beneath them, listed error codes or flags declared elsewhere, repeated the steps of their own function body, or named a helper's consumers, which removes a net of about 650 lines across 123 files under `packages/agents/src`.
+  - Replaces the write probe in the unwritable-directory test in `derive-session-context/__tests__/cli.tool.test.ts`, which checked a path that nothing creates, and makes the test skip rather than pass when `chmod` does not make the directory unwritable.
+
+- Align prose in the kb, event, and session helpers with the writing rules (#1747)
+
+  - Revises comments, doc descriptions, test titles, and test-fixture prose across these modules to align with plain-speech doctrine and the writing conventions.
+  - Changes five printed strings, among them the `feedback-memories` usage line and the `kb-add` `invalid-folder` message, and rebuilds the seven helper bundles that compile them.
+
+- Align prose outside packages/agents with the writing rules (#1752)
+
+  - Aligns the `kb create` help text and the `kb taxonomy` output and the `taxonomy.undeclared` and `taxonomy.unused` lint messages to align with writing conventions.
+
+- Run the comment-discipline deletion pass over the agents content tree (#1761)
+
+  - Deletes 127 lines of superfluous comments from the shell scripts and tests under `packages/agents/content`.
+  - Fixes the `shellcheck disable=SC2086` directive in `resolve-frontmatter.sh`: shellcheck cannot parse the `--` rationale delimiter, so the suppression did not apply.
+
+- Apply the comment-deletion pass to packages/agents/src/lib (#1763)
+
+  - Cuts 416 comment lines from `packages/agents/src/lib`: restatement of the code below, headers enumerating a module's consumers, and the `@param` and `@returns` tags.
+  - Adds descriptions to the helpers and fixture builders that had none.
+
+- Delete the restating comments in the agents commands, shared, and tests (#1766)
+
+  - Removes superfluous comments.
+
+- Delete the restating comments in the prose, change, and lede helpers (#1767)
+
+  - Removes superfluous comments.
+
+- Apply comment discipline to the agents tooling and the bin wrappers (#1769)
+
+  - Deletes from the 14 `make-*-smoke-test.ts` builders the three rules that they repeated, leaving each header with the fixture that it creates and the pipeline that its own run covers. Each rule is documented once: two already on `SmokeTestInvocation` and in the smoke-test runner's header, and the third now on `SmokeTestInvocation`.
+  - Converges the comment blocks of `packages/agents/bin/codeassembly.js`, `packages/kb/bin/kb.js`, and `packages/mcp/bin/codeassembly-mcp.js` on one wording, and deletes from all three the wrapper rationale that `packages/agents/README.md` documents.
+  - Corrects two comments that stated something false: `install-launchers.sh`'s manual-`--help` rationale named `getopts`, which that script never calls, and `make-emit-event-smoke-test.ts` pointed at a PATH hazard that the file that it named does not document.
+
 ## 0.15.0 — 2026-09-13
 
 ### 🎉 Features

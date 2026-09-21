@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.9 — 2026-09-21
+
+### 📚 Documentation
+
+- Sweep the agents CLI, README, and scripts against the writing rules (#1735)
+
+  - Repairs the writing-rule violations in the agents package's CLI, commands and tests, README, build and shell scripts, and `.readyup` kit, and extends those repairs to the `packages/kb` and `packages/mcp` bin wrappers, which copy the agents wrapper's comments.
+  - Changes the wording of printed CLI lines, among them `status`'s `Not installed`, `install`'s warnings, and the sync report's ambient-host and rulebook-retirement lines, together with the test assertions that pin them.
+
+- Apply comment discipline outside packages/agents (#1750)
+
+  - Fixes three defects: The `mcp` staleness scan reported a stale build after an edit under `__fixtures__`, `__mocks__`, or `test-utils`, its stale-build warning named a rebuild command that does not exist, and `scripts/replace-separator-comments.ts` skipped the `.config` directory.
+  - Derives the expected event types in the `mcp` protocol test from `runEventSchema`, so that a type added to the schema fails the test until the flow emits it.
+
+- Align prose outside packages/agents with the writing rules (#1752)
+
+  - Aligns the `kb create` help text and the `kb taxonomy` output and the `taxonomy.undeclared` and `taxonomy.unused` lint messages to align with writing conventions.
+
+- Apply comment discipline to the agents tooling and the bin wrappers (#1769)
+
+  - Deletes from the 14 `make-*-smoke-test.ts` builders the three rules that they repeated, leaving each header with the fixture that it creates and the pipeline that its own run covers. Each rule is documented once: two already on `SmokeTestInvocation` and in the smoke-test runner's header, and the third now on `SmokeTestInvocation`.
+  - Converges the comment blocks of `packages/agents/bin/codeassembly.js`, `packages/kb/bin/kb.js`, and `packages/mcp/bin/codeassembly-mcp.js` on one wording, and deletes from all three the wrapper rationale that `packages/agents/README.md` documents.
+  - Corrects two comments that stated something false: `install-launchers.sh`'s manual-`--help` rationale named `getopts`, which that script never calls, and `make-emit-event-smoke-test.ts` pointed at a PATH hazard that the file that it named does not document.
+
 ## 0.2.8 — 2026-09-13
 
 ### Dependency updates

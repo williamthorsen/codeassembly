@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.3 — 2026-09-21
+
+### 📚 Documentation
+
+- Align prose in the kb, event, and session helpers with the writing rules (#1747)
+
+  - Revises comments, doc descriptions, test titles, and test-fixture prose across these modules to align with plain-speech doctrine and the writing conventions.
+  - Changes five printed strings, among them the `feedback-memories` usage line and the `kb-add` `invalid-folder` message, and rebuilds the seven helper bundles that compile them.
+
+- Apply comment discipline outside packages/agents (#1750)
+
+  - Fixes three defects: The `mcp` staleness scan reported a stale build after an edit under `__fixtures__`, `__mocks__`, or `test-utils`, its stale-build warning named a rebuild command that does not exist, and `scripts/replace-separator-comments.ts` skipped the `.config` directory.
+  - Derives the expected event types in the `mcp` protocol test from `runEventSchema`, so that a type added to the schema fails the test until the flow emits it.
+
+- Align prose outside packages/agents with the writing rules (#1752)
+
+  - Aligns the `kb create` help text and the `kb taxonomy` output and the `taxonomy.undeclared` and `taxonomy.unused` lint messages to align with writing conventions.
+
 ## 0.4.2 — 2026-09-01
 
 ### 🧪 Tests

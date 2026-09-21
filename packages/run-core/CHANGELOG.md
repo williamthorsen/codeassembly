@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.1 — 2026-09-21
+
+### 📚 Documentation
+
+- Apply comment discipline outside packages/agents (#1750)
+
+  - Fixes three defects: The `mcp` staleness scan reported a stale build after an edit under `__fixtures__`, `__mocks__`, or `test-utils`, its stale-build warning named a rebuild command that does not exist, and `scripts/replace-separator-comments.ts` skipped the `.config` directory.
+  - Derives the expected event types in the `mcp` protocol test from `runEventSchema`, so that a type added to the schema fails the test until the flow emits it.
+
+- Align prose outside packages/agents with the writing rules (#1752)
+
+  - Aligns the `kb create` help text and the `kb taxonomy` output and the `taxonomy.undeclared` and `taxonomy.unused` lint messages to align with writing conventions.
+
 ## 0.4.0 — 2026-09-13
 
 ### 🎉 Features
