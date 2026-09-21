@@ -8,22 +8,22 @@
       "esbuildVersion": "0.28.2",
       "inputs": [
         {
-          "hash": "19e3fc49",
+          "hash": "139bfac4",
           "kind": "module",
           "path": "kits/default.ts"
         },
         {
-          "hash": "9b2102b8",
+          "hash": "8779b3c6",
           "kind": "module",
           "path": "lib/label-map-drift.ts"
         }
       ],
       "name": "default",
       "path": "kits/default.js",
-      "readyupVersion": "0.35.0",
+      "readyupVersion": "0.38.0",
       "source": "kits/default.ts",
-      "sourceHash": "19e3fc49",
-      "targetHash": "1177bd8f"
+      "sourceHash": "139bfac4",
+      "targetHash": "328545b6"
     }
   ]
 }
