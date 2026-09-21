@@ -1232,6 +1232,7 @@ describe('resolve-merge', () => {
       },
       merge_title: '#466 agents|feat: Add the parser (#470)',
       body: '- Adds the parser.',
+      trailers: [],
       sources: {
         block: {
           title: 'Add the parser',
@@ -1246,6 +1247,32 @@ describe('resolve-merge', () => {
       },
       defects: [],
       notices: [],
+    });
+  });
+
+  it('reports the block’s entries as rendered trailers, keeping them out of the body', async () => {
+    const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
+    const block = renderChangeRecordBlock({
+      consolidatedRecord: { type: 'feat' },
+      entries: [
+        { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+        { breaking: true, scopes: ['agents'], text: 'Removes the legacy API', type: 'drop' },
+      ],
+      entriesCommit: headCommit.slice(0, 8),
+      title: 'Add the parser',
+    });
+    const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\n${block}\n`);
+
+    const { output } = await runDescribe({
+      argv: ['resolve-merge', '--base', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({
+      body: '- Adds the parser.',
+      trailers: ['agents,kb|feat: Adds the store-qualified wikilink', 'agents|drop!: Removes the legacy API'],
     });
   });
 

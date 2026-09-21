@@ -64,6 +64,7 @@ describe(resolveMerge, () => {
         },
         merge_title: '#466 agents|feat: Add foo (#470)',
         body: '- Adds foo.',
+        trailers: [],
         sources: {
           block: {
             title: 'Add foo',
@@ -487,6 +488,82 @@ describe(resolveMerge, () => {
       const report = resolveMerge(buildInput({ block, commits: unavailable('the head commit is not local') }));
 
       expect(report.effective_sources).toMatchObject({ type: 'block' });
+    });
+  });
+
+  describe('the trailers', () => {
+    it('renders one per entry through the commit template, joining several scopes with a comma', () => {
+      const entries: ChangeEntry[] = [
+        { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+        { breaking: false, scopes: ['kb'], text: 'Corrects the guard', type: 'docs' },
+      ];
+
+      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }, { entries, fresh: true }) }));
+
+      expect(report.trailers).toStrictEqual([
+        'agents,kb|feat: Adds the store-qualified wikilink',
+        'kb|docs: Corrects the guard',
+      ]);
+    });
+
+    it('renders the breaking marker on the type, as the piped-scope convention places it', () => {
+      const entries: ChangeEntry[] = [
+        { breaking: true, scopes: ['agents'], text: 'Removes the legacy API', type: 'drop' },
+      ];
+
+      const report = resolveMerge(buildInput({ block: readBlock({ type: 'drop' }, { entries, fresh: true }) }));
+
+      expect(report.trailers).toStrictEqual(['agents|drop!: Removes the legacy API']);
+    });
+
+    it('renders an entry naming no scope as its type and text alone', () => {
+      const entries: ChangeEntry[] = [{ breaking: false, scopes: [], text: 'Adds foo', type: 'feat' }];
+
+      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }, { entries, fresh: true }) }));
+
+      expect(report.trailers).toStrictEqual(['feat: Adds foo']);
+    });
+
+    it('keeps the trailers out of the composed body', () => {
+      const report = resolveMerge(
+        buildInput({ block: readBlock({ scope: 'kb', type: 'feat' }, { entries: ENTRIES, fresh: true }) }),
+      );
+
+      expect(report.body).toBe('- Adds foo.');
+      expect(report.trailers).toStrictEqual(['kb|feat: Adds the store-qualified wikilink']);
+    });
+
+    it('renders stale entries as written, since a merge re-derives nothing', () => {
+      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'aabbccdd' });
+
+      const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
+
+      expect(report.trailers).toStrictEqual(['kb|feat: Adds the store-qualified wikilink']);
+    });
+
+    it('renders none for a repository whose commit grammar is empty', () => {
+      const report = resolveMerge(
+        buildInput({
+          block: readBlock({ type: 'feat' }, { entries: ENTRIES, fresh: true }),
+          templates: { ...TEMPLATES, commit: '' },
+        }),
+      );
+
+      expect(report.trailers).toStrictEqual([]);
+    });
+
+    it('renders none for a block that records no entry', () => {
+      expect(resolveMerge(buildInput({ block: readBlock({ type: 'feat' }) })).trailers).toStrictEqual([]);
+    });
+
+    it('renders none for a malformed entry list', () => {
+      const block = readBlock({ type: 'feat' }, { entriesDefect: '`entries[0].text` is missing' });
+
+      expect(resolveMerge(buildInput({ block })).trailers).toStrictEqual([]);
+    });
+
+    it('renders none for an absent block', () => {
+      expect(resolveMerge(buildInput({})).trailers).toStrictEqual([]);
     });
   });
 
