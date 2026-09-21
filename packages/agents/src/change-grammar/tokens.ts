@@ -9,12 +9,14 @@ export function isTokenName(name: string): name is TokenName {
  * Brings a record to the form that the rest of the engine assumes: string values trimmed, the `*` scope and every
  * empty value dropped, and a type spelled with the breaking marker split into its bare key and the flag. Idempotent, so
  * a caller may normalize at its own boundary and still pass the result to `render`.
+ *
+ * The scope is a list, so `splitScopes` reduces it and the surviving names rejoin under the separator.
  */
 export function normalizeChangeRecord(record: ChangeRecord): ChangeRecord {
   const normalized: ChangeRecord = {};
 
-  const scope = record.scope?.trim();
-  if (scope !== undefined && scope !== '' && scope !== SCOPE_WILDCARD) {
+  const scope = splitScopes(record.scope).join(SCOPE_SEPARATOR);
+  if (scope !== '') {
     normalized.scope = scope;
   }
 
@@ -42,8 +44,27 @@ export function normalizeChangeRecord(record: ChangeRecord): ChangeRecord {
   return normalized;
 }
 
+/**
+ * Splits a scope value into the workspaces that it names, in first-occurrence order, dropping the empty names, the
+ * wildcard, and the duplicates. A value that leaves nothing behind names no scope, which is how a whole-value `*`
+ * normalizes away and how `agents,*` reads as `agents`.
+ */
+export function splitScopes(scope: string | undefined): string[] {
+  if (scope === undefined) {
+    return [];
+  }
+  const named = scope
+    .split(SCOPE_SEPARATOR)
+    .map((element) => element.trim())
+    .filter((element) => element !== '' && element !== SCOPE_WILDCARD);
+  return [...new Set(named)];
+}
+
 /** The marker of a breaking change, whether as its own token or as the tail of a rendered type. */
 export const BREAKING_MARKER = '!';
+
+/** The character that joins the workspaces of a scope naming more than one. */
+export const SCOPE_SEPARATOR = ',';
 
 /** The scope standing for a change that spans every workspace. It normalizes to empty and never appears in output. */
 export const SCOPE_WILDCARD = '*';
