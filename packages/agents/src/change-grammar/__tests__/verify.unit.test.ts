@@ -99,6 +99,12 @@ describe(verify, () => {
       expect(defects.some((defect) => defect.includes('does not round-trip'))).toBe(true);
     });
 
+    it('refuses a template whose scope delimiter is the comma that joins a scope list', () => {
+      const defects = verify('[{scope},]{type}: {title}', TAXONOMY);
+
+      expect(defects.some((defect) => defect.includes('does not round-trip'))).toBe(true);
+    });
+
     it('accepts a template that names no token at all', () => {
       expect(verify('Release', TAXONOMY)).toStrictEqual([]);
     });

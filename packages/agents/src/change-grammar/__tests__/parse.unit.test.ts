@@ -32,6 +32,7 @@ const ROUND_TRIP_RECORDS: ChangeRecord[] = [
   { title: 'Add foo', type: 'fix' },
   { breaking: true, title: 'Add foo', type: 'drop' },
   { scope: 'run-core', title: 'Rename the lane fold', type: 'refactor' },
+  { scope: 'agents,kb', title: 'Add the store-qualified wikilink', type: 'feat' },
 ];
 
 describe(parse, () => {

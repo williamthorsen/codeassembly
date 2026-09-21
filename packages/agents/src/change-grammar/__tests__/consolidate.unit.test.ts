@@ -69,6 +69,21 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
+  it('names no scope for one entry naming two, as two entries naming one apiece do', () => {
+    const entries = [{ scope: 'agents,kb', type: 'feat' }];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
+  });
+
+  it('names the one scope on which a list and a bare value agree', () => {
+    const entries = [
+      { scope: 'agents,agents', type: 'feat' },
+      { scope: 'agents', type: 'fix' },
+    ];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
+  });
+
   it('skips an entry naming a type that the taxonomy does not declare', () => {
     const entries = [{ type: 'invented' }, { type: 'fix' }];
 

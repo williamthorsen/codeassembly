@@ -1,3 +1,4 @@
+import { splitScopes } from './tokens.ts';
 import type { ChangeRecord, Taxonomy } from './types.ts';
 
 /**
@@ -8,15 +9,17 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * position in the taxonomy, then the type's listing order within it. Ranking by frequency would let three routine
  * fixes outrank the one feature that the branch exists for.
  *
- * Exactly one distinct scope survives; a branch with two scopes names none, since no scope describes it.
+ * Exactly one distinct scope survives; a branch with two scopes names none, since no scope describes it. An entry
+ * whose scope names several workspaces contributes each of them, so it counts exactly as the entries that name them
+ * one apiece do.
  */
 export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy): ChangeRecord {
   const consolidated: ChangeRecord = {};
 
   const scopes = new Set<string>();
   for (const entry of entries) {
-    if (entry.scope !== undefined) {
-      scopes.add(entry.scope);
+    for (const scope of splitScopes(entry.scope)) {
+      scopes.add(scope);
     }
   }
   const [scope] = scopes;

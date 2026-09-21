@@ -255,7 +255,7 @@ function readLeadingLiteral(group: GroupNode): string | undefined {
 }
 
 const SAMPLE_PR_NUMBER = '470';
-const SAMPLE_SCOPE = 'agents';
+const SAMPLE_SCOPE = 'agents,kb';
 const SAMPLE_TICKET_REF = '#466';
 const SAMPLE_TITLE = 'Add foo';
 

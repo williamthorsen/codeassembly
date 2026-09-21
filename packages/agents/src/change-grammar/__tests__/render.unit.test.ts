@@ -146,4 +146,34 @@ describe(render, () => {
       expect(render(compileTemplate('{title}'), { title: '  Add foo  ' })).toBe('Add foo');
     });
   });
+
+  describe('a scope naming several workspaces', () => {
+    it('renders the workspaces comma-joined', () => {
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { scope: 'agents,kb', title: TITLE, type: 'feat' })).toBe(
+        'agents,kb|feat: Add foo',
+      );
+    });
+
+    it('trims each workspace and drops the empty elements', () => {
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { scope: ' agents , , kb ', title: TITLE, type: 'feat' })).toBe(
+        'agents,kb|feat: Add foo',
+      );
+    });
+
+    it('drops a wildcard element, keeping the workspaces beside it', () => {
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { scope: 'agents,*', title: TITLE, type: 'feat' })).toBe(
+        'agents|feat: Add foo',
+      );
+    });
+
+    it('drops a repeated workspace, keeping first-occurrence order', () => {
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { scope: 'kb,agents,kb', title: TITLE, type: 'feat' })).toBe(
+        'kb,agents|feat: Add foo',
+      );
+    });
+
+    it('names no scope when every element drops, so the group drops with it', () => {
+      expect(render(compileTemplate(FLAT_SCOPE_COMMIT), { scope: '*,,*', title: TITLE, type: 'feat' })).toBe('Add foo');
+    });
+  });
 });

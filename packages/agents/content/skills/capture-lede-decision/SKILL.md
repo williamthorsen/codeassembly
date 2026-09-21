@@ -22,6 +22,8 @@ The middle of the scale is what the corpus most needs and most easily loses: a l
 
 The verdict, `accepted` or `revised`, is not asked. The helper derives it from whether the two ledes differ and records it beside the rating.
 
+The merge commit's body carries one `Change:` trailer per change entry below its lede, so the helper cuts a trailing trailer block before comparing and recording. Only a run at the end qualifies, and only when every line of it is a trailer, which leaves a body that ends in prose untouched.
+
 ## The corpus stores positive signals only
 
 A record exists because the author looked at the lede and rated it. Declining to rate writes nothing. **The absence of a record means nothing, and in particular is not an endorsement**: A merge that nobody evaluated is indistinguishable from a merge on which this skill never ran. Never infer a rating, and never record one that the author did not give: A lede that was merged unchanged under time pressure is not a rated lede, and recording a rating not made by the author is the single failure that would make the corpus useless.

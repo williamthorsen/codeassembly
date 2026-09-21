@@ -40,7 +40,7 @@ Change: agents|feat: Add the parser
 Change: agents|fix: Correct the guard
 ```
 
-`condense-branch` writes one per commit entry when it squashes a branch, so a condensed branch stays readable. Because Git parses them as trailers, the block may follow any number of body paragraphs.
+`condense-branch` writes one per commit entry when it squashes a branch, so a condensed branch stays readable. `merge-pr` writes one per change entry into the squash-merge body, below the lede, so the entries that the block records reach the default branch as records rather than as prose; `resolve-merge` renders them and reports them in `trailers`, separate from the merge body. Because Git parses them as trailers, the block may follow any number of body paragraphs.
 
 **A commit with trailers contributes them in place of its subject.** Its subject renders the record to which those trailers already consolidate. Reading both would count the branch's commit entries twice.
 
@@ -102,6 +102,7 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Change-summary frontmatter | `title`, the consolidated record's `scope`, `type`, and `breaking`, `changes`, `ticket_type`, and the override fields |
 | Condensed commit message   | A subject rendered from the consolidated record, and one `Change:` trailer per commit entry                           |
+| Merge commit               | The lede, then one `Change:` trailer per change entry that the block records                                          |
 | Pull-request body          | `Closes`, then the block as the final block, carried from the change summary's body                                   |
 | Pull-request labels        | The effective record's type and scope, mapped through `.meta/label-map.json`, plus `breaking` when it is breaking     |
 

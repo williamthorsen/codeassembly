@@ -2,6 +2,7 @@ import { applyOverrides, type Overrides } from '../change-grammar/apply-override
 import { compileTemplate } from '../change-grammar/compile-template.ts';
 import { parse } from '../change-grammar/parse.ts';
 import { render } from '../change-grammar/render.ts';
+import { SCOPE_SEPARATOR } from '../change-grammar/tokens.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
 import type { ChangeEntry } from './change-entries.ts';
@@ -69,6 +70,7 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
       title: title.value,
     }),
     body: composeBody(input.pr.body),
+    trailers: renderEntryTrailers(block?.entries ?? [], input.templates.commit),
     sources: {
       block: block === undefined ? null : toBlockOutcome(block),
       commits: commits === undefined ? null : toSourceRecordOutcome(commits),
@@ -169,6 +171,7 @@ export interface ResolveMergeOutcome {
   merge_title: string;
   notices: MergeNotice[];
   sources: MergeSourcesOutcome;
+  trailers: string[];
 }
 
 /**
@@ -412,6 +415,29 @@ function readSources(input: MergeInput): {
     });
   }
   return { block, entriesFresh, notices };
+}
+
+/**
+ * Renders the block's change entries as trailer values, one per entry, in the order that the block records them. Each
+ * entry renders through `commit.title_format` from its type, its marker, its scopes joined by the separator, and its
+ * `text` as the title, so a trailer and the commit subject that it stands for share one grammar.
+ *
+ * The value excludes the `Change: ` prefix, as `consolidate-branch`'s `entries[].change` does, and the writer adds it.
+ * A repository whose commit grammar is empty renders none, having no trailer grammar either.
+ */
+function renderEntryTrailers(entries: readonly ChangeEntry[], template: string): string[] {
+  if (template === '') {
+    return [];
+  }
+  const nodes = compileTemplate(template);
+  return entries.map((entry) =>
+    render(nodes, {
+      ...(entry.breaking && { breaking: true }),
+      scope: entry.scopes.join(SCOPE_SEPARATOR),
+      title: entry.text,
+      type: entry.type,
+    }),
+  );
 }
 
 /** Renders the effective record through `merge.title_format`, falling back to the bare title when that template is empty. */

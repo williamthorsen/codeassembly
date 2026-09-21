@@ -305,6 +305,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   },
   "merge_title": "#466 agents|feat: Add the parser (#470)",
   "body": "- Adds the parser.",
+  "trailers": [],
   "sources": {
     "block": {
       "title": "Add the parser",
@@ -348,6 +349,10 @@ Each field names the step that set it last, as [Where the record is read](./chan
 **The bare title** comes from `--override-title`, then from the pull-request title inverted through `pr.title_format`, then from the block's title, then from the pull-request title as given. A scope and type read from the pull-request title, through `pr.title_format` when it names `{type}` and otherwise through `commit.title_format`, never stay in the bare title. `ticket_ref` comes from the pull-request title, then from `--ticket-ref`. `merge_title` is `effective_record` rendered through `merge.title_format`, the marker included, or the bare title when that template is empty.
 
 **`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that contain only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
+
+**`trailers` is the block's change entries rendered as trailer values**, one per entry, in the order that the block records them. Each renders through `commit.title_format` from the entry's `type`, its `breaking` marker, its `scopes` joined by commas, and its `text` as the title, so a trailer and the commit subject for which it stands share one grammar. An entry naming `agents` and `kb` therefore renders as `agents,kb|feat: Adds the store-qualified wikilink`, and a breaking one as `agents|drop!: Removes the legacy API`. The value excludes the `Change: ` prefix, as [`consolidate-branch`](#consolidate-branch)'s `entries[].change` does, and the writer adds it.
+
+The entries render whether or not they are fresh: a merge re-derives nothing, and a `stale-entries` notice reports staleness instead. The list is empty when the block is absent, malformed, or records no entry, and when `commit.title_format` is empty, since a repository with no commit grammar has no trailer grammar. `trailers` is separate from `body`, so a consumer that replaces a thin body keeps them.
 
 **`defects` block approval.** Each names a condition of `effective_record` that the author must override before the merge is offered, with the kinds that [`resolve-effective-record`](#resolve-effective-record) lists.
 
@@ -398,7 +403,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes \
 
 | Token          | Resolves to                                                                                                            |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `{scope}`      | Change scope (workspace, package, module). `*` normalizes to empty.                                                    |
+| `{scope}`      | Change scope (workspace, package, module), one name or several joined by commas. `*` normalizes to empty.              |
 | `{type}`       | Work type (`feat`, `fix`, `docs`, …). Renders as `feat!` when the template names no `{breaking}` to render the marker. |
 | `{breaking}`   | The breaking marker `!`; empty for a change that is not breaking.                                                      |
 | `{title}`      | Bare title text. Required in every template that should produce a non-empty title.                                     |
@@ -478,5 +483,11 @@ The `{scope}` token expects a value that identifies the part of the codebase aff
 - In a monorepo, the scope is typically the workspace name or abbreviation.
 - Use `root` when the change touches only files at the monorepo root.
 - Use `*` when the change spans multiple workspaces, or root and one or more workspaces. It normalizes to no scope, so the rendered title has no scope prefix.
+
+**A scope may name several workspaces, joined by commas**, which is how one change entry that spans two workspaces renders as one `Change:` trailer: `agents,kb|feat: Add the store-qualified wikilink`. Normalization trims each name and drops the empty ones, the `*` ones, and the duplicates, keeping first-occurrence order; `agents,*` therefore names `agents`, and a value that leaves nothing behind names no scope, exactly as a whole-value `*` does.
+
+A rendered list reads back as the same value, since the scope run is bounded by the delimiter that the template itself places after it and no catalogued convention delimits the scope with a comma. A template that does is refused as one that cannot round-trip.
+
+**Consolidation counts each named workspace separately.** One entry naming `agents,kb` contributes both, exactly as two entries naming one apiece do, so it consolidates to no scope.
 
 Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) is stated by the consuming skill; see the `consult-commit-conventions` skill for the commit-side rules.
