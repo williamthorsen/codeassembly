@@ -602,7 +602,7 @@ A template is a string containing literal text and any combination of the suppor
 
 | Token          | Resolves to                                                                                                                  |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `{scope}`      | Change scope (workspace, package, module). `*` normalizes to empty.                                                          |
+| `{scope}`      | Change scope (workspace, package, module), one name or several joined by commas. `*` normalizes to empty.                    |
 | `{type}`       | Work type (`feat`, `fix`, `docs`, …). Includes the breaking marker itself (`feat!`) when the template names no `{breaking}`. |
 | `{breaking}`   | The breaking marker `!`, empty for a change that is not breaking.                                                            |
 | `{title}`      | Bare title text. Required in every template that should produce a non-empty title.                                           |
@@ -702,6 +702,7 @@ Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' 
 - In a monorepo, the scope is the workspace name or abbreviation.
 - `root`: commit touches only files in the monorepo root.
 - `*`: commit spans multiple workspaces, or root and one or more workspaces.
+- `agents,kb`: a change entry that belongs to several workspaces names them joined by commas. Normalization trims each name and drops the empty ones, the `*` ones, and the duplicates; consolidation counts each named workspace separately.
 - A root change tightly associated with one workspace (e.g., lockfile updated by a dependency added to that workspace) uses the workspace scope, not `root`.
 
 ##### Breaking changes
