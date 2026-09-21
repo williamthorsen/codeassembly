@@ -34,6 +34,19 @@ const RENDERING_PHRASES: ReadonlyArray<string> = [
   'when every entry names the same scopes, no bullet carries tags',
 ];
 
+/**
+ * Phrases holding the skill to recording the entries as data: writing them to a file, consolidating the change's
+ * record from that file, and ending the body with the rendered block. Without all three the entries reach the pull
+ * request as prose alone, which is the state that recording them replaced. Lowercased, so that a sentence's opening
+ * capital still matches.
+ */
+const ENTRY_RECORDING_PHRASES: ReadonlyArray<string> = [
+  'entries-{timestamp}.yaml',
+  'consolidate-entries --entries-file',
+  '--entries-commit',
+  "the body's last element",
+];
+
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'skills', 'summarize-change', 'SKILL.md'), CONTENT_ROOT);
 
 describe('summarize-change contract', () => {
@@ -46,6 +59,23 @@ describe('summarize-change contract', () => {
       'than out of a second copy. A rendering stated loosely varies per run, so the parser has nothing fixed to ' +
       `read. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
+  });
+
+  it('records the entries, consolidates the record from them, and ends the body with the block', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = ENTRY_RECORDING_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The block is where the entries reach the pull request as data, and the consolidated record that the ' +
+      'frontmatter carries is derived from them. Dropping any of these steps leaves the entries as prose alone, ' +
+      `which reads as a working change summary. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('consolidates the frontmatter record from the entries rather than from the commits', async () => {
+    const text = (await EXPANDED).toLowerCase();
+
+    expect(text).toContain('the step-7 `consolidated_record`, consolidated from the change entries');
   });
 
   it('mandates no coverage of the lede by `## Details`', async () => {

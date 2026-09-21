@@ -8,7 +8,7 @@ user-invocable: true
 
 Analyze the current branch's changes since diverging from the default branch.
 
-The branch's consolidated record is derived from its commits and recorded per [the change record](../_data/change-record.md).
+The change's consolidated record is derived from the change entries and recorded per [the change record](../_data/change-record.md). The body ends with the rendered `change-record` block, which carries the entries and that record to the pull request.
 
 ## Arguments
 
@@ -49,7 +49,9 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
      [`consolidate-branch`](../_data/title-templates.md#consolidate-branch) states the output. The frontmatter call reads `changes` back from this file, so keep its path.
 
-     If the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a consolidated record: `scope`, `type`, `breaking`, and `changes` are left out.
+     This consolidation serves `changes`, the unmatched and violation report below, and the tier that step 5 seeds the drafter with. It is not what the frontmatter's `scope`, `type`, and `breaking` record: Step 7 consolidates those from the change entries, which do not exist yet.
+
+     If the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a consolidated record: `changes` is left out, and step 7 consolidates the record from the entries as it does on any run.
 
    - **Resolve the ticket's type** if the fetch returned labels, passing one `--ticket-label` per label. If there are none, skip the call; `ticket_type` is then absent.
 
@@ -60,7 +62,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
      Read `ticket_type` from the output, leaving it absent if it is `null`; [`resolve-ticket-type`](../_data/title-templates.md#resolve-ticket-type) states when it is. If the call fails, relay its error and continue with `ticket_type` absent.
 
-   - **Report** each `unmatched` subject and each `violations` entry to the developer, then continue. If every field of `consolidated_record` is `null`, say that the branch yields no entries; `scope`, `type`, and `breaking` are then left out of the frontmatter.
+   - **Report** each `unmatched` subject and each `violations` entry to the developer, then continue. If every field of `consolidated_record` is `null`, say that the branch yields no commit entries and continue; the tier that step 5 seeds falls back to `internal`.
    - **Resolve the overrides.** `--scope` sets `override_scope`. `--type` sets `override_type`, and a `!` on it sets `override_breaking` rather than staying on the type. Record an override as given, even if it equals the consolidated record.
    - **Resolve the effective record** from the consolidated record and the overrides:
 
@@ -82,7 +84,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
-4. **Compose `## Why`** per the output format below. `## Details` and `## What` are both rendered from the entry list that step 5 draws, so neither exists until step 7.
+4. **Compose `## Why`** per the output format below. `## Details` and `## What` are both rendered from the entry list that step 5 draws, so neither exists until step 8.
 
 5. **Draft the entries via `entry-drafter`**: Resolve the tier by looking up the effective type from step 2 in [work-types.json](../_data/work-types.json); if there is none, use `internal`. Then dispatch the `{subagent:entry-drafter}` subagent via the {tool:Task} tool with this block:
 
@@ -114,11 +116,25 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
    Repeat step 5 with `rejection:` set to the code that the failed check names, and with the passages that failed in the `rejected` fence that step describes.
 
-   Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones that you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then continue to step 7 with the verified entries. If you could never place a return, show the developer each passage as the fence contained it. Take a passage rejected by the audit into step 7 only after asking the developer.
+   Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones that you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then continue to step 7 with the verified entries. If you could never place a return, show the developer each passage as the fence contained it. Take a passage rejected by the audit past step 6 only after asking the developer.
 
-7. **Render `## Details` from the verified entries** per [Rendering `Details`](#rendering-details).
+7. **Consolidate the change's record from the entries.** Do this before step 8, and before the frontmatter call: The `## Details` headings, the title, the labels, and the block all read the record that this step produces.
+   - **Write the verified entries** to a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `entries-{timestamp}.yaml`. The file is a top-level YAML list of mappings, one per entry, each carrying `type`, `scopes`, `breaking`, and `text` as the drafter returned them, with the corrections that step 6 made. Write it with a file-writing tool rather than a shell heredoc: `text` is arbitrary prose containing backticks and quotes. Keep its path; step 10 reads the same file.
+   - **Record the derivation commit**: `git rev-parse --short HEAD`. It is the commit at which the entries were read, and `resolve-merge` compares it against the pull request's head to tell a fresh block from a stale one.
+   - **Consolidate the entries:**
 
-8. **Cut `## What` via `lede-cutter`**: The verified entries report every fact that the drafter judged worth writing; a lede contains only the ones on which its reader acts. The candidates are the same bullets that step 7 rendered, without their scope tags: the breaking prefix when the entry's `breaking` is true, followed by its `text`. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
+     ```bash
+     entries_path="{absolute path from the write step}"
+     node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entries-file "$entries_path"
+     ```
+
+     [`consolidate-entries`](../_data/title-templates.md#consolidate-entries) states the output. Its `consolidated_record` is what the frontmatter's `scope`, `type`, and `breaking` record, each absent when it is `null` and `breaking` only when it is `true`. If the call fails, relay its error and leave all three out.
+
+   - **Re-resolve the effective record** by running `resolve-effective-record` again, on this consolidated record and the overrides resolved in step 2. The first run in step 2 used the commit-derived record, which this one supersedes, and the title and the labels downstream read the effective record. Report each `policy-violation` in `defects` and change nothing.
+
+8. **Render `## Details` from the verified entries** per [Rendering `Details`](#rendering-details).
+
+9. **Cut `## What` via `lede-cutter`**: The verified entries report every fact that the drafter judged worth writing; a lede contains only the ones on which its reader acts. The candidates are the same bullets that step 8 rendered, without their scope tags: the breaking prefix when the entry's `breaking` is true, followed by its `text`. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
 
    ```dispatch
    tier: {the tier resolved in step 5}
@@ -149,7 +165,30 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
    Take the surviving bullets as the content of `## What`, in the order in which they were sent, and read the cutter's `## Report` for what it dropped. Relay that to the developer: This is the one step that removes content, and the saved summary shows only what survived it.
 
-9. **Save** per the [Saving](#saving) section.
+10. **Render the `change-record` block** and make it the body's last element:
+
+    ```bash
+    entries_path="{absolute path from step 7}"
+    node {harness_home_dir}/scripts/describe-change.mjs render-block \
+      --title "{title}" \
+      --scope "{scope}" \
+      --type "{type}" \
+      --breaking \
+      --override-scope "{override_scope}" \
+      --override-type "{override_type}" \
+      --override-breaking \
+      --entries-file "$entries_path" \
+      --entries-commit "{the short SHA from step 7}" \
+      | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
+    ```
+
+    Pass the step-7 consolidated record through `--scope`, `--type`, and `--breaking`, never the effective record: The block records the consolidation and the overrides separately, and `resolve-merge` applies the overrides itself. Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`.
+
+    [`render-block`](../_data/title-templates.md#render-block) states the output, which is JSON; the last command decodes it and prints the `block` field. Render and decode in one Bash invocation, and write the printed block verbatim below `## Details`, separated by one blank line. Never copy the block out of the raw JSON: `text` is arbitrary prose, and JSON escapes its quotes and backslashes a second time.
+
+    `create-pr` carries this block into the pull-request body rather than rendering one of its own, so a body saved without one reaches the pull request without one. If the helper is unavailable or the call fails, relay its error, say that the summary carries no block, and save the body without one.
+
+11. **Save** per the [Saving](#saving) section.
 
 If expected information is missing, stop and ask the developer.
 
@@ -163,12 +202,12 @@ The artifact begins with a single YAML frontmatter block that unifies canonical 
 
 The body following the frontmatter has this structure:
 
-```markdown
+````markdown
 # {ticket_ref} {title}
 
 ## What
 
-{The bullets that survived Process step 8, with any `Migration:` paragraph below them. No scope tags.}
+{The bullets that survived Process step 9, with any `Migration:` paragraph below them. No scope tags.}
 
 ## Why
 
@@ -187,7 +226,22 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 ### 🐛 Bug fixes
 
 - 🚨 **Breaking:** Stops `kb check` resolving a bare wikilink against every store. #kb
+
+```change-record
+title: Add the store-qualified wikilink
+consolidated_record:
+  scope: agents
+  type: feat
+entries_commit: e5029924
+entries:
+  - type: feat
+    scopes:
+      - agents
+      - kb
+    breaking: false
+    text: Adds the store-qualified wikilink `[[store:Note title]]`, which `kb check` resolves against the named store.
 ```
+````
 
 ### Rendering `Details`
 
@@ -196,7 +250,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 - **Subsections.** One per distinct `type` among the entries, headed `{emoji} {label}` from that type's [work-types.json](../_data/work-types.json) `types[]` entry. Order them by tier (public → internal → process) and, within a tier, in the order that `work-types.json` lists the types. A type with no entry gets no subsection.
 - **Bullets.** Under each subsection, one bullet per entry of that type, in the order the drafter returned them. The bullet is `🚨 **Breaking:** ` (from `markers.breaking`, rendered as `{emoji} **{label}:** `) when the entry's `breaking` is `true`, followed by the entry's `text`. The prefix tags the entry inline rather than relocating it to a separate section.
 - **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, no bullet carries tags, since the consolidated record already names that scope.
-- **`## What`.** `## What` is a selection of these same bullets, carrying no scope tags in either case. Which bullets it keeps is settled in step 8; the contract is that it takes some of them and writes none of its own.
+- **`## What`.** `## What` is a selection of these same bullets, carrying no scope tags in either case. Which bullets it keeps is settled in step 9; the contract is that it takes some of them and writes none of its own.
 - **An unknown type.** A `type` naming no key in `work-types.json` has no `emoji` or `label` to head a subsection with, and no tier to order it by. Report it to the developer per step 5 and head that subsection with the bare `type`, after every subsection that the taxonomy orders, so that the entry stays visible rather than being dropped or reassigned.
 
 ## Guidance
@@ -207,6 +261,7 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 - Ignore auto-formatter and lint-fix changes
 - The breaking prefix does not include the migration: A breaking change states what the consumer does in a `Migration:` paragraph in `## What`, which is the text that the merge commit and the changelog carry
 - `## What` and `## Why` are required
+- The rendered `change-record` block is the body's last element, per [the change record](../_data/change-record.md)
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
@@ -225,7 +280,7 @@ The block is structured as:
 
 ### Canonical-field resolution
 
-Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below.
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below. Run this after step 7, whose consolidated record `scope`, `type`, and `breaking` carry.
 
 Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 consolidation file inside the same call, so that no entry is retyped into a command, in which a backtick, `$`, or `"` would be expanded or would end the argument. A file that a failed consolidation left empty yields no `changes`:
 
@@ -257,8 +312,8 @@ Prepend the script's output verbatim to the artifact body.
 ### Consumer fields
 
 - **`title`**: The bare title without the `ticket_ref` prefix. If `ticket_ref` is `#409` and the heading is `#409 Rationalize PR creation skills`, the title is `Rationalize PR creation skills`. When `ticket_ref` is null, the title is the entire heading text.
-- **`scope`**, **`type`**, and **`breaking`**: The step-2 `consolidated_record`, each absent if it is `null`, and `breaking` only if it is `true`. They record the consolidated record and never an override.
-- **`changes`**: Each entry's `change`, oldest first, read from the consolidation file.
+- **`scope`**, **`type`**, and **`breaking`**: The step-7 `consolidated_record`, consolidated from the change entries, each absent if it is `null` and `breaking` only if it is `true`. They record the consolidated record and never an override.
+- **`changes`**: Each commit entry's `change`, oldest first, read from the step-2 consolidation file. It is the commit-derived list, which the change entries do not replace: The two answer different questions, and a reviewer reads `changes` to see what the branch's commits declared.
 - **`ticket_type`**: The step-2 `ticket_type`, absent if it is `null` or unresolved.
 - **`override_scope`**, **`override_type`**, and **`override_breaking`**: The overrides resolved in step 2, each absent if unset, and `override_breaking` only if it is `true`.
 

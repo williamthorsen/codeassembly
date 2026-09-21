@@ -45,6 +45,27 @@ describe(readChangeRecordBlock, () => {
       expected: { consolidatedRecord: { breaking: true, scope: 'agents', type: 'drop' }, title: 'Drop foo' },
     },
     {
+      name: 'entries and their derivation commit',
+      block: {
+        consolidatedRecord: { scope: 'agents', type: 'feat' },
+        entries: [
+          { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+          { breaking: true, scopes: [], text: 'Drops the legacy reader', type: 'drop' },
+        ],
+        entriesCommit: 'e5029924',
+        title: 'Add the parser',
+      },
+      expected: {
+        consolidatedRecord: { scope: 'agents', type: 'feat' },
+        entries: [
+          { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+          { breaking: true, scopes: [], text: 'Drops the legacy reader', type: 'drop' },
+        ],
+        entriesCommit: 'e5029924',
+        title: 'Add the parser',
+      },
+    },
+    {
       name: 'a marker spelled on an override type',
       block: { consolidatedRecord: { type: 'feat' }, overrides: { type: 'sec!' }, title: 'Add foo' },
       expected: { consolidatedRecord: { type: 'feat' }, overrides: { breaking: true, type: 'sec' }, title: 'Add foo' },
@@ -91,6 +112,47 @@ describe(readChangeRecordBlock, () => {
 
     expect(readChangeRecordBlock(body.join('\n'))).toStrictEqual({
       block: { consolidatedRecord: { type: 'feat' }, title: 'Add foo' },
+      kind: 'read',
+    });
+  });
+
+  it.each<{ defect: RegExp; name: string; payload: string }>([
+    {
+      name: 'an entry list that is a mapping',
+      payload: 'title: Add foo\nconsolidated_record:\n  type: feat\nentries:\n  type: feat',
+      defect: /the entries are not a list/,
+    },
+    {
+      name: 'an entry missing its text',
+      payload: 'title: Add foo\nconsolidated_record:\n  type: feat\nentries:\n  - type: feat',
+      defect: /`entries\[0\].text` is missing/,
+    },
+    {
+      name: 'a numeric derivation commit',
+      payload: 'title: Add foo\nconsolidated_record:\n  type: feat\nentries_commit: 42',
+      defect: /`entries_commit` is not a string/,
+    },
+  ])('reads a block with $name, leaving the entries absent and reporting the defect', ({ defect, payload }) => {
+    const reading = readChangeRecordBlock(`\`\`\`change-record\n${payload}\n\`\`\``);
+
+    expect(reading).toStrictEqual({
+      block: { consolidatedRecord: { type: 'feat' }, title: 'Add foo' },
+      entriesDefect: expect.stringMatching(defect),
+      kind: 'read',
+    });
+  });
+
+  it('reads an empty entry list as no entries', () => {
+    const body = '```change-record\ntitle: Add foo\nentries: []\n```';
+
+    expect(readChangeRecordBlock(body)).toStrictEqual({ block: { title: 'Add foo' }, kind: 'read' });
+  });
+
+  it('reads a derivation commit recorded without entries', () => {
+    const body = '```change-record\ntitle: Add foo\nentries_commit: e5029924\n```';
+
+    expect(readChangeRecordBlock(body)).toStrictEqual({
+      block: { entriesCommit: 'e5029924', title: 'Add foo' },
       kind: 'read',
     });
   });
@@ -227,6 +289,48 @@ describe(renderChangeRecordBlock, () => {
     const rendered = renderChangeRecordBlock({ consolidatedRecord: { scope: '*', type: 'feat' }, title: 'Add foo' });
 
     expect(readBlock(rendered).consolidated_record).toStrictEqual({ type: 'feat' });
+  });
+
+  it('renders the scalars before the entry list', () => {
+    const rendered = renderChangeRecordBlock({
+      consolidatedRecord: { scope: 'agents', type: 'feat' },
+      entries: [{ breaking: false, scopes: ['agents'], text: 'Adds the parser', type: 'feat' }],
+      entriesCommit: 'e5029924',
+      overrides: { type: 'sec' },
+      title: 'Add the parser',
+    });
+
+    expect(rendered).toBe(
+      [
+        '```change-record',
+        'title: Add the parser',
+        'consolidated_record:',
+        '  scope: agents',
+        '  type: feat',
+        'overrides:',
+        '  type: sec',
+        'entries_commit: e5029924',
+        'entries:',
+        '  - type: feat',
+        '    scopes:',
+        '      - agents',
+        '    breaking: false',
+        '    text: Adds the parser',
+        '```',
+      ].join('\n'),
+    );
+  });
+
+  it('omits the entries and the derivation commit when they are empty', () => {
+    const rendered = renderChangeRecordBlock({ entries: [], entriesCommit: '  ', title: 'Add foo' });
+
+    expect(readBlock(rendered)).toStrictEqual({ title: 'Add foo' });
+  });
+
+  it('omits the derivation commit when the block records no entries', () => {
+    const rendered = renderChangeRecordBlock({ entries: [], entriesCommit: 'e5029924', title: 'Add foo' });
+
+    expect(readBlock(rendered)).toStrictEqual({ title: 'Add foo' });
   });
 
   it('quotes a title containing the colon that would otherwise open a mapping', () => {

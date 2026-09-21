@@ -222,6 +222,10 @@ Render each notice there as one line. When a line says where a field came from, 
 - **`divergence`**: The two sources that the notice's `sources` names disagree on the fields that its `fields` lists. Name each source's values for those fields, read from the report's `sources`, and the source from which the proposal takes each of them.
 - **`pr-title-divergence`**: The PR title's prefix differs from the proposal on the fields that the notice's `fields` lists. Name the prefix's values for those fields, read from `sources.pr_title`.
 - **`pr-title-unparsed`**: The PR title did not parse, so the title comes from the source that `effective_sources.title` names.
+- **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries. Its title and consolidated record still stand.
+- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the block's record takes no precedence over the commits', and `effective_sources` names the one that stood.
+
+**A `stale-entries` notice is reported and nothing is re-derived.** Nothing in the skill library updates a pull-request description, and commits pushed after the body was composed are already out of scope here, as step 8 states.
 
 A `divergence` or `pr-title-divergence` notice names values that the user can merge under instead, and the title is theirs to replace. If the user answers the gate with such values or a new title rather than a clear approval or decline, add them to the override set (a scope as `--override-scope`, `*` for no scope, a type as `--override-type`, a marker as `--override-breaking` or `--no-override-breaking`, and a title as `--override-title`), re-run step 3, settle any new defect, and render this gate again.
 
@@ -230,6 +234,8 @@ Render `{confirmation}` so that the ask itself names every destructive side effe
 - `none` → `Merge PR #{pr_number}? 👍🏼👎🏼`
 - `remote` → `Merge PR #{pr_number} and delete the remote branch {headRefName}? 👍🏼👎🏼`
 - `both` → `Merge PR #{pr_number} and delete the local and remote branch {headRefName}? 👍🏼👎🏼`
+
+Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. The notice above the gate reports staleness, but the classifier reads the ask text alone, which is why the branch deletion is repeated there rather than left to the `Delete:` line.
 
 If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events), then stop with no API call and no artifact. If they approve, continue.
 

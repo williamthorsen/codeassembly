@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ChangeRecord, Taxonomy } from '../../change-grammar/types.ts';
+import type { ChangeEntry } from '../change-entries.ts';
 import {
   type ChangeRecordBlockReading,
   type RecordOverrides,
@@ -28,6 +29,10 @@ const TEMPLATES: Record<Surface, string> = {
 };
 
 const HEAD_COMMIT = 'e5029924aa11bb22cc33dd44ee55ff6677889900';
+
+const ENTRIES: ChangeEntry[] = [
+  { breaking: false, scopes: ['kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+];
 
 const BODY = '## What\n\n- Adds foo.\n';
 
@@ -64,6 +69,8 @@ describe(resolveMerge, () => {
             title: 'Add foo',
             consolidated_record: { scope: 'agents', type: 'feat', breaking: false },
             overrides: {},
+            entries_commit: null,
+            entries: [],
           },
           commits: { scope: 'agents', type: 'feat', breaking: false },
           labels: { scope: null, type: null, breaking: null },
@@ -373,6 +380,8 @@ describe(resolveMerge, () => {
         title: 'Add foo',
         consolidated_record: { scope: 'agents', type: null, breaking: false },
         overrides: { breaking: true, type: 'sec' },
+        entries_commit: null,
+        entries: [],
       });
     });
 
@@ -381,7 +390,103 @@ describe(resolveMerge, () => {
 
       const report = resolveMerge(buildInput({ block }));
 
-      expect(report.sources.block).toStrictEqual({ title: 'Add foo', consolidated_record: null, overrides: {} });
+      expect(report.sources.block).toStrictEqual({
+        title: 'Add foo',
+        consolidated_record: null,
+        overrides: {},
+        entries_commit: null,
+        entries: [],
+      });
+    });
+
+    it('mirror the entries and the derivation commit that the block records', () => {
+      const report = resolveMerge(
+        buildInput({ block: readBlock({ type: 'feat' }, { entries: ENTRIES, fresh: true }) }),
+      );
+
+      expect(report.sources.block).toMatchObject({ entries: ENTRIES, entries_commit: 'e5029924' });
+    });
+  });
+
+  describe('the entries', () => {
+    it('lets a fresh block’s record stand over the commits’, and reports the divergence', () => {
+      const report = resolveMerge(
+        buildInput({
+          block: readBlock({ scope: 'kb', type: 'feat' }, { entries: ENTRIES, fresh: true }),
+          commitsRecord: { scope: 'agents', type: 'fix' },
+        }),
+      );
+
+      expect(report.effective_record).toMatchObject({ scope: 'kb', type: 'feat' });
+      expect(report.effective_sources).toMatchObject({ scope: 'block', type: 'block' });
+      expect(report.notices).toContainEqual({
+        kind: 'divergence',
+        sources: ['block', 'commits'],
+        fields: ['scope', 'type'],
+      });
+    });
+
+    it('matches a short derivation commit against the head as a prefix, ignoring case', () => {
+      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'E5029924' });
+
+      const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
+
+      expect(report.effective_sources).toMatchObject({ type: 'block' });
+      expect(report.notices).not.toContainEqual(expect.objectContaining({ kind: 'stale-entries' }));
+    });
+
+    it('when the derivation commit is not the head, lets the commits win and reports staleness', () => {
+      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'aabbccdd' });
+
+      const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
+
+      expect(report.effective_record).toMatchObject({ type: 'fix' });
+      expect(report.effective_sources).toMatchObject({ type: 'commits' });
+      expect(report.notices).toContainEqual({
+        kind: 'stale-entries',
+        entries_commit: 'aabbccdd',
+        head_commit: HEAD_COMMIT,
+      });
+    });
+
+    it('when entries carry no derivation commit, reports staleness with a null commit', () => {
+      const block = readBlock({ type: 'feat' }, { entries: ENTRIES });
+
+      const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
+
+      expect(report.effective_sources).toMatchObject({ type: 'commits' });
+      expect(report.notices).toContainEqual({
+        kind: 'stale-entries',
+        entries_commit: null,
+        head_commit: HEAD_COMMIT,
+      });
+    });
+
+    it('keeps the commits-win rule for a block written before the entries entered the grammar', () => {
+      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), commitsRecord: { type: 'fix' } }));
+
+      expect(report.effective_sources).toMatchObject({ type: 'commits' });
+      expect(report.notices).not.toContainEqual(expect.objectContaining({ kind: 'stale-entries' }));
+    });
+
+    it('reports a malformed entry list as a notice, leaving the rest of the block usable', () => {
+      const block = readBlock({ type: 'feat' }, { entriesDefect: '`entries[0].text` is missing' });
+
+      const report = resolveMerge(buildInput({ block }));
+
+      expect(report.sources.block).toMatchObject({ entries: [], title: 'Add foo' });
+      expect(report.notices).toContainEqual({
+        kind: 'malformed-entries',
+        defect: '`entries[0].text` is missing',
+      });
+    });
+
+    it('when the commits could not be read, lets a stale block’s record stand', () => {
+      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'aabbccdd' });
+
+      const report = resolveMerge(buildInput({ block, commits: unavailable('the head commit is not local') }));
+
+      expect(report.effective_sources).toMatchObject({ type: 'block' });
     });
   });
 
@@ -597,14 +702,25 @@ function buildInput(
  */
 function readBlock(
   consolidatedRecord: ChangeRecord,
-  options: { overrides?: RecordOverrides; title?: string } = {},
+  options: {
+    entries?: ChangeEntry[];
+    entriesCommit?: string;
+    entriesDefect?: string;
+    fresh?: boolean;
+    overrides?: RecordOverrides;
+    title?: string;
+  } = {},
 ): ChangeRecordBlockReading {
+  const entriesCommit = options.fresh === true ? HEAD_COMMIT.slice(0, 8) : options.entriesCommit;
   return {
     block: {
       consolidatedRecord,
       title: options.title ?? 'Add foo',
+      ...(options.entries !== undefined && { entries: options.entries }),
+      ...(entriesCommit !== undefined && { entriesCommit }),
       ...(options.overrides !== undefined && { overrides: options.overrides }),
     },
+    ...(options.entriesDefect !== undefined && { entriesDefect: options.entriesDefect }),
     kind: 'read',
   };
 }

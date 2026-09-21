@@ -4,6 +4,7 @@ import type { Overrides } from '../change-grammar/apply-overrides.ts';
 import { normalizeChangeRecord } from '../change-grammar/tokens.ts';
 import type { ChangeRecord } from '../change-grammar/types.ts';
 import { isRecord } from '../lib/type-guards.ts';
+import { type ChangeEntry, readChangeEntries } from './change-entries.ts';
 
 /**
  * Reads the last `change-record` block in a pull-request body back into what it records, as the inverse of
@@ -12,6 +13,10 @@ import { isRecord } from '../lib/type-guards.ts';
  * A block without a `title` does not read. `consolidated_record` and `overrides` normalize as the renderer normalizes
  * them. Because a key that the grammar does not declare is ignored, a later addition to the block does not break this
  * reader. A declared key whose value is null reads as absent.
+ *
+ * A defective `entries` list is the one departure from the block's all-or-nothing rule: The block reads with its
+ * entries absent and the defect reported alongside it, since its title and its consolidated record are still usable. A
+ * block that loses either of those has nothing left to resolve from, so every other field keeps the rule.
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
   const lines = splitLines(body);
@@ -42,15 +47,24 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
  *
  * The consolidated record and the overrides are normalized as the engine normalizes any record. A field that the
  * branch did not determine is absent rather than empty, a marker spelled on a type splits into the type and `breaking`,
- * and `breaking` appears only when it is true. Each group is omitted when it is empty.
+ * and `breaking` appears only when it is true. Each group is omitted when it is empty, as are the entries. The
+ * derivation commit appears only beside entries, since it records a claim about them.
+ *
+ * The scalars precede the entry list, so the bulky list does not separate them from each other.
  */
 export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
   const consolidatedRecord = normalizeConsolidatedRecord(block.consolidatedRecord ?? {});
   const overrides = normalizeOverrides(block.overrides ?? {});
+  const entriesCommit = block.entriesCommit?.trim();
+  const entries = block.entries ?? [];
   const payload = {
     title: block.title.trim(),
     ...(Object.keys(consolidatedRecord).length > 0 && { consolidated_record: consolidatedRecord }),
     ...(Object.keys(overrides).length > 0 && { overrides }),
+    ...(entries.length > 0 && {
+      ...(entriesCommit !== undefined && entriesCommit !== '' && { entries_commit: entriesCommit }),
+      entries: entries.map(toEntryPayload),
+    }),
   };
   return `${FENCE}${INFO_STRING}\n${stringifyYaml(payload)}${FENCE}`;
 }
@@ -68,18 +82,26 @@ export function stripChangeRecordBlocks(text: string): string {
 }
 
 /**
- * What the block records: the title, the consolidated record of the branch, and the overrides that the author applied.
- * Only the scope, type, and breaking marker of `consolidatedRecord` are recorded.
+ * What the block records: the title, the consolidated record of the branch, the overrides that the author applied, the
+ * change entries, and the commit at which those entries were derived. Only the scope, type, and breaking marker of
+ * `consolidatedRecord` are recorded, and `entriesCommit` is the short SHA as the change summary wrote it.
  */
 export interface ChangeRecordBlock {
   consolidatedRecord?: ChangeRecord;
+  entries?: ChangeEntry[];
+  entriesCommit?: string;
   overrides?: RecordOverrides;
   title: string;
 }
 
-/** What a body's last `change-record` block reads as: absent, malformed with the defect named, or the block that it records. */
+/**
+ * What a body's last `change-record` block reads as: absent, malformed with the defect named, or the block that it
+ * records. A read block carries `entriesDefect` when its entries were defective, in which case it records none.
+ */
 export type ChangeRecordBlockReading =
-  { kind: 'absent' } | { defect: string; kind: 'malformed' } | { block: ChangeRecordBlock; kind: 'read' };
+  | { kind: 'absent' }
+  | { defect: string; kind: 'malformed' }
+  | { block: ChangeRecordBlock; entriesDefect?: string; kind: 'read' };
 
 /**
  * The overrides that a block records, named as the flags that set them are. A `scope` of `*` sets no scope. `breaking`
@@ -145,6 +167,31 @@ function normalizeOverrides(overrides: RecordOverrides): RecordOverrides {
     ...(type !== undefined && { type }),
     ...(breaking === true && { breaking }),
   };
+}
+
+/**
+ * Reads the entries and their derivation commit, which read together: A defect in either leaves both absent, since a
+ * derivation commit records a claim about the entries. An empty list reads as no entries, as the renderer writes one.
+ */
+function readEntryFields(
+  payload: Record<string, unknown>,
+): { defect: string } | { entries?: ChangeEntry[]; entriesCommit?: string } {
+  const commit = payload.entries_commit;
+  if (commit !== undefined && commit !== null && typeof commit !== 'string') {
+    return { defect: '`entries_commit` is not a string' };
+  }
+  const entriesCommit = commit?.trim();
+  const recordedCommit = entriesCommit === undefined || entriesCommit === '' ? {} : { entriesCommit };
+
+  const list = payload.entries;
+  if (list === undefined || list === null) {
+    return recordedCommit;
+  }
+  const read = readChangeEntries(list);
+  if ('defect' in read) {
+    return read;
+  }
+  return { ...recordedCommit, ...(read.entries.length > 0 && { entries: read.entries }) };
 }
 
 /**
@@ -215,12 +262,16 @@ function readPayload(payload: unknown): ChangeRecordBlockReading {
     ...(scope !== undefined && { scope }),
     ...(type !== undefined && { type }),
   });
+  const entryFields = readEntryFields(payload);
+  const recorded = 'defect' in entryFields ? {} : entryFields;
   return {
     block: {
       title: title.trim(),
       ...(Object.keys(consolidatedRecord).length > 0 && { consolidatedRecord }),
       ...(Object.keys(overrides).length > 0 && { overrides }),
+      ...recorded,
     },
+    ...('defect' in entryFields && { entriesDefect: entryFields.defect }),
     kind: 'read',
   };
 }
@@ -232,5 +283,10 @@ function splitLines(text: string): string[] {
 
 /** The declared string fields of each group that the block contains. */
 const STRING_FIELDS = ['scope', 'type'] as const;
+
+/** Renders one change entry in the key order that `entry-drafter` returns it in. */
+function toEntryPayload(entry: ChangeEntry): Record<string, unknown> {
+  return { type: entry.type, scopes: entry.scopes, breaking: entry.breaking, text: entry.text };
+}
 
 // endregion | Helpers
