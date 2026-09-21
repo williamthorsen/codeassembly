@@ -305,7 +305,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   },
   "merge_title": "#466 agents|feat: Add the parser (#470)",
   "body": "- Adds the parser.",
-  "trailers": ["agents,kb|feat: Adds the store-qualified wikilink", "agents|drop!: Removes the legacy API"],
+  "trailers": [],
   "sources": {
     "block": {
       "title": "Add the parser",
@@ -350,7 +350,7 @@ Each field names the step that set it last, as [Where the record is read](./chan
 
 **`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that contain only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
 
-**`trailers` is the block's change entries rendered as trailer values**, one per entry, in the order that the block records them. Each renders through `commit.title_format` from the entry's `type`, its `breaking` marker, its `scopes` joined by commas, and its `text` as the title, so a trailer and the commit subject for which it stands share one grammar. The value excludes the `Change: ` prefix, as [`consolidate-branch`](#consolidate-branch)'s `entries[].change` does, and the writer adds it.
+**`trailers` is the block's change entries rendered as trailer values**, one per entry, in the order that the block records them. Each renders through `commit.title_format` from the entry's `type`, its `breaking` marker, its `scopes` joined by commas, and its `text` as the title, so a trailer and the commit subject for which it stands share one grammar. An entry naming `agents` and `kb` therefore renders as `agents,kb|feat: Adds the store-qualified wikilink`, and a breaking one as `agents|drop!: Removes the legacy API`. The value excludes the `Change: ` prefix, as [`consolidate-branch`](#consolidate-branch)'s `entries[].change` does, and the writer adds it.
 
 The entries render whether or not they are fresh: a merge re-derives nothing, and a `stale-entries` notice reports staleness instead. The list is empty when the block is absent, malformed, or records no entry, and when `commit.title_format` is empty, since a repository with no commit grammar has no trailer grammar. `trailers` is separate from `body`, so a consumer that replaces a thin body keeps them.
 
