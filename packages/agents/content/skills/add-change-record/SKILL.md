@@ -122,7 +122,7 @@ Append the block after the body read in step 4, separated by one blank line, and
   gh pr edit {number} --body-file "$body_path"
   ```
 
-- **`"bitbucket"`**: The `bitbucketPullRequest` tool exposes no action that updates a pull request's description among the actions that [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) documents. Emit `skill.completed` (payload `{"outcome":"stopped: no Bitbucket write path"}`) per [Lifecycle events](#lifecycle-events), then stop, showing the block again and saying that the author pastes it as the last element of the description in the Bitbucket UI.
+- **`"bitbucket"`**: Write through the description-update action that [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) documents, if it documents one. That doc is the single statement of the tool's actions, and today it documents reading, finding, and merging alone. When it documents no such action, emit `skill.completed` (payload `{"outcome":"stopped: no Bitbucket write path"}`) per [Lifecycle events](#lifecycle-events), then stop, showing the block again and saying that the author pastes it as the description's last element in the Bitbucket UI.
 
 ### 8. Confirm the block is the body's last element
 
