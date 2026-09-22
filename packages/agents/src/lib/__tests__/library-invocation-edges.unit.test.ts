@@ -28,6 +28,12 @@ describe('library invocation edges', () => {
     expect(closure.skills).toContain('capture-event');
   });
 
+  it('pulls summarize-change into add-change-record, which drafts the block through it', async () => {
+    const closure = await resolveClosure({ skill: ['add-change-record'] }, libraryResolver(contentDir));
+
+    expect(closure.skills).toContain('summarize-change');
+  });
+
   it('pulls create-pr’s required delegates and leaves its optional one out', async () => {
     const closure = await resolveClosure({ skill: ['create-pr'] }, libraryResolver(contentDir));
 
@@ -69,6 +75,12 @@ describe('library invocation edges', () => {
     const closure = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
 
     expect(closure.skills).toContain('create-pr');
+  });
+
+  it('pulls add-change-record and summarize-change into merge-pr, which offers the one on an absent block', async () => {
+    const closure = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
+
+    expect(closure.skills).toEqual(expect.arrayContaining(['add-change-record', 'summarize-change']));
   });
 
   it('resolves the entire content library without a cycle or missing artifact', async () => {

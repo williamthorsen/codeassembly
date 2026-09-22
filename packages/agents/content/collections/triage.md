@@ -6,6 +6,7 @@ members:
     - commit-conventions
     - shell-conventions
   skills:
+    - add-change-record
     - add-test-ids
     - align-ticket-with-implementation
     - anti-patterns

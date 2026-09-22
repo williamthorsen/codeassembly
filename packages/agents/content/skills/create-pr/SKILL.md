@@ -117,7 +117,7 @@ If `ticket_ref` is null, skip: no closing line.
 
 The closing line goes above the block rather than below it because the block is the body's last element, as [The `change-record` block](../_data/change-record.md#the-change-record-block) states. A merge reads the last `change-record` fence wherever it sits, so the order costs nothing to keep and the convention stays true.
 
-If the change summary's body ends with no block, append the closing line as the body's last line and say that the pull request carries no change record. A body reaches this step without one when `summarize-change` reported that `render-block` was unavailable or failed.
+If the change summary's body ends with no block, append the closing line as the body's last line and say that the pull request carries no change record, naming `{skill:add-change-record}` as the skill that adds one. A body reaches this step without one when `summarize-change` reported that `render-block` was unavailable or failed.
 
 ### 10. Call delegate
 
