@@ -5,16 +5,16 @@ import { describe, expect, it } from 'vitest';
 
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// A content fence is the one channel that hands a subagent text rather than scalars: the candidates among which a
-// cutter chooses, and the passages that a redispatched drafter revises. Everything the fence carries is copied from
-// a subagent's own earlier return, so the caller writes none of it. A sentence templated here would seed the subagent
+// A content fence is the one channel that hands a subagent text rather than scalars: the passages that a redispatched
+// drafter revises. Everything the fence carries is copied from a subagent's own earlier return, so the caller writes
+// none of it. A sentence templated here would seed the subagent
 // exactly as a prose scalar in the dispatch block does, which `dispatch-block-scalars` forbids by holding that
 // block's keys to a closed set. Because neither failure shows at runtime -- each yields a plausible lede carrying the
 // caller's weighting -- the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** Every info string that a content fence may carry. A channel absent from this set is one that nothing reviewed. */
-const DECLARED_FENCES: ReadonlySet<string> = new Set(['candidates', 'rejected']);
+const DECLARED_FENCES: ReadonlySet<string> = new Set(['rejected']);
 
 /**
  * A line that a content fence may carry: a bullet whose whole content is one placeholder filled by the caller at
