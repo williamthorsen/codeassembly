@@ -1,14 +1,8 @@
-coverage/
-dist/
-
-# Generated esbuild bundles of skill helpers, not authored source.
+# Generated esbuild bundles of skill helpers, not authored source. Prettier exhibits a
+# non-idempotent reformatting bug on long ternary expressions emitted by the bundler (the
+# `yaml` package surfaces the pattern).
 content/skills/**/*.mjs
 content/scripts/**/*.mjs
-
-# Test fixtures no parser can read, marked by a `.malformed` infix. Prettier cannot
-# parse them, and reformatting would erase the defect they exist to test.
-src/**/__tests__/**/fixtures/**/*.malformed/
-src/**/__tests__/**/fixtures/**/*.malformed.*
 
 # Subagent partials and the files that consume them must preserve exact whitespace
 # around `<!-- include: ... -->` open/close directives and `<!-- children -->`

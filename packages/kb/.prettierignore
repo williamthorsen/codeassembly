@@ -1,7 +1,0 @@
-coverage/
-dist/
-
-# Test fixtures no parser can read, marked by a `.malformed` infix. Prettier cannot
-# parse them, and reformatting would erase the defect they exist to test.
-src/**/__tests__/**/fixtures/**/*.malformed/
-src/**/__tests__/**/fixtures/**/*.malformed.*
