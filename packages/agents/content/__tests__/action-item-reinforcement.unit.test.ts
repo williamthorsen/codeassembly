@@ -11,6 +11,7 @@ import { describe, expect, it } from 'vitest';
 // path (`create-pr`'s unknown-platform fallback, `capture-feedback`'s ambiguity confirm) are absent by design; a
 // skill that begins asking as a matter of course belongs here.
 const REINFORCED_SKILLS: ReadonlyArray<string> = [
+  'add-change-record',
   'assess-ticket',
   'brainstorming',
   'collaborate',
