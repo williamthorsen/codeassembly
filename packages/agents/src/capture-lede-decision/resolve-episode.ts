@@ -19,10 +19,9 @@ const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
 
 /**
  * Subagent bodies that govern a draft, in the fixed order on which the combined digest depends. The drafter writes the
- * entries and the cutter decides which of them survive into the lede, so a change to either changes the doctrine under
- * which a lede was written.
+ * lede and the entries both, so its body is the whole doctrine under which a lede was written.
  */
-const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter.md', 'lede-cutter.md'];
+const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter.md'];
 
 /**
  * Artifact filename suffix holding the body that merged, and the heading under which it appears. The section records
@@ -155,7 +154,7 @@ async function findNewestArtifact(input: { artifactDir: string; suffix: string }
 
 /**
  * Digests the subagent bodies that govern a draft. Each body is hashed on its own and the digests are hashed
- * together, so a change to either moves the result and no content can straddle the boundary between them.
+ * together, so a change to any of them moves the result and no content can straddle the boundary between two.
  */
 async function hashDoctrine(subagentsDir: string): Promise<DoctrineHashOutcome> {
   const digests: string[] = [];

@@ -140,17 +140,17 @@ Read the printed path and pass it to `--merged-lede-file` as literal text, becau
 One event per decision, in the corpus:
 
 - **Tags**: `lede-decision`, `type:{work type}`, `breaking` for a change whose work type had the marker, the derived verdict, and `quality:{level}`. Recall the corpus as a group with `kb-retrieve-events --tag lede-decision`, by work type with `--tag type:feat`, by rating with `--tag quality:exemplary`, and the breaking changes alone with `--tag breaking`.
-- **Frontmatter**: The rating; the work type and tier, and the scope when the change names one; `breaking: true` for a breaking change, and nothing for any other; the pull-request number, merge commit, and ticket; `doctrine-hash`, a combined digest of the `entry-drafter` and `lede-cutter` bodies in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
+- **Frontmatter**: The rating; the work type and tier, and the scope when the change names one; `breaking: true` for a breaking change, and nothing for any other; the pull-request number, merge commit, and ticket; `doctrine-hash`, a digest of the `entry-drafter` body in force when the agent wrote; and `agents-version` when the home-provenance stamp supplies one.
 - **Body**: `## Agent lede`, then `## Merged lede` whenever the two texts differ, then `## Comment` when one was given.
 
-`doctrine-hash` groups records by doctrine generation. The drafter writes the entries and the cutter decides which of them survive into the lede, so those two bodies are what a draft was written under and a change to either opens a generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing each body's own history. A digest recorded before the bodies became the doctrine is a fingerprint of the retired `skills/_data/lede-voice.md`, and resolves against that file's history instead.
+`doctrine-hash` groups records by doctrine generation. The drafter writes the lede and the entries both, so its body is what a draft was written under and a change to it opens a generation. Nothing is recorded at install time to make that work: The mapping from a digest back to the commit that introduced it stays recoverable by re-hashing the body's own history. A digest recorded under an earlier generation resolves against that generation's files the same way: one combining the drafter with the retired `lede-cutter.md`, and an older one fingerprinting the retired `skills/_data/lede-voice.md` alone.
 
 ## Handling failures
 
 Handle the `error` code as follows:
 
 - `no-artifact-dir`, `no-agent-lede`, `no-merged-lede`: The ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
-- `no-doctrine`: An installed subagent body covered by the digest is unreadable; the message names it. Report it as an install problem.
+- `no-doctrine`: The installed subagent body covered by the digest is unreadable; the message names it. Report it as an install problem.
 - `no-taxonomy`: The installed `work-types.json` is unreadable. Report it as an install problem; no `--type` value resolves against a taxonomy that did not load.
 - `unresolved-identity`: The work type or its tier could not be resolved, or `--scope` or `--breaking` was passed without `--type`. The message names which; pass `--type`, with `--scope` and `--breaking` as they apply to the change.
 - `invalid-args`: Report the message and propose a corrected invocation.

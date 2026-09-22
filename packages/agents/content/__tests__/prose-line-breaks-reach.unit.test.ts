@@ -41,7 +41,6 @@ const CARRIERS: ReadonlyArray<string> = [
   'skills/summarize-change/SKILL.md',
   'skills/wrap-up/SKILL.md',
   'subagents/entry-drafter.md',
-  'subagents/lede-cutter.md',
   'subagents/orchestrated-coder.md',
 ];
 

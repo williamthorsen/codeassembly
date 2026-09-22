@@ -5,16 +5,19 @@ import { describe, expect, it } from 'vitest';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
 // The drafter answers "What changed?" from the diff and the commit log, in a form that the author rates, and returns
-// one entry per outcome. Two edits would defeat that quietly: taking the diff away, which leaves the inventory grounded
-// in the diffstat alone, and loosening the granularity rule, whose entry unit is what keeps the diff from being
-// catalogued edit by edit. The form is defeated by a prescribed phrase, which the model emits wherever guidance names
-// one, by an exemplar below the floor, every one of which is paragraph-form, and by an entry unit that reads as one
-// edit, whose split entries no later actor may merge. None of these failures shows up at runtime -- each yields a
-// plausible entry list -- so the guard has to be here.
+// a lede and one entry per outcome. Two edits would defeat that quietly: taking the diff away, which leaves the
+// inventory grounded in the diffstat alone, and loosening the granularity rule, whose entry unit is what keeps the
+// diff from being catalogued edit by edit. The form is defeated by a prescribed phrase, which the model emits wherever
+// guidance names one, by an exemplar below the floor, every one of which is paragraph-form, and by an entry unit that
+// reads as one edit, whose split entries no later actor may merge. None of these failures shows up at runtime -- each
+// yields a plausible entry list -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The drafter's assignment, which selects what it reports. */
 const ASSIGNMENT_QUESTION = 'What changed?';
+
+/** The heading under which the drafter returns its entries, which each caller parses as YAML. */
+const ENTRIES_HEADING = '## Entries';
 
 /** The fields that every entry carries, each of which some caller reads out of the returned YAML. */
 const ENTRY_FIELDS: ReadonlyArray<string> = ['breaking', 'scopes', 'text', 'type'];
@@ -34,8 +37,8 @@ const FORM_CONTRACT_PHRASES: ReadonlyArray<string> = [
 
 /**
  * Phrases fixing an entry's scope to the outcome rather than to the edit. When they are gone, "one entry" reads as one
- * edit, and neither the caller's audit nor the deletion-only cutter may merge the entries split by that reading. The
- * drafter now reads the whole diff, so this rule is the only thing standing between it and an entry per hunk.
+ * edit, and the caller's audit may not merge the entries split by that reading. The drafter reads the whole diff, so
+ * this rule is the only thing standing between it and an entry per hunk.
  */
 const GRANULARITY_PHRASES: ReadonlyArray<string> = [
   'either two outcomes',
@@ -49,6 +52,20 @@ const HUNK_RETURNING_DIFF = /`git diff (?![^`]*--stat)[^`]*`/g;
 
 /** The rule stating what an entry list leaves out, which the drafter carries in place of the shared concision rule. */
 const LEAVE_OUT_RULE_PHRASE = 'the question is never whether a fact is real';
+
+/**
+ * Phrases fixing the lede to prose of a stated length. Lowercased, so that a sentence's opening capital still matches.
+ */
+const LEDE_FORM_PHRASES: ReadonlyArray<string> = ['two or three sentences of prose', 'prose, never a list'];
+
+/** The heading under which the drafter returns the lede, which each caller takes as `## What`. */
+const LEDE_HEADING = '## Lede';
+
+/** Phrases naming the reader that the lede is written for, who is not the reader of any one entry. */
+const LEDE_READER_PHRASES: ReadonlyArray<string> = [
+  'whoever meets the change without its entries',
+  'the developer reading `git log`',
+];
 
 /**
  * Phrases binding a migration paragraph to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
@@ -93,6 +110,7 @@ const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not wo
  */
 const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   '`rejected` fence',
+  'a redispatch returns no `## lede` section',
   'one replacement per passage',
   'revise those passages and nothing else',
 ];
@@ -154,10 +172,9 @@ describe('entry-drafter contract', () => {
       .toArray();
 
     const message =
-      'The drafter reports what changed, so it reads the hunks. This guard once asserted the opposite, when the ' +
-      'drafter wrote a lede and the diff inflated one; the inventory it writes now is meant to be complete at ' +
-      'outcome granularity, and the selection happens afterwards in the cutter. A drafter left with the diffstat ' +
-      'alone reports what the commit subjects already say. No invocation here returns hunks.';
+      'The drafter reports what changed, so it reads the hunks. The entry list is meant to be complete at outcome ' +
+      'granularity, and the lede states what those outcomes amount to. A drafter left with the diffstat alone ' +
+      'reports what the commit subjects already say. No invocation here returns hunks.';
     expect(found.length, message).toBeGreaterThan(0);
   });
 
@@ -196,8 +213,8 @@ describe('entry-drafter contract', () => {
 
     const message =
       'A drafter reading "one entry" as one edit splits a single outcome across entries, and the split survives the ' +
-      'whole pipeline: The audit may strike and correct but never merge, and the cutter may only delete. The drafter ' +
-      'reads the whole diff, so this rule is also what stops the entry list becoming an inventory of hunks. These ' +
+      'whole pipeline, since the audit may strike and correct but never merge. The drafter reads the whole diff, so ' +
+      'this rule is also what stops the entry list becoming an inventory of hunks. These ' +
       `phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -269,9 +286,9 @@ describe('entry-drafter contract', () => {
     const missing = MIGRATION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'A migration paragraph is the only text addressed to a consumer whose build broke, and the cutter never sees it. ' +
-      'The trap present in the replacement appears in no hunk, so a caller auditing against the diff cannot supply ' +
-      `it. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'A migration paragraph is the only text addressed to a consumer whose build broke, and it survives into the ' +
+      'merge commit whatever else is cut. The trap present in the replacement appears in no hunk, so a caller ' +
+      `auditing against the diff cannot supply it. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -285,9 +302,44 @@ describe('entry-drafter contract', () => {
   it('states that the lede stands alone', async () => {
     const message =
       '`## What` is the text that the merge commit, the changelog, and the release notes carry, so a lede leaving ' +
-      'the statement of the change to a title reads as details under a heading. Without this the drafter reports ' +
-      'around the title again, and every bullet that it writes is true.';
+      'the statement of the change to a title reads as details under a heading. Without this the drafter writes ' +
+      'around the title again, and every sentence that it writes is true.';
     expect(await EXPANDED, message).toContain(STANDALONE_PHRASE);
+  });
+
+  it('returns the lede above the entries', async () => {
+    const text = await EXPANDED;
+    const ledeAt = text.indexOf(LEDE_HEADING);
+    const entriesAt = text.indexOf(ENTRIES_HEADING);
+
+    const message =
+      'The caller takes `## What` from this section and parses the entries from the next, matching each heading in ' +
+      `the return. A return missing \`${LEDE_HEADING}\`, or carrying it below \`${ENTRIES_HEADING}\`, leaves the ` +
+      'caller with no lede to take and a thin body that the merge flow then recomposes from the diff.';
+    expect(ledeAt, message).toBeGreaterThan(-1);
+    expect(entriesAt, message).toBeGreaterThan(ledeAt);
+  });
+
+  it('fixes the lede to prose of a stated length', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = LEDE_FORM_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The lede is the whole of what a reader of `git log` gets, and nothing downstream shortens it or changes its ' +
+      'shape. Without a stated length it grows to cover every entry, and without the prose rule it arrives as the ' +
+      `entry list a second time. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('names the lede’s own reader', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = LEDE_READER_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The entries are written for the reader that each type’s tier names, and the lede for whoever meets the ' +
+      'change without them. When that reader is gone, the lede is written for the entry list’s audience and ' +
+      `addresses someone who is already reading the entries. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
   });
 
   it('prescribes no connective phrase', async () => {
