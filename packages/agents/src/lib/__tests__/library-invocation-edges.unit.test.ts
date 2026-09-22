@@ -28,6 +28,12 @@ describe('library invocation edges', () => {
     expect(closure.skills).toContain('capture-event');
   });
 
+  it('pulls summarize-change into add-change-record, which drafts the block through it', async () => {
+    const closure = await resolveClosure({ skill: ['add-change-record'] }, libraryResolver(contentDir));
+
+    expect(closure.skills).toContain('summarize-change');
+  });
+
   it('pulls create-pr’s required delegates and leaves its optional one out', async () => {
     const closure = await resolveClosure({ skill: ['create-pr'] }, libraryResolver(contentDir));
 
