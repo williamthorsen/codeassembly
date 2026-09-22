@@ -77,6 +77,12 @@ describe('library invocation edges', () => {
     expect(closure.skills).toContain('create-pr');
   });
 
+  it('pulls add-change-record and summarize-change into merge-pr, which offers the one on an absent block', async () => {
+    const closure = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
+
+    expect(closure.skills).toEqual(expect.arrayContaining(['add-change-record', 'summarize-change']));
+  });
+
   it('resolves the entire content library without a cycle or missing artifact', async () => {
     // The whole-catalog resolution exercises every self-token (dropped, so no self-cycle) and every cross-reference
     // edge (resolves to a real artifact) at once.

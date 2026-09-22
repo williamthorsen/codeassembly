@@ -88,7 +88,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   [--override-title "{title}"]
 ```
 
-The guard keeps a failed read out of the merge. The redirect above truncates the file before `gh` writes, so a failed read leaves it empty, and an empty body contains no `## What` and no `change-record` block: The helper would resolve the effective record from the labels alone and report no `malformed-block` notice, and step 5 would dispatch the drafter. If the guard refuses, emit `skill.completed` (payload `{"outcome":"stopped: PR body not read"}`) per [Lifecycle events](#lifecycle-events) and stop.
+The guard keeps a failed read out of the merge. The redirect above truncates the file before `gh` writes, so a failed read leaves it empty, and an empty body contains no `## What` and no `change-record` block: The helper would resolve the effective record from the labels alone, step 5 would dispatch the drafter, and the offer below would propose adding a block to a body that was never read. If the guard refuses, emit `skill.completed` (payload `{"outcome":"stopped: PR body not read"}`) per [Lifecycle events](#lifecycle-events) and stop.
 
 Pass each PR label from step 2 as a separate `--pr-label` flag. Pass `--ticket-ref` only when `ticket_ref` from session context is non-null and `headRefName` is `branch_name`, since a PR merged from another branch's checkout belongs to another ticket; the helper uses that reference only when the PR title contains none. Pass this skill's `--scope`, `--type`, `--breaking`, and `--no-breaking` as `--override-scope`, `--override-type`, `--override-breaking`, and `--no-override-breaking`, omitting each one that was not given.
 
@@ -110,6 +110,16 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 [`resolve-merge`](../_data/title-templates.md#resolve-merge) states every field.
 
 The overrides passed to this run are the merge's **override set**. Each later run of this step, for a choice at the gate or for step 8's re-read, passes the whole set with that run's addition, and the same `--head`.
+
+**When the first run's `notices` contains `absent-block`, offer to add the block.** The pull request carries no change record, so the merge would publish no `Change:` trailers. Emit `input.requested` (payload `{"prompt":"add-change-record"}`) per [Lifecycle events](#lifecycle-events), then ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
+
+```
+PR #{number} carries no change record, so the merge would publish no `Change:` trailers. Draft the entries and add the block? This runs `{skill:summarize-change}`. 👍🏼👎🏼
+```
+
+On yes, invoke `{skill:add-change-record}` with `--pr {number}`. Then write a fresh body file from the platform as this step does and run the helper again, with the same override set and the same `--head`. A failure there stops the skill as the first run does, since no answer is at fault.
+
+On no, and when `{skill:add-change-record}` stopped for any of its own reasons, continue with the report that the first run produced. The notice then reaches the gate at step 6, which reports it.
 
 ### 4. Resolve strategy and deletion strategy
 
@@ -229,6 +239,7 @@ Proposed merge for PR #{pr_number}:
 
 Render each notice there as one line. When a line says where a field came from, name the source that `effective_sources` gives for that field:
 
+- **`absent-block`**: The PR carries no `change-record` block, so the merge publishes no `Change:` trailers, and the effective record comes from the sources that `effective_sources` names field by field.
 - **`malformed-block`**: The PR's `change-record` block cannot be read (its `defect`), so the labels and the commits resolved the effective record.
 - **`commits-unavailable`**: Because the commits were not read (its `reason`), the block or the labels were not checked against them.
 - **`divergence`**: The two sources that the notice's `sources` names disagree on the fields that its `fields` lists. Name each source's values for those fields, read from the report's `sources`, and the source from which the proposal takes each of them.
@@ -237,7 +248,7 @@ Render each notice there as one line. When a line says where a field came from, 
 - **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries. Its title and consolidated record still stand.
 - **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the block's record takes no precedence over the commits', and `effective_sources` names the one that stood.
 
-**A `stale-entries` notice is reported and nothing is re-derived.** Nothing in the skill library updates a pull-request description, and commits pushed after the body was composed are already out of scope here, as step 8 states.
+**A `stale-entries` notice is reported and nothing is re-derived.** Commits pushed after the body was composed are already out of scope here, as step 8 states. A body carrying no block may gain one at step 3, through `{skill:add-change-record}`; a block that is already written is never replaced, whether it reads, is malformed, or records no entry.
 
 A `divergence` or `pr-title-divergence` notice names values that the user can merge under instead, and the title is theirs to replace. If the user answers the gate with such values or a new title rather than a clear approval or decline, add them to the override set (a scope as `--override-scope`, `*` for no scope, a type as `--override-type`, a marker as `--override-breaking` or `--no-override-breaking`, and a title as `--override-title`), re-run step 3, settle any new defect, and render this gate again.
 
@@ -247,7 +258,7 @@ Render `{confirmation}` so that the ask itself names every destructive side effe
 - `remote` → `Merge PR #{pr_number} and delete the remote branch {headRefName}? 👍🏼👎🏼`
 - `both` → `Merge PR #{pr_number} and delete the local and remote branch {headRefName}? 👍🏼👎🏼`
 
-Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. The notice above the gate reports staleness, but the classifier reads the ask text alone, which is why the branch deletion is repeated there rather than left to the `Delete:` line.
+Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. Under an `absent-block` notice, open it with `The pull request carries no change record. ` in the same way. The notice above the gate reports staleness, but the classifier reads the ask text alone, which is why the branch deletion is repeated there rather than left to the `Delete:` line.
 
 If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events), then stop with no API call and no artifact. If they approve, continue.
 
