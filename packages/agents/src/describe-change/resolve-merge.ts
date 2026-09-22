@@ -397,11 +397,9 @@ function readSources(input: MergeInput): {
   const notices: MergeNotice[] = [];
   if (input.block.kind === 'absent') {
     notices.push({ kind: 'absent-block' });
-  }
-  if (input.block.kind === 'malformed') {
+  } else if (input.block.kind === 'malformed') {
     notices.push({ kind: 'malformed-block', defect: input.block.defect });
-  }
-  if (input.block.kind === 'read' && input.block.entriesDefect !== undefined) {
+  } else if (input.block.entriesDefect !== undefined) {
     notices.push({ kind: 'malformed-entries', defect: input.block.entriesDefect });
   }
   if (input.commits.kind === 'unavailable') {
