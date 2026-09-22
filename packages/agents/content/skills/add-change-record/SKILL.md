@@ -31,7 +31,7 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 
 ### 2. Resolve the pull request
 
-Resolve it per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): An explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the pull request for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected pull request.
+Resolve it per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-add-change-record-review-pr-merge-pr): An explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the pull request for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected pull request.
 
 Read the pull request's metadata, dispatching on `scm`:
 

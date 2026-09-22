@@ -14,7 +14,7 @@ The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolve
 - **Never on the default branch**: That branch belongs to no pull request, so a URL stored against it is whichever PR the last session happened to resolve. It is the stored default at step 2 of the runtime-resolution path below, which is how `merge-pr` with no `--pr` would come to merge an arbitrary PR. Because reviewing someone else's PR from the default branch is ordinary, this is a case that arises rather than a misuse. The deriver enforces it: It refuses the write, reports on stderr, exits 0, and emits a manifest whose `pr_url` is null, and it clears a value already stored there. The same rule applies to `ticket_url`; see [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url).
 - **Invalidate**: When the stored URL does not yield the expected PR (the resource is not found at that URL, whether stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-pr-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out.
 
-## Runtime-resolution path (`review-pr`, `merge-pr`)
+## Runtime-resolution path (`add-change-record`, `review-pr`, `merge-pr`)
 
 These skills discover a PR for the current branch at runtime. Resolve in this order:
 
