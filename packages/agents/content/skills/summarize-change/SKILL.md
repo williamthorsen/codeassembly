@@ -84,9 +84,9 @@ Both are optional, and each is recorded as an override beside the consolidated r
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
    - The change summary's own heading prefixes that string with the ticket reference for identification: `{ticket_ref} {title}`, or just `{title}` when `ticket_ref` is null.
 
-4. **Compose `## Why`** per the output format below. `## Details` and `## What` are both rendered from the entry list that step 5 draws, so neither exists until step 8.
+4. **Compose `## Why`** per the output format below. `## What` and `## Details` both come from what step 5 draws, so neither exists until step 8.
 
-5. **Draft the entries via `entry-drafter`**: Resolve the tier by looking up the effective type from step 2 in [work-types.json](../_data/work-types.json); if there is none, use `internal`. Then dispatch the `{subagent:entry-drafter}` subagent via the {tool:Task} tool with this block:
+5. **Draft the lede and the entries via `entry-drafter`**: Resolve the tier by looking up the effective type from step 2 in [work-types.json](../_data/work-types.json); if there is none, use `internal`. Then dispatch the `{subagent:entry-drafter}` subagent via the {tool:Task} tool with this block:
 
    ```dispatch
    type: {resolved type}
@@ -102,17 +102,17 @@ Both are optional, and each is recorded as an override beside the consolidated r
    - {the first passage that failed}
    ```
 
-   Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change an entry that it never sees, which keeps an entry that passed from coming back changed. Send the migration paragraph the same way if it is what failed. The fence carries entry `text` alone, so the drafter returns one replacement `text` per passage, in the order sent; put each in the place of the passage that it replaces, keep that entry's `type`, `scopes`, and `breaking`, and take every other entry from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
+   Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change a passage that it never sees, which keeps one that passed from coming back changed. Send the lede or the migration paragraph the same way if it is what failed. The fence carries the lede or an entry's `text`, so the drafter returns one replacement passage per passage sent, in the order sent; put each in the place of the passage that it replaces, keep that entry's `type`, `scopes`, and `breaking`, and take the lede and every other entry from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
 
-   Parse the drafter's `## Entries` fence as YAML. Each entry carries `type`, `scopes`, `breaking`, and `text`. Hold any `Migration:` paragraph below the fence aside, and read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that names no key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
+   Take the drafter's `## Lede` section as it stands; step 9 makes it `## What`, and no step rewrites it. Parse the `## Entries` fence as YAML. Each entry carries `type`, `scopes`, `breaking`, and `text`. Hold any `Migration:` paragraph below the fence aside, and read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that names no key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
 
-6. **Audit the entries.** Three checks apply to each entry's `text`, and each names the rejection code that its failure raises, for which a redispatch is the repair rather than an edit of your own. `type`, `scopes`, and `breaking` are not prose and are never rejected.
+6. **Audit the lede and the entries.** Three checks apply to the lede and to each entry's `text` alike, and each names the rejection code that its failure raises, for which a redispatch is the repair rather than an edit of your own. `type`, `scopes`, and `breaking` are not prose and are never rejected.
 
-   - **Verification.** Read each entry's `text` against the diff from step 2. Strike a claim that the diff contradicts, and correct one that it states differently. Never add: A fact omitted from the draft was left out by the reader of the change, and supplying it here restores the weighting that the fresh-context dispatch removed. The drafter read the diff, so this check no longer supplies the draft's grounding; it catches a sentence claiming more than the diff supports, which the diff does not contradict and which is not one to strike: `rejection: unsupported-claim`.
-   - **Subject.** Read each `text` with "This pull request" in front of it. If that sentence is false, the verb names what the system does rather than what the change did: `rejection: subject`. This check fails most often on a change that adds something which itself acts, such as a command, a check, a rule, or a hook, because the added thing's behavior is true, interesting, and reads as a correct entry while standing in for the change.
+   - **Verification.** Read the lede and each entry's `text` against the diff from step 2. Strike a claim that the diff contradicts, and correct one that it states differently. Never add: A fact omitted from the draft was left out by the reader of the change, and supplying it here restores the weighting that the fresh-context dispatch removed. The drafter read the diff, so this check no longer supplies the draft's grounding; it catches a sentence claiming more than the diff supports, which the diff does not contradict and which is not one to strike: `rejection: unsupported-claim`.
+   - **Subject.** Read the lede's each sentence, and each entry's `text`, with "This pull request" in front of it. If that sentence is false, the verb names what the system does rather than what the change did: `rejection: subject`. This check fails most often on a change that adds something which itself acts, such as a command, a check, a rule, or a hook, because the added thing's behavior is true, interesting, and reads as a correct entry while standing in for the change.
    - **Voice.** A figurative verb, or an invented term when a plain one exists: `rejection: voice`.
 
-   Striking and correcting an entry's `text` are the whole of your authority. Every other failure is a redispatch, never an edit. Do not rewrite the prose yourself: The draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting that the dispatch removed.
+   Striking and correcting a sentence are the whole of your authority. Every other failure is a redispatch, never an edit. Do not rewrite the prose yourself: The draft came from a fresh context for the same reason this audit is mechanical, and rewriting it here restores the weighting that the dispatch removed.
 
    Repeat step 5 with `rejection:` set to the code that the failed check names, and with the passages that failed in the `rejected` fence that step describes.
 
@@ -134,36 +134,9 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
 8. **Render `## Details` from the verified entries** per [Rendering `Details`](#rendering-details).
 
-9. **Cut `## What` via `lede-cutter`**: The verified entries report every fact that the drafter judged worth writing; a lede contains only the ones on which its reader acts. The candidates are the same bullets that step 8 rendered, without their scope tags: the breaking prefix when the entry's `breaking` is true, followed by its `text`. Dispatch the `{subagent:lede-cutter}` subagent via the {tool:Task} tool with this block, followed by the candidates:
+9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it, followed by the held-aside `Migration:` paragraph when the draft carries one, separated by one blank line. Write nothing of your own into it, and take no sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here carries this session's weighting into the merge commit, the changelog, and the release notes.
 
-   ```dispatch
-   tier: {the tier resolved in step 5}
-   ```
-
-   ```candidates
-   - {the first untagged bullet}
-   - {the second untagged bullet}
-   ```
-
-   Copy each candidate character for character, one per line, and number none of them: The cutter returns the survivors verbatim, and anything added here has to be stripped back out. Send no scope tags: The cutter's return is checked for byte identity against what it was sent, and a tag that reaches it comes back in `## What`. Add `rejection: {code}` on a redispatch and on no other dispatch, taking the code from the check that failed below.
-
-   **The migration paragraph is not a candidate.** If the draft carries one, hold it aside and re-attach it below the surviving bullets. Because only `## What` appears in the merge commit and the changelog, that paragraph is the only text addressed to a consumer whose build just broke, and it survives every cut.
-
-   **Skip the dispatch for a single-entry draft.** The cut leaves at least one bullet, so a draft that yields one has nothing to give up.
-
-   **Check the return before taking it.** Write the candidates and the returned bullets to two files, then compare them, naming each file by the absolute path to which it was written:
-
-   ```bash
-   grep -Fxv -f "{candidates_file}" "{returned_file}"
-   ```
-
-   Each printed line is a bullet that the cutter wrote rather than kept. `grep` exits 1 when it prints nothing, which is the passing case. Read the printed lines rather than the exit status.
-
-   **Count the returned bullets too.** The empty set is a subset, so the comparison above passes a return containing no bullets at all. An empty `## What` is passed on to `merge-pr`, which reads a body under 30 characters as thin and composes a fresh one from the diff, silently discarding the pipeline's output.
-
-   Redispatch on either failure -- `rejection: not-a-subset` for a bullet written by the cutter, `rejection: empty-cut` for a return containing none -- at most twice across the two; after a second failure, take every candidate uncut and report the failure to the developer.
-
-   Take the surviving bullets as the content of `## What`, in the order in which they were sent, and read the cutter's `## Report` for what it dropped. Relay that to the developer: This is the one step that removes content, and the saved summary shows only what survived it.
+   Because only `## What` appears in the merge commit and the changelog, the migration paragraph is the only text there addressed to a consumer whose build just broke, which is why it travels with the lede rather than staying with the entries.
 
 10. **Render the `change-record` block** and make it the body's last element:
 
@@ -207,7 +180,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The bullets that survived Process step 9, with any `Migration:` paragraph below them. No scope tags.}
+{The drafter's lede, two or three sentences of prose, with any `Migration:` paragraph below it.}
 
 ## Why
 
@@ -250,14 +223,14 @@ entries:
 - **Subsections.** One per distinct `type` among the entries, headed `{emoji} {label}` from that type's [work-types.json](../_data/work-types.json) `types[]` entry. Order them by tier (public → internal → process) and, within a tier, in the order that `work-types.json` lists the types. A type with no entry gets no subsection.
 - **Bullets.** Under each subsection, one bullet per entry of that type, in the order the drafter returned them. The bullet is `🚨 **Breaking:** ` (from `markers.breaking`, rendered as `{emoji} **{label}:** `) when the entry's `breaking` is `true`, followed by the entry's `text`. The prefix tags the entry inline rather than relocating it to a separate section.
 - **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, no bullet carries tags, since the consolidated record already names that scope.
-- **`## What`.** `## What` is a selection of these same bullets, carrying no scope tags in either case. Which bullets it keeps is settled in step 9; the contract is that it takes some of them and writes none of its own.
+- **`## What`.** `## What` carries none of these bullets. It is the lede that the drafter wrote, composed in step 9, and the two sections therefore cover the change at different lengths rather than repeating one list.
 - **An unknown type.** A `type` naming no key in `work-types.json` has no `emoji` or `label` to head a subsection with, and no tier to order it by. Report it to the developer per step 5 and head that subsection with the bare `type`, after every subsection that the taxonomy orders, so that the entry stays visible rather than being dropped or reassigned.
 
 ## Guidance
 
 - When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so that they read naturally without it.
-- The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is every entry that the lede was selected from
-- `## Details` and `## What` are two renderings of one bullet list, so neither is composed independently of the entries
+- The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is every outcome that the change contains
+- Both `## What` and `## Details` come from the drafter, so neither is composed in this session
 - Ignore auto-formatter and lint-fix changes
 - The breaking prefix does not include the migration: A breaking change states what the consumer does in a `Migration:` paragraph in `## What`, which is the text that the merge commit and the changelog carry
 - `## What` and `## Why` are required

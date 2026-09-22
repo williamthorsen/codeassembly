@@ -4,10 +4,12 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
-// `## Details` and `## What` are two renderings of one entry list, and a later ticket parses the entries back out of
-// the rendering. Two edits would defeat that quietly: under-specifying the rendering, which leaves the parser reading
-// prose that varies per run, and restoring the coverage mandate, which is what made `## Details` a prose re-rendering
-// of the diff. Neither fails at runtime -- each yields a plausible change summary -- so the guard has to be here.
+// `## Details` renders the drafter's entries, `## What` carries the lede that the same drafter wrote, and a later
+// ticket parses the entries back out of the rendering. Three edits would defeat that quietly: under-specifying the
+// rendering, which leaves the parser reading prose that varies per run; restoring the coverage mandate, which is what
+// made `## Details` a prose re-rendering of the diff; and composing `## What` in this session, which returns the
+// weighting that the fresh-context dispatch removes. None fails at runtime -- each yields a plausible change summary
+// -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /**
@@ -47,6 +49,21 @@ const ENTRY_RECORDING_PHRASES: ReadonlyArray<string> = [
   "the body's last element",
 ];
 
+/**
+ * Phrases binding `## What` to the drafter's own `## Lede`. Lowercased, so that a sentence's opening capital still
+ * matches.
+ */
+const LEDE_SOURCE_PHRASES: ReadonlyArray<string> = [
+  "take the drafter's `## lede` section",
+  'write nothing of your own into it',
+];
+
+/** Every subagent that this skill may dispatch, matched against the tokens that the installer rewrites. */
+const PERMITTED_SUBAGENTS: ReadonlyArray<string> = ['entry-drafter'];
+
+/** The token form by which a skill names a subagent to dispatch. */
+const SUBAGENT_TOKEN = /\{subagent:([a-z][a-z0-9-]*)\}/g;
+
 const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'skills', 'summarize-change', 'SKILL.md'), CONTENT_ROOT);
 
 describe('summarize-change contract', () => {
@@ -83,9 +100,37 @@ describe('summarize-change contract', () => {
     const found = COVERAGE_MANDATE_PHRASES.filter((phrase) => text.includes(phrase));
 
     const message =
-      '`## What` is a selection of the same bullets that `## Details` renders, so coverage holds by construction ' +
-      'and a mandate can only ask for more than the entries contain. That is what drew a prose re-rendering of the ' +
-      `diff. These phrases are back:\n  ${found.join('\n  ')}`;
+      'The lede and the entries answer at different lengths for one change, so a mandate that each fact in the ' +
+      'first reappear in the second can only ask for more than the entries contain. That is what drew a prose ' +
+      `re-rendering of the diff. These phrases are back:\n  ${found.join('\n  ')}`;
     expect(found, message).toEqual([]);
+  });
+
+  it('takes `## What` from the drafter’s lede rather than composing it', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = LEDE_SOURCE_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The lede reaches the merge commit, the changelog, and the release notes, and it was written in a fresh ' +
+      'context for the reader who meets the change without the entries. A skill left free to compose it writes a ' +
+      `plausible one carrying this session's weighting. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('dispatches the drafter alone', async () => {
+    const dispatched = [
+      ...new Set(
+        (await EXPANDED)
+          .matchAll(SUBAGENT_TOKEN)
+          .map((match) => match[1] ?? '')
+          .toArray(),
+      ),
+    ].toSorted();
+
+    const message =
+      'Each dispatch runs a fresh context over the whole change, which is what the pipeline pays for. A second one ' +
+      'on the lede path doubles that cost to rework text that the first already wrote for the same reader. These ' +
+      `subagents are dispatched:\n  ${dispatched.join('\n  ')}`;
+    expect(dispatched, message).toEqual([...PERMITTED_SUBAGENTS].toSorted());
   });
 });
