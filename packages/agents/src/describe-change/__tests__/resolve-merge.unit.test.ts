@@ -180,7 +180,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: false, scope: 'kb', type: 'docs' },
         effective_sources: { breaking: 'labels', scope: 'labels', type: 'labels' },
-        notices: [{ kind: 'commits-unavailable' }],
+        notices: [{ kind: 'absent-block' }, { kind: 'commits-unavailable' }],
       });
     });
 
@@ -196,6 +196,19 @@ describe(resolveMerge, () => {
   });
 
   describe('without a readable block', () => {
+    it('reports an absent block and resolves from the labels and the commits', () => {
+      const report = resolveMerge(
+        buildInput({ commitsRecord: { scope: 'agents', type: 'feat' }, labels: { scope: 'kb' } }),
+      );
+
+      expect(report).toMatchObject({
+        effective_record: { scope: 'kb', type: 'feat' },
+        effective_sources: { scope: 'labels', type: 'commits' },
+        notices: [{ kind: 'absent-block' }, { fields: ['scope'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        sources: { block: null },
+      });
+    });
+
     it('reports a malformed block and resolves as though it were absent', () => {
       const block: ChangeRecordBlockReading = { defect: '`title` is missing', kind: 'malformed' };
 
@@ -220,7 +233,10 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: true, scope: 'agents', type: 'drop' },
         effective_sources: { breaking: 'labels', scope: 'commits', type: 'labels' },
-        notices: [{ fields: ['type', 'breaking'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        notices: [
+          { kind: 'absent-block' },
+          { fields: ['type', 'breaking'], kind: 'divergence', sources: ['labels', 'commits'] },
+        ],
         sources: { labels: { breaking: true, scope: null, type: 'drop' } },
       });
     });
@@ -233,7 +249,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: true, scope: 'kb', type: 'feat' },
         effective_sources: { breaking: 'commits', scope: 'labels', type: 'commits' },
-        notices: [{ fields: ['scope'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        notices: [{ kind: 'absent-block' }, { fields: ['scope'], kind: 'divergence', sources: ['labels', 'commits'] }],
       });
     });
 
@@ -248,17 +264,20 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: false, scope: 'kb', type: 'docs' },
         effective_sources: { breaking: 'labels', scope: 'labels', type: 'labels' },
-        notices: [{ fields: ['scope', 'type'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        notices: [
+          { kind: 'absent-block' },
+          { fields: ['scope', 'type'], kind: 'divergence', sources: ['labels', 'commits'] },
+        ],
       });
     });
 
-    it('with no label, takes every field from the commits and shows nothing', () => {
+    it('with no label, takes every field from the commits and shows only the absent block', () => {
       const report = resolveMerge(buildInput({ commitsRecord: { scope: 'agents', type: 'feat' } }));
 
       expect(report).toMatchObject({
         effective_record: { scope: 'agents', type: 'feat' },
         effective_sources: { breaking: 'commits', scope: 'commits', type: 'commits' },
-        notices: [],
+        notices: [{ kind: 'absent-block' }],
         sources: { labels: { breaking: null, scope: null, type: null } },
       });
     });
@@ -271,7 +290,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: false, type: 'feat' },
         effective_sources: { breaking: 'commits', type: 'commits' },
-        notices: [],
+        notices: [{ kind: 'absent-block' }],
         sources: { labels: { breaking: true, scope: null, type: null } },
       });
     });
@@ -286,7 +305,10 @@ describe(resolveMerge, () => {
 
       expect(report).toMatchObject({
         effective_record: { breaking: false, scope: 'agents', type: 'feat' },
-        notices: [{ fields: ['breaking'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        notices: [
+          { kind: 'absent-block' },
+          { fields: ['breaking'], kind: 'divergence', sources: ['labels', 'commits'] },
+        ],
       });
     });
   });
@@ -652,7 +674,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { title: 'Add foo' },
         effective_sources: { title: 'pr_title_verbatim' },
-        notices: [{ kind: 'pr-title-unparsed' }],
+        notices: [{ kind: 'absent-block' }, { kind: 'pr-title-unparsed' }],
       });
     });
 

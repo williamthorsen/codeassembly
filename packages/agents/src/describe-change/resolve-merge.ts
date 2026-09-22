@@ -132,6 +132,7 @@ export interface MergeInput {
 
 /** Something the approval gate shows the author without blocking approval. */
 export type MergeNotice =
+  | { kind: 'absent-block' }
   | { kind: 'commits-unavailable'; reason: string }
   | { fields: ComparedField[]; kind: 'divergence'; sources: ['block' | 'labels', 'commits'] }
   | { defect: string; kind: 'malformed-block' }
@@ -385,9 +386,8 @@ function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undef
 
 /**
  * Reads the block out of its reading and raises every notice that reading the sources produces, before any record
- * resolves: a block that could not be read, an entry list that could not be read, commits that could not be read, and
- * entries that were not derived at the pull request's head. It also reports whether those entries are fresh, which
- * `chooseFromBlock` weighs.
+ * resolves: a source that is absent or that could not be read, and entries that were not derived at the pull request's
+ * head. It also reports whether those entries are fresh, which `chooseFromBlock` weighs.
  */
 function readSources(input: MergeInput): {
   block: ChangeRecordBlock | undefined;
@@ -395,6 +395,9 @@ function readSources(input: MergeInput): {
   notices: MergeNotice[];
 } {
   const notices: MergeNotice[] = [];
+  if (input.block.kind === 'absent') {
+    notices.push({ kind: 'absent-block' });
+  }
   if (input.block.kind === 'malformed') {
     notices.push({ kind: 'malformed-block', defect: input.block.defect });
   }

@@ -1276,6 +1276,24 @@ describe('resolve-merge', () => {
     });
   });
 
+  it('when the body contains no block, resolves from the commits and says so', async () => {
+    const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
+    const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
+
+    const { output } = await runDescribe({
+      argv: ['resolve-merge', '--base', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({
+      effective_sources: { scope: 'commits', type: 'commits' },
+      notices: [{ kind: 'absent-block' }],
+      sources: { block: null },
+    });
+  });
+
   it('when the head commit is absent from the repository, resolves without the commits and says so', async () => {
     const { cwd, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     const absent = '0123456789abcdef0123456789abcdef01234567';
@@ -1288,7 +1306,10 @@ describe('resolve-merge', () => {
       home,
     });
 
-    expect(output).toMatchObject({ notices: [{ kind: 'commits-unavailable' }], sources: { commits: null } });
+    expect(output).toMatchObject({
+      notices: [{ kind: 'absent-block' }, { kind: 'commits-unavailable' }],
+      sources: { commits: null },
+    });
   });
 
   it('when commit.title_format is empty, resolves without the commits rather than refusing', async () => {
@@ -1311,7 +1332,10 @@ describe('resolve-merge', () => {
     });
 
     expect(output).toMatchObject({
-      notices: [{ kind: 'commits-unavailable', reason: expect.stringContaining('commit.title_format is empty') }],
+      notices: [
+        { kind: 'absent-block' },
+        { kind: 'commits-unavailable', reason: expect.stringContaining('commit.title_format is empty') },
+      ],
     });
   });
 
