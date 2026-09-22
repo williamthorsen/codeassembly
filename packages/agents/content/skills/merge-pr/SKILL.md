@@ -34,7 +34,7 @@ Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-con
 
 ### 2. Resolve the PR
 
-Resolve the PR to merge per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-review-pr-merge-pr): An explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR.
+Resolve the PR to merge per [PR source resolution](../_data/pr-source-resolution.md#runtime-resolution-path-add-change-record-review-pr-merge-pr): An explicit `--pr {n}` overrides; otherwise a stored `pr_url` from session context is the default; otherwise discover the PR for the current branch. Persist the resolved URL via `--set-pr-url`, and invalidate (`--clear-pr-url`) and re-resolve a stored URL that does not yield the expected PR.
 
 Read the PR's metadata for the steps below, dispatching on `scm`:
 
@@ -111,7 +111,15 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 
 The overrides passed to this run are the merge's **override set**. Each later run of this step, for a choice at the gate or for step 8's re-read, passes the whole set with that run's addition, and the same `--head`.
 
-**When the first run's `notices` contains `absent-block`, offer to add the block.** The pull request carries no change record, so the merge would publish no `Change:` trailers. Emit `input.requested` (payload `{"prompt":"add-change-record"}`) per [Lifecycle events](#lifecycle-events), then ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
+**When the first run's `notices` contains `absent-block`, offer to add the block, if this checkout can draft it.** The pull request carries no change record, so the merge would publish no `Change:` trailers. `{skill:add-change-record}` drafts the entries from `{default_branch}...HEAD`, and refuses when HEAD is not the pull request's head commit, so read the local head before offering:
+
+```bash
+git rev-parse HEAD
+```
+
+When it is not `headRefOid`, make no offer: This checkout describes other commits, and the merge of a pull request from another branch's checkout is a case that this skill supports. Carry the notice to the gate at step 6 and name the checkout there as the reason that no block can be drafted here.
+
+When it is `headRefOid`, emit `input.requested` (payload `{"prompt":"add-change-record"}`) per [Lifecycle events](#lifecycle-events), then ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
 
 ```
 PR #{number} carries no change record, so the merge would publish no `Change:` trailers. Draft the entries and add the block? This runs `{skill:summarize-change}`. 👍🏼👎🏼
