@@ -294,11 +294,21 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    // The digest covers several bodies, so a caller told only the code cannot tell which one to reinstall.
+    // The code names no file, so the message carries the path that the caller reinstalls.
     expect(expectFailure(outcome)).toStrictEqual({
       error: 'no-doctrine',
       message: expect.stringContaining(doctrinePath),
     });
+  });
+
+  it('digests the drafter alone, leaving another body in the directory out', async () => {
+    const fixture = await createLedeFixture();
+    const before = (await resolveFor(fixture)).doctrineHash;
+    await writeFile(join(fixture.subagentsDir, 'lede-cutter.md'), 'A retired doctrine body.\n', 'utf8');
+
+    // A harness installed before the cutter was removed still has its body beside the drafter's, and a digest that
+    // took whatever the directory held would open a generation per machine rather than per doctrine change.
+    expect((await resolveFor(fixture)).doctrineHash).toBe(before);
   });
 
   it.each(FIXTURE_DOCTRINE_FILENAMES)('moves the fingerprint when %s changes', async (filename) => {
