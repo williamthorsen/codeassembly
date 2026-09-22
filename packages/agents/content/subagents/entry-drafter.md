@@ -171,7 +171,7 @@ Migration: {the paragraph, when the change breaks a consumer; omitted otherwise}
 
 Every entry carries all four keys, in that order. `text` is quoted when YAML would otherwise mis-parse it, and a colon followed by a space is the case that most often requires it.
 
-On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. The fence carries an entry's `text` or the lede and nothing else, so a replacement carries the same; the caller places each one and keeps every other field.
+On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading carries every replacement, whether its passage was an entry's `text` or the lede, and a redispatch returns no `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence carries an entry's `text` or the lede and nothing else, so a replacement carries the same; the caller places each one and keeps every other field.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 

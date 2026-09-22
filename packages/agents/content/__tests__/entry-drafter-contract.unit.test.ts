@@ -110,6 +110,7 @@ const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not wo
  */
 const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   '`rejected` fence',
+  'a redispatch returns no `## lede` section',
   'one replacement per passage',
   'revise those passages and nothing else',
 ];
