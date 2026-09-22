@@ -119,12 +119,7 @@ describe('summarize-change contract', () => {
 
   it('dispatches the drafter alone', async () => {
     const dispatched = [
-      ...new Set(
-        (await EXPANDED)
-          .matchAll(SUBAGENT_TOKEN)
-          .map((match) => match[1] ?? '')
-          .toArray(),
-      ),
+      ...new Set((await EXPANDED).matchAll(SUBAGENT_TOKEN).map((match) => match[1] ?? '')),
     ].toSorted();
 
     const message =
