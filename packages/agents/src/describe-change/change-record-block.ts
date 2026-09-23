@@ -19,23 +19,21 @@ import { type ChangeEntry, readChangeEntries } from './change-entries.ts';
  * block that loses either of those has nothing left to resolve from, so every other field keeps the rule.
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
-  const lines = splitLines(body);
-  const fence = findFences(lines).at(-1);
-  if (fence === undefined) {
-    return { kind: 'absent' };
-  }
-  if (fence.close === undefined) {
-    return { defect: 'the block opens but never closes', kind: 'malformed' };
-  }
+  const parsed = parseLastBlock(body);
+  return 'payload' in parsed ? readPayload(parsed.payload) : parsed;
+}
 
-  const document = parseDocument(lines.slice(fence.open + 1, fence.close).join('\n'));
-  const [error] = document.errors;
-  if (error !== undefined) {
-    const message = (error.message.split('\n', 1)[0] ?? '').replace(/:$/, '');
-    return { defect: `the payload is not valid YAML: ${message}`, kind: 'malformed' };
-  }
-  const payload: unknown = document.toJS();
-  return readPayload(payload);
+/**
+ * Reads the last `change-record` block in a merge-commit body back into what it records, as the inverse of
+ * `renderMergeChangeRecordBlock`.
+ *
+ * The reader applies the rules that release-kit applies when it reads the merge commit, so any defect makes the whole
+ * block malformed and no entry is salvaged from a defective list. A key that the grammar does not declare is ignored,
+ * and a declared key whose value is null reads as absent.
+ */
+export function readMergeChangeRecordBlock(body: string): MergeChangeRecordBlockReading {
+  const parsed = parseLastBlock(body);
+  return 'payload' in parsed ? readMergePayload(parsed.payload) : parsed;
 }
 
 /**
@@ -66,6 +64,21 @@ export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
       ...(entriesCommit !== undefined && entriesCommit !== '' && { entries_commit: entriesCommit }),
       entries: entries.map(toEntryPayload),
     }),
+  };
+  return `${FENCE}${INFO_STRING}\n${stringifyPayload(payload)}${FENCE}`;
+}
+
+/**
+ * Renders the fenced `change-record` block that a merge-commit body contains below its lede: the change entries, with
+ * the pull-request number and the ticket reference that release-kit reads as data. The scalars precede the entry list,
+ * and each entry renders as it does in the pull-request form.
+ */
+export function renderMergeChangeRecordBlock(block: MergeChangeRecordBlock): string {
+  const ticketRef = block.ticketRef?.trim();
+  const payload = {
+    ...(block.prNumber !== undefined && { pr_number: block.prNumber }),
+    ...(ticketRef !== undefined && ticketRef !== '' && { ticket_ref: ticketRef }),
+    entries: block.entries.map(toEntryPayload),
   };
   return `${FENCE}${INFO_STRING}\n${stringifyPayload(payload)}${FENCE}`;
 }
@@ -103,6 +116,17 @@ export type ChangeRecordBlockReading =
   | { kind: 'absent' }
   | { defect: string; kind: 'malformed' }
   | { block: ChangeRecordBlock; entriesDefect?: string; kind: 'read' };
+
+/** What a merge commit's block records: the change entries, the pull-request number, and the ticket reference. */
+export interface MergeChangeRecordBlock {
+  entries: ChangeEntry[];
+  prNumber?: number;
+  ticketRef?: string;
+}
+
+/** What a merge-commit body's last `change-record` block reads as: absent, malformed with the defect named, or read. */
+export type MergeChangeRecordBlockReading =
+  { kind: 'absent' } | { defect: string; kind: 'malformed' } | { block: MergeChangeRecordBlock; kind: 'read' };
 
 /**
  * The overrides that a block records, named as the flags that set them are. A `scope` of `*` sets no scope. `breaking`
@@ -170,6 +194,28 @@ function normalizeOverrides(overrides: RecordOverrides): RecordOverrides {
   };
 }
 
+/** Parses the payload of a body's last `change-record` block, or reports the block absent or malformed. */
+function parseLastBlock(
+  body: string,
+): { kind: 'absent' } | { defect: string; kind: 'malformed' } | { payload: unknown } {
+  const lines = splitLines(body);
+  const fence = findFences(lines).at(-1);
+  if (fence === undefined) {
+    return { kind: 'absent' };
+  }
+  if (fence.close === undefined) {
+    return { defect: 'the block opens but never closes', kind: 'malformed' };
+  }
+
+  const document = parseDocument(lines.slice(fence.open + 1, fence.close).join('\n'));
+  const [error] = document.errors;
+  if (error !== undefined) {
+    const message = (error.message.split('\n', 1)[0] ?? '').replace(/:$/, '');
+    return { defect: `the payload is not valid YAML: ${message}`, kind: 'malformed' };
+  }
+  return { payload: document.toJS() };
+}
+
 /**
  * Reads the entries and their derivation commit, which read together: A defect in either leaves both absent, since a
  * derivation commit records a claim about the entries. An empty list reads as no entries, as the renderer writes one.
@@ -229,6 +275,38 @@ function readGroup(
     record[key] = value;
   }
   return { record };
+}
+
+/** Reads a parsed merge-form payload into the block that it records, reporting the first defect. */
+function readMergePayload(payload: unknown): MergeChangeRecordBlockReading {
+  if (!isRecord(payload)) {
+    return { defect: 'the payload is not a mapping', kind: 'malformed' };
+  }
+  const { entries, pr_number: prNumber, ticket_ref: ticketRef } = payload;
+  if (
+    prNumber !== undefined &&
+    prNumber !== null &&
+    (typeof prNumber !== 'number' || !Number.isSafeInteger(prNumber) || prNumber <= 0)
+  ) {
+    return { defect: '`pr_number` is not a positive integer', kind: 'malformed' };
+  }
+  if (ticketRef !== undefined && ticketRef !== null && typeof ticketRef !== 'string') {
+    return { defect: '`ticket_ref` is not a string', kind: 'malformed' };
+  }
+
+  const read = entries === undefined || entries === null ? { entries: [] } : readChangeEntries(entries);
+  if ('defect' in read) {
+    return { defect: read.defect, kind: 'malformed' };
+  }
+  const trimmedTicketRef = ticketRef?.trim();
+  return {
+    block: {
+      entries: read.entries,
+      ...(typeof prNumber === 'number' && { prNumber }),
+      ...(trimmedTicketRef !== undefined && trimmedTicketRef !== '' && { ticketRef: trimmedTicketRef }),
+    },
+    kind: 'read',
+  };
 }
 
 /** Reads a parsed payload into the block that it records, reporting the first key whose value the grammar does not allow. */
