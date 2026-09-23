@@ -169,7 +169,7 @@ Three sections, in this order, with any migration paragraph between the second a
   migration: Replace `kb find` with `kb search`, which exits nonzero when nothing matches.
 ```
 
-Migration: {the paragraph, when the change breaks a consumer; omitted otherwise}
+Migration: {the paragraph, when the change breaks a consumer or drops or deprecates published surface; omitted otherwise}
 
 ## Report
 
