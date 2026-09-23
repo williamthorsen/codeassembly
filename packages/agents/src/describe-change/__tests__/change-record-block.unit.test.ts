@@ -50,7 +50,13 @@ describe(readChangeRecordBlock, () => {
         consolidatedRecord: { scope: 'agents', type: 'feat' },
         entries: [
           { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
-          { breaking: true, scopes: [], text: 'Drops the legacy reader', type: 'drop' },
+          {
+            breaking: true,
+            migration: 'Import `read` from `kb`',
+            scopes: [],
+            text: 'Drops the legacy reader',
+            type: 'drop',
+          },
         ],
         entriesCommit: 'e5029924',
         title: 'Add the parser',
@@ -59,7 +65,13 @@ describe(readChangeRecordBlock, () => {
         consolidatedRecord: { scope: 'agents', type: 'feat' },
         entries: [
           { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
-          { breaking: true, scopes: [], text: 'Drops the legacy reader', type: 'drop' },
+          {
+            breaking: true,
+            migration: 'Import `read` from `kb`',
+            scopes: [],
+            text: 'Drops the legacy reader',
+            type: 'drop',
+          },
         ],
         entriesCommit: 'e5029924',
         title: 'Add the parser',
@@ -312,10 +324,35 @@ describe(renderChangeRecordBlock, () => {
         'entries_commit: e5029924',
         'entries:',
         '  - type: feat',
-        '    scopes:',
-        '      - agents',
-        '    breaking: false',
+        '    scopes: [agents]',
         '    text: Adds the parser',
+        '```',
+      ].join('\n'),
+    );
+  });
+
+  it('renders an entry with scopes in flow form, breaking only when true, and migration last', () => {
+    const rendered = renderChangeRecordBlock({
+      entries: [
+        { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the parser', type: 'feat' },
+        { breaking: true, migration: 'Import `read` from `kb`', scopes: [], text: 'Drops the reader', type: 'drop' },
+      ],
+      title: 'Add the parser',
+    });
+
+    expect(rendered).toBe(
+      [
+        '```change-record',
+        'title: Add the parser',
+        'entries:',
+        '  - type: feat',
+        '    scopes: [agents, kb]',
+        '    text: Adds the parser',
+        '  - type: drop',
+        '    scopes: []',
+        '    breaking: true',
+        '    text: Drops the reader',
+        '    migration: Import `read` from `kb`',
         '```',
       ].join('\n'),
     );
