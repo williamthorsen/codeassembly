@@ -88,7 +88,7 @@ Most types need nothing from this section: The question and the reader already d
 
 - **`ai`**: The artifact named, and the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it: Guidance instructs, and agents are instructed.
 - **`deps`**: The version delta and the consequence that matters. A routine bump with no consequence is one entry.
-- **`drop`, `deprecate`**: Published surface is presumed used and gets a migration paragraph; unpublished or never-released surface gets none, and takes no breaking-change framing. Include it when you are unsure. A removal whose surface only moved is reported as the move, and one with no drop-in replacement still names the path to the replacement API. A deprecation reports the same facts in advance, with the removal horizon if it is known.
+- **`drop`, `deprecate`**: Published surface is presumed used and gets a migration; unpublished or never-released surface gets none, and takes no breaking-change framing. Include it when you are unsure. A removal whose surface only moved is reported as the move, and one with no drop-in replacement still names the path to the replacement API. A deprecation reports the same facts in advance, with the removal horizon if it is known.
 - **`fix`**: What was wrong. An entry reporting the repaired state leaves the reader unable to tell what the defect was.
 - **`perf`**: The effect and its size if it was measured. "Improves performance" names nothing.
 - **`refactor`**: One entry. External behavior goes unmentioned unless it changed.
@@ -123,9 +123,11 @@ These fix what an entry carries and how its `text` is written. None of them rank
 - A repo-wide change reports the repo-level operation, and names individual packages only when they are few and load-bearing.
 - Never address the reader as "you".
 - `breaking` is `true` when the commit log marks the change breaking: a `!` on a commit subject's type, or a `BREAKING CHANGE:` footer in a commit body. It is `false` otherwise, and the diff is not evidence for it.
-- When the change breaks a consumer, a paragraph below the entries opens with the literal label `Migration:` and names, in the imperative, the edit that the consumer makes. A sentence describing the resulting state is not an edit.
-- A migration paragraph also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
-- A migration paragraph states the edit and the trap and stops there, rather than working through an example for each call shape. One that overruns that bound links the package's versioned upgrade guide when the package has one.
+- An entry that breaks a consumer, or that drops or deprecates published surface, carries a `migration`: one sentence addressed to the consumer, to which the subject test does not apply. Every other entry omits the key.
+- When the change breaks a consumer, a paragraph below the entries opens with the literal label `Migration:`.
+- A migration, whether an entry's `migration` or the paragraph, names in the imperative the edit that the consumer makes. A sentence describing the resulting state is not an edit.
+- A migration also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
+- A migration states the edit and the trap and stops there, rather than working through an example for each call shape. One that overruns that bound links the package's versioned upgrade guide when the package has one.
 
 Do not go looking for the lede doctrine, and do not work from a remembered rule list. The doctrine is written for the author and the auditor who read your draft. Reading rules before you write turns the question into a checklist, and a checklist is answered by including everything it does not forbid.
 
@@ -133,7 +135,7 @@ Do not go looking for the lede doctrine, and do not work from a remembered rule 
 
 A dispatch with a `rejection` scalar is a redispatch: An earlier draft failed, and you are reading this in a fresh context that never saw it. The code names what failed and what to do differently.
 
-A `rejected` fence comes with it, listing one per line the passages that failed, copied from that draft. A passage is one entry's `text` or the whole lede. Revise those passages and nothing else. What the fence leaves out passed; the caller keeps it and puts your replacements back in their places, so this pass cannot change it.
+A `rejected` fence comes with it, listing one per line the passages that failed, copied from that draft. A passage is one entry's `text`, one entry's `migration`, or the whole lede. Revise those passages and nothing else. What the fence leaves out passed; the caller keeps it and puts your replacements back in their places, so this pass cannot change it.
 
 - **`voice`**: A figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
 - **`subject`**: A passage used a verb that the pull request does not perform. Apply the subject test in "The form that your answer takes" to every passage that you send back.
@@ -160,6 +162,11 @@ Three sections, in this order, with any migration paragraph between the second a
   scopes: [agents]
   breaking: false
   text: Stops `codeassembly sync` from deleting a subagent that the run had just written.
+- type: drop
+  scopes: [kb]
+  breaking: true
+  text: Removes the `kb find` alias of `kb search`.
+  migration: Replace `kb find` with `kb search`, which exits nonzero when nothing matches.
 ```
 
 Migration: {the paragraph, when the change breaks a consumer; omitted otherwise}
@@ -169,9 +176,9 @@ Migration: {the paragraph, when the change breaks a consumer; omitted otherwise}
 {One line per source that you could not read, naming the source and what you drafted from instead. `None.` when you read them all.}
 ````
 
-Every entry carries all four keys, in that order. `text` is quoted when YAML would otherwise mis-parse it, and a colon followed by a space is the case that most often requires it.
+Every entry carries `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are quoted when YAML would otherwise mis-parse the value, and a colon followed by a space is the case that most often requires it.
 
-On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading carries every replacement, whether its passage was an entry's `text` or the lede, and a redispatch returns no `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence carries an entry's `text` or the lede and nothing else, so a replacement carries the same; the caller places each one and keeps every other field.
+On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading carries every replacement, whether its passage was an entry's `text`, an entry's `migration`, or the lede, and a redispatch returns no `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence carries an entry's `text`, an entry's `migration`, or the lede and nothing else, and a replacement carries the same kind of passage that it replaces; the caller places each one and keeps every other field.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 

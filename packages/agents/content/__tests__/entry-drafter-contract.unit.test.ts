@@ -73,6 +73,16 @@ const LEDE_READER_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
+ * Phrases deciding which entries carry a `migration` and which omit it. Lowercased, so that a sentence's opening
+ * capital still matches.
+ */
+const MIGRATION_FIELD_PHRASES: ReadonlyArray<string> = [
+  'carries a `migration`',
+  'drops or deprecates published surface',
+  'every other entry omits the key',
+];
+
+/**
  * Phrases binding a migration paragraph to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
  * review cannot recover it, and without the bound a migration grows a worked example per call shape.
  */
@@ -294,6 +304,17 @@ describe('entry-drafter contract', () => {
       'A migration paragraph is the only text addressed to a consumer whose build broke, and it survives into the ' +
       'merge commit whatever else is cut. The trap present in the replacement appears in no hunk, so a caller ' +
       `auditing against the diff cannot supply it. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('decides which entries carry a migration', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = MIGRATION_FIELD_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'An entry’s `migration` is the upgrade instruction that release notes render under its bullet, and this file ' +
+      'is the only one that tells the drafter when to write it. Without the trigger, a breaking entry reaches the ' +
+      `changelog with no instruction; without the omission, every entry grows one. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
