@@ -180,7 +180,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The drafter's lede, two or three sentences of prose, with any `Migration:` paragraph below it.}
+{The drafter's lede, with any `Migration:` paragraph below it.}
 
 ## Why
 

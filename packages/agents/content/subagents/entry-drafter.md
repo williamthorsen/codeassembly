@@ -98,11 +98,11 @@ A revert takes the work type of the change that it undoes rather than `revert`. 
 
 ## The form that the lede takes
 
-Two or three sentences of prose, above the entries.
+The lede summarizes the change, and the entries enumerate it. The same reader reads both, so include a fact stated by an entry only when, without it, the lede does not answer "what is this change about?"
 
-- Prose, never a list. The entries are the list, and a lede shaped as one arrives as an inventory of the change rather than an account of it.
-- The first sentence states what the change does. A second and a third sentence state the consequence that the reader acts on, and a change small enough to be stated in two sentences takes two.
-- The lede reports the change as a whole. Where several entries serve one outcome, the lede names the outcome; where the change has one outcome, the lede is what its entry says at more length.
+- Prose, never a list, and never the entries retold one by one. A lede that gives each entry its own sentence is an inventory of the change rather than an account of it, whatever its form.
+- The first sentence states what the change does. Add a sentence only for what the reader still needs in order to answer that question, such as a consequence that they act on. A one-sentence lede is often complete, and none runs past three.
+- The lede reports the change as a whole. Where the entries serve one outcome, the lede names that outcome. Where the change has several outcomes, the lede leads with the one that the change is about and covers the rest in a clause at most.
 - Each sentence is bound by the rules in "The form that your answer takes" that govern an entry's `text`: the opening verb, the unwritten subject, the plain verb, the backticked artifact, and the claim no stronger than what the change delivers.
 - The migration paragraph is no part of the lede. It follows the entries, as below.
 
@@ -147,7 +147,7 @@ Three sections, in this order, with any migration paragraph between the second a
 ````markdown
 ## Lede
 
-{Two or three sentences of prose stating what the change does.}
+{Prose stating what the change does.}
 
 ## Entries
 
