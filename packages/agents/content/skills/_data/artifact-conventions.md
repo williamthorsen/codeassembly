@@ -182,7 +182,7 @@ run_id: <run id> # optional: set only by callers that write into, or link back t
 ---
 ```
 
-The `pull-request` and `merge` records carry no frontmatter. Each opens with a marker naming the reader that a silent rewrite damages, and no other artifact states one:
+The `pull-request` and `merge` records carry no frontmatter. Each opens with a marker that names its reader and directs a reading agent to leave the record unedited, and no other artifact states one:
 
 <!-- include: ../../_partials/record-marker.md / -->
 
@@ -914,15 +914,13 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. Correct one that got its own subject wrong; never edit one toward what has happened since, whether a later human edit to the remote to which it was published, a rebase that leaves `baseSha` and `commit` unresolvable, or a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-The `pull-request` and `merge` records carry a marker naming that damage in the file rather than leaving it to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. No other artifact carries one.
+The `pull-request` and `merge` records carry a marker that directs a reading agent to leave the record unedited, stated in the file rather than left to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. No other artifact carries one.
 
 A flow still composing its own artifact has reached nothing downstream of it: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` is not a record at all, being the planning loop's working state.
 
 A later flow that revises a finished record writes a new artifact rather than editing the old one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan that it refines intact.
 
 Overwriting either of those records breaks `capture-lede-decision`. It derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; if a `pull-request` body is rewritten to match a human's later edit, `capture-lede-decision` reports `differ: false` for a lede that was in fact revised, so it records an `accepted` verdict for a lede that the author rewrote. The corruption raises no error and is undetectable in any session that no longer has the original text. When a lede is genuinely needed and the artifacts do not contain it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
-
-None of this is narrated. Do not mention the rule to the user, do not announce a write that was not made, and do not offer to reconcile a record with current state.
 
 ## Portability
 
