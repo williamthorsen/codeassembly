@@ -538,6 +538,22 @@ describe(resolveMerge, () => {
       expect(report.trailers).toStrictEqual(['agents|drop!: Removes the legacy API']);
     });
 
+    it('leaves an entry’s migration out of its trailer', () => {
+      const entries: ChangeEntry[] = [
+        {
+          breaking: true,
+          migration: 'Import `read` from `kb`',
+          scopes: ['agents'],
+          text: 'Removes the legacy API',
+          type: 'drop',
+        },
+      ];
+
+      const report = resolveMerge(buildInput({ block: readBlock({ type: 'drop' }, { entries, fresh: true }) }));
+
+      expect(report.trailers).toStrictEqual(['agents|drop!: Removes the legacy API']);
+    });
+
     it('renders an entry naming no scope as its type and text alone', () => {
       const entries: ChangeEntry[] = [{ breaking: false, scopes: [], text: 'Adds foo', type: 'feat' }];
 

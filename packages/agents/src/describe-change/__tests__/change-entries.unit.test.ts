@@ -105,6 +105,33 @@ describe(readChangeEntries, () => {
     });
   });
 
+  it('reads a migration, trimmed', () => {
+    const value = parseYaml(
+      '- type: drop\n  text: Drops the legacy reader\n  migration: "  Import `read` from `kb`  "\n',
+    );
+
+    expect(readChangeEntries(value)).toStrictEqual({
+      entries: [
+        {
+          breaking: false,
+          migration: 'Import `read` from `kb`',
+          scopes: [],
+          text: 'Drops the legacy reader',
+          type: 'drop',
+        },
+      ],
+    });
+  });
+
+  it.each<{ migration: unknown; name: string }>([
+    { name: 'null', migration: null },
+    { name: 'blank', migration: ' '.repeat(3) },
+  ])('reads a $name migration as absent', ({ migration }) => {
+    expect(readChangeEntries([{ migration, text: 'Drops foo', type: 'drop' }])).toStrictEqual({
+      entries: [{ breaking: false, scopes: [], text: 'Drops foo', type: 'drop' }],
+    });
+  });
+
   it('ignores a key that the grammar does not declare', () => {
     const value = parseYaml('- type: docs\n  text: Records the grammar\n  commit: abc1234\n');
 
@@ -137,6 +164,21 @@ describe(readChangeEntries, () => {
       name: 'a non-string scope',
       value: [{ scopes: ['agents', 7], text: 'Adds foo', type: 'feat' }],
       defect: '`entries[0].scopes[1]` is not a string',
+    },
+    {
+      name: 'a non-string migration',
+      value: [{ migration: ['Import foo'], text: 'Drops foo', type: 'drop' }],
+      defect: '`entries[0].migration` is not a string',
+    },
+    {
+      name: 'a migration spanning two lines',
+      value: [{ migration: 'Import foo\nfrom bar', text: 'Drops foo', type: 'drop' }],
+      defect: '`entries[0].migration` spans more than one line',
+    },
+    {
+      name: 'a migration containing a carriage return',
+      value: [{ migration: 'Import foo\rfrom bar', text: 'Drops foo', type: 'drop' }],
+      defect: '`entries[0].migration` spans more than one line',
     },
     { name: 'a missing type', value: [{ text: 'Adds foo' }], defect: '`entries[0].type` is missing' },
     { name: 'a missing text', value: [{ type: 'feat' }], defect: '`entries[0].text` is missing' },

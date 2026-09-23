@@ -23,8 +23,9 @@ export function consolidateChangeEntries(entries: readonly ChangeEntry[], taxono
  * not allow.
  *
  * The value is a list of mappings, in the shape that `entry-drafter` returns. `scopes` and `breaking` are optional and
- * read as empty and false; `type` and `text` are required, since an entry missing either records nothing. A key that
- * the grammar does not declare is ignored, and a declared key whose value is null reads as absent.
+ * read as empty and false; `type` and `text` are required, since an entry missing either records nothing. `migration`
+ * is optional and one line, and a blank one reads as absent. A key that the grammar does not declare is ignored, and a
+ * declared key whose value is null reads as absent.
  */
 export function readChangeEntries(value: unknown): ChangeEntriesReading {
   if (!Array.isArray(value)) {
@@ -46,10 +47,11 @@ export type ChangeEntriesReading = { defect: string } | { entries: ChangeEntry[]
 
 /**
  * One outcome of a change, as `entry-drafter` returns it: the work type that it takes, the scopes that it touched, its
- * breaking marker, and the sentence that reports it.
+ * breaking marker, the sentence that reports it, and the upgrade instruction that it calls for, if any.
  */
 export interface ChangeEntry {
   breaking: boolean;
+  migration?: string;
   scopes: string[];
   text: string;
   type: string;
@@ -64,7 +66,7 @@ function readEntry(item: unknown, index: number): { defect: string } | { entry: 
     return { defect: `\`${at}\` is not a mapping` };
   }
 
-  const { breaking, scopes } = item;
+  const { breaking, migration, scopes } = item;
   if (breaking !== undefined && breaking !== null && typeof breaking !== 'boolean') {
     return { defect: `\`${at}.breaking\` is not a boolean` };
   }
@@ -80,6 +82,14 @@ function readEntry(item: unknown, index: number): { defect: string } | { entry: 
     read.push(scope.trim());
   }
 
+  if (migration !== undefined && migration !== null && typeof migration !== 'string') {
+    return { defect: `\`${at}.migration\` is not a string` };
+  }
+  const instruction = migration?.trim() ?? '';
+  if (/[\n\r]/.test(instruction)) {
+    return { defect: `\`${at}.migration\` spans more than one line` };
+  }
+
   const text = readRequiredField(item, at, 'text');
   if ('defect' in text) {
     return text;
@@ -90,7 +100,13 @@ function readEntry(item: unknown, index: number): { defect: string } | { entry: 
   }
 
   return {
-    entry: { breaking: breaking === true, scopes: read, text: text.value, type: type.value },
+    entry: {
+      breaking: breaking === true,
+      ...(instruction !== '' && { migration: instruction }),
+      scopes: read,
+      text: text.value,
+      type: type.value,
+    },
   };
 }
 

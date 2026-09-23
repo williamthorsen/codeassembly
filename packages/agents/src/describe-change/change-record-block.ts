@@ -1,4 +1,4 @@
-import { parseDocument, stringify as stringifyYaml } from 'yaml';
+import { Document, isMap, isSeq, parseDocument } from 'yaml';
 
 import type { Overrides } from '../change-grammar/apply-overrides.ts';
 import { normalizeChangeRecord } from '../change-grammar/tokens.ts';
@@ -50,7 +50,8 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
  * and `breaking` appears only when it is true. Each group is omitted when it is empty, as are the entries. The
  * derivation commit appears only beside entries, since it records a claim about them.
  *
- * The scalars precede the entry list, so the bulky list does not separate them from each other.
+ * The scalars precede the entry list, so the bulky list does not separate them from each other. An entry's `scopes`
+ * render in flow form, keeping each entry compact.
  */
 export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
   const consolidatedRecord = normalizeConsolidatedRecord(block.consolidatedRecord ?? {});
@@ -66,7 +67,7 @@ export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
       entries: entries.map(toEntryPayload),
     }),
   };
-  return `${FENCE}${INFO_STRING}\n${stringifyYaml(payload)}${FENCE}`;
+  return `${FENCE}${INFO_STRING}\n${stringifyPayload(payload)}${FENCE}`;
 }
 
 /**
@@ -284,9 +285,33 @@ function splitLines(text: string): string[] {
 /** The declared string fields of each group that the block contains. */
 const STRING_FIELDS = ['scope', 'type'] as const;
 
-/** Renders one change entry in the key order that `entry-drafter` returns it in. */
+/** Serializes the payload as YAML, rendering each entry's `scopes` in flow form. */
+function stringifyPayload(payload: Record<string, unknown>): string {
+  const document = new Document(payload);
+  const entries = document.get('entries');
+  if (isSeq(entries)) {
+    for (const entry of entries.items) {
+      const scopes = isMap(entry) ? entry.get('scopes', true) : undefined;
+      if (isSeq(scopes)) {
+        scopes.flow = true;
+      }
+    }
+  }
+  return document.toString({ flowCollectionPadding: false });
+}
+
+/**
+ * Renders one change entry in the key order that `entry-drafter` returns it in, writing `breaking` only when it is true
+ * and `migration` only when the entry has one.
+ */
 function toEntryPayload(entry: ChangeEntry): Record<string, unknown> {
-  return { type: entry.type, scopes: entry.scopes, breaking: entry.breaking, text: entry.text };
+  return {
+    type: entry.type,
+    scopes: entry.scopes,
+    ...(entry.breaking && { breaking: true }),
+    text: entry.text,
+    ...(entry.migration !== undefined && { migration: entry.migration }),
+  };
 }
 
 // endregion | Helpers
