@@ -102,9 +102,9 @@ Both are optional, and each is recorded as an override beside the consolidated r
    - {the first passage that failed}
    ```
 
-   Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change a passage that it never sees, which keeps one that passed from coming back changed. Send the lede or the migration paragraph the same way if it is what failed. The fence carries the lede, an entry's `text`, or an entry's `migration`, so the drafter returns one replacement passage per passage sent, in the order sent; put each in the place of the passage that it replaces and keep every other field of that entry, so that a replaced `text` keeps the entry's `migration` and a replaced `migration` keeps its `text`. Take the lede and every other entry from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
+   Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change a passage that it never sees, which keeps one that passed from coming back changed. Send the lede the same way if it is what failed. The fence carries the lede, an entry's `text`, or an entry's `migration`, so the drafter returns one replacement passage per passage sent, in the order sent; put each in the place of the passage that it replaces and keep every other field of that entry, so that a replaced `text` keeps the entry's `migration` and a replaced `migration` keeps its `text`. Take the lede and every other entry from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
 
-   On a first dispatch, take the drafter's `## Lede` section as it stands; step 9 makes it `## What`, and no step rewrites it. A redispatch returns every replacement under `## Entries` and no `## Lede` section at all, so the lede it carries forward is whichever text the placement above left in the lede's place. Parse the `## Entries` fence as YAML. Each entry carries `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry calls for one. Hold any `Migration:` paragraph below the fence aside, and read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that names no key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
+   On a first dispatch, take the drafter's `## Lede` section as it stands; step 9 makes it `## What`, and no step rewrites it. A redispatch returns every replacement under `## Entries` and no `## Lede` section at all, so the lede it carries forward is whichever text the placement above left in the lede's place. Parse the `## Entries` fence as YAML. Each entry carries `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry calls for one. Read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that names no key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
 
 6. **Audit the lede and the entries.** Three checks apply to the lede, to each entry's `text`, and to each entry's `migration` alike, except as the subject check states, and each names the rejection code that its failure raises, for which a redispatch is the repair rather than an edit of your own. `type`, `scopes`, and `breaking` are not prose and are never rejected.
 
@@ -134,9 +134,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
 8. **Render `## Details` from the verified entries** per [Rendering `Details`](#rendering-details).
 
-9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it, followed by the held-aside `Migration:` paragraph when the draft carries one, separated by one blank line. Write nothing of your own into it, and take no sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here carries this session's weighting into the merge commit, the changelog, and the release notes.
-
-   Because only `## What` appears in the merge commit and the changelog, the migration paragraph is the only text there addressed to a consumer whose build just broke, which is why it travels with the lede rather than staying with the entries.
+9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and take no sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here carries this session's weighting into the merge commit, the changelog, and the release notes.
 
 10. **Render the `change-record` block** and make it the body's last element:
 
@@ -180,7 +178,7 @@ The body following the frontmatter has this structure:
 
 ## What
 
-{The drafter's lede, with any `Migration:` paragraph below it.}
+{The drafter's lede.}
 
 ## Why
 
@@ -231,7 +229,7 @@ entries:
 - The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is every outcome that the change contains
 - Both `## What` and `## Details` come from the drafter, so neither is composed in this session
 - Ignore auto-formatter and lint-fix changes
-- The breaking prefix does not include the migration: A breaking change states what the consumer does in a `Migration:` paragraph in `## What`, which is the text that the merge commit and the changelog carry
+- The breaking prefix does not include the migration: An entry that breaks a consumer states what the consumer does in its `migration`, which `## Details` nests under the entry's bullet and the merge commit's `change-record` block records
 - `## What` and `## Why` are required
 - The rendered `change-record` block is the body's last element, per [the change record](../_data/change-record.md)
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.

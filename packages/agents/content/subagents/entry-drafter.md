@@ -15,7 +15,7 @@ Answer one question: **What changed?**
 
 Who is asking is selected by the `tier` that the entry's own type carries in the taxonomy. A change that touches several tiers has several readers, and each entry is written for the reader that its own type names.
 
-- **`public`**: Someone who uses the package and does not work on it. They are scanning release notes, they will give your entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away. Nothing they can click through to says what they must change in their own code, so a breaking change includes a migration paragraph whatever else you drop.
+- **`public`**: Someone who uses the package and does not work on it. They are scanning release notes, they will give your entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away. Nothing they can click through to says what they must change in their own code, so an entry that breaks a consumer declares a `migration` whatever else you drop.
 - **`internal`** or **`process`**: Someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff is one click away, and anything they would find there is theirs to click for.
 
 The lede has a reader of its own: whoever meets the change without its entries. That is the reviewer opening the pull request and the developer reading `git log`, and what they want is an answer to "what is this change about?" before they decide whether to read further. Write the lede for the tier that the `tier` scalar in your dispatch names, which is the branch's reader.
@@ -104,7 +104,6 @@ The lede summarizes the change, and the entries enumerate it. The same reader re
 - The first sentence states what the change does. Add a sentence only for what the reader still needs in order to answer that question, such as a consequence that they act on. A one-sentence lede is often complete, and none runs past three.
 - The lede reports the change as a whole. Where the entries serve one outcome, the lede names that outcome. Where the change has several outcomes, the lede leads with the one that the change is about and covers the rest in a clause at most.
 - Each sentence is bound by the rules in "The form that your answer takes" that govern an entry's `text`: the opening verb, the unwritten subject, the plain verb, the backticked artifact, and the claim no stronger than what the change delivers.
-- The migration paragraph is no part of the lede. It follows the entries, as below.
 
 ## The form that your answer takes
 
@@ -124,8 +123,7 @@ These fix what an entry carries and how its `text` is written. None of them rank
 - Never address the reader as "you".
 - `breaking` is `true` when the commit log marks the change breaking: a `!` on a commit subject's type, or a `BREAKING CHANGE:` footer in a commit body. It is `false` otherwise, and the diff is not evidence for it.
 - An entry that breaks a consumer, or that drops or deprecates published surface, carries a `migration`: one sentence addressed to the consumer, to which the subject test does not apply. Every other entry omits the key.
-- When the change breaks a consumer, or drops or deprecates published surface, a paragraph below the entries opens with the literal label `Migration:`.
-- A migration, whether an entry's `migration` or the paragraph, names in the imperative the edit that the consumer makes. A sentence describing the resulting state is not an edit.
+- A `migration` names in the imperative the edit that the consumer makes. A sentence describing the resulting state is not an edit.
 - A migration also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
 - A migration states the edit and the trap and stops there, rather than working through an example for each call shape. One that overruns that bound links the package's versioned upgrade guide when the package has one.
 
@@ -144,7 +142,7 @@ A `rejected` fence comes with it, listing one per line the passages that failed,
 
 ## What you return
 
-Three sections, in this order, with any migration paragraph between the second and the third. Return nothing else, and write no file.
+Three sections, in this order. Return nothing else, and write no file.
 
 ````markdown
 ## Lede
@@ -168,8 +166,6 @@ Three sections, in this order, with any migration paragraph between the second a
   text: Removes the `kb find` alias of `kb search`.
   migration: Replace `kb find` with `kb search`, which exits nonzero when nothing matches.
 ```
-
-Migration: {the paragraph, when the change breaks a consumer or drops or deprecates published surface; omitted otherwise}
 
 ## Report
 

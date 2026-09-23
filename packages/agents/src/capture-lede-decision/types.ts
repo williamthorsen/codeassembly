@@ -17,7 +17,7 @@ export type LedeVerdict = (typeof LEDE_VERDICTS)[number];
 export interface EpisodeIdentity {
   type: string;
   tier: string;
-  /** Whether the work type had the breaking marker; the doctrine requires a `Migration:` paragraph of these alone. */
+  /** Whether the work type had the breaking marker. */
   breaking: boolean;
   /** Scope to which the change belongs; absent for a change that names none. */
   scope?: string;

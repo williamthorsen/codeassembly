@@ -83,7 +83,7 @@ const MIGRATION_FIELD_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases binding a migration paragraph to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
+ * Phrases binding an entry's `migration` to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
  * review cannot recover it, and without the bound a migration grows a worked example per call shape.
  */
 const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
@@ -296,13 +296,13 @@ describe('entry-drafter contract', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('binds a migration paragraph to the edit, the trap, and the bound', async () => {
+  it('binds an entry’s migration to the edit, the trap, and the bound', async () => {
     const text = (await EXPANDED).toLowerCase();
     const missing = MIGRATION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'A migration paragraph is the only text addressed to a consumer whose build broke, and it survives into the ' +
-      'merge commit whatever else is cut. The trap present in the replacement appears in no hunk, so a caller ' +
+      'An entry’s `migration` is the only text addressed to a consumer whose build broke, and the merge commit ' +
+      'records it whatever else is cut. The trap present in the replacement appears in no hunk, so a caller ' +
       `auditing against the diff cannot supply it. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });

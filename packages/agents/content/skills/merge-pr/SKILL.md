@@ -165,7 +165,7 @@ ticket-source: {ticket URL or reference}
 
 The block contains scalars only, and only these keys. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here introduces this session's weighting into the draft. Read its `## Report` for any source that it could not access.
 
-The lede is the drafter's `## Lede` section, followed by any `Migration:` paragraph that the draft contains below its entries, separated by one blank line. The merge publishes the entries themselves in `merge_block`, so nothing here renders them.
+The lede is the drafter's `## Lede` section. The merge publishes the entries themselves in `merge_block`, so nothing here renders them.
 
 **Compose the published body**: the lede, a blank line, and the report's `merge_block` verbatim.
 
