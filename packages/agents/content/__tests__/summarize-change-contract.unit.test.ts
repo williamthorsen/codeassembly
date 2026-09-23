@@ -34,6 +34,7 @@ const RENDERING_PHRASES: ReadonlyArray<string> = [
   'order them by tier',
   'bare `#scope` tags',
   'when every entry names the same scopes, no bullet carries tags',
+  'one nested list item, `migration: {migration}`',
 ];
 
 /**
@@ -44,6 +45,7 @@ const RENDERING_PHRASES: ReadonlyArray<string> = [
  */
 const ENTRY_RECORDING_PHRASES: ReadonlyArray<string> = [
   'entries-{timestamp}.yaml',
+  '`text`, and `migration` when the entry has one, as the drafter returned them',
   'consolidate-entries --entries-file',
   '--entries-commit',
   "the body's last element",
