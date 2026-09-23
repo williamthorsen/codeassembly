@@ -124,7 +124,7 @@ These fix what an entry carries and how its `text` is written. None of them rank
 - Never address the reader as "you".
 - `breaking` is `true` when the commit log marks the change breaking: a `!` on a commit subject's type, or a `BREAKING CHANGE:` footer in a commit body. It is `false` otherwise, and the diff is not evidence for it.
 - An entry that breaks a consumer, or that drops or deprecates published surface, carries a `migration`: one sentence addressed to the consumer, to which the subject test does not apply. Every other entry omits the key.
-- When the change breaks a consumer, a paragraph below the entries opens with the literal label `Migration:`.
+- When the change breaks a consumer, or drops or deprecates published surface, a paragraph below the entries opens with the literal label `Migration:`.
 - A migration, whether an entry's `migration` or the paragraph, names in the imperative the edit that the consumer makes. A sentence describing the resulting state is not an edit.
 - A migration also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
 - A migration states the edit and the trap and stops there, rather than working through an example for each call shape. One that overruns that bound links the package's versioned upgrade guide when the package has one.
