@@ -1,1 +1,1 @@
-<!-- Point-in-time record. capture-lede-decision reads this body to recover what was published; editing it destroys that record silently. -->
+<!-- Point-in-time record, read by capture-lede-decision to recover what was published. Publish a revision as a new record; leave this one unedited, and say nothing about leaving it. -->

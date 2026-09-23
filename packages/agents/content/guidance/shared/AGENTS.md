@@ -28,7 +28,7 @@ When creating an artifact (plan, devlog, review, change summary, chat summary, e
 
 A saved artifact records what its author produced at that moment. Correct one that got its own subject wrong; never edit one toward what has happened since, and never report its divergence from current state as a defect or as a repair for the user to weigh.
 
-Two artifacts are never edited once written, because a rewrite of either destroys evidence silently: `capture-lede-decision` reads the `pull-request` artifact's `## What` and the `merge` artifact's `## Body` to recover what was published. Each carries a marker saying so, and each names the out-of-band flag to reach for instead.
+Two artifacts are never edited once written, because a rewrite of either destroys evidence silently: `capture-lede-decision` reads the `pull-request` artifact's `## What` and the `merge` artifact's `## Body` to recover what was published. Each opens with a marker that directs a reading agent to publish a revision as a new record and leave the original unedited.
 
 That restraint on editing a record applies to the remote ticket as well, from the point its work is handed to implementation. Design comes before that point: `design-and-plan` refines a raw ticket, and it may rewrite any section or the whole ticket.
 
