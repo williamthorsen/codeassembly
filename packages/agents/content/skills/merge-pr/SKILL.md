@@ -194,7 +194,7 @@ Mark each type option by applying this test to the diff, not by how many sources
 
 <!-- include: ../../_partials/work-type-choice.md / -->
 
-Apply the test to the diff whether or not `defects` holds an entry. Commits, labels, and a PR title that agree can agree on one wrong type, which raises no defect and leaves the merge title to publish it. When the test's type differs from the effective record's, raise that as a question here; when they agree, ask nothing.
+Apply the test to the diff whether or not `defects` holds an entry. Commits, labels, and a PR title that agree can agree on one wrong type, which raises no defect and leaves the merge title to publish it. When the test's type differs from the effective record's, raise that as a question here; when they agree, ask nothing and report nothing, here or at the gate.
 
 Take an answer spelled with the marker as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`. The helper refuses a type spelled with `!`, so it would refuse an answer passed through unchanged, and the defect would stay unsettled.
 
