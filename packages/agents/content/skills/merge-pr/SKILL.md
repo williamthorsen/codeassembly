@@ -111,7 +111,7 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 
 The overrides passed to this run are the merge's **override set**. Each later run of this step, for a choice at the gate or for step 8's re-read, passes the whole set with that run's addition, and the same `--head`.
 
-**When the first run's `notices` contains `absent-block`, offer to add the block, if this checkout can draft it.** The pull request carries no change record, so the merge would publish no `Change:` trailers. `{skill:add-change-record}` drafts the entries from `{default_branch}...HEAD`, and refuses when HEAD is not the pull request's head commit, so read the local head before offering:
+**When the first run's `notices` contains `absent-block`, offer to add the block, if this checkout can draft it.** The pull request contains no change record, so the merge would publish no `Change:` trailers. `{skill:add-change-record}` drafts the entries from `{default_branch}...HEAD`, and refuses when HEAD is not the pull request's head commit, so read the local head before offering:
 
 ```bash
 git rev-parse HEAD
@@ -122,12 +122,12 @@ When it is not `headRefOid`, make no offer: This checkout describes other commit
 When it is `headRefOid`, emit `input.requested` (payload `{"prompt":"add-change-record"}`) per [Lifecycle events](#lifecycle-events), then ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
 
 ```
-PR #{number} carries no change record, so the merge would publish no `Change:` trailers. Draft the entries and add the block? This runs `{skill:summarize-change}`. 👍🏼👎🏼
+PR #{number} contains no change record, so the merge would publish no `Change:` trailers. Draft the entries and add the block? This runs `{skill:summarize-change}`. 👍🏼👎🏼
 ```
 
 On yes, invoke `{skill:add-change-record}` with `--pr {number}`. Then write a fresh body file from the platform as this step does and run the helper again, with the same override set and the same `--head`. A failure there stops the skill as the first run does, since no answer is at fault.
 
-On no, and when `{skill:add-change-record}` stopped for any of its own reasons, continue with the report that the first run produced. The notice then reaches the gate at step 6, which reports it.
+On no, and when `{skill:add-change-record}` stopped for any of its own reasons, continue with the report that the first run produced. The gate at step 6 then reports the notice.
 
 ### 4. Resolve strategy and deletion strategy
 
@@ -164,7 +164,7 @@ ticket-source: {ticket URL or reference}
 
 The block contains scalars only, and only these keys. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here introduces this session's weighting into the draft. Read its `## Report` for any source that it could not access.
 
-The lede is the drafter's `## Lede` section, followed by any `Migration:` paragraph that the draft carries below its entries, separated by one blank line. The entries themselves reach the merge through the block's trailers, so nothing here renders them.
+The lede is the drafter's `## Lede` section, followed by any `Migration:` paragraph that the draft contains below its entries, separated by one blank line. The merge publishes the entries themselves as the block's trailers, so nothing here renders them.
 
 **Compose the published body**: the lede, a blank line, and one `Change: {value}` line per entry of the report's `trailers`, in the order that the report lists them.
 
@@ -175,7 +175,7 @@ Change: {first trailer}
 Change: {second trailer}
 ```
 
-The trailers append to whichever lede won, the drafted one included, since they come from the block rather than from the body. A report whose `trailers` is empty publishes the lede alone, with neither the blank line nor any trailer.
+Append the trailers to whichever lede is used, the drafted one included, since they come from the block rather than from the body. A report whose `trailers` is empty publishes the lede alone, with neither the blank line nor any trailer.
 
 Do not audit the draft here: The user reads the published body at the approval gate in step 6, before anything is published.
 
@@ -192,7 +192,7 @@ Mark each type option by applying this test to the diff, not by how many sources
 
 <!-- include: ../../_partials/work-type-choice.md / -->
 
-Apply the test to the diff whether or not `defects` holds an entry. Commits, labels, and a PR title that agree can agree on one wrong type, which raises no defect and leaves the merge title to publish it. When the test's type differs from the effective record's, raise that as a question here; when they agree, ask nothing and report nothing, here or at the gate.
+Apply the test to the diff whether or not `defects` holds an entry. Commits, labels, and a PR title that agree can agree on one wrong type, which raises no defect, and the merge title would then publish that type. When the test's type differs from the effective record's, raise that as a question here; when they agree, ask nothing and report nothing, here or at the gate.
 
 Take an answer spelled with the marker as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`. The helper refuses a type spelled with `!`, so it would refuse an answer passed through unchanged, and the defect would stay unsettled.
 
@@ -224,14 +224,14 @@ Proposed merge for PR #{pr_number}:
 
 Render each notice there as one line. When a line says where a field came from, name the source that `effective_sources` gives for that field:
 
-- **`absent-block`**: The PR carries no `change-record` block, so the merge publishes no `Change:` trailers, and the effective record comes from the sources that `effective_sources` names field by field.
+- **`absent-block`**: The PR contains no `change-record` block, so the merge publishes no `Change:` trailers, and the effective record comes from the sources that `effective_sources` names field by field.
 - **`malformed-block`**: The PR's `change-record` block cannot be read (its `defect`), so the labels and the commits resolved the effective record.
 - **`commits-unavailable`**: Because the commits were not read (its `reason`), the block or the labels were not checked against them.
 - **`divergence`**: The two sources that the notice's `sources` names disagree on the fields that its `fields` lists. Name each source's values for those fields, read from the report's `sources`, and the source from which the proposal takes each of them.
 - **`pr-title-divergence`**: The PR title's prefix differs from the proposal on the fields that the notice's `fields` lists. Name the prefix's values for those fields, read from `sources.pr_title`.
 - **`pr-title-unparsed`**: The PR title did not parse, so the title comes from the source that `effective_sources.title` names.
 - **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries. Its title and consolidated record still stand.
-- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the block's record takes no precedence over the commits', and `effective_sources` names the one that stood.
+- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the block's record takes no precedence over the commits', and `effective_sources` names the one that the resolution used.
 
 **A `stale-entries` notice is reported and nothing is re-derived.**
 
@@ -243,7 +243,7 @@ Render `{confirmation}` so that the ask itself names every destructive side effe
 - `remote` → `Merge PR #{pr_number} and delete the remote branch {headRefName}? 👍🏼👎🏼`
 - `both` → `Merge PR #{pr_number} and delete the local and remote branch {headRefName}? 👍🏼👎🏼`
 
-Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. Under an `absent-block` notice, open it with `The pull request carries no change record. ` in the same way.
+Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. Under an `absent-block` notice, open it with `The pull request contains no change record. ` in the same way.
 
 If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events), then stop with no API call and no artifact. If they approve, continue.
 
@@ -264,7 +264,7 @@ This step exists because a published merge-commit title and body cannot be amend
 Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's platform dispatch, then re-run step 3 over them: a fresh body file, the new title, the `headRefOid` read in step 2, and the override set as settled at the approval gate. Then compare the two values that the merge publishes:
 
 - **Title**: Compare the new `merge_title` with the approved one.
-- **Lede**: Compare the new report's `body` with the `body` of the report behind the body that the user most recently approved. If it changed, re-run step 5 over it in full, the thin-lede fallback included, so that a description that has since gained a real `## What` is picked up. The baseline advances with each approval, as the title's does; if it stayed at the pre-gate report, every pass would re-run the fallback and the loop would never converge.
+- **Lede**: Compare the new report's `body` with the `body` of the report behind the body that the user most recently approved. If it changed, re-run step 5 over it in full, the thin-lede fallback included, so that a description that has since gained a real `## What` is picked up. Advance the baseline with each approval, as for the title; if it stayed at the pre-gate report, every pass would re-run the fallback and the loop would never converge.
 - **Trailers**: Compare the new report's `trailers` with the approved report's, element by element. If they changed and the lede did not, recompose the published body from the approved lede and the new trailers, dispatching no drafter, since the lede is unaffected.
 
 If neither the lede nor the trailers changed, keep the approved body.
