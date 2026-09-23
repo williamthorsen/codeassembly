@@ -24,7 +24,7 @@ Merge a pull request on the appropriate platform. `describe-change.mjs` resolves
 
 ## Reserved preference keys
 
-`merge.strategy` and `merge.deletion_strategy` are **reserved keys** in `.agents/preferences.yaml` and `~/.agents/preferences.yaml`. They are not yet honored: This iteration uses the hard-coded defaults above. Setting them in preferences has no effect; CLI overrides are the only way to change the values today. The keys are reserved so that adding preference-file lookup later is a localized, additive change that does not require renaming or re-shaping the configuration surface.
+`merge.strategy` and `merge.deletion_strategy` are **reserved keys** in `.agents/preferences.yaml` and `~/.agents/preferences.yaml`. They are not yet honored: This iteration uses the hard-coded defaults above. Setting them in preferences has no effect; CLI overrides are the only way to change the values today.
 
 ## Process
 
@@ -136,13 +136,11 @@ resolveStrategy(cliOverride):          return cliOverride ?? 'squash'
 resolveDeletionStrategy(cliOverride):  return cliOverride ?? 'remote'
 ```
 
-These are intentionally written as named functions with an explicit pipeline so that adding preference-file lookup later means inserting one stage. `--delete both|remote|none` map directly to the same string values.
+`--delete both|remote|none` map directly to the same string values.
 
 Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `both`, before step 6 asks for anything. Emit `skill.completed` (payload `{"outcome":"stopped: unsupported deletion strategy"}`) per [Lifecycle events](#lifecycle-events), then stop with:
 
 <!-- include: ../_partials/bitbucket-delete-both-refusal.md / -->
-
-`scm` is known from step 1 and the strategy from this step, so the refusal needs no further input here. If the delegate refused instead, step 6 would ask the user to authorize deleting a local branch that the platform cannot touch, and the delegate would refuse after the user answered. `merge-bb-pr` keeps the same guard for a caller that invokes it without this orchestrator.
 
 ### 5. Compose merge-commit body
 
@@ -154,7 +152,7 @@ If the lede is thin, compose fresh content through the drafter that `summarize-c
 
 Resolve the tier by looking up the report's `effective_record.type` in [work-types.json](../_data/work-types.json).
 
-If `defects` shows that the effective record has no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report. The tier names the reader that the drafter writes for, and the type it resolves from is the one that the effective record carries into the merge, in a body that appears in the merge commit, the changelog, and release notes.
+If `defects` shows that the effective record has no declared type (`missing-type` or `undeclared-type`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report.
 
 Dispatch the `{subagent:entry-drafter}` subagent via the {tool:Task} tool with this block:
 
@@ -166,7 +164,7 @@ ticket-source: {ticket URL or reference}
 
 The block contains scalars only, and only these keys. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here introduces this session's weighting into the draft. Read its `## Report` for any source that it could not access.
 
-The lede is the drafter's `## Lede` section, followed by any `Migration:` paragraph that the draft carries below its entries, separated by one blank line. The migration paragraph travels with it because the merge commit is the only place a consumer whose build just broke meets it. The entries themselves reach the merge through the block's trailers, so nothing here renders them.
+The lede is the drafter's `## Lede` section, followed by any `Migration:` paragraph that the draft carries below its entries, separated by one blank line. The entries themselves reach the merge through the block's trailers, so nothing here renders them.
 
 **Compose the published body**: the lede, a blank line, and one `Change: {value}` line per entry of the report's `trailers`, in the order that the report lists them.
 
@@ -235,7 +233,7 @@ Render each notice there as one line. When a line says where a field came from, 
 - **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries. Its title and consolidated record still stand.
 - **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the block's record takes no precedence over the commits', and `effective_sources` names the one that stood.
 
-**A `stale-entries` notice is reported and nothing is re-derived.** Commits pushed after the body was composed are already out of scope here, as step 8 states. A body carrying no block may gain one at step 3, through `{skill:add-change-record}`; a block that is already written is never replaced, whether it reads, is malformed, or records no entry.
+**A `stale-entries` notice is reported and nothing is re-derived.**
 
 A `divergence` or `pr-title-divergence` notice names values that the user can merge under instead, and the title is theirs to replace. If the user answers the gate with such values or a new title rather than a clear approval or decline, add them to the override set (a scope as `--override-scope`, `*` for no scope, a type as `--override-type`, a marker as `--override-breaking` or `--no-override-breaking`, and a title as `--override-title`), re-run step 3, settle any new defect, and render this gate again.
 
@@ -245,7 +243,7 @@ Render `{confirmation}` so that the ask itself names every destructive side effe
 - `remote` → `Merge PR #{pr_number} and delete the remote branch {headRefName}? 👍🏼👎🏼`
 - `both` → `Merge PR #{pr_number} and delete the local and remote branch {headRefName}? 👍🏼👎🏼`
 
-Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. Under an `absent-block` notice, open it with `The pull request carries no change record. ` in the same way. The notice above the gate reports staleness, but the classifier reads the ask text alone, which is why the branch deletion is repeated there rather than left to the `Delete:` line.
+Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. Under an `absent-block` notice, open it with `The pull request carries no change record. ` in the same way.
 
 If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events), then stop with no API call and no artifact. If they approve, continue.
 
@@ -309,7 +307,7 @@ Report nothing else here, and invoke nothing. The merge flow records no lede dec
 ## Important
 
 - The orchestrator owns every decision that it presents (PR resolution, strategy and deletion strategy, body composition, the approval gate), and `describe-change.mjs` owns the resolution of the effective record, the merge title, and the body. Delegates own only execution (platform API calls + state validation).
-- Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. A separate skill may handle local cleanup later. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows: `gh pr merge --delete-branch` fails when the base branch is checked out in another worktree. On Bitbucket, `both` has no counterpart at all and `merge-bb-pr` refuses it, naming `--delete remote` as the alternative.
+- Local state is intentionally untouched after the merge. The delegate deletes the branch on the remote per the resolved decision; the local working copy and current branch are not modified. The default `remote` mode deletes the remote branch via a post-merge `gh api -X DELETE` call (delegated to `merge-gh-pr`); `both` mode passes `--delete-branch` to `gh pr merge`, which is incompatible with worktree-based workflows: `gh pr merge --delete-branch` fails when the base branch is checked out in another worktree. On Bitbucket, `both` has no counterpart at all and `merge-bb-pr` refuses it, naming `--delete remote` as the alternative.
 - Never bypass branch protections. The orchestrator does not expose `--admin`; users who need that capability run `gh pr merge --admin` directly.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in the merge body. They run automatically in CI.
 
