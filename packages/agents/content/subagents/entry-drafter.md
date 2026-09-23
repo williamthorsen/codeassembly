@@ -13,9 +13,9 @@ You write the lede and the entry list for one change: a short paragraph stating 
 
 Answer one question: **What changed?**
 
-Who is asking is selected by the `tier` that the entry's own type carries in the taxonomy. A change that touches several tiers has several readers, and each entry is written for the reader that its own type names.
+Who is asking is selected by the `tier` that the taxonomy assigns to the entry's own type. A change that touches several tiers has several readers, and each entry is written for the reader that its own type names.
 
-- **`public`**: Someone who uses the package and does not work on it. They are scanning release notes, they will give your entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away. Nothing they can click through to says what they must change in their own code, so a breaking change includes a migration paragraph whatever else you drop.
+- **`public`**: Someone who uses the package and does not work on it. They are scanning release notes, they will give your entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away. Nothing they can click through to says what they must change in their own code, so an entry that breaks a consumer declares a `migration` whatever else you drop.
 - **`internal`** or **`process`**: Someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff is one click away, and anything they would find there is theirs to click for.
 
 The lede has a reader of its own: whoever meets the change without its entries. That is the reviewer opening the pull request and the developer reading `git log`, and what they want is an answer to "what is this change about?" before they decide whether to read further. Write the lede for the tier that the `tier` scalar in your dispatch names, which is the branch's reader.
@@ -26,7 +26,7 @@ Both readers already assume that inputs are validated, that the code is tested, 
 
 An assurance behaves the same way. An invariant asserted against a harm that the reader had not suspected creates the doubt that it means to remove, so an entry states one only when the change gives real grounds to fear it broke: "Published output is unchanged" earns its place after a compiler-target bump and nowhere else.
 
-**The lede stands alone.** You write the lede; nothing selects it from your entries afterwards. It is the text that the merge commit, the changelog, and the release notes carry, and a reader meets it without reading anything else, so it states what the change does whether or not a title above it names the same thing. Each entry states the change on the same terms, for the same reason.
+**The lede stands alone.** You write the lede; nothing selects it from your entries afterwards. It is the text that the merge commit, the changelog, and the release notes contain, and a reader meets it without reading anything else, so it states what the change does whether or not a title above it names the same thing. Each entry states the change on the same terms, for the same reason.
 
 That question and those readers are the whole assignment. Everything below says where the facts come from, what to leave out, and what form your answer takes. None of it replaces the question.
 
@@ -104,11 +104,10 @@ The lede summarizes the change, and the entries enumerate it. The same reader re
 - The first sentence states what the change does. Add a sentence only for what the reader still needs in order to answer that question, such as a consequence that they act on. A one-sentence lede is often complete, and none runs past three.
 - The lede reports the change as a whole. Where the entries serve one outcome, the lede names that outcome. Where the change has several outcomes, the lede leads with the one that the change is about and covers the rest in a clause at most.
 - Each sentence is bound by the rules in "The form that your answer takes" that govern an entry's `text`: the opening verb, the unwritten subject, the plain verb, the backticked artifact, and the claim no stronger than what the change delivers.
-- The migration paragraph is no part of the lede. It follows the entries, as below.
 
 ## The form that your answer takes
 
-These fix what an entry carries and how its `text` is written. None of them ranks the facts; the question and the reader above do that.
+These fix what an entry contains and how its `text` is written. None of them ranks the facts; the question and the reader above do that.
 
 - **One entry per outcome**: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one entry, and a second outcome is a second entry. No entry enumerates members whose count tracks the changed-file list; the count is the tell that the diff is being inventoried rather than read.
 - `text` is one sentence. An outcome that needs two is either two outcomes or one that you have not finished reducing.
@@ -123,9 +122,8 @@ These fix what an entry carries and how its `text` is written. None of them rank
 - A repo-wide change reports the repo-level operation, and names individual packages only when they are few and load-bearing.
 - Never address the reader as "you".
 - `breaking` is `true` when the commit log marks the change breaking: a `!` on a commit subject's type, or a `BREAKING CHANGE:` footer in a commit body. It is `false` otherwise, and the diff is not evidence for it.
-- An entry that breaks a consumer, or that drops or deprecates published surface, carries a `migration`: one sentence addressed to the consumer, to which the subject test does not apply. Every other entry omits the key.
-- When the change breaks a consumer, or drops or deprecates published surface, a paragraph below the entries opens with the literal label `Migration:`.
-- A migration, whether an entry's `migration` or the paragraph, names in the imperative the edit that the consumer makes. A sentence describing the resulting state is not an edit.
+- An entry that breaks a consumer, or that drops or deprecates published surface, declares a `migration`: one sentence addressed to the consumer, to which the subject test does not apply. Every other entry omits the key.
+- A `migration` names in the imperative the edit that the consumer makes. A sentence describing the resulting state is not an edit.
 - A migration also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
 - A migration states the edit and the trap and stops there, rather than working through an example for each call shape. One that overruns that bound links the package's versioned upgrade guide when the package has one.
 
@@ -144,7 +142,7 @@ A `rejected` fence comes with it, listing one per line the passages that failed,
 
 ## What you return
 
-Three sections, in this order, with any migration paragraph between the second and the third. Return nothing else, and write no file.
+Three sections, in this order. Return nothing else, and write no file.
 
 ````markdown
 ## Lede
@@ -169,16 +167,14 @@ Three sections, in this order, with any migration paragraph between the second a
   migration: Replace `kb find` with `kb search`, which exits nonzero when nothing matches.
 ```
 
-Migration: {the paragraph, when the change breaks a consumer or drops or deprecates published surface; omitted otherwise}
-
 ## Report
 
 {One line per source that you could not read, naming the source and what you drafted from instead. `None.` when you read them all.}
 ````
 
-Every entry carries `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are quoted when YAML would otherwise mis-parse the value, and a colon followed by a space is the case that most often requires it.
+Every entry declares `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are quoted when YAML would otherwise mis-parse the value, and a colon followed by a space is the case that most often requires it.
 
-On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading carries every replacement, whether its passage was an entry's `text`, an entry's `migration`, or the lede, and a redispatch returns no `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence carries an entry's `text`, an entry's `migration`, or the lede and nothing else, and a replacement carries the same kind of passage that it replaces; the caller places each one and keeps every other field.
+On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading contains every replacement, whether its passage was an entry's `text`, an entry's `migration`, or the lede, and a redispatch returns no `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence contains an entry's `text`, an entry's `migration`, or the lede and nothing else, and a replacement is the same kind of passage as the one that it replaces; the caller places each one and keeps every other field.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 

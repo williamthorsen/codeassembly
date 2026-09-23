@@ -19,7 +19,7 @@ const ASSIGNMENT_QUESTION = 'What changed?';
 /** The heading under which the drafter returns its entries, which each caller parses as YAML. */
 const ENTRIES_HEADING = '## Entries';
 
-/** The fields that every entry carries, each of which some caller reads out of the returned YAML. */
+/** The fields that every entry declares, each of which some caller reads out of the returned YAML. */
 const ENTRY_FIELDS: ReadonlyArray<string> = ['breaking', 'scopes', 'text', 'type'];
 
 /** The exemplar call's quality floor, without which the corpus also returns the records beneath it. */
@@ -50,7 +50,7 @@ const GRANULARITY_PHRASES: ReadonlyArray<string> = [
 /** A `git diff` invocation that returns hunks: the bare form, or any form whose flags omit `--stat`. */
 const HUNK_RETURNING_DIFF = /`git diff (?![^`]*--stat)[^`]*`/g;
 
-/** The rule stating what an entry list leaves out, which the drafter carries in place of the shared concision rule. */
+/** The rule stating what an entry list leaves out, which the drafter's body contains in place of the shared concision rule. */
 const LEAVE_OUT_RULE_PHRASE = 'the question is never whether a fact is real';
 
 /**
@@ -73,17 +73,17 @@ const LEDE_READER_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases deciding which entries carry a `migration` and which omit it. Lowercased, so that a sentence's opening
+ * Phrases deciding which entries declare a `migration` and which omit it. Lowercased, so that a sentence's opening
  * capital still matches.
  */
 const MIGRATION_FIELD_PHRASES: ReadonlyArray<string> = [
-  'carries a `migration`',
+  'declares a `migration`',
   'drops or deprecates published surface',
   'every other entry omits the key',
 ];
 
 /**
- * Phrases binding a migration paragraph to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
+ * Phrases binding an entry's `migration` to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
  * review cannot recover it, and without the bound a migration grows a worked example per call shape.
  */
 const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
@@ -107,7 +107,7 @@ const PER_TYPE_EXEMPLAR_PHRASE = 'once per distinct type among your entries';
 /** A connective prescribed nowhere by the drafter, pinned as a literal because a rewording is how it returns. */
 const PRESCRIBED_CONNECTIVE = 'Separately,';
 
-/** The phrase excluding how a change was produced, which a commit body carries and a bullet does not. */
+/** The phrase excluding how a change was produced, which a commit body contains and a bullet does not. */
 const PROCESS_NARRATION_PHRASE = 'review mechanics, ticket and finding numbers';
 
 /** Every code under which the caller redispatches, each of which the drafter has to be able to act on. */
@@ -206,7 +206,7 @@ describe('entry-drafter contract', () => {
       .filter((line) => line.includes(TIER_FALLBACK_FLAG) && !line.includes('--min-quality'));
 
     const message =
-      `A dispatch carrying \`tier\` and no \`type\` is one that \`summarize-change\` produces, so the fallback runs. ` +
+      `A dispatch naming \`tier\` and no \`type\` is one that \`summarize-change\` produces, so the fallback runs. ` +
       `A line naming \`${TIER_FALLBACK_FLAG}\` without the floor reads as the whole argument list, which returns the ` +
       `records excluded by the floor. These lines drop it:\n  ${found.join('\n  ')}`;
     expect(found, message).toEqual([]);
@@ -280,7 +280,7 @@ describe('entry-drafter contract', () => {
 
   it('states the rule for leaving true facts out', async () => {
     const message =
-      'The drafter carries no shared concision rule, so this section is the whole of what tells it to drop a fact. ' +
+      'The drafter’s body contains no shared concision rule, so this section is the whole of what tells it to drop a fact. ' +
       'Deleting it leaves a drafter with no leave-out rule at all, and every suite stays green.';
     expect(await EXPANDED, message).toContain(LEAVE_OUT_RULE_PHRASE);
   });
@@ -296,18 +296,18 @@ describe('entry-drafter contract', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('binds a migration paragraph to the edit, the trap, and the bound', async () => {
+  it('binds an entry’s migration to the edit, the trap, and the bound', async () => {
     const text = (await EXPANDED).toLowerCase();
     const missing = MIGRATION_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'A migration paragraph is the only text addressed to a consumer whose build broke, and it survives into the ' +
-      'merge commit whatever else is cut. The trap present in the replacement appears in no hunk, so a caller ' +
+      'An entry’s `migration` is the only text addressed to a consumer whose build broke, and the merge commit ' +
+      'records it whatever else is cut. The trap present in the replacement appears in no hunk, so a caller ' +
       `auditing against the diff cannot supply it. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
-  it('decides which entries carry a migration', async () => {
+  it('decides which entries declare a migration', async () => {
     const text = (await EXPANDED).toLowerCase();
     const missing = MIGRATION_FIELD_PHRASES.filter((phrase) => !text.includes(phrase));
 
@@ -320,14 +320,14 @@ describe('entry-drafter contract', () => {
 
   it('leaves out how the change was produced', async () => {
     const message =
-      'A commit body carries review mechanics, ticket and finding numbers, and CI runs, and the drafter reads the ' +
+      'A commit body contains review mechanics, ticket and finding numbers, and CI runs, and the drafter reads the ' +
       'commit log. Without this the drafter reads them as facts of the change and writes them into a bullet.';
     expect(await EXPANDED, message).toContain(PROCESS_NARRATION_PHRASE);
   });
 
   it('states that the lede stands alone', async () => {
     const message =
-      '`## What` is the text that the merge commit, the changelog, and the release notes carry, so a lede leaving ' +
+      '`## What` is the text that the merge commit, the changelog, and the release notes contain, so a lede leaving ' +
       'the statement of the change to a title reads as details under a heading. Without this the drafter writes ' +
       'around the title again, and every sentence that it writes is true.';
     expect(await EXPANDED, message).toContain(STANDALONE_PHRASE);
@@ -340,7 +340,7 @@ describe('entry-drafter contract', () => {
 
     const message =
       'The caller takes `## What` from this section and parses the entries from the next, matching each heading in ' +
-      `the return. A return missing \`${LEDE_HEADING}\`, or carrying it below \`${ENTRIES_HEADING}\`, leaves the ` +
+      `the return. A return missing \`${LEDE_HEADING}\`, or placing it below \`${ENTRIES_HEADING}\`, leaves the ` +
       'caller with no lede to take and a thin body that the merge flow then recomposes from the diff.';
     expect(ledeAt, message).toBeGreaterThan(-1);
     expect(entriesAt, message).toBeGreaterThan(ledeAt);
@@ -377,7 +377,7 @@ describe('entry-drafter contract', () => {
     expect(await EXPANDED, message).not.toContain(PRESCRIBED_CONNECTIVE);
   });
 
-  it('names every field that an entry carries', async () => {
+  it('names every field that an entry declares', async () => {
     const text = await EXPANDED;
     const missing = ENTRY_FIELDS.filter((field) => !text.includes(`\`${field}\``));
 
@@ -398,7 +398,7 @@ describe('entry-drafter contract', () => {
 
   it('draws exemplars once per type among the entries', async () => {
     const message =
-      '`## Details` carries a bullet under every type the branch touches, so one call for the branch calibrates ' +
+      '`## Details` contains a bullet under every type the branch touches, so one call for the branch calibrates ' +
       'every entry against the highest-ranking type and miscalibrates all but one of them. Each type was rated by ' +
       'the author for its own reader.';
     expect(await EXPANDED, message).toContain(PER_TYPE_EXEMPLAR_PHRASE);

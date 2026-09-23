@@ -7,6 +7,7 @@ import { readNoteContent } from '@williamthorsen/kb/note-io';
 import { applyOverrides } from '../change-grammar/apply-overrides.ts';
 import { normalizeChangeRecord } from '../change-grammar/tokens.ts';
 import type { ChangeRecord } from '../change-grammar/types.ts';
+import { stripChangeRecordBlocks } from '../describe-change/change-record-block.ts';
 import { extractString } from '../kb-shared/note-helpers.ts';
 import { readHomeProvenance, readHomeProvenanceAt } from '../lib/home-provenance.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
@@ -25,7 +26,7 @@ const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter.md'];
 
 /**
  * Artifact filename suffix holding the body that merged, and the heading under which it appears. The section records
- * the published whole, so the lede is what remains once `stripChangeTrailers` removes the entry records below it.
+ * the published whole, so the lede is what remains without the entry records below it.
  */
 const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;
 
@@ -94,7 +95,7 @@ export async function resolveEpisode(input: {
       message: `no "## ${MERGED_LEDE_SOURCE.heading}" section in a ${MERGED_LEDE_SOURCE.suffix}.md artifact under ${input.artifactDir}`,
     };
   }
-  const mergedLede = stripChangeTrailers(mergedBody);
+  const mergedLede = stripChangeTrailers(stripChangeRecordBlocks(mergedBody).trimEnd());
 
   const doctrine = await hashDoctrine(input.subagentsDir);
   if (!doctrine.ok) {
@@ -376,7 +377,7 @@ async function resolveIdentity(input: {
  *
  * Only a run at the end qualifies, and only when every line of it is a trailer: a body whose last paragraph is prose
  * keeps every line, and one that is trailers alone leaves nothing. A body containing no trailer block is returned
- * whole, which is what a merge recording no change entry writes.
+ * whole.
  */
 function stripChangeTrailers(body: string): string {
   const lines = body.split('\n');

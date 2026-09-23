@@ -22,7 +22,7 @@ The middle of the scale is what the corpus most needs and most easily loses: a l
 
 The verdict, `accepted` or `revised`, is not asked. The helper derives it from whether the two ledes differ and records it beside the rating.
 
-The merge commit's body carries one `Change:` trailer per change entry below its lede, so the helper cuts a trailing trailer block before comparing and recording. Only a run at the end qualifies, and only when every line of it is a trailer, which leaves a body that ends in prose untouched.
+The merge commit's body records its change entries below the lede, as a `change-record` block or, in a merge published before that block existed, as one `Change:` trailer per entry. The helper removes every `change-record` block and then a trailing trailer block before comparing and recording. A trailer block qualifies only as a run at the end whose every line is a trailer, which leaves a body that ends in prose untouched.
 
 ## The corpus stores positive signals only
 

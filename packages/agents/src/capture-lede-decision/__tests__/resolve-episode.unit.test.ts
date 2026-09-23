@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { renderMergeChangeRecordBlock } from '../../describe-change/change-record-block.ts';
 import { getHomeProvenancePath, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import { resolveEpisode } from '../resolve-episode.ts';
@@ -41,10 +42,24 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture)).differ).toBe(false);
   });
 
-  it('cuts the Change: trailers that a merge body carries below its lede', async () => {
+  it('cuts the Change: trailers that a merge body contains below its lede', async () => {
     const fixture = await createLedeFixture({
       mergedLede: `${FIXTURE_AGENT_LEDE}\n\nChange: agents|feat: Adds the link\nChange: agents|fix: Corrects the guard`,
     });
+
+    const episode = expectEpisode(await resolveEpisode(inputFor(fixture)));
+
+    expect(episode.mergedLede).toBe(FIXTURE_AGENT_LEDE);
+    expect(episode.differ).toBe(false);
+  });
+
+  it('cuts the change-record block that a merge body contains below its lede', async () => {
+    const block = renderMergeChangeRecordBlock({
+      entries: [{ breaking: false, scopes: ['agents'], text: 'Adds the link', type: 'feat' }],
+      prNumber: 1124,
+      ticketRef: '#1100',
+    });
+    const fixture = await createLedeFixture({ mergedLede: `${FIXTURE_AGENT_LEDE}\n\n${block}\n` });
 
     const episode = expectEpisode(await resolveEpisode(inputFor(fixture)));
 
@@ -294,7 +309,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    // The code names no file, so the message carries the path that the caller reinstalls.
+    // The code names no file, so the message names the path that the caller reinstalls.
     expect(expectFailure(outcome)).toStrictEqual({
       error: 'no-doctrine',
       message: expect.stringContaining(doctrinePath),

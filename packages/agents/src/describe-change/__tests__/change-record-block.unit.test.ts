@@ -2,12 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { parse as parseYaml } from 'yaml';
 
 import { isRecord } from '../../lib/type-guards.ts';
+import type { ChangeEntry } from '../change-entries.ts';
 import {
   type ChangeRecordBlock,
   readChangeRecordBlock,
+  readMergeChangeRecordBlock,
   renderChangeRecordBlock,
+  renderMergeChangeRecordBlock,
   stripChangeRecordBlocks,
 } from '../change-record-block.ts';
+
+const MERGE_ENTRIES: ChangeEntry[] = [
+  { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+  { breaking: true, migration: 'Import `read` from `kb`', scopes: [], text: 'Removes the legacy reader', type: 'drop' },
+];
 
 describe(readChangeRecordBlock, () => {
   it.each<{ block: ChangeRecordBlock; expected: ChangeRecordBlock; name: string }>([
@@ -216,6 +224,103 @@ describe(readChangeRecordBlock, () => {
   });
 });
 
+describe(readMergeChangeRecordBlock, () => {
+  it('reads a rendered block back to its entries, pull-request number, and ticket reference', () => {
+    const block = { entries: MERGE_ENTRIES, prNumber: 470, ticketRef: '#466' };
+
+    expect(readMergeChangeRecordBlock(`Adds the parser.\n\n${renderMergeChangeRecordBlock(block)}`)).toStrictEqual({
+      block,
+      kind: 'read',
+    });
+  });
+
+  it('reads a block without a ticket reference', () => {
+    const block = { entries: MERGE_ENTRIES, prNumber: 470 };
+
+    expect(readMergeChangeRecordBlock(renderMergeChangeRecordBlock(block))).toStrictEqual({ block, kind: 'read' });
+  });
+
+  it('reads an entry naming many scopes back intact', () => {
+    const scopes = Array.from({ length: 24 }, (_value, index) => `workspace-with-a-long-name-${index}`);
+    const block = { entries: [{ breaking: false, scopes, text: 'Upgrades every workspace', type: 'deps' }] };
+
+    expect(readMergeChangeRecordBlock(renderMergeChangeRecordBlock(block))).toStrictEqual({ block, kind: 'read' });
+  });
+
+  it('reports a body containing no block as absent', () => {
+    expect(readMergeChangeRecordBlock('Adds the parser.')).toStrictEqual({ kind: 'absent' });
+  });
+
+  it('ignores a key that the grammar does not declare, and reads a null field as absent', () => {
+    const body =
+      '```change-record\ntitle: Add foo\npr_number: null\nticket_ref: null\nentries:\n  - type: feat\n    text: Adds foo\n```';
+
+    expect(readMergeChangeRecordBlock(body)).toStrictEqual({
+      block: { entries: [{ breaking: false, scopes: [], text: 'Adds foo', type: 'feat' }] },
+      kind: 'read',
+    });
+  });
+
+  it.each<{ defect: RegExp; name: string; payload: string }>([
+    { name: 'a block that never closes', payload: 'pr_number: 1', defect: /never closes/ },
+    { name: 'invalid YAML', payload: 'entries: [', defect: /not valid YAML/ },
+    { name: 'a payload that is not a mapping', payload: '- 1', defect: /not a mapping/ },
+    { name: 'a string pr_number', payload: 'pr_number: "470"', defect: /`pr_number` is not a positive integer/ },
+    { name: 'a fractional pr_number', payload: 'pr_number: 1.5', defect: /`pr_number` is not a positive integer/ },
+    { name: 'a zero pr_number', payload: 'pr_number: 0', defect: /`pr_number` is not a positive integer/ },
+    {
+      name: 'an unsafe pr_number',
+      payload: 'pr_number: 9007199254740993',
+      defect: /`pr_number` is not a positive integer/,
+    },
+    { name: 'a non-string ticket_ref', payload: 'ticket_ref: 1827', defect: /`ticket_ref` is not a string/ },
+    { name: 'entries that are not a list', payload: 'entries: feat', defect: /not a list/ },
+    { name: 'an entry that is not a mapping', payload: 'entries: [feat]', defect: /`entries\[0\]` is not a mapping/ },
+    {
+      name: 'an entry missing its text',
+      payload: 'entries:\n  - type: feat\n  - type: fix',
+      defect: /`entries\[0\].text` is missing/,
+    },
+    {
+      name: 'a blank type',
+      payload: 'entries:\n  - type: " "\n    text: Adds foo',
+      defect: /`entries\[0\].type` is empty/,
+    },
+    {
+      name: 'a non-boolean breaking',
+      payload: 'entries:\n  - type: feat\n    breaking: yes please\n    text: Adds foo',
+      defect: /`entries\[0\].breaking` is not a boolean/,
+    },
+    {
+      name: 'scopes that are not a list',
+      payload: 'entries:\n  - type: feat\n    scopes: agents\n    text: Adds foo',
+      defect: /`entries\[0\].scopes` is not a list/,
+    },
+    {
+      name: 'a non-string scope',
+      payload: 'entries:\n  - type: feat\n    scopes: [1]\n    text: Adds foo',
+      defect: /`entries\[0\].scopes\[0\]` is not a string/,
+    },
+    {
+      name: 'a non-string migration',
+      payload: 'entries:\n  - type: drop\n    text: Drops foo\n    migration: [Import foo]',
+      defect: /`entries\[0\].migration` is not a string/,
+    },
+  ])('reports $name as malformed', ({ defect, name, payload }) => {
+    const body = name === 'a block that never closes' ? `\`\`\`change-record\n${payload}` : fence(payload);
+    const reading = readMergeChangeRecordBlock(body);
+
+    expect(reading.kind).toBe('malformed');
+    expect(reading).toHaveProperty('defect', expect.stringMatching(defect));
+  });
+
+  it('reads no entry from a list that has a defective item', () => {
+    const body = fence('entries:\n  - type: feat\n    text: Adds foo\n  - type: fix');
+
+    expect(readMergeChangeRecordBlock(body)).not.toHaveProperty('block');
+  });
+});
+
 describe(renderChangeRecordBlock, () => {
   it('opens on the info string and closes on a bare fence', () => {
     const rendered = renderChangeRecordBlock({
@@ -378,6 +483,42 @@ describe(renderChangeRecordBlock, () => {
   });
 });
 
+describe(renderMergeChangeRecordBlock, () => {
+  it('renders the pull-request number and the ticket reference before the entry list', () => {
+    const rendered = renderMergeChangeRecordBlock({ entries: MERGE_ENTRIES, prNumber: 470, ticketRef: '#466' });
+
+    expect(rendered).toBe(
+      [
+        '```change-record',
+        'pr_number: 470',
+        'ticket_ref: "#466"',
+        'entries:',
+        '  - type: feat',
+        '    scopes: [agents, kb]',
+        '    text: Adds the store-qualified wikilink',
+        '  - type: drop',
+        '    scopes: []',
+        '    breaking: true',
+        '    text: Removes the legacy reader',
+        '    migration: Import `read` from `kb`',
+        '```',
+      ].join('\n'),
+    );
+  });
+
+  it('renders the pull-request number as a YAML integer', () => {
+    const rendered = renderMergeChangeRecordBlock({ entries: MERGE_ENTRIES, prNumber: 470 });
+
+    expect(readBlock(rendered).pr_number).toBe(470);
+  });
+
+  it('omits a blank ticket reference', () => {
+    const rendered = renderMergeChangeRecordBlock({ entries: MERGE_ENTRIES, prNumber: 470, ticketRef: ' ' });
+
+    expect(readBlock(rendered)).not.toHaveProperty('ticket_ref');
+  });
+});
+
 describe(stripChangeRecordBlocks, () => {
   it('removes every block, fences included, and keeps the text around them', () => {
     const block = renderChangeRecordBlock({ consolidatedRecord: { type: 'feat' }, title: 'Add foo' });
@@ -393,6 +534,11 @@ describe(stripChangeRecordBlocks, () => {
 });
 
 // region | Helpers
+
+/** Wraps a payload in the block's fences. */
+function fence(payload: string): string {
+  return `\`\`\`change-record\n${payload}\n\`\`\``;
+}
 
 /** Reads a rendered block back through a YAML parse, which is the inverse against which the renderer is written. */
 function readBlock(rendered: string): Record<string, unknown> {

@@ -16,6 +16,11 @@ export interface ConsolidateBranchOutcome {
   violations: Array<{ commit: string; policy: string; type: string }>;
 }
 
+/** A merge body that passed the check, reporting the entry count that its block records. */
+export interface CheckMergeBodyOutcome {
+  entry_count: number;
+}
+
 /**
  * A consolidated record, in the shape that the JSON output names: the scope, type, and breaking marker of a branch,
  * each `null` when the branch has no entries to determine it.
@@ -57,6 +62,7 @@ export interface EntryOutcome {
 /** What the invocation asks for: the subcommand that it names, and what that subcommand reads from its arguments. */
 export type ParsedArgs =
   | { baseRef: string; subcommand: 'consolidate-branch' }
+  | { bodyFile: string; entryCount: number; subcommand: 'check-merge-body' }
   | { block: ChangeRecordBlock; entriesFile?: string; subcommand: 'render-block' }
   | { entriesFile: string; subcommand: 'consolidate-entries' }
   | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
