@@ -9,7 +9,7 @@ dependencies:
 
 # Add change record
 
-Append a `change-record` block to a pull request whose body has none, so that the merge publishes the change entries as `Change:` trailers.
+Append a `change-record` block to a pull request whose body has none, so that the merge publishes the change entries.
 
 The block is drafted by `{skill:summarize-change}`, which consolidates the branch, draws the entries, audits them, and renders the block. This skill lifts the rendered block from the summary that the run saved and appends it to the pull-request body; it drafts nothing of its own.
 

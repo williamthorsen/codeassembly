@@ -102,7 +102,8 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 - `effective_sources`: the source that supplied each field of `effective_record` apart from `pr_number`, such as `block`, `commits`, `labels`, `pr_title`, or `flags`.
 - `merge_title`: the rendered merge-commit title, which includes the breaking marker.
 - `body`: the PR's `## What` section, without the `change-record` block and without the `Closes` line.
-- `trailers`: the block's change entries rendered as trailer values, one per entry, without the `Change: ` prefix.
+- `merge_block`: the `change-record` block that the merge body contains below the lede, rendered from the PR block's change entries, or `null` when the PR block records none.
+- `entry_count`: the number of change entries that `merge_block` records, `0` when it is `null`.
 - `sources`: what the block, the commits, the labels, and the PR title each name, whether or not the resolution used them, each `null` if it was not read.
 - `defects`: each condition of `effective_record` that the author must override before approval.
 - `notices`: what the gate shows beside the proposal.
@@ -111,7 +112,7 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 
 The overrides passed to this run are the merge's **override set**. Each later run of this step, for a choice at the gate or for step 8's re-read, passes the whole set with that run's addition, and the same `--head`.
 
-**When the first run's `notices` contains `absent-block`, offer to add the block, if this checkout can draft it.** The pull request contains no change record, so the merge would publish no `Change:` trailers. `{skill:add-change-record}` drafts the entries from `{default_branch}...HEAD`, and refuses when HEAD is not the pull request's head commit, so read the local head before offering:
+**When the first run's `notices` contains `absent-block`, offer to add the block, if this checkout can draft it.** The pull request contains no change record, so the merge would publish no change entries. `{skill:add-change-record}` drafts the entries from `{default_branch}...HEAD`, and refuses when HEAD is not the pull request's head commit, so read the local head before offering:
 
 ```bash
 git rev-parse HEAD
@@ -122,7 +123,7 @@ When it is not `headRefOid`, make no offer: This checkout describes other commit
 When it is `headRefOid`, emit `input.requested` (payload `{"prompt":"add-change-record"}`) per [Lifecycle events](#lifecycle-events), then ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
 
 ```
-PR #{number} contains no change record, so the merge would publish no `Change:` trailers. Draft the entries and add the block? This runs `{skill:summarize-change}`. 👍🏼👎🏼
+PR #{number} contains no change record, so the merge would publish no change entries. Draft the entries and add the block? This runs `{skill:summarize-change}`. 👍🏼👎🏼
 ```
 
 On yes, invoke `{skill:add-change-record}` with `--pr {number}`. Then write a fresh body file from the platform as this step does and run the helper again, with the same override set and the same `--head`. A failure there stops the skill as the first run does, since no answer is at fault.
@@ -144,7 +145,7 @@ Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `b
 
 ### 5. Compose merge-commit body
 
-The report's `body` is the merge-commit **lede** candidate. The published body is that lede followed by the block's trailers, which the last part of this step composes.
+The report's `body` is the merge-commit **lede** candidate. The published body is that lede followed by the report's `merge_block`, which the last part of this step composes.
 
 A lede is **thin** if it is empty or contains fewer than 30 characters of non-whitespace content. The 30-character threshold is a default heuristic; proceed with a shorter lede if it is clearly intentional and self-contained (e.g., "Cosmetic only.", "Reverts #418.").
 
@@ -164,18 +165,17 @@ ticket-source: {ticket URL or reference}
 
 The block contains scalars only, and only these keys. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here introduces this session's weighting into the draft. Read its `## Report` for any source that it could not access.
 
-The lede is the drafter's `## Lede` section, followed by any `Migration:` paragraph that the draft contains below its entries, separated by one blank line. The merge publishes the entries themselves as the block's trailers, so nothing here renders them.
+The lede is the drafter's `## Lede` section, followed by any `Migration:` paragraph that the draft contains below its entries, separated by one blank line. The merge publishes the entries themselves in `merge_block`, so nothing here renders them.
 
-**Compose the published body**: the lede, a blank line, and one `Change: {value}` line per entry of the report's `trailers`, in the order that the report lists them.
+**Compose the published body**: the lede, a blank line, and the report's `merge_block` verbatim.
 
 ```
 {lede}
 
-Change: {first trailer}
-Change: {second trailer}
+{merge_block}
 ```
 
-Append the trailers to whichever lede is used, the drafted one included, since they come from the block rather than from the body. A report whose `trailers` is empty publishes the lede alone, with neither the blank line nor any trailer.
+Append `merge_block` to whichever lede is used, the drafted one included, since it comes from the PR's block rather than from the body. A report whose `merge_block` is `null` publishes the lede alone, with no blank line after it.
 
 Do not audit the draft here: The user reads the published body at the approval gate in step 6, before anything is published.
 
@@ -218,13 +218,13 @@ Proposed merge for PR #{pr_number}:
 {confirmation}
 ```
 
-`{published body}` is step 5's composed whole, the lede and its `Change:` trailers together. The triangle delimiters wrap the title and body, the parts that will actually be published, and a squash merge writes them to a protected default branch where they cannot be amended.
+`{published body}` is step 5's composed whole, the lede and its `change-record` block together. The triangle delimiters wrap the title and body, the parts that will actually be published, and a squash merge writes them to a protected default branch where they cannot be amended.
 
 **Between the closing `▲` and `{confirmation}`, report only what is wrong.** A line belongs there only when it names a condition that blocks or complicates the merge: a notice, a failing or pending check, or a defect in the published body, such as a typo that the merge commit would publish verbatim. The user reads silence as a clean merge, so never report an absence: no line for an empty `defects` or `notices`, a mergeable state, passing checks, or sources that agree. An empty `{notices}` renders nothing, and a clean run shows the proposal followed directly by `{confirmation}`. No line restates a value that the triangles already show, such as the scope, type, or breaking marker in the title.
 
 Render each notice there as one line. When a line says where a field came from, name the source that `effective_sources` gives for that field:
 
-- **`absent-block`**: The PR contains no `change-record` block, so the merge publishes no `Change:` trailers, and the effective record comes from the sources that `effective_sources` names field by field.
+- **`absent-block`**: The PR contains no `change-record` block, so the merge publishes no change entries, and the effective record comes from the sources that `effective_sources` names field by field.
 - **`malformed-block`**: The PR's `change-record` block cannot be read (its `defect`), so the labels and the commits resolved the effective record.
 - **`commits-unavailable`**: Because the commits were not read (its `reason`), the block or the labels were not checked against them.
 - **`divergence`**: The two sources that the notice's `sources` names disagree on the fields that its `fields` lists. Name each source's values for those fields, read from the report's `sources`, and the source from which the proposal takes each of them.
@@ -265,21 +265,37 @@ Re-read the PR's `title` and `description` (or `body` on GitHub) using step 2's 
 
 - **Title**: Compare the new `merge_title` with the approved one.
 - **Lede**: Compare the new report's `body` with the `body` of the report behind the body that the user most recently approved. If it changed, re-run step 5 over it in full, the thin-lede fallback included, so that a description that has since gained a real `## What` is picked up. Advance the baseline with each approval, as for the title; if it stayed at the pre-gate report, every pass would re-run the fallback and the loop would never converge.
-- **Trailers**: Compare the new report's `trailers` with the approved report's, element by element. If they changed and the lede did not, recompose the published body from the approved lede and the new trailers, dispatching no drafter, since the lede is unaffected.
+- **Merge block**: Compare the new report's `merge_block` with the approved report's, as strings. If it changed and the lede did not, recompose the published body from the approved lede and the new `merge_block`, dispatching no drafter, since the lede is unaffected.
 
-If neither the lede nor the trailers changed, keep the approved body.
+If neither the lede nor the merge block changed, keep the approved body.
 
 If the new report contains a defect, return to step 6 and settle it before comparing.
 
 The lede comparison keys on the report's `body` rather than on the composed lede because step 5's thin-lede fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would have no fixed point to reach. The helper's extraction is deterministic, so it has one. Keying on the `## What` section rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` appears in the merge commit.
 
-The trailers take a comparison of their own because `body` excludes the `change-record` block: An edit confined to that block leaves `body` identical while changing what the merge publishes, and `merge_title` catches only the subset of such edits that move the consolidated record. `trailers` is rendered by the helper rather than drafted, so comparing it has the fixed point that the lede comparison needs `body` to supply.
+The merge block takes a comparison of its own because `body` excludes the `change-record` block: An edit confined to that block leaves `body` identical while changing what the merge publishes, and `merge_title` catches only the subset of such edits that move the consolidated record. `merge_block` is rendered by the helper rather than drafted, so comparing it has the fixed point that the lede comparison needs `body` to supply.
 
 The window that this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope: The re-run reads the commits up to the head commit read in step 2, and a generated body is not recomposed on account of later commits. The delegate's own branch-sync check reports local and remote divergence.
 
 If every re-read value matches the approved one, continue to step 9 without saying anything. If any differs, re-render step 6's gate with the new values and ask again, and repeat this step after each approval until the values stop changing. Merging the newest version silently would publish text that the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with no merge and no artifact, exactly as step 6 does.
 
-### 9. Call delegate
+### 9. Check the published body
+
+The merge commit is the record from which release-kit reads the change entries, and it rejects a whole block on any defect, so read the approved body back before publishing it. Write the published body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-pr{pr_number}-check-{timestamp}.md`, then run the helper with the approved report's `entry_count`, opening with the assignment and the guard:
+
+```bash
+body_path="{absolute path from the write step}"
+[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
+node {harness_home_dir}/scripts/describe-change.mjs check-merge-body \
+  --body-file "$body_path" \
+  --entry-count "{entry_count}"
+```
+
+The helper refuses a body whose block is malformed, or whose entry count differs from `--entry-count`. A count of `0` requires the body to contain no block. [`check-merge-body`](../_data/title-templates.md#check-merge-body) states the rules.
+
+If it exits non-zero, emit `skill.completed` (payload `{"outcome":"stopped: merge body failed round-trip"}`) per [Lifecycle events](#lifecycle-events) and stop with its message. Nothing is merged.
+
+### 10. Call delegate
 
 Pass the following inputs to the selected delegate per the delegate interface:
 
@@ -296,9 +312,9 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes a title that `defects` blocks, or a `prompt` sentinel, to the delegate: All values are concrete by this point.
 
-If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture one thing from the delegate's completion report and continue: whether it reported a merge. Step 10 reports the outcome from it.
+If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture one thing from the delegate's completion report and continue: whether it reported a merge. Step 11 reports the outcome from it.
 
-### 10. Report the outcome
+### 11. Report the outcome
 
 Emit `skill.completed` per [Lifecycle events](#lifecycle-events): payload `{"outcome":"merged"}` when the delegate reported a merge, and `{"outcome":"not merged"}` when it did not. A merge whose commit SHA is unavailable is still a merge, and is reported as `merged`.
 
