@@ -220,7 +220,9 @@ Proposed merge for PR #{pr_number}:
 {confirmation}
 ```
 
-`{published body}` is step 5's composed whole, the lede and its `Change:` trailers together. The triangle delimiters wrap the title and body, the parts that will actually be published, and a squash merge writes them to a protected default branch where they cannot be amended. Append any additional context (CI status, branch fate, repo-specific commentary) between the closing `▲` and the `{confirmation}` line, outside the delimited region. Everything outside the triangles is metadata for the user's decision.
+`{published body}` is step 5's composed whole, the lede and its `Change:` trailers together. The triangle delimiters wrap the title and body, the parts that will actually be published, and a squash merge writes them to a protected default branch where they cannot be amended.
+
+**Between the closing `▲` and `{confirmation}`, report only what is wrong.** A line belongs there only when it names a condition that blocks or complicates the merge: a notice, a failing or pending check, or a defect in the published body, such as a typo that the merge commit would publish verbatim. The user reads silence as a clean merge, so never report an absence: no line for an empty `defects` or `notices`, a mergeable state, passing checks, or sources that agree. An empty `{notices}` renders nothing, and a clean run shows the proposal followed directly by `{confirmation}`. No line restates a value that the triangles already show, such as the scope, type, or breaking marker in the title.
 
 Render each notice there as one line. When a line says where a field came from, name the source that `effective_sources` gives for that field:
 
