@@ -41,11 +41,12 @@ The bundle has no shebang, so the `node` prefix is required. Each subcommand acc
 | [`resolve-effective-record`](#resolve-effective-record) | A record with its overrides applied, and its defects    | The taxonomy                                                |
 | [`render-block`](#render-block)                         | The `change-record` block that ends a pull-request body | Nothing                                                     |
 | [`resolve-merge`](#resolve-merge)                       | What a pull request merges as                           | The templates, the taxonomy, the label map, and the commits |
+| [`check-merge-body`](#check-merge-body)                 | The entry count that a composed merge body records      | The body file                                               |
 | [`resolve-scopes`](#resolve-scopes)                     | The scope that owns each given path                     | The workspace layout                                        |
 
 ### What stops a run and what only warns
 
-- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, and `resolve-scopes` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, `check-merge-body`, and `resolve-scopes` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
 - Malformed YAML in `pnpm-workspace.yaml` stops `resolve-scopes`, naming the file.
 - An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `resolve-effective-record`, and `resolve-merge`.
@@ -305,7 +306,8 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   },
   "merge_title": "#466 agents|feat: Add the parser (#470)",
   "body": "- Adds the parser.",
-  "trailers": [],
+  "merge_block": null,
+  "entry_count": 0,
   "sources": {
     "block": {
       "title": "Add the parser",
@@ -350,9 +352,9 @@ Each field names the step that set it last, as [Where the record is read](./chan
 
 **`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that contain only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
 
-**`trailers` is the block's change entries rendered as trailer values**, one per entry, in the order that the block records them. Each renders through `commit.title_format` from the entry's `type`, its `breaking` marker, its `scopes` joined by commas, and its `text` as the title, leaving out its `migration`, so a trailer and the commit subject for which it stands share one grammar. An entry naming `agents` and `kb` therefore renders as `agents,kb|feat: Adds the store-qualified wikilink`, and a breaking one as `agents|drop!: Removes the legacy API`. The value excludes the `Change: ` prefix, as [`consolidate-branch`](#consolidate-branch)'s `entries[].change` does, and the writer adds it.
+**`merge_block` is the block's change entries in the [merge-commit form](./change-record.md#the-merge-commit-form)**, fences included, with `pr_number` from `--pr-number` as an integer and `ticket_ref` from `effective_record`, left out when that is `null`. The entries keep the order in which the block records them. **`entry_count`** is the number of entries that `merge_block` records.
 
-The entries render whether or not they are fresh: a merge re-derives nothing, and a `stale-entries` notice reports staleness instead. The list is empty when the block is absent, malformed, or records no entry, and when `commit.title_format` is empty, since a repository with no commit grammar has no trailer grammar. `trailers` is separate from `body`, so a consumer that replaces a thin body keeps them.
+The entries render whether or not they are fresh: a merge re-derives nothing, and a `stale-entries` notice reports staleness instead. `merge_block` is `null`, and `entry_count` is `0`, when the block is absent, malformed, or records no entry. `merge_block` is separate from `body`, so a consumer that replaces a thin body keeps it.
 
 **`defects` block approval.** Each names a condition of `effective_record` that the author must override before the merge is offered, with the kinds that [`resolve-effective-record`](#resolve-effective-record) lists.
 
@@ -362,7 +364,7 @@ The entries render whether or not they are fresh: a merge re-derives nothing, an
 
 | Kind                  | Meaning                                                                                                                                                                                                                                                                             |
 | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `absent-block`        | The body contains no block, so the merge publishes no `Change:` trailers. `effective_sources` names what supplied each field in the block's place. The `add-change-record` skill adds a block to a body that has none.                                                              |
+| `absent-block`        | The body contains no block, so the merge publishes no change entries. `effective_sources` names what supplied each field in the block's place. The `add-change-record` skill adds a block to a body that has none.                                                                  |
 | `malformed-block`     | The body's last block cannot be read; `defect` names why, and the merge resolves as though no block were present.                                                                                                                                                                   |
 | `commits-unavailable` | The commits cannot be read; `reason` names why, and the block or the labels are not checked against them.                                                                                                                                                                           |
 | `divergence`          | Before any override, the block's consolidated record, or the record chosen from the labels, disagrees with the commits'. `sources` names the two, `block` or `labels` and then `commits`, and `fields` lists the fields among `scope`, `type`, and `breaking` on which they differ. |
@@ -376,6 +378,24 @@ The entries render whether or not they are fresh: a merge re-derives nothing, an
 **A head commit that the local repository lacks is not an error.** The run reports `commits-unavailable` and resolves from the block or the labels without checking them against the commits, so fetch the head commit before resolving. Any other git failure stops the run.
 
 The run refuses if no taxonomy is readable and if the body file cannot be read. With an empty `commit.title_format`, the run reports `commits-unavailable` rather than refusing. `--override-type` refuses a type spelled with `!`, and the run refuses `--override-breaking` together with `--no-override-breaking`.
+
+## `check-merge-body`
+
+`check-merge-body` reads a composed merge body back as release-kit reads the merge commit, and refuses a body that would not yield the expected entries.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs check-merge-body \
+  --body-file {body_file} \
+  --entry-count 2
+```
+
+Both flags are required. `--body-file` names a file containing the whole merge body, and `--entry-count` takes the `entry_count` that [`resolve-merge`](#resolve-merge) reported, as a non-negative integer.
+
+```json
+{ "entry_count": 2 }
+```
+
+The body's last `change-record` block is read under the rules of the [merge-commit form](./change-record.md#the-merge-commit-form): Any defect makes the whole block malformed. The run exits non-zero, naming the defect or both counts, when the file cannot be read, when the block is malformed, and when the number of entries that it records differs from `--entry-count`. A body containing no block records none, so it passes only with `--entry-count 0`, and a body containing a block fails with `--entry-count 0`.
 
 ## `resolve-scopes`
 
@@ -485,7 +505,7 @@ The `{scope}` token expects a value that identifies the part of the codebase aff
 - Use `root` when the change touches only files at the monorepo root.
 - Use `*` when the change spans multiple workspaces, or root and one or more workspaces. It normalizes to no scope, so the rendered title has no scope prefix.
 
-**A scope may name several workspaces, joined by commas**, which is how one change entry that spans two workspaces renders as one `Change:` trailer: `agents,kb|feat: Add the store-qualified wikilink`. Normalization trims each name and drops the empty ones, the `*` ones, and the duplicates, keeping first-occurrence order; `agents,*` therefore names `agents`, and a value that leaves nothing behind names no scope, exactly as a whole-value `*` does.
+**A scope may name several workspaces, joined by commas**, which is how one commit entry that spans two workspaces renders as one `Change:` trailer: `agents,kb|feat: Add the store-qualified wikilink`. Normalization trims each name and drops the empty ones, the `*` ones, and the duplicates, keeping first-occurrence order; `agents,*` therefore names `agents`, and a value that leaves nothing behind names no scope, exactly as a whole-value `*` does.
 
 A rendered list reads back as the same value, since the scope run is bounded by the delimiter that the template itself places after it and no catalogued convention delimits the scope with a comma. A template that does is refused as one that cannot round-trip.
 

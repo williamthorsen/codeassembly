@@ -1,6 +1,6 @@
 # The change record
 
-A change's scope, type, and breaking marker are consolidated once from the change entries, and then written to every surface that needs them. This file defines the terms, states the two grammars that encode them (the `Change:` commit trailer, and the fenced `change-record` block that ends a pull-request body), states how overrides apply, and states how a merge reads the block back.
+A change's scope, type, and breaking marker are consolidated once from the change entries, and then written to every surface that needs them. This file defines the terms, states the two grammars that encode them (the `Change:` commit trailer, and the fenced `change-record` block that ends a pull-request body and, in its merge-commit form, a merge commit), states how overrides apply, and states how a merge reads the block back.
 
 [`title-templates.md`](./title-templates.md) states the commands that consolidate, resolve, and render. This file states what they produce and how it is written down.
 
@@ -14,7 +14,7 @@ A change's scope, type, and breaking marker are consolidated once from the chang
 | consolidated record | The `scope`, `type`, and `breaking` to which a list of entries consolidates, by one ranking that serves both kinds.                                                                                                                         |
 | overrides           | The `scope`, `type`, and `breaking` that the author sets by hand, plus `title` at merge.                                                                                                                                                    |
 | effective record    | The consolidated record, or at merge the record resolved from the sources, with the overrides applied, plus the title and, at merge, `ticket_ref` and `pr_number`.                                                                          |
-| block               | The fenced `change-record` block that ends a pull-request body. It is never called "the record".                                                                                                                                            |
+| block               | The fenced `change-record` block that ends a pull-request body. A merge commit contains its merge-commit form. It is never called "the record".                                                                                             |
 
 ## The record's fields
 
@@ -40,7 +40,7 @@ Change: agents|feat: Add the parser
 Change: agents|fix: Correct the guard
 ```
 
-`condense-branch` writes one per commit entry when it squashes a branch, so a condensed branch stays readable. `merge-pr` writes one per change entry into the squash-merge body, below the lede, so the entries that the block records reach the default branch as records rather than as prose; `resolve-merge` renders them and reports them in `trailers`, separate from the merge body. A trailer carries no entry's `migration`. Because Git parses them as trailers, the block may follow any number of body paragraphs.
+`condense-branch` writes one per commit entry when it squashes a branch, so a condensed branch stays readable. Because Git parses them as trailers, they may follow any number of body paragraphs.
 
 **A commit with trailers contributes them in place of its subject.** Its subject renders the record to which those trailers already consolidate. Reading both would count the branch's commit entries twice.
 
@@ -86,6 +86,38 @@ The payload is YAML rather than a surface template because `consolidated_record`
 
 **The block is the body's last element.** A reader takes the last `change-record` fence in the body, and the merge body that `resolve-merge` composes from the pull request excludes every block.
 
+## The merge-commit form
+
+A squash merge publishes the block's change entries below the lede, in a reduced form of the block that release-kit reads from the merge commit. `resolve-merge` renders it and reports it in `merge_block`, separate from the merge body; see [`resolve-merge`](./title-templates.md#resolve-merge).
+
+````markdown
+```change-record
+pr_number: 470
+ticket_ref: "#466"
+entries:
+  - type: feat
+    scopes: [agents, kb]
+    text: Adds the store-qualified wikilink `[[store:Note title]]`, which `kb check` resolves against the named store.
+  - type: drop
+    scopes: [kb]
+    breaking: true
+    text: Removes the `kb find` alias of `kb search`.
+    migration: Replace `kb find` with `kb search`, which exits nonzero when nothing matches.
+```
+````
+
+| Key          | Meaning                                                                                                    |
+| ------------ | ---------------------------------------------------------------------------------------------------------- |
+| `pr_number`  | The pull request's number, as a YAML integer.                                                              |
+| `ticket_ref` | The effective record's ticket reference. Absent when the merge has none.                                   |
+| `entries`    | The change entries that the pull request's block records, in its order, each rendered as it renders there. |
+
+`title`, `consolidated_record`, `overrides`, and `entries_commit` are left out: The merge title already renders the effective record, and the rest served only to resolve it.
+
+**A merge with no change entry writes no block**, since a block without entries tells release-kit nothing. That is the case when the pull request's block is absent, is malformed, or records no entry, and the merge body is then the lede alone.
+
+**The form is read under release-kit's rules**, which are stricter than the pull-request form's: Any defect makes the whole block malformed, no entry is salvaged from a defective list, and `pr_number` must be a positive integer. Before merging, `merge-pr` reads the approved body back through the `check-merge-body` subcommand and refuses to merge when the block is malformed or records a different number of entries than `resolve-merge` rendered; see [`check-merge-body`](./title-templates.md#check-merge-body).
+
 ## The effective record
 
 The overrides apply to the consolidated record one field at a time, and a field that no override names keeps the consolidated record's value:
@@ -104,7 +136,7 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | Change-summary frontmatter | `title`, the consolidated record's `scope`, `type`, and `breaking`, `changes`, `ticket_type`, and the override fields |
 | Condensed commit message   | A subject rendered from the consolidated record, and one `Change:` trailer per commit entry                           |
-| Merge commit               | The lede, then one `Change:` trailer per change entry that the block records                                          |
+| Merge commit               | The lede, then the merge-commit form of the block when the pull request's block records a change entry                |
 | Pull-request body          | `Closes`, then the block as the final block, carried from the change summary's body                                   |
 | Pull-request labels        | The effective record's type and scope, mapped through `.meta/label-map.json`, plus `breaking` when it is breaking     |
 
