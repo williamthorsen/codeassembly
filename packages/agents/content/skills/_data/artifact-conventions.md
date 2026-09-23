@@ -922,8 +922,6 @@ A later flow that revises a finished record writes a new artifact rather than ed
 
 Overwriting either of those records breaks `capture-lede-decision`. It derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; if a `pull-request` body is rewritten to match a human's later edit, `capture-lede-decision` reports `differ: false` for a lede that was in fact revised, so it records an `accepted` verdict for a lede that the author rewrote. The corruption raises no error and is undetectable in any session that no longer has the original text. When a lede is genuinely needed and the artifacts do not contain it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
 
-None of this is narrated. Do not mention the rule to the user, do not announce a write that was not made, and do not offer to reconcile a record with current state.
-
 ## Portability
 
 Every level degrades gracefully:

@@ -36,7 +36,7 @@ From that point on, the ticket's `## Problem`, `## Context`, and `## Proposed so
 
 Acceptance criteria are the one revisable part, because they alone are the contract that an implementation can falsify. Align them to the implementation only when the two conflict, or when the gap would mislead a reviewer. Small improvements are made as a matter of course, and the ticket is not rewritten to pretend they were foreseen.
 
-None of this is narrated. Do not mention the doctrine to the user, do not announce a write that was not made, and do not offer to reconcile a record with current state.
+A write that this section rules out is not a skipped step, because nobody asked for it, and it produces no user-facing text: Do not mention the doctrine or the marker, do not report the write that was not made, and do not offer to reconcile the record with current state. When the user asks for such a write, decline it in one line and name the alternative: a new record, the pull-request description for a divergence from the ticket, or `capture-lede-decision`'s `--agent-lede-file` and `--merged-lede-file`.
 
 ## Commits
 
