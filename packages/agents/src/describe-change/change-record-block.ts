@@ -110,7 +110,7 @@ export interface ChangeRecordBlock {
 
 /**
  * What a body's last `change-record` block reads as: absent, malformed with the defect named, or the block that it
- * records. A read block carries `entriesDefect` when its entries were defective, in which case it records none.
+ * records. A read block includes `entriesDefect` when its entries were defective, in which case it records none.
  */
 export type ChangeRecordBlockReading =
   | { kind: 'absent' }

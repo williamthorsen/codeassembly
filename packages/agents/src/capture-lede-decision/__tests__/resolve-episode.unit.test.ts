@@ -42,7 +42,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture)).differ).toBe(false);
   });
 
-  it('cuts the Change: trailers that a merge body carries below its lede', async () => {
+  it('cuts the Change: trailers that a merge body contains below its lede', async () => {
     const fixture = await createLedeFixture({
       mergedLede: `${FIXTURE_AGENT_LEDE}\n\nChange: agents|feat: Adds the link\nChange: agents|fix: Corrects the guard`,
     });
@@ -309,7 +309,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    // The code names no file, so the message carries the path that the caller reinstalls.
+    // The code names no file, so the message names the path that the caller reinstalls.
     expect(expectFailure(outcome)).toStrictEqual({
       error: 'no-doctrine',
       message: expect.stringContaining(doctrinePath),

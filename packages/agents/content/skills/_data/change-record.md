@@ -82,7 +82,7 @@ The payload is YAML rather than a surface template because `consolidated_record`
 
 **The scalars precede `entries`**, so the bulky list does not separate the title from the consolidated record.
 
-**The block carries the change entries as data**, which is how a reader downstream of the merge gets them without parsing them back out of the rendered `## Details` prose. The change summary's `changes` frontmatter field is a different list: It holds the commit entries, which record what the branch's commits declared.
+**The block records the change entries as data**, which is how a reader downstream of the merge gets them without parsing them back out of the rendered `## Details` prose. The change summary's `changes` frontmatter field is a different list: It holds the commit entries, which record what the branch's commits declared.
 
 **The block is the body's last element.** A reader takes the last `change-record` fence in the body, and the merge body that `resolve-merge` composes from the pull request excludes every block.
 
@@ -137,7 +137,7 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 | Change-summary frontmatter | `title`, the consolidated record's `scope`, `type`, and `breaking`, `changes`, `ticket_type`, and the override fields |
 | Condensed commit message   | A subject rendered from the consolidated record, and one `Change:` trailer per commit entry                           |
 | Merge commit               | The lede, then the merge-commit form of the block when the pull request's block records a change entry                |
-| Pull-request body          | `Closes`, then the block as the final block, carried from the change summary's body                                   |
+| Pull-request body          | `Closes`, then the block as the final block, copied from the change summary's body                                    |
 | Pull-request labels        | The effective record's type and scope, mapped through `.meta/label-map.json`, plus `breaking` when it is breaking     |
 
 [Artifact conventions](./artifact-conventions.md#change-summary-frontmatter) specifies the change-summary fields.
@@ -163,7 +163,7 @@ The comparison is of whole records, so every field is attributed to the one that
 
 The block's overrides then apply to whichever stands, as [The effective record](#the-effective-record) states, and each field that they set is attributed to `block_overrides`.
 
-**A merge does not re-derive the block's entries.** Commits pushed after the body was composed are already out of scope at merge, so staleness is reported and the merge proceeds. A body that carries no block may gain one through `add-change-record` before the merge resolves; a block that is already written is never replaced, whether it reads, is malformed, or records no entry.
+**A merge does not re-derive the block's entries.** Commits pushed after the body was composed are already out of scope at merge, so staleness is reported and the merge proceeds. A body that contains no block may gain one through `add-change-record` before the merge resolves; a block that is already written is never replaced, whether it reads, is malformed, or records no entry.
 
 **Without a readable block**, the labels stand in for the block. A body that contains no block raises `absent-block`, so a gate can report that the entries are missing rather than empty; a block that cannot be read raises `malformed-block` instead. The type and its breaking marker come together, from the labels if exactly one type label resolves and otherwise from the commits. A marker never pairs with a type from the other source. The scope comes from its label if exactly one resolves, and otherwise from the commits. The breaking label is the literal `breaking`. Each field is attributed to `labels` or `commits` according to its source, so a type from the labels and a scope from the commits are reported as such. When the chosen record disagrees with the commits', a `divergence` notice names the fields on which the two differ.
 

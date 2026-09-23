@@ -8,7 +8,7 @@ user-invocable: true
 
 Analyze the current branch's changes since diverging from the default branch.
 
-The change's consolidated record is derived from the change entries and recorded per [the change record](../_data/change-record.md). The body ends with the rendered `change-record` block, which carries the entries and that record to the pull request.
+The change's consolidated record is derived from the change entries and recorded per [the change record](../_data/change-record.md). The body ends with the rendered `change-record` block, which records the entries and that record in the pull request.
 
 ## Arguments
 
@@ -102,9 +102,9 @@ Both are optional, and each is recorded as an override beside the consolidated r
    - {the first passage that failed}
    ```
 
-   Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change a passage that it never sees, which keeps one that passed from coming back changed. Send the lede the same way if it is what failed. The fence carries the lede, an entry's `text`, or an entry's `migration`, so the drafter returns one replacement passage per passage sent, in the order sent; put each in the place of the passage that it replaces and keep every other field of that entry, so that a replaced `text` keeps the entry's `migration` and a replaced `migration` keeps its `text`. Take the lede and every other entry from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
+   Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change a passage that it never sees, which keeps one that passed from coming back changed. Send the lede the same way if it is what failed. The fence contains the lede, an entry's `text`, or an entry's `migration`, so the drafter returns one replacement passage per passage sent, in the order sent; put each in the place of the passage that it replaces and keep every other field of that entry, so that a replaced `text` keeps the entry's `migration` and a replaced `migration` keeps its `text`. Take the lede and every other entry from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
 
-   On a first dispatch, take the drafter's `## Lede` section as it stands; step 9 makes it `## What`, and no step rewrites it. A redispatch returns every replacement under `## Entries` and no `## Lede` section at all, so the lede it carries forward is whichever text the placement above left in the lede's place. Parse the `## Entries` fence as YAML. Each entry carries `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry calls for one. Read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that names no key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
+   On a first dispatch, take the drafter's `## Lede` section as it stands; step 9 makes it `## What`, and no step rewrites it. A redispatch returns every replacement under `## Entries` and no `## Lede` section at all, so the lede that it keeps is whichever text the placement above left in the lede's place. Parse the `## Entries` fence as YAML. Each entry declares `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry calls for one. Read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that names no key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
 
 6. **Audit the lede and the entries.** Three checks apply to the lede, to each entry's `text`, and to each entry's `migration` alike, except as the subject check states, and each names the rejection code that its failure raises, for which a redispatch is the repair rather than an edit of your own. `type`, `scopes`, and `breaking` are not prose and are never rejected.
 
@@ -119,7 +119,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
    Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones that you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then continue to step 7 with the verified entries. If you could never place a return, show the developer each passage as the fence contained it. Take a passage rejected by the audit past step 6 only after asking the developer.
 
 7. **Consolidate the change's record from the entries.** Do this before step 8, and before the frontmatter call: The `## Details` headings, the title, the labels, and the block all read the record that this step produces.
-   - **Write the verified entries** to a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `entries-{timestamp}.yaml`. The file is a top-level YAML list of mappings, one per entry, each carrying `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry has one, as the drafter returned them, with the corrections that step 6 made. Write it with a file-writing tool rather than a shell heredoc: `text` and `migration` are arbitrary prose containing backticks and quotes. Keep its path; step 10 reads the same file.
+   - **Write the verified entries** to a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `entries-{timestamp}.yaml`. The file is a top-level YAML list of mappings, one per entry, each declaring `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry has one, as the drafter returned them, with the corrections that step 6 made. Write it with a file-writing tool rather than a shell heredoc: `text` and `migration` are arbitrary prose containing backticks and quotes. Keep its path; step 10 reads the same file.
    - **Record the derivation commit**: `git rev-parse --short HEAD`. It is the commit at which the entries were read, and `resolve-merge` compares it against the pull request's head to tell a fresh block from a stale one.
    - **Consolidate the entries:**
 
@@ -134,7 +134,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
 8. **Render `## Details` from the verified entries** per [Rendering `Details`](#rendering-details).
 
-9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and take no sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here carries this session's weighting into the merge commit, the changelog, and the release notes.
+9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and take no sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here adds this session's weighting to the merge commit, the changelog, and the release notes.
 
 10. **Render the `change-record` block** and make it the body's last element:
 
@@ -157,7 +157,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
     [`render-block`](../_data/title-templates.md#render-block) states the output, which is JSON; the last command decodes it and prints the `block` field. Render and decode in one Bash invocation, and write the printed block verbatim below `## Details`, separated by one blank line. Never copy the block out of the raw JSON: `text` is arbitrary prose, and JSON escapes its quotes and backslashes a second time.
 
-    `create-pr` carries this block into the pull-request body rather than rendering one of its own, so a body saved without one reaches the pull request without one. If the helper is unavailable or the call fails, relay its error, say that the summary carries no block, and save the body without one.
+    `create-pr` copies this block into the pull-request body rather than rendering one of its own, so a body saved without one reaches the pull request without one. If the helper is unavailable or the call fails, relay its error, say that the summary contains no block, and save the body without one.
 
 11. **Save** per the [Saving](#saving) section.
 
@@ -219,8 +219,8 @@ entries:
 - **Subsections.** One per distinct `type` among the entries, headed `{emoji} {label}` from that type's [work-types.json](../_data/work-types.json) `types[]` entry. Order them by tier (public → internal → process) and, within a tier, in the order that `work-types.json` lists the types. A type with no entry gets no subsection.
 - **Bullets.** Under each subsection, one bullet per entry of that type, in the order the drafter returned them. The bullet is `🚨 **Breaking:** ` (from `markers.breaking`, rendered as `{emoji} **{label}:** `) when the entry's `breaking` is `true`, followed by the entry's `text`. The prefix tags the entry inline rather than relocating it to a separate section.
 - **Migration.** When an entry has a `migration`, its bullet gets one nested list item, `Migration: {migration}`, and the scope tags stay on the bullet's own line. Nest it as a list item, never as an indented continuation line.
-- **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, no bullet carries tags, since the consolidated record already names that scope.
-- **`## What`.** `## What` carries none of these bullets. It is the lede that the drafter wrote, composed in step 9, and the two sections therefore cover the change at different lengths rather than repeating one list.
+- **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, no bullet ends with tags, since the consolidated record already names that scope.
+- **`## What`.** `## What` contains none of these bullets. It is the lede that the drafter wrote, composed in step 9, and the two sections therefore cover the change at different lengths rather than repeating one list.
 - **An unknown type.** A `type` naming no key in `work-types.json` has no `emoji` or `label` to head a subsection with, and no tier to order it by. Report it to the developer per step 5 and head that subsection with the bare `type`, after every subsection that the taxonomy orders, so that the entry stays visible rather than being dropped or reassigned.
 
 ## Guidance
@@ -250,7 +250,7 @@ The block is structured as:
 
 ### Canonical-field resolution
 
-Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below. Run this after step 7, whose consolidated record `scope`, `type`, and `breaking` carry.
+Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below. Run this after step 7, which resolves the consolidated record's `scope`, `type`, and `breaking`.
 
 Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 consolidation file inside the same call, so that no entry is retyped into a command, in which a backtick, `$`, or `"` would be expanded or would end the argument. A file that a failed consolidation left empty yields no `changes`:
 

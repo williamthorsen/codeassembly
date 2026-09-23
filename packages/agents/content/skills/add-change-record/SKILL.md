@@ -52,7 +52,7 @@ If no pull request can be resolved, emit `skill.completed` (payload `{"outcome":
 git rev-parse HEAD
 ```
 
-The next step runs `{skill:summarize-change}`, which reads `{default_branch}...HEAD` and records HEAD as the block's `entries_commit`. A block drafted anywhere else describes commits that the pull request does not carry, and `resolve-merge` would read it as stale at merge.
+The next step runs `{skill:summarize-change}`, which reads `{default_branch}...HEAD` and records HEAD as the block's `entries_commit`. A block drafted anywhere else describes commits that the pull request does not contain, and `resolve-merge` would read it as stale at merge.
 
 Compare the local SHA with `headRefOid`. On GitHub the two are full SHAs and must be equal; on Bitbucket, compare on a prefix per [Bitbucket pull-request access](../_data/bitbucket-pr-access.md#reading-a-pull-request), since the platform may abbreviate its hash.
 
@@ -88,7 +88,7 @@ Read `notices` from the output. The block reading is settled by the helper rathe
 Continue only when `notices` contains `absent-block`. Otherwise emit `skill.completed` (payload `{"outcome":"stopped: block present"}`) per [Lifecycle events](#lifecycle-events) and stop with the reason that the notices give:
 
 - **`malformed-block`**: The body's block cannot be read (its `defect`). Say that a written block is never replaced, and that the author repairs this one by hand.
-- **Neither notice**: The body already carries a readable block. Say so, and that a block without entries is left as it is.
+- **Neither notice**: The body already contains a readable block. Say so, and that a block without entries is left as it is.
 
 A guard refusal or a non-zero exit stops the skill the same way, with the helper's own message and the outcome `stopped: block not resolved`.
 
@@ -98,7 +98,7 @@ Invoke `{skill:summarize-change}`, passing through `--scope` and `--type` as giv
 
 Take the last `change-record` fence from the summary that this session just saved, copied character for character, the fence lines included. Read it from the saved file rather than from the transcript.
 
-When the saved summary carries no fence, emit `skill.completed` (payload `{"outcome":"stopped: no block drafted"}`) per [Lifecycle events](#lifecycle-events) and stop, relaying what `{skill:summarize-change}` reported about `render-block`. Nothing is written to the pull request.
+When the saved summary contains no fence, emit `skill.completed` (payload `{"outcome":"stopped: no block drafted"}`) per [Lifecycle events](#lifecycle-events) and stop, relaying what `{skill:summarize-change}` reported about `render-block`. Nothing is written to the pull request.
 
 ### 6. Show the block and ask
 

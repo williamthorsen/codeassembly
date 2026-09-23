@@ -474,7 +474,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('when entries carry no derivation commit, reports staleness with a null commit', () => {
+    it('when entries record no derivation commit, reports staleness with a null commit', () => {
       const block = readBlock({ type: 'feat' }, { entries: ENTRIES });
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));

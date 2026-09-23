@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
-// `## Details` renders the drafter's entries, `## What` carries the lede that the same drafter wrote, and a later
+// `## Details` renders the drafter's entries, `## What` contains the lede that the same drafter wrote, and a later
 // ticket parses the entries back out of the rendering. Three edits would defeat that quietly: under-specifying the
 // rendering, which leaves the parser reading prose that varies per run; restoring the coverage mandate, which is what
 // made `## Details` a prose re-rendering of the diff; and composing `## What` in this session, which returns the
@@ -13,7 +13,7 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /**
- * Phrases that a restored coverage mandate carries. The mandate required every fact in the lede to reappear in
+ * Phrases that a restored coverage mandate contains. The mandate required every fact in the lede to reappear in
  * `## Details` and forbade trimming either section, which together commissioned the prose re-rendering of the diff
  * that this pipeline was rebuilt to stop. Lowercased, so that a sentence's opening capital still matches.
  */
@@ -25,7 +25,7 @@ const COVERAGE_MANDATE_PHRASES: ReadonlyArray<string> = [
 
 /**
  * Phrases stating the rendering exactly enough to parse back out: which subsections exist and in what order, what
- * each bullet is, and when a bullet carries its scopes. Lowercased, so that a sentence's opening capital still
+ * each bullet is, and when a bullet ends with its scopes. Lowercased, so that a sentence's opening capital still
  * matches.
  */
 const RENDERING_PHRASES: ReadonlyArray<string> = [
@@ -33,7 +33,7 @@ const RENDERING_PHRASES: ReadonlyArray<string> = [
   'one bullet per entry of that type',
   'order them by tier',
   'bare `#scope` tags',
-  'when every entry names the same scopes, no bullet carries tags',
+  'when every entry names the same scopes, no bullet ends with tags',
   'one nested list item, `migration: {migration}`',
 ];
 
@@ -86,7 +86,7 @@ describe('summarize-change contract', () => {
 
     const message =
       'The block is where the entries reach the pull request as data, and the consolidated record that the ' +
-      'frontmatter carries is derived from them. Dropping any of these steps leaves the entries as prose alone, ' +
+      'frontmatter records is derived from them. Dropping any of these steps leaves the entries as prose alone, ' +
       `which reads as a working change summary. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -115,7 +115,7 @@ describe('summarize-change contract', () => {
     const message =
       'The lede reaches the merge commit, the changelog, and the release notes, and it was written in a fresh ' +
       'context for the reader who meets the change without the entries. A skill left free to compose it writes a ' +
-      `plausible one carrying this session's weighting. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      `plausible one weighted by this session's judgment. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
