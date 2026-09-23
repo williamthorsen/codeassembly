@@ -6,15 +6,15 @@ A change's scope, type, and breaking marker are consolidated once from the chang
 
 ## Terms
 
-| Term                | Meaning                                                                                                                                                             |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| record              | The values from which a title renders: `title`, `scope`, `type`, `breaking`, `ticket_ref`, and `pr_number`.                                                         |
-| commit entry        | The record that one commit subject or one `Change:` trailer declares. `consolidate-branch` reports these.                                                           |
-| change entry        | One outcome of a change: its `type`, the `scopes` that it touched, its `breaking` marker, and the sentence of `text` that reports it. `entry-drafter` writes these. |
-| consolidated record | The `scope`, `type`, and `breaking` to which a list of entries consolidates, by one ranking that serves both kinds.                                                 |
-| overrides           | The `scope`, `type`, and `breaking` that the author sets by hand, plus `title` at merge.                                                                            |
-| effective record    | The consolidated record, or at merge the record resolved from the sources, with the overrides applied, plus the title and, at merge, `ticket_ref` and `pr_number`.  |
-| block               | The fenced `change-record` block that ends a pull-request body. It is never called "the record".                                                                    |
+| Term                | Meaning                                                                                                                                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| record              | The values from which a title renders: `title`, `scope`, `type`, `breaking`, `ticket_ref`, and `pr_number`.                                                                                                                                 |
+| commit entry        | The record that one commit subject or one `Change:` trailer declares. `consolidate-branch` reports these.                                                                                                                                   |
+| change entry        | One outcome of a change: its `type`, the `scopes` that it touched, its `breaking` marker, the sentence of `text` that reports it, and an optional one-line `migration` naming the edit that a consumer makes. `entry-drafter` writes these. |
+| consolidated record | The `scope`, `type`, and `breaking` to which a list of entries consolidates, by one ranking that serves both kinds.                                                                                                                         |
+| overrides           | The `scope`, `type`, and `breaking` that the author sets by hand, plus `title` at merge.                                                                                                                                                    |
+| effective record    | The consolidated record, or at merge the record resolved from the sources, with the overrides applied, plus the title and, at merge, `ticket_ref` and `pr_number`.                                                                          |
+| block               | The fenced `change-record` block that ends a pull-request body. It is never called "the record".                                                                                                                                            |
 
 ## The record's fields
 
@@ -40,7 +40,7 @@ Change: agents|feat: Add the parser
 Change: agents|fix: Correct the guard
 ```
 
-`condense-branch` writes one per commit entry when it squashes a branch, so a condensed branch stays readable. `merge-pr` writes one per change entry into the squash-merge body, below the lede, so the entries that the block records reach the default branch as records rather than as prose; `resolve-merge` renders them and reports them in `trailers`, separate from the merge body. Because Git parses them as trailers, the block may follow any number of body paragraphs.
+`condense-branch` writes one per commit entry when it squashes a branch, so a condensed branch stays readable. `merge-pr` writes one per change entry into the squash-merge body, below the lede, so the entries that the block records reach the default branch as records rather than as prose; `resolve-merge` renders them and reports them in `trailers`, separate from the merge body. A trailer carries no entry's `migration`. Because Git parses them as trailers, the block may follow any number of body paragraphs.
 
 **A commit with trailers contributes them in place of its subject.** Its subject renders the record to which those trailers already consolidate. Reading both would count the branch's commit entries twice.
 
@@ -60,21 +60,23 @@ overrides:
 entries_commit: e5029924
 entries:
   - type: feat
-    scopes:
-      - agents
-      - kb
-    breaking: false
+    scopes: [agents, kb]
     text: Adds the store-qualified wikilink `[[store:Note title]]`, which `kb check` resolves against the named store.
+  - type: drop
+    scopes: [kb]
+    breaking: true
+    text: Removes the `kb find` alias of `kb search`.
+    migration: Replace `kb find` with `kb search`, which exits nonzero when nothing matches.
 ```
 ````
 
-| Key                   | Meaning                                                                                                                                             |
-| --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`               | The change summary's title. Required.                                                                                                               |
-| `consolidated_record` | The consolidated record's `scope`, `type`, and `breaking`. Absent when the change determined none of them.                                          |
-| `overrides`           | The `scope`, `type`, or `breaking` that the author set by hand. Absent when the author set none. `breaking` appears only as `true`.                 |
-| `entries_commit`      | The short SHA of the commit at which the change entries were derived. Absent when the block records no entries.                                     |
-| `entries`             | The change entries, each carrying `type`, `scopes`, `breaking`, and `text`, in the order that the drafter returned them. Absent when there is none. |
+| Key                   | Meaning                                                                                                                                                                                                                    |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`               | The change summary's title. Required.                                                                                                                                                                                      |
+| `consolidated_record` | The consolidated record's `scope`, `type`, and `breaking`. Absent when the change determined none of them.                                                                                                                 |
+| `overrides`           | The `scope`, `type`, or `breaking` that the author set by hand. Absent when the author set none. `breaking` appears only as `true`.                                                                                        |
+| `entries_commit`      | The short SHA of the commit at which the change entries were derived. Absent when the block records no entries.                                                                                                            |
+| `entries`             | The change entries, in the order that the drafter returned them. Absent when there is none. Each renders `type`, `scopes` in flow form, `breaking` only when it is `true`, `text`, and `migration` when the entry has one. |
 
 The payload is YAML rather than a surface template because `consolidated_record`, `overrides`, and `entries` nest, and a template renders one flat line. Nesting also leaves room for the block to gain structured keys, such as a grammar version or a ticket reference. Its inverse is a YAML parse rather than a compiled pattern, so this pair needs none of the round-trip verification required by the title grammar.
 
@@ -114,7 +116,7 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 
 **The body's last `change-record` block is the one read.** It is malformed when it never closes, when its payload is not a YAML mapping, when `title` is missing, empty, or not a string, when `consolidated_record` or `overrides` is not a mapping, and when a declared field has the wrong type. A malformed block is reported as `malformed-block` and resolved as though it were absent. A key that the grammar does not declare is ignored, and a declared key whose value is null reads as absent.
 
-**A defective `entries` list is the one exception to that rule.** The list is defective when it is not a list, when an item is not a mapping, when an item's `type` or `text` is missing, blank, or not a string, when its `breaking` is not a boolean, or when its `scopes` is not a list of strings; a non-string `entries_commit` reads the same way, since the commit records a claim about the entries. The block reads with its entries absent, its defect reported as `malformed-entries`, and its title and consolidated record still in use. Every other field keeps the all-or-nothing rule, because a block that loses either of those has nothing left to resolve from.
+**A defective `entries` list is the one exception to that rule.** The list is defective when it is not a list, when an item is not a mapping, when an item's `type` or `text` is missing, blank, or not a string, when its `breaking` is not a boolean, when its `scopes` is not a list of strings, or when its `migration` is not a string or spans more than one line; a non-string `entries_commit` reads the same way, since the commit records a claim about the entries. The block reads with its entries absent, its defect reported as `malformed-entries`, and its title and consolidated record still in use. Every other field keeps the all-or-nothing rule, because a block that loses either of those has nothing left to resolve from.
 
 **The block's entries are fresh** when the block records some, records the commit at which they were derived, and the pull request's head starts with that commit. The comparison is a prefix test rather than an equality, since the block records a short SHA and the pull request reports a full one, and it ignores case. Entries recorded without a derivation commit are stale, since nothing establishes when they were read. A block whose entries are present and not fresh raises `stale-entries`, which names the derivation commit, `null` when the block records none, and the head against which it was compared.
 

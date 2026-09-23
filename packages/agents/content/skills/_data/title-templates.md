@@ -193,7 +193,7 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entrie
 
 **The entries arrive in a file rather than through flags** because `text` is arbitrary prose containing backticks and quotes, which a shell argument would expand or truncate.
 
-The run refuses an entries file that cannot be read, that is not valid YAML, or that is malformed, naming the defect: a value that is not a list, an item that is not a mapping, a missing or blank `type` or `text`, a `breaking` that is not a boolean, and a `scopes` that is not a list of strings. A key that the grammar does not declare is ignored. It also refuses outright if no taxonomy is readable, since the entries have nothing to rank against.
+The run refuses an entries file that cannot be read, that is not valid YAML, or that is malformed, naming the defect: a value that is not a list, an item that is not a mapping, a missing or blank `type` or `text`, a `breaking` that is not a boolean, a `scopes` that is not a list of strings, and a `migration` that is not a string or spans more than one line. A blank or null `migration` reads as absent, and a key that the grammar does not declare is ignored. It also refuses outright if no taxonomy is readable, since the entries have nothing to rank against.
 
 ## `resolve-ticket-type`
 
@@ -261,7 +261,7 @@ The output is JSON whose `block` contains the fenced block, fences included:
 
 ````json
 {
-  "block": "```change-record\ntitle: Add the parser\nconsolidated_record:\n  scope: agents\n  type: feat\noverrides:\n  type: sec\n  breaking: true\nentries_commit: e5029924\nentries:\n  - type: feat\n    scopes:\n      - agents\n    breaking: false\n    text: Adds the parser\n```"
+  "block": "```change-record\ntitle: Add the parser\nconsolidated_record:\n  scope: agents\n  type: feat\noverrides:\n  type: sec\n  breaking: true\nentries_commit: e5029924\nentries:\n  - type: feat\n    scopes: [agents]\n    text: Adds the parser\n```"
 }
 ````
 
@@ -341,7 +341,7 @@ Each field names the step that set it last, as [Where the record is read](./chan
 
 **`sources` reports what each source names**, whether or not the resolution used it. A source is `null` only when it was not read: `block` when the body contains no block or a malformed one, `commits` when the commits cannot be read, and `pr_title` when the title does not invert. Within a record, a field that the source does not determine is `null`, `breaking` included.
 
-- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` when the block has no consolidated record and whose `breaking` is `false` when the block omits it, its `overrides`, which lists only the keys that are set, its `entries`, each carrying `type`, `scopes`, `breaking`, and `text`, and its `entries_commit`. `entries` is empty when the block records none and when they were malformed; `entries_commit` is `null` when the block records none.
+- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` when the block has no consolidated record and whose `breaking` is `false` when the block omits it, its `overrides`, which lists only the keys that are set, its `entries`, each carrying `type`, `scopes`, `breaking`, `text`, and any `migration`, and its `entries_commit`. `entries` is empty when the block records none and when they were malformed; `entries_commit` is `null` when the block records none.
 - `commits` is the record to which the commits between `--base` and `--head` consolidate. Every field is `null` when the range contains no entry.
 - `labels` is the record that the labels name, and is never `null`. `type` and `scope` each resolve when exactly one label of their section names a key. `breaking` is `true` with the `breaking` label, `false` when a type label resolves without it, and `null` otherwise.
 - `pr_title` is the record that the pull-request title contains: the bare `title` and the `ticket_ref`, and the `scope`, `type`, and `breaking` of any typed prefix, each `null` when the title contains no prefix. It is read under `--override-title` too.
@@ -350,7 +350,7 @@ Each field names the step that set it last, as [Where the record is read](./chan
 
 **`body` is the merge body**: the `## What` section, without any `change-record` block and without the trailing lines that contain only a closing keyword (`close`, `fix`, `resolve`, and their inflections) and ticket references.
 
-**`trailers` is the block's change entries rendered as trailer values**, one per entry, in the order that the block records them. Each renders through `commit.title_format` from the entry's `type`, its `breaking` marker, its `scopes` joined by commas, and its `text` as the title, so a trailer and the commit subject for which it stands share one grammar. An entry naming `agents` and `kb` therefore renders as `agents,kb|feat: Adds the store-qualified wikilink`, and a breaking one as `agents|drop!: Removes the legacy API`. The value excludes the `Change: ` prefix, as [`consolidate-branch`](#consolidate-branch)'s `entries[].change` does, and the writer adds it.
+**`trailers` is the block's change entries rendered as trailer values**, one per entry, in the order that the block records them. Each renders through `commit.title_format` from the entry's `type`, its `breaking` marker, its `scopes` joined by commas, and its `text` as the title, leaving out its `migration`, so a trailer and the commit subject for which it stands share one grammar. An entry naming `agents` and `kb` therefore renders as `agents,kb|feat: Adds the store-qualified wikilink`, and a breaking one as `agents|drop!: Removes the legacy API`. The value excludes the `Change: ` prefix, as [`consolidate-branch`](#consolidate-branch)'s `entries[].change` does, and the writer adds it.
 
 The entries render whether or not they are fresh: a merge re-derives nothing, and a `stale-entries` notice reports staleness instead. The list is empty when the block is absent, malformed, or records no entry, and when `commit.title_format` is empty, since a repository with no commit grammar has no trailer grammar. `trailers` is separate from `body`, so a consumer that replaces a thin body keeps them.
 
