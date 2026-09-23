@@ -54,9 +54,14 @@ const HUNK_RETURNING_DIFF = /`git diff (?![^`]*--stat)[^`]*`/g;
 const LEAVE_OUT_RULE_PHRASE = 'the question is never whether a fact is real';
 
 /**
- * Phrases fixing the lede to prose of a stated length. Lowercased, so that a sentence's opening capital still matches.
+ * Phrases fixing the lede to prose that summarizes the entries rather than restating them. Lowercased, so that a
+ * sentence's opening capital still matches.
  */
-const LEDE_FORM_PHRASES: ReadonlyArray<string> = ['two or three sentences of prose', 'prose, never a list'];
+const LEDE_FORM_PHRASES: ReadonlyArray<string> = [
+  'include a fact stated by an entry only when',
+  'a one-sentence lede is often complete',
+  'prose, never a list',
+];
 
 /** The heading under which the drafter returns the lede, which each caller takes as `## What`. */
 const LEDE_HEADING = '## Lede';
@@ -320,14 +325,16 @@ describe('entry-drafter contract', () => {
     expect(entriesAt, message).toBeGreaterThan(ledeAt);
   });
 
-  it('fixes the lede to prose of a stated length', async () => {
+  it('fixes the lede to prose that summarizes the entries', async () => {
     const text = (await EXPANDED).toLowerCase();
     const missing = LEDE_FORM_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
       'The lede is the whole of what a reader of `git log` gets, and nothing downstream shortens it or changes its ' +
-      'shape. Without a stated length it grows to cover every entry, and without the prose rule it arrives as the ' +
-      `entry list a second time. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'shape. The same reader reads the entries next, so a lede that restates them costs a second pass over the ' +
+      'same facts. Without the summary rule it gives each entry a sentence, without the one-sentence allowance it ' +
+      'fills a length as a budget, and without the prose rule it arrives as the entry list a second time. These ' +
+      `phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
