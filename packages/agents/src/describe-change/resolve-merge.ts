@@ -2,7 +2,6 @@ import { applyOverrides, type Overrides } from '../change-grammar/apply-override
 import { compileTemplate } from '../change-grammar/compile-template.ts';
 import { parse } from '../change-grammar/parse.ts';
 import { render } from '../change-grammar/render.ts';
-import { SCOPE_SEPARATOR } from '../change-grammar/tokens.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
 import type { ChangeEntry } from './change-entries.ts';
@@ -10,6 +9,7 @@ import {
   type ChangeRecordBlock,
   type ChangeRecordBlockReading,
   type RecordOverrides,
+  renderMergeChangeRecordBlock,
   stripChangeRecordBlocks,
 } from './change-record-block.ts';
 import { findDefects, type RecordDefect } from './find-defects.ts';
@@ -45,6 +45,7 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
   notices.push(...findPullRequestTitleNotices(prTitle, effective));
   const title = resolveTitle({ blockTitle: block?.title, overrides: input.overrides, pr: input.pr, prTitle });
   const ticketRef = resolveTicketRef({ prTitle, ticketRef: input.ticketRef });
+  const entries = block?.entries ?? [];
 
   return {
     effective_record: {
@@ -70,7 +71,8 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
       title: title.value,
     }),
     body: composeBody(input.pr.body),
-    trailers: renderEntryTrailers(block?.entries ?? [], input.templates.commit),
+    merge_block: renderMergeBlock({ entries, prNumber: input.pr.number, ticketRef: ticketRef?.value }),
+    entry_count: entries.length,
     sources: {
       block: block === undefined ? null : toBlockOutcome(block),
       commits: commits === undefined ? null : toSourceRecordOutcome(commits),
@@ -169,10 +171,13 @@ export interface ResolveMergeOutcome {
   defects: RecordDefect[];
   effective_record: EffectiveRecordOutcome;
   effective_sources: EffectiveSourcesOutcome;
+  /** The number of change entries that `merge_block` records. */
+  entry_count: number;
+  /** The `change-record` block that the merge body contains below its lede, `null` when there is no entry to record. */
+  merge_block: string | null;
   merge_title: string;
   notices: MergeNotice[];
   sources: MergeSourcesOutcome;
-  trailers: string[];
 }
 
 /**
@@ -419,26 +424,23 @@ function readSources(input: MergeInput): {
 }
 
 /**
- * Renders the block's change entries as trailer values, one per entry, in the order that the block records them. Each
- * entry renders through `commit.title_format` from its type, its marker, its scopes joined by the separator, and its
- * `text` as the title, so a trailer and the commit subject that it stands for share one grammar.
- *
- * The value excludes the `Change: ` prefix, as `consolidate-branch`'s `entries[].change` does, and the writer adds it.
- * A repository whose commit grammar is empty renders none, having no trailer grammar either.
+ * Renders the merge-commit `change-record` block from the block's change entries, or `null` when there is none, since a
+ * block without entries tells release-kit nothing. A pull-request number that is not a positive integer is omitted.
  */
-function renderEntryTrailers(entries: readonly ChangeEntry[], template: string): string[] {
-  if (template === '') {
-    return [];
+function renderMergeBlock(input: {
+  entries: ChangeEntry[];
+  prNumber: string;
+  ticketRef: string | undefined;
+}): string | null {
+  if (input.entries.length === 0) {
+    return null;
   }
-  const nodes = compileTemplate(template);
-  return entries.map((entry) =>
-    render(nodes, {
-      ...(entry.breaking && { breaking: true }),
-      scope: entry.scopes.join(SCOPE_SEPARATOR),
-      title: entry.text,
-      type: entry.type,
-    }),
-  );
+  const prNumber = Number(input.prNumber);
+  return renderMergeChangeRecordBlock({
+    entries: input.entries,
+    ...(Number.isSafeInteger(prNumber) && prNumber > 0 && { prNumber }),
+    ...(input.ticketRef !== undefined && { ticketRef: input.ticketRef }),
+  });
 }
 
 /** Renders the effective record through `merge.title_format`, falling back to the bare title when that template is empty. */

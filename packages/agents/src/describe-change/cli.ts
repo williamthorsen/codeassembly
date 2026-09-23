@@ -24,6 +24,7 @@ import { type ChangeEntry, consolidateChangeEntries, readChangeEntries } from '.
 import {
   type ChangeRecordBlock,
   readChangeRecordBlock,
+  readMergeChangeRecordBlock,
   type RecordOverrides,
   renderChangeRecordBlock,
 } from './change-record-block.ts';
@@ -36,6 +37,7 @@ import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOu
 import { discoverWorkspaceDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
 import {
+  type CheckMergeBodyOutcome,
   type ConsolidateBranchOutcome,
   type ConsolidateEntriesOutcome,
   isSurface,
@@ -109,6 +111,13 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
     ],
     read: readResolveMergeArgs,
   },
+  'check-merge-body': {
+    flags: [
+      { name: 'body-file', takesValue: true },
+      { name: 'entry-count', takesValue: true },
+    ],
+    read: readCheckMergeBodyArgs,
+  },
   'resolve-scopes': { flags: [{ name: 'path', takesValue: true }], read: readResolveScopesArgs },
 };
 
@@ -166,6 +175,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 export async function runDescribe(input: DescribeInput): Promise<DescribeResult> {
   const args = parseArgs(input.argv);
   switch (args.subcommand) {
+    case 'check-merge-body':
+      return runCheckMergeBody(args, input);
     case 'consolidate-branch':
       return runConsolidateBranch(args.baseRef, input);
     case 'consolidate-entries':
@@ -198,6 +209,7 @@ export interface DescribeInput {
 /** What a completed run writes: the JSON payload for stdout, and the diagnostics for stderr. */
 export interface DescribeResult {
   output:
+    | CheckMergeBodyOutcome
     | ConsolidateBranchOutcome
     | ConsolidateEntriesOutcome
     | ParseTitleOutcome
@@ -313,6 +325,21 @@ async function loadTemplatesWithTaxonomy(
     throw new Error(`${reason}; none is readable under ${input.dataDir}`);
   }
   return { ...loaded, taxonomy };
+}
+
+/** Reads the `check-merge-body` invocation: the path of the composed merge body and the entry count that it must record. */
+function readCheckMergeBodyArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  const values = valueFlagMap(flags);
+  const entryCount = readRequiredValue('check-merge-body', values, 'entry-count');
+  if (!/^\d+$/.test(entryCount)) {
+    throw new Error(`--entry-count takes a non-negative integer; got ${entryCount}`);
+  }
+  return {
+    bodyFile: readRequiredValue('check-merge-body', values, 'body-file'),
+    entryCount: Number(entryCount),
+    subcommand: 'check-merge-body',
+  };
 }
 
 /** Reads the `consolidate-branch` invocation: the base ref of the range to read. */
@@ -574,6 +601,36 @@ function renderTemplate(template: string, record: ChangeRecord): string {
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', 'skills', '_data');
+}
+
+/**
+ * Reads a composed merge body back as release-kit reads the merge commit, refusing a body whose block is malformed, or
+ * whose entry count differs from the one expected. An expected count of zero requires the body to contain no block.
+ */
+async function runCheckMergeBody(
+  args: { bodyFile: string; entryCount: number },
+  input: DescribeInput,
+): Promise<DescribeResult> {
+  const resolved = path.resolve(input.cwd, args.bodyFile);
+  let body: string;
+  try {
+    body = await readFile(resolved, 'utf8');
+  } catch (error) {
+    throw chainError(`--body-file ${resolved} cannot be read`, error);
+  }
+  const reading = readMergeChangeRecordBlock(body);
+  if (reading.kind === 'malformed') {
+    throw new Error(`the merge body's change-record block is malformed: ${reading.defect}`);
+  }
+  if (reading.kind === 'read' && args.entryCount === 0) {
+    throw new Error('the merge body contains a change-record block, but no entry was expected');
+  }
+  const found = reading.kind === 'absent' ? 0 : reading.block.entries.length;
+  if (found !== args.entryCount) {
+    throw new Error(`the merge body records ${found} change entries; expected ${args.entryCount}`);
+  }
+  const output: CheckMergeBodyOutcome = { entry_count: found };
+  return { output, warnings: [] };
 }
 
 /**

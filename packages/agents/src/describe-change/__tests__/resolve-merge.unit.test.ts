@@ -4,6 +4,7 @@ import type { ChangeRecord, Taxonomy } from '../../change-grammar/types.ts';
 import type { ChangeEntry } from '../change-entries.ts';
 import {
   type ChangeRecordBlockReading,
+  readMergeChangeRecordBlock,
   type RecordOverrides,
   renderChangeRecordBlock,
 } from '../change-record-block.ts';
@@ -64,7 +65,8 @@ describe(resolveMerge, () => {
         },
         merge_title: '#466 agents|feat: Add foo (#470)',
         body: '- Adds foo.',
-        trailers: [],
+        merge_block: null,
+        entry_count: 0,
         sources: {
           block: {
             title: 'Add foo',
@@ -513,62 +515,44 @@ describe(resolveMerge, () => {
     });
   });
 
-  describe('the trailers', () => {
-    it('renders one per entry through the commit template, joining several scopes with a comma', () => {
+  describe('the merge block', () => {
+    it('renders the entries with the pull-request number and the ticket reference, and counts them', () => {
       const entries: ChangeEntry[] = [
         { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
-        { breaking: false, scopes: ['kb'], text: 'Corrects the guard', type: 'docs' },
+        { breaking: true, migration: 'Import `read` from `kb`', scopes: [], text: 'Removes the reader', type: 'drop' },
       ];
 
       const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }, { entries, fresh: true }) }));
 
-      expect(report.trailers).toStrictEqual([
-        'agents,kb|feat: Adds the store-qualified wikilink',
-        'kb|docs: Corrects the guard',
-      ]);
+      expect(report.entry_count).toBe(2);
+      expect(readMergeChangeRecordBlock(report.merge_block ?? '')).toStrictEqual({
+        block: { entries, prNumber: 470, ticketRef: '#466' },
+        kind: 'read',
+      });
     });
 
-    it('renders the breaking marker on the type, as the piped-scope convention places it', () => {
-      const entries: ChangeEntry[] = [
-        { breaking: true, scopes: ['agents'], text: 'Removes the legacy API', type: 'drop' },
-      ];
+    it('omits the ticket reference when the merge has none', () => {
+      const report = resolveMerge(
+        buildInput({
+          block: readBlock({ type: 'feat' }, { entries: ENTRIES, fresh: true }),
+          prTitle: 'Add foo',
+          ticketRef: null,
+        }),
+      );
 
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'drop' }, { entries, fresh: true }) }));
-
-      expect(report.trailers).toStrictEqual(['agents|drop!: Removes the legacy API']);
+      expect(readMergeChangeRecordBlock(report.merge_block ?? '')).toStrictEqual({
+        block: { entries: ENTRIES, prNumber: 470 },
+        kind: 'read',
+      });
     });
 
-    it('leaves an entry’s migration out of its trailer', () => {
-      const entries: ChangeEntry[] = [
-        {
-          breaking: true,
-          migration: 'Import `read` from `kb`',
-          scopes: ['agents'],
-          text: 'Removes the legacy API',
-          type: 'drop',
-        },
-      ];
-
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'drop' }, { entries, fresh: true }) }));
-
-      expect(report.trailers).toStrictEqual(['agents|drop!: Removes the legacy API']);
-    });
-
-    it('renders an entry naming no scope as its type and text alone', () => {
-      const entries: ChangeEntry[] = [{ breaking: false, scopes: [], text: 'Adds foo', type: 'feat' }];
-
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }, { entries, fresh: true }) }));
-
-      expect(report.trailers).toStrictEqual(['feat: Adds foo']);
-    });
-
-    it('keeps the trailers out of the composed body', () => {
+    it('keeps the block out of the composed body', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock({ scope: 'kb', type: 'feat' }, { entries: ENTRIES, fresh: true }) }),
       );
 
       expect(report.body).toBe('- Adds foo.');
-      expect(report.trailers).toStrictEqual(['kb|feat: Adds the store-qualified wikilink']);
+      expect(report.merge_block).toMatch(/^```change-record\n/);
     });
 
     it('renders stale entries as written, since a merge re-derives nothing', () => {
@@ -576,10 +560,11 @@ describe(resolveMerge, () => {
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
 
-      expect(report.trailers).toStrictEqual(['kb|feat: Adds the store-qualified wikilink']);
+      expect(report.entry_count).toBe(1);
+      expect(report.merge_block).not.toBeNull();
     });
 
-    it('renders none for a repository whose commit grammar is empty', () => {
+    it('renders for a repository whose commit grammar is empty', () => {
       const report = resolveMerge(
         buildInput({
           block: readBlock({ type: 'feat' }, { entries: ENTRIES, fresh: true }),
@@ -587,21 +572,23 @@ describe(resolveMerge, () => {
         }),
       );
 
-      expect(report.trailers).toStrictEqual([]);
+      expect(report.entry_count).toBe(1);
+      expect(report.merge_block).not.toBeNull();
     });
 
-    it('renders none for a block that records no entry', () => {
-      expect(resolveMerge(buildInput({ block: readBlock({ type: 'feat' }) })).trailers).toStrictEqual([]);
-    });
+    it.each<{ block: ChangeRecordBlockReading; name: string }>([
+      { name: 'a block that records no entry', block: readBlock({ type: 'feat' }) },
+      {
+        name: 'a malformed entry list',
+        block: readBlock({ type: 'feat' }, { entriesDefect: '`entries[0].text` is missing' }),
+      },
+      { name: 'an absent block', block: { kind: 'absent' } },
+      { name: 'a malformed block', block: { defect: '`title` is missing', kind: 'malformed' } },
+    ])('renders none for $name', ({ block }) => {
+      const report = resolveMerge(buildInput({ block }));
 
-    it('renders none for a malformed entry list', () => {
-      const block = readBlock({ type: 'feat' }, { entriesDefect: '`entries[0].text` is missing' });
-
-      expect(resolveMerge(buildInput({ block })).trailers).toStrictEqual([]);
-    });
-
-    it('renders none for an absent block', () => {
-      expect(resolveMerge(buildInput({})).trailers).toStrictEqual([]);
+      expect(report.merge_block).toBeNull();
+      expect(report.entry_count).toBe(0);
     });
   });
 

@@ -9,7 +9,7 @@ import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 
 import { isRecord } from '../../lib/type-guards.ts';
-import { renderChangeRecordBlock } from '../change-record-block.ts';
+import { renderChangeRecordBlock, renderMergeChangeRecordBlock } from '../change-record-block.ts';
 import { parseArgs, runDescribe } from '../cli.ts';
 import type { ConsolidateBranchOutcome, EntryOutcome } from '../types.ts';
 
@@ -55,6 +55,7 @@ const SUBCOMMAND_NAMES = [
   'resolve-effective-record',
   'render-block',
   'resolve-merge',
+  'check-merge-body',
   'resolve-scopes',
 ];
 
@@ -1232,7 +1233,8 @@ describe('resolve-merge', () => {
       },
       merge_title: '#466 agents|feat: Add the parser (#470)',
       body: '- Adds the parser.',
-      trailers: [],
+      merge_block: null,
+      entry_count: 0,
       sources: {
         block: {
           title: 'Add the parser',
@@ -1250,7 +1252,7 @@ describe('resolve-merge', () => {
     });
   });
 
-  it('reports the block’s entries as rendered trailers, keeping them out of the body', async () => {
+  it('reports the block’s entries as the merge block, keeping them out of the body', async () => {
     const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     const block = renderChangeRecordBlock({
       consolidatedRecord: { type: 'feat' },
@@ -1270,10 +1272,8 @@ describe('resolve-merge', () => {
       home,
     });
 
-    expect(output).toMatchObject({
-      body: '- Adds the parser.',
-      trailers: ['agents,kb|feat: Adds the store-qualified wikilink', 'agents|drop!: Removes the legacy API'],
-    });
+    expect(output).toMatchObject({ body: '- Adds the parser.', entry_count: 2 });
+    expect(output).toHaveProperty('merge_block', expect.stringMatching(/^```change-record\npr_number: 470\n/));
   });
 
   it('when the body contains no block, resolves from the commits and says so', async () => {
@@ -1365,6 +1365,77 @@ describe('resolve-merge', () => {
         home,
       }),
     ).rejects.toThrow(/resolve-merge checks types against the taxonomy/);
+  });
+});
+
+describe('check-merge-body', () => {
+  const MERGE_BLOCK = renderMergeChangeRecordBlock({
+    entries: [{ breaking: false, scopes: ['agents'], text: 'Adds the parser', type: 'feat' }],
+    prNumber: 470,
+    ticketRef: '#466',
+  });
+
+  it('reads the body file and the expected entry count', () => {
+    expect(parseArgs(['check-merge-body', '--body-file', 'body.md', '--entry-count', '2'])).toStrictEqual({
+      bodyFile: 'body.md',
+      entryCount: 2,
+      subcommand: 'check-merge-body',
+    });
+  });
+
+  it.each(['--body-file', '--entry-count'])('if %s is missing, refuses the invocation', (flag) => {
+    const argv = ['check-merge-body', '--body-file', 'body.md', '--entry-count', '2'];
+    const index = argv.indexOf(flag);
+
+    expect(() => parseArgs(argv.toSpliced(index, 2))).toThrow(`check-merge-body requires ${flag}`);
+  });
+
+  it('if the entry count is not a non-negative integer, refuses it', () => {
+    expect(() => parseArgs(['check-merge-body', '--body-file', 'body.md', '--entry-count', '-1'])).toThrow(
+      /--entry-count takes a non-negative integer/,
+    );
+  });
+
+  it('passes a body whose block records the expected entry count', async () => {
+    const bodyFile = await writeBody(`Adds the parser.\n\n${MERGE_BLOCK}\n`);
+
+    const { output } = await runCheck(bodyFile, 1);
+
+    expect(output).toStrictEqual({ entry_count: 1 });
+  });
+
+  it('passes a body containing no block when no entry is expected', async () => {
+    const { output } = await runCheck(await writeBody('Adds the parser.\n'), 0);
+
+    expect(output).toStrictEqual({ entry_count: 0 });
+  });
+
+  it('refuses a body whose block records a different entry count', async () => {
+    const bodyFile = await writeBody(`Adds the parser.\n\n${MERGE_BLOCK}\n`);
+
+    await expect(runCheck(bodyFile, 2)).rejects.toThrow('the merge body records 1 change entries; expected 2');
+  });
+
+  it('refuses a body containing no block when entries are expected', async () => {
+    await expect(runCheck(await writeBody('Adds the parser.\n'), 1)).rejects.toThrow(
+      'the merge body records 0 change entries; expected 1',
+    );
+  });
+
+  it('refuses a body containing a block when no entry is expected', async () => {
+    const bodyFile = await writeBody(`Adds the parser.\n\n${MERGE_BLOCK}\n`);
+
+    await expect(runCheck(bodyFile, 0)).rejects.toThrow(/contains a change-record block, but no entry was expected/);
+  });
+
+  it('refuses a body whose block is malformed, naming the defect', async () => {
+    const bodyFile = await writeBody('Adds the parser.\n\n```change-record\npr_number: "470"\nentries: []\n```\n');
+
+    await expect(runCheck(bodyFile, 0)).rejects.toThrow('`pr_number` is not a positive integer');
+  });
+
+  it('refuses a body file that cannot be read', async () => {
+    await expect(runCheck(join(tmpdir(), 'absent-merge-body.md'), 0)).rejects.toThrow(/--body-file .* cannot be read/);
   });
 });
 
@@ -1482,6 +1553,16 @@ function omitCommit(entry: EntryOutcome): Omit<EntryOutcome, 'commit'> {
 /** Returns the pull-request flags that `resolve-merge` requires beside `--base` and `--head`, reading the body from `bodyFile`. */
 function pullRequestFlags(bodyFile: string): string[] {
   return ['--pr-title', '#466 Add the parser', '--pr-body-file', bodyFile, '--pr-number', '470'];
+}
+
+/** Runs `check-merge-body` in process against a body file and an expected entry count. */
+async function runCheck(bodyFile: string, entryCount: number): ReturnType<typeof runDescribe> {
+  return runDescribe({
+    argv: ['check-merge-body', '--body-file', bodyFile, '--entry-count', String(entryCount)],
+    cwd: process.cwd(),
+    dataDir: DATA_DIR,
+    home: tmpdir(),
+  });
 }
 
 /** Runs the helper's source under the running Node, capturing its output and exit code. */
