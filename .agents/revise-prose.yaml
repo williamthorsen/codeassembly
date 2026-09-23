@@ -1,7 +1,7 @@
 rules:
   capitalization-after-colon:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: false
     roots:
       - .agents
@@ -219,7 +219,7 @@ rules:
       - vitest.root.config.ts
   doc-descriptions:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: false
     roots:
       - .agents
@@ -437,7 +437,7 @@ rules:
       - vitest.root.config.ts
   em-dash:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: true
     roots:
       - .agents
@@ -655,7 +655,7 @@ rules:
       - vitest.root.config.ts
   inline-comments:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: false
     roots:
       - .agents
@@ -873,7 +873,7 @@ rules:
       - vitest.root.config.ts
   plain-speech:
     version: '7'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: false
     roots:
       - .agents
@@ -897,6 +897,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
+      - packages/agents/content/skills/merge-pr/SKILL.md
       - packages/agents/src/capture-event
       - packages/agents/src/derive-session-context
       - packages/agents/src/emit-event
@@ -969,7 +970,7 @@ rules:
       - vitest.root.config.ts
   reduced-object-relative:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: true
     roots:
       - .agents
@@ -1187,7 +1188,7 @@ rules:
       - vitest.root.config.ts
   second-person:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: true
     roots:
       - .agents
@@ -1405,7 +1406,7 @@ rules:
       - vitest.root.config.ts
   sentence-case:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: false
     roots:
       - .agents
@@ -1623,7 +1624,7 @@ rules:
       - vitest.root.config.ts
   so:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: true
     roots:
       - .agents
@@ -1841,7 +1842,7 @@ rules:
       - vitest.root.config.ts
   where:
     version: '1'
-    swept-at: 2026-09-17
+    swept-at: 2026-09-23
     detected: true
     roots:
       - .agents
@@ -3471,16 +3472,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/skills/merge-pr/SKILL.md
-    phrase: match the approved ones
-    ground: 'not the construction: "ones" is the object of "match"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/skills/merge-pr/SKILL.md
-    phrase: Never fold this case into "not merged"
-    ground: 'not the construction: "fold" is the main verb and "this case" its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/skills/merge-pr/SKILL.md
     phrase: Never offer the merge while `defects` contains an entry.
     ground: 'not the construction: a "while" adverbial clause with no object gap'
   - rule: reduced-object-relative
@@ -3493,11 +3484,6 @@ rejections:
     file: packages/agents/content/skills/merge-pr/SKILL.md
     phrase: whether or not the resolution used them
     ground: 'not the construction: a "whether or not" clause with no head noun'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/skills/merge-pr/SKILL.md
-    phrase: which reader the draft is written for
-    ground: 'not the construction: an embedded question, not a relative clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/skills/merge-pr/SKILL.md
@@ -6784,11 +6770,6 @@ rejections:
     rule-version: '1'
     file: packages/agents/content/skills/merge-pr/SKILL.md
     phrase: A Bitbucket fork's head cannot be fetched from `{remote}`, so fetch the base branch alone.
-    ground: states a direct result, and no earlier clause-joining so remains within three sentences
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/skills/merge-pr/SKILL.md
-    phrase: Otherwise the merge has already happened, so this step can only add a record.
     ground: states a direct result, and no earlier clause-joining so remains within three sentences
   - rule: so
     rule-version: '1'
