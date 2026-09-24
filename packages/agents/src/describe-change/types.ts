@@ -1,4 +1,6 @@
 import type { ChangeRecord } from '../change-grammar/types.ts';
+import type { EntryAmendment } from './amend-entry.ts';
+import type { ChangeEntry } from './change-entries.ts';
 import type { ChangeRecordBlock, RecordOverrides } from './change-record-block.ts';
 import type { RecordDefect } from './find-defects.ts';
 import type { MergeOverrides } from './resolve-merge.ts';
@@ -6,6 +8,12 @@ import type { MergeOverrides } from './resolve-merge.ts';
 /** Reports whether `value` names one of the configured surfaces. */
 export function isSurface(value: string): value is Surface {
   return SURFACE_NAMES.includes(value);
+}
+
+/** The entry that `amend-entry` wrote, and the number of entries that the block records, under the keys that the JSON output names. */
+export interface AmendEntryOutcome {
+  entry: ChangeEntry;
+  entry_count: number;
 }
 
 /** What a branch of commits consolidated to, in the shape that the JSON output names. */
@@ -61,6 +69,7 @@ export interface EntryOutcome {
 
 /** What the invocation asks for: the subcommand that it names, and what that subcommand reads from its arguments. */
 export type ParsedArgs =
+  | { amendment: EntryAmendment; bodyFile: string; entryIndex: number; subcommand: 'amend-entry' }
   | { baseRef: string; subcommand: 'consolidate-branch' }
   | { bodyFile: string; entryCount: number; subcommand: 'check-merge-body' }
   | { bodyFile: string; record: ChangeRecord; subcommand: 'resolve-labels' }
