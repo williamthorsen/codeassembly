@@ -1,6 +1,6 @@
 ## Next-steps options
 
-The next-steps block has three independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header. When two or more sub-blocks appear, label each with its `A` identifier as a bold prefix (`**A1: Deviations from ticket**`, and so on) and keep each sub-block's own 1-based numbering, so the user answers `A1: 1, A2: 2`; a lone sub-block has no identifier.
+The next-steps block has four independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header. When two or more sub-blocks appear, label each with its `A` identifier as a bold prefix (`**A1: Deviations from ticket**`, and so on) and keep each sub-block's own 1-based numbering, so the user answers `A1: 1, A2: 2`; a lone sub-block has no identifier.
 
 Use `~/`-relative paths when possible and absolute paths otherwise. Every line subordinate to an option (invocation guidance as much as a pro or con) is a nested list item, never a whitespace-indented continuation; see [option format](#option-format).
 
@@ -302,9 +302,20 @@ Complexity levels classify individual findings, but the recommendation applies t
 
 When the cascade's conditions leave two options genuinely in balance, prefer the one that keeps a human in the loop. That resolves a tie and nothing more: It never overrides a rule that fired, and a fix that satisfies rule 2's single-change test is not a tie.
 
+### Blocked-step sub-block
+
+Shown when something that the user can clear, such as a sandbox denial, a missing credential, or a stopped service, blocked a review step. A clean review renders it like any other trigger. The line above the options names the step and the blocker, and the first option names the action that clears it:
+
+```
+{step} was blocked: {blocker}.
+
+1. 🔓 ■■■ {Action that clears it, e.g. run `! {command}`}, then re-run {step}
+2. ⏭️ ■□□ Accept the review without {step}
+```
+
 ### Combined output format
 
-When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Deviations → Source divergence → Actionable findings. Each sub-block edits a different artifact, so selecting several runs each edit against its own preview. Because source divergence appears only in PR reviews, a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Blocked step → Deviations → Source divergence → Actionable findings. Each sub-block that edits an artifact edits a different one, so selecting several runs each edit against its own preview. Because source divergence appears only in PR reviews, a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
 
 ```
 Next steps:
