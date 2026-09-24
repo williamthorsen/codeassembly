@@ -67,11 +67,12 @@ Each finding is tagged with a resolution type:
 
 ### Correctness criteria (X findings)
 
-| Focus                     | Check                                                             | Resolution                                            |
-| ------------------------- | ----------------------------------------------------------------- | ----------------------------------------------------- |
-| Factual accuracy          | Referenced files, utilities, APIs exist?                          | `auto`                                                |
-| Structural soundness      | Dependencies ordered? Steps scoped correctly?                     | `auto`                                                |
-| Requirements traceability | Every requirement has a step? Every step traces to a requirement? | `user` if intentionally omitted; `auto` if overlooked |
+| Focus                     | Check                                                                                       | Resolution                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| Factual accuracy          | Referenced files, utilities, APIs exist?                                                    | `auto`                                                |
+| Structural soundness      | Dependencies ordered? Steps scoped correctly?                                               | `auto`                                                |
+| Requirements traceability | Every requirement has a step? Every step traces to a requirement?                           | `user` if intentionally omitted; `auto` if overlooked |
+| Blocker handling          | Does a step or risk accept a degraded fallback where it should ask the user for a resource? | `auto`                                                |
 
 <!-- guidance-hook: implementation-preferences -->
 <!-- guidance-hook: writing-preferences -->
