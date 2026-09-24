@@ -27,6 +27,12 @@ const ENTRIES_YAML = [
 
 const execFileAsync = promisify(execFile);
 
+/** A label map naming the types and scopes that the `resolve-labels` fixtures use. */
+const LABEL_MAP = {
+  scopes: { agents: 'scope:agents', kb: 'scope:kb' },
+  types: { drop: 'removal', feat: 'feature', fix: 'fix' },
+};
+
 /** The helper's source, which the running Node executes directly. */
 const CLI_PATH = fileURLToPath(new URL('../cli.ts', import.meta.url));
 
@@ -57,6 +63,7 @@ const SUBCOMMAND_NAMES = [
   'resolve-merge',
   'check-merge-body',
   'resolve-scopes',
+  'resolve-labels',
 ];
 
 describe('subcommand dispatch', () => {
@@ -846,6 +853,103 @@ describe('resolve-ticket-type', () => {
     const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
 
     expect(output).toStrictEqual({ ticket_type: 'feat' });
+  });
+});
+
+describe('resolve-labels', () => {
+  it('reads the body file and the record flags', () => {
+    expect(
+      parseArgs(['resolve-labels', '--body-file', 'summary.md', '--scope', 'agents', '--type', 'feat', '--breaking']),
+    ).toEqual({
+      bodyFile: 'summary.md',
+      record: { breaking: true, scope: 'agents', type: 'feat' },
+      subcommand: 'resolve-labels',
+    });
+  });
+
+  it.each([[], ['--body-file', ' ']])('if --body-file is missing or blank, refuses the invocation', (...flags) => {
+    expect(() => parseArgs(['resolve-labels', ...flags])).toThrow('resolve-labels requires --body-file');
+  });
+
+  it('refuses --title, which resolve-labels does not take', () => {
+    expect(() => parseArgs(['resolve-labels', '--body-file', 'summary.md', '--title', 'Add foo'])).toThrow(
+      'unknown flag: --title',
+    );
+  });
+
+  it('labels the entries in the body’s last change-record block together with the record', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+    const block = renderChangeRecordBlock({
+      entries: [
+        { breaking: false, scopes: ['agents'], text: 'Adds the parser', type: 'feat' },
+        { breaking: true, scopes: ['kb', 'agents'], text: 'Renames the store', type: 'drop' },
+      ],
+      title: 'Add the parser',
+    });
+    const bodyFile = await writeBody(`---\ntitle: Add the parser\n---\n\n## What\n\nAdds the parser.\n\n${block}\n`);
+
+    const argv = ['resolve-labels', '--body-file', bodyFile, '--type', 'feat!', '--scope', '*'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['feature', 'removal', 'breaking', 'scope:agents', 'scope:kb'] });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('labels the record alone when the body contains no block, as the effective record labels it', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+    const bodyFile = await writeBody('## What\n\nAdds the parser.\n');
+
+    const argv = ['resolve-labels', '--body-file', bodyFile, '--scope', 'agents', '--type', 'fix', '--breaking'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['fix', 'breaking', 'scope:agents'] });
+  });
+
+  it('warns and labels the record alone when the block is malformed', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+    const bodyFile = await writeBody('## What\n\n```change-record\nentries: []\n```\n');
+
+    const argv = ['resolve-labels', '--body-file', bodyFile, '--type', 'feat'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['feature'] });
+    expect(warnings).toStrictEqual([
+      'the body’s change-record block is malformed, so no entry adds a label: `title` is missing',
+    ]);
+  });
+
+  it('warns and labels the record alone when the block’s entries are malformed', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+    const bodyFile = await writeBody('```change-record\ntitle: Add foo\nentries: nope\n```\n');
+
+    const argv = ['resolve-labels', '--body-file', bodyFile, '--type', 'feat'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['feature'] });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(/^the body’s change entries are malformed, so no entry adds a label: /);
+  });
+
+  it('yields no label when the repository configures no label map', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const bodyFile = await writeBody('## What\n');
+
+    const argv = ['resolve-labels', '--body-file', bodyFile, '--type', 'feat', '--breaking'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: [] });
+  });
+
+  it('refuses a body file that cannot be read', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    await expect(
+      runDescribe({ argv: ['resolve-labels', '--body-file', join(cwd, 'absent.md')], cwd, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(/--body-file .*absent\.md cannot be read/);
   });
 });
 

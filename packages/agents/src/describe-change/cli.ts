@@ -33,6 +33,7 @@ import { findDefects } from './find-defects.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readLabelMap, resolveLabeledRecord } from './read-label-map.ts';
+import { resolveLabels } from './resolve-labels.ts';
 import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOutcome } from './resolve-merge.ts';
 import { discoverWorkspaceDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
@@ -46,6 +47,7 @@ import {
   type RenderBlockOutcome,
   type RenderedTitles,
   type ResolveEffectiveRecordOutcome,
+  type ResolveLabelsOutcome,
   type ResolveMergeArgs,
   type ResolveScopesOutcome,
   type Subcommand,
@@ -119,6 +121,15 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
     read: readCheckMergeBodyArgs,
   },
   'resolve-scopes': { flags: [{ name: 'path', takesValue: true }], read: readResolveScopesArgs },
+  'resolve-labels': {
+    flags: [
+      { name: 'body-file', takesValue: true },
+      { name: 'breaking', takesValue: false },
+      { name: 'scope', takesValue: true },
+      { name: 'type', takesValue: true },
+    ],
+    read: readResolveLabelsArgs,
+  },
 };
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -189,6 +200,8 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
       return runRenderTitles(args.record, input);
     case 'resolve-effective-record':
       return runResolveEffectiveRecord(args, input);
+    case 'resolve-labels':
+      return runResolveLabels(args, input);
     case 'resolve-merge':
       return runResolveMerge(args.merge, input);
     case 'resolve-scopes':
@@ -216,6 +229,7 @@ export interface DescribeResult {
     | RenderBlockOutcome
     | RenderedTitles
     | ResolveEffectiveRecordOutcome
+    | ResolveLabelsOutcome
     | ResolveMergeOutcome
     | ResolveScopesOutcome
     | TicketTypeOutcome;
@@ -494,6 +508,16 @@ function readResolveEffectiveRecordArgs({ flags, positionals }: ScanResult): Par
   return { ...readRecordWithOverrides(flags), subcommand: 'resolve-effective-record' };
 }
 
+/** Reads the `resolve-labels` invocation: the path of the body whose entries are labeled, and the effective record's flags. */
+function readResolveLabelsArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return {
+    bodyFile: readRequiredValue('resolve-labels', valueFlagMap(flags), 'body-file'),
+    record: readRecordFlags(flags),
+    subcommand: 'resolve-labels',
+  };
+}
+
 /** Reads the `resolve-merge` invocation: the pull request's range and inputs, and the author's overrides. */
 function readResolveMergeArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
@@ -767,6 +791,39 @@ async function runResolveEffectiveRecord(
     },
     warnings: [],
   };
+}
+
+/**
+ * Resolves a change's labels through the repository's label map, from the entries in the body file's last
+ * `change-record` block and from the effective record that the flags pass. A block that is absent, malformed, or
+ * without entries contributes no entry, and a defective one is reported as a warning. The body file is read relative to
+ * the invoking directory, and the label map from the repository root.
+ */
+async function runResolveLabels(
+  args: { bodyFile: string; record: ChangeRecord },
+  input: DescribeInput,
+): Promise<DescribeResult> {
+  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+  const warnings = warning === undefined ? [] : [warning];
+  const bodyPath = path.resolve(input.cwd, args.bodyFile);
+  let body: string;
+  try {
+    body = await readFile(bodyPath, 'utf8');
+  } catch (error) {
+    throw chainError(`--body-file ${bodyPath} cannot be read`, error);
+  }
+
+  const reading = readChangeRecordBlock(body);
+  if (reading.kind === 'malformed') {
+    warnings.push(`the body’s change-record block is malformed, so no entry adds a label: ${reading.defect}`);
+  } else if (reading.kind === 'read' && reading.entriesDefect !== undefined) {
+    warnings.push(`the body’s change entries are malformed, so no entry adds a label: ${reading.entriesDefect}`);
+  }
+  const entries = reading.kind === 'read' ? (reading.block.entries ?? []) : [];
+  const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));
+  const labels = resolveLabels({ entries, labelMap, record: normalizeChangeRecord(args.record) });
+  const output: ResolveLabelsOutcome = { labels };
+  return { output, warnings };
 }
 
 /**
