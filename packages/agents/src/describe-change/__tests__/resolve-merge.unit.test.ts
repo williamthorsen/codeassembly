@@ -111,39 +111,23 @@ describe(resolveMerge, () => {
   });
 
   describe('when stale entries and the commits disagree', () => {
-    it('uses the commits, attributes every field to them, and names the fields that differ', () => {
+    it('lets the entries’ record stand, attributes it to the block, and warns only that the entries are stale', () => {
       const report = resolveMerge(
         buildInput({
           block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], STALE),
-          commitsRecord: { scope: 'agents', type: 'docs' },
+          commitsRecord: { breaking: true, scope: 'kb', type: 'docs' },
         }),
       );
 
       expect(report).toMatchObject({
-        effective_record: { breaking: false, scope: 'agents', type: 'docs' },
-        effective_sources: { breaking: 'commits', scope: 'commits', type: 'commits' },
-        notices: [{ kind: 'stale-entries' }, { fields: ['type'], kind: 'divergence', sources: ['block', 'commits'] }],
+        effective_record: { breaking: false, scope: 'agents', type: 'feat' },
+        effective_sources: { breaking: 'block', scope: 'block', type: 'block' },
+        notices: [{ entries_commit: 'aabbccdd', head_commit: HEAD_COMMIT, kind: 'stale-entries' }],
+        sources: { commits: { breaking: true, scope: 'kb', type: 'docs' } },
       });
     });
 
-    it('takes a breaking marker the commits add to the entries’ record', () => {
-      const report = resolveMerge(
-        buildInput({
-          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], STALE),
-          commitsRecord: { breaking: true, scope: 'agents', type: 'feat' },
-        }),
-      );
-
-      expect(report).toMatchObject({
-        effective_record: { breaking: true, scope: 'agents', type: 'feat' },
-        notices: [
-          { kind: 'stale-entries' },
-          { fields: ['breaking'], kind: 'divergence', sources: ['block', 'commits'] },
-        ],
-      });
-    });
-
-    it('compares commits that contain no entry like any other record', () => {
+    it('lets the entries’ record stand over commits that contain no entry', () => {
       const report = resolveMerge(
         buildInput({
           block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], STALE),
@@ -152,29 +136,26 @@ describe(resolveMerge, () => {
       );
 
       expect(report).toMatchObject({
-        effective_record: { breaking: false, scope: null, type: null },
-        notices: [
-          { kind: 'stale-entries' },
-          { fields: ['scope', 'type'], kind: 'divergence', sources: ['block', 'commits'] },
-        ],
+        effective_record: { breaking: false, scope: 'agents', type: 'feat' },
+        notices: [{ kind: 'stale-entries' }],
         sources: { commits: { breaking: null, scope: null, type: null } },
       });
     });
 
-    it('applies the block’s overrides to the commits’ record, attributing the fields that they set', () => {
+    it('applies the block’s overrides to the entries’ record, attributing the fields that they set', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock([entryOf({ scope: 'agents', type: 'docs' })], {
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], {
             ...STALE,
             overrides: { breaking: true, scope: '*' },
           }),
-          commitsRecord: { scope: 'kb', type: 'feat' },
+          commitsRecord: { scope: 'kb', type: 'docs' },
         }),
       );
 
       expect(report).toMatchObject({
         effective_record: { breaking: true, scope: null, type: 'feat' },
-        effective_sources: { breaking: 'block_overrides', scope: 'block_overrides', type: 'commits' },
+        effective_sources: { breaking: 'block_overrides', scope: 'block_overrides', type: 'block' },
       });
     });
   });
@@ -228,7 +209,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { scope: 'kb', type: 'feat' },
         effective_sources: { scope: 'labels', type: 'commits' },
-        notices: [{ kind: 'absent-block' }, { fields: ['scope'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        notices: [{ kind: 'absent-block' }],
         sources: { block: null },
       });
     });
@@ -257,10 +238,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: true, scope: 'agents', type: 'drop' },
         effective_sources: { breaking: 'labels', scope: 'commits', type: 'labels' },
-        notices: [
-          { kind: 'absent-block' },
-          { fields: ['type', 'breaking'], kind: 'divergence', sources: ['labels', 'commits'] },
-        ],
+        notices: [{ kind: 'absent-block' }],
         sources: { labels: { breaking: true, scope: null, type: 'drop' } },
       });
     });
@@ -273,7 +251,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: true, scope: 'kb', type: 'feat' },
         effective_sources: { breaking: 'commits', scope: 'labels', type: 'commits' },
-        notices: [{ kind: 'absent-block' }, { fields: ['scope'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        notices: [{ kind: 'absent-block' }],
       });
     });
 
@@ -288,10 +266,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: false, scope: 'kb', type: 'docs' },
         effective_sources: { breaking: 'labels', scope: 'labels', type: 'labels' },
-        notices: [
-          { kind: 'absent-block' },
-          { fields: ['scope', 'type'], kind: 'divergence', sources: ['labels', 'commits'] },
-        ],
+        notices: [{ kind: 'absent-block' }],
       });
     });
 
@@ -329,10 +304,7 @@ describe(resolveMerge, () => {
 
       expect(report).toMatchObject({
         effective_record: { breaking: false, scope: 'agents', type: 'feat' },
-        notices: [
-          { kind: 'absent-block' },
-          { fields: ['breaking'], kind: 'divergence', sources: ['labels', 'commits'] },
-        ],
+        notices: [{ kind: 'absent-block' }],
       });
     });
   });
@@ -441,7 +413,7 @@ describe(resolveMerge, () => {
       const report = resolveMerge(
         buildInput({
           block: readBlock([entryOf({ breaking: true, type: 'docs' })], STALE),
-          commitsRecord: { type: 'feat' },
+          overrides: { breaking: false, type: 'feat' },
         }),
       );
 
@@ -487,7 +459,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('lets fresh entries’ record stand over the commits’, and reports the divergence', () => {
+    it('lets fresh entries’ record stand over the commits’ without a notice', () => {
       const report = resolveMerge(
         buildInput({
           block: readBlock(ENTRIES),
@@ -497,11 +469,7 @@ describe(resolveMerge, () => {
 
       expect(report.effective_record).toMatchObject({ scope: 'kb', type: 'feat' });
       expect(report.effective_sources).toMatchObject({ scope: 'block', type: 'block' });
-      expect(report.notices).toContainEqual({
-        kind: 'divergence',
-        sources: ['block', 'commits'],
-        fields: ['scope', 'type'],
-      });
+      expect(report.notices).toStrictEqual([]);
     });
 
     it('matches a short derivation commit against the head as a prefix, ignoring case', () => {
@@ -513,18 +481,16 @@ describe(resolveMerge, () => {
       expect(report.notices).not.toContainEqual(expect.objectContaining({ kind: 'stale-entries' }));
     });
 
-    it('when the derivation commit is not the head, lets the commits win and reports staleness', () => {
+    it('when the derivation commit is not the head, lets the entries’ record stand and reports staleness', () => {
       const block = readBlock(ENTRIES, { entriesCommit: 'aabbccdd' });
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
 
-      expect(report.effective_record).toMatchObject({ type: 'fix' });
-      expect(report.effective_sources).toMatchObject({ type: 'commits' });
-      expect(report.notices).toContainEqual({
-        kind: 'stale-entries',
-        entries_commit: 'aabbccdd',
-        head_commit: HEAD_COMMIT,
-      });
+      expect(report.effective_record).toMatchObject({ type: 'feat' });
+      expect(report.effective_sources).toMatchObject({ type: 'block' });
+      expect(report.notices).toStrictEqual([
+        { kind: 'stale-entries', entries_commit: 'aabbccdd', head_commit: HEAD_COMMIT },
+      ]);
     });
 
     it('when entries record no derivation commit, reports staleness with a null commit', () => {
@@ -532,7 +498,7 @@ describe(resolveMerge, () => {
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
 
-      expect(report.effective_sources).toMatchObject({ type: 'commits' });
+      expect(report.effective_sources).toMatchObject({ type: 'block' });
       expect(report.notices).toContainEqual({
         kind: 'stale-entries',
         entries_commit: null,
@@ -550,7 +516,7 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: true, scope: 'kb', type: 'sec' },
         effective_sources: { breaking: 'block_overrides', scope: 'labels', type: 'commits' },
-        notices: [{ fields: ['scope'], kind: 'divergence', sources: ['labels', 'commits'] }],
+        notices: [],
       });
     });
 
