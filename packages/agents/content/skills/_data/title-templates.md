@@ -43,12 +43,14 @@ The bundle has no shebang, so the `node` prefix is required. Each subcommand acc
 | [`resolve-merge`](#resolve-merge)                       | What a pull request merges as                           | The templates, the taxonomy, the label map, and the commits |
 | [`check-merge-body`](#check-merge-body)                 | The entry count that a composed merge body records      | The body file                                               |
 | [`resolve-scopes`](#resolve-scopes)                     | The scope that owns each given path                     | The workspace layout                                        |
+| [`resolve-labels`](#resolve-labels)                     | The labels for a change                                 | The body file and the label map                             |
 
 ### What stops a run and what only warns
 
-- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, `check-merge-body`, and `resolve-scopes` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, `check-merge-body`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
 - Malformed YAML in `pnpm-workspace.yaml` stops `resolve-scopes`, naming the file.
+- A malformed `change-record` block in the body file causes a warning from `resolve-labels`, which then labels the change from the flags alone.
 - An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `resolve-effective-record`, and `resolve-merge`.
 - Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s workspace discovery, which then finds none.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
@@ -419,6 +421,26 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes \
 **A path is read relative to the repository root**, which git resolves from the invoking directory, so an absolute path and a root-relative one resolve alike whatever subdirectory the caller ran from. A path outside the root resolves to `root`. When git resolves no repository root, the run warns and anchors at the invoking directory.
 
 **The subcommand defines no rule of its own.** It delegates discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/agents` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the discovery rule belongs upstream, in nmr.
+
+## `resolve-labels`
+
+`resolve-labels` reports the labels for a change, from the entries in the body file's last `change-record` block and from the effective record that the flags pass. `--body-file` is required, and `--scope`, `--type`, and `--breaking` are optional.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs resolve-labels \
+  --body-file {change_summary_path} \
+  --scope agents --type feat
+```
+
+```json
+{ "labels": ["feature", "fix", "breaking", "scope:agents", "scope:kb"] }
+```
+
+**`labels` is the union of what the record and the entries name**, each mapped through the repository's `.meta/label-map.json`: the type label of every type, `breaking` when the record or any entry is breaking, and the scope label of every scope. Type labels come first, then `breaking`, then scope labels. Within each group the record's label leads, followed by the entries' labels in the order in which the entries name them, and each label appears once.
+
+**A key that the map does not name, and a scope of `*`, add no label.** The run reads no taxonomy, so an undeclared type is labeled only when the map names it. A label map that is absent, unparseable, or empty yields no labels at all, `breaking` included.
+
+**The body file may be the change summary itself**, since only its last `change-record` block is read and the frontmatter is ignored. A body containing no block, or a block without entries, is labeled from the flags alone. The run warns and does the same for a malformed block or entry list, and it refuses a body file that cannot be read. `--type feat!` is accepted and splits into the bare type and the marker.
 
 ## Supported tokens
 

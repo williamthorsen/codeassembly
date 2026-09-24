@@ -132,13 +132,13 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 
 ## Where the record is written
 
-| Surface                    | What it contains                                                                                                      |
-| -------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| Change-summary frontmatter | `title`, the consolidated record's `scope`, `type`, and `breaking`, `changes`, `ticket_type`, and the override fields |
-| Condensed commit message   | A subject rendered from the consolidated record, and one `Change:` trailer per commit entry                           |
-| Merge commit               | The lede, then the merge-commit form of the block when the pull request's block records a change entry                |
-| Pull-request body          | `Closes`, then the block as the final block, copied from the change summary's body                                    |
-| Pull-request labels        | The effective record's type and scope, mapped through `.meta/label-map.json`, plus `breaking` when it is breaking     |
+| Surface                    | What it contains                                                                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Change-summary frontmatter | `title`, the consolidated record's `scope`, `type`, and `breaking`, `changes`, `ticket_type`, and the override fields                                                                                         |
+| Condensed commit message   | A subject rendered from the consolidated record, and one `Change:` trailer per commit entry                                                                                                                   |
+| Merge commit               | The lede, then the merge-commit form of the block when the pull request's block records a change entry                                                                                                        |
+| Pull-request body          | `Closes`, then the block as the final block, copied from the change summary's body                                                                                                                            |
+| Pull-request labels        | Every type and scope that the effective record or an entry names, mapped through `.meta/label-map.json`, plus `breaking` when either is breaking; see [`resolve-labels`](./title-templates.md#resolve-labels) |
 
 [Artifact conventions](./artifact-conventions.md#change-summary-frontmatter) specifies the change-summary fields.
 

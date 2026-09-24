@@ -90,14 +90,19 @@ See [title-templates.md](../_data/title-templates.md) for the title-format model
 
 ### 7. Resolve labels
 
-Resolve labels from the effective record in step 5:
+Resolve the labels from the change summary's entries and from the effective record in step 5:
 
-1. Read `.meta/label-map.json` using the Read tool. If the file does not exist, skip: labels = [].
-2. **Type label** (if the effective type is present): Look up the type in `label_map.types`. If found, add the mapped label name.
-3. **Breaking label**: If the effective record is breaking, add `breaking` as an additional label.
-4. **Scope label** (if the effective scope is present): Look up the scope in `label_map.scopes`. If found, add the mapped label name.
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs resolve-labels \
+  --body-file "{change_summary_path}" \
+  --scope "{scope}" \
+  --type "{type}" \
+  --breaking
+```
 
-Missing entries are silently skipped. If neither scope nor type is present and the change is not breaking, labels = [].
+Pass the change summary written in step 3 as `--body-file`. Omit `--scope` and `--type` when the effective record's field is `null`, and pass `--breaking` only if the effective record is breaking. Read `labels` from the output; [`resolve-labels`](../_data/title-templates.md#resolve-labels) states what it contains. Relay any warning that the run writes to stderr.
+
+If the call fails, relay its error and continue with labels = [].
 
 ### 8. Detect platform and select delegate
 

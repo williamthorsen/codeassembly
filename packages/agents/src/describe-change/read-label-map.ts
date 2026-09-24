@@ -67,6 +67,9 @@ export function resolveLabelKey(section: LabelSection, labels: readonly string[]
   return matched.size === 1 ? only : undefined;
 }
 
+/** The label that marks a breaking change. */
+export const BREAKING_LABEL = 'breaking';
+
 /** A label map's two sections. */
 export interface LabelMap {
   scopes: LabelSection;
@@ -77,9 +80,6 @@ export interface LabelMap {
 export type LabelSection = Readonly<Record<string, string>>;
 
 // region | Helpers
-
-/** The label that marks a breaking change. */
-const BREAKING_LABEL = 'breaking';
 
 /** Reads one section, dropping every entry whose label is not a string; anything but a mapping reads as empty. */
 function readSection(value: unknown): Record<string, string> {

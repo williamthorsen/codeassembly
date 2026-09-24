@@ -63,6 +63,7 @@ export interface EntryOutcome {
 export type ParsedArgs =
   | { baseRef: string; subcommand: 'consolidate-branch' }
   | { bodyFile: string; entryCount: number; subcommand: 'check-merge-body' }
+  | { bodyFile: string; record: ChangeRecord; subcommand: 'resolve-labels' }
   | { block: ChangeRecordBlock; entriesFile?: string; subcommand: 'render-block' }
   | { entriesFile: string; subcommand: 'consolidate-entries' }
   | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
@@ -110,6 +111,11 @@ export interface ResolveMergeArgs {
   prTitle: string;
   /** The ticket reference to be used when the pull-request title does not contain one. */
   ticketRef?: string;
+}
+
+/** The labels for a change, under the key that the JSON output names. */
+export interface ResolveLabelsOutcome {
+  labels: string[];
 }
 
 /** Every given path's scope and the union of those scopes, under the keys that the JSON output names. */
