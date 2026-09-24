@@ -187,10 +187,10 @@ Settle every item in `defects` before showing the proposal, one question at a ti
 
 **An entry defect** (one that names an `entry`) is settled by amending that entry in the PR body, because an override changes only the effective record, and the merge block would still publish the entry as it stands. Ask one question per entry defect. Quote the entry's `text` from `sources.block.entries`, and name its type for an `undeclared-type`, or the type and the policy that it breaks for a `policy-violation`. Offer the types that the test below assigns to the entry's own text, the marker that the policy asks for when the defect is a `policy-violation`, and an "other (specify)" option. State in the prompt that the answer rewrites that entry in the PR body.
 
-On an answer, amend the entry in the body file that step 3 last wrote, opening with the assignment and the guard. Pass `--type` for a type answer and `--breaking` or `--no-breaking` for a marker answer:
+On an answer, re-read the PR body into a fresh scratch file as step 3 writes one, named `gh-body-pr{number}-amend-{timestamp}.md`: from the platform on GitHub, and on Bitbucket from a fresh read of the description through step 2's platform dispatch. The question is human-paced, so the copy that step 3 read can be older than the PR, and writing it back would discard an edit made while the question was pending. Then amend the entry in that file, opening with the assignment and the guard. Pass `--type` for a type answer and `--breaking` or `--no-breaking` for a marker answer:
 
 ```bash
-body_path="{absolute path from step 3's write}"
+body_path="{absolute path from the re-read}"
 [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
 node {harness_home_dir}/scripts/describe-change.mjs amend-entry \
   --body-file "$body_path" \
