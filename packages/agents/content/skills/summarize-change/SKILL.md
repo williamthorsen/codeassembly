@@ -8,7 +8,7 @@ user-invocable: true
 
 Analyze the current branch's changes since diverging from the default branch.
 
-The change's consolidated record is derived from the change entries and recorded per [the change record](../_data/change-record.md). The body ends with the rendered `change-record` block, which records the entries and that record in the pull request.
+The change's consolidated record is derived from the change entries and recorded per [the change record](../_data/change-record.md). The body ends with the rendered `change-record` block, which records the entries in the pull request.
 
 ## Arguments
 
@@ -142,9 +142,6 @@ Both are optional, and each is recorded as an override beside the consolidated r
     entries_path="{absolute path from step 7}"
     node {harness_home_dir}/scripts/describe-change.mjs render-block \
       --title "{title}" \
-      --scope "{scope}" \
-      --type "{type}" \
-      --breaking \
       --override-scope "{override_scope}" \
       --override-type "{override_type}" \
       --override-breaking \
@@ -153,7 +150,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
       | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
     ```
 
-    Pass the step-7 consolidated record through `--scope`, `--type`, and `--breaking`, never the effective record: The block records the consolidation and the overrides separately, and `resolve-merge` applies the overrides itself. Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`.
+    Pass the overrides resolved in step 2, never the effective record: `resolve-merge` ranks the entries and applies the overrides itself. Omit each override flag whose field is absent, and pass `--override-breaking` only if that field is `true`.
 
     [`render-block`](../_data/title-templates.md#render-block) states the output, which is JSON; the last command decodes it and prints the `block` field. Render and decode in one Bash invocation, and write the printed block verbatim below `## Details`, separated by one blank line. Never copy the block out of the raw JSON: `text` is arbitrary prose, and JSON escapes its quotes and backslashes a second time.
 
@@ -201,9 +198,6 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 ```change-record
 title: Add the store-qualified wikilink
-consolidated_record:
-  scope: agents
-  type: feat
 entries_commit: e5029924
 entries:
   - type: feat
