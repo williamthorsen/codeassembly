@@ -315,7 +315,7 @@ Shown when something that the user can clear, such as a sandbox denial, a missin
 
 ### Combined output format
 
-When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Blocked step → Deviations → Source divergence → Actionable findings. Each sub-block edits a different artifact, so selecting several runs each edit against its own preview. Because source divergence appears only in PR reviews, a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
+When multiple sub-blocks are shown, present them as separate sections within a single next-steps block. Ordering is Blocked step → Deviations → Source divergence → Actionable findings. Each sub-block that edits an artifact edits a different one, so selecting several runs each edit against its own preview. Because source divergence appears only in PR reviews, a block that includes it renders the Findings PR variant. The example below illustrates one such arrangement; each sub-block's recommendation rules and marker strengths determine which marker applies to each option:
 
 ```
 Next steps:
