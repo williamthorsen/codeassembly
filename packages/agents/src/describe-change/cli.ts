@@ -1,7 +1,7 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -20,6 +20,7 @@ import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadTaxonomy } from '../lib/work-types.ts';
+import { amendEntry, type EntryAmendment } from './amend-entry.ts';
 import { type ChangeEntry, consolidateChangeEntries, readChangeEntries } from './change-entries.ts';
 import {
   type ChangeRecordBlock,
@@ -38,6 +39,7 @@ import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOu
 import { discoverWorkspaceDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
 import {
+  type AmendEntryOutcome,
   type CheckMergeBodyOutcome,
   type ConsolidateBranchOutcome,
   type ConsolidateEntriesOutcome,
@@ -120,6 +122,16 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
     ],
     read: readCheckMergeBodyArgs,
   },
+  'amend-entry': {
+    flags: [
+      { name: 'body-file', takesValue: true },
+      { name: 'breaking', takesValue: false },
+      { name: 'entry', takesValue: true },
+      { name: 'no-breaking', takesValue: false },
+      { name: 'type', takesValue: true },
+    ],
+    read: readAmendEntryArgs,
+  },
   'resolve-scopes': { flags: [{ name: 'path', takesValue: true }], read: readResolveScopesArgs },
   'resolve-labels': {
     flags: [
@@ -161,7 +173,7 @@ if (isEntryPoint()) {
  *
  * `render-titles`, `resolve-effective-record`, and `render-block` accept `--type feat!`, which the engine splits into the
  * bare type and the breaking marker. An `--override-type` spelled with the marker is refused, since the breaking overrides
- * set it.
+ * set it. `amend-entry` likewise refuses a `--type` spelled with the marker, since `--breaking` sets it.
  *
  * @internal - Exported to allow testing.
  */
@@ -186,6 +198,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 export async function runDescribe(input: DescribeInput): Promise<DescribeResult> {
   const args = parseArgs(input.argv);
   switch (args.subcommand) {
+    case 'amend-entry':
+      return runAmendEntry(args, input);
     case 'check-merge-body':
       return runCheckMergeBody(args, input);
     case 'consolidate-branch':
@@ -222,6 +236,7 @@ export interface DescribeInput {
 /** What a completed run writes: the JSON payload for stdout, and the diagnostics for stderr. */
 export interface DescribeResult {
   output:
+    | AmendEntryOutcome
     | CheckMergeBodyOutcome
     | ConsolidateBranchOutcome
     | ConsolidateEntriesOutcome
@@ -339,6 +354,47 @@ async function loadTemplatesWithTaxonomy(
     throw new Error(`${reason}; none is readable under ${input.dataDir}`);
   }
   return { ...loaded, taxonomy };
+}
+
+/**
+ * Reads the `amend-entry` invocation: the body file, the 0-based index of the entry to amend, and the fields that the
+ * amendment sets, of which there must be at least one.
+ */
+function readAmendEntryArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  const values = valueFlagMap(flags);
+  const entry = readRequiredValue('amend-entry', values, 'entry');
+  if (!/^\d+$/.test(entry)) {
+    throw new Error(`--entry takes the entry’s 0-based index; got ${entry}`);
+  }
+  const breakingFlags = new Set(
+    flags.filter((flag) => flag.name === 'breaking' || flag.name === 'no-breaking').map((flag) => flag.name),
+  );
+  if (breakingFlags.size > 1) {
+    throw new Error('--breaking and --no-breaking set the marker in opposite directions; pass one');
+  }
+  const type = values.type?.trim();
+  if (type === '') {
+    throw new Error('--type requires a value');
+  }
+  if (type?.endsWith(BREAKING_MARKER) === true) {
+    throw new Error('--type takes a bare type; pass --breaking for a breaking change');
+  }
+
+  const [breakingFlag] = breakingFlags;
+  const amendment: EntryAmendment = {
+    ...(breakingFlag !== undefined && { breaking: breakingFlag === 'breaking' }),
+    ...(type !== undefined && { type }),
+  };
+  if (Object.keys(amendment).length === 0) {
+    throw new Error('amend-entry requires --type, --breaking, or --no-breaking');
+  }
+  return {
+    amendment,
+    bodyFile: readRequiredValue('amend-entry', values, 'body-file'),
+    entryIndex: Number(entry),
+    subcommand: 'amend-entry',
+  };
 }
 
 /** Reads the `check-merge-body` invocation: the path of the composed merge body and the entry count that it must record. */
@@ -625,6 +681,38 @@ function renderTemplate(template: string, record: ChangeRecord): string {
 function resolveDefaultDataDir(): string {
   const helperDir = path.dirname(fileURLToPath(import.meta.url));
   return path.resolve(helperDir, '..', 'skills', '_data');
+}
+
+/**
+ * Amends one change entry in the body file's last `change-record` block and writes the body back to the same file. Only
+ * the taxonomy is loaded, which the amended entry is checked against and the block's record is ranked by. The body file
+ * is read relative to the invoking directory, and a refused amendment leaves it untouched.
+ */
+async function runAmendEntry(
+  args: { amendment: EntryAmendment; bodyFile: string; entryIndex: number },
+  input: DescribeInput,
+): Promise<DescribeResult> {
+  const taxonomy = await loadTaxonomy(input.dataDir);
+  if (taxonomy === null) {
+    throw new Error(
+      `amend-entry checks the amended type against the taxonomy; none is readable under ${input.dataDir}`,
+    );
+  }
+  const resolved = path.resolve(input.cwd, args.bodyFile);
+  let body: string;
+  try {
+    body = await readFile(resolved, 'utf8');
+  } catch (error) {
+    throw chainError(`--body-file ${resolved} cannot be read`, error);
+  }
+  const amended = amendEntry({ amendment: args.amendment, body, index: args.entryIndex, taxonomy });
+  try {
+    await writeFile(resolved, amended.body, 'utf8');
+  } catch (error) {
+    throw chainError(`--body-file ${resolved} cannot be written`, error);
+  }
+  const output: AmendEntryOutcome = { entry: amended.entry, entry_count: amended.entryCount };
+  return { output, warnings: [] };
 }
 
 /**

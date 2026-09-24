@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import process from 'node:process';
@@ -10,7 +10,11 @@ import { describe, expect, it } from 'vitest';
 
 import { isRecord } from '../../lib/type-guards.ts';
 import type { ChangeEntry } from '../change-entries.ts';
-import { renderChangeRecordBlock, renderMergeChangeRecordBlock } from '../change-record-block.ts';
+import {
+  readChangeRecordBlock,
+  renderChangeRecordBlock,
+  renderMergeChangeRecordBlock,
+} from '../change-record-block.ts';
 import { parseArgs, runDescribe } from '../cli.ts';
 import type { ConsolidateBranchOutcome, EntryOutcome } from '../types.ts';
 
@@ -63,6 +67,7 @@ const SUBCOMMAND_NAMES = [
   'render-block',
   'resolve-merge',
   'check-merge-body',
+  'amend-entry',
   'resolve-scopes',
   'resolve-labels',
 ];
@@ -1550,6 +1555,99 @@ describe('check-merge-body', () => {
   });
 });
 
+describe('amend-entry', () => {
+  const ENTRIES: ChangeEntry[] = [
+    { breaking: false, scopes: ['agents'], text: 'Adds the parser', type: 'feature' },
+    { breaking: false, scopes: ['agents'], text: 'Corrects the guard', type: 'fix' },
+  ];
+
+  it('reads the body file, the entry index, and the amended fields', () => {
+    expect(
+      parseArgs(['amend-entry', '--body-file', 'body.md', '--entry', '1', '--type', 'feat', '--no-breaking']),
+    ).toStrictEqual({
+      amendment: { breaking: false, type: 'feat' },
+      bodyFile: 'body.md',
+      entryIndex: 1,
+      subcommand: 'amend-entry',
+    });
+    expect(parseArgs(['amend-entry', '--body-file', 'body.md', '--entry', '0', '--breaking'])).toStrictEqual({
+      amendment: { breaking: true },
+      bodyFile: 'body.md',
+      entryIndex: 0,
+      subcommand: 'amend-entry',
+    });
+  });
+
+  it.each(['--body-file', '--entry'])('if %s is missing, refuses the invocation', (flag) => {
+    const argv = ['amend-entry', '--body-file', 'body.md', '--entry', '0', '--type', 'feat'];
+    const index = argv.indexOf(flag);
+
+    expect(() => parseArgs(argv.toSpliced(index, 2))).toThrow(`amend-entry requires ${flag}`);
+  });
+
+  it.each([
+    [['--entry', '-1', '--type', 'feat'], /--entry takes the entry’s 0-based index; got -1/],
+    [['--entry', '0'], 'amend-entry requires --type, --breaking, or --no-breaking'],
+    [['--entry', '0', '--breaking', '--no-breaking'], /opposite directions/],
+    [['--entry', '0', '--type', 'feat!'], '--type takes a bare type; pass --breaking for a breaking change'],
+    [['--entry', '0', '--type', ' '], '--type requires a value'],
+  ])('refuses %j', (flags, message) => {
+    expect(() => parseArgs(['amend-entry', '--body-file', 'body.md', ...flags])).toThrow(message);
+  });
+
+  it('rewrites the entry in the body file and reports it with the entry count', async () => {
+    const block = renderChangeRecordBlock({ entries: ENTRIES, entriesCommit: 'abc1234', title: 'Add the parser' });
+    const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\n${block}\n`);
+
+    const { output } = await runAmend(bodyFile, ['--entry', '0', '--type', 'feat']);
+
+    expect(output).toStrictEqual({ entry: { ...ENTRIES[0], type: 'feat' }, entry_count: 2 });
+    const body = await readFile(bodyFile, 'utf8');
+    expect(body.startsWith('## What\n\n- Adds the parser.\n\n```change-record\n')).toBe(true);
+    expect(readChangeRecordBlock(body)).toMatchObject({
+      block: { entries: [{ ...ENTRIES[0], type: 'feat' }, ENTRIES[1]], entriesCommit: 'abc1234' },
+      kind: 'read',
+    });
+  });
+
+  it('refuses an amendment that leaves the entry defective, leaving the file untouched', async () => {
+    const content = `${renderChangeRecordBlock({ entries: ENTRIES, title: 'Add the parser' })}\n`;
+    const bodyFile = await writeBody(content);
+
+    await expect(runAmend(bodyFile, ['--entry', '0', '--type', 'feature'])).rejects.toThrow(
+      'the amendment leaves entries[0] defective: the taxonomy does not declare the type feature',
+    );
+    await expect(readFile(bodyFile, 'utf8')).resolves.toBe(content);
+  });
+
+  it('refuses a body file that cannot be read', async () => {
+    await expect(runAmend(join(tmpdir(), 'absent-pr-body.md'), ['--entry', '0', '--type', 'feat'])).rejects.toThrow(
+      /--body-file .* cannot be read/,
+    );
+  });
+
+  it('clears the entry defect that resolve-merge reports', async () => {
+    const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
+    const block = renderChangeRecordBlock({
+      entries: ENTRIES.slice(0, 1),
+      entriesCommit: headCommit.slice(0, 8),
+      title: 'Add the parser',
+    });
+    const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\n${block}\n`);
+    const resolve = async (): Promise<unknown> => {
+      const argv = ['resolve-merge', '--base', 'base', '--head', headCommit, ...pullRequestFlags(bodyFile)];
+      const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+      return output;
+    };
+
+    await expect(resolve()).resolves.toMatchObject({
+      defects: [{ entry: 0, kind: 'undeclared-type', type: 'feature' }, { kind: 'missing-type' }],
+    });
+    await runAmend(bodyFile, ['--entry', '0', '--type', 'feat']);
+    await expect(resolve()).resolves.toMatchObject({ defects: [] });
+  });
+});
+
 // region | Helpers
 
 /** A finished helper process: what it wrote and how it exited. */
@@ -1664,6 +1762,16 @@ function omitCommit(entry: EntryOutcome): Omit<EntryOutcome, 'commit'> {
 /** Returns the pull-request flags that `resolve-merge` requires beside `--base` and `--head`, reading the body from `bodyFile`. */
 function pullRequestFlags(bodyFile: string): string[] {
   return ['--pr-title', '#466 Add the parser', '--pr-body-file', bodyFile, '--pr-number', '470'];
+}
+
+/** Runs `amend-entry` in process against a body file and the flags given. */
+async function runAmend(bodyFile: string, flags: readonly string[]): ReturnType<typeof runDescribe> {
+  return runDescribe({
+    argv: ['amend-entry', '--body-file', bodyFile, ...flags],
+    cwd: process.cwd(),
+    dataDir: DATA_DIR,
+    home: tmpdir(),
+  });
 }
 
 /** Runs `check-merge-body` in process against a body file and an expected entry count. */

@@ -12,7 +12,7 @@ import {
   renderMergeChangeRecordBlock,
   stripChangeRecordBlocks,
 } from './change-record-block.ts';
-import { findDefects, type RecordDefect } from './find-defects.ts';
+import { findDefects, findEntryDefects, type RecordDefect } from './find-defects.ts';
 import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from './types.ts';
 
 /**
@@ -72,7 +72,7 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
       labels: toSourceRecordOutcome(input.labels),
       pr_title: prTitle === undefined ? null : toPullRequestTitleOutcome(prTitle),
     },
-    defects: findDefects(effective, input.taxonomy),
+    defects: [...findEntryDefects(entries, input.taxonomy), ...findDefects(effective, input.taxonomy)],
     notices,
   };
 }

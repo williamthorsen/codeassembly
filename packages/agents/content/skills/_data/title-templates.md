@@ -42,16 +42,17 @@ The bundle has no shebang, so the `node` prefix is required. Each subcommand acc
 | [`render-block`](#render-block)                         | The `change-record` block that ends a pull-request body | Nothing                                                     |
 | [`resolve-merge`](#resolve-merge)                       | What a pull request merges as                           | The templates, the taxonomy, the label map, and the commits |
 | [`check-merge-body`](#check-merge-body)                 | The entry count that a composed merge body records      | The body file                                               |
+| [`amend-entry`](#amend-entry)                           | One change entry, amended in a pull-request body        | The taxonomy and the body file, which it rewrites           |
 | [`resolve-scopes`](#resolve-scopes)                     | The scope that owns each given path                     | The workspace layout                                        |
 | [`resolve-labels`](#resolve-labels)                     | The labels for a change                                 | The body file and the label map                             |
 
 ### What stops a run and what only warns
 
-- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, `check-merge-body`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, `check-merge-body`, `amend-entry`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
 - Malformed YAML in `pnpm-workspace.yaml` stops `resolve-scopes`, naming the file.
 - A malformed `change-record` block in the body file causes a warning from `resolve-labels`, which then labels the change from the flags alone.
-- An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `resolve-effective-record`, and `resolve-merge`.
+- An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `resolve-effective-record`, `resolve-merge`, and `amend-entry`.
 - Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s workspace discovery, which then finds none.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
 
@@ -358,7 +359,14 @@ Each field names the step that set it last, as [Where the record is read](./chan
 
 The entries render whether or not they are fresh: a merge re-derives nothing, and a `stale-entries` notice reports staleness instead. `merge_block` is `null`, and `entry_count` is `0`, when the block is absent, malformed, or records no entry. `merge_block` is separate from `body`, so a consumer that replaces a thin body keeps it.
 
-**`defects` block approval.** Each names a condition of `effective_record` that the author must override before the merge is offered, with the kinds that [`resolve-effective-record`](#resolve-effective-record) lists.
+**`defects` block approval.** Each names a condition that the author must settle before the merge is offered, with the kinds that [`resolve-effective-record`](#resolve-effective-record) lists. The block's change entries are checked first, fresh or stale, since the merge block publishes them either way: Each entry whose type `work-types.json` does not declare, or whose marker breaks its type's `breakingPolicy`, yields an `undeclared-type` or `policy-violation` whose `entry` names the entry's 0-based index, in entry order. The effective record's defect follows, without `entry`. An entry defect is settled by [`amend-entry`](#amend-entry), since an override changes only the effective record; the record's defect is settled by an override.
+
+```json
+[
+  { "entry": 1, "kind": "undeclared-type", "type": "feature" },
+  { "kind": "missing-type" }
+]
+```
 
 **The block's entries decide the record.** `resolve-merge` ranks them into a scope, type, and marker by the rule that [`consolidate-entries`](#consolidate-entries) applies, and never reads the block's `consolidated_record`. The entries are fresh when the block records some, records the commit at which they were derived, and the head that `--head` names starts with that commit, compared case-insensitively: The block records a short SHA and the pull request reports a full one. The record ranked from fresh entries stands over the commits'; stale entries keep the rule that the commits win. `divergence` is raised whichever of the two stands, so which one did is read from `effective_sources`. A block that records no entries, or whose entries are malformed, resolves its base record from the labels and the commits as a body without a block does, and its overrides still apply.
 
@@ -398,6 +406,31 @@ Both flags are required. `--body-file` names a file containing the whole merge b
 ```
 
 The body's last `change-record` block is read under the rules of the [merge-commit form](./change-record.md#the-merge-commit-form): Any defect makes the whole block malformed. The run exits non-zero, naming the defect or both counts, when the file cannot be read, when the block is malformed, and when the number of entries that it records differs from `--entry-count`. A body containing no block records none, so it passes only with `--entry-count 0`, and a body containing a block fails with `--entry-count 0`.
+
+## `amend-entry`
+
+`amend-entry` rewrites one change entry in the last `change-record` block of a pull-request body file, and writes the body back to the same file.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs amend-entry \
+  --body-file {body_file} \
+  --entry 1 \
+  --type feat \
+  --no-breaking
+```
+
+`--body-file` and `--entry` are required. `--entry` takes the entry's 0-based index, as a defect's `entry` names it. `--type` sets the entry's type, and `--breaking` or `--no-breaking` sets its marker; at least one of the three is required, and a field that the invocation leaves out keeps the entry's value.
+
+```json
+{
+  "entry": { "breaking": false, "scopes": ["agents"], "text": "Adds the parser", "type": "feat" },
+  "entry_count": 2
+}
+```
+
+The run re-renders the whole block as [`render-block`](#render-block) renders one, keeping its `title`, `overrides`, and `entries_commit`, and recomputes `consolidated_record` from the amended entries. The block's formatting is normalized, so the body's diff shows the whole block changing. Text outside the block is unchanged byte for byte, and the block takes the line ending of the body around it.
+
+The run exits non-zero, naming the cause and leaving the file untouched, when the body contains no block or a malformed one, when the block's entries are malformed, when `--entry` is out of range, when `--type` is spelled with `!` (pass `--breaking`), when the taxonomy does not declare the amended type, and when the amended marker breaks the type's `breakingPolicy`. An amendment that succeeds therefore clears the entry's defect. It also refuses `--breaking` together with `--no-breaking`, a file that cannot be read or written, and a taxonomy that cannot be read.
 
 ## `resolve-scopes`
 

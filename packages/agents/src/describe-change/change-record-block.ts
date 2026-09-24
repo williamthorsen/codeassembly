@@ -84,6 +84,26 @@ export function renderMergeChangeRecordBlock(block: MergeChangeRecordBlock): str
 }
 
 /**
+ * Replaces a body's last `change-record` block, fences included, with `block`, leaving every other byte of the body as
+ * it was. The block's lines take the line ending that follows the opening fence. Throws when the body's last block is
+ * absent or never closes.
+ */
+export function replaceLastChangeRecordBlock(body: string, block: string): string {
+  const parts = body.split(/(\r?\n)/);
+  const lines = parts.filter((_part, index) => index % 2 === 0);
+  const fence = findFences(lines).at(-1);
+  if (fence?.close === undefined) {
+    throw new Error('the body contains no closed change-record block to replace');
+  }
+  const lineEnding = parts[fence.open * 2 + 1] ?? '\n';
+  return [
+    ...parts.slice(0, fence.open * 2),
+    block.split('\n').join(lineEnding),
+    ...parts.slice(fence.close * 2 + 1),
+  ].join('');
+}
+
+/**
  * Removes every `change-record` block from a text, fences included, joining the remaining lines with `\n`. A block that
  * never closes runs to the end of the text, as a Markdown renderer reads it.
  */
