@@ -341,7 +341,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
 | `pr_title`          | The pull-request title, inverted through `pr.title_format`                                                                                                              |
 | `pr_title_verbatim` | The pull-request title as given, when it does not invert and no block is readable                                                                                       |
 
-Each field names the step that set it last, as [Where the record is read](./change-record.md#where-the-record-is-read) orders the steps, so a field that an override sets names the override even when it repeats the value that it replaces. A field is `null` when nothing supplied it: a `ticket_ref` that neither the title nor `--ticket-ref` names, and, without a readable block, a field that no label resolves while the commits cannot be read.
+Each field names the step that set it last, as [Where the record is read](./change-record.md#where-the-record-is-read) orders the steps, so a field that an override sets names the override even when it repeats the value that it replaces. A field is `null` when nothing supplied it: a `ticket_ref` that neither the title nor `--ticket-ref` names, and, without entries to rank, a field that no label resolves while the commits cannot be read.
 
 **`sources` reports what each source names**, whether or not the resolution used it. A source is `null` only when it was not read: `block` when the body contains no block or a malformed one, `commits` when the commits cannot be read, and `pr_title` when the title does not invert. Within a record, a field that the source does not determine is `null`, `breaking` included.
 
