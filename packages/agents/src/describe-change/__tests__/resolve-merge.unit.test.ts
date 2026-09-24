@@ -418,6 +418,36 @@ describe(resolveMerge, () => {
 
       expect(report.defects).toStrictEqual([{ kind: 'policy-violation', policy: 'forbidden', type: 'docs' }]);
     });
+
+    it('reports each defective entry, naming its index, before the effective record’s defect', () => {
+      const report = resolveMerge(
+        buildInput({
+          block: readBlock([
+            entryOf({ type: 'feat' }),
+            entryOf({ type: 'feature' }),
+            entryOf({ breaking: true, type: 'docs' }),
+          ]),
+          overrides: { breaking: false, type: 'drop' },
+        }),
+      );
+
+      expect(report.defects).toStrictEqual([
+        { entry: 1, kind: 'undeclared-type', type: 'feature' },
+        { entry: 2, kind: 'policy-violation', policy: 'forbidden', type: 'docs' },
+        { kind: 'policy-violation', policy: 'required', type: 'drop' },
+      ]);
+    });
+
+    it('reports a defective entry whether or not the entries are fresh', () => {
+      const report = resolveMerge(
+        buildInput({
+          block: readBlock([entryOf({ breaking: true, type: 'docs' })], STALE),
+          commitsRecord: { type: 'feat' },
+        }),
+      );
+
+      expect(report.defects).toStrictEqual([{ entry: 0, kind: 'policy-violation', policy: 'forbidden', type: 'docs' }]);
+    });
   });
 
   describe('the sources', () => {

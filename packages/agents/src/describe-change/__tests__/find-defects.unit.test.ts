@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import type { Taxonomy } from '../../change-grammar/types.ts';
-import { findDefects } from '../find-defects.ts';
+import type { ChangeEntry } from '../change-entries.ts';
+import { findDefects, findEntryDefects } from '../find-defects.ts';
 
 /** A taxonomy declaring one type of each breaking policy, independent of the repository's own. */
 const TAXONOMY: Taxonomy = {
@@ -38,3 +39,41 @@ describe(findDefects, () => {
     ]);
   });
 });
+
+describe(findEntryDefects, () => {
+  it('reports nothing for entries whose types are declared and whose markers their policies admit', () => {
+    expect(
+      findEntryDefects([entryOf({ breaking: true, type: 'feat' }), entryOf({ type: 'docs' })], TAXONOMY),
+    ).toStrictEqual([]);
+  });
+
+  it('reports each defective entry in entry order, naming its index', () => {
+    const entries = [
+      entryOf({ type: 'feat' }),
+      entryOf({ type: 'feature' }),
+      entryOf({ breaking: true, type: 'docs' }),
+      entryOf({ type: 'drop' }),
+    ];
+
+    expect(findEntryDefects(entries, TAXONOMY)).toStrictEqual([
+      { entry: 1, kind: 'undeclared-type', type: 'feature' },
+      { entry: 2, kind: 'policy-violation', policy: 'forbidden', type: 'docs' },
+      { entry: 3, kind: 'policy-violation', policy: 'required', type: 'drop' },
+    ]);
+  });
+
+  it('reads a type spelled with the marker as undeclared', () => {
+    expect(findEntryDefects([entryOf({ type: 'feat!' })], TAXONOMY)).toStrictEqual([
+      { entry: 0, kind: 'undeclared-type', type: 'feat!' },
+    ]);
+  });
+});
+
+// region | Helpers
+
+/** Builds a change entry that names the type and its marker. */
+function entryOf(record: { breaking?: boolean; type: string }): ChangeEntry {
+  return { breaking: record.breaking === true, scopes: ['agents'], text: 'Adds foo', type: record.type };
+}
+
+// endregion | Helpers
