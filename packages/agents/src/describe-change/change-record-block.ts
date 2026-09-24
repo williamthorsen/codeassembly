@@ -10,13 +10,13 @@ import { type ChangeEntry, readChangeEntries } from './change-entries.ts';
  * Reads the last `change-record` block in a pull-request body back into what it records, as the inverse of
  * `renderChangeRecordBlock`: the body contains no block, contains one that cannot be read, or contains one that reads.
  *
- * A block without a `title` does not read. `consolidated_record` and `overrides` normalize as the renderer normalizes
- * them. Because a key that the grammar does not declare is ignored, a later addition to the block does not break this
- * reader. A declared key whose value is null reads as absent.
+ * A block without a `title` does not read. Its overrides normalize as the renderer normalizes them. Because a key that
+ * the grammar does not declare is ignored, a later addition to the block does not break this reader. A declared key
+ * whose value is null reads as absent.
  *
  * A defective `entries` list is the one departure from the block's all-or-nothing rule: The block reads with its
- * entries absent and the defect reported alongside it, since its title and its consolidated record are still usable. A
- * block that loses either of those has nothing left to resolve from, so every other field keeps the rule.
+ * entries absent and the defect reported alongside it, since its title and its overrides are still usable. A block
+ * that loses either of those has nothing left to resolve from, so every other field keeps the rule.
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
   const parsed = parseLastBlock(body);
@@ -39,26 +39,24 @@ export function readMergeChangeRecordBlock(body: string): MergeChangeRecordBlock
 /**
  * Renders the fenced `change-record` block that a pull-request body contains as its final block.
  *
- * The payload is YAML rather than a surface template, because `consolidated_record` and `overrides` nest and a template
- * renders one flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair needs no round-trip
+ * The payload is YAML rather than a surface template, because `overrides` and the entries nest and a template renders
+ * one flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair needs no round-trip
  * verification of the kind required by the title grammar.
  *
- * The consolidated record and the overrides are normalized as the engine normalizes any record. A field that the
- * branch did not determine is absent rather than empty, a marker spelled on a type splits into the type and `breaking`,
- * and `breaking` appears only when it is true. Each group is omitted when it is empty, as are the entries. The
- * derivation commit appears only beside entries, since it records a claim about them.
+ * The overrides are normalized as the engine normalizes any record. A field that the author did not override is absent
+ * rather than empty, a marker spelled on a type splits into the type and `breaking`, and `breaking` appears only when
+ * it is true. The overrides are omitted when they are empty, as are the entries. The derivation commit appears only
+ * beside entries, since it records a claim about them.
  *
  * The scalars precede the entry list, so the bulky list does not separate them from each other. An entry's `scopes`
  * render in flow form, keeping each entry compact.
  */
 export function renderChangeRecordBlock(block: ChangeRecordBlock): string {
-  const consolidatedRecord = normalizeConsolidatedRecord(block.consolidatedRecord ?? {});
   const overrides = normalizeOverrides(block.overrides ?? {});
   const entriesCommit = block.entriesCommit?.trim();
   const entries = block.entries ?? [];
   const payload = {
     title: block.title.trim(),
-    ...(Object.keys(consolidatedRecord).length > 0 && { consolidated_record: consolidatedRecord }),
     ...(Object.keys(overrides).length > 0 && { overrides }),
     ...(entries.length > 0 && {
       ...(entriesCommit !== undefined && entriesCommit !== '' && { entries_commit: entriesCommit }),
@@ -116,12 +114,10 @@ export function stripChangeRecordBlocks(text: string): string {
 }
 
 /**
- * What the block records: the title, the consolidated record of the branch, the overrides that the author applied, the
- * change entries, and the commit at which those entries were derived. Only the scope, type, and breaking marker of
- * `consolidatedRecord` are recorded, and `entriesCommit` is the short SHA as the change summary wrote it.
+ * What the block records: the title, the overrides that the author applied, the change entries, and the commit at
+ * which those entries were derived. `entriesCommit` is the short SHA as the change summary wrote it.
  */
 export interface ChangeRecordBlock {
-  consolidatedRecord?: ChangeRecord;
   entries?: ChangeEntry[];
   entriesCommit?: string;
   overrides?: RecordOverrides;
@@ -190,16 +186,6 @@ function findFences(lines: readonly string[]): FenceSpan[] {
 /** Names the block's kind on the opening fence, distinguishing it from any other fence in the body. */
 const INFO_STRING = 'change-record';
 
-/** Keeps only the scope, type, and breaking marker of a normalized record, which a consolidated record consists of. */
-function normalizeConsolidatedRecord(record: ChangeRecord): ChangeRecord {
-  const { breaking, scope, type } = normalizeChangeRecord(record);
-  return {
-    ...(scope !== undefined && { scope }),
-    ...(type !== undefined && { type }),
-    ...(breaking === true && { breaking }),
-  };
-}
-
 /**
  * Keeps only the overridable dimensions of a normalized record, so a marker spelled on the type becomes `breaking`. The
  * scope is kept as given, `*` included, since an override of `*` is the author's choice of no scope.
@@ -262,25 +248,22 @@ function readEntryFields(
 }
 
 /**
- * Reads the declared fields of one of the payload's groups into a record, reporting a group that is not a mapping or
- * the first field whose value has the wrong type. An absent or null group reads as empty.
+ * Reads the declared fields of the payload's `overrides` into a record, reporting a value that is not a mapping or the
+ * first field whose value has the wrong type. An absent or null value reads as empty.
  */
-function readGroup(
-  payload: Record<string, unknown>,
-  name: 'consolidated_record' | 'overrides',
-): { defect: string } | { record: ChangeRecord } {
-  const mapping = payload[name];
+function readOverrideFields(payload: Record<string, unknown>): { defect: string } | { record: ChangeRecord } {
+  const mapping = payload.overrides;
   if (mapping === undefined || mapping === null) {
     return { record: {} };
   }
   if (!isRecord(mapping)) {
-    return { defect: `\`${name}\` is not a mapping` };
+    return { defect: '`overrides` is not a mapping' };
   }
   const record: ChangeRecord = {};
   const { breaking } = mapping;
   if (breaking !== undefined && breaking !== null) {
     if (typeof breaking !== 'boolean') {
-      return { defect: `\`${name}.breaking\` is not a boolean` };
+      return { defect: '`overrides.breaking` is not a boolean' };
     }
     record.breaking = breaking;
   }
@@ -290,7 +273,7 @@ function readGroup(
       continue;
     }
     if (typeof value !== 'string') {
-      return { defect: `\`${name}.${key}\` is not a string` };
+      return { defect: `\`overrides.${key}\` is not a string` };
     }
     record[key] = value;
   }
@@ -345,16 +328,11 @@ function readPayload(payload: unknown): ChangeRecordBlockReading {
     return { defect: '`title` is empty', kind: 'malformed' };
   }
 
-  const consolidatedFields = readGroup(payload, 'consolidated_record');
-  if ('defect' in consolidatedFields) {
-    return { defect: consolidatedFields.defect, kind: 'malformed' };
-  }
-  const overrideFields = readGroup(payload, 'overrides');
+  const overrideFields = readOverrideFields(payload);
   if ('defect' in overrideFields) {
     return { defect: overrideFields.defect, kind: 'malformed' };
   }
 
-  const consolidatedRecord = normalizeConsolidatedRecord(consolidatedFields.record);
   const { breaking, scope, type } = overrideFields.record;
   const overrides = normalizeOverrides({
     ...(breaking === true && { breaking }),
@@ -366,7 +344,6 @@ function readPayload(payload: unknown): ChangeRecordBlockReading {
   return {
     block: {
       title: title.trim(),
-      ...(Object.keys(consolidatedRecord).length > 0 && { consolidatedRecord }),
       ...(Object.keys(overrides).length > 0 && { overrides }),
       ...recorded,
     },
@@ -380,7 +357,7 @@ function splitLines(text: string): string[] {
   return text.split(/\r?\n/);
 }
 
-/** The declared string fields of each group that the block contains. */
+/** The declared string fields of the block's overrides. */
 const STRING_FIELDS = ['scope', 'type'] as const;
 
 /** Serializes the payload as YAML, rendering each entry's `scopes` in flow form. */

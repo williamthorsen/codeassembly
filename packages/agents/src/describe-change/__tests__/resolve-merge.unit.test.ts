@@ -73,7 +73,6 @@ describe(resolveMerge, () => {
         sources: {
           block: {
             title: 'Add foo',
-            consolidated_record: { scope: 'agents', type: 'feat', breaking: false },
             overrides: {},
             entries_commit: 'e5029924',
             entries: [entryOf({ scope: 'agents', type: 'feat' })],
@@ -451,31 +450,12 @@ describe(resolveMerge, () => {
   });
 
   describe('the sources', () => {
-    it('mirror the block as read, reading an absent marker within its record as not breaking', () => {
-      const report = resolveMerge(
-        buildInput({
-          block: readBlock([], { consolidatedRecord: { scope: 'agents' }, overrides: { breaking: true, type: 'sec' } }),
-        }),
-      );
+    it('mirror the block as read', () => {
+      const report = resolveMerge(buildInput({ block: readBlock([], { overrides: { breaking: true, type: 'sec' } }) }));
 
       expect(report.sources.block).toStrictEqual({
         title: 'Add foo',
-        consolidated_record: { scope: 'agents', type: null, breaking: false },
         overrides: { breaking: true, type: 'sec' },
-        entries_commit: null,
-        entries: [],
-      });
-    });
-
-    it('report a block that names no consolidated record with a null record', () => {
-      const block: ChangeRecordBlockReading = { block: { title: 'Add foo' }, kind: 'read' };
-
-      const report = resolveMerge(buildInput({ block }));
-
-      expect(report.sources.block).toStrictEqual({
-        title: 'Add foo',
-        consolidated_record: null,
-        overrides: {},
         entries_commit: null,
         entries: [],
       });
@@ -489,13 +469,13 @@ describe(resolveMerge, () => {
   });
 
   describe('the entries', () => {
-    it('ranks the entries into the record, whatever the stored consolidated record says', () => {
+    it('ranks the entries into the record', () => {
       const entries: ChangeEntry[] = [
         { breaking: false, scopes: ['agents'], text: 'Adds the store-qualified wikilink', type: 'feat' },
         { breaking: true, scopes: ['kb'], text: 'Removes the reader', type: 'drop' },
         { breaking: false, scopes: ['kb'], text: 'Describes the store', type: 'docs' },
       ];
-      const block = readBlock(entries, { consolidatedRecord: { scope: 'agents', type: 'docs' } });
+      const block = readBlock(entries);
 
       const report = resolveMerge(buildInput({ block }));
 
@@ -561,10 +541,7 @@ describe(resolveMerge, () => {
     });
 
     it('resolves a block that records no entry from the labels and the commits, applying its overrides', () => {
-      const block = readBlock([], {
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
-        overrides: { breaking: true },
-      });
+      const block = readBlock([], { overrides: { breaking: true } });
 
       const report = resolveMerge(
         buildInput({ block, commitsRecord: { scope: 'agents', type: 'sec' }, labels: { scope: 'kb' } }),
@@ -579,7 +556,6 @@ describe(resolveMerge, () => {
 
     it('reports a malformed entry list as a notice, resolving the record as for a block that records no entry', () => {
       const block = readBlock([], {
-        consolidatedRecord: { type: 'feat' },
         entriesDefect: '`entries[0].text` is missing',
         overrides: { scope: 'kb' },
       });
@@ -822,7 +798,7 @@ describe(resolveMerge, () => {
 
   describe('the body', () => {
     it('when ## What is the last heading, excludes the closing line and the block', () => {
-      const block = renderChangeRecordBlock({ consolidatedRecord: { type: 'feat' }, title: 'Add foo' });
+      const block = renderChangeRecordBlock({ title: 'Add foo' });
 
       const report = resolveMerge(
         buildInput({ prBody: `## What\n\n- Adds foo.\n- Adds bar.\n\nCloses #466\n\n${block}\n` }),
@@ -910,13 +886,11 @@ function entryOf(record: { breaking?: boolean; scope?: string; type: string }): 
 
 /**
  * Builds a block reading that records the entries given, derived at the head unless `entriesCommit` names another
- * commit or is null, with a stored consolidated record that defaults to the entries' own. Overrides are included if
- * given, and the title defaults to the pull request's.
+ * commit or is null. Overrides are included if given, and the title defaults to the pull request's.
  */
 function readBlock(
   entries: ChangeEntry[],
   options: {
-    consolidatedRecord?: ChangeRecord;
     entriesCommit?: string | null;
     entriesDefect?: string;
     overrides?: RecordOverrides;
@@ -927,7 +901,6 @@ function readBlock(
     options.entriesCommit === undefined && entries.length > 0 ? HEAD_COMMIT.slice(0, 8) : options.entriesCommit;
   return {
     block: {
-      consolidatedRecord: options.consolidatedRecord ?? consolidateChangeEntries(entries, TAXONOMY),
       title: options.title ?? 'Add foo',
       ...(entries.length > 0 && { entries }),
       ...(typeof entriesCommit === 'string' && { entriesCommit }),

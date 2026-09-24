@@ -1,5 +1,5 @@
 import type { Taxonomy } from '../change-grammar/types.ts';
-import { type ChangeEntry, consolidateChangeEntries } from './change-entries.ts';
+import type { ChangeEntry } from './change-entries.ts';
 import { readChangeRecordBlock, renderChangeRecordBlock, replaceLastChangeRecordBlock } from './change-record-block.ts';
 import { findDefects, type RecordDefect } from './find-defects.ts';
 
@@ -7,10 +7,9 @@ import { findDefects, type RecordDefect } from './find-defects.ts';
  * Amends one change entry in a pull-request body's last `change-record` block, returning the body with that block
  * re-rendered and every other byte unchanged.
  *
- * The block keeps its title, overrides, and derivation commit, and its consolidated record is recomputed from the
- * amended entries. Refuses a block that is absent or malformed, malformed entries, an index out of range, and an
- * amendment that leaves the entry's type undeclared or its marker in breach of the type's policy, so an amendment that
- * returns always clears the entry's defect.
+ * The block keeps its title, overrides, and derivation commit. Refuses a block that is absent or malformed, malformed
+ * entries, an index out of range, and an amendment that leaves the entry's type undeclared or its marker in breach of
+ * the type's policy, so an amendment that returns always clears the entry's defect.
  */
 export function amendEntry(input: {
   amendment: EntryAmendment;
@@ -48,7 +47,6 @@ export function amendEntry(input: {
   const amended = entries.with(input.index, entry);
   const block = renderChangeRecordBlock({
     ...reading.block,
-    consolidatedRecord: consolidateChangeEntries(amended, input.taxonomy),
     entries: amended,
   });
   return { body: replaceLastChangeRecordBlock(input.body, block), entry, entryCount: amended.length };

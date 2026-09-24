@@ -78,12 +78,10 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
 }
 
 /**
- * The block as read, in the shape that the JSON output names: `consolidated_record` is `null` when the block has none,
- * `entries` is empty when the block records none or when they were malformed, and `entries_commit` is the short SHA
- * that the block recorded.
+ * The block as read, in the shape that the JSON output names: `entries` is empty when the block records none or when
+ * they were malformed, and `entries_commit` is the short SHA that the block recorded.
  */
 export interface BlockOutcome {
-  consolidated_record: { breaking: boolean; scope: string | null; type: string | null } | null;
   entries: ChangeEntry[];
   entries_commit: string | null;
   overrides: RecordOverrides;
@@ -498,19 +496,10 @@ interface SourcedValue {
 /** Matches a ticket reference: `#123`, `owner/repo#123`, `ABC-123`, or a URL. */
 const TICKET_REFERENCE = /^(?:(?:[\w.-]+\/[\w.-]+)?#\d+|[A-Z][A-Z\d]*-\d+|https?:\/\/\S+)$/;
 
-/** Renders the block in the shape that the JSON output names, reading an absent marker within its record as not breaking. */
+/** Renders the block in the shape that the JSON output names. */
 function toBlockOutcome(block: ChangeRecordBlock): BlockOutcome {
-  const { consolidatedRecord } = block;
   return {
     title: block.title,
-    consolidated_record:
-      consolidatedRecord === undefined
-        ? null
-        : {
-            scope: consolidatedRecord.scope ?? null,
-            type: consolidatedRecord.type ?? null,
-            breaking: consolidatedRecord.breaking === true,
-          },
     overrides: { ...block.overrides },
     entries_commit: block.entriesCommit ?? null,
     entries: block.entries ?? [],

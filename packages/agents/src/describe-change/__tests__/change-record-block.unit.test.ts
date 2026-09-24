@@ -25,37 +25,18 @@ describe(readChangeRecordBlock, () => {
       expected: { title: 'Add the parser: the reader' },
     },
     {
-      name: 'every group',
-      block: {
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
-        overrides: { breaking: true, scope: 'kb', type: 'sec' },
-        title: 'Add the parser',
-      },
-      expected: {
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
-        overrides: { breaking: true, scope: 'kb', type: 'sec' },
-        title: 'Add the parser',
-      },
-    },
-    {
-      name: 'overrides alone',
-      block: { overrides: { type: 'sec' }, title: 'Add the parser' },
-      expected: { overrides: { type: 'sec' }, title: 'Add the parser' },
+      name: 'every override',
+      block: { overrides: { breaking: true, scope: 'kb', type: 'sec' }, title: 'Add the parser' },
+      expected: { overrides: { breaking: true, scope: 'kb', type: 'sec' }, title: 'Add the parser' },
     },
     {
       name: 'a wildcard scope override',
-      block: { consolidatedRecord: { scope: 'agents', type: 'feat' }, overrides: { scope: '*' }, title: 'Add foo' },
-      expected: { consolidatedRecord: { scope: 'agents', type: 'feat' }, overrides: { scope: '*' }, title: 'Add foo' },
-    },
-    {
-      name: 'a breaking consolidated record',
-      block: { consolidatedRecord: { breaking: true, scope: 'agents', type: 'drop' }, title: 'Drop foo' },
-      expected: { consolidatedRecord: { breaking: true, scope: 'agents', type: 'drop' }, title: 'Drop foo' },
+      block: { overrides: { scope: '*' }, title: 'Add foo' },
+      expected: { overrides: { scope: '*' }, title: 'Add foo' },
     },
     {
       name: 'entries and their derivation commit',
       block: {
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
         entries: [
           { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
           {
@@ -70,7 +51,6 @@ describe(readChangeRecordBlock, () => {
         title: 'Add the parser',
       },
       expected: {
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
         entries: [
           { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
           {
@@ -87,8 +67,8 @@ describe(readChangeRecordBlock, () => {
     },
     {
       name: 'a marker spelled on an override type',
-      block: { consolidatedRecord: { type: 'feat' }, overrides: { type: 'sec!' }, title: 'Add foo' },
-      expected: { consolidatedRecord: { type: 'feat' }, overrides: { breaking: true, type: 'sec' }, title: 'Add foo' },
+      block: { overrides: { type: 'sec!' }, title: 'Add foo' },
+      expected: { overrides: { breaking: true, type: 'sec' }, title: 'Add foo' },
     },
   ])('reads back the block rendered for $name', ({ block, expected }) => {
     const body = `## What\n\n- Adds the parser\n\nCloses #466\n\n${renderChangeRecordBlock(block)}\n`;
@@ -101,17 +81,17 @@ describe(readChangeRecordBlock, () => {
   });
 
   it('reads the last of several blocks', () => {
-    const first = renderChangeRecordBlock({ consolidatedRecord: { type: 'fix' }, title: 'Fix foo' });
-    const last = renderChangeRecordBlock({ consolidatedRecord: { type: 'feat' }, title: 'Add foo' });
+    const first = renderChangeRecordBlock({ overrides: { type: 'fix' }, title: 'Fix foo' });
+    const last = renderChangeRecordBlock({ overrides: { type: 'feat' }, title: 'Add foo' });
 
     expect(readChangeRecordBlock(`${first}\n\ntext\n\n${last}`)).toStrictEqual({
-      block: { consolidatedRecord: { type: 'feat' }, title: 'Add foo' },
+      block: { overrides: { type: 'feat' }, title: 'Add foo' },
       kind: 'read',
     });
   });
 
   it('reads a block whose lines end in CRLF', () => {
-    const block: ChangeRecordBlock = { consolidatedRecord: { scope: 'kb', type: 'docs' }, title: 'Describe the store' };
+    const block: ChangeRecordBlock = { overrides: { scope: 'kb', type: 'docs' }, title: 'Describe the store' };
     const body = renderChangeRecordBlock(block).replaceAll('\n', '\r\n');
 
     expect(readChangeRecordBlock(body)).toStrictEqual({ block, kind: 'read' });
@@ -122,41 +102,52 @@ describe(readChangeRecordBlock, () => {
       '```change-record',
       'grammar: 2',
       'title: Add foo',
-      'consolidated_record:',
+      'overrides:',
       '  scope:',
       '  title: Add bar',
       '  type: feat',
-      'overrides:',
+      'entries_commit:',
       '```',
     ];
 
     expect(readChangeRecordBlock(body.join('\n'))).toStrictEqual({
-      block: { consolidatedRecord: { type: 'feat' }, title: 'Add foo' },
+      block: { overrides: { type: 'feat' }, title: 'Add foo' },
       kind: 'read',
     });
+  });
+
+  it.each([
+    { name: 'a valid record', value: '\n  scope: agents\n  type: feat' },
+    { name: 'a list', value: ' [feat]' },
+    { name: 'a numeric scope', value: '\n  scope: 42' },
+    { name: 'a marker spelled as a string', value: "\n  breaking: 'yes'" },
+  ])('ignores a legacy consolidated record holding $name', ({ value }) => {
+    const body = `\`\`\`change-record\ntitle: Add foo\nconsolidated_record:${value}\n\`\`\``;
+
+    expect(readChangeRecordBlock(body)).toStrictEqual({ block: { title: 'Add foo' }, kind: 'read' });
   });
 
   it.each<{ defect: RegExp; name: string; payload: string }>([
     {
       name: 'an entry list that is a mapping',
-      payload: 'title: Add foo\nconsolidated_record:\n  type: feat\nentries:\n  type: feat',
+      payload: 'title: Add foo\noverrides:\n  type: sec\nentries:\n  type: feat',
       defect: /the entries are not a list/,
     },
     {
       name: 'an entry missing its text',
-      payload: 'title: Add foo\nconsolidated_record:\n  type: feat\nentries:\n  - type: feat',
+      payload: 'title: Add foo\noverrides:\n  type: sec\nentries:\n  - type: feat',
       defect: /`entries\[0\].text` is missing/,
     },
     {
       name: 'a numeric derivation commit',
-      payload: 'title: Add foo\nconsolidated_record:\n  type: feat\nentries_commit: 42',
+      payload: 'title: Add foo\noverrides:\n  type: sec\nentries_commit: 42',
       defect: /`entries_commit` is not a string/,
     },
   ])('reads a block with $name, leaving the entries absent and reporting the defect', ({ defect, payload }) => {
     const reading = readChangeRecordBlock(`\`\`\`change-record\n${payload}\n\`\`\``);
 
     expect(reading).toStrictEqual({
-      block: { consolidatedRecord: { type: 'feat' }, title: 'Add foo' },
+      block: { overrides: { type: 'sec' }, title: 'Add foo' },
       entriesDefect: expect.stringMatching(defect),
       kind: 'read',
     });
@@ -181,7 +172,7 @@ describe(readChangeRecordBlock, () => {
     { name: 'a block that never closes', payload: null, defect: /never closes/ },
     { name: 'a payload that is not YAML', payload: 'title: [unclosed', defect: /not valid YAML/ },
     { name: 'a payload that is not a mapping', payload: '- e5029924', defect: /payload is not a mapping/ },
-    { name: 'a missing title', payload: 'consolidated_record:\n  type: feat', defect: /`title` is missing/ },
+    { name: 'a missing title', payload: 'overrides:\n  type: feat', defect: /`title` is missing/ },
     {
       name: 'an old-grammar block keyed by head',
       payload: 'head:\n  title: Add foo\n  type: feat',
@@ -190,24 +181,14 @@ describe(readChangeRecordBlock, () => {
     { name: 'a numeric title', payload: 'title: 42', defect: /`title` is not a string/ },
     { name: 'a blank title', payload: "title: ' '", defect: /`title` is empty/ },
     {
-      name: 'a consolidated record that is a list',
-      payload: 'title: Add foo\nconsolidated_record: [feat]',
-      defect: /`consolidated_record` is not a mapping/,
-    },
-    {
       name: 'overrides that are a string',
       payload: 'title: Add foo\noverrides: sec',
       defect: /`overrides` is not a mapping/,
     },
     {
-      name: 'a numeric consolidated scope',
-      payload: 'title: Add foo\nconsolidated_record:\n  scope: 42',
-      defect: /`consolidated_record.scope`/,
-    },
-    {
-      name: 'a consolidated breaking spelled as a string',
-      payload: "title: Add foo\nconsolidated_record:\n  breaking: 'yes'",
-      defect: /`consolidated_record.breaking` is not a boolean/,
+      name: 'an override marker spelled as a string',
+      payload: "title: Add foo\noverrides:\n  breaking: 'yes'",
+      defect: /`overrides.breaking` is not a boolean/,
     },
     {
       name: 'a numeric override type',
@@ -323,19 +304,15 @@ describe(readMergeChangeRecordBlock, () => {
 
 describe(renderChangeRecordBlock, () => {
   it('opens on the info string and closes on a bare fence', () => {
-    const rendered = renderChangeRecordBlock({
-      consolidatedRecord: { scope: 'agents', type: 'feat' },
-      title: 'Add foo',
-    });
+    const rendered = renderChangeRecordBlock({ title: 'Add foo' });
     const lines = rendered.split('\n');
 
     expect(lines.at(0)).toBe('```change-record');
     expect(lines.at(-1)).toBe('```');
   });
 
-  it('renders the title, then the consolidated record, then the overrides', () => {
+  it('renders the title, then the overrides', () => {
     const rendered = renderChangeRecordBlock({
-      consolidatedRecord: { breaking: true, scope: 'agents', type: 'feat' },
       overrides: { breaking: true, scope: 'kb', type: 'sec' },
       title: 'Add the parser',
     });
@@ -344,10 +321,6 @@ describe(renderChangeRecordBlock, () => {
       [
         '```change-record',
         'title: Add the parser',
-        'consolidated_record:',
-        '  scope: agents',
-        '  type: feat',
-        '  breaking: true',
         'overrides:',
         '  scope: kb',
         '  type: sec',
@@ -355,27 +328,6 @@ describe(renderChangeRecordBlock, () => {
         '```',
       ].join('\n'),
     );
-  });
-
-  it('omits breaking for a consolidated record that is not breaking', () => {
-    const rendered = renderChangeRecordBlock({
-      consolidatedRecord: { scope: 'agents', type: 'feat' },
-      title: 'Add foo',
-    });
-
-    expect(readBlock(rendered).consolidated_record).toStrictEqual({ scope: 'agents', type: 'feat' });
-  });
-
-  it('records only the scope, type, and marker of the consolidated record', () => {
-    const rendered = renderChangeRecordBlock({
-      consolidatedRecord: { prNumber: '470', scope: 'agents', ticketRef: '#466', title: 'Add bar', type: 'feat' },
-      title: 'Add foo',
-    });
-
-    expect(readBlock(rendered)).toStrictEqual({
-      consolidated_record: { scope: 'agents', type: 'feat' },
-      title: 'Add foo',
-    });
   });
 
   it('when an override type spells the marker, records the type and a breaking override', () => {
@@ -390,27 +342,14 @@ describe(renderChangeRecordBlock, () => {
     expect(readBlock(rendered).overrides).toStrictEqual({ scope: '*' });
   });
 
-  it('omits each group that is empty', () => {
-    const rendered = renderChangeRecordBlock({ consolidatedRecord: { scope: '*' }, overrides: {}, title: 'Add foo' });
+  it('omits empty overrides and an empty entry list', () => {
+    const rendered = renderChangeRecordBlock({ entries: [], overrides: {}, title: 'Add foo' });
 
     expect(readBlock(rendered)).toStrictEqual({ title: 'Add foo' });
   });
 
-  it('splits a marker spelled on the type into the type and the flag', () => {
-    const rendered = renderChangeRecordBlock({ consolidatedRecord: { type: 'drop!' }, title: 'Drop foo' });
-
-    expect(readBlock(rendered).consolidated_record).toStrictEqual({ type: 'drop', breaking: true });
-  });
-
-  it('drops the wildcard scope from the consolidated record rather than recording it', () => {
-    const rendered = renderChangeRecordBlock({ consolidatedRecord: { scope: '*', type: 'feat' }, title: 'Add foo' });
-
-    expect(readBlock(rendered).consolidated_record).toStrictEqual({ type: 'feat' });
-  });
-
   it('renders the scalars before the entry list', () => {
     const rendered = renderChangeRecordBlock({
-      consolidatedRecord: { scope: 'agents', type: 'feat' },
       entries: [{ breaking: false, scopes: ['agents'], text: 'Adds the parser', type: 'feat' }],
       entriesCommit: 'e5029924',
       overrides: { type: 'sec' },
@@ -421,9 +360,6 @@ describe(renderChangeRecordBlock, () => {
       [
         '```change-record',
         'title: Add the parser',
-        'consolidated_record:',
-        '  scope: agents',
-        '  type: feat',
         'overrides:',
         '  type: sec',
         'entries_commit: e5029924',
@@ -521,7 +457,7 @@ describe(renderMergeChangeRecordBlock, () => {
 
 describe(stripChangeRecordBlocks, () => {
   it('removes every block, fences included, and keeps the text around them', () => {
-    const block = renderChangeRecordBlock({ consolidatedRecord: { type: 'feat' }, title: 'Add foo' });
+    const block = renderChangeRecordBlock({ title: 'Add foo' });
 
     expect(stripChangeRecordBlocks(`- Adds the parser\n${block}\nbetween\n${block}\nafter`)).toBe(
       '- Adds the parser\nbetween\nafter',

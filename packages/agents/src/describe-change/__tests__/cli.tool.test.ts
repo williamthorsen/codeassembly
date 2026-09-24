@@ -756,7 +756,7 @@ describe('resolve-ticket-type', () => {
     ]);
 
     expect(parsed).toEqual({
-      block: { consolidatedRecord: {}, entriesCommit: 'e5029924', overrides: {}, title: 'Add foo' },
+      block: { entriesCommit: 'e5029924', overrides: {}, title: 'Add foo' },
       entriesFile: 'entries.yaml',
       subcommand: 'render-block',
     });
@@ -781,10 +781,6 @@ describe('resolve-ticket-type', () => {
     const { output } = await runDescribe({
       argv: [
         'render-block',
-        '--scope',
-        'agents',
-        '--type',
-        'feat',
         '--title',
         'Add the parser',
         '--entries-file',
@@ -799,7 +795,6 @@ describe('resolve-ticket-type', () => {
 
     expect(output).toStrictEqual({
       block: renderChangeRecordBlock({
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
         entries: [
           { breaking: false, scopes: ['agents'], text: 'Adds the store-qualified wikilink', type: 'feat' },
           { breaking: false, scopes: ['agents'], text: 'Stops the sync from deleting a subagent', type: 'fix' },
@@ -808,20 +803,6 @@ describe('resolve-ticket-type', () => {
         title: 'Add the parser',
       }),
     });
-  });
-
-  it('consolidates nothing, so the record it records is the one that the flags pass', async () => {
-    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
-    const entriesFile = await writeEntries(ENTRIES_YAML);
-
-    const { output } = await runDescribe({
-      argv: ['render-block', '--type', 'docs', '--title', 'Add the parser', '--entries-file', entriesFile],
-      cwd,
-      dataDir: DATA_DIR,
-      home,
-    });
-
-    expect(output).toMatchObject({ block: expect.stringContaining('type: docs') });
   });
 
   it('if the entries file cannot be read, refuses the invocation', async () => {
@@ -1111,14 +1092,9 @@ describe('resolve-effective-record', () => {
 });
 
 describe('render-block', () => {
-  it('reads the title, the consolidated record’s flags, and every override flag', () => {
+  it('reads the title and every override flag', () => {
     const parsed = parseArgs([
       'render-block',
-      '--scope',
-      'agents',
-      '--type',
-      'feat',
-      '--breaking',
       '--title',
       'Add the parser',
       '--override-scope',
@@ -1130,7 +1106,6 @@ describe('render-block', () => {
 
     expect(parsed).toEqual({
       block: {
-        consolidatedRecord: { breaking: true, scope: 'agents', type: 'feat' },
         overrides: { breaking: true, scope: 'kb', type: 'sec' },
         title: 'Add the parser',
       },
@@ -1138,23 +1113,27 @@ describe('render-block', () => {
     });
   });
 
-  it.each(['--ticket-ref', '--pr-number', '--ticket-label', '--override-title', '--base'])(
+  it.each(['--ticket-ref', '--pr-number', '--ticket-label', '--override-title', '--base', '--scope', '--type'])(
     'if %s is passed, refuses it as unknown',
     (flag) => {
       expect(() => parseArgs(['render-block', flag, 'value'])).toThrow(`unknown flag: ${flag}`);
     },
   );
 
+  it('if --breaking is passed, refuses it as unknown', () => {
+    expect(() => parseArgs(['render-block', '--title', 'Add foo', '--breaking'])).toThrow('unknown flag: --breaking');
+  });
+
   it('reads an invocation with only the title', () => {
     expect(parseArgs(['render-block', '--title', 'Add foo'])).toEqual({
-      block: { consolidatedRecord: {}, overrides: {}, title: 'Add foo' },
+      block: { overrides: {}, title: 'Add foo' },
       subcommand: 'render-block',
     });
   });
 
   it.each([
-    ['is missing', ['--type', 'feat']],
-    ['is blank', ['--title', ' ', '--type', 'feat']],
+    ['is missing', ['--override-type', 'feat']],
+    ['is blank', ['--title', ' ', '--override-type', 'feat']],
   ])('if --title %s, refuses the invocation', (_label, flags) => {
     expect(() => parseArgs(['render-block', ...flags])).toThrow('render-block requires --title');
   });
@@ -1171,9 +1150,9 @@ describe('render-block', () => {
     );
   });
 
-  it('renders the block from the title, the consolidated record, and the overrides as the JSON output’s block', async () => {
+  it('renders the block from the title and the overrides as the JSON output’s block', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
-    const argv = ['render-block', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'];
+    const argv = ['render-block', '--title', 'Add the parser'];
 
     const { output } = await runDescribe({
       argv: [...argv, '--override-type', 'sec', '--override-breaking'],
@@ -1184,7 +1163,6 @@ describe('render-block', () => {
 
     expect(output).toStrictEqual({
       block: renderChangeRecordBlock({
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
         overrides: { breaking: true, type: 'sec' },
         title: 'Add the parser',
       }),
@@ -1195,18 +1173,13 @@ describe('render-block', () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     const { output } = await runDescribe({
-      argv: ['render-block', '--scope', 'agents', '--type', 'feat', '--title', 'Add the parser'],
+      argv: ['render-block', '--title', 'Add the parser'],
       cwd,
       dataDir: DATA_DIR,
       home,
     });
 
-    expect(output).toStrictEqual({
-      block: renderChangeRecordBlock({
-        consolidatedRecord: { scope: 'agents', type: 'feat' },
-        title: 'Add the parser',
-      }),
-    });
+    expect(output).toStrictEqual({ block: renderChangeRecordBlock({ title: 'Add the parser' }) });
   });
 });
 
@@ -1303,7 +1276,6 @@ describe('resolve-merge', () => {
       { breaking: false, scopes: ['agents'], text: 'Corrects the guard', type: 'fix' },
     ];
     const block = renderChangeRecordBlock({
-      consolidatedRecord: { scope: 'kb', type: 'docs' },
       entries,
       entriesCommit: headCommit.slice(0, 8),
       title: 'Add the parser',
@@ -1354,7 +1326,6 @@ describe('resolve-merge', () => {
       sources: {
         block: {
           title: 'Add the parser',
-          consolidated_record: { scope: 'kb', type: 'docs', breaking: false },
           overrides: {},
           entries_commit: headCommit.slice(0, 8),
           entries,
@@ -1371,7 +1342,6 @@ describe('resolve-merge', () => {
   it('reports the block’s entries as the merge block, keeping them out of the body', async () => {
     const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     const block = renderChangeRecordBlock({
-      consolidatedRecord: { type: 'feat' },
       entries: [
         { breaking: false, scopes: ['agents', 'kb'], text: 'Adds the store-qualified wikilink', type: 'feat' },
         { breaking: true, scopes: ['agents'], text: 'Removes the legacy API', type: 'drop' },
