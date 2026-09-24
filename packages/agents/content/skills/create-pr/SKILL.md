@@ -11,7 +11,7 @@ dependencies:
 
 Create a pull request on the appropriate platform. This is the user-facing entry point that orchestrates the full PR creation flow, delegating platform-specific API calls to internal skills (`create-gh-pr`, `create-bitbucket-pr`).
 
-The pull request carries the change's entries, consolidated record, and overrides in the `change-record` block that the change summary's body ends with, as [the change record](../_data/change-record.md) states them.
+The pull request carries the change's entries and overrides in the `change-record` block that the change summary's body ends with, as [the change record](../_data/change-record.md) states them.
 
 ## Optional arguments
 
