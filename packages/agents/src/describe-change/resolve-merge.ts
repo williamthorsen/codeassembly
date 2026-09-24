@@ -4,7 +4,7 @@ import { parse } from '../change-grammar/parse.ts';
 import { render } from '../change-grammar/render.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
-import type { ChangeEntry } from './change-entries.ts';
+import { type ChangeEntry, consolidateChangeEntries } from './change-entries.ts';
 import {
   type ChangeRecordBlock,
   type ChangeRecordBlockReading,
@@ -19,33 +19,26 @@ import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from 
  * Resolves what a pull request merges as: the effective record and the source of each of its fields, the merge title and
  * body, what each source names, the defects that block approval, and the notices that the approval gate shows.
  *
- * A readable block resolves the base record through `chooseFromBlock` and its absence through `chooseFromLabels`, each
- * of which states how it weighs the commits. The block's overrides then apply, and the caller's apply last, through
- * `applyOverrides`, so each field is attributed to the source that set it last. The title resolves on a precedence of
- * its own.
- *
- * A block whose entries were derived at the pull request's head is fresh, and its consolidated record stands over the
- * commits'. A stale block, a block written before the entries entered the grammar, and one whose entries are absent all
- * keep the rule that the commits win, as the fresher of two consolidations of the same branch.
+ * The base record resolves through `chooseFromEntries` when the block records entries, and otherwise through
+ * `chooseFromLabels`, each of which states how it weighs the commits. The block's overrides then apply, and the
+ * caller's apply last, through `applyOverrides`, so each field is attributed to the source that set it last. The title
+ * resolves on a precedence of its own.
  */
 export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
   const { block, entriesFresh, notices } = readSources(input);
   const commits = input.commits.kind === 'read' ? readCommitsRecord(input.commits.consolidatedRecord) : undefined;
-  const base =
-    block === undefined
+  const entries = block?.entries ?? [];
+  const chosen =
+    entries.length === 0
       ? chooseFromLabels({ commits, labels: input.labels, notices })
-      : applySourcedOverrides(
-          chooseFromBlock({ block, commits, entriesFresh, notices }),
-          block.overrides ?? {},
-          'block_overrides',
-        );
+      : chooseFromEntries({ commits, entries, entriesFresh, notices, taxonomy: input.taxonomy });
+  const base = block === undefined ? chosen : applySourcedOverrides(chosen, block.overrides ?? {}, 'block_overrides');
   const { record: effective, sources } = applySourcedOverrides(base, input.overrides, 'flags');
 
   const prTitle = readPullRequestTitle(input);
   notices.push(...findPullRequestTitleNotices(prTitle, effective));
   const title = resolveTitle({ blockTitle: block?.title, overrides: input.overrides, pr: input.pr, prTitle });
   const ticketRef = resolveTicketRef({ prTitle, ticketRef: input.ticketRef });
-  const entries = block?.entries ?? [];
 
   return {
     effective_record: {
@@ -228,21 +221,22 @@ interface AttributedRecord {
 }
 
 /**
- * Chooses between the block's consolidated record and the commits', reporting the fields on which they disagree
- * whichever of the two stands.
+ * Chooses between the record ranked from the block's entries and the commits' record, reporting the fields on which
+ * they disagree whichever of the two stands.
  *
- * Freshness decides. A block whose entries were derived at the pull request's head consolidated from the entries, which
- * the commit subjects only approximate, so its record stands. Otherwise the commits' wins whenever they were read, as
- * the fresher of two consolidations of the same branch, and the block's stands only when the two agree or when the
- * commits could not be read.
+ * Freshness decides. Entries derived at the pull request's head describe the change better than the commit subjects,
+ * which only approximate it, so their record stands. Otherwise the commits' wins whenever they were read, as the fresher
+ * of two consolidations of the same branch, and the entries' stands only when the two agree or when the commits could
+ * not be read.
  */
-function chooseFromBlock(input: {
-  block: ChangeRecordBlock;
+function chooseFromEntries(input: {
   commits: ChangeRecord | undefined;
+  entries: ChangeEntry[];
   entriesFresh: boolean;
   notices: MergeNotice[];
+  taxonomy: Taxonomy;
 }): AttributedRecord {
-  const blockRecord = toComparedFields(input.block.consolidatedRecord ?? {});
+  const blockRecord = toComparedFields(consolidateChangeEntries(input.entries, input.taxonomy));
   const fields = input.commits === undefined ? [] : findDifferingFields(blockRecord, input.commits);
   if (fields.length > 0) {
     input.notices.push({ kind: 'divergence', sources: ['block', 'commits'], fields });
@@ -254,7 +248,7 @@ function chooseFromBlock(input: {
 }
 
 /**
- * Chooses the record without a readable block: the type and its marker from the labels when a type label resolved,
+ * Chooses the record without entries to rank: the type and its marker from the labels when a type label resolved,
  * otherwise from the commits, and the scope from its label when one resolved, otherwise from the commits.
  */
 function chooseFromLabels(input: {
@@ -392,7 +386,7 @@ function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undef
 /**
  * Reads the block out of its reading and raises every notice that reading the sources produces, before any record
  * resolves: a source that is absent or that could not be read, and entries that were not derived at the pull request's
- * head. It also reports whether those entries are fresh, which `chooseFromBlock` weighs.
+ * head. It also reports whether those entries are fresh, which `chooseFromEntries` weighs.
  */
 function readSources(input: MergeInput): {
   block: ChangeRecordBlock | undefined;

@@ -9,6 +9,7 @@ import { promisify } from 'node:util';
 import { describe, expect, it } from 'vitest';
 
 import { isRecord } from '../../lib/type-guards.ts';
+import type { ChangeEntry } from '../change-entries.ts';
 import { renderChangeRecordBlock, renderMergeChangeRecordBlock } from '../change-record-block.ts';
 import { parseArgs, runDescribe } from '../cli.ts';
 import type { ConsolidateBranchOutcome, EntryOutcome } from '../types.ts';
@@ -1292,8 +1293,14 @@ describe('resolve-merge', () => {
       'agents|fix: Correct the guard',
     ]);
     await writeLabelMap(cwd, { types: { docs: 'documentation' } });
+    const entries: ChangeEntry[] = [
+      { breaking: false, scopes: ['agents'], text: 'Adds the parser', type: 'feat' },
+      { breaking: false, scopes: ['agents'], text: 'Corrects the guard', type: 'fix' },
+    ];
     const block = renderChangeRecordBlock({
-      consolidatedRecord: { scope: 'agents', type: 'feat' },
+      consolidatedRecord: { scope: 'kb', type: 'docs' },
+      entries,
+      entriesCommit: headCommit.slice(0, 8),
       title: 'Add the parser',
     });
     const bodyFile = await writeBody(`## What\n\n- Adds the parser.\n\nCloses #466\n\n${block}\n`);
@@ -1337,15 +1344,15 @@ describe('resolve-merge', () => {
       },
       merge_title: '#466 agents|feat: Add the parser (#470)',
       body: '- Adds the parser.',
-      merge_block: null,
-      entry_count: 0,
+      merge_block: expect.stringMatching(/^```change-record\n/),
+      entry_count: 2,
       sources: {
         block: {
           title: 'Add the parser',
-          consolidated_record: { scope: 'agents', type: 'feat', breaking: false },
+          consolidated_record: { scope: 'kb', type: 'docs', breaking: false },
           overrides: {},
-          entries_commit: null,
-          entries: [],
+          entries_commit: headCommit.slice(0, 8),
+          entries,
         },
         commits: { scope: 'agents', type: 'feat', breaking: false },
         labels: { scope: null, type: 'docs', breaking: false },
