@@ -289,7 +289,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
 
 `--base`, `--head`, `--pr-number`, `--pr-title`, and `--pr-body-file` are required. `--head` is the pull request's head commit. The commits are read from the local repository, so the head commit must be there for them to be read, and it need not be checked out. `--pr-number` takes digits alone. `--pr-body-file` names a file containing the pull-request body, which is multi-line Markdown. `--pr-label` is repeatable. `--ticket-ref` is the ticket reference to be used when the pull-request title does not contain one. The overrides are `--override-scope`, `--override-type`, `--override-breaking` or `--no-override-breaking`, and `--override-title`.
 
-```json
+````json
 {
   "effective_record": {
     "title": "Add the parser",
@@ -301,51 +301,51 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   },
   "effective_sources": {
     "title": "pr_title",
-    "scope": "commits",
-    "type": "commits",
-    "breaking": "commits",
+    "scope": "block",
+    "type": "block",
+    "breaking": "block",
     "ticket_ref": "pr_title"
   },
   "merge_title": "#466 agents|feat: Add the parser (#470)",
   "body": "- Adds the parser.",
-  "merge_block": null,
-  "entry_count": 0,
+  "merge_block": "```change-record\npr_number: 470\nticket_ref: \"#466\"\nentries:\n  - type: feat\n    scopes: [agents]\n    text: Adds the parser\n```",
+  "entry_count": 1,
   "sources": {
     "block": {
       "title": "Add the parser",
-      "consolidated_record": { "scope": "agents", "type": "fix", "breaking": false },
+      "consolidated_record": { "scope": "agents", "type": "feat", "breaking": false },
       "overrides": {},
-      "entries_commit": null,
-      "entries": []
+      "entries_commit": "e5029924",
+      "entries": [{ "type": "feat", "scopes": ["agents"], "breaking": false, "text": "Adds the parser" }]
     },
-    "commits": { "scope": "agents", "type": "feat", "breaking": false },
+    "commits": { "scope": "agents", "type": "fix", "breaking": false },
     "labels": { "scope": "agents", "type": "feat", "breaking": false },
     "pr_title": { "title": "Add the parser", "ticket_ref": "#466", "scope": null, "type": null, "breaking": null }
   },
   "defects": [],
   "notices": [{ "kind": "divergence", "sources": ["block", "commits"], "fields": ["type"] }]
 }
-```
+````
 
 **`effective_record` is the [effective record](./change-record.md#terms) that the merge settles on**, resolved as [Where the record is read](./change-record.md#where-the-record-is-read) states. It contains every field of a record, since `merge_title` renders from it. A field that nothing sets is `null`, apart from `breaking`, which is then `false`.
 
 **`effective_sources` names what supplied each field of `effective_record`**, apart from `pr_number`, which `--pr-number` supplies:
 
-| Value               | Supplied by                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `block`             | The block's consolidated record, when its entries are fresh, when the commits agree with it or cannot be read, or the block's title, when the title does not invert |
-| `block_overrides`   | An override that the block records                                                                                                                                  |
-| `commits`           | The record to which the commits consolidate                                                                                                                         |
-| `flags`             | The invocation's overrides, and `--ticket-ref`                                                                                                                      |
-| `labels`            | The pull request's labels                                                                                                                                           |
-| `pr_title`          | The pull-request title, inverted through `pr.title_format`                                                                                                          |
-| `pr_title_verbatim` | The pull-request title as given, when it does not invert and no block is readable                                                                                   |
+| Value               | Supplied by                                                                                                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `block`             | The record ranked from the block's entries, when they are fresh, when the commits agree with it or cannot be read, or the block's title, when the title does not invert |
+| `block_overrides`   | An override that the block records                                                                                                                                      |
+| `commits`           | The record to which the commits consolidate                                                                                                                             |
+| `flags`             | The invocation's overrides, and `--ticket-ref`                                                                                                                          |
+| `labels`            | The pull request's labels                                                                                                                                               |
+| `pr_title`          | The pull-request title, inverted through `pr.title_format`                                                                                                              |
+| `pr_title_verbatim` | The pull-request title as given, when it does not invert and no block is readable                                                                                       |
 
-Each field names the step that set it last, as [Where the record is read](./change-record.md#where-the-record-is-read) orders the steps, so a field that an override sets names the override even when it repeats the value that it replaces. A field is `null` when nothing supplied it: a `ticket_ref` that neither the title nor `--ticket-ref` names, and, without a readable block, a field that no label resolves while the commits cannot be read.
+Each field names the step that set it last, as [Where the record is read](./change-record.md#where-the-record-is-read) orders the steps, so a field that an override sets names the override even when it repeats the value that it replaces. A field is `null` when nothing supplied it: a `ticket_ref` that neither the title nor `--ticket-ref` names, and, without entries to rank, a field that no label resolves while the commits cannot be read.
 
 **`sources` reports what each source names**, whether or not the resolution used it. A source is `null` only when it was not read: `block` when the body contains no block or a malformed one, `commits` when the commits cannot be read, and `pr_title` when the title does not invert. Within a record, a field that the source does not determine is `null`, `breaking` included.
 
-- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` when the block has no consolidated record and whose `breaking` is `false` when the block omits it, its `overrides`, which lists only the keys that are set, its `entries`, each with `type`, `scopes`, `breaking`, `text`, and any `migration`, and its `entries_commit`. `entries` is empty when the block records none and when they were malformed; `entries_commit` is `null` when the block records none.
+- `block` mirrors the block as read: its `title`, its `consolidated_record`, which is `null` when the block has no consolidated record, whose `breaking` is `false` when the block omits it, and which the resolution does not read, its `overrides`, which lists only the keys that are set, its `entries`, each with `type`, `scopes`, `breaking`, `text`, and any `migration`, and its `entries_commit`. `entries` is empty when the block records none and when they were malformed; `entries_commit` is `null` when the block records none.
 - `commits` is the record to which the commits between `--base` and `--head` consolidate. Every field is `null` when the range contains no entry.
 - `labels` is the record that the labels name, and is never `null`. `type` and `scope` each resolve when exactly one label of their section names a key. `breaking` is `true` with the `breaking` label, `false` when a type label resolves without it, and `null` otherwise.
 - `pr_title` is the record that the pull-request title contains: the bare `title` and the `ticket_ref`, and the `scope`, `type`, and `breaking` of any typed prefix, each `null` when the title contains no prefix. It is read under `--override-title` too.
@@ -360,20 +360,20 @@ The entries render whether or not they are fresh: a merge re-derives nothing, an
 
 **`defects` block approval.** Each names a condition of `effective_record` that the author must override before the merge is offered, with the kinds that [`resolve-effective-record`](#resolve-effective-record) lists.
 
-**The block's entries decide which consolidated record stands.** They are fresh when the block records some, records the commit at which they were derived, and the head that `--head` names starts with that commit, compared case-insensitively: The block records a short SHA and the pull request reports a full one. A fresh block consolidated from the entries, so its record stands over the commits'; a stale block, one written before the entries entered the grammar, and one recording none all keep the rule that the commits win. `divergence` is raised whichever of the two stands, so which one did is read from `effective_sources`.
+**The block's entries decide the record.** `resolve-merge` ranks them into a scope, type, and marker by the rule that [`consolidate-entries`](#consolidate-entries) applies, and never reads the block's `consolidated_record`. The entries are fresh when the block records some, records the commit at which they were derived, and the head that `--head` names starts with that commit, compared case-insensitively: The block records a short SHA and the pull request reports a full one. The record ranked from fresh entries stands over the commits'; stale entries keep the rule that the commits win. `divergence` is raised whichever of the two stands, so which one did is read from `effective_sources`. A block that records no entries, or whose entries are malformed, resolves its base record from the labels and the commits as a body without a block does, and its overrides still apply.
 
 **`notices` inform the gate** and block nothing:
 
-| Kind                  | Meaning                                                                                                                                                                                                                                                                             |
-| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `absent-block`        | The body contains no block, so the merge publishes no change entries. `effective_sources` names what supplied each field in the block's place. The `add-change-record` skill adds a block to a body that has none.                                                                  |
-| `malformed-block`     | The body's last block cannot be read; `defect` names why, and the merge resolves as though no block were present.                                                                                                                                                                   |
-| `commits-unavailable` | The commits cannot be read; `reason` names why, and the block or the labels are not checked against them.                                                                                                                                                                           |
-| `divergence`          | Before any override, the block's consolidated record, or the record chosen from the labels, disagrees with the commits'. `sources` names the two, `block` or `labels` and then `commits`, and `fields` lists the fields among `scope`, `type`, and `breaking` on which they differ. |
-| `pr-title-divergence` | The pull-request title's typed prefix differs from `effective_record`; `fields` lists the fields on which they differ. It is raised under `--override-title` too.                                                                                                                   |
-| `pr-title-unparsed`   | The pull-request title does not invert through `pr.title_format`; `effective_sources.title` names what stands in.                                                                                                                                                                   |
-| `malformed-entries`   | The block's `entries` list cannot be read; `defect` names why. The entries are reported as absent and the rest of the block stays in use.                                                                                                                                           |
-| `stale-entries`       | The block records entries that were not derived at the pull request's head. `entries_commit` names the commit at which they were derived, `null` when the block records none, and `head_commit` names the head against which it was compared.                                       |
+| Kind                  | Meaning                                                                                                                                                                                                                                                                                        |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `absent-block`        | The body contains no block, so the merge publishes no change entries. `effective_sources` names what supplied each field in the block's place. The `add-change-record` skill adds a block to a body that has none.                                                                             |
+| `malformed-block`     | The body's last block cannot be read; `defect` names why, and the merge resolves as though no block were present.                                                                                                                                                                              |
+| `commits-unavailable` | The commits cannot be read; `reason` names why, and the block or the labels are not checked against them.                                                                                                                                                                                      |
+| `divergence`          | Before any override, the record ranked from the block's entries, or the record chosen from the labels, disagrees with the commits'. `sources` names the two, `block` or `labels` and then `commits`, and `fields` lists the fields among `scope`, `type`, and `breaking` on which they differ. |
+| `pr-title-divergence` | The pull-request title's typed prefix differs from `effective_record`; `fields` lists the fields on which they differ. It is raised under `--override-title` too.                                                                                                                              |
+| `pr-title-unparsed`   | The pull-request title does not invert through `pr.title_format`; `effective_sources.title` names what stands in.                                                                                                                                                                              |
+| `malformed-entries`   | The block's `entries` list cannot be read; `defect` names why. The entries are reported as absent, the base record resolves from the labels and the commits, and the block's title and overrides stay in use.                                                                                  |
+| `stale-entries`       | The block records entries that were not derived at the pull request's head. `entries_commit` names the commit at which they were derived, `null` when the block records none, and `head_commit` names the head against which it was compared.                                                  |
 
 **Each override outranks every source on its own field**, as [The effective record](./change-record.md#the-effective-record) states; `--no-override-breaking` removes the marker. `--override-title` replaces the bare title, and the pull-request title's prefix is still read and compared.
 

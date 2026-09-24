@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import type { ChangeRecord, Taxonomy } from '../../change-grammar/types.ts';
-import type { ChangeEntry } from '../change-entries.ts';
+import { type ChangeEntry, consolidateChangeEntries } from '../change-entries.ts';
 import {
   type ChangeRecordBlockReading,
   readMergeChangeRecordBlock,
@@ -37,12 +37,15 @@ const ENTRIES: ChangeEntry[] = [
 
 const BODY = '## What\n\n- Adds foo.\n';
 
+/** Places a block's entries at a commit other than the head. */
+const STALE = { entriesCommit: 'aabbccdd' };
+
 describe(resolveMerge, () => {
-  describe('when the block and the commits agree', () => {
-    it('merges the block’s record, attributes it to the block, and shows nothing', () => {
+  describe('when the entries and the commits agree', () => {
+    it('merges the entries’ record, attributes it to the block, and shows nothing', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]),
           commitsRecord: { scope: 'agents', type: 'feat' },
         }),
       );
@@ -65,15 +68,15 @@ describe(resolveMerge, () => {
         },
         merge_title: '#466 agents|feat: Add foo (#470)',
         body: '- Adds foo.',
-        merge_block: null,
-        entry_count: 0,
+        merge_block: expect.stringMatching(/^```change-record\n/),
+        entry_count: 1,
         sources: {
           block: {
             title: 'Add foo',
             consolidated_record: { scope: 'agents', type: 'feat', breaking: false },
             overrides: {},
-            entries_commit: null,
-            entries: [],
+            entries_commit: 'e5029924',
+            entries: [entryOf({ scope: 'agents', type: 'feat' })],
           },
           commits: { scope: 'agents', type: 'feat', breaking: false },
           labels: { scope: null, type: null, breaking: null },
@@ -86,7 +89,10 @@ describe(resolveMerge, () => {
 
     it('when the title includes the same typed prefix, merges it once', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), prTitle: '#466 agents|feat: Add foo' }),
+        buildInput({
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]),
+          prTitle: '#466 agents|feat: Add foo',
+        }),
       );
 
       expect(report).toMatchObject({
@@ -97,17 +103,19 @@ describe(resolveMerge, () => {
     });
 
     it('renders the marker for a breaking record', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ breaking: true, scope: 'agents', type: 'feat' }) }));
+      const report = resolveMerge(
+        buildInput({ block: readBlock([entryOf({ breaking: true, scope: 'agents', type: 'feat' })]) }),
+      );
 
       expect(report.merge_title).toBe('#466 agents|feat!: Add foo (#470)');
     });
   });
 
-  describe('when the block and the commits disagree', () => {
+  describe('when stale entries and the commits disagree', () => {
     it('uses the commits, attributes every field to them, and names the fields that differ', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], STALE),
           commitsRecord: { scope: 'agents', type: 'docs' },
         }),
       );
@@ -115,32 +123,41 @@ describe(resolveMerge, () => {
       expect(report).toMatchObject({
         effective_record: { breaking: false, scope: 'agents', type: 'docs' },
         effective_sources: { breaking: 'commits', scope: 'commits', type: 'commits' },
-        notices: [{ fields: ['type'], kind: 'divergence', sources: ['block', 'commits'] }],
+        notices: [{ kind: 'stale-entries' }, { fields: ['type'], kind: 'divergence', sources: ['block', 'commits'] }],
       });
     });
 
-    it('takes a breaking marker the commits add to the block’s record', () => {
+    it('takes a breaking marker the commits add to the entries’ record', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], STALE),
           commitsRecord: { breaking: true, scope: 'agents', type: 'feat' },
         }),
       );
 
       expect(report).toMatchObject({
         effective_record: { breaking: true, scope: 'agents', type: 'feat' },
-        notices: [{ fields: ['breaking'], kind: 'divergence', sources: ['block', 'commits'] }],
+        notices: [
+          { kind: 'stale-entries' },
+          { fields: ['breaking'], kind: 'divergence', sources: ['block', 'commits'] },
+        ],
       });
     });
 
     it('compares commits that contain no entry like any other record', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), commits: { kind: 'read' } }),
+        buildInput({
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], STALE),
+          commits: { kind: 'read' },
+        }),
       );
 
       expect(report).toMatchObject({
         effective_record: { breaking: false, scope: null, type: null },
-        notices: [{ fields: ['scope', 'type'], kind: 'divergence', sources: ['block', 'commits'] }],
+        notices: [
+          { kind: 'stale-entries' },
+          { fields: ['scope', 'type'], kind: 'divergence', sources: ['block', 'commits'] },
+        ],
         sources: { commits: { breaking: null, scope: null, type: null } },
       });
     });
@@ -148,7 +165,10 @@ describe(resolveMerge, () => {
     it('applies the block’s overrides to the commits’ record, attributing the fields that they set', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'docs' }, { overrides: { breaking: true, scope: '*' } }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'docs' })], {
+            ...STALE,
+            overrides: { breaking: true, scope: '*' },
+          }),
           commitsRecord: { scope: 'kb', type: 'feat' },
         }),
       );
@@ -161,9 +181,12 @@ describe(resolveMerge, () => {
   });
 
   describe('when the commits are unavailable', () => {
-    it('lets the block’s record stand and says why', () => {
+    it('lets the entries’ record stand and says why', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), commits: unavailable('not fetched') }),
+        buildInput({
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]),
+          commits: unavailable('not fetched'),
+        }),
       );
 
       expect(report).toMatchObject({
@@ -319,7 +342,7 @@ describe(resolveMerge, () => {
     it('outrank the block and its overrides, field by field', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }, { overrides: { scope: 'kb', type: 'sec' } }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], { overrides: { scope: 'kb', type: 'sec' } }),
           overrides: { type: 'docs' },
         }),
       );
@@ -332,7 +355,7 @@ describe(resolveMerge, () => {
 
     it('are attributed to the flags when they set the value that the record already has', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), overrides: { type: 'feat' } }),
+        buildInput({ block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]), overrides: { type: 'feat' } }),
       );
 
       expect(report.effective_sources).toMatchObject({ scope: 'block', type: 'flags' });
@@ -340,7 +363,7 @@ describe(resolveMerge, () => {
 
     it('clear the scope for a scope of *', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ scope: 'agents', type: 'feat' }), overrides: { scope: '*' } }),
+        buildInput({ block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]), overrides: { scope: '*' } }),
       );
 
       expect(report).toMatchObject({
@@ -353,7 +376,7 @@ describe(resolveMerge, () => {
     it('remove a marker that the record and the block’s override both set', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ breaking: true, type: 'feat' }, { overrides: { breaking: true } }),
+          block: readBlock([entryOf({ breaking: true, type: 'feat' })], { overrides: { breaking: true } }),
           overrides: { breaking: false },
         }),
       );
@@ -362,14 +385,16 @@ describe(resolveMerge, () => {
     });
 
     it('add a marker to a record that has none', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), overrides: { breaking: true } }));
+      const report = resolveMerge(
+        buildInput({ block: readBlock([entryOf({ type: 'feat' })]), overrides: { breaking: true } }),
+      );
 
       expect(report.merge_title).toBe('#466 feat!: Add foo (#470)');
     });
 
     it('keep the resolved marker when only the type is overridden', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ breaking: true, type: 'feat' }), overrides: { type: 'sec' } }),
+        buildInput({ block: readBlock([entryOf({ breaking: true, type: 'feat' })]), overrides: { type: 'sec' } }),
       );
 
       expect(report).toMatchObject({
@@ -381,14 +406,14 @@ describe(resolveMerge, () => {
 
   describe('defects', () => {
     it('reports an effective record that names no type', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ scope: 'agents' }) }));
+      const report = resolveMerge(buildInput({ block: readBlock([]) }));
 
       expect(report.defects).toStrictEqual([{ kind: 'missing-type' }]);
     });
 
     it('reports the defects of the effective record that the overrides produce', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ breaking: true, type: 'feat' }), overrides: { type: 'docs' } }),
+        buildInput({ block: readBlock([entryOf({ breaking: true, type: 'feat' })]), overrides: { type: 'docs' } }),
       );
 
       expect(report.defects).toStrictEqual([{ kind: 'policy-violation', policy: 'forbidden', type: 'docs' }]);
@@ -398,7 +423,9 @@ describe(resolveMerge, () => {
   describe('the sources', () => {
     it('mirror the block as read, reading an absent marker within its record as not breaking', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ scope: 'agents' }, { overrides: { breaking: true, type: 'sec' } }) }),
+        buildInput({
+          block: readBlock([], { consolidatedRecord: { scope: 'agents' }, overrides: { breaking: true, type: 'sec' } }),
+        }),
       );
 
       expect(report.sources.block).toStrictEqual({
@@ -425,19 +452,35 @@ describe(resolveMerge, () => {
     });
 
     it('mirror the entries and the derivation commit that the block records', () => {
-      const report = resolveMerge(
-        buildInput({ block: readBlock({ type: 'feat' }, { entries: ENTRIES, fresh: true }) }),
-      );
+      const report = resolveMerge(buildInput({ block: readBlock(ENTRIES) }));
 
       expect(report.sources.block).toMatchObject({ entries: ENTRIES, entries_commit: 'e5029924' });
     });
   });
 
   describe('the entries', () => {
-    it('lets a fresh block’s record stand over the commits’, and reports the divergence', () => {
+    it('ranks the entries into the record, whatever the stored consolidated record says', () => {
+      const entries: ChangeEntry[] = [
+        { breaking: false, scopes: ['agents'], text: 'Adds the store-qualified wikilink', type: 'feat' },
+        { breaking: true, scopes: ['kb'], text: 'Removes the reader', type: 'drop' },
+        { breaking: false, scopes: ['kb'], text: 'Describes the store', type: 'docs' },
+      ];
+      const block = readBlock(entries, { consolidatedRecord: { scope: 'agents', type: 'docs' } });
+
+      const report = resolveMerge(buildInput({ block }));
+
+      expect(report).toMatchObject({
+        effective_record: { breaking: true, scope: null, type: 'drop' },
+        effective_sources: { breaking: 'block', scope: 'block', type: 'block' },
+        merge_title: '#466 drop!: Add foo (#470)',
+        notices: [],
+      });
+    });
+
+    it('lets fresh entries’ record stand over the commits’, and reports the divergence', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'kb', type: 'feat' }, { entries: ENTRIES, fresh: true }),
+          block: readBlock(ENTRIES),
           commitsRecord: { scope: 'agents', type: 'fix' },
         }),
       );
@@ -452,7 +495,7 @@ describe(resolveMerge, () => {
     });
 
     it('matches a short derivation commit against the head as a prefix, ignoring case', () => {
-      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'E5029924' });
+      const block = readBlock(ENTRIES, { entriesCommit: 'E5029924' });
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
 
@@ -461,7 +504,7 @@ describe(resolveMerge, () => {
     });
 
     it('when the derivation commit is not the head, lets the commits win and reports staleness', () => {
-      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'aabbccdd' });
+      const block = readBlock(ENTRIES, { entriesCommit: 'aabbccdd' });
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
 
@@ -475,7 +518,7 @@ describe(resolveMerge, () => {
     });
 
     it('when entries record no derivation commit, reports staleness with a null commit', () => {
-      const block = readBlock({ type: 'feat' }, { entries: ENTRIES });
+      const block = readBlock(ENTRIES, { entriesCommit: null });
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
 
@@ -487,18 +530,36 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('keeps the commits-win rule for a block written before the entries entered the grammar', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), commitsRecord: { type: 'fix' } }));
+    it('resolves a block that records no entry from the labels and the commits, applying its overrides', () => {
+      const block = readBlock([], {
+        consolidatedRecord: { scope: 'agents', type: 'feat' },
+        overrides: { breaking: true },
+      });
 
-      expect(report.effective_sources).toMatchObject({ type: 'commits' });
-      expect(report.notices).not.toContainEqual(expect.objectContaining({ kind: 'stale-entries' }));
+      const report = resolveMerge(
+        buildInput({ block, commitsRecord: { scope: 'agents', type: 'sec' }, labels: { scope: 'kb' } }),
+      );
+
+      expect(report).toMatchObject({
+        effective_record: { breaking: true, scope: 'kb', type: 'sec' },
+        effective_sources: { breaking: 'block_overrides', scope: 'labels', type: 'commits' },
+        notices: [{ fields: ['scope'], kind: 'divergence', sources: ['labels', 'commits'] }],
+      });
     });
 
-    it('reports a malformed entry list as a notice, leaving the rest of the block usable', () => {
-      const block = readBlock({ type: 'feat' }, { entriesDefect: '`entries[0].text` is missing' });
+    it('reports a malformed entry list as a notice, resolving the record as for a block that records no entry', () => {
+      const block = readBlock([], {
+        consolidatedRecord: { type: 'feat' },
+        entriesDefect: '`entries[0].text` is missing',
+        overrides: { scope: 'kb' },
+      });
 
-      const report = resolveMerge(buildInput({ block }));
+      const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'sec' } }));
 
+      expect(report).toMatchObject({
+        effective_record: { scope: 'kb', type: 'sec' },
+        effective_sources: { scope: 'block_overrides', type: 'commits' },
+      });
       expect(report.sources.block).toMatchObject({ entries: [], title: 'Add foo' });
       expect(report.notices).toContainEqual({
         kind: 'malformed-entries',
@@ -506,8 +567,8 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('when the commits could not be read, lets a stale block’s record stand', () => {
-      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'aabbccdd' });
+    it('when the commits could not be read, lets stale entries’ record stand', () => {
+      const block = readBlock(ENTRIES, { entriesCommit: 'aabbccdd' });
 
       const report = resolveMerge(buildInput({ block, commits: unavailable('the head commit is not local') }));
 
@@ -522,7 +583,7 @@ describe(resolveMerge, () => {
         { breaking: true, migration: 'Import `read` from `kb`', scopes: [], text: 'Removes the reader', type: 'drop' },
       ];
 
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }, { entries, fresh: true }) }));
+      const report = resolveMerge(buildInput({ block: readBlock(entries) }));
 
       expect(report.entry_count).toBe(2);
       expect(readMergeChangeRecordBlock(report.merge_block ?? '')).toStrictEqual({
@@ -534,7 +595,7 @@ describe(resolveMerge, () => {
     it('omits the ticket reference when the merge has none', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ type: 'feat' }, { entries: ENTRIES, fresh: true }),
+          block: readBlock(ENTRIES),
           prTitle: 'Add foo',
           ticketRef: null,
         }),
@@ -547,16 +608,14 @@ describe(resolveMerge, () => {
     });
 
     it('keeps the block out of the composed body', () => {
-      const report = resolveMerge(
-        buildInput({ block: readBlock({ scope: 'kb', type: 'feat' }, { entries: ENTRIES, fresh: true }) }),
-      );
+      const report = resolveMerge(buildInput({ block: readBlock(ENTRIES) }));
 
       expect(report.body).toBe('- Adds foo.');
       expect(report.merge_block).toMatch(/^```change-record\n/);
     });
 
     it('renders stale entries as written, since a merge re-derives nothing', () => {
-      const block = readBlock({ type: 'feat' }, { entries: ENTRIES, entriesCommit: 'aabbccdd' });
+      const block = readBlock(ENTRIES, { entriesCommit: 'aabbccdd' });
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
 
@@ -567,7 +626,7 @@ describe(resolveMerge, () => {
     it('renders for a repository whose commit grammar is empty', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ type: 'feat' }, { entries: ENTRIES, fresh: true }),
+          block: readBlock(ENTRIES),
           templates: { ...TEMPLATES, commit: '' },
         }),
       );
@@ -577,10 +636,10 @@ describe(resolveMerge, () => {
     });
 
     it.each<{ block: ChangeRecordBlockReading; name: string }>([
-      { name: 'a block that records no entry', block: readBlock({ type: 'feat' }) },
+      { name: 'a block that records no entry', block: readBlock([]) },
       {
         name: 'a malformed entry list',
-        block: readBlock({ type: 'feat' }, { entriesDefect: '`entries[0].text` is missing' }),
+        block: readBlock([], { entriesDefect: '`entries[0].text` is missing' }),
       },
       { name: 'an absent block', block: { kind: 'absent' } },
       { name: 'a malformed block', block: { defect: '`title` is missing', kind: 'malformed' } },
@@ -596,7 +655,7 @@ describe(resolveMerge, () => {
     it('reports a typed prefix that differs from the effective record, and keeps it out of the title', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]),
           prTitle: '#466 kb|docs: Describe the store',
         }),
       );
@@ -615,7 +674,11 @@ describe(resolveMerge, () => {
       const templates = { ...TEMPLATES, pr: '[{ticket_ref} ][[{scope}|]{type}: ]{title}' };
 
       const report = resolveMerge(
-        buildInput({ block: readBlock({ type: 'feat' }), prTitle: '#466 kb|feat!: Describe the store', templates }),
+        buildInput({
+          block: readBlock([entryOf({ type: 'feat' })]),
+          prTitle: '#466 kb|feat!: Describe the store',
+          templates,
+        }),
       );
 
       expect(report).toMatchObject({
@@ -628,7 +691,7 @@ describe(resolveMerge, () => {
     it('compares the prefix with the record that the overrides produce', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]),
           overrides: { scope: 'kb', type: 'docs' },
           prTitle: '#466 kb|docs: Describe the store',
         }),
@@ -640,7 +703,7 @@ describe(resolveMerge, () => {
     it('takes an overriding title in place of the pull-request title, and still reads and compares its prefix', () => {
       const report = resolveMerge(
         buildInput({
-          block: readBlock({ scope: 'agents', type: 'feat' }),
+          block: readBlock([entryOf({ scope: 'agents', type: 'feat' })]),
           overrides: { title: 'Rename kb|docs: the shared layer' },
           prTitle: '#466 Rename kb|docs: the shared layer',
         }),
@@ -658,7 +721,11 @@ describe(resolveMerge, () => {
       const templates = { ...TEMPLATES, pr: '{ticket_ref} {title}' };
 
       const report = resolveMerge(
-        buildInput({ block: readBlock({ type: 'feat' }, { title: 'Add the parser' }), prTitle: 'Add foo', templates }),
+        buildInput({
+          block: readBlock([entryOf({ type: 'feat' })], { title: 'Add the parser' }),
+          prTitle: 'Add foo',
+          templates,
+        }),
       );
 
       expect(report).toMatchObject({
@@ -682,7 +749,9 @@ describe(resolveMerge, () => {
     });
 
     it('takes the ticket reference from the title over the flag', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), prTitle: '#500 Add foo' }));
+      const report = resolveMerge(
+        buildInput({ block: readBlock([entryOf({ type: 'feat' })]), prTitle: '#500 Add foo' }),
+      );
 
       expect(report).toMatchObject({
         effective_record: { ticket_ref: '#500' },
@@ -692,7 +761,7 @@ describe(resolveMerge, () => {
     });
 
     it('takes the flag’s ticket reference when the title names none', () => {
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), prTitle: 'Add foo' }));
+      const report = resolveMerge(buildInput({ block: readBlock([entryOf({ type: 'feat' })]), prTitle: 'Add foo' }));
 
       expect(report).toMatchObject({
         effective_record: { ticket_ref: '#466' },
@@ -702,7 +771,7 @@ describe(resolveMerge, () => {
 
     it('when no ticket reference is known, renders the merge title without one', () => {
       const report = resolveMerge(
-        buildInput({ block: readBlock({ type: 'feat' }), prTitle: 'Add foo', ticketRef: null }),
+        buildInput({ block: readBlock([entryOf({ type: 'feat' })]), prTitle: 'Add foo', ticketRef: null }),
       );
 
       expect(report).toMatchObject({
@@ -715,7 +784,7 @@ describe(resolveMerge, () => {
     it('when the merge template is empty, uses the bare title', () => {
       const templates = { ...TEMPLATES, merge: '' };
 
-      const report = resolveMerge(buildInput({ block: readBlock({ type: 'feat' }), templates }));
+      const report = resolveMerge(buildInput({ block: readBlock([entryOf({ type: 'feat' })]), templates }));
 
       expect(report.merge_title).toBe('Add foo');
     });
@@ -766,8 +835,8 @@ describe(resolveMerge, () => {
 
 /**
  * Builds a merge input from the house templates and a taxonomy of one type per policy. A `commitsRecord` stands for
- * commits that were read and consolidate to it; without one, the commits agree with the block's consolidated record, or
- * contain no entry when no block is readable. A `ticketRef` of null leaves the flag's reference out.
+ * commits that were read and consolidate to it; without one, the commits agree with the record ranked from the block's
+ * entries, or contain no entry when the block records none. A `ticketRef` of null leaves the flag's reference out.
  */
 function buildInput(
   changes: Partial<Omit<MergeInput, 'pr' | 'ticketRef'>> & {
@@ -778,8 +847,9 @@ function buildInput(
   } = {},
 ): MergeInput {
   const { commitsRecord, prBody, prTitle, ticketRef, ...rest } = changes;
+  const entries = rest.block?.kind === 'read' ? (rest.block.block.entries ?? []) : [];
   const consolidatedRecord =
-    commitsRecord ?? (rest.block?.kind === 'read' ? (rest.block.block.consolidatedRecord ?? {}) : undefined);
+    commitsRecord ?? (entries.length === 0 ? undefined : consolidateChangeEntries(entries, TAXONOMY));
   return {
     block: { kind: 'absent' },
     commits: { ...(consolidatedRecord !== undefined && { consolidatedRecord }), kind: 'read' },
@@ -798,28 +868,39 @@ function buildInput(
   };
 }
 
+/** Builds one change entry that names the record's type, its scope if any, and its marker. */
+function entryOf(record: { breaking?: boolean; scope?: string; type: string }): ChangeEntry {
+  return {
+    breaking: record.breaking === true,
+    scopes: record.scope === undefined ? [] : [record.scope],
+    text: 'Adds foo',
+    type: record.type,
+  };
+}
+
 /**
- * Builds a block reading that contains the consolidated record given, with the author's overrides if any are given,
- * and a title that defaults to the pull request's.
+ * Builds a block reading that records the entries given, derived at the head unless `entriesCommit` names another
+ * commit or is null, with a stored consolidated record that defaults to the entries' own. Overrides are included if
+ * given, and the title defaults to the pull request's.
  */
 function readBlock(
-  consolidatedRecord: ChangeRecord,
+  entries: ChangeEntry[],
   options: {
-    entries?: ChangeEntry[];
-    entriesCommit?: string;
+    consolidatedRecord?: ChangeRecord;
+    entriesCommit?: string | null;
     entriesDefect?: string;
-    fresh?: boolean;
     overrides?: RecordOverrides;
     title?: string;
   } = {},
 ): ChangeRecordBlockReading {
-  const entriesCommit = options.fresh === true ? HEAD_COMMIT.slice(0, 8) : options.entriesCommit;
+  const entriesCommit =
+    options.entriesCommit === undefined && entries.length > 0 ? HEAD_COMMIT.slice(0, 8) : options.entriesCommit;
   return {
     block: {
-      consolidatedRecord,
+      consolidatedRecord: options.consolidatedRecord ?? consolidateChangeEntries(entries, TAXONOMY),
       title: options.title ?? 'Add foo',
-      ...(options.entries !== undefined && { entries: options.entries }),
-      ...(entriesCommit !== undefined && { entriesCommit }),
+      ...(entries.length > 0 && { entries }),
+      ...(typeof entriesCommit === 'string' && { entriesCommit }),
       ...(options.overrides !== undefined && { overrides: options.overrides }),
     },
     ...(options.entriesDefect !== undefined && { entriesDefect: options.entriesDefect }),

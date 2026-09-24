@@ -185,7 +185,7 @@ Do not audit the draft here: The user reads the published body at the approval g
 
 Settle every entry in `defects` before showing the proposal, one question at a time:
 
-- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types that the report's `sources` name (in the block's `consolidated_record` and `overrides`, and in `commits`, `labels`, and `pr_title`), plus the type that the test below assigns to the diff when no source names it, and an "other (specify)" option.
+- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types that the report's `sources` name (in the block's `entries` and `overrides`, and in `commits`, `labels`, and `pr_title`), plus the type that the test below assigns to the diff when no source names it, and an "other (specify)" option.
 - **`policy-violation`**: Name the type and the policy that it breaks. Offer the marker that the policy asks for (`--no-override-breaking` when it forbids the marker, `--override-breaking` when it requires it), the types from the list above, and an "other (specify)" option.
 
 Mark each type option by applying this test to the diff, not by how many sources name the type:
@@ -230,8 +230,8 @@ Render each notice there as one line. When a line says where a field came from, 
 - **`divergence`**: The two sources that the notice's `sources` names disagree on the fields that its `fields` lists. Name each source's values for those fields, read from the report's `sources`, and the source from which the proposal takes each of them.
 - **`pr-title-divergence`**: The PR title's prefix differs from the proposal on the fields that the notice's `fields` lists. Name the prefix's values for those fields, read from `sources.pr_title`.
 - **`pr-title-unparsed`**: The PR title did not parse, so the title comes from the source that `effective_sources.title` names.
-- **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries. Its title and consolidated record still stand.
-- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the block's record takes no precedence over the commits', and `effective_sources` names the one that the resolution used.
+- **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries, and the labels and the commits resolved the base record. Its title and overrides still stand.
+- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the entries' record takes no precedence over the commits', and `effective_sources` names the one that the resolution used.
 
 **A `stale-entries` notice is reported and nothing is re-derived.**
 
@@ -273,7 +273,7 @@ If the new report contains a defect, return to step 6 and settle it before compa
 
 The lede comparison keys on the report's `body` rather than on the composed lede because step 5's thin-lede fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would have no fixed point to reach. The helper's extraction is deterministic, so it has one. Keying on the `## What` section rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` appears in the merge commit.
 
-The merge block takes a comparison of its own because `body` excludes the `change-record` block: An edit confined to that block leaves `body` identical while changing what the merge publishes, and `merge_title` catches only the subset of such edits that move the consolidated record. `merge_block` is rendered by the helper rather than drafted, so comparing it has the fixed point that the lede comparison needs `body` to supply.
+The merge block takes a comparison of its own because `body` excludes the `change-record` block: An edit confined to that block leaves `body` identical while changing what the merge publishes, and `merge_title` catches only the subset of such edits that move the record ranked from the entries. `merge_block` is rendered by the helper rather than drafted, so comparing it has the fixed point that the lede comparison needs `body` to supply.
 
 The window that this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope: The re-run reads the commits up to the head commit read in step 2, and a generated body is not recomposed on account of later commits. The delegate's own branch-sync check reports local and remote divergence.
 
