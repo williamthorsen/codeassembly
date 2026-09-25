@@ -62,7 +62,9 @@ Read the change and settle the entries: what each outcome is, which type it take
 
 ### Pass two: the scopes, the exemplars, and the writing
 
-6. **Scopes.** For each entry, pass the paths that it touched to `node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes --path {path} --path {path}`. Its `scopes` array is that entry's `scopes`, in the order the call returns them.
+6. **Scopes.** For each entry, pass the paths in which its outcome appears to `node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes --path {path} --path {path}`, leaving out any path whose edit only supports that outcome. Its `scopes` array is that entry's `scopes`, in the order the call returns them.
+
+   A supporting edit in another workspace contributes no scope. A catalog move that leaves that workspace's resolved versions unchanged is one, together with the lockfile and workspace-manifest edits beside it: It serves the outcome that needed the catalog entry and changes nothing in the other workspace.
 
 7. **Exemplars.** Run `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type} --min-quality strong` once per distinct type among your entries. It returns text rated `strong` or `exemplary` by the author, newest first. Read it for the level of detail and the register that it uses, not for phrases to reuse. An empty list is a normal result; draft without it.
 
@@ -109,7 +111,7 @@ The lede summarizes the change, and the entries enumerate it. The same reader re
 
 These fix what an entry contains and how its `text` is written. None of them ranks the facts; the question and the reader above do that.
 
-- **One entry per outcome**: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one entry, and a second outcome is a second entry. No entry enumerates members whose count tracks the changed-file list; the count is the tell that the diff is being inventoried rather than read.
+- **One entry per outcome**: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one entry, and a second outcome is a second entry. A supporting edit is no outcome of its own: It belongs to the outcome that it supports, as a commit touching several scopes takes the one that fits it closest, and it gets no entry, in another workspace as much as in this one. No entry enumerates members whose count tracks the changed-file list; the count is the tell that the diff is being inventoried rather than read.
 - `text` is one sentence. An outcome that needs two is either two outcomes or one that you have not finished reducing.
 - `text` opens with its verb, third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine when natural.
 - The subject is the pull request, and it stays unwritten. Read a `text` with "This pull request" in front of it: When that sentence is false, the verb names what the system does rather than what the change did, and the entry fails. "This pull request ends quietly when the reader closes the pipe" is false; "This pull request stops `foo` from crashing with an unhandled `EPIPE`" is true.

@@ -148,6 +148,15 @@ const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
   path.join('subagents', 'entry-drafter.md'),
 ];
 
+/**
+ * Phrases keeping a supporting edit out of the entry list and out of scope resolution. Lowercased, so that a
+ * sentence's opening capital still matches.
+ */
+const SUPPORTING_EDIT_PHRASES: ReadonlyArray<string> = [
+  'a supporting edit is no outcome of its own',
+  'the paths in which its outcome appears',
+];
+
 /** The taxonomy that supplies each entry's `type`, and through that type's tier its reader. */
 const TAXONOMY_FILENAME = 'work-types.json';
 
@@ -231,6 +240,17 @@ describe('entry-drafter contract', () => {
       'whole pipeline, since the audit may strike and correct but never merge. The drafter reads the whole diff, so ' +
       'this rule is also what stops the entry list becoming an inventory of hunks. These ' +
       `phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('keeps a supporting edit out of the entries and their scopes', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = SUPPORTING_EDIT_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'An edit that only supports an outcome, such as a catalog move in another workspace, otherwise becomes an ' +
+      'entry or a path of its own, and its workspace then strips the branch of the scope that its commits declare. ' +
+      `These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
