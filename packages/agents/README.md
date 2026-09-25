@@ -702,7 +702,7 @@ Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' 
 - In a monorepo, the scope is the workspace name or abbreviation.
 - `root`: commit touches only files in the monorepo root.
 - `*`: commit spans multiple workspaces, with or without root.
-- `agents,kb`: a change entry that belongs to several workspaces names them joined by commas. Normalization trims each name and drops the empty ones, the `*` ones, and the duplicates; consolidation counts each named workspace separately, and sets `root` aside when the entries also name a workspace.
+- `agents,kb`: a change entry that belongs to several workspaces names them joined by commas. Normalization trims each name and drops the empty ones, the `*` ones, and the duplicates; consolidation counts each named workspace separately, sets aside process-tier entries' scopes when a higher-tier entry names a scope, and then sets `root` aside when the remaining scopes also name a workspace. The scope labels keep a process-tier entry's workspace.
 - A root change tightly associated with one workspace (e.g., lockfile updated by a dependency added to that workspace) uses the workspace scope, not `root`.
 
 ##### Breaking changes
