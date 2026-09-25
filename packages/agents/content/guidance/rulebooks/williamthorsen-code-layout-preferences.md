@@ -2,7 +2,7 @@
 slug: williamthorsen-code-layout-preferences
 description: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order. Consult before creating a file or directory, before placing a test, helper, or fixture, and before ordering declarations in a module.'
 delivery: [hook, skill]
-version: '5'
+version: '6'
 ---
 
 # William Thorsen's code layout preferences
@@ -59,6 +59,8 @@ A file takes the name of its main export. A file with no single main export take
 Components take PascalCase because their exports are PascalCase, so no framework exception is needed.
 
 Name a file for its subject, never for its audience. `test-utils.ts` names who reads it; `scaffolding.ts` names what it contains.
+
+Unless instructed otherwise, keep a non-secret value, such as a path, a port, or a URL, out of `.env*` files, which agent sandboxes and secret-handling tools treat as secret by name. Put it in a config file with another stem, such as `settings.yaml`. When the value is machine-local, give that file a `.local` segment, such as `settings.local.yaml`, and gitignore it.
 
 ## Declaration order
 
