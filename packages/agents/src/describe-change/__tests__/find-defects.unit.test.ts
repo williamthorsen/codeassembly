@@ -1,6 +1,9 @@
+import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 import type { Taxonomy } from '../../change-grammar/types.ts';
+import { loadTaxonomy } from '../../lib/work-types.ts';
 import type { ChangeEntry } from '../change-entries.ts';
 import { findDefects, findEntryDefects } from '../find-defects.ts';
 
@@ -9,7 +12,6 @@ const TAXONOMY: Taxonomy = {
   tiers: ['public', 'process'],
   types: [
     { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
-    { breakingPolicy: 'required', key: 'drop', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'docs', tier: 'process' },
   ],
 };
@@ -33,10 +35,11 @@ describe(findDefects, () => {
     ]);
   });
 
-  it('reports a marker that the type’s policy requires and the record omits', () => {
-    expect(findDefects({ type: 'drop' }, TAXONOMY)).toStrictEqual([
-      { kind: 'policy-violation', policy: 'required', type: 'drop' },
-    ]);
+  it('reports nothing for a drop either way under the repository’s taxonomy', async () => {
+    const taxonomy = await readRepositoryTaxonomy();
+
+    expect(findDefects({ type: 'drop' }, taxonomy)).toStrictEqual([]);
+    expect(findDefects({ breaking: true, type: 'drop' }, taxonomy)).toStrictEqual([]);
   });
 });
 
@@ -52,13 +55,11 @@ describe(findEntryDefects, () => {
       entryOf({ type: 'feat' }),
       entryOf({ type: 'feature' }),
       entryOf({ breaking: true, type: 'docs' }),
-      entryOf({ type: 'drop' }),
     ];
 
     expect(findEntryDefects(entries, TAXONOMY)).toStrictEqual([
       { entry: 1, kind: 'undeclared-type', type: 'feature' },
       { entry: 2, kind: 'policy-violation', policy: 'forbidden', type: 'docs' },
-      { entry: 3, kind: 'policy-violation', policy: 'required', type: 'drop' },
     ]);
   });
 
@@ -74,6 +75,16 @@ describe(findEntryDefects, () => {
 /** Builds a change entry that names the type and its marker. */
 function entryOf(record: { breaking?: boolean; type: string }): ChangeEntry {
   return { breaking: record.breaking === true, scopes: ['agents'], text: 'Adds foo', type: record.type };
+}
+
+/** Reads the taxonomy that the package deploys, failing the test when it does not load. */
+async function readRepositoryTaxonomy(): Promise<Taxonomy> {
+  const dataDir = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
+  const taxonomy = await loadTaxonomy(dataDir);
+  if (taxonomy === null) {
+    throw new Error(`expected a readable work-types.json under ${dataDir}`);
+  }
+  return taxonomy;
 }
 
 // endregion | Helpers

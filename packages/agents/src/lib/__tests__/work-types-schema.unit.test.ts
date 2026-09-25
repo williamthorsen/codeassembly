@@ -150,8 +150,12 @@ describe('work-types.schema.json', () => {
     },
     {
       description: 'rejects a `breakingPolicy` value outside the allowed enum',
-      // Guards `types[].breakingPolicy.enum: ["forbidden", "optional", "required"]`.
+      // Guards `types[].breakingPolicy.enum: ["forbidden", "optional"]`.
       input: buildMinimalDoc({ types: [buildTypeRecord({ breakingPolicy: 'sometimes' })] }),
+    },
+    {
+      description: 'rejects a `required` breaking policy',
+      input: buildMinimalDoc({ types: [buildTypeRecord({ breakingPolicy: 'required' })] }),
     },
     {
       description: 'rejects a `tiers` array whose order does not match the canonical precedence',

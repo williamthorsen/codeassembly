@@ -28,7 +28,7 @@ export function findEntryDefects(entries: readonly ChangeEntry[], taxonomy: Taxo
  */
 export type RecordDefect =
   | { kind: 'missing-type' }
-  | { entry?: number; kind: 'policy-violation'; policy: 'forbidden' | 'required'; type: string }
+  | { entry?: number; kind: 'policy-violation'; policy: 'forbidden'; type: string }
   | { entry?: number; kind: 'undeclared-type'; type: string };
 
 // region | Helpers

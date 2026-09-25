@@ -1,5 +1,5 @@
-/** Whether a work type requires, admits, or forbids the breaking marker. */
-export type BreakingPolicy = 'forbidden' | 'optional' | 'required';
+/** Whether a work type admits or forbids the breaking marker. */
+export type BreakingPolicy = 'forbidden' | 'optional';
 
 /**
  * The values from which a surface template renders, and the values that a parse returns. Every field is optional: A

@@ -9,7 +9,6 @@ const TAXONOMY: Taxonomy = {
   tiers: ['public', 'internal', 'process'],
   types: [
     { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
-    { breakingPolicy: 'required', key: 'drop', tier: 'public' },
     { breakingPolicy: 'optional', key: 'fix', tier: 'public' },
     { breakingPolicy: 'optional', key: 'sec', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'refactor', tier: 'internal' },
@@ -94,12 +93,6 @@ describe(consolidateBranch, () => {
       title: 'Restructure the guard',
       type: 'refactor',
     });
-  });
-
-  it('reports a drop that omits the marker required by its policy', () => {
-    const result = consolidateBranch(buildCommits(['agents|drop: Remove the legacy reader']), NODES, TAXONOMY);
-
-    expect(result.violations).toStrictEqual([{ commit: 'commit0', policy: 'required', type: 'drop' }]);
   });
 
   it('lists a subject matched by no template and keeps it out of the entries', () => {

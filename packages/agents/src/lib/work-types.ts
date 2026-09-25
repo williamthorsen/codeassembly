@@ -96,7 +96,7 @@ export function resolveWorkType(type: string, workTypes: ReadonlyMap<string, Wor
 // region | Helpers
 
 /** The breaking policies that a taxonomy entry may declare. */
-const BREAKING_POLICIES: ReadonlySet<string> = new Set(['forbidden', 'optional', 'required']);
+const BREAKING_POLICIES: ReadonlySet<string> = new Set(['forbidden', 'optional']);
 
 /** Reports whether `value` names one of the declared breaking policies. */
 function isBreakingPolicy(value: unknown): value is BreakingPolicy {

@@ -11,12 +11,12 @@ import {
 import { type MergeInput, resolveMerge } from '../resolve-merge.ts';
 import type { Surface } from '../types.ts';
 
-/** A taxonomy declaring one type of each breaking policy, independent of the repository's own. */
+/** A taxonomy declaring every breaking policy, independent of the repository's own. */
 const TAXONOMY: Taxonomy = {
   tiers: ['public', 'internal', 'process'],
   types: [
     { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
-    { breakingPolicy: 'required', key: 'drop', tier: 'public' },
+    { breakingPolicy: 'optional', key: 'drop', tier: 'public' },
     { breakingPolicy: 'optional', key: 'sec', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'docs', tier: 'process' },
   ],
@@ -398,14 +398,14 @@ describe(resolveMerge, () => {
             entryOf({ type: 'feature' }),
             entryOf({ breaking: true, type: 'docs' }),
           ]),
-          overrides: { breaking: false, type: 'drop' },
+          overrides: { breaking: true, type: 'docs' },
         }),
       );
 
       expect(report.defects).toStrictEqual([
         { entry: 1, kind: 'undeclared-type', type: 'feature' },
         { entry: 2, kind: 'policy-violation', policy: 'forbidden', type: 'docs' },
-        { kind: 'policy-violation', policy: 'required', type: 'drop' },
+        { kind: 'policy-violation', policy: 'forbidden', type: 'docs' },
       ]);
     });
 
