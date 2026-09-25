@@ -9,17 +9,26 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * position in the taxonomy, then the type's listing order within it. Ranking by frequency would let three routine
  * fixes outrank the one feature that the branch exists for.
  *
- * The scope is kept when exactly one distinct scope survives once `root` is set aside, which happens whenever the
- * entries also name a workspace: `root` holds the files that support a workspace's change, so root work tied to one
- * workspace counts as that workspace's, as the commit conventions state. A branch naming two workspaces names no
+ * The scope is kept when exactly one distinct scope survives two filters. First, the scopes of entries in the
+ * taxonomy's last tier are set aside whenever an entry of a higher tier names a scope: Process work such as a
+ * dependency move supports the branch's change rather than describing it. Second, `root` is set aside whenever the
+ * surviving scopes also name a workspace: `root` holds the files that support a workspace's change, so root work tied
+ * to one workspace counts as that workspace's, as the commit conventions state. A branch naming two workspaces names no
  * scope, since none describes it, and a branch naming `root` alone keeps `root`. An entry whose scope names several
- * workspaces contributes each of them, so it counts exactly as the entries that name them one apiece do.
+ * workspaces contributes each of them, so it counts exactly as the entries that name them one apiece do. An entry whose
+ * type the taxonomy does not declare counts as higher-tier, and a one-tier taxonomy sets no entry's scope aside.
  */
 export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy): ChangeRecord {
   const consolidated: ChangeRecord = {};
 
+  const hasScopedHigherTierEntry = entries.some(
+    (entry) => !isLowestTier(entry, taxonomy) && splitScopes(entry.scope).length > 0,
+  );
   const scopes = new Set<string>();
   for (const entry of entries) {
+    if (hasScopedHigherTierEntry && isLowestTier(entry, taxonomy)) {
+      continue;
+    }
     for (const scope of splitScopes(entry.scope)) {
       scopes.add(scope);
     }
@@ -48,6 +57,15 @@ export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy
 }
 
 // region | Helpers
+
+/** Reports whether the entry's type belongs to the last of several tiers, the one whose scopes yield to the others'. */
+function isLowestTier(entry: ChangeRecord, taxonomy: Taxonomy): boolean {
+  const lowest = taxonomy.tiers.at(-1);
+  if (taxonomy.tiers.length < 2 || lowest === undefined) {
+    return false;
+  }
+  return taxonomy.types.some((candidate) => candidate.key === entry.type && candidate.tier === lowest);
+}
 
 /** Reports whether `rank` beats `incumbent` on breaking, then tier, then listing order. */
 function outranks(rank: Rank, incumbent: Rank): boolean {

@@ -290,17 +290,17 @@ tickets_created:
 
 This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extensions consumed by downstream PR-creation skills (`create-pr`, `create-gh-pr`, `create-bitbucket-pr`):
 
-| Field               | Required | Description                                                                                                                                |
-| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| `title`             | yes      | The change-summary title, used as the proposed PR title.                                                                                   |
-| `scope`             | no       | The consolidated record's scope (e.g., `agents`, `root`). Omitted if the change entries name more than one scope, or if there is no entry. |
-| `type`              | no       | The consolidated record's work type (see `work-types.json`). Omitted if the change has no entries.                                         |
-| `breaking`          | no       | `true` if the consolidated record is breaking. Omitted otherwise; there is no `false`.                                                     |
-| `changes`           | no       | Each commit entry rendered through `commit.title_format`, oldest first. Omitted if the branch has no commit entry.                         |
-| `ticket_type`       | no       | The work type that the linked ticket's labels name. Omitted if they name none or more than one, or if no labels were read.                 |
-| `override_scope`    | no       | The scope that the author set by hand, or `*` if the author set no scope.                                                                  |
-| `override_type`     | no       | The work type that the author set by hand, without a marker.                                                                               |
-| `override_breaking` | no       | `true` if the author added the breaking marker by hand. Omitted otherwise.                                                                 |
+| Field               | Required | Description                                                                                                                                                         |
+| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`             | yes      | The change-summary title, used as the proposed PR title.                                                                                                            |
+| `scope`             | no       | The consolidated record's scope (e.g., `agents`, `root`). Omitted if consolidation leaves other than one scope (see `title-templates.md`), or if there is no entry. |
+| `type`              | no       | The consolidated record's work type (see `work-types.json`). Omitted if the change has no entries.                                                                  |
+| `breaking`          | no       | `true` if the consolidated record is breaking. Omitted otherwise; there is no `false`.                                                                              |
+| `changes`           | no       | Each commit entry rendered through `commit.title_format`, oldest first. Omitted if the branch has no commit entry.                                                  |
+| `ticket_type`       | no       | The work type that the linked ticket's labels name. Omitted if they name none or more than one, or if no labels were read.                                          |
+| `override_scope`    | no       | The scope that the author set by hand, or `*` if the author set no scope.                                                                                           |
+| `override_type`     | no       | The work type that the author set by hand, without a marker.                                                                                                        |
+| `override_breaking` | no       | `true` if the author added the breaking marker by hand. Omitted otherwise.                                                                                          |
 
 `scope`, `type`, and `breaking` contain the [consolidated record](change-record.md#terms), consolidated from the [change entries](change-record.md#terms) that the change summary drafted, so the labels, the pull-request title, and the `change-record` block all follow one record. `changes` is the separate commit-derived list: It records what the branch's commits declared, which a reviewer reads for a different question than the change entries answer.
 
