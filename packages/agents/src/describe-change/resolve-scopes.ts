@@ -2,6 +2,8 @@ import path from 'node:path';
 
 import { getWorkspacePackageDirs, isMonorepoRoot } from '@williamthorsen/nmr/workspace';
 
+import { ROOT_SCOPE } from '../change-grammar/tokens.ts';
+
 /**
  * Discovers the workspace directories that `projectRoot` declares, as absolute paths.
  *
@@ -60,9 +62,6 @@ export interface ScopeResolution {
 }
 
 // region | Helpers
-
-/** The scope of a path that no scope directory contains. */
-const ROOT_SCOPE = 'root';
 
 /** Resolves one path's scope, preferring the longest scope directory that contains it so a nested one wins. */
 function resolveScope(givenPath: string, projectRoot: string, scopeDirs: readonly ScopeDir[]): string {

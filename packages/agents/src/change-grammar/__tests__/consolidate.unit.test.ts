@@ -63,7 +63,7 @@ describe(consolidate, () => {
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
   });
 
-  it('names no scope when one entry declares none', () => {
+  it('keeps the scope when one entry declares none', () => {
     const entries = [{ scope: 'agents', type: 'feat' }, { type: 'fix' }];
 
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
@@ -73,6 +73,40 @@ describe(consolidate, () => {
     const entries = [{ scope: 'agents,kb', type: 'feat' }];
 
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
+  });
+
+  it('sets root aside when the entries also name one workspace', () => {
+    const entries = [
+      { scope: 'agents', type: 'feat' },
+      { scope: 'root', type: 'ai' },
+    ];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
+  });
+
+  it('sets root aside within one entry that also names a workspace', () => {
+    const entries = [{ scope: 'agents,root', type: 'feat' }];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
+  });
+
+  it('names no scope for two workspaces and root', () => {
+    const entries = [
+      { scope: 'agents', type: 'feat' },
+      { scope: 'kb', type: 'fix' },
+      { scope: 'root', type: 'ai' },
+    ];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
+  });
+
+  it('names root for a branch naming root alone', () => {
+    const entries = [
+      { scope: 'root', type: 'fix' },
+      { scope: 'root', type: 'ai' },
+    ];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'root', type: 'fix' });
   });
 
   it('names the one scope on which a list and a bare value agree', () => {

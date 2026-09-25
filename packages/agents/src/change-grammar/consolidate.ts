@@ -1,4 +1,4 @@
-import { splitScopes } from './tokens.ts';
+import { dropIncidentalRoot, splitScopes } from './tokens.ts';
 import type { ChangeRecord, Taxonomy } from './types.ts';
 
 /**
@@ -9,9 +9,11 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * position in the taxonomy, then the type's listing order within it. Ranking by frequency would let three routine
  * fixes outrank the one feature that the branch exists for.
  *
- * Exactly one distinct scope survives; a branch with two scopes names none, since no scope describes it. An entry
- * whose scope names several workspaces contributes each of them, so it counts exactly as the entries that name them
- * one apiece do.
+ * The scope is kept when exactly one distinct scope survives once `root` is set aside, which happens whenever the
+ * entries also name a workspace: `root` holds the files that support a workspace's change, so root work tied to one
+ * workspace counts as that workspace's, as the commit conventions state. A branch naming two workspaces names no
+ * scope, since none describes it, and a branch naming `root` alone keeps `root`. An entry whose scope names several
+ * workspaces contributes each of them, so it counts exactly as the entries that name them one apiece do.
  */
 export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy): ChangeRecord {
   const consolidated: ChangeRecord = {};
@@ -22,8 +24,9 @@ export function consolidate(entries: readonly ChangeRecord[], taxonomy: Taxonomy
       scopes.add(scope);
     }
   }
-  const [scope] = scopes;
-  if (scopes.size === 1 && scope !== undefined) {
+  const surviving = dropIncidentalRoot(scopes);
+  const [scope] = surviving;
+  if (surviving.length === 1 && scope !== undefined) {
     consolidated.scope = scope;
   }
 
