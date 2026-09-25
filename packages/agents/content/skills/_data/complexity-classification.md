@@ -1,6 +1,6 @@
 # Complexity classification
 
-Classify the complexity of a task, finding, or change to determine how it should be handled. Skills reference this rubric to make consistent routing and triage decisions.
+Classify the complexity of a task, finding, or change to determine how it should be handled.
 
 ## Levels
 
@@ -48,10 +48,10 @@ Each consuming skill defines which complexity levels qualify for its "simple eno
 | `wrap-up` drive-by pass            | 1–2    | Apply immediately on the current branch; skip ticket creation                                                                                                                                           |
 | `next-steps-after-plan`            | 1–2    | Recommend "Implement". When a review pass would catch nothing meaningful (e.g., a typo or unused-import removal), note on the option that the review can be skipped at `implement-plan`'s closing menu. |
 | `implement-plan` closing menu      | 1–2    | Recommend "Create PR without review"; the realized diff is trivial enough that a review pass would catch nothing meaningful                                                                             |
-| `next-steps-after-review`          | n/a    | Trivial findings usually name a single change, which selects "Implement directly and commit"; the recommendation depends on the finding's shape rather than on the level.                               |
+| `next-steps-after-review`          | n/a    | Trivial findings usually name a single change, for which the skill recommends "Implement directly and commit"; the recommendation depends on the finding's shape rather than on the level.              |
 | `orchestrated-architect` (planned) | 1–2    | Classify as `none`/`low` impact (minimal architectural guidance)                                                                                                                                        |
 
-When characteristics span two levels, prefer the higher level. This is consistent with the "when uncertain, recommend the more thorough option" pattern used by consuming skills.
+When characteristics span two levels, prefer the higher level.
 
 Consumers above level 2 should use the level descriptions to inform their own routing logic rather than relying solely on this table.
 

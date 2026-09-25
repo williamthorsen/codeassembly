@@ -1,7 +1,7 @@
 rules:
   capitalization-after-colon:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: false
     roots:
       - .agents
@@ -219,7 +219,7 @@ rules:
       - vitest.root.config.ts
   doc-descriptions:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: false
     roots:
       - .agents
@@ -437,7 +437,7 @@ rules:
       - vitest.root.config.ts
   em-dash:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: true
     roots:
       - .agents
@@ -655,7 +655,7 @@ rules:
       - vitest.root.config.ts
   inline-comments:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: false
     roots:
       - .agents
@@ -873,7 +873,7 @@ rules:
       - vitest.root.config.ts
   plain-speech:
     version: '7'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: false
     roots:
       - .agents
@@ -897,6 +897,8 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
+      - packages/agents/content/skills/_data/complexity-classification.md
+      - packages/agents/content/skills/_data/scope-and-deferral.md
       - packages/agents/content/skills/merge-pr/SKILL.md
       - packages/agents/src/capture-event
       - packages/agents/src/derive-session-context
@@ -970,7 +972,7 @@ rules:
       - vitest.root.config.ts
   reduced-object-relative:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: true
     roots:
       - .agents
@@ -1188,7 +1190,7 @@ rules:
       - vitest.root.config.ts
   second-person:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: true
     roots:
       - .agents
@@ -1406,7 +1408,7 @@ rules:
       - vitest.root.config.ts
   sentence-case:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: false
     roots:
       - .agents
@@ -1624,7 +1626,7 @@ rules:
       - vitest.root.config.ts
   so:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: true
     roots:
       - .agents
@@ -1842,7 +1844,7 @@ rules:
       - vitest.root.config.ts
   where:
     version: '1'
-    swept-at: 2026-09-23
+    swept-at: 2026-09-25
     detected: true
     roots:
       - .agents
@@ -3054,11 +3056,6 @@ rejections:
     file: packages/agents/content/skills/_data/recommendation-gradient.md
     phrase: the agent may still hold a strong evidence-based ranking
     ground: 'not the construction: "hold" is the clause''s own verb with a full object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/skills/_data/scope-and-deferral.md
-    phrase: any item that doesn't fit a batch becomes a separate ticket
-    ground: 'not the construction: "becomes" is the main verb'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/content/skills/_data/scope-and-deferral.md
