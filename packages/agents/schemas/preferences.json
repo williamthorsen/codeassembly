@@ -166,6 +166,27 @@
       "type": "object",
       "description": "Project identification configuration.",
       "properties": {
+        "scopes": {
+          "type": "array",
+          "description": "Directories that own a change scope although they are not workspace packages, such as an app built by another toolchain. `describe-change resolve-scopes` resolves paths against these together with the pnpm workspace's packages, the longest containing directory winning. Read from the project preferences file only; the global file contributes no scopes. A declared directory does not become a workspace to any tool.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Scope name. Defaults to the directory's basename, and overrides the basename of a package directory with the same path."
+              },
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Directory relative to the repository root. An absolute path, a path outside the repository, and a path that is not an existing directory are skipped with a warning."
+              }
+            },
+            "required": ["path"],
+            "additionalProperties": false
+          }
+        },
         "slug": {
           "type": "string",
           "description": "Project identifier used for namespacing artifacts under `{base_dir}/projects/{slug}/`."

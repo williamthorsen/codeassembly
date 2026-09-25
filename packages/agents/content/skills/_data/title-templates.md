@@ -43,17 +43,18 @@ The bundle has no shebang, so the `node` prefix is required. Each subcommand acc
 | [`resolve-merge`](#resolve-merge)                       | What a pull request merges as                           | The templates, the taxonomy, the label map, and the commits |
 | [`check-merge-body`](#check-merge-body)                 | The entry count that a composed merge body records      | The body file                                               |
 | [`amend-entry`](#amend-entry)                           | One change entry, amended in a pull-request body        | The taxonomy and the body file, which it rewrites           |
-| [`resolve-scopes`](#resolve-scopes)                     | The scope that owns each given path                     | The workspace layout                                        |
+| [`resolve-scopes`](#resolve-scopes)                     | The scope that owns each given path                     | The workspace layout and the project preferences file       |
 | [`resolve-labels`](#resolve-labels)                     | The labels for a change                                 | The body file and the label map                             |
 
 ### What stops a run and what only warns
 
 - A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, `check-merge-body`, `amend-entry`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
-- Malformed YAML in `pnpm-workspace.yaml` stops `resolve-scopes`, naming the file.
+- Malformed YAML in `pnpm-workspace.yaml` or in the project preferences file stops `resolve-scopes`, naming the file.
+- A `project.scopes` entry that `resolve-scopes` cannot honor causes a warning naming the entry's index and fault, and the run skips that entry and resolves the rest. See [`resolve-scopes`](#resolve-scopes).
 - A malformed `change-record` block in the body file causes a warning from `resolve-labels`, which then labels the change from the flags alone.
 - An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `resolve-effective-record`, `resolve-merge`, and `amend-entry`.
-- Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s workspace discovery, which then finds none.
+- Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s discovery of workspace and declared scope directories.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
 
 ## `render-titles`
@@ -432,7 +433,7 @@ The run exits non-zero, naming the cause and leaving the file untouched, when th
 
 ## `resolve-scopes`
 
-`resolve-scopes` reports the scope that owns each given path, so a consumer can attribute a set of changed files to the workspaces that own them. `--path` is its one flag, repeatable and optional.
+`resolve-scopes` reports the scope that owns each given path, so a consumer can attribute a set of changed files to the scopes that own them. `--path` is its one flag, repeatable and optional.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes \
@@ -445,13 +446,23 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes \
 
 **`path_scopes` maps each path as given to its scope**, under the spelling that the invocation passed, so a caller can look a result up by the path that it asked about. **`scopes` is the sorted set** of the scopes that those paths name between them.
 
-**The derivation**: `@williamthorsen/nmr/workspace` resolves the repository root's workspace directories, honoring the `packages` patterns that `pnpm-workspace.yaml` declares, negative patterns included. A path's scope is the basename of the longest of those directories that contains it, so a nested workspace wins over the one enclosing it. A path that no workspace directory contains resolves to `root`.
+**The derivation**: `@williamthorsen/nmr/workspace` resolves the repository root's workspace directories, honoring the `packages` patterns that `pnpm-workspace.yaml` declares, negative patterns included; each is named by its basename. The repository adds scope directories of its own under `project.scopes` in its `.agents/preferences.yaml`, each named by its `name` or else by its basename. A path's scope is the name of the longest of those directories that contains it, so a nested directory wins over the one enclosing it, whether either is a package or a declared directory. A path that no scope directory contains resolves to `root`.
 
-**A repository declaring no workspaces yields `root` for every path.** A root that is not a pnpm workspace, and one whose patterns match no directory, both discover none, and this is how a consumer detects that the repository has no scope vocabulary. A repository on another package manager reads the same way.
+```yaml
+project:
+  scopes:
+    - path: apps/devopticon
+    - path: tools/ios-shell
+      name: ios
+```
+
+**A declared directory owns a scope without becoming a workspace**, so a deliverable that is not a Node package, such as a SwiftPM app, can own one without a placeholder manifest that nmr and release-kit would then act on. A declared directory that is also a package directory takes its declared name. Only the project preferences file declares scopes; `project.scopes` in the global file has no effect. An entry that is not a mapping, that has no string `path`, that has a `name` that is not a non-empty string, or whose path is absolute, outside the repository, missing, or not a directory is skipped with a warning, and a `project.scopes` that is not a list is ignored with one.
+
+**A repository with no scope directories yields `root` for every path.** A root that is not a pnpm workspace and declares no scopes discovers none, as does one whose patterns match no directory, and this is how a consumer detects that the repository has no scope vocabulary. A repository on another package manager reads the same way unless it declares scopes.
 
 **A path is read relative to the repository root**, which git resolves from the invoking directory, so an absolute path and a root-relative one resolve alike whatever subdirectory the caller ran from. A path outside the root resolves to `root`. When git resolves no repository root, the run warns and anchors at the invoking directory.
 
-**The subcommand defines no rule of its own.** It delegates discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/agents` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the discovery rule belongs upstream, in nmr.
+**The subcommand defines no workspace rule of its own.** It delegates workspace discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/agents` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the workspace discovery rule belongs upstream, in nmr.
 
 ## `resolve-labels`
 

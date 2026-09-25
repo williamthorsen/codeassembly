@@ -676,6 +676,80 @@ describe('resolve-scopes', () => {
     expect(output).toStrictEqual({ path_scopes: { 'packages/kb/src/index.ts': 'root' }, scopes: ['root'] });
   });
 
+  it('resolves a declared directory in a repository that declares no workspaces', async () => {
+    const scopes = 'project:\n  scopes:\n    - path: apps/devopticon\n    - path: tools/ios-shell\n      name: ios';
+    const { cwd, home } = await makeRepo(`${HOUSE_TEMPLATES}\n${scopes}`);
+    await mkdir(join(cwd, 'apps', 'devopticon'), { recursive: true });
+    await mkdir(join(cwd, 'tools', 'ios-shell'), { recursive: true });
+
+    const argv = [
+      'resolve-scopes',
+      '--path',
+      'apps/devopticon/Package.swift',
+      '--path',
+      'tools/ios-shell/App.swift',
+      '--path',
+      'AGENTS.md',
+    ];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({
+      path_scopes: {
+        'apps/devopticon/Package.swift': 'devopticon',
+        'tools/ios-shell/App.swift': 'ios',
+        'AGENTS.md': 'root',
+      },
+      scopes: ['devopticon', 'ios', 'root'],
+    });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('lets a declared name override the basename of a package directory', async () => {
+    const { cwd, home } = await makeWorkspaceRepo();
+    await writeAgentsPreferences(
+      cwd,
+      `${HOUSE_TEMPLATES}\nproject:\n  scopes:\n    - path: packages/kb\n      name: knowledge`,
+    );
+
+    const argv = ['resolve-scopes', '--path', 'packages/kb/src/index.ts', '--path', 'packages/agents/src/cli.ts'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({
+      path_scopes: { 'packages/kb/src/index.ts': 'knowledge', 'packages/agents/src/cli.ts': 'agents' },
+      scopes: ['agents', 'knowledge'],
+    });
+  });
+
+  it('warns about a faulty declared entry, skips it, and still resolves the valid one', async () => {
+    const scopes = 'project:\n  scopes:\n    - path: apps/missing\n    - path: apps/devopticon';
+    const { cwd, home } = await makeRepo(`${HOUSE_TEMPLATES}\n${scopes}`);
+    await mkdir(join(cwd, 'apps', 'devopticon'), { recursive: true });
+
+    const argv = ['resolve-scopes', '--path', 'apps/devopticon/Package.swift', '--path', 'apps/missing/x.swift'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({
+      path_scopes: { 'apps/devopticon/Package.swift': 'devopticon', 'apps/missing/x.swift': 'root' },
+      scopes: ['devopticon', 'root'],
+    });
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatch(
+      /preferences\.yaml: project\.scopes\[0\] has a path apps\/missing that does not exist; skipping it$/,
+    );
+  });
+
+  it('ignores scopes declared in the global preferences file', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await mkdir(join(cwd, 'apps', 'devopticon'), { recursive: true });
+    await writeAgentsPreferences(home, 'project:\n  scopes:\n    - path: apps/devopticon');
+
+    const argv = ['resolve-scopes', '--path', 'apps/devopticon/Package.swift'];
+    const { output, warnings } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ path_scopes: { 'apps/devopticon/Package.swift': 'root' }, scopes: ['root'] });
+    expect(warnings).toStrictEqual([]);
+  });
+
   it('reports no scopes when given no path', async () => {
     const { cwd, home } = await makeWorkspaceRepo();
 

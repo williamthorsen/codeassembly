@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { discoverWorkspaceDirs, resolveScopes } from '../resolve-scopes.ts';
+import { discoverWorkspaceDirs, mergeScopeDirs, resolveScopes, type ScopeDir } from '../resolve-scopes.ts';
 
 describe(discoverWorkspaceDirs, () => {
   it('discovers the directories that the root declares as workspaces', async () => {
@@ -32,39 +32,68 @@ describe(discoverWorkspaceDirs, () => {
   });
 });
 
+describe(mergeScopeDirs, () => {
+  it('names each package directory by its basename and keeps each declared name', () => {
+    const scopeDirs = mergeScopeDirs({
+      declaredDirs: [{ dir: '/repo/tools/ios-shell', name: 'ios' }],
+      packageDirs: ['/repo/packages/kb'],
+    });
+
+    expect(scopeDirs).toEqual([
+      { dir: '/repo/packages/kb', name: 'kb' },
+      { dir: '/repo/tools/ios-shell', name: 'ios' },
+    ]);
+  });
+
+  it('lets a declared directory that is also a package directory override the package’s name', () => {
+    const scopeDirs = mergeScopeDirs({
+      declaredDirs: [{ dir: '/repo/packages/kb', name: 'knowledge' }],
+      packageDirs: ['/repo/packages/kb', '/repo/packages/agents'],
+    });
+
+    expect(scopeDirs).toEqual([
+      { dir: '/repo/packages/kb', name: 'knowledge' },
+      { dir: '/repo/packages/agents', name: 'agents' },
+    ]);
+  });
+});
+
 describe(resolveScopes, () => {
   const projectRoot = '/repo';
-  const workspaceDirs = ['/repo/packages/agents', '/repo/packages/kb'];
+  const scopeDirs: ScopeDir[] = [
+    { dir: '/repo/packages/agents', name: 'agents' },
+    { dir: '/repo/packages/kb', name: 'kb' },
+  ];
 
-  it('resolves a path inside a workspace to that directory’s basename', () => {
-    const resolution = resolveScopes({ paths: ['packages/kb/src/index.ts'], projectRoot, workspaceDirs });
+  it('resolves a path inside a scope directory to that directory’s name', () => {
+    const resolution = resolveScopes({ paths: ['packages/kb/src/index.ts'], projectRoot, scopeDirs });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb/src/index.ts': 'kb' });
   });
 
-  it('resolves the workspace directory itself to its basename', () => {
-    const resolution = resolveScopes({ paths: ['packages/kb'], projectRoot, workspaceDirs });
+  it('resolves the scope directory itself to its name', () => {
+    const resolution = resolveScopes({ paths: ['packages/kb'], projectRoot, scopeDirs });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb': 'kb' });
   });
 
-  it('resolves a path outside every workspace to root', () => {
-    const resolution = resolveScopes({ paths: ['AGENTS.md', 'packages/README.md'], projectRoot, workspaceDirs });
+  it('resolves a path outside every scope directory to root', () => {
+    const resolution = resolveScopes({ paths: ['AGENTS.md', 'packages/README.md'], projectRoot, scopeDirs });
 
     expect(resolution.pathScopes).toEqual({ 'AGENTS.md': 'root', 'packages/README.md': 'root' });
   });
 
-  it('does not let a workspace claim a sibling path sharing its prefix', () => {
-    const resolution = resolveScopes({ paths: ['packages/kb-tools/x.ts'], projectRoot, workspaceDirs });
+  it('does not let a scope directory claim a sibling path sharing its prefix', () => {
+    const resolution = resolveScopes({ paths: ['packages/kb-tools/x.ts'], projectRoot, scopeDirs });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb-tools/x.ts': 'root' });
   });
 
-  it('resolves a path inside a nested workspace to the inner one', () => {
+  it('resolves a path inside a nested scope directory to the inner one', () => {
     const resolution = resolveScopes({
       paths: ['packages/kb/plugins/tagger/src/index.ts'],
       projectRoot,
-      workspaceDirs: [...workspaceDirs, '/repo/packages/kb/plugins/tagger'],
+      scopeDirs: [...scopeDirs, { dir: '/repo/packages/kb/plugins/tagger', name: 'tagger' }],
     });
 
     expect(resolution.pathScopes).toEqual({ 'packages/kb/plugins/tagger/src/index.ts': 'tagger' });
@@ -74,7 +103,7 @@ describe(resolveScopes, () => {
     const resolution = resolveScopes({
       paths: ['/repo/packages/agents/src/cli.ts', 'packages/agents/src/cli.ts'],
       projectRoot,
-      workspaceDirs,
+      scopeDirs,
     });
 
     expect(resolution.pathScopes).toEqual({
@@ -84,16 +113,16 @@ describe(resolveScopes, () => {
   });
 
   it('resolves a path outside the project root to root', () => {
-    const resolution = resolveScopes({ paths: ['../elsewhere/x.ts', '..'], projectRoot, workspaceDirs });
+    const resolution = resolveScopes({ paths: ['../elsewhere/x.ts', '..'], projectRoot, scopeDirs });
 
     expect(resolution.pathScopes).toEqual({ '../elsewhere/x.ts': 'root', '..': 'root' });
   });
 
-  it('resolves every path to root when the root declares no workspaces', () => {
+  it('resolves every path to root when there are no scope directories', () => {
     const resolution = resolveScopes({
       paths: ['packages/kb/src/index.ts', 'AGENTS.md'],
       projectRoot,
-      workspaceDirs: [],
+      scopeDirs: [],
     });
 
     expect(resolution).toEqual({
@@ -102,18 +131,44 @@ describe(resolveScopes, () => {
     });
   });
 
+  it('resolves a declared directory nested in a package to the declared name', () => {
+    const resolution = resolveScopes({
+      paths: ['packages/kb/ios/App.swift', 'packages/kb/src/index.ts'],
+      projectRoot,
+      scopeDirs: [...scopeDirs, { dir: '/repo/packages/kb/ios', name: 'ios' }],
+    });
+
+    expect(resolution.pathScopes).toEqual({ 'packages/kb/ios/App.swift': 'ios', 'packages/kb/src/index.ts': 'kb' });
+  });
+
+  it('resolves a package nested in a declared directory to the package', () => {
+    const resolution = resolveScopes({
+      paths: ['apps/devopticon/Package.swift', 'apps/devopticon/web/src/main.ts'],
+      projectRoot,
+      scopeDirs: [
+        { dir: '/repo/apps/devopticon', name: 'devopticon' },
+        { dir: '/repo/apps/devopticon/web', name: 'web' },
+      ],
+    });
+
+    expect(resolution.pathScopes).toEqual({
+      'apps/devopticon/Package.swift': 'devopticon',
+      'apps/devopticon/web/src/main.ts': 'web',
+    });
+  });
+
   it('reports the sorted unique set of the scopes that the paths name', () => {
     const resolution = resolveScopes({
       paths: ['packages/kb/a.ts', 'AGENTS.md', 'packages/agents/b.ts', 'packages/kb/c.ts'],
       projectRoot,
-      workspaceDirs,
+      scopeDirs,
     });
 
     expect(resolution.scopes).toEqual(['agents', 'kb', 'root']);
   });
 
   it('reports no scopes when given no paths', () => {
-    expect(resolveScopes({ paths: [], projectRoot, workspaceDirs })).toEqual({ pathScopes: {}, scopes: [] });
+    expect(resolveScopes({ paths: [], projectRoot, scopeDirs })).toEqual({ pathScopes: {}, scopes: [] });
   });
 });
 
