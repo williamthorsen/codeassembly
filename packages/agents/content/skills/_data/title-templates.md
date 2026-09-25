@@ -165,7 +165,7 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
 
 **A subject matched by no template is listed in `unmatched` rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set that the consolidated record is derived from.
 
-**A violation is reported and the run continues.** A `refactor!`, or a `drop` without its marker, disagrees with the type's `breakingPolicy`. Because the commit is already written, refusing here would block the work until a rebase; the entry is reported as written and never normalized.
+**A violation is reported and the run continues.** A `refactor!` disagrees with the type's `breakingPolicy`. Because the commit is already written, refusing here would block the work until a rebase; the entry is reported as written and never normalized.
 
 The run refuses outright if no taxonomy is readable, since the entries have nothing to rank against, and if `commit.title_format` is empty, since no template would match any subject.
 

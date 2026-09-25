@@ -208,7 +208,7 @@ Then re-run step 3 with the same override set and the same `--head`. Its fresh r
 **A defect of the effective record** is settled by an override:
 
 - **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types that the report's `sources` name (in the block's `entries` and `overrides`, and in `commits`, `labels`, and `pr_title`), plus the type that the test below assigns to the diff when no source names it, and an "other (specify)" option.
-- **`policy-violation`**: Name the type and the policy that it breaks. Offer the marker that the policy asks for (`--no-override-breaking` when it forbids the marker, `--override-breaking` when it requires it), the types from the list above, and an "other (specify)" option.
+- **`policy-violation`**: Name the type and the policy that it breaks. Offer `--no-override-breaking` (which removes the forbidden marker), the types from the list above, and an "other (specify)" option.
 
 Mark each type option by applying this test to the diff, not by how many sources name the type:
 
