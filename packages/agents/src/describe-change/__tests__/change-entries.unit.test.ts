@@ -12,6 +12,7 @@ const TAXONOMY: Taxonomy = {
     { key: 'fix', tier: 'public' },
     { key: 'sec', tier: 'public' },
     { key: 'refactor', tier: 'internal' },
+    { key: 'ai', tier: 'process' },
     { key: 'docs', tier: 'process' },
   ],
 };
@@ -33,6 +34,12 @@ describe(consolidateChangeEntries, () => {
     const entries = [buildEntry({ scopes: ['agents'], type: 'feat' }), buildEntry({ scopes: ['kb'], type: 'fix' })];
 
     expect(consolidateChangeEntries(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
+  });
+
+  it('sets aside a root entry beside one workspace, so a ledger update keeps the branch scope', () => {
+    const entries = [buildEntry({ scopes: ['agents'], type: 'feat' }), buildEntry({ scopes: ['root'], type: 'ai' })];
+
+    expect(consolidateChangeEntries(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
   it('ranks an entry that names no scope, so a change touching nothing scoped still resolves a type', () => {
