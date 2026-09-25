@@ -47,9 +47,11 @@ describe(loadTaxonomy, () => {
   });
 
   it('keeps a declared breaking policy', async () => {
-    const taxonomy = await readTaxonomy({ types: [{ key: 'drop', tier: 'public', breakingPolicy: 'required' }] });
+    const taxonomy = await readTaxonomy({
+      types: [{ key: 'refactor', tier: 'internal', breakingPolicy: 'forbidden' }],
+    });
 
-    expect(taxonomy.types[0]?.breakingPolicy).toBe('required');
+    expect(taxonomy.types[0]?.breakingPolicy).toBe('forbidden');
   });
 
   it('drops a breaking policy misspelled by the taxonomy, so nothing enforces an invented one', async () => {

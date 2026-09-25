@@ -73,7 +73,7 @@ function describeDefect(defect: RecordDefect): string {
     case 'missing-type':
       return 'it names no type';
     case 'policy-violation':
-      return `the type ${defect.type} ${defect.policy === 'forbidden' ? 'forbids' : 'requires'} the breaking marker`;
+      return `the type ${defect.type} forbids the breaking marker`;
     case 'undeclared-type':
       return `the taxonomy does not declare the type ${defect.type}`;
   }

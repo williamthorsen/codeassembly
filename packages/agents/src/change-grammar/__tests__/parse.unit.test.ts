@@ -11,7 +11,7 @@ const TAXONOMY: Taxonomy = {
   tiers: ['public', 'internal', 'process'],
   types: [
     { aliases: ['feature'], breakingPolicy: 'optional', key: 'feat', tier: 'public' },
-    { aliases: [], breakingPolicy: 'required', key: 'drop', tier: 'public' },
+    { aliases: [], breakingPolicy: 'optional', key: 'drop', tier: 'public' },
     { aliases: ['bugfix'], breakingPolicy: 'optional', key: 'fix', tier: 'public' },
     { aliases: ['security'], breakingPolicy: 'optional', key: 'sec', tier: 'public' },
     { aliases: [], breakingPolicy: 'forbidden', key: 'refactor', tier: 'internal' },

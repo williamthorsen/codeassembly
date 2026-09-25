@@ -5,12 +5,12 @@ import { amendEntry, type EntryAmendment } from '../amend-entry.ts';
 import type { ChangeEntry } from '../change-entries.ts';
 import { readChangeRecordBlock, renderChangeRecordBlock } from '../change-record-block.ts';
 
-/** A taxonomy declaring one type of each breaking policy, independent of the repository's own. */
+/** A taxonomy declaring every breaking policy, independent of the repository's own. */
 const TAXONOMY: Taxonomy = {
   tiers: ['public', 'process'],
   types: [
     { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
-    { breakingPolicy: 'required', key: 'drop', tier: 'public' },
+    { breakingPolicy: 'optional', key: 'drop', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'docs', tier: 'process' },
   ],
 };
@@ -128,9 +128,6 @@ describe(amendEntry, () => {
     it('an amendment that leaves the marker in breach of the type’s policy', () => {
       expect(() => amend({ type: 'docs' }, 1)).toThrow(
         'the amendment leaves entries[1] defective: the type docs forbids the breaking marker',
-      );
-      expect(() => amend({ breaking: false, type: 'drop' }, 1)).toThrow(
-        'the amendment leaves entries[1] defective: the type drop requires the breaking marker',
       );
     });
   });

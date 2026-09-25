@@ -57,8 +57,8 @@
             "uniqueItems": true
           },
           "breakingPolicy": {
-            "description": "Whether a breaking-change marker (`!`) is forbidden, optional, or required for this type.",
-            "enum": ["forbidden", "optional", "required"],
+            "description": "Whether a breaking-change marker (`!`) is forbidden or optional for this type.",
+            "enum": ["forbidden", "optional"],
             "type": "string"
           },
           "description": {

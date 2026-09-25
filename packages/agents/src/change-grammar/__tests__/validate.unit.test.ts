@@ -7,7 +7,6 @@ const TAXONOMY: Taxonomy = {
   tiers: ['public', 'internal', 'process'],
   types: [
     { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
-    { breakingPolicy: 'required', key: 'drop', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'refactor', tier: 'internal' },
     { key: 'tests', tier: 'internal' },
   ],
@@ -21,19 +20,11 @@ describe(validate, () => {
     });
   });
 
-  it('reports a drop omitting the marker required by its policy', () => {
-    expect(validate({ type: 'drop' }, TAXONOMY)).toStrictEqual({ policy: 'required', type: 'drop' });
-  });
-
   it('leaves the record untouched rather than normalizing the violation away', () => {
     const record = { breaking: true, title: 'Restructure the guard', type: 'refactor' };
     validate(record, TAXONOMY);
 
     expect(record).toStrictEqual({ breaking: true, title: 'Restructure the guard', type: 'refactor' });
-  });
-
-  it('accepts a drop with its required marker', () => {
-    expect(validate({ breaking: true, type: 'drop' }, TAXONOMY)).toBeUndefined();
   });
 
   it('accepts a feat either way, its policy leaving the marker optional', () => {

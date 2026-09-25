@@ -70,7 +70,7 @@ export interface BranchEntry {
 /** One entry whose breaking marker disagrees with its type's policy, and the commit that declared it. */
 export interface EntryViolation {
   commit: string;
-  policy: 'forbidden' | 'required';
+  policy: 'forbidden';
   type: string;
 }
 
