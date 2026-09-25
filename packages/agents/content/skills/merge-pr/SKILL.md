@@ -248,16 +248,15 @@ Render each notice there as one line. When a line says where a field came from, 
 
 - **`absent-block`**: The PR contains no `change-record` block, so the merge publishes no change entries, and the effective record comes from the sources that `effective_sources` names field by field.
 - **`malformed-block`**: The PR's `change-record` block cannot be read (its `defect`), so the labels and the commits resolved the effective record.
-- **`commits-unavailable`**: Because the commits were not read (its `reason`), the block or the labels were not checked against them.
-- **`divergence`**: The two sources that the notice's `sources` names disagree on the fields that its `fields` lists. Name each source's values for those fields, read from the report's `sources`, and the source from which the proposal takes each of them.
+- **`commits-unavailable`**: The commits were not read (its `reason`), so when the block records no entries, the effective record comes from the labels alone.
 - **`pr-title-divergence`**: The PR title's prefix differs from the proposal on the fields that the notice's `fields` lists. Name the prefix's values for those fields, read from `sources.pr_title`.
 - **`pr-title-unparsed`**: The PR title did not parse, so the title comes from the source that `effective_sources.title` names.
 - **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block records no entries, and the labels and the commits resolved the base record. Its title and overrides still stand.
-- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so the entries' record takes no precedence over the commits', and `effective_sources` names the one that the resolution used.
+- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so commits pushed since then may not be described by the entries, whose record still stands.
 
 **A `stale-entries` notice is reported and nothing is re-derived.**
 
-A `divergence` or `pr-title-divergence` notice names values that the user can merge under instead, and the title is theirs to replace. If the user answers the gate with such values or a new title rather than a clear approval or decline, add them to the override set (a scope as `--override-scope`, `*` for no scope, a type as `--override-type`, a marker as `--override-breaking` or `--no-override-breaking`, and a title as `--override-title`), re-run step 3, settle any new defect, and render this gate again.
+A `pr-title-divergence` notice names values that the user can merge under instead, and the title is theirs to replace. If the user answers the gate with such values or a new title rather than a clear approval or decline, add them to the override set (a scope as `--override-scope`, `*` for no scope, a type as `--override-type`, a marker as `--override-breaking` or `--no-override-breaking`, and a title as `--override-title`), re-run step 3, settle any new defect, and render this gate again.
 
 Render `{confirmation}` so that the ask itself names every destructive side effect that the approval authorizes. The permission auto-classifier grants only what the ask text names, so a branch deletion shown only in the `Delete:` line above is not authorized; the ask must name it too:
 

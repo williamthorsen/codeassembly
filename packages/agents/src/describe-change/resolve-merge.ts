@@ -19,19 +19,16 @@ import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from 
  * Resolves what a pull request merges as: the effective record and the source of each of its fields, the merge title and
  * body, what each source names, the defects that block approval, and the notices that the approval gate shows.
  *
- * The base record resolves through `chooseFromEntries` when the block records entries, and otherwise through
- * `chooseFromLabels`, each of which states how it weighs the commits. The block's overrides then apply, and the
- * caller's apply last, through `applyOverrides`, so each field is attributed to the source that set it last. The title
+ * The base record is ranked from the block's entries when it records any, and otherwise resolves through
+ * `chooseFromLabels`. The block's overrides then apply, and the caller's apply last, through `applyOverrides`, so each field is attributed to the source that set it last. The title
  * resolves on a precedence of its own.
  */
 export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
-  const { block, entriesFresh, notices } = readSources(input);
+  const { block, notices } = readSources(input);
   const commits = input.commits.kind === 'read' ? readCommitsRecord(input.commits.consolidatedRecord) : undefined;
   const entries = block?.entries ?? [];
   const chosen =
-    entries.length === 0
-      ? chooseFromLabels({ commits, labels: input.labels, notices })
-      : chooseFromEntries({ commits, entries, entriesFresh, notices, taxonomy: input.taxonomy });
+    entries.length === 0 ? chooseFromLabels({ commits, labels: input.labels }) : rankEntries(entries, input.taxonomy);
   const base = block === undefined ? chosen : applySourcedOverrides(chosen, block.overrides ?? {}, 'block_overrides');
   const { record: effective, sources } = applySourcedOverrides(base, input.overrides, 'flags');
 
@@ -78,12 +75,10 @@ export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
 }
 
 /**
- * The block as read, in the shape that the JSON output names: `consolidated_record` is `null` when the block has none,
- * `entries` is empty when the block records none or when they were malformed, and `entries_commit` is the short SHA
- * that the block recorded.
+ * The block as read, in the shape that the JSON output names: `entries` is empty when the block records none or when
+ * they were malformed, and `entries_commit` is the short SHA that the block recorded.
  */
 export interface BlockOutcome {
-  consolidated_record: { breaking: boolean; scope: string | null; type: string | null } | null;
   entries: ChangeEntry[];
   entries_commit: string | null;
   overrides: RecordOverrides;
@@ -129,7 +124,6 @@ export interface MergeInput {
 export type MergeNotice =
   | { kind: 'absent-block' }
   | { kind: 'commits-unavailable'; reason: string }
-  | { fields: ComparedField[]; kind: 'divergence'; sources: ['block' | 'labels', 'commits'] }
   | { defect: string; kind: 'malformed-block' }
   | { defect: string; kind: 'malformed-entries' }
   | { fields: ComparedField[]; kind: 'pr-title-divergence' }
@@ -221,41 +215,10 @@ interface AttributedRecord {
 }
 
 /**
- * Chooses between the record ranked from the block's entries and the commits' record, reporting the fields on which
- * they disagree whichever of the two stands.
- *
- * Freshness decides. Entries derived at the pull request's head describe the change better than the commit subjects,
- * which only approximate it, so their record stands. Otherwise the commits' wins whenever they were read, as the fresher
- * of two consolidations of the same branch, and the entries' stands only when the two agree or when the commits could
- * not be read.
- */
-function chooseFromEntries(input: {
-  commits: ChangeRecord | undefined;
-  entries: ChangeEntry[];
-  entriesFresh: boolean;
-  notices: MergeNotice[];
-  taxonomy: Taxonomy;
-}): AttributedRecord {
-  const blockRecord = toComparedFields(consolidateChangeEntries(input.entries, input.taxonomy));
-  const fields = input.commits === undefined ? [] : findDifferingFields(blockRecord, input.commits);
-  if (fields.length > 0) {
-    input.notices.push({ kind: 'divergence', sources: ['block', 'commits'], fields });
-  }
-  if (input.commits === undefined || fields.length === 0 || input.entriesFresh) {
-    return { record: blockRecord, sources: { breaking: 'block', scope: 'block', type: 'block' } };
-  }
-  return { record: input.commits, sources: { breaking: 'commits', scope: 'commits', type: 'commits' } };
-}
-
-/**
  * Chooses the record without entries to rank: the type and its marker from the labels when a type label resolved,
  * otherwise from the commits, and the scope from its label when one resolved, otherwise from the commits.
  */
-function chooseFromLabels(input: {
-  commits: ChangeRecord | undefined;
-  labels: ChangeRecord;
-  notices: MergeNotice[];
-}): AttributedRecord {
+function chooseFromLabels(input: { commits: ChangeRecord | undefined; labels: ChangeRecord }): AttributedRecord {
   const commitsSource = input.commits === undefined ? null : 'commits';
   const typed = input.labels.type === undefined ? (input.commits ?? {}) : input.labels;
   const typeSource = input.labels.type === undefined ? commitsSource : 'labels';
@@ -265,12 +228,6 @@ function chooseFromLabels(input: {
     ...(scope !== undefined && { scope }),
     ...(typed.type !== undefined && { type: typed.type }),
   };
-  if (input.commits !== undefined) {
-    const fields = findDifferingFields(record, input.commits);
-    if (fields.length > 0) {
-      input.notices.push({ kind: 'divergence', sources: ['labels', 'commits'], fields });
-    }
-  }
   return {
     record,
     sources: {
@@ -346,6 +303,17 @@ function isDroppedTrailingLine(line: string): boolean {
 /** The record that the pull-request title contains, which always names a bare title. */
 type PullRequestTitleRecord = ChangeRecord & { title: string };
 
+/**
+ * Ranks the block's entries into one record, attributed to the block. It stands whether or not the entries were derived
+ * at the pull request's head, since `stale-entries` already warns when they were not.
+ */
+function rankEntries(entries: ChangeEntry[], taxonomy: Taxonomy): AttributedRecord {
+  return {
+    record: toComparedFields(consolidateChangeEntries(entries, taxonomy)),
+    sources: { breaking: 'block', scope: 'block', type: 'block' },
+  };
+}
+
 /** Reads the commits' consolidated record, whose marker a branch with entries always determines. */
 function readCommitsRecord(consolidatedRecord: ChangeRecord | undefined): ChangeRecord {
   return consolidatedRecord === undefined
@@ -386,13 +354,9 @@ function readPullRequestTitle(input: MergeInput): PullRequestTitleRecord | undef
 /**
  * Reads the block out of its reading and raises every notice that reading the sources produces, before any record
  * resolves: a source that is absent or that could not be read, and entries that were not derived at the pull request's
- * head. It also reports whether those entries are fresh, which `chooseFromEntries` weighs.
+ * head.
  */
-function readSources(input: MergeInput): {
-  block: ChangeRecordBlock | undefined;
-  entriesFresh: boolean;
-  notices: MergeNotice[];
-} {
+function readSources(input: MergeInput): { block: ChangeRecordBlock | undefined; notices: MergeNotice[] } {
   const notices: MergeNotice[] = [];
   if (input.block.kind === 'absent') {
     notices.push({ kind: 'absent-block' });
@@ -406,15 +370,14 @@ function readSources(input: MergeInput): {
   }
 
   const block = input.block.kind === 'read' ? input.block.block : undefined;
-  const entriesFresh = block !== undefined && areEntriesFresh(block, input.pr.headCommit);
-  if (block !== undefined && (block.entries?.length ?? 0) > 0 && !entriesFresh) {
+  if (block !== undefined && (block.entries?.length ?? 0) > 0 && !areEntriesFresh(block, input.pr.headCommit)) {
     notices.push({
       kind: 'stale-entries',
       entries_commit: block.entriesCommit ?? null,
       head_commit: input.pr.headCommit,
     });
   }
-  return { block, entriesFresh, notices };
+  return { block, notices };
 }
 
 /**
@@ -498,19 +461,10 @@ interface SourcedValue {
 /** Matches a ticket reference: `#123`, `owner/repo#123`, `ABC-123`, or a URL. */
 const TICKET_REFERENCE = /^(?:(?:[\w.-]+\/[\w.-]+)?#\d+|[A-Z][A-Z\d]*-\d+|https?:\/\/\S+)$/;
 
-/** Renders the block in the shape that the JSON output names, reading an absent marker within its record as not breaking. */
+/** Renders the block in the shape that the JSON output names. */
 function toBlockOutcome(block: ChangeRecordBlock): BlockOutcome {
-  const { consolidatedRecord } = block;
   return {
     title: block.title,
-    consolidated_record:
-      consolidatedRecord === undefined
-        ? null
-        : {
-            scope: consolidatedRecord.scope ?? null,
-            type: consolidatedRecord.type ?? null,
-            breaking: consolidatedRecord.breaking === true,
-          },
     overrides: { ...block.overrides },
     entries_commit: block.entriesCommit ?? null,
     entries: block.entries ?? [],

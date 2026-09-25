@@ -93,10 +93,10 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
   'resolve-effective-record': { flags: [...RECORD_FLAGS, ...OVERRIDE_FLAGS], read: readResolveEffectiveRecordArgs },
   'render-block': {
     flags: [
-      ...RECORD_FLAGS,
       ...OVERRIDE_FLAGS,
       { name: 'entries-commit', takesValue: true },
       { name: 'entries-file', takesValue: true },
+      { name: 'title', takesValue: true },
     ],
     read: readRenderBlockArgs,
   },
@@ -452,6 +452,18 @@ async function readEntriesFile(input: { cwd: string; filePath: string }): Promis
   return read.entries;
 }
 
+/** Reads the override flags that `render-block` and `resolve-effective-record` share. A blank value sets no override. */
+function readOverrideFlags(flags: readonly MatchedFlag[]): RecordOverrides {
+  const values = valueFlagMap(flags);
+  const scope = values['override-scope']?.trim();
+  const type = readOverrideType(values);
+  return {
+    ...(flags.some((flag) => flag.name === 'override-breaking') && { breaking: true }),
+    ...(scope !== undefined && scope !== '' && { scope }),
+    ...(type !== undefined && type !== '' && { type }),
+  };
+}
+
 /** Reads `--override-type`, refusing a type spelled with the breaking marker. */
 function readOverrideType(values: Record<string, string>): string | undefined {
   const type = values['override-type']?.trim();
@@ -488,24 +500,8 @@ function readRecordFlags(flags: readonly MatchedFlag[]): ChangeRecord {
 }
 
 /**
- * Reads the record flags and the override flags that `render-block` and `resolve-effective-record` share. An override
- * flag whose value is blank sets no override.
- */
-function readRecordWithOverrides(flags: readonly MatchedFlag[]): { overrides: RecordOverrides; record: ChangeRecord } {
-  const values = valueFlagMap(flags);
-  const scope = values['override-scope']?.trim();
-  const type = readOverrideType(values);
-  const overrides: RecordOverrides = {
-    ...(flags.some((flag) => flag.name === 'override-breaking') && { breaking: true }),
-    ...(scope !== undefined && scope !== '' && { scope }),
-    ...(type !== undefined && type !== '' && { type }),
-  };
-  return { overrides, record: readRecordFlags(flags) };
-}
-
-/**
- * Reads the `render-block` invocation: the required title, the consolidated record's flags, the author's overrides, and
- * the entries file and derivation commit that the block records.
+ * Reads the `render-block` invocation: the required title, the author's overrides, and the entries file and derivation
+ * commit that the block records.
  *
  * `--entries-commit` requires `--entries-file`, since a derivation commit with nothing derived at it records a claim
  * about nothing.
@@ -514,10 +510,7 @@ function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
   const values = valueFlagMap(flags);
   const title = readRequiredValue('render-block', values, 'title');
-  const {
-    overrides,
-    record: { title: _title, ...consolidatedRecord },
-  } = readRecordWithOverrides(flags);
+  const overrides = readOverrideFlags(flags);
   for (const name of ['entries-commit', 'entries-file']) {
     if (values[name]?.trim() === '') {
       throw new Error(`--${name} requires a value`);
@@ -529,7 +522,7 @@ function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
     throw new Error('--entries-commit records the commit at which the entries were derived; pass --entries-file too');
   }
   return {
-    block: { consolidatedRecord, overrides, title, ...(entriesCommit !== undefined && { entriesCommit }) },
+    block: { overrides, title, ...(entriesCommit !== undefined && { entriesCommit }) },
     ...(entriesFile !== undefined && { entriesFile }),
     subcommand: 'render-block',
   };
@@ -561,7 +554,11 @@ function readRequiredValue(subcommand: Subcommand, values: Record<string, string
 /** Reads the `resolve-effective-record` invocation: the record flags and the author's overrides. */
 function readResolveEffectiveRecordArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
-  return { ...readRecordWithOverrides(flags), subcommand: 'resolve-effective-record' };
+  return {
+    overrides: readOverrideFlags(flags),
+    record: readRecordFlags(flags),
+    subcommand: 'resolve-effective-record',
+  };
 }
 
 /** Reads the `resolve-labels` invocation: the path of the body whose entries are labeled, and the effective record's flags. */

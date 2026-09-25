@@ -8,7 +8,7 @@ user-invocable: true
 
 Analyze the current branch's changes since diverging from the default branch.
 
-The change's consolidated record is derived from the change entries and recorded per [the change record](../_data/change-record.md). The body ends with the rendered `change-record` block, which records the entries and that record in the pull request.
+The change's consolidated record is derived from the change entries and recorded per [the change record](../_data/change-record.md). The body ends with the rendered `change-record` block, which records the entries in the pull request.
 
 ## Arguments
 
@@ -118,7 +118,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
    Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones that you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then continue to step 7 with the verified entries. If you could never place a return, show the developer each passage as the fence contained it. Take a passage rejected by the audit past step 6 only after asking the developer.
 
-7. **Consolidate the change's record from the entries.** Do this before step 8, and before the frontmatter call: The `## Details` headings, the title, the labels, and the block all read the record that this step produces.
+7. **Consolidate the change's record from the entries.** Do this before step 8, and before the frontmatter call: The `## Details` headings, the title, and the labels read the record that this step produces.
    - **Write the verified entries** to a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `entries-{timestamp}.yaml`. The file is a top-level YAML list of mappings, one per entry, each declaring `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry has one, as the drafter returned them, with the corrections that step 6 made. Write it with a file-writing tool rather than a shell heredoc: `text` and `migration` are arbitrary prose containing backticks and quotes. Keep its path; step 10 reads the same file.
    - **Record the derivation commit**: `git rev-parse --short HEAD`. It is the commit at which the entries were read, and `resolve-merge` compares it against the pull request's head to tell a fresh block from a stale one.
    - **Consolidate the entries:**
@@ -142,9 +142,6 @@ Both are optional, and each is recorded as an override beside the consolidated r
     entries_path="{absolute path from step 7}"
     node {harness_home_dir}/scripts/describe-change.mjs render-block \
       --title "{title}" \
-      --scope "{scope}" \
-      --type "{type}" \
-      --breaking \
       --override-scope "{override_scope}" \
       --override-type "{override_type}" \
       --override-breaking \
@@ -153,7 +150,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
       | python3 -c "import sys,json; print(json.load(sys.stdin).get('block',''))"
     ```
 
-    Pass the step-7 consolidated record through `--scope`, `--type`, and `--breaking`, never the effective record: The block records the consolidation and the overrides separately, and `resolve-merge` applies the overrides itself. Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`.
+    Pass the overrides resolved in step 2, never the effective record: `resolve-merge` ranks the entries and applies the overrides itself. Omit each override flag whose field is absent, and pass `--override-breaking` only if that field is `true`.
 
     [`render-block`](../_data/title-templates.md#render-block) states the output, which is JSON; the last command decodes it and prints the `block` field. Render and decode in one Bash invocation, and write the printed block verbatim below `## Details`, separated by one blank line. Never copy the block out of the raw JSON: `text` is arbitrary prose, and JSON escapes its quotes and backslashes a second time.
 
@@ -201,9 +198,6 @@ Good: "Heavy-upload sessions were intermittently failing as users hit the upstre
 
 ```change-record
 title: Add the store-qualified wikilink
-consolidated_record:
-  scope: agents
-  type: feat
 entries_commit: e5029924
 entries:
   - type: feat

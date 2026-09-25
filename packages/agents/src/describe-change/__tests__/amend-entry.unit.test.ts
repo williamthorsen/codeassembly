@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Taxonomy } from '../../change-grammar/types.ts';
 import { amendEntry, type EntryAmendment } from '../amend-entry.ts';
-import { type ChangeEntry, consolidateChangeEntries } from '../change-entries.ts';
+import type { ChangeEntry } from '../change-entries.ts';
 import { readChangeRecordBlock, renderChangeRecordBlock } from '../change-record-block.ts';
 
 /** A taxonomy declaring one type of each breaking policy, independent of the repository's own. */
@@ -22,7 +22,6 @@ const DOCS_ENTRY: ChangeEntry = { breaking: true, scopes: ['kb'], text: 'Documen
 const ENTRIES = [FEATURE_ENTRY, DOCS_ENTRY];
 
 const BLOCK = renderChangeRecordBlock({
-  consolidatedRecord: { scope: 'agents', type: 'feat' },
   entries: ENTRIES,
   entriesCommit: 'e5029924',
   overrides: { scope: 'agents' },
@@ -34,13 +33,12 @@ const PREFIX = '## What\n\nAdds the parser.\n\n';
 const SUFFIX = '\n\n## Why\n\nCloses #466\n';
 
 describe(amendEntry, () => {
-  it('rewrites the amended entry alone and recomputes the consolidated record from the amended entries', () => {
+  it('rewrites the amended entry alone, keeping the title, overrides, and derivation commit', () => {
     const { body, entry, entryCount } = amend({ type: 'feat' }, 0);
 
     const reading = readChangeRecordBlock(body);
     expect(reading).toStrictEqual({
       block: {
-        consolidatedRecord: consolidateChangeEntries([{ ...FEATURE_ENTRY, type: 'feat' }, DOCS_ENTRY], TAXONOMY),
         entries: [{ ...FEATURE_ENTRY, type: 'feat' }, DOCS_ENTRY],
         entriesCommit: 'e5029924',
         overrides: { scope: 'agents' },
@@ -50,6 +48,16 @@ describe(amendEntry, () => {
     });
     expect(entry).toStrictEqual({ ...FEATURE_ENTRY, type: 'feat' });
     expect(entryCount).toBe(2);
+  });
+
+  it('drops a legacy consolidated record from the re-rendered block', () => {
+    const legacy = BLOCK.replace(
+      'title: Add the parser\n',
+      'title: Add the parser\nconsolidated_record:\n  type: feat\n',
+    );
+    const { body } = amendEntry({ amendment: { type: 'feat' }, body: legacy, index: 0, taxonomy: TAXONOMY });
+
+    expect(body).not.toContain('consolidated_record');
   });
 
   it('sets or clears the marker without changing the type', () => {
