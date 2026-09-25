@@ -70,7 +70,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-comment-preferences',
-    { bodyHash: '4d5aca933fb7a0dc099713869c7eaf09949e7f2ad5fc8ca98037127293a94137', version: '3' },
+    { bodyHash: 'bf4d7b051fb0ebd70dc1e71a5d4897f592357a6c235793d32ac17dd3a0231988', version: '4' },
   ],
   [
     'williamthorsen-ticketing-preferences',
@@ -113,6 +113,7 @@ const RULE_PINS = new Map<string, RulePin>([
     'inline-comments',
     { sectionHash: 'b99006eae56846bd994efc6ae21fb163ac4dcf4b3b50bb1322f734520b3a98d0', version: '1' },
   ],
+  ['line-wrapping', { sectionHash: '6cb583e22c0a9310f995e204516a15b7a06b0dd3edf6c5f386b6498727434fff', version: '1' }],
   [
     'reduced-object-relative',
     { sectionHash: 'c618a58fa100ac9594a2df5fd4b53d44f31d654a097e69e570b26e1736f5090e', version: '1' },
