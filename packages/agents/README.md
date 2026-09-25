@@ -246,12 +246,12 @@ Name a hook for the concern rather than the consumer (`implementation-preference
 
 The library declares four hook names:
 
-| Hook                         | Concern                                      | Declared by                                                                           |
-| ---------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------- |
-| `comment-preferences`        | the register of comments written into source | the coder subagent, the five reviewer subagents, `prose-reviser`, and `revise-prose`  |
-| `implementation-preferences` | how code is written and judged               | the implementing and reviewing skills, the coder, and the five plan-shaping subagents |
-| `ticketing-preferences`      | how work is split across tickets             | the ticket-composing skills and `planner`                                             |
-| `writing-preferences`        | how agent-authored prose reads               | every subagent but the deployment canary, and `revise-prose`                          |
+| Hook                         | Concern                                                        | Declared by                                                                           |
+| ---------------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `comment-preferences`        | the register and line wrapping of comments written into source | the coder subagent, the five reviewer subagents, `prose-reviser`, and `revise-prose`  |
+| `implementation-preferences` | how code is written and judged                                 | the implementing and reviewing skills, the coder, and the five plan-shaping subagents |
+| `ticketing-preferences`      | how work is split across tickets                               | the ticket-composing skills and `planner`                                             |
+| `writing-preferences`        | how agent-authored prose reads                                 | every subagent but the deployment canary, and `revise-prose`                          |
 
 A binding fills a hook with the whole of the bound rulebook's body, and there is no way to bind part of one. A rulebook bound to a hook that only subagents declare is spliced entire into every declaring subagent, and none of the reports below can see that it contains guidance that those subagents have no use for. Keep such a rulebook coherent for its narrowest consumer: Once it mixes session-only guidance with the subagent-relevant kind, split it rather than binding the whole.
 
