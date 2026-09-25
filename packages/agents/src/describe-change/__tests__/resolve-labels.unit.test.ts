@@ -37,6 +37,17 @@ describe(resolveLabels, () => {
     ]);
   });
 
+  it('labels a process-tier entry’s workspace beside a higher-tier entry’s workspace', () => {
+    const entries = [buildEntry({ scopes: ['agents'], type: 'feat' }), buildEntry({ scopes: ['kb'], type: 'docs' })];
+
+    expect(resolveLabels({ entries, labelMap: MAP, record: {} })).toStrictEqual([
+      'feature',
+      'documentation',
+      'scope:agents',
+      'scope:kb',
+    ]);
+  });
+
   it('labels root when the entries name root alone, or root beside a wildcard', () => {
     const entries = [
       buildEntry({ scopes: ['root'], type: 'fix' }),

@@ -9,8 +9,9 @@ import { BREAKING_LABEL, type LabelMap, type LabelSection } from './read-label-m
  * `breaking`, which precedes the scope labels; within each group the record's label leads, then the entries' labels
  * in the order that the entries name them, each label once.
  *
- * The entries' scopes set `root` aside when they also name a workspace, as `consolidate` does. The record's scope is
- * labeled as given, since it is either already consolidated or an explicit override.
+ * The entries' scopes set `root` aside when they also name a workspace, as `consolidate` does, but keep the workspace
+ * of a process-tier entry, which `consolidate` sets aside: A label names every workspace that the branch changed. The
+ * record's scope is labeled as given, since it is either already consolidated or an explicit override.
  *
  * A type or scope that the map does not name, and a scope of `*`, contribute no label. A map that configures no label
  * at all yields none, `breaking` included, since a repository without a label map has no labels to apply.
