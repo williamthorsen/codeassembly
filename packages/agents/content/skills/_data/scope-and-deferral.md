@@ -2,7 +2,7 @@
 
 ## The default: Fold in
 
-By default, work that the problem requires, or that is cheap and serves the ticket's goal, is folded into the current change. A ticket is a signal of intent, not a boundary; it belongs to us and can be refined. Spinning off a separate ticket needs an affirmative, stated reason:
+By default, fold into the current change the work that the ticket didn't name (a discovered defect, an adjacent cleanup, a companion change) when the problem requires it, or when it is cheap and serves the ticket's goal. A ticket is a signal of intent, not a boundary; it belongs to us and can be refined. Spinning off a separate ticket needs an affirmative, stated reason:
 
 - a genuinely separable concern,
 - a materially different risk surface,
