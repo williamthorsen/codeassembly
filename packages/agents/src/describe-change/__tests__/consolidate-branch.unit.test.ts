@@ -14,6 +14,7 @@ const TAXONOMY: Taxonomy = {
     { breakingPolicy: 'optional', key: 'sec', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'refactor', tier: 'internal' },
     { breakingPolicy: 'forbidden', key: 'ai', tier: 'process' },
+    { breakingPolicy: 'forbidden', key: 'deps', tier: 'process' },
   ],
 };
 
@@ -71,6 +72,16 @@ describe(consolidateBranch, () => {
     );
 
     expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
+  });
+
+  it('sets aside a process-tier commit naming another workspace', () => {
+    const result = consolidateBranch(
+      buildCommits(['img-promoter|feat: Add the promoter', 'web|deps: Move the specifiers to the catalog']),
+      NODES,
+      TAXONOMY,
+    );
+
+    expect(result.consolidatedRecord).toStrictEqual({ scope: 'img-promoter', type: 'feat' });
   });
 
   it('reports a refactor that spells the marker forbidden by its policy, leaving the entry as written', () => {

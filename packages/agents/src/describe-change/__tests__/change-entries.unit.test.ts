@@ -13,6 +13,7 @@ const TAXONOMY: Taxonomy = {
     { key: 'sec', tier: 'public' },
     { key: 'refactor', tier: 'internal' },
     { key: 'ai', tier: 'process' },
+    { key: 'deps', tier: 'process' },
     { key: 'docs', tier: 'process' },
   ],
 };
@@ -40,6 +41,15 @@ describe(consolidateChangeEntries, () => {
     const entries = [buildEntry({ scopes: ['agents'], type: 'feat' }), buildEntry({ scopes: ['root'], type: 'ai' })];
 
     expect(consolidateChangeEntries(entries, TAXONOMY)).toStrictEqual({ scope: 'agents', type: 'feat' });
+  });
+
+  it('sets aside a process-tier entry naming another workspace, so a catalog move keeps the branch scope', () => {
+    const entries = [
+      buildEntry({ scopes: ['img-promoter'], type: 'feat' }),
+      buildEntry({ scopes: ['root', 'web'], type: 'deps' }),
+    ];
+
+    expect(consolidateChangeEntries(entries, TAXONOMY)).toStrictEqual({ scope: 'img-promoter', type: 'feat' });
   });
 
   it('ranks an entry that names no scope, so a change touching nothing scoped still resolves a type', () => {

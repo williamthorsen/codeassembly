@@ -11,6 +11,7 @@ const TAXONOMY: Taxonomy = {
     { key: 'fix', tier: 'public' },
     { key: 'sec', tier: 'public' },
     { key: 'refactor', tier: 'internal' },
+    { key: 'deps', tier: 'process' },
     { key: 'docs', tier: 'process' },
   ],
 };
@@ -107,6 +108,59 @@ describe(consolidate, () => {
     ];
 
     expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'root', type: 'fix' });
+  });
+
+  it('sets aside a process-tier scope when a higher-tier entry names one', () => {
+    const entries = [
+      { scope: 'img-promoter', type: 'feat' },
+      { scope: 'root,web', type: 'deps' },
+    ];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'img-promoter', type: 'feat' });
+  });
+
+  it('counts an internal-tier scope beside a public-tier one', () => {
+    const entries = [
+      { scope: 'img-promoter', type: 'feat' },
+      { scope: 'web', type: 'refactor' },
+    ];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
+  });
+
+  it('names the scope of a process-tier entry alone', () => {
+    expect(consolidate([{ scope: 'web', type: 'deps' }], TAXONOMY)).toStrictEqual({ scope: 'web', type: 'deps' });
+  });
+
+  it('keeps a process-tier scope when no higher-tier entry names a scope', () => {
+    const entries = [{ type: 'feat' }, { scope: 'web', type: 'deps' }];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ scope: 'web', type: 'feat' });
+  });
+
+  it('keeps the scope of an entry whose type the taxonomy does not declare', () => {
+    const entries = [
+      { scope: 'img-promoter', type: 'feat' },
+      { scope: 'web', type: 'invented' },
+    ];
+
+    expect(consolidate(entries, TAXONOMY)).toStrictEqual({ type: 'feat' });
+  });
+
+  it('sets no scope aside under a one-tier taxonomy', () => {
+    const taxonomy: Taxonomy = {
+      tiers: ['all'],
+      types: [
+        { key: 'feat', tier: 'all' },
+        { key: 'deps', tier: 'all' },
+      ],
+    };
+    const entries = [
+      { scope: 'img-promoter', type: 'feat' },
+      { scope: 'web', type: 'deps' },
+    ];
+
+    expect(consolidate(entries, taxonomy)).toStrictEqual({ type: 'feat' });
   });
 
   it('names the one scope on which a list and a bare value agree', () => {
