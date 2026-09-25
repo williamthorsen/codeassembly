@@ -13,6 +13,7 @@ const TAXONOMY: Taxonomy = {
     { breakingPolicy: 'optional', key: 'fix', tier: 'public' },
     { breakingPolicy: 'optional', key: 'sec', tier: 'public' },
     { breakingPolicy: 'forbidden', key: 'refactor', tier: 'internal' },
+    { breakingPolicy: 'forbidden', key: 'ai', tier: 'process' },
   ],
 };
 
@@ -53,6 +54,23 @@ describe(consolidateBranch, () => {
     );
 
     expect(result.consolidatedRecord).toStrictEqual({ type: 'feat' });
+  });
+
+  it('sets aside one root commit among the commits of one workspace', () => {
+    const result = consolidateBranch(
+      buildCommits([
+        'agents|feat: Add the parser',
+        'agents|fix: Correct the guard',
+        'agents|fix: Correct the other guard',
+        'agents|refactor: Restructure the guard',
+        'agents|fix: Correct the third guard',
+        'root|ai: Record the sweep in the ledger',
+      ]),
+      NODES,
+      TAXONOMY,
+    );
+
+    expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
   it('reports a refactor that spells the marker forbidden by its policy, leaving the entry as written', () => {

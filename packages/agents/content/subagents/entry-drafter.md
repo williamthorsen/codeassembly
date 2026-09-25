@@ -78,7 +78,7 @@ Writing follows.
 
 An entry list drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much it cost to establish.
 
-Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and no entry that you write includes them.
+Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and no entry that you write includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it gets no entry.
 
 The general concision rule does not govern here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: The facts that you leave out are actionable ones, and the reader has the diff one click away.
 

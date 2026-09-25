@@ -1,5 +1,14 @@
 import type { ChangeRecord } from './types.ts';
 
+/**
+ * Sets `root` aside when `scopes` also names a workspace, since `root` holds the files that support a workspace rather
+ * than a peer of it. A set naming `root` alone keeps it.
+ */
+export function dropIncidentalRoot(scopes: Iterable<string>): string[] {
+  const named = [...scopes];
+  return named.some((scope) => scope !== ROOT_SCOPE) ? named.filter((scope) => scope !== ROOT_SCOPE) : named;
+}
+
 /** Reports whether `name` is one of the declared tokens. */
 export function isTokenName(name: string): name is TokenName {
   return DECLARED_TOKENS.has(name);
@@ -62,6 +71,9 @@ export function splitScopes(scope: string | undefined): string[] {
 
 /** The marker of a breaking change, whether as its own token or as the tail of a rendered type. */
 export const BREAKING_MARKER = '!';
+
+/** The scope of the files that belong to no workspace. */
+export const ROOT_SCOPE = 'root';
 
 /** The character that joins the workspaces of a scope naming more than one. */
 export const SCOPE_SEPARATOR = ',';

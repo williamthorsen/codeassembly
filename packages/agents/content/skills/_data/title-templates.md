@@ -567,12 +567,13 @@ The `{scope}` token expects a value that identifies the part of the codebase aff
 
 - In a monorepo, the scope is typically the workspace name or abbreviation.
 - Use `root` when the change touches only files at the monorepo root.
-- Use `*` when the change spans multiple workspaces, or root and one or more workspaces. It normalizes to no scope, so the rendered title has no scope prefix.
+- A change to root and exactly one workspace takes that workspace, since the root files support its work.
+- Use `*` when the change spans multiple workspaces, with or without root. It normalizes to no scope, so the rendered title has no scope prefix.
 
 **A scope may name several workspaces, joined by commas**, which is how one commit entry that spans two workspaces renders as one `Change:` trailer: `agents,kb|feat: Add the store-qualified wikilink`. Normalization trims each name and drops the empty ones, the `*` ones, and the duplicates, keeping first-occurrence order; `agents,*` therefore names `agents`, and a value that leaves nothing behind names no scope, exactly as a whole-value `*` does.
 
 A rendered list reads back as the same value, since the scope run is bounded by the delimiter that the template itself places after it and no catalogued convention delimits the scope with a comma. A template that does is refused as one that cannot round-trip.
 
-**Consolidation counts each named workspace separately.** One entry naming `agents,kb` contributes both, exactly as two entries naming one apiece do, so it consolidates to no scope.
+**Consolidation counts each named workspace separately.** One entry naming `agents,kb` contributes both, exactly as two entries naming one apiece do, so it consolidates to no scope. Consolidation sets `root` aside whenever the entries also name a workspace, then keeps a scope only when exactly one remains: `agents` and `root` consolidate to `agents`, and `root` alone to `root`. The scope labels apply the same filter, so they omit `root` beside a workspace.
 
 Per-surface guidance on when to apply each value (e.g., what to count as `root` for a commit) is stated by the consuming skill; see the `consult-commit-conventions` skill for the commit-side rules.

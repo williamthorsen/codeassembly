@@ -10,7 +10,7 @@ const MAP: LabelMap = {
 };
 
 describe(resolveLabels, () => {
-  it('labels every type and scope that the entries name, and breaking when any entry is breaking', () => {
+  it('labels every type and workspace scope that the entries name, and breaking when any entry is breaking', () => {
     const entries = [
       buildEntry({ scopes: ['agents'], type: 'feat' }),
       buildEntry({ breaking: true, scopes: ['kb', 'agents'], type: 'fix' }),
@@ -24,8 +24,26 @@ describe(resolveLabels, () => {
       'breaking',
       'scope:agents',
       'scope:kb',
-      'scope:root',
     ]);
+  });
+
+  it('sets root aside when the entries also name one workspace', () => {
+    const entries = [buildEntry({ scopes: ['agents'], type: 'feat' }), buildEntry({ scopes: ['root'], type: 'docs' })];
+
+    expect(resolveLabels({ entries, labelMap: MAP, record: {} })).toStrictEqual([
+      'feature',
+      'documentation',
+      'scope:agents',
+    ]);
+  });
+
+  it('labels root when the entries name root alone, or root beside a wildcard', () => {
+    const entries = [
+      buildEntry({ scopes: ['root'], type: 'fix' }),
+      buildEntry({ scopes: ['*', 'root'], type: 'docs' }),
+    ];
+
+    expect(resolveLabels({ entries, labelMap: MAP, record: {} })).toStrictEqual(['fix', 'documentation', 'scope:root']);
   });
 
   it('leads each group with the record’s label and lists every label once', () => {
