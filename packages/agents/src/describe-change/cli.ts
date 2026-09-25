@@ -33,10 +33,11 @@ import { consolidateBranch } from './consolidate-branch.ts';
 import { findDefects } from './find-defects.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
+import { readDeclaredScopes } from './read-declared-scopes.ts';
 import { readLabelMap, resolveLabeledRecord } from './read-label-map.ts';
 import { resolveLabels } from './resolve-labels.ts';
 import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOutcome } from './resolve-merge.ts';
-import { discoverWorkspaceDirs, resolveScopes } from './resolve-scopes.ts';
+import { discoverWorkspaceDirs, mergeScopeDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
 import {
   type AmendEntryOutcome,
@@ -946,14 +947,20 @@ async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Pr
 }
 
 /**
- * Resolves each given path's scope from the repository's workspace layout. The run is anchored at the repository root,
- * so a path is read the same way whatever subdirectory the caller invoked it from.
+ * Resolves each given path's scope from the repository's workspace packages and the scope directories that its
+ * preferences file declares. The run is anchored at the repository root, so a path is read the same way whatever
+ * subdirectory the caller invoked it from.
  */
 async function runResolveScopes(paths: readonly string[], input: DescribeInput): Promise<DescribeResult> {
   const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
-  const workspaceDirs = discoverWorkspaceDirs(projectRoot);
-  const { pathScopes, scopes } = resolveScopes({ paths, projectRoot, workspaceDirs });
-  return { output: { path_scopes: pathScopes, scopes }, warnings: warning === undefined ? [] : [warning] };
+  const declared = await readDeclaredScopes(projectRoot);
+  const scopeDirs = mergeScopeDirs({
+    declaredDirs: declared.scopeDirs,
+    packageDirs: discoverWorkspaceDirs(projectRoot),
+  });
+  const { pathScopes, scopes } = resolveScopes({ paths, projectRoot, scopeDirs });
+  const warnings = [...(warning === undefined ? [] : [warning]), ...declared.warnings];
+  return { output: { path_scopes: pathScopes, scopes }, warnings };
 }
 
 /** Resolves the work type that the ticket's labels name through the repository's label map. */
