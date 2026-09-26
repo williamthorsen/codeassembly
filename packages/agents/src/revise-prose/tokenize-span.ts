@@ -43,8 +43,8 @@ export interface Token {
   afterBreak: boolean;
 }
 
-export /** Splits a span into words, recording each word's offsets and whether clause punctuation precedes it. */
-function tokenize(text: string): Token[] {
+/** Splits a span into words, recording each word's offsets and whether clause punctuation precedes it. */
+export function tokenize(text: string): Token[] {
   const tokens: Token[] = [];
   let afterBreak = false;
   const pattern = /\S+/g;

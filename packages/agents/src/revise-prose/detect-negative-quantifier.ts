@@ -25,7 +25,8 @@ export function detectNegativeQuantifiers(spans: readonly ProseSpan[]): Negative
 // region | Helpers
 
 /**
- * Determiners that mark a later word as a head noun. `that` is left out, since it opens a relative or content clause as often as it determines a noun.
+ * Determiners that mark a later word as a head noun. `that` is left out, since it opens a relative or content clause as
+ * often as it determines a noun.
  */
 const DETERMINERS: ReadonlySet<string> = new Set([
   'a',
@@ -50,7 +51,9 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 /** Words after `no` that complete a fixed phrase rather than open a subject: `no longer`, `no one`, and the rest. */
 const FIXED_FOLLOWERS: ReadonlySet<string> = new Set(['longer', 'more', 'one', 'other', 'such']);
 
-/** Most words that may stand between a determiner and the head noun that it marks, when a relativizer follows the head. */
+/**
+ * Most words that may stand between a determiner and the head noun that it marks, when a relativizer follows the head.
+ */
 const MAX_HEAD_MODIFIERS = 2;
 
 /** Most words that the noun phrase after `no` may contain before its verb. */

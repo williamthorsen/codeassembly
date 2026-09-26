@@ -628,7 +628,6 @@ interface AuxiliaryChain {
   lastAuxiliaryIndex: number;
 }
 
-/** One word of a span, with the offsets from which a report and a line lookup are computed. */
 /** Reports whether a verb agrees with a plural subject, which is what a bare-noun subject always is. */
 function agreesWithPluralSubject(word: string): boolean {
   return !word.endsWith('s');
