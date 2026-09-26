@@ -34,9 +34,9 @@ No detector reports a match inside an inline code span. The four sentence detect
 
 ## Batches
 
-A batch is whole files, because a subagent reads a file whole, and the batches cover the whole scanned set rather than the candidate-bearing subset, because a unit may have no detector and its violations can be in files that no detector nominates.
+A batch is whole files, because a subagent reads a file whole, and the batches cover the whole scanned set rather than the candidate-bearing subset, because a unit may have no detector and its violations can be in files that the detectors do not nominate.
 
-`detect` puts the recurring batches first. It groups files linked by a shared sentence into a component that no batch boundary crosses, so one subagent adjudicates every copy of a sentence and no two subagents edit the same file. It makes a component that outgrows the budget on its own into one oversized batch. It packs the remaining files by whole directory. A batch boundary falls on a directory boundary except when one directory alone exceeds the budget.
+`detect` puts the recurring batches first. It groups files linked by a shared sentence into a component that a batch boundary never crosses, so one subagent adjudicates every copy of a sentence and no two subagents edit the same file. It makes a component that outgrows the budget on its own into one oversized batch. It packs the remaining files by whole directory. A batch boundary falls on a directory boundary except when one directory alone exceeds the budget.
 
 ## The record
 

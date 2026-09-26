@@ -111,7 +111,7 @@ A skill deploys as a directory, so the entries inside each directory that the pl
 
 **The aggregates overlap rather than partition.** A description's bytes count in `alwaysLoaded` and again inside its document's bytes in `onInvocation`, because the description loads with the harness's listing and loads again inside the body. The three totals do not sum to a whole, and nothing that presents them may imply that they do.
 
-`ambientRegions` is the one measured quantity that no file row backs. An ambient region is a span inside a guidance file that the deployment does not own outright, so the region's bytes reach this aggregate and no entry in `files`.
+`ambientRegions` is the one measured quantity without a file row behind it. An ambient region is a span inside a guidance file that the deployment does not own outright, so the region's bytes reach this aggregate and no entry in `files`.
 
 ## When a snapshot is appended
 
@@ -120,7 +120,7 @@ Both conditions must hold:
 1. The measurement differs from the previous snapshot. A sync that rewrites nothing appends nothing.
 2. The tree whose content was deployed is on a commit that the remote-tracking default branch contains, so that the record tracks the default branch's sizes rather than those of each branch under development.
 
-The compared measurement is `files`, `expansions`, and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which deploys no file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that no file backs. Comparing the expansions covers a rewiring that moves a partial's reach without moving anyone's bytes, and it makes the first measurement taken after the block existed differ from a previous snapshot that states none.
+The compared measurement is `files`, `expansions`, and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which deploys no file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that the files do not back. Comparing the expansions covers a rewiring that moves a partial's reach without moving anyone's bytes, and it makes the first measurement taken after the block existed differ from a previous snapshot that states none.
 
 Which tree the ancestry probes follows the domain. The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch is the one judged; the home domain's comes from the running package, so the package root is. The default branch resolves from `origin/HEAD`, falling back to `origin/main`. When neither resolves, and when the probed tree is not a git tree at all, the ancestry condition is unanswerable and the append goes through: A tree with no branch has none to be wrong about, and refusing there would stop the record entirely.
 
@@ -169,7 +169,7 @@ A unit's line therefore accounts for the bytes that it removed from the document
 Three cases attribute nothing, and report as they did before the block existed:
 
 - **An added or removed document**, whose whole bytes are not a change for a unit to explain. A unit reaching only such a document explains nothing and states no line.
-- **A unit that the previous snapshot held and this measurement does not.** Attributing a deleted partial needs each document's previous closure, which no snapshot records, and crediting it against the current closures would count the same bytes twice.
+- **A unit that the previous snapshot held and this measurement does not.** Attributing a deleted partial needs each document's previous closure, which the snapshots do not record, and crediting it against the current closures would count the same bytes twice.
 - **A previous snapshot stating no `expansions`**, which suppresses the pass entirely and leaves every document to report its own change.
 
 Two further cases leave bytes in the residual rather than in the unit's line, and code handles neither. A document naming one partial in two directives is inlined twice and held in the closure once, so half of the change lands in the residual. A partial whose edit adds or removes its `<!-- children -->` placeholder shifts its includer by that line, for the same reason. Nothing is hidden in either case: The unit's line appears, and the document's line appears beside it.
