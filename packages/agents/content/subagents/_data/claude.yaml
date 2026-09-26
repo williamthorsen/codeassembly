@@ -31,6 +31,9 @@ aspect-test-reviewer:
 code-simplification-reviewer:
   model: sonnet
 
+handoff-reviewer:
+  model: sonnet
+
 planner:
   model: sonnet
 
