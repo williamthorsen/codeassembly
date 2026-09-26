@@ -32,7 +32,7 @@ With no path, the sweep covers the whole repository. That is this skill's defaul
 
 Both come from this document, never from a list kept elsewhere. Because a rule document declares each rule by a marker beside it rather than by its heading, a heading change cannot silently drop a rule, and a project bound to a different rulebook is swept for the rules that it declares.
 
-- **The `plain-speech` unit** is at the version that the `<!-- unit-version: plain-speech <version> -->` marker below names. It contains one rule, `plain-speech`, whose sweep version is the same.
+- **The `plain-speech` unit** is at the version that the `<!-- unit-version: plain-speech <version> -->` marker below names. It contains the rule `plain-speech`, whose sweep version is the same, and each rule that a `<!-- rule: <id> <version> -->` marker in its calibration below declares, at that marker's sweep version.
 - **Each `<!-- rulebook:<slug> -->` block** in the comment-preferences and writing-preferences fills at the end of this document is a unit, at the version that its `<!-- rulebook-version: <version> -->` line names. A block that does not specify a version is not a unit: Do not name its rules to the helper, sweep it without recording anything for it, and name that slug in the closing summary.
 - **Each `<!-- rule: <id> <version> -->` marker** in a unit's body declares a rule at that sweep version, whether or not the helper has a detector for it. The rule's unit is the block containing the marker.
 - **A marker that reads `<!-- rule: <id> -->`** declares a rule without a sweep version. It is swept, but nothing records it: Name it to the helper without a version, and name it in the closing summary.
@@ -50,12 +50,13 @@ If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alo
 node {harness_home_dir}/skills/revise-prose/revise-prose.mjs detect {paths} \
   --unit plain-speech={version} \
   --rule plain-speech@{version}=plain-speech \
+  --rule {calibration-rule-id}@{rule-version}=plain-speech \
   --unit {slug}={version} \
   --rule {rule-id}@{rule-version}={slug} \
   --rule {unversioned-rule-id}={slug}
 ```
 
-Pass one `--unit` per unit from step 1, `--rule plain-speech@{version}=plain-speech` for the `plain-speech` unit, and one `--rule` per marker in a unit: with `@{rule-version}` if the marker declares a version, and without it if not. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
+Pass one `--unit` per unit from step 1, `--rule plain-speech@{version}=plain-speech` and one `--rule {id}@{rule-version}=plain-speech` per marker in the calibration for the `plain-speech` unit, and one `--rule` per marker in any other unit: with `@{rule-version}` if the marker declares a version, and without it if not. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
 
 The helper prints one JSON object to stdout. On success it contains `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array containing the sites already adjudicated by an earlier sweep, a `batches` array in which each batch lists as `unswept` the versioned rules that its files still need, a `rules` object listing the named rules that it `detected` and those for which it has no detector as `undetected`, and a `summary`. On failure it contains `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
 
@@ -144,7 +145,7 @@ revise-prose summary
 | 0     | 12    | 31      | 4        | 2            |
 | 1     | 9     | 18      | 1        | 0            |
 
-Recorded in `.agents/revise-prose.yaml`: capitalization-after-colon 1, em-dash 1, plain-speech 6, sentence-case 2.
+Recorded in `.agents/revise-prose.yaml`: capitalization-after-colon 1, em-dash 1, negative-quantifier 1, plain-speech 8, sentence-case 2.
 Not recorded: other-writing-guidance, prefer-active-voice.
 No detector: capitalization-after-colon, plain-speech, sentence-case.
 5 files excluded: 1 generated, 1 machine-generated, 3 ineligible.

@@ -8,10 +8,11 @@ import type { ReportedBatch } from '../../src/revise-prose/types.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts';
 
-// The rulebooks' `<!-- rule: <id> <version> -->` markers are the one list of rule names. The helper's detector registry,
-// the names that `prose-reviser` reports, and the fold that `revise-prose` composes from that report each stay within
-// it: A rejection under a rule that the skill leaves out of the fold's versioned rules makes the `record` command refuse
-// the whole fold, and a rule stated without a marker leaves the subagent no id to report its sites under.
+// The `<!-- rule: <id> <version> -->` markers in the rulebooks and the plain-speech calibration are the one list of
+// rule names. The helper's detector registry, the names that `prose-reviser` reports, and the fold that `revise-prose`
+// composes from that report each stay within it: A rejection under a rule that the skill leaves out of the fold's
+// versioned rules makes the `record` command refuse the whole fold, and a rule stated without a marker leaves the
+// subagent no id to report its sites under.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 const CALIBRATION = '_partials/plain-speech-calibration.md';
@@ -194,12 +195,16 @@ async function readContentFile(relativePath: string): Promise<string> {
   return readFile(path.join(CONTENT_ROOT, relativePath), 'utf8');
 }
 
-/** Reads every rule id that the library's rulebooks declare, a duplicate appearing once per declaration. */
+/**
+ * Reads every rule id that the library's rulebooks and the plain-speech calibration declare, a duplicate appearing once
+ * per declaration.
+ */
 async function readDeclaredIds(): Promise<string[]> {
-  return (await RESOLVED)
+  const rulebookIds = (await RESOLVED)
     .values()
     .flatMap((rulebook) => listDeclaredIds(rulebook.body))
     .toArray();
+  return [...rulebookIds, ...listDeclaredIds(await readContentFile(CALIBRATION))];
 }
 
 /** Reads the `plain-speech` rule id from the unit-version line that names it. */

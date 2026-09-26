@@ -41,7 +41,7 @@ interface RulePin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: '1bd1cc6e01ae2bdd7fe5037f82843c947ec7beb0b256143b331e818664a0782c', version: '23' },
+    { bodyHash: '7d09154987d7224e58c895219502cb0d2e9bddcba9a5e89556045225ae3606d4', version: '24' },
   ],
   [
     'commit-conventions',
@@ -98,7 +98,11 @@ const PINS = new Map<string, RulebookPin>([
 // pinned against that version, so that a section edit fails this suite until the author decides whether the rule's
 // version rises, a decision separate from whether the rulebook's does.
 
-/** The sweep version that each rule's marker declares, and the section against which that version is pinned. */
+/**
+ * The sweep version that each rule's marker declares, and the section against which that version is pinned. A rule
+ * declared by the plain-speech calibration has no pin here, since no rulebook includes the calibration:
+ * `plain-speech-calibration.unit.test.ts` pins the calibration's whole text instead.
+ */
 const RULE_PINS = new Map<string, RulePin>([
   [
     'capitalization-after-colon',

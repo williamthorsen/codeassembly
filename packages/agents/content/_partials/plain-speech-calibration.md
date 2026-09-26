@@ -44,6 +44,12 @@ Nine shapes recur in this corpus. Each is a search pattern rather than a rule: A
 8. **A concrete metaphor standing in for the literal abstraction.** The inverse of shape 7. "attrition rather than advocacy" becomes "tiring the developer rather than persuading them". "priced on your ledger" becomes "measured by you".
 9. **A negative quantifier standing in for the one actor that cannot act.** "a skill that no task invokes" becomes "a skill that the plan does not invoke".
 
+### The negative-quantifier rule
+
+<!-- rule: negative-quantifier 1 -->
+
+The helper reports shape 9 under this rule. Report a site of that shape under `negative-quantifier`, and every other site that breaks the plain-speech rule under `plain-speech`.
+
 ### Words to look for
 
 Ten words recur in this corpus in uses for which a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is no candidate.

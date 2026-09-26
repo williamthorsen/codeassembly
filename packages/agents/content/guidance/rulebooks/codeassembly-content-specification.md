@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '23'
+version: '24'
 ---
 
 # CodeAssembly content specification
@@ -183,7 +183,7 @@ Because a sweeper applies the doctrine deployed to its harness, deploy the conte
 
 ## Declaring rule ids and sweep versions
 
-A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id and a sweep version for each rule that it states. The declaration is a `<!-- rule: <id> <version> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading.
+A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id and a sweep version for each rule that it states. The declaration is a `<!-- rule: <id> <version> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading. `_partials/plain-speech-calibration.md` declares a rule of the `plain-speech` unit the same way, with its marker under a `###` heading of its own, and `plain-speech-calibration.unit.test.ts` pins that marker with the rest of the calibration's text.
 
 The marker declares the rule whether or not a detector covers it: The helper's registry alone decides which rules it detects. A rulebook that declares one id declares one under every `##` heading, and no id is declared twice across the library. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`.)_
 
