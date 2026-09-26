@@ -112,6 +112,10 @@ describe(detectNegativeQuantifiers, () => {
       expect(detect(sentence)).toEqual([]);
     });
 
+    it('skips a `no` phrase after the "so that" of a purpose clause', () => {
+      expect(detect('It masks the link so that no URL reaches the detector.')).toEqual([]);
+    });
+
     it('skips a `no` phrase that opens a clause without a head', () => {
       expect(detect('When no consumer could observe it, the change repairs nothing.')).toEqual([]);
     });

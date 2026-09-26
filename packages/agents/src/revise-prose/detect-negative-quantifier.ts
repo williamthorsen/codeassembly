@@ -74,6 +74,7 @@ const PHRASE_BREAKERS: ReadonlySet<string> = new Set([
   'nor',
   'on',
   'or',
+  'so',
   'than',
   'that',
   'to',
