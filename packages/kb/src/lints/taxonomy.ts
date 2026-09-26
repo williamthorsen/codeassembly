@@ -13,9 +13,9 @@ export interface TaxonomyNote {
 
 /**
  * Reports each disagreement between a store's assertion folders and its declared taxonomy: `taxonomy.undeclared` for a
- * folder holding notes that no domain declares, `taxonomy.unused` for a declared domain holding no note at or beneath
- * it, and `taxonomy.orphan` for a declared domain whose parent is undeclared. All are warnings, so drift is reported
- * without failing the run. All are vault-scoped: A run narrowed to selected notes still reports them.
+ * folder holding notes outside every declared domain, `taxonomy.unused` for a declared domain holding no note at or
+ * beneath it, and `taxonomy.orphan` for a declared domain whose parent is undeclared. All are warnings, so drift is
+ * reported without failing the run. All are vault-scoped: A run narrowed to selected notes still reports them.
  *
  * A taxonomy declaring nothing disables all three, whether because the file is absent or because it declares no
  * domains. The rules therefore report nothing for a store that has not adopted a taxonomy, rather than flagging
