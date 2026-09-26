@@ -158,8 +158,8 @@ function findHeadIndex(tokens: readonly Token[], quantifierIndex: number): numbe
     return isHead ? headIndex : undefined;
   }
 
-  const headIndex = quantifierIndex - 1;
   if (hasVerbEnding(previous.word)) return undefined;
+  const headIndex = quantifierIndex - 1;
   return isDeterminedHead(tokens, headIndex, 0) ? headIndex : undefined;
 }
 
