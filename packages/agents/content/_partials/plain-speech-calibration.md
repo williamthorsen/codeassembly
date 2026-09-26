@@ -1,4 +1,4 @@
-<!-- unit-version: plain-speech 7 -->
+<!-- unit-version: plain-speech 8 -->
 
 ## Plain-speech sweep calibration
 
@@ -32,7 +32,7 @@ Three edits fall under cases 1 and 2, and two under case 3: "lands" gives the pl
 
 ### Shapes to look for
 
-Eight shapes recur in this corpus. Each is a search pattern rather than a rule: A sentence matching one is a candidate for the rule's tests, and a sentence matching none can still fail them.
+Nine shapes recur in this corpus. Each is a search pattern rather than a rule: A sentence matching one is a candidate for the rule's tests, and a sentence matching none can still fail them.
 
 1. **The cleft construction.** "Segment anchoring is what admits the branch form" becomes "Segment anchoring admits the branch form".
 2. **Appositives stacked on the subject.** "The record, a file that one run writes and the next reads, is keyed on the phrase" becomes "The record is keyed on the phrase. One run writes it and the next reads it."
@@ -42,6 +42,7 @@ Eight shapes recur in this corpus. Each is a search pattern rather than a rule: 
 6. **Personification of an inanimate subject.** "The queue now reads as one set behind the blocking ticket" becomes "All four tickets are now marked as blocked by that ticket".
 7. **An abstract noun standing in for a small concrete set.** "The suite covers the boundary cases" becomes "The suite covers an empty list, one entry, and a list past the budget".
 8. **A concrete metaphor standing in for the literal abstraction.** The inverse of shape 7. "attrition rather than advocacy" becomes "tiring the developer rather than persuading them". "priced on your ledger" becomes "measured by you".
+9. **A negative quantifier standing in for the one actor that cannot act.** "a skill that no task invokes" becomes "a skill that the plan does not invoke".
 
 ### Words to look for
 
