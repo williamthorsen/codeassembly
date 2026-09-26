@@ -79,6 +79,7 @@ describe(runDetect, () => {
       }
       expect(summary.byRule).toStrictEqual({
         'em-dash': 0,
+        'negative-quantifier': 0,
         'reduced-object-relative': 1,
         'second-person': 0,
         so: 0,
@@ -119,6 +120,7 @@ describe(runDetect, () => {
 
       expect(summary.byRule).toStrictEqual({
         'em-dash': 1,
+        'negative-quantifier': 0,
         'reduced-object-relative': 1,
         'second-person': 0,
         so: 0,

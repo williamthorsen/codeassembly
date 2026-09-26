@@ -6,6 +6,7 @@
  * rule *finds* is here.
  */
 import { detectEmDashes } from './detect-em-dash.ts';
+import { detectNegativeQuantifiers } from './detect-negative-quantifier.ts';
 import { detectObjectRelatives } from './detect-object-relative.ts';
 import { detectSecondPersonPronouns } from './detect-second-person.ts';
 import { detectSoUses } from './detect-so.ts';
@@ -15,6 +16,7 @@ import type { Candidate, ProseSpan, RuleId } from './types.ts';
 /** Every rule detected by the helper, mapped to the detector that reports its sites. */
 export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[]) => Candidate[]>> = {
   'em-dash': detectEmDashes,
+  'negative-quantifier': detectNegativeQuantifiers,
   'reduced-object-relative': detectObjectRelatives,
   'second-person': detectSecondPersonPronouns,
   so: detectSoUses,
@@ -22,7 +24,14 @@ export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[
 };
 
 /** Every rule detected by the helper, for the messages that name the known set. A test holds it to the registry. */
-export const RULE_IDS: ReadonlyArray<RuleId> = ['em-dash', 'reduced-object-relative', 'second-person', 'so', 'where'];
+export const RULE_IDS: ReadonlyArray<RuleId> = [
+  'em-dash',
+  'negative-quantifier',
+  'reduced-object-relative',
+  'second-person',
+  'so',
+  'where',
+];
 
 /**
  * Runs the named rules' detectors over every span and returns their candidates in reading order: by file in the order

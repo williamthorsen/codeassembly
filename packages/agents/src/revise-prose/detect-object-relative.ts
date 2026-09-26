@@ -15,6 +15,7 @@
  */
 import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
 import { countNewlinesBefore, findSentence, flattenWhitespace } from './span-text.ts';
+import { AUXILIARIES, type Token, tokenize } from './tokenize-span.ts';
 import type { ObjectRelativeCandidate, ProseSpan, SubjectShape } from './types.ts';
 
 /** Scans every span for the construction, returning one candidate per site in reading order. */
@@ -27,33 +28,6 @@ export function detectObjectRelatives(spans: readonly ProseSpan[]): ObjectRelati
 }
 
 // region | Helpers
-
-/** Auxiliary and modal verbs. One between a head and a subject licenses the join; one after a subject discharges it. */
-const AUXILIARIES: ReadonlySet<string> = new Set([
-  'am',
-  'are',
-  'be',
-  'been',
-  'being',
-  'can',
-  'could',
-  'did',
-  'do',
-  'does',
-  'had',
-  'has',
-  'have',
-  'is',
-  'may',
-  'might',
-  'must',
-  'shall',
-  'should',
-  'was',
-  'were',
-  'will',
-  'would',
-]);
 
 /**
  * Head nouns whose relative clause has an adjunct gap rather than a gap in an argument position. The rulebook puts
@@ -655,22 +629,6 @@ interface AuxiliaryChain {
 }
 
 /** One word of a span, with the offsets from which a report and a line lookup are computed. */
-interface Token {
-  /** The word as written, stripped of the punctuation around it. */
-  raw: string;
-  /** The word lowercased, which every lexical test reads. */
-  word: string;
-  /** Offset of the word's first character within the span's text. */
-  start: number;
-  /** Offset just past the word's last character. */
-  end: number;
-  /** Whether clause punctuation separates this word from the one before it. */
-  afterBreak: boolean;
-}
-
-/** Punctuation that ends a clause when it adjoins a word; standing alone, any punctuation ends one. */
-const CLAUSE_BREAK_PATTERN = /[,;:.!?()[\]{}"\u{2013}\u{2014}]/u;
-
 /** Reports whether a verb agrees with a plural subject, which is what a bare-noun subject always is. */
 function agreesWithPluralSubject(word: string): boolean {
   return !word.endsWith('s');
@@ -1258,34 +1216,6 @@ function isVerbPosition(tokens: readonly Token[], headIndex: number): boolean {
   const previous = tokens[headIndex - 1]?.word ?? '';
   const governor = NEGATORS.has(previous) ? (tokens[headIndex - 2]?.word ?? '') : previous;
   return governor === 'to' || AUXILIARIES.has(governor);
-}
-
-/** Splits a span into words, recording each word's offsets and whether clause punctuation precedes it. */
-function tokenize(text: string): Token[] {
-  const tokens: Token[] = [];
-  let afterBreak = false;
-  const pattern = /\S+/g;
-
-  let match = pattern.exec(text);
-  while (match !== null) {
-    const chunk = match[0];
-    const leading = chunk.length - chunk.replace(/^[^\p{L}\p{N}]+/u, '').length;
-    const stripped = chunk.replace(/^[^\p{L}\p{N}]+/u, '').replace(/[^\p{L}\p{N}]+$/u, '');
-    const trailing = chunk.slice(leading + stripped.length);
-
-    if (stripped === '') {
-      afterBreak = true;
-    } else {
-      afterBreak ||= CLAUSE_BREAK_PATTERN.test(chunk.slice(0, leading));
-      const start = match.index + leading;
-      tokens.push({ raw: stripped, word: stripped.toLowerCase(), start, end: start + stripped.length, afterBreak });
-      afterBreak = false;
-      afterBreak ||= CLAUSE_BREAK_PATTERN.test(trailing);
-    }
-    match = pattern.exec(text);
-  }
-
-  return tokens;
 }
 
 // endregion | Helpers
