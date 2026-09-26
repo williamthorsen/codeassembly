@@ -44,7 +44,7 @@ By default the helper writes to the knowledge base discovered by walking up from
 
 ## Placement
 
-The declared taxonomy is the primary placement signal; the folders found on disk by the survey corroborate it. A folder containing notes that no domain declares is drift: Report it rather than quietly writing another note into it.
+The declared taxonomy is the primary placement signal; the folders found on disk by the survey corroborate it. A folder containing notes outside every declared domain is drift: Report it rather than quietly writing another note into it.
 
 Treat the taxonomy as a strong prior, not a hard constraint. When a note's topic is in the long tail, rely on the tags for retrieval and place the note in the nearest domain that genuinely fits; do not force it into an ill-fitting folder to avoid proposing a new one, and do not create a domain per note.
 
@@ -73,7 +73,7 @@ It reports:
 - `kb`: The knowledge base to which the write will resolve, by the same rules.
 - `taxonomyPath`: The `.kb/taxonomy.yaml` from which the domains came.
 - `domains`: Each declared domain with its `description`, its `provisional` flag, and the `noteCount` at or beneath it.
-- `undeclaredFolders`: Folders containing notes that no domain declares.
+- `undeclaredFolders`: Folders containing notes outside every declared domain.
 
 Then read a representative sample of notes from the folder most likely to fit the new note's topic. The survey reads no note bodies, so the sample, not the survey, reveals the title conventions and the live tag vocabulary already in use.
 

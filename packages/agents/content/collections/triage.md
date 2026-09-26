@@ -83,6 +83,6 @@ members:
 
 The not-yet-examined collection, and where new content starts. Membership claims nothing about an artifact beyond its existence: Nobody has yet read it for personal doctrine or for coupling to one author's environment, so it can be neither offered as generally applicable nor vouched for as deliberately personal.
 
-Declaring it deploys the catalog minus the vetted collections and the artifacts recorded standalone. That is the honest way to keep everything while the vetting proceeds, and it is the reason no artifact has to be examined before the vetted collections become usable.
+Declaring it deploys the catalog minus the vetted collections and the artifacts recorded standalone. That is the honest way to keep everything while the vetting proceeds, and it is why the vetted collections are usable before the vetting examines a single artifact.
 
 This collection only shrinks. An artifact leaves it by promotion into a public or personal collection, by moving into an opt-in collection once it turns out to be wanted often but only on the machines using one vendor's ecosystem, or by being recorded standalone once it turns out to be deliberate but rarely wanted; nothing is ever moved back in. Several members contain general and personal guidance in one file and become decidable only after a rewrite splits them.

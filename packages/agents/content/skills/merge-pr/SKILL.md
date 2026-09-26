@@ -118,7 +118,7 @@ The overrides passed to this run are the merge's **override set**. Each later ru
 git rev-parse HEAD
 ```
 
-When it is not `headRefOid`, make no offer: This checkout describes other commits, and the merge of a pull request from another branch's checkout is a case that this skill supports. Carry the notice to the gate at step 6 and name the checkout there as the reason that no block can be drafted here.
+When it is not `headRefOid`, make no offer: This checkout describes other commits, and the merge of a pull request from another branch's checkout is a case that this skill supports. Carry the notice to the gate at step 6 and name the checkout there as the reason for not drafting a block here.
 
 When it is `headRefOid`, emit `input.requested` (payload `{"prompt":"add-change-record"}`) per [Lifecycle events](#lifecycle-events), then ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
 

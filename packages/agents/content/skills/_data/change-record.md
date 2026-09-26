@@ -116,7 +116,7 @@ entries:
 
 ## The effective record
 
-The overrides apply to the consolidated record one field at a time, and a field that no override names keeps the consolidated record's value:
+The overrides apply to the consolidated record one field at a time, and a field without an override keeps the consolidated record's value:
 
 - A `scope` override replaces the scope. A scope override of `*` is recorded as given, and it leaves the effective record with no scope.
 - A `type` override replaces the type and keeps the breaking marker.

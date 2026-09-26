@@ -45,7 +45,7 @@ A value-bearing flag accepts both `--type value` and `--type=value`.
 | `turn.completed`   | **Relayed, not yours.** The agent finished responding.                                                                   |
 | `session.ended`    | **Relayed, not yours.** A session exited, switched, or forked.                                                           |
 
-The four relayed types are emitted by the hook relay that the CLI installs into the harness. The relay fires at boundaries that no skill is running to observe. **Never emit one from a skill**: You would double-count a boundary already reported by the harness. They are listed here so that you recognize them when reading a log, not so that you can produce them.
+The four relayed types are emitted by the hook relay that the CLI installs into the harness. The relay fires at boundaries outside any skill's run, so a skill cannot observe them. **Never emit one from a skill**: You would double-count a boundary already reported by the harness. They are listed here so that you recognize them when reading a log, not so that you can produce them.
 
 A skill emits `input.requested` when it asks and waits, but no matching `input.received`: The relayed `turn.started` marks the resume, so the skill has nothing to add.
 

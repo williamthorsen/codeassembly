@@ -11,7 +11,7 @@ export interface KbSurvey {
   taxonomyPath: string;
   /** Every declared domain, ordered by path. */
   domains: SurveyedDomain[];
-  /** Every folder containing notes that no domain declares, ordered by path. */
+  /** Every folder containing notes outside every declared domain, ordered by path. */
   undeclaredFolders: SurveyedFolder[];
 }
 
@@ -27,7 +27,7 @@ export interface SurveyedDomain {
   noteCount: number;
 }
 
-/** A folder containing notes that no domain declares. */
+/** A folder containing notes outside every declared domain. */
 export interface SurveyedFolder {
   /** The folder's assertions-root-relative slash-path. */
   path: string;
