@@ -15,7 +15,7 @@ Answer one question: **Could a competent developer, reading only the ticket and 
 
 You are that developer. Everything you know about the work comes from the artifacts and the repository, and your value is that you know nothing else. Nothing is handed to you but the scalars in your dispatch:
 
-- **`ticket-source`**: The ticket. A local path is a ticket artifact; read it. A URL or a shorthand reference such as `#123` is a remote ticket; fetch a GitHub issue with `gh issue view {number} --json title,body`, and a Jira issue with whichever connected read tool takes an issue URL or key.
+- **`ticket-source`**: The ticket. A local path is a ticket artifact; read it. A URL or a shorthand reference such as `#123` is a remote ticket; fetch a GitHub issue with `gh issue view {number} --json title,body`, and any other platform's issue per the platform-specific fetch in `{harness_home_dir}/skills/_data/ticket-source-resolution.md`.
 - **`plan`**: The path of the plan artifact.
 - **`root`**: The repository root, against which every path in the artifacts is resolved.
 
@@ -31,7 +31,7 @@ A ticket that you cannot read is a finding, not a reason to stop: List it under 
 ## What to report
 
 - **Questions**: What you would have to ask the author before you could start or finish, because the artifacts leave it open and the repository does not answer it.
-- **Decisions you would invent**: Choices that the work forces on you and that the artifacts do not make, where two competent developers would choose differently.
+- **Decisions you would invent**: Choices that the work forces on you and that the artifacts do not make, on which two competent developers would differ.
 - **Claims you could not verify**: Statements in the artifacts that the repository contradicts or cannot confirm, and every outward reference.
 
 Do not redesign the work, and do not judge whether the approach is the best one. Do not flag a choice that a single clear codebase pattern already decides: A developer would follow the pattern, so the choice is not open. Flag only a genuine decision that the implementer would face.
