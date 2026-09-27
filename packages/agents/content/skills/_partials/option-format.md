@@ -1,17 +1,28 @@
 ## Option format
 
-**Earn the menu before rendering it.** A menu is for a call that you cannot make. Before composing options, settle whose call it is:
+**Earn the menu before rendering it.** Mark the options first, then read the markers: Render the menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class below. Every other field is decided: State the decision in one line with its reason, record it, and proceed. An all-■□□ field is decided too. An unmarked list is a pure-preference call, and a preference is in the gated class. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
 
-- **Yours**: The ranking follows from evidence that you hold: correctness, a codebase convention, a governing document that already decided it, or a consequence that you can read in the code, such as coupling, review coherence, or total effort. State the decision in one line with its reason and proceed. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
-- **The user's**: The ranking turns on a preference, a priority, a risk appetite, or a budget that only they hold. Render the menu.
+The gated class is closed. These decisions are asked whatever the markers say:
+
+- the shape of a public API or a contract
+- remote shared state: a ticket edit, a push, a merge, the creation of a branch or a ticket
+- data loss, or any action that cannot be undone
+- spend or budget
+- a preference for which you hold no evidence
+
+Everything else is the agent's call by default. A gated action is not decided in the agent's voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you hold no evidence.
+
+**Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only where the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it provisional in the record, and ask at the checkpoint; revise if overruled. A skill with no phase structure treats its own approval gate, or the end of its work, as the checkpoint.
+
+**Batch, never stream.** Asks that survive the gate collect into one review at the checkpoint, not one per turn.
+
+**Record what you did not ask.** Write every decision that the gate let you take into the plan's `## Decisions taken` section, with a one-line reason, marked `(provisional)` when it awaits the checkpoint; where no plan exists, write it into the turn's summary. Recording is mandatory: A silent decision is worse than an ask.
 
 **Never rank the options by your own elapsed time, round trips, or effort.** You measure these costs yourself, and that measure counts the user's context switch and review cycles as nothing. Measuring one does not make the call yours, and a more accurate measurement still cannot rank the options.
 
-Ordering follows from those two rules. When the order changes the code or the total effort -- upstream before downstream, a refactor before the feature that would otherwise be written twice -- recommend it and mark it, naming the delay that it causes and saying nothing about delay when none is involved. When the outcomes are identical and only the timing differs, such as when queued work is picked up, present the cost, render the options unmarked, and let the user choose.
+Ordering follows from the gate. When the order changes the code or the total effort -- upstream before downstream, a refactor before the feature that would otherwise be written twice -- recommend it and mark it, naming the delay that it causes and saying nothing about delay when none is involved. When the outcomes are identical and only the timing differs, such as when queued work is picked up, present the cost, render the options unmarked, and put the choice at the checkpoint.
 
-This gate governs judgment asks alone. An ask that authorizes a consequential or hard-to-reverse action (creating a branch, pushing, editing a ticket, advancing a pipeline) belongs to the user however confident you are, and is never collapsed into a stated decision. Templated next-steps menus survive the gate for the same reason: What to do next is the user's call about their own time.
-
-Asking is not neutral. It is cheap for you and expensive for the user, who must load the context, weigh the options, and answer. A wrong-but-stated recommendation costs them a word to correct; a decision handed back costs them an evaluation. When the call is close, decide.
+Asking is not neutral. It costs the developer a context switch, and it idles the session until the answer arrives. A wrong-but-stated recommendation costs them a word to correct; a decision handed back costs them an evaluation and costs the session the wait.
 
 Render every option-style question in this form: any numbered list of 2 or more choices with substantive tradeoffs, including templated next-steps menus and yes/no choices in which both paths are concrete actions. Reserve `👍🏼👎🏼` for confirmation prompts, in which a single action has been proposed and "no" means "let's adjust or discuss" rather than a concrete alternative.
 

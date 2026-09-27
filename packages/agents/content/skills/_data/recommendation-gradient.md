@@ -8,11 +8,13 @@ The render contract comes first; the doctrine behind it follows. Skills that ask
 
 ## Why the gate comes first
 
-Asking is not a neutral act. It is cheap for the agent (it discharges responsibility for the call, rules out being wrong, and costs one paragraph) and expensive for the developer, who must load the context, evaluate the options, and answer. A menu that the agent could have resolved itself transfers cost from the cheap side to the expensive one, and it looks like diligence while it happens, which is why it goes unnoticed and recurs. That asymmetry, rather than politeness or thoroughness, decides whether a question is asked at all.
+Asking is not a neutral act. It is cheap for the agent (it discharges responsibility for the call, rules out being wrong, and costs one paragraph) and expensive twice over: The developer pays a context switch to load the context, weigh the options, and answer, and the session that asked idles until the answer arrives. Across a dozen concurrent sessions those costs compound into decision fatigue and a stalled pipeline. A menu that the agent could have resolved itself transfers cost from the cheap side to the expensive one, and it looks like diligence while it happens, which is why it goes unnoticed and recurs.
 
-A wrong-but-stated recommendation is cheaper to correct than a decision handed back: Correcting one costs a word, answering one costs an evaluation. "When in doubt, ask" is therefore the expensive default, not the safe one.
+The gate reads the markers rather than asking for judgment, because a judgment gate loses to a step that says to ask: An agent following a step list executes the step, and a rendered ■■■ makes the ask feel legitimate. Markers leave nothing to override. Two ■■□ at the top is a real fork, an unmarked list is a preference, and every other field is decided. The gated class is a closed list for the same reason: "consequential" is read generously, and a list is not.
 
-The gate and the marker are one rule seen twice. A menu that passes the gate is one decided by the developer's values or authorization, and the agent may still hold a strong evidence-based ranking inside it, which is exactly when ■■■ is honest. A marker set below the strength actually available tells the developer nothing, and leaves them investigating every menu to find the few that are real forks.
+A wrong-but-stated recommendation is cheaper to correct than a decision handed back: Correcting one costs a word, answering one costs an evaluation and a wait. The record keeps the developer's veto at the cheaper price. They read the ledger and overrule the entries with which they disagree, and the session has kept working in the meantime. "When in doubt, ask" is therefore the expensive default, not the safe one, and "when in doubt, record" is the rule that replaces it.
+
+The gate and the marker are one rule seen twice. A menu that passes the gate is one that the markers could not settle or one that the developer authorizes, and the agent may still hold a strong evidence-based ranking inside an authorization menu, which is exactly when ■■■ is honest. A marker set below the strength actually available tells the developer nothing, and leaves them investigating every menu to find the few that are real forks.
 
 ## Why a manufactured bullet costs more than none
 
