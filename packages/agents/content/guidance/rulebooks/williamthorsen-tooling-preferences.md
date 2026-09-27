@@ -2,7 +2,7 @@
 slug: williamthorsen-tooling-preferences
 description: William Thorsen's preferences for which command-line tool an agent reaches for, how it invokes it, and how it obtains a tool or resource that is missing.
 delivery: ambient
-version: '1'
+version: '2'
 ---
 
 # William Thorsen's tooling preferences
