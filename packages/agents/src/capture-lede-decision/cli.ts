@@ -11,6 +11,7 @@ import { ulid } from 'ulid';
 
 import { writeEvent } from '../capture-event/write-event.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
+import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
 import { DEFAULT_KB_SENTINEL, FEEDBACK_KB_SENTINEL } from '../kb-shared/kb-role-sentinels.ts';
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
@@ -296,21 +297,8 @@ function describeStoreFailure(resolved: Extract<Awaited<ReturnType<typeof resolv
         message: `event store "${resolved.name}" is marked readonly in kb.yaml; decisions are refused`,
       };
     case 'no-default':
-      return {
-        error: 'no-default-store',
-        message:
-          resolved.registryError !== undefined
-            ? `could not resolve the default event store: ${resolved.registryError}`
-            : '--store @default was given but no default_kb is configured in kb.yaml',
-      };
     case 'no-feedback':
-      return {
-        error: 'no-feedback-store',
-        message:
-          resolved.registryError !== undefined
-            ? `could not resolve the feedback event store: ${resolved.registryError}`
-            : '--store @feedback was given but no feedback_kb is configured in kb.yaml',
-      };
+      return { ...formatRoleFailure(resolved) };
     default: {
       const _exhaustive: never = resolved;
       throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);

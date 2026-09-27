@@ -12,6 +12,7 @@ import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
+import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
 import { isSafeEventId, splitCommaList } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget, type ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
@@ -256,23 +257,8 @@ function resolutionFailure(resolved: Extract<ResolveCaptureTargetOutcome, { ok: 
         message: `event store "${resolved.name}" is marked readonly in kb.yaml; edits are refused`,
       };
     case 'no-default':
-      return {
-        ok: false,
-        error: 'no-default-store',
-        message:
-          resolved.registryError !== undefined
-            ? `could not resolve the default event store: ${resolved.registryError}`
-            : '--store @default was given but no default_kb is configured in kb.yaml',
-      };
     case 'no-feedback':
-      return {
-        ok: false,
-        error: 'no-feedback-store',
-        message:
-          resolved.registryError !== undefined
-            ? `could not resolve the feedback event store: ${resolved.registryError}`
-            : '--store @feedback was given but no feedback_kb is configured in kb.yaml',
-      };
+      return { ok: false, ...formatRoleFailure(resolved) };
     default: {
       const _exhaustive: never = resolved;
       throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);
