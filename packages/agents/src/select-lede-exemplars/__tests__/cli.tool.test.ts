@@ -80,9 +80,12 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--type', 'feat', '--count', count])).toThrow('--count must be a whole number');
   });
 
-  it('refuses the @default sentinel, which names a machine setting rather than a corpus', () => {
-    expect(() => parseArgs(['--type', 'feat', '--store', '@default'])).toThrow('--store @default is not accepted');
-  });
+  it.each([['@default'], ['@feedback']])(
+    'refuses the %s sentinel, which names a machine setting rather than a corpus',
+    (sentinel) => {
+      expect(() => parseArgs(['--type', 'feat', '--store', sentinel])).toThrow(`--store ${sentinel} is not accepted`);
+    },
+  );
 
   it('refuses an unexpected positional argument', () => {
     expect(() => parseArgs(['feat'])).toThrow('unexpected argument: feat');

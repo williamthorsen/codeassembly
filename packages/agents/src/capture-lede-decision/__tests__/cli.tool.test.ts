@@ -106,11 +106,14 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--verdict', 'revised', ...requiredFlags()])).toThrow('unknown flag: --verdict');
   });
 
-  it('refuses the @default sentinel, which names a machine setting rather than a corpus', () => {
-    expect(() => parseArgs(['--inspect', '--store', '@default', ...requiredFlags()])).toThrow(
-      '--store @default is not accepted',
-    );
-  });
+  it.each([['@default'], ['@feedback']])(
+    'refuses the %s sentinel, which names a machine setting rather than a corpus',
+    (sentinel) => {
+      expect(() => parseArgs(['--inspect', '--store', sentinel, ...requiredFlags()])).toThrow(
+        `--store ${sentinel} is not accepted`,
+      );
+    },
+  );
 });
 
 describe(runDecision, () => {

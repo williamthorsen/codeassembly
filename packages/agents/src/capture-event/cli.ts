@@ -119,6 +119,15 @@ export async function runCapture(input: {
               ? `could not resolve the default event store: ${resolved.registryError}`
               : '--store @default was given but no default_kb is configured in kb.yaml',
         };
+      case 'no-feedback':
+        return {
+          ok: false,
+          error: 'no-feedback-store',
+          message:
+            resolved.registryError !== undefined
+              ? `could not resolve the feedback event store: ${resolved.registryError}`
+              : '--store @feedback was given but no feedback_kb is configured in kb.yaml',
+        };
       default: {
         const _exhaustive: never = resolved;
         throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);

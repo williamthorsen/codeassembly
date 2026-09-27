@@ -61,6 +61,7 @@ export type CaptureErrorCode =
   | 'store-not-registered'
   | 'readonly-store'
   | 'no-default-store'
+  | 'no-feedback-store'
   | 'schema-validation'
   | 'amend-not-found'
   | 'amend-parse';

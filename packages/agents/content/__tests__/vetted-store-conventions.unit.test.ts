@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_KB_SENTINEL } from '../../src/kb-shared/default-kb-sentinel.ts';
+import { DEFAULT_KB_SENTINEL } from '../../src/kb-shared/kb-role-sentinels.ts';
 import { ARTIFACT_TYPES } from '../../src/lib/artifact-types.ts';
 import { resolveContentDir } from '../../src/lib/content-resolver.ts';
 import { libraryResolver } from '../../src/lib/content-sources.ts';

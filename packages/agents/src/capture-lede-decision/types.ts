@@ -106,6 +106,7 @@ export type DecisionErrorCode =
   | 'store-not-registered'
   | 'readonly-store'
   | 'no-default-store'
+  | 'no-feedback-store'
   | 'schema-validation';
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
