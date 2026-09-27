@@ -57,6 +57,10 @@ Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is
 
 {The investigation strategy in 2-3 sentences.}
 
+## Decisions taken
+
+- {A decision that the agent took without asking, with its one-line reason; append `(provisional)` when it awaits the checkpoint.}
+
 ## Timebox
 
 {Effort ceiling, mirroring the ticket.}

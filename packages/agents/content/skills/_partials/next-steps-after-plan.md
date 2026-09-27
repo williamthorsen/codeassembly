@@ -45,7 +45,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
 1. **Refine plan**: Recommend only when you can name a load-bearing decision that the plan leaves unsettled and that a refine pass would raise.
 
-   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, taken from prior design work, verified against source, or copied from an established pattern already in the codebase. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively has settled decisions, and a plan produced with no design phase is likelier to have unsettled ones.
+   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, taken from prior design work, verified against source, or copied from an established pattern already in the codebase. A `## Decisions taken` entry that survived an approval checkpoint is ratified: The developer read it and did not overrule it. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively has settled decisions, and a plan produced with no design phase is likelier to have unsettled ones.
 
    Rule 1 also fails when the plan's residual unknowns are **empirical**, answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.
 
