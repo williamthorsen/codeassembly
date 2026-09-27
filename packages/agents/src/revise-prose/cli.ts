@@ -428,6 +428,7 @@ function summarize(input: {
   const byShape: Record<SubjectShape, number> = { quantified: 0, definite: 0, bare: 0, pronoun: 0 };
   const byRule: Record<RuleId, number> = {
     'em-dash': 0,
+    'negative-quantifier': 0,
     'reduced-object-relative': 0,
     'second-person': 0,
     so: 0,

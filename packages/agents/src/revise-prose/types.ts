@@ -6,7 +6,12 @@
 
 /** A detected site, discriminated on the rule whose detector reported it. */
 export type Candidate =
-  EmDashCandidate | ObjectRelativeCandidate | SecondPersonCandidate | SoCandidate | WhereCandidate;
+  | EmDashCandidate
+  | NegativeQuantifierCandidate
+  | ObjectRelativeCandidate
+  | SecondPersonCandidate
+  | SoCandidate
+  | WhereCandidate;
 
 /** What every candidate contains, whichever rule found it. */
 export interface CandidateBase {
@@ -30,6 +35,17 @@ export interface CandidateBase {
 
 export interface EmDashCandidate extends CandidateBase {
   rule: 'em-dash';
+}
+
+/** One over-inclusive site: a head noun whose relative clause may take a subject opened by `no`. */
+export interface NegativeQuantifierCandidate extends CandidateBase {
+  rule: 'negative-quantifier';
+  /** The head noun that the relative clause modifies. */
+  head: string;
+  /** The noun phrase after `no`, as matched. */
+  subject: string;
+  /** The finite verb that closes the subject. */
+  verb: string;
 }
 
 /** One over-inclusive site: a head noun whose relative clause may be missing its relativizer. */
@@ -66,7 +82,7 @@ export interface WhereCandidate extends CandidateBase {
 }
 
 /** A rule for which the sweep has a detector. A rule without one is named by a plain string, as a unit is. */
-export type RuleId = 'em-dash' | 'reduced-object-relative' | 'second-person' | 'so' | 'where';
+export type RuleId = 'em-dash' | 'negative-quantifier' | 'reduced-object-relative' | 'second-person' | 'so' | 'where';
 
 /** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
 export interface Batch {

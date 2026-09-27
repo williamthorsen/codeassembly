@@ -14,7 +14,7 @@ members:
 
 The public collection. Membership claims that an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works.
 
-Membership is per-artifact and enumerated in full rather than by dependency root, so the closure check reads a set that no artifact's dependency edges can extend unnoticed.
+Membership is per-artifact and enumerated in full rather than by dependency root, so the closure check notices every member that an artifact's dependency edges would add.
 
 The skills belong here on different grounds. A rulebook of the personal collection names `capture-feedback` in a body token, and `capture-feedback` names `capture-event` in another. Because no collection can be closed over an artifact of lesser standing, both were promoted. `capture-event`'s promotion was forced by that chain rather than chosen on its own merits. It is the one member to re-examine first. `capture-feedback` qualifies on its own terms: It names no store, declares the registry needed by a capture, and sends a record to a store by a rule that any registry can resolve.
 
@@ -22,4 +22,4 @@ The skills belong here on different grounds. A rulebook of the personal collecti
 
 `readme-conventions` qualifies on its own terms as well. It names no repository, tool, or path belonging to one author, and what it asks of a README follows from who reads the file rather than from a preference about how a README should read. Its body contains no invocation token, so its closure is empty and admitting it extends this collection's reach by nothing.
 
-Adding a skill that declares a guidance hook has a drawback that no current member has. A project declaring this collection deploys its own copy of that skill, and that copy shadows the user's home-bound one. Because guidance-hook bindings do not cross the boundary between the user-global and project domains, guidance bound globally by the developer goes missing in that repository until the project binds it too. Weigh that against the general applicability claimed by membership before admitting such a skill.
+Adding a skill that declares a guidance hook has a drawback that the current members do not have. A project declaring this collection deploys its own copy of that skill, and that copy shadows the user's home-bound one. Because guidance-hook bindings do not cross the boundary between the user-global and project domains, guidance bound globally by the developer goes missing in that repository until the project binds it too. Weigh that against the general applicability claimed by membership before admitting such a skill.

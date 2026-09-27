@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '23'
+version: '24'
 ---
 
 # CodeAssembly content specification
@@ -145,7 +145,7 @@ A vetted collection is closed under its dependency edges, which makes the vettin
 - **Subagents:** `name`, `description`, optional `tools`, optional `disallowedTools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context), optional `rulebooks` (rulebooks injected the same way, named by slug rather than by deploy name, so that a `skill-name` override on the target stays correct). `sync` pulls both lists into the deploy closure, merges each injected rulebook's deploy name into the deployed `skills:`, and drops the `rulebooks:` key from what it writes.
 - **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.
 
-A subagent's tool grant is either named or inherited. `tools` names the grant outright; a subagent that omits it inherits the harness's whole subagent tool pool, and `disallowedTools` then removes names from whatever pool results. Use inheritance when the subagent needs a tool that no allowlist can name -- an MCP tool whose name varies by machine -- and weigh the consequence: A denylist names tools the same way an allowlist does, so it removes the listed names and nothing else. The residual grant is whatever the machine supplies, and the subagent's own instructions limit the rest. Choose inheritance when that residual is acceptable, and name a `tools` allowlist when it is not. Claude applies the denylist. Rovo does not read it, and its overlay names a `tools` allowlist for every subagent, so a subagent relying on inheritance states its Rovo grant in that overlay. _(Convention; not enforced.)_
+A subagent's tool grant is either named or inherited. `tools` names the grant outright; a subagent that omits it inherits the harness's whole subagent tool pool, and `disallowedTools` then removes names from whatever pool results. Use inheritance when the subagent needs a tool that an allowlist cannot name -- an MCP tool whose name varies by machine -- and weigh the consequence: A denylist names tools the same way an allowlist does, so it removes the listed names and nothing else. The residual grant is whatever the machine supplies, and the subagent's own instructions limit the rest. Choose inheritance when that residual is acceptable, and name a `tools` allowlist when it is not. Claude applies the denylist. Rovo does not read it, and its overlay names a `tools` allowlist for every subagent, so a subagent relying on inheritance states its Rovo grant in that overlay. _(Convention; not enforced.)_
 
 Only the rulebook row is validated on parse; a `members:` block is validated wherever it appears. The other rows are read leniently: A field consumed by a deploy pass takes effect, and an absent one falls back to a default rather than failing. A skill with no `description` appears in Rovo's prompt index with an empty one. _(Convention; not enforced.)_
 
@@ -183,7 +183,7 @@ Because a sweeper applies the doctrine deployed to its harness, deploy the conte
 
 ## Declaring rule ids and sweep versions
 
-A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id and a sweep version for each rule that it states. The declaration is a `<!-- rule: <id> <version> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading.
+A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id and a sweep version for each rule that it states. The declaration is a `<!-- rule: <id> <version> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading. `_partials/plain-speech-calibration.md` declares a rule of the `plain-speech` unit the same way, with its marker under a `###` heading of its own, and `plain-speech-calibration.unit.test.ts` pins that marker with the rest of the calibration's text.
 
 The marker declares the rule whether or not a detector covers it: The helper's registry alone decides which rules it detects. A rulebook that declares one id declares one under every `##` heading, and no id is declared twice across the library. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`.)_
 

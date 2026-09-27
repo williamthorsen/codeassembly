@@ -6,7 +6,7 @@ A relative clause with an object gap takes an overt relativizer: "the source tha
 
 **Repairs, in preference order.** Choose per site; restored relativizers stacked across a passage read as a tic of their own.
 
-1. **Reduce to a passive participle** if the actor is worth naming: "a dependency imported by no exported tier module".
+1. **Reduce to a passive participle** if the actor is worth naming: "a dependency imported by every exported tier module".
 2. **Restore the relativizer** if the passive reads worse: "the ticket that the branch name encodes".
 3. **Recast** if neither fits: Promote the embedded clause to a main clause, or replace the relative with a prepositional phrase.
 
@@ -18,11 +18,11 @@ A relative clause with an object gap takes an overt relativizer: "the source tha
 
 **The shapes, ranked by cost.** The rank follows the embedded subject's form, since the reader must keep that form in mind until the verb appears. Each is an exhibit of the construction, not a model to copy.
 
-1. **Quantified noun phrase** (worst): "a dependency no exported tier module imports". The reader absorbs a quantifier and a full noun phrase before any verb discharges the head.
+1. **Quantified noun phrase** (worst): "a dependency every exported tier module imports". The reader absorbs a quantifier and a full noun phrase before any verb discharges the head.
 2. **Definite noun phrase**: "the ticket the branch name encodes".
 3. **Bare noun**: "an idiom developers recognize".
 4. **Pronoun** (mildest): "the source it names". Forbidden all the same; a pronoun shortens the wait rather than ending it.
 
-**The agentive `by`-phrase satisfies plain speech.** Plain speech rejects the _agentless_ passive that hides who acted. A `by`-phrase names the actor in the same breath; therefore, "imported by no exported tier module" satisfies plain speech as fully as the active form does. This rule breaks the habit of reaching for a contact clause to dodge a passive that was never the target.
+**The agentive `by`-phrase satisfies plain speech.** Plain speech rejects the _agentless_ passive that hides who acted. A `by`-phrase names the actor in the same breath; therefore, "imported by every exported tier module" satisfies plain speech as fully as the active form does. This rule breaks the habit of reaching for a contact clause to dodge a passive that was never the target.
 
 **Scope.** The rule governs a lexical head noun whose relative clause has a gap in an argument position: the direct object ("the source that it names"), the object of a preposition ("the level against which it is probed"), or the complement of a copula ("the throwing mock that it is"). The anaphoric one-series heads a relative clause under the rule too, though it is no lexical noun, because a relativizer restores to it: "one that the spy carries". Two neighboring constructions fall outside the rule, each on a ground of its own: the fused head ("everything I know", "all you need"), which is its own relative pronoun and admits no relativizer, and the adjunct relative ("the reason it fails", "the way it works"), whose gap fills no argument position. The boundary keys on head type and gap role. Neither a short embedded subject nor a tight word budget exempts anything.

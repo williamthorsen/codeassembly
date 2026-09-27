@@ -17,7 +17,7 @@ The actual guidance refinement is **deferred**: This skill captures the candidat
 Invoke `{skill:capture-feedback}` whenever the user gives feedback that should change how the agent behaves, either:
 
 - **Correcting a misapplied rule**: The agent broke guidance that already exists (for example, title-cased a heading when the sentence-case rule was in force).
-- **Specifying a new desired behavior**: The user wants a behavior that no current guidance covers.
+- **Specifying a new desired behavior**: The user wants a behavior that the current guidance does not cover.
 
 Both are captured the same way; the difference is recorded in the tags.
 
