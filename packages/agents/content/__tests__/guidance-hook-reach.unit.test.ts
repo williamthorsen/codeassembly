@@ -62,6 +62,12 @@ interface SpliceProbe {
   readonly coexisting: ReadonlyArray<string>;
 }
 
+/**
+ * Subagents whose return the dispatching session folds into artifacts of its own, applying house style there, so a
+ * writing-preferences fill in the subagent is weight paid on every dispatch for text that no reader keeps.
+ */
+const HOUSE_STYLE_EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set(['handoff-reviewer']);
+
 // Listed explicitly rather than discovered from the directives: The failure guarded against is a body dropping off,
 // and a discovered list would move with the bug.
 const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
@@ -135,7 +141,9 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     // subagent added later fails here until it declares the hook or joins the exemption. `revise-prose` joins them
     // as the one skill that reads its own fill; see AMBIENT_FILL_READERS.
     declaringBodies: [
-      ...listGovernedSubagents().map(toSubagentBody),
+      ...listGovernedSubagents()
+        .filter((slug) => !HOUSE_STYLE_EXEMPT_SUBAGENTS.has(slug))
+        .map(toSubagentBody),
       { label: 'revise-prose', relativePath: 'skills/revise-prose/SKILL.md' },
     ],
     boundRulebooks: [
