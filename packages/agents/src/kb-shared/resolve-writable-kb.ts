@@ -2,7 +2,7 @@ import process from 'node:process';
 
 import { findKbRoot, tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 
-import { DEFAULT_KB_SENTINEL } from './default-kb-sentinel.ts';
+import { DEFAULT_KB_SENTINEL } from './kb-role-sentinels.ts';
 
 /** A knowledge base resolved as the write target. */
 export interface ResolvedKb {

@@ -13,16 +13,22 @@ import { kbRegistryFileSchema } from './kb-registry-schema.ts';
 const USER_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 const PROJECT_CONFIG_RELATIVE = join('.agents', 'kb.yaml');
 
+/** A top-level `kb.yaml` key that assigns a role to one registered KB. */
+type RoleKey = 'default_kb' | 'feedback_kb';
+
+/** One registry file's normalized entries and its raw role pointers. */
+type RegistryFileContents = { entries: KbRegistryEntry[] } & Partial<Record<RoleKey, string>>;
+
 /**
  * Loads and merges the user-global (`~/.agents/kb.yaml`) and project-local
  * (`.agents/kb.yaml`) KB registries into a normalized `KbRegistry`.
  *
- * Project entries replace user entries by name on collision and append new names. The top-level `default_kb`
- * pointer resolves by name against the merged entries (the project's value overriding the user's); the resolved
- * entry is exposed as `defaultKb`.
+ * Project entries replace user entries by name on collision and append new names. The top-level `default_kb` and
+ * `feedback_kb` pointers each resolve by name against the merged entries (the project's value overriding the user's);
+ * the resolved entries are exposed as `defaultKb` and `feedbackKb`.
  * Within a single file, relative `path` values resolve against that file's directory and a leading `~` or `~/`
  * expands against `$HOME`. Both files are optional; when neither exists the result has no entries.
- * Malformed YAML, a structural defect, or a `default_kb` that names no registered KB throw.
+ * Malformed YAML, a structural defect, or a role pointer that names no registered KB throw.
  */
 export async function loadKbRegistry(
   input: { userConfigPath?: string; projectDir?: string; home?: string } = {},
@@ -38,15 +44,9 @@ export async function loadKbRegistry(
 
   const merged = mergeEntries(userFile?.entries ?? [], projectFile?.entries ?? []);
 
-  let defaultKbName: string | undefined;
-  let defaultKbSource = userConfigPath;
-  if (projectFile?.defaultKb !== undefined) {
-    defaultKbName = projectFile.defaultKb;
-    defaultKbSource = projectConfigPath ?? userConfigPath;
-  } else if (userFile?.defaultKb !== undefined) {
-    defaultKbName = userFile.defaultKb;
-  }
-  const defaultKb = resolveDefaultKb(merged, defaultKbName, defaultKbSource);
+  const files = { user: userFile, userPath: userConfigPath, project: projectFile, projectPath: projectConfigPath };
+  const defaultKb = resolveRoleKb(merged, 'default_kb', files);
+  const feedbackKb = resolveRoleKb(merged, 'feedback_kb', files);
 
   const sources: KbRegistry['sources'] = {};
   if (userFile !== undefined) sources.user = userConfigPath;
@@ -54,7 +54,12 @@ export async function loadKbRegistry(
     sources.project = projectConfigPath;
   }
 
-  return { entries: merged, ...(defaultKb !== undefined && { defaultKb }), sources };
+  return {
+    entries: merged,
+    ...(defaultKb !== undefined && { defaultKb }),
+    ...(feedbackKb !== undefined && { feedbackKb }),
+    sources,
+  };
 }
 
 /** The outcome of a no-throw registry load: the resolved config plus a captured error message when loading failed. */
@@ -96,14 +101,14 @@ function expandTilde(value: string, home: string): string {
 }
 
 /**
- * Reads and validates one registry file, returning its entries and raw `default_kb` (if any). Returns `undefined`
+ * Reads and validates one registry file, returning its entries and raw role pointers (if any). Returns `undefined`
  * when the file is absent; throws on malformed YAML or a structural defect.
  */
 async function loadRegistryFile(
   path: string,
   source: KbRegistryEntry['source'],
   home: string,
-): Promise<{ entries: KbRegistryEntry[]; defaultKb?: string } | undefined> {
+): Promise<RegistryFileContents | undefined> {
   let text: string;
   try {
     text = await readFile(path, 'utf8');
@@ -143,7 +148,11 @@ async function loadRegistryFile(
     });
   }
 
-  return { entries, ...(result.data.default_kb !== undefined && { defaultKb: result.data.default_kb }) };
+  return {
+    entries,
+    ...(result.data.default_kb !== undefined && { default_kb: result.data.default_kb }),
+    ...(result.data.feedback_kb !== undefined && { feedback_kb: result.data.feedback_kb }),
+  };
 }
 
 /** Merges user entries with project entries: project replaces by name and appends new names. */
@@ -159,20 +168,28 @@ function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistry
 }
 
 /**
- * Resolves the effective `default_kb` name to its merged entry. Returns `undefined` when no `default_kb` is set;
- * throws naming the source file when the name matches no registered KB.
+ * Resolves a role pointer to its merged entry, the project file's value overriding the user file's. Returns
+ * `undefined` when neither file sets the key; throws naming the source file when the name matches no registered KB.
  */
-function resolveDefaultKb(
+function resolveRoleKb(
   entries: KbRegistryEntry[],
-  name: string | undefined,
-  sourcePath: string,
+  key: RoleKey,
+  files: {
+    user: RegistryFileContents | undefined;
+    userPath: string;
+    project: RegistryFileContents | undefined;
+    projectPath: string | undefined;
+  },
 ): KbRegistryEntry | undefined {
+  const projectName = files.project?.[key];
+  const name = projectName ?? files.user?.[key];
   if (name === undefined) {
     return undefined;
   }
+  const sourcePath = projectName === undefined ? files.userPath : (files.projectPath ?? files.userPath);
   const match = entries.find((entry) => entry.name === name);
   if (match === undefined) {
-    throw new Error(`${sourcePath}: default_kb "${name}" does not match any registered KB`);
+    throw new Error(`${sourcePath}: ${key} "${name}" does not match any registered KB`);
   }
   return match;
 }

@@ -1,0 +1,11 @@
+# Registry fixture declaring both roles on different entries, so that `@feedback` and `@default` resolve apart.
+# Paths are relative to this file's directory (`home-with-feedback/.agents/`).
+default_kb: global-vault
+feedback_kb: feedback-vault
+kbs:
+  feedback-vault:
+    path: ../../vault-a
+    description: Fixture feedback vault
+  global-vault:
+    path: ../../vault-b
+    description: Fixture global vault

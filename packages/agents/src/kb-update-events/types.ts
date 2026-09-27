@@ -36,7 +36,12 @@ export interface UpdateFailure {
 
 /** Categorical invocation-level error codes that the helper can return without an unexpected throw. */
 export type UpdateErrorCode =
-  'invalid-args' | 'missing-store' | 'store-not-registered' | 'readonly-store' | 'no-default-store';
+  | 'invalid-args'
+  | 'missing-store'
+  | 'store-not-registered'
+  | 'readonly-store'
+  | 'no-default-store'
+  | 'no-feedback-store';
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type UpdateResult = UpdateBatchSuccess | UpdateFailure;

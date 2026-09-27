@@ -10,8 +10,9 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { ulid } from 'ulid';
 
 import { writeEvent } from '../capture-event/write-event.ts';
-import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
+import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
+import { DEFAULT_KB_SENTINEL, FEEDBACK_KB_SENTINEL } from '../kb-shared/kb-role-sentinels.ts';
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
@@ -223,9 +224,9 @@ export async function runDecision(input: {
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
  * change that it describes is not worth recording. Every other flag is optional: the change's identity (`--type`,
  * `--scope`, and `--breaking`) and the ticket fall back to the change-summary artifact, the two lede overrides fall
- * back to their artifacts, and `--store` names a corpus registered under some other name. The `@default` sentinel is
- * refused: It names a machine's default store rather than a corpus, which is the route by which decisions have been
- * filed outside the one that keeps them.
+ * back to their artifacts, and `--store` names a corpus registered under some other name. The `@default` and
+ * `@feedback` sentinels are refused: Each names a store that a machine's registry assigns a role rather than a corpus,
+ * which is the route by which decisions have been filed outside the one that keeps them.
  *
  * @internal - Exported to allow testing.
  */
@@ -240,10 +241,10 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`--${name} requires a value`);
     }
   }
-  if (raw.store === DEFAULT_KB_SENTINEL) {
+  if (raw.store === DEFAULT_KB_SENTINEL || raw.store === FEEDBACK_KB_SENTINEL) {
     throw new Error(
-      `--store ${DEFAULT_KB_SENTINEL} is not accepted: A lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
-        'not to whichever store kb.yaml names as its default. Omit --store, or name the corpus.',
+      `--store ${raw.store} is not accepted: A lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
+        'not to whichever store kb.yaml assigns a role. Omit --store, or name the corpus.',
     );
   }
 
@@ -296,13 +297,8 @@ function describeStoreFailure(resolved: Extract<Awaited<ReturnType<typeof resolv
         message: `event store "${resolved.name}" is marked readonly in kb.yaml; decisions are refused`,
       };
     case 'no-default':
-      return {
-        error: 'no-default-store',
-        message:
-          resolved.registryError !== undefined
-            ? `could not resolve the default event store: ${resolved.registryError}`
-            : '--store @default was given but no default_kb is configured in kb.yaml',
-      };
+    case 'no-feedback':
+      return { ...formatRoleFailure(resolved) };
     default: {
       const _exhaustive: never = resolved;
       throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);

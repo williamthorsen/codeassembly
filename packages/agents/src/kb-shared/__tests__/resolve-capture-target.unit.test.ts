@@ -12,6 +12,9 @@ const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
 const HOME_DEFAULT_NAMED = join(FIXTURES, 'home-default-named');
 const HOME_READONLY_DEFAULT = join(FIXTURES, 'home-readonly-default');
 const HOME_UNRESOLVABLE_DEFAULT = join(FIXTURES, 'home-unresolvable-default');
+const HOME_WITH_FEEDBACK = join(FIXTURES, 'home-with-feedback');
+const HOME_READONLY_FEEDBACK = join(FIXTURES, 'home-readonly-feedback');
+const HOME_UNRESOLVABLE_FEEDBACK = join(FIXTURES, 'home-unresolvable-feedback');
 // A home directory with no `.agents/kb.yaml`, so the user-global registry is empty.
 const HOME_EMPTY = FIXTURES;
 
@@ -65,6 +68,46 @@ describe(resolveCaptureTarget, () => {
       ok: false,
       reason: 'no-default',
       registryError: expect.stringMatching(/default_kb "ghost" does not match any registered KB/),
+    });
+  });
+
+  it('resolves the @feedback sentinel to the configured feedback_kb', async () => {
+    const result = await resolveCaptureTarget({ explicitName: '@feedback', home: HOME_WITH_FEEDBACK });
+
+    expect(result).toEqual({ ok: true, store: { name: 'feedback-vault', path: VAULT_A } });
+  });
+
+  it('refuses a readonly feedback_kb resolved via @feedback', async () => {
+    const result = await resolveCaptureTarget({ explicitName: '@feedback', home: HOME_READONLY_FEEDBACK });
+
+    expect(result).toEqual({ ok: false, reason: 'readonly-store', name: 'readonly-feedback', path: VAULT_READONLY });
+  });
+
+  it('returns no-feedback when @feedback is given but only default_kb is configured', async () => {
+    const result = await resolveCaptureTarget({ explicitName: '@feedback', home: HOME_WITH_DEFAULT });
+
+    expect(result).toEqual({ ok: false, reason: 'no-feedback' });
+  });
+
+  it('includes the registry error when @feedback names an unresolvable feedback_kb', async () => {
+    const result = await resolveCaptureTarget({ explicitName: '@feedback', home: HOME_UNRESOLVABLE_FEEDBACK });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'no-feedback',
+      registryError: expect.stringMatching(/feedback_kb "ghost" does not match any registered KB/),
+    });
+  });
+
+  it('includes the feedback store in missing-store when feedback_kb is configured', async () => {
+    const result = await resolveCaptureTarget({ explicitName: null, home: HOME_WITH_FEEDBACK });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'missing-store',
+      registeredStores: ['feedback-vault', 'global-vault'],
+      defaultName: 'global-vault',
+      feedbackName: 'feedback-vault',
     });
   });
 

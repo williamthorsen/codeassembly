@@ -1,4 +1,5 @@
 default_kb: shared
+feedback_kb: user-only
 kbs:
   shared:
     path: ./user-shared-kb

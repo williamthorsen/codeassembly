@@ -27,6 +27,8 @@ export interface KbRegistry {
   entries: KbRegistryEntry[];
   /** The entry named by `default_kb`, resolved against `entries`; absent when `default_kb` is unset. */
   defaultKb?: KbRegistryEntry;
+  /** The entry named by `feedback_kb`, resolved against `entries`; absent when `feedback_kb` is unset. */
+  feedbackKb?: KbRegistryEntry;
   /** Absolute paths of the registry files that contributed entries. */
   sources: {
     user?: string;

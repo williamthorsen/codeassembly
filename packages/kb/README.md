@@ -49,6 +49,7 @@ A KB registry declares one or more knowledge bases. `loadKbRegistry` reads two o
 ```yaml
 # .agents/kb.yaml
 default_kb: coding
+feedback_kb: team
 kbs:
   coding:
     path: ~/vaults/coding
@@ -60,6 +61,8 @@ kbs:
 ```
 
 The top-level `default_kb` key names the machine's default knowledge base: the single KB that searches and discovery-based writes fall back on when no store is named or discovered. `capture-event` writes there only when explicitly selected with `--store @default`, never by omission. It must name an entry under `kbs`; a value that matches none fails the load. Set, change, or clear it from the command line with `kb set-default`.
+
+The top-level `feedback_kb` key names the knowledge base that receives feedback about agent guidance: the KB read by the pass that refines that guidance. `capture-event` writes there on `--store @feedback`, and refuses when the key is unset. It follows the same rules as `default_kb`: It must name an entry under `kbs`, and a value that matches none fails the load. No command sets it; edit the registry file.
 
 Configuration keys, per KB entry under `kbs.<name>`:
 
@@ -77,7 +80,7 @@ An entry's name is also what a [store-qualified wikilink](#linking-into-another-
 
 - Project entries **replace** user entries with the same name.
 - Project entries with a new name are **appended**.
-- When both files set `default_kb`, the **project** value takes precedence; the resolved default is the named entry from the merged set.
+- When both files set `default_kb` or `feedback_kb`, the **project** value takes precedence; each resolves to the named entry from the merged set.
 - Path existence is not checked at load time.
 
 ```ts

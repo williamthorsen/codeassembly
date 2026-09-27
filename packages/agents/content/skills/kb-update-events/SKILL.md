@@ -16,7 +16,7 @@ The operation surface is the **curatorial mutable set** only: `addressed-by` (ma
 
 | Argument                    | Description                                                                                        | Required |
 | --------------------------- | -------------------------------------------------------------------------------------------------- | -------- |
-| `--store`                   | Registry name of the event store, or `@default` for the `default_kb`.                              | Yes      |
+| `--store`                   | Registry name, `@default` for the `default_kb`, or `@feedback` for the `feedback_kb`.              | Yes      |
 | `--add-addressed-by <refs>` | Append comma-separated reference(s) to each event's `addressed-by` list.                           | One op   |
 | `--retag <list>`            | Replace each event's `tags` with the comma-separated list. Canonicalizes.                          | One op   |
 | `--set-impact <level>`      | Set each event's `impact` to one of `low`, `medium`, `high`, `critical`. Replaces any prior value. | One op   |
@@ -26,7 +26,7 @@ A value-bearing flag accepts both `--retag fix,observation` and `--retag=fix,obs
 
 ### Store selection
 
-`--store` is required: Every edit names its store. The helper resolves the store by registry name only and never walks the working directory for a `.kb/` folder. The store must be registered in `kb.yaml`. Pass `--store <name>` for a named store, or `--store @default` for the registry's `default_kb`. Omitting `--store` is refused with an error that lists the registered stores.
+`--store` is required: Every edit names its store. The helper resolves the store by registry name only and never walks the working directory for a `.kb/` folder. The store must be registered in `kb.yaml`. Pass `--store <name>` for a named store, `--store @default` for the registry's `default_kb`, or `--store @feedback` for its `feedback_kb`. Omitting `--store` is refused with an error that lists the registered stores.
 
 ## Runtime dependencies
 
@@ -42,7 +42,7 @@ Collect the ids of the events to edit (typically from a prior recall). Each id i
 
 ```bash
 node {harness_home_dir}/skills/kb-update-events/kb-update-events.mjs \
-  --store <name|@default> \
+  --store <name|@default|@feedback> \
   --add-addressed-by <ref[,ref...]> \
   <event-id> [<event-id> ...]
 ```
@@ -70,6 +70,7 @@ On `ok: false`, act on the `error` code:
 - `store-not-registered`: The named store is not in `kb.yaml`.
 - `readonly-store`: The store is marked readonly; edits are refused.
 - `no-default-store`: `--store @default` was given but no `default_kb` is configured.
+- `no-feedback-store`: `--store @feedback` was given but no `feedback_kb` is configured.
 
 ## Completion
 

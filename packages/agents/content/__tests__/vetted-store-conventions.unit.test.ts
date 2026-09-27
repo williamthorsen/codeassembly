@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { DEFAULT_KB_SENTINEL } from '../../src/kb-shared/default-kb-sentinel.ts';
+import * as sentinels from '../../src/kb-shared/kb-role-sentinels.ts';
 import { ARTIFACT_TYPES } from '../../src/lib/artifact-types.ts';
 import { resolveContentDir } from '../../src/lib/content-resolver.ts';
 import { libraryResolver } from '../../src/lib/content-sources.ts';
@@ -24,6 +24,9 @@ const VETTED_COLLECTION = 'recommended';
 
 /** A flag and the value that it takes, in either the spaced or the `=` form; a following flag is not a value. */
 const STORE_FLAG_PATTERN = /(?:--store|--kb)(?:=|[ \t]+)(?!-)(\S+)/g;
+
+/** The reserved values that select a store by its registry role rather than by name. */
+const ROLE_SENTINELS: readonly string[] = Object.values(sentinels);
 
 /** A table cell containing a store flag and nothing else, the left half of the table form. */
 const FLAG_CELL_PATTERN = /^`(?:--store|--kb)`$/;
@@ -76,16 +79,16 @@ describe('vetted store conventions', () => {
       ]);
     });
 
-    it('flags an at-prefixed value that is not the default-KB sentinel', () => {
-      expect(findConcreteStores('Pass `--store @defualt` here.', false)).toEqual(['@defualt']);
+    it.each([['@defualt'], ['@feedbakc']])('flags the at-prefixed value %s, which is not a role sentinel', (value) => {
+      expect(findConcreteStores(`Pass \`--store ${value}\` here.`, false)).toEqual([value]);
     });
 
     it('permits an angle-bracket placeholder', () => {
       expect(findConcreteStores('Run it with `--store <name|@default>` to choose.', false)).toEqual([]);
     });
 
-    it('permits the default-KB sentinel', () => {
-      expect(findConcreteStores(`Route it with \`--store ${DEFAULT_KB_SENTINEL}\`.`, false)).toEqual([]);
+    it.each(ROLE_SENTINELS.map((sentinel) => [sentinel]))('permits the %s role sentinel', (sentinel) => {
+      expect(findConcreteStores(`Route it with \`--store ${sentinel}\`.`, false)).toEqual([]);
     });
 
     it('does not flag a bare flag mention that prose follows', () => {
@@ -142,17 +145,17 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   const header =
     `Found ${violations.length} concrete store name(s) in a --store or --kb argument position within ` +
     `${VETTED_COLLECTION}'s closure. A vetted artifact names no store that exists only in one environment: ` +
-    `replace each with an angle-bracket placeholder, with \`${DEFAULT_KB_SENTINEL}\`, or with a rule for ` +
-    `choosing the destination.`;
+    `replace each with an angle-bracket placeholder, with a role sentinel (${ROLE_SENTINELS.join(', ')}), ` +
+    `or with a rule for choosing the destination.`;
   const lines = violations.map(
     (violation) => `  ${violation.file}:${violation.line} (${violation.store}): ${violation.text}`,
   );
   return [header, ...lines].join('\n');
 }
 
-/** True when a value in a flag position names no real store: a placeholder, or the default-KB sentinel. */
+/** True when a value in a flag position names no real store: a placeholder, or a role sentinel. */
 function isPermittedStoreValue(value: string): boolean {
-  return value === DEFAULT_KB_SENTINEL || (value.startsWith('<') && value.endsWith('>'));
+  return ROLE_SENTINELS.includes(value) || (value.startsWith('<') && value.endsWith('>'));
 }
 
 /**

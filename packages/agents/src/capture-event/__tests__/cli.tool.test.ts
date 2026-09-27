@@ -444,6 +444,79 @@ describe(runCapture, () => {
     }
   });
 
+  it('writes to the feedback_kb, not the default_kb, when --store @feedback is given', async () => {
+    const defaultStore = await makeStoreDir();
+    const feedbackStore = await makeStoreDir();
+    const home = await mkdtemp(join(tmpdir(), 'capture-cli-feedback-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(
+      join(home, '.agents', 'kb.yaml'),
+      `default_kb: personal\nfeedback_kb: guidance\nkbs:\n  guidance:\n    path: ${feedbackStore}\n  personal:\n    path: ${defaultStore}\n`,
+      'utf8',
+    );
+
+    const result = await runCapture({
+      argv: ['--store', '@feedback', '--summary', 'Noticed a thing'],
+      stdin: bodyStream('Body text.'),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.store).toBe('guidance');
+      expect(result.path.startsWith(feedbackStore)).toBe(true);
+    }
+  });
+
+  it('fails with no-feedback-store naming the key when --store @feedback is given but no feedback_kb is configured', async () => {
+    const { home } = await makeStore('codeassembly');
+
+    const result = await runCapture({
+      argv: ['--store', '@feedback', '--summary', 'x'],
+      stdin: bodyStream(''),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('no-feedback-store');
+      expect(result.message).toBe('--store @feedback was given but no feedback_kb is configured in kb.yaml');
+    }
+  });
+
+  it('fails with missing-store, naming both role sentinels when both roles are configured', async () => {
+    const defaultStore = await makeStoreDir();
+    const feedbackStore = await makeStoreDir();
+    const home = await mkdtemp(join(tmpdir(), 'capture-cli-missingroles-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(
+      join(home, '.agents', 'kb.yaml'),
+      `default_kb: personal\nfeedback_kb: guidance\nkbs:\n  guidance:\n    path: ${feedbackStore}\n  personal:\n    path: ${defaultStore}\n`,
+      'utf8',
+    );
+
+    const result = await runCapture({
+      argv: ['--summary', 'x'],
+      stdin: bodyStream(''),
+      cwd: '/tmp/elsewhere',
+      env: {},
+      now: NOW,
+      home,
+    });
+
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.message).toContain('the registry default is "personal", available as --store @default');
+      expect(result.message).toContain('the feedback store is "guidance", available as --store @feedback');
+    }
+  });
+
   it('names the registry-load cause when --store names a registered store but default_kb is unresolvable', async () => {
     const storePath = await makeStoreDir();
     const home = await mkdtemp(join(tmpdir(), 'capture-cli-poisoned-'));

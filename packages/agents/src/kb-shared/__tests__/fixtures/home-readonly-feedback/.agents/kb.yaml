@@ -1,0 +1,8 @@
+# Registry fixture whose `feedback_kb` is readonly, so that a capture through `@feedback` is refused.
+# Paths are relative to this file's directory (`home-readonly-feedback/.agents/`).
+feedback_kb: readonly-feedback
+kbs:
+  readonly-feedback:
+    path: ../../vault-readonly
+    description: Fixture readonly feedback vault
+    readonly: true

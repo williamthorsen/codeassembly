@@ -24,7 +24,7 @@ Both are captured the same way; the difference is recorded in the tags.
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The capture runs through `{skill:capture-event}`'s bundled helper, which inherits the Node version floor of `@williamthorsen/kb`.
-- **A `kb.yaml` registry declaring the destination store**: `--store` resolves through `.agents/kb.yaml` in the project or `~/.agents/kb.yaml`, and `@default` resolves only when that registry configures a `default_kb`. If no registry declares a usable destination, apply the immediate fix, then report that the record went uncaptured and name what a registry would need. Never retry against a guessed store name.
+- **A `kb.yaml` registry declaring `feedback_kb`**: `--store @feedback` resolves through `~/.agents/kb.yaml`, and only when that registry sets `feedback_kb` to a registered, writable KB. If it does not, apply the immediate fix, then report that the record went uncaptured and that `feedback_kb` must be set in `~/.agents/kb.yaml`. Never retry against another store.
 
 ## Process
 
@@ -50,19 +50,19 @@ If the feedback is purely behavioral (a standing rule with nothing to fix right 
 
 Invoke the `{skill:capture-event}` skill to append the record, composing its arguments and body as follows:
 
-- `--store <name|@default>`: The KB containing the guidance that the record would refine. That subject makes `capture-event`'s project-versus-environment rule decidable here: A lesson about one project's own skills, rulebooks, or instructions goes to that project's KB by name, and a lesson about guidance that the agent applies in every project goes to `@default`.
+- `--store @feedback`: Always. The registry's `feedback_kb` names the KB read by the pass that refines guidance in this environment, whichever repository the guidance came from.
 - `--tags feedback`: Always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
 - `--skill <slug>`: When the refinement target is a skill.
 - `--impact <level>`: Optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you have no clear read; the rating is revisable later with `kb-update-events`.
 - `--summary`: A one-line recall label, for example "Agent title-cased a heading; sentence case is the rule."
 - **Body**: The generalized lesson, only to the extent needed to act on it later:
   - The **error→correction pair** (misapplied-guidance mode) or the **desired behavior** (no-guidance mode), generalized, not the raw artifact or diff.
-  - A **best-effort candidate refinement target**: The guidance artifact and its type (skill, subagent, rulebook, general guidance, or helper). Use `--skill` for a skill target; name the artifact in the body for the other four. Write "candidate: undetermined" when you genuinely cannot place it.
+  - A **best-effort candidate refinement target**: The guidance artifact and its type (skill, subagent, rulebook, general guidance, or helper), with the provenance that the artifact's file states: its `<!-- codeassembly-* -->` ownership marker or its `Source:` line. Use `--skill` for a skill target; name the artifact in the body for the other four. Write "candidate: undetermined" when you genuinely cannot place it.
   - Any uncertainty about the classification from step 1.
 
 ### 4. Report
 
-State what was fixed (or that the feedback was behavioral-only) and the captured record's id and path. If no registry declared a destination, say so in place of the id and path.
+State what was fixed (or that the feedback was behavioral-only) and the captured record's id and path. If no `feedback_kb` is configured, say so in place of the id and path, and name the key to set.
 
 If the user then says the record is inaccurate, correct it in place with `capture-event --amend <id>` rather than capturing a second record; amend rewrites the record in place. Capture a fresh record only when the correction is a genuinely distinct lesson.
 

@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { DEFAULT_KB_SENTINEL } from '../kb-shared/default-kb-sentinel.ts';
+import { DEFAULT_KB_SENTINEL, FEEDBACK_KB_SENTINEL } from '../kb-shared/kb-role-sentinels.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadWorkTypes, resolveWorkType, type WorkType } from '../lib/work-types.ts';
@@ -77,9 +77,9 @@ if (isEntryPoint()) {
  * the fallback is a narrower request rather than an invented type. `--with-pair` serves a caller calibrating an edit
  * rather than a draft and changes no selection. `--count`, `--min-quality`, `--store`, and `--data-dir` each fall back
  * to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
- * sparse is not filtered down to nothing. The `@default` sentinel is refused: It names whichever store a machine
- * defaults to rather than this corpus, and reading the wrong corpus yields plausible exemplars drawn from nothing
- * relevant.
+ * sparse is not filtered down to nothing. The `@default` and `@feedback` sentinels are refused: Each names whichever
+ * store a machine's registry assigns that role rather than this corpus, and reading the wrong corpus yields plausible
+ * exemplars drawn from nothing relevant.
  *
  * @internal - Exported to allow testing.
  */
@@ -94,10 +94,10 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`--${name} requires a value`);
     }
   }
-  if (raw.store === DEFAULT_KB_SENTINEL) {
+  if (raw.store === DEFAULT_KB_SENTINEL || raw.store === FEEDBACK_KB_SENTINEL) {
     throw new Error(
-      `--store ${DEFAULT_KB_SENTINEL} is not accepted: Lede exemplars come from the ${LEDE_DECISION_STORE} corpus, ` +
-        'not from whichever store kb.yaml names as its default. Omit --store, or name the corpus.',
+      `--store ${raw.store} is not accepted: Lede exemplars come from the ${LEDE_DECISION_STORE} corpus, ` +
+        'not from whichever store kb.yaml assigns a role. Omit --store, or name the corpus.',
     );
   }
 

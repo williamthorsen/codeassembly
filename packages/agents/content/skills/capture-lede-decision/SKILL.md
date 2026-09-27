@@ -39,7 +39,7 @@ For the same reason, the corpus is outcome-selected: It contains only changes th
 | `--merge-commit`     | The merge commit's SHA.                                                                          | Yes      |
 | `--inspect`          | Resolve and report the episode without writing. Mutually exclusive with `--quality`.             | Mode     |
 | `--quality`          | The author's rating of the lede in the merged pull request. Mutually exclusive with `--inspect`. | Mode     |
-| `--store`            | Names a corpus registered under some other name; `@default` is refused.                          | No       |
+| `--store`            | Names a corpus registered under some other name; `@default` and `@feedback` are refused.         | No       |
 | `--type`             | Work type. `--type feat!` is accepted as `--type feat --breaking`.                               | Identity |
 | `--scope`            | Package or surface scope. Omit it for a change that names no scope; `*` names none.              | Identity |
 | `--breaking`         | Marks the change breaking.                                                                       | Identity |

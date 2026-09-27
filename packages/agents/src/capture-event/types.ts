@@ -3,8 +3,8 @@ import type { EventImpact } from '@williamthorsen/kb/records';
 /** Parsed command-line invocation of the capture-event helper. */
 export interface ParsedArgs {
   /**
-   * Registry name of the event store to write into, or the `@default` sentinel for the registry's `default_kb`;
-   * `null` when `--store` is omitted, which the resolver refuses.
+   * Registry name of the event store to write into, or a role sentinel (`@default` or `@feedback`) for the store that
+   * the registry assigns that role; `null` when `--store` is omitted, which the resolver refuses.
    */
   store: string | null;
   /** The human-readable one-line summary; becomes the record's display label on recall. */
@@ -61,6 +61,7 @@ export type CaptureErrorCode =
   | 'store-not-registered'
   | 'readonly-store'
   | 'no-default-store'
+  | 'no-feedback-store'
   | 'schema-validation'
   | 'amend-not-found'
   | 'amend-parse';

@@ -7,6 +7,7 @@
 export function formatMissingStoreMessage(resolved: {
   registeredStores: string[];
   defaultName?: string;
+  feedbackName?: string;
   registryError?: string;
 }): string {
   if (resolved.registryError !== undefined) {
@@ -16,9 +17,14 @@ export function formatMissingStoreMessage(resolved: {
     return '--store is required, but no stores are registered in kb.yaml';
   }
   const stores = resolved.registeredStores.join(', ');
-  const defaultHint =
-    resolved.defaultName !== undefined
-      ? `the registry default is "${resolved.defaultName}", available as --store @default`
-      : 'no default_kb is configured';
-  return `--store is required. Registered stores: ${stores}. Pass --store <name> to choose one; ${defaultHint}.`;
+  const roleHints = [
+    ...(resolved.defaultName === undefined
+      ? []
+      : [`the registry default is "${resolved.defaultName}", available as --store @default`]),
+    ...(resolved.feedbackName === undefined
+      ? []
+      : [`the feedback store is "${resolved.feedbackName}", available as --store @feedback`]),
+  ];
+  const roleHint = roleHints.length === 0 ? 'no default_kb or feedback_kb is configured' : roleHints.join('; ');
+  return `--store is required. Registered stores: ${stores}. Pass --store <name> to choose one; ${roleHint}.`;
 }
