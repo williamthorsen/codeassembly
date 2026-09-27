@@ -12,6 +12,12 @@ const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'sav
 const CUTTING_SUBAGENTS: ReadonlySet<string> = new Set(['entry-drafter']);
 
 /**
+ * Subagents whose return is lists of items that the dispatching session folds into artifacts of its own, so the
+ * composition rule governs no text that a reader keeps, and each line of it is fixed cost on every dispatch.
+ */
+const LIST_RETURNING_SUBAGENTS: ReadonlySet<string> = new Set(['handoff-reviewer']);
+
+/**
  * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section kept
  * inline by `guidance/shared/AGENTS.md` reaches no subagent and so appears here under no key.
  *
@@ -22,7 +28,9 @@ const CUTTING_SUBAGENTS: ReadonlySet<string> = new Set(['entry-drafter']);
 export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<string>>> = {
   'code-descriptions': listCodeFacingSubagents(),
   'code-style': listCodeFacingSubagents(),
-  concision: listGovernedSubagents().filter((slug) => !CUTTING_SUBAGENTS.has(slug)),
+  concision: listGovernedSubagents().filter(
+    (slug) => !CUTTING_SUBAGENTS.has(slug) && !LIST_RETURNING_SUBAGENTS.has(slug),
+  ),
   'file-access': listGovernedSubagents(),
   'live-repo-writes': ['orchestrated-coder'],
   'plain-speech': listGovernedSubagents(),
