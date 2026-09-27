@@ -304,12 +304,12 @@ When the cascade's conditions leave two options genuinely in balance, prefer the
 
 ### Blocked-step sub-block
 
-Shown when something that the user can clear, such as a sandbox denial, a missing credential, or a stopped service, blocked a review step. A clean review renders it like any other trigger. The line above the options names the step and the blocker, and the first option names the action that clears it:
+Shown when something that the user can clear, such as a sandbox denial, a missing credential, or a stopped service, blocked a review step and remains once the routes that need no action from the user, such as an ephemeral runner for a missing tool, are exhausted. A clean review renders it like any other trigger. The line above the options names the step and the blocker, and the first option names the action that supplies the missing resource, such as a login or a grant, never the blocked step for the user to run:
 
 ```
 {step} was blocked: {blocker}.
 
-1. 🔓 ■■■ {Action that clears it, e.g. run `! {command}`}, then re-run {step}
+1. 🔓 ■■■ {Action that supplies the resource, e.g. run `! {login command}`}, then re-run {step}
 2. ⏭️ ■□□ Accept the review without {step}
 ```
 

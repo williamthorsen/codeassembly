@@ -19,7 +19,7 @@ Soft offers are the hardest form to spot. Each phrases a question as a statement
 - "happy to…"
 - "if you'd like…"
 - "I've not done X" (leaving the offer implicit)
-- "I couldn't run X because…" (a blocker that the user can clear, with no ask naming the action that clears it)
+- "I couldn't run X because…" (a blocker that the user can clear, with no ask naming the action that clears it; a missing tool or dependency is no blocker until the routes that need no action from the user, such as an ephemeral runner, are exhausted)
 
 Each is an action item. Restate it in the block as the concrete action that it proposes, and strike the offer from the prose. The observation that prompted it may stay; that is signal. The ask may not.
 
