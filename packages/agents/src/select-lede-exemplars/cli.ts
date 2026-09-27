@@ -77,9 +77,9 @@ if (isEntryPoint()) {
  * the fallback is a narrower request rather than an invented type. `--with-pair` serves a caller calibrating an edit
  * rather than a draft and changes no selection. `--count`, `--min-quality`, `--store`, and `--data-dir` each fall back
  * to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
- * sparse is not filtered down to nothing. The `@default` sentinel is refused: It names whichever store a machine
- * defaults to rather than this corpus, and reading the wrong corpus yields plausible exemplars drawn from nothing
- * relevant.
+ * sparse is not filtered down to nothing. The `@default` and `@feedback` sentinels are refused: Each names whichever
+ * store a machine's registry assigns that role rather than this corpus, and reading the wrong corpus yields plausible
+ * exemplars drawn from nothing relevant.
  *
  * @internal - Exported to allow testing.
  */

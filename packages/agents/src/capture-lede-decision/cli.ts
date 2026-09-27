@@ -223,9 +223,9 @@ export async function runDecision(input: {
  * appear. `--artifact-dir`, `--pr`, and `--merge-commit` are always required, because a decision that cannot name the
  * change that it describes is not worth recording. Every other flag is optional: the change's identity (`--type`,
  * `--scope`, and `--breaking`) and the ticket fall back to the change-summary artifact, the two lede overrides fall
- * back to their artifacts, and `--store` names a corpus registered under some other name. The `@default` sentinel is
- * refused: It names a machine's default store rather than a corpus, which is the route by which decisions have been
- * filed outside the one that keeps them.
+ * back to their artifacts, and `--store` names a corpus registered under some other name. The `@default` and
+ * `@feedback` sentinels are refused: Each names a store that a machine's registry assigns a role rather than a corpus,
+ * which is the route by which decisions have been filed outside the one that keeps them.
  *
  * @internal - Exported to allow testing.
  */
