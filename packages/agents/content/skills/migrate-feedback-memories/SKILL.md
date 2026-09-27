@@ -12,7 +12,7 @@ A **memory store** is one project's memory directory under `~/.claude/projects/`
 
 The three destinations:
 
-- **Capture**: A generalizable lesson that should propagate is recorded as a `capture-feedback`-style candidate event in the `codeassembly` KB, and the source memory is then removed from its store; a capture migrates the memory out, it does not copy it. A later distillation pass codifies the event into shared guidance.
+- **Capture**: A generalizable lesson that should propagate is recorded as a `capture-feedback`-style candidate event in the feedback KB (the registry's `feedback_kb`), and the source memory is then removed from its store; a capture migrates the memory out, it does not copy it. A later distillation pass codifies the event into shared guidance.
 - **Retain**: A genuinely local, non-propagating fact (a project-specific deadline or quirk) stays a memory, untouched.
 - **Delete**: A memory already captured (including one migrated from another machine) or otherwise redundant is removed.
 
@@ -93,7 +93,7 @@ On approval, run all captures first, then a single deletion pass:
    ```bash
    (cd "<repoPath>" && cat <<'EOF' | node {harness_home_dir}/skills/capture-event/capture-event.mjs \
      --summary "<one-line lesson>" \
-     --store codeassembly \
+     --store @feedback \
      --harness {harness_id} \
      --tags feedback \
      [--skill <slug>] [--impact <level>]
@@ -104,7 +104,7 @@ On approval, run all captures first, then a single deletion pass:
    )
    ```
 
-   `--store codeassembly` here is the **KB store** (the capture's destination, not the memory store from which it came). It resolves from `~/.agents/kb.yaml` independently of the working directory, so the capture writes the event to the same store wherever it runs. When the memory's `repoPath` is null (the memory-store slug resolves to no live repo on this machine), omit the `(cd "<repoPath>" && … )` wrapper and run the capture from the current directory as today; `capture-event` then stamps this run's `cwd`/`repo`, and the body's `Origin:` line still records the origin.
+   `--store @feedback` here names the **KB store** (the capture's destination, not the memory store from which it came). It resolves to the `feedback_kb` of `~/.agents/kb.yaml` independently of the working directory, so the capture writes the event to the same store wherever it runs. When the memory's `repoPath` is null (the memory-store slug resolves to no live repo on this machine), omit the `(cd "<repoPath>" && … )` wrapper and run the capture from the current directory as today; `capture-event` then stamps this run's `cwd`/`repo`, and the body's `Origin:` line still records the origin.
 
    Only when `capture-event` returns `ok: true`, add that memory's source `path` to the deletion batch: Because a capture migrates the memory out of its store, its source is removed once the event is recorded. When a capture fails, leave the source in place and report the failure; never delete a memory whose capture did not succeed.
 
@@ -120,7 +120,7 @@ On approval, run all captures first, then a single deletion pass:
 
 ### Composing a capture
 
-- `--store codeassembly`: The agent-guidance KB store. Route to a different KB store only when a memory is specific to another registered project's KB.
+- `--store @feedback`: The feedback KB is configured in the registry, not chosen per memory.
 - `--tags feedback` always; add `,mistake` (i.e. `--tags feedback,mistake`) when the memory recorded a _misapplied_ existing rule, including the violation-of-existing-guidance memory that the Delete rule routes to Capture instead of deleting.
 - `--skill <slug>` when the lesson targets a specific skill.
 - `--impact <low|medium|high|critical>`: Rate on the merits of the memory's content: how much acting on the lesson would improve future behavior. Omit only on a genuine toss-up.
