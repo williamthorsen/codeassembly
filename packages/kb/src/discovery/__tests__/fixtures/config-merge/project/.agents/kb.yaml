@@ -1,4 +1,5 @@
 default_kb: project-only
+feedback_kb: shared
 kbs:
   shared:
     path: ./project-shared-kb

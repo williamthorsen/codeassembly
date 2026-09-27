@@ -10,6 +10,7 @@ export const kbRegistryFileEntrySchema = z.object({
 /** Schema for the full `kb.yaml` file. */
 export const kbRegistryFileSchema = z.object({
   default_kb: z.string().min(1).optional(),
+  feedback_kb: z.string().min(1).optional(),
   kbs: z.record(z.string(), kbRegistryFileEntrySchema).optional(),
 });
 

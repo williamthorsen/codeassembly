@@ -86,6 +86,26 @@ describe(loadKbRegistry, () => {
     expect(config.defaultKb).toBeUndefined();
   });
 
+  it('resolves feedback_kb with the project value winning over the user value', async () => {
+    const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
+
+    expect(config.feedbackKb?.name).toBe('shared');
+    expect(config.feedbackKb?.source).toBe('project');
+  });
+
+  it('resolves the user feedback_kb when the project registry does not set one', async () => {
+    const config = await loadKbRegistry({ home: HOME, projectDir: join(MERGE_DIR, 'only-project') });
+
+    expect(config.feedbackKb?.name).toBe('user-only');
+    expect(config.feedbackKb?.path).toBe(join(HOME, 'user-only-kb'));
+  });
+
+  it('leaves feedbackKb undefined when no registry sets feedback_kb', async () => {
+    const config = await loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'only-project') });
+
+    expect(config.feedbackKb).toBeUndefined();
+  });
+
   it('throws when a tilde path is used but the home directory is empty', async () => {
     await expect(loadKbRegistry({ home: '', projectDir: join(MERGE_DIR, 'tilde-project') })).rejects.toThrow(
       /HOME is not set/,
@@ -96,6 +116,18 @@ describe(loadKbRegistry, () => {
     await expect(
       loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'unresolvable-default') }),
     ).rejects.toThrow(/unresolvable-default.*default_kb "nonexistent" does not match any registered KB/s);
+  });
+
+  it('throws naming the source file when feedback_kb names no registered KB', async () => {
+    await expect(
+      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'unresolvable-feedback') }),
+    ).rejects.toThrow(/unresolvable-feedback.*feedback_kb "nonexistent" does not match any registered KB/s);
+  });
+
+  it('throws naming the user file when a user feedback_kb names no registered KB', async () => {
+    await expect(
+      loadKbRegistry({ userConfigPath: join(MERGE_DIR, 'unresolvable-feedback', '.agents', 'kb.yaml'), home: HOME }),
+    ).rejects.toThrow(/unresolvable-feedback.*feedback_kb "nonexistent"/s);
   });
 
   it('throws naming the source file when a registry contains malformed YAML', async () => {
