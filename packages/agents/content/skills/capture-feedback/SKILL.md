@@ -24,7 +24,7 @@ Both are captured the same way; the difference is recorded in the tags.
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The capture runs through `{skill:capture-event}`'s bundled helper, which inherits the Node version floor of `@williamthorsen/kb`.
-- **A `kb.yaml` registry declaring `feedback_kb`**: `--store @feedback` resolves through `.agents/kb.yaml` in the project or `~/.agents/kb.yaml`, and only when that registry sets `feedback_kb` to a registered, writable KB. If it does not, apply the immediate fix, then report that the record went uncaptured and that `feedback_kb` must be set in `kb.yaml`. Never retry against another store.
+- **A `kb.yaml` registry declaring `feedback_kb`**: `--store @feedback` resolves through `~/.agents/kb.yaml`, and only when that registry sets `feedback_kb` to a registered, writable KB. If it does not, apply the immediate fix, then report that the record went uncaptured and that `feedback_kb` must be set in `~/.agents/kb.yaml`. Never retry against another store.
 
 ## Process
 
