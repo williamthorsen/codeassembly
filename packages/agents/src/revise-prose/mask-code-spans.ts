@@ -3,8 +3,8 @@
  *
  * A detector reads prose word by word, and the content of an inline code span is not prose: Its tokens are
  * identifiers, flags, and file names. Masking puts one placeholder in each span's place before any detector reads the
- * text, so the span contributes no words while the words on either side of it stay as far apart as the source wrote
- * them.
+ * text, so the span doesn't contribute any words while the words on either side of it stay as far apart as the source
+ * wrote them.
  */
 import { countNewlines, findCodeSpans } from './span-text.ts';
 

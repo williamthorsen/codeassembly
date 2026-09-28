@@ -4,7 +4,7 @@
  *
  * The file is parsed once. The parse yields every scalar's bounds, which is what tells a `#` inside a block scalar
  * from one that opens a comment, and the comments themselves are found by a line pass over what the scalars leave,
- * the syntax tree recording no line for a comment.
+ * since the syntax tree doesn't record a line for a comment.
  */
 import { LineCounter, parseAllDocuments, Scalar, visit } from 'yaml';
 
@@ -12,7 +12,7 @@ import { findHashCommentStart } from './hash-comments.ts';
 import { isProseLiteral } from './span-text.ts';
 import type { ProseSpan } from './types.ts';
 
-/** Raised when YAML cannot be parsed, no scalar's bounds being trustworthy once the parser reports an error. */
+/** Raised when YAML cannot be parsed, since a parser error makes every scalar's bounds untrustworthy. */
 export class UnparsableYamlError extends Error {}
 
 /**
@@ -35,8 +35,8 @@ export function extractYamlProse(input: { file: string; content: string }): Pros
   for (const document of documents) {
     visit(document, {
       Scalar(key, node) {
-        // A mapping key names a field rather than reading as prose, and it opens no region in which a comment could
-        // hide.
+        // A mapping key names a field rather than reading as prose, and it doesn't open a region in which a comment
+        // could hide.
         if (key === 'key') return;
         const span = buildScalarSpan({ file: input.file, content: input.content, node, lineCounter, continued });
         if (span !== undefined) spans.push(span);

@@ -1,11 +1,11 @@
 /**
  * `so` detection.
  *
- * The rule permits a `so` that states a direct result and limits how often a clause-joining `so` recurs. Because no
- * neighboring word tells a result from an imprecise use after a comma, the detector reports only what a neighboring
- * word or the distance between sites settles: a bare `so`, which nothing before it marks as a result, and a `so` within
- * the rule's gap after another. A use that a neighboring word places outside the rule ("so that", "so-called", "do so",
- * "if so", and the degree adverb before a quantity word) is neither reported nor counted.
+ * The rule permits a `so` that states a direct result and limits how often a clause-joining `so` recurs. Because
+ * neighboring words don't tell a result from an imprecise use after a comma, the detector reports only what a
+ * neighboring word or the distance between sites settles: a bare `so`, which nothing before it marks as a result, and
+ * a `so` within the rule's gap after another. A use that a neighboring word places outside the rule ("so that",
+ * "so-called", "do so", "if so", and the degree adverb before a quantity word) is neither reported nor counted.
  */
 import { countNewlinesBefore, findCodeSpans, flattenWhitespace, listSentenceBounds } from './span-text.ts';
 import type { ProseSpan, SoCandidate } from './types.ts';
@@ -98,7 +98,10 @@ function detectInFile(spans: readonly ProseSpan[]): SoCandidate[] {
   return candidates;
 }
 
-/** Reports whether a site is bare, given its sentence's text before it: A word precedes it, and no result marker does. */
+/**
+ * Reports whether a site is bare, given its sentence's text before it: A word precedes it, and it doesn't follow any
+ * result marker.
+ */
 function isBareSite(textBefore: string): boolean {
   return /[\p{L}\p{N}]/u.test(textBefore) && !RESULT_MARKER.test(textBefore);
 }
