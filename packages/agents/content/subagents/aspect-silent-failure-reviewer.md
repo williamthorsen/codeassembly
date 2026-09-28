@@ -160,7 +160,7 @@ If the change does not contain any error-handling code, or the review did not pr
 
 ### Summary
 
-{Brief explanation: Either no error-handling code in the change, or error handling reviewed with no issues found}
+{Brief explanation: Either the change does not contain any error-handling code, or the review of its error handling did not find any issues}
 ```
 
 ## Re-review protocol

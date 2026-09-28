@@ -175,7 +175,7 @@ If the change does not contain any source files that require test coverage, or t
 
 ### Summary
 
-{Brief explanation: Either no testable source changes, or test coverage reviewed with no issues found}
+{Brief explanation: Either the change does not contain any testable source changes, or the review of test coverage did not find any issues}
 ```
 
 ## Re-review protocol

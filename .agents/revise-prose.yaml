@@ -871,6 +871,12 @@ rules:
       - vite.config.ts
       - vitest.config.ts
       - vitest.root.config.ts
+  negative-quantifier:
+    version: '2'
+    swept-at: 2026-09-28
+    detected: true
+    roots:
+      - packages/agents/content
   plain-speech:
     version: '7'
     swept-at: 2026-09-25
@@ -2146,6 +2152,601 @@ rejections:
     file: packages/foreman/src/format/freshness.ts
     phrase: or "—" when unknown
     ground: 'not prose: the quoted character is the literal placeholder string that the function returns'
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/__tests__/banned-codepoints.unit.test.ts
+    phrase: '${exemption.path}: no such file'
+    ground: a verbless label in a failure message
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/__tests__/guidance-hook-reach.unit.test.ts
+    phrase: No hard line breaks
+    ground: a data literal that the test matches against the partial's text, not prose
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/__tests__/prose-line-breaks-reach.unit.test.ts
+    phrase: No hard line breaks
+    ground: a data literal (RULE_HEADLINE) that quotes the partial's heading, not prose
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/__tests__/prose-sweep-vocabulary.unit.test.ts
+    phrase: "'no version'"
+    ground: a verbless label in a rendered listing
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/__tests__/rulebook-version-pins.unit.test.ts
+    phrase: '**No hard line breaks.**'
+    ground: a data literal quoting a partial's heading
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/__tests__/shared-guidance-references.unit.test.ts
+    phrase: in no particular order
+    ground: fixed idiom
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: '"A change can need coverage even when no particular test is worth writing"'
+    ground: a quoted example that the document displays rather than composes
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: '"A change that needs coverage but finds no candidate clearing the bar ships without a test"'
+    ground: quoted before-and-after examples of a shape
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: '"a skill that no task invokes" becomes "a skill that the plan does not invoke"'
+    ground: "a marked exhibit: the rule's own example"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: '"publishes no build output" becomes "doesn''t publish any build output"'
+    ground: "a marked exhibit: the rule's own example"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/plain-speech-calibration.md
+    phrase: '"there''s no Vercel CLI" becomes "the Vercel CLI isn''t installed on this machine"'
+    ground: "a marked exhibit: the rule's own example"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/plain-speech.md
+    phrase: '"There''s no Vercel CLI" was meant as'
+    ground: "a marked exhibit: the rule's own example"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/prose-line-breaks.md
+    phrase: '**No hard line breaks.**'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/_partials/README.md
+    phrase: 'Bare self-close: No slot'
+    ground: a verbless heading
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
+    phrase: (no obscure abbreviations, kind-bearing tails, unit-of-measure suffixes, verb-led function names, and when a boolean takes a prefix)
+    ground: a verbless parenthetical list of topics
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/scripts/__tests__/get_ticket_id_test.sh
+    phrase: legacy comment, no value
+    ground: a comment inside a YAML fixture that the test writes as data
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/scripts/__tests__/resolve_frontmatter_test.sh
+    phrase: 'No commit:'
+    ground: a verbless label naming the fixture state
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: '"No action this PR / no action required / not actionable here"'
+    ground: quoted exhibits of hedging language
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: '"no severity, no action"'
+    ground: a quoted slogan
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: (no remote, shallow clone)
+    ground: a verbless parenthetical list of causes
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: No authored findings
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: No separate disposition artifact.
+    ground: a verbless fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: S, R, and/or T (no W/F)
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: W (no F)
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/artifact-conventions.md
+    phrase: 'Written as-is: no sanitization.'
+    ground: a verbless fragment in a table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/complexity-classification.md
+    phrase: No judgment needed.
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/complexity-classification.md
+    phrase: Single module, no API or behavioral changes.
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/naming-conventions.md
+    phrase: No obscure abbreviations
+    ground: a verbless heading
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/ticket-source-resolution.md
+    phrase: _(no source provided)_
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/title-templates.md
+    phrase: type `feat`, no scope
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/title-voice.md
+    phrase: '**No backticks.**'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/title-voice.md
+    phrase: '**No ephemeral references.**'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/title-voice.md
+    phrase: '**No external actions.**'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/title-voice.md
+    phrase: '**No jargon.**'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_data/title-voice.md
+    phrase: no ticket ID, pull-request number, review-finding ID, or run identifier
+    ground: a verbless fragment listing what the title omits
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_partials/next-steps-after-plan.md
+    phrase: '"single module with no downstream effects"'
+    ground: a quoted, verbless example
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/_partials/next-steps-after-review.md
+    phrase: '**No recommendation**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/add-change-record/SKILL.md
+    phrase: '"No open pull request found for branch `{branch_name}`.'
+    ground: a quoted message that the skill prints verbatim
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/assess-ticket/SKILL.md
+    phrase: green means no concern and red means high concern
+    ground: plain as written; the user rejected the repair
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/assess-ticket/SKILL.md
+    phrase: No concern
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/capture-feedback/SKILL.md
+    phrase: '**No: no such guidance.**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/classify-complexity/SKILL.md
+    phrase: '**No action, just assessment**'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/collaborate/SKILL.md
+    phrase: 'Not this (an interactive picker, flat label plus description, no markers):'
+    ground: a verbless label introducing a marked counter-example
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/create-devlog/SKILL.md
+    phrase: '`working-tree`: No value.'
+    ground: a verbless list value
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/create-devlog/SKILL.md
+    phrase: 'Else (no ticket; research/exploration sessions):'
+    ground: a verbless parenthetical label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/create-devlog/SKILL.md
+    phrase: 'No argument (last commit):'
+    ground: a verbless label naming a mode
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/create-devlog/SKILL.md
+    phrase: 'No arguments: Summarize the last commit'
+    ground: a verbless label naming an argument form
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/create-devlog/SKILL.md
+    phrase: Treat null as "no ticket";
+    ground: quoted label text
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/create-pr/SKILL.md
+    phrase: 'skip: no closing line.'
+    ground: a verbless fragment after a colon
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/create-ticket/SKILL.md
+    phrase: 'Fallback: No remote platform'
+    ground: a verbless heading; its anchor is linked throughout the file
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/development-workflows/SKILL.md
+    phrase: 'Reliability: No command parsing failures'
+    ground: a verbless labelled list item
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/find-orchestration-savings/SKILL.md
+    phrase: '"No completed run found for this context"'
+    ground: a quoted message reported verbatim
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/get-ticket-id/SKILL.md
+    phrase: 'Error: No ticket ID found'
+    ground: a verbless table cell quoting an error message
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/kb-edit/SKILL.md
+    phrase: (no substantive change)
+    ground: a verbless parenthetical label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/merge-bb-pr/SKILL.md
+    phrase: Concrete strategy (no `prompt` sentinel)
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/merge-gh-pr/SKILL.md
+    phrase: Concrete strategy (no `prompt` sentinel)
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: '"No open PR found for branch `{branch_name}`.'
+    ground: a quoted stop message
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/merge-pr/SKILL.md
+    phrase: '{"outcome":"stopped: no Bitbucket write path"}'
+    ground: a payload data literal
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: '**Retain**: No action.'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/orchestrate-dev/SKILL.md
+    phrase: Discretionary, no ticket.
+    ground: a verbless list fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/orchestrate-review/SKILL.md
+    phrase: '"No changes to review on this branch relative to the diff base."'
+    ground: a quoted error message
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/orchestrate/SKILL.md
+    phrase: (if no companion)
+    ground: a verbless parenthetical inside a step label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/people-report/SKILL.md
+    phrase: '**No external calls**'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/refine-plan/SKILL.md
+    phrase: '"No user answers -- all findings are auto-resolvable."'
+    ground: a verbless prompt-template value
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: '"no action this PR,"'
+    ground: a quoted reviewer phrase
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: '"no current evidence against"'
+    ground: a quoted hedging phrase that the document quotes rather than composes
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: a small input-to-boolean function with no side effects
+    ground: inside a quoted exhibit of a bad response
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: No action this PR, out of scope for the storage refactor.
+    ground: inside a quoted review recommendation
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: No action this PR.
+    ground: inside a quoted review recommendation
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: 'No arguments:'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/respond-to-review/SKILL.md
+    phrase: there's no current evidence the function needs auth-specific context.
+    ground: inside a quoted review recommendation, which is an exhibit of hedged language
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/review-bb-pr/SKILL.md
+    phrase: '**No review logic here.**'
+    ground: a verbless bold lead-in label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/review-bb-pr/SKILL.md
+    phrase: '**No ticket**:'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/review-branch/SKILL.md
+    phrase: '**No source available**:'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/review-criteria/SKILL.md
+    phrase: '"no action this PR"'
+    ground: a marked exhibit of hedging language
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/review-gh-pr/SKILL.md
+    phrase: '**No review logic here.**'
+    ground: a verbless bold lead-in label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/review-gh-pr/SKILL.md
+    phrase: '**No ticket**:'
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/save-artifact/SKILL.md
+    phrase: No leading/trailing hyphens
+    ground: a verbless list label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/software-engineering/SKILL.md
+    phrase: '**Easier testing**: No need to mock entire complex objects'
+    ground: a verbless list fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/update-jira-ticket/SKILL.md
+    phrase: No HTML surface.
+    ground: a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: '**No `<!-- rulebook:` marker.**'
+    ground: a verbless bold constraint label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/update-project-guidance/SKILL.md
+    phrase: '**No path into a harness-owned directory**'
+    ground: a verbless bold constraint label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/upgrade-dependencies/SKILL.md
+    phrase: '"no changes, skipping"'
+    ground: quoted tool output
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: '"No wrap-up items identified for this session."'
+    ground: a quoted output string
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/skills/wrap-up/SKILL.md
+    phrase: No code changes, no run artifacts, no review artifacts
+    ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/_partials/coder-writes-review-scaffold.md
+    phrase: why no change was made
+    ground: inside a code-span output template
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/_partials/review-finding-actionability-gate.md
+    phrase: '"no action this PR"'
+    ground: a marked exhibit of wording to catch
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/_partials/review-finding-actionability-gate.md
+    phrase: '**No self-disqualifying findings**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-code-reviewer.md
+    phrase: '**No false positives**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-code-reviewer.md
+    phrase: 'If no findings:'
+    ground: a verbless label introducing an example
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-code-reviewer.md
+    phrase: No praise, no style nits outside project conventions
+    ground: a verbless list fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-code-reviewer.md
+    phrase: see the "If no findings" example
+    ground: quotes the verbless label that stays
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-silent-failure-reviewer.md
+    phrase: '**No false positives**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-silent-failure-reviewer.md
+    phrase: No error-handling code in the change, or no findings
+    ground: a verbless list entry defining an enum value
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-silent-failure-reviewer.md
+    phrase: No praise, no generic advice
+    ground: a verbless list fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: '(no authorship signal, or `authored-by-pipeline: false`)'
+    ground: a verbless parenthetical label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: '**No false positives**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: New critical functionality with no tests
+    ground: a verbless noun phrase in an enum-value list entry
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: New source code with no corresponding tests
+    ground: a verbless scope-list entry
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: No praise, no generic "add more tests" advice
+    ground: a verbless list fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/aspect-test-reviewer.md
+    phrase: No source files requiring test coverage in the change, or no findings
+    ground: a verbless list entry defining an enum value
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/code-simplification-reviewer.md
+    phrase: '**No false positives**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/code-simplification-reviewer.md
+    phrase: 'If no findings:'
+    ground: a verbless label introducing an example
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/code-simplification-reviewer.md
+    phrase: No praise, no style nits outside project conventions
+    ground: a verbless list fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/code-simplification-reviewer.md
+    phrase: see the "If no findings" example
+    ground: quotes the verbless label that stays
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: A claim is no stronger than what the change delivers.
+    ground: "not the construction: 'no' modifies a comparative adjective, not a noun"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: and no more
+    ground: fixed idiom
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/entry-drafter.md
+    phrase: the claim no stronger than what the change delivers
+    ground: "not the construction: 'no' modifies a comparative adjective, not a noun"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: No cross-cutting concerns
+    ground: a verbless criteria-list entry
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: No integration points affected
+    ground: a verbless criteria-list entry
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: No new dependencies or interfaces
+    ground: a verbless criteria-list entry
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-architect.md
+    phrase: No new patterns introduced
+    ground: a verbless criteria-list entry
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: No empty placeholders, no "I didn't find anything to flag" notes.
+    ground: a verbless fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-coder.md
+    phrase: No extra features, no premature abstractions, no "while I'm here" improvements.
+    ground: a verbless fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-reviewer.md
+    phrase: '**No false positives**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/orchestrated-reviewer.md
+    phrase: No praise, no style nits, no "consider doing X" without clear justification
+    ground: a verbless list fragment
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/prose-reviser.md
+    phrase: '"publishes no build output"'
+    ground: "a marked exhibit: the rule's own example"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/prose-reviser.md
+    phrase: '"there''s no Vercel CLI"'
+    ground: "a marked exhibit: the rule's own example"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/agents/content/subagents/savings-analyzer.md
+    phrase: '**zero-risk**: Pure waste, no quality impact'
+    ground: a verbless label definition
   - rule: plain-speech
     rule-version: '7'
     file: .agents/skills/office-game-feel/SKILL.md

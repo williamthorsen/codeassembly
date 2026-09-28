@@ -62,7 +62,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
       'The one carve-out is presentational text',
       'This rule takes precedence over the register of the surrounding documents',
       'still be **mannered prose**',
-      'A verb that fits any subject and object states no relation between them',
+      'A verb that fits any subject and object does not state any relation between them',
       'an imperative there would give the action to the reader',
       'a tool **reports** its findings (not "the findings arrive")',
     ],
