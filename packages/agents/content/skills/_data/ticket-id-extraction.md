@@ -7,7 +7,7 @@ This is the canonical contract for extracting a Jira-style ticket ID from a bran
 - **Pattern (case-insensitive):** `[A-Za-z]{2,}-[0-9]+`. Two or more letters, a hyphen, one or more digits. Single-letter prefixes (`a-1`, `x-99`) are not valid ticket IDs.
 - **Position:** Matched anywhere in the input. The first match wins.
 - **Output normalization:** The captured ID is uppercased before being returned (`mac-130` → `MAC-130`).
-- **Suffix tolerance:** Trailing `.N` (sub-ticket) and `-description` segments are accepted in input but are not part of the canonical ID. The greedy `[0-9]+` boundary stops at any non-digit (`.`, `-letter`, `/`, `_`, end-of-string), so these suffixes are naturally truncated; no post-match stripping is required.
+- **Suffix tolerance:** Trailing `.N` (sub-ticket) and `-description` segments are accepted in input but are not part of the canonical ID. The greedy `[0-9]+` boundary stops at any non-digit (`.`, `-letter`, `/`, `_`, end-of-string), so these suffixes are naturally truncated; post-match stripping is not required.
 
 ## Behavior table
 
@@ -36,8 +36,8 @@ This is intentional: Case-insensitive unanchored matching is the price of suppor
 
 ## Pull-request identifier
 
-`PR-<n>` (e.g. `PR-123`) matches the pattern like any other two-letter prefix, so it extracts to `PR-123`. This is a sanctioned identity for a pull request that has no backing ticket, giving it a branch name and an artifact directory. Downstream URL derivation treats a `PR-<n>` id as a non-ticket: `derive-session-context` builds no ticket URL for it, even when a ticket base URL is configured (see `resolveTicketUrls` in `compose-manifest.ts`).
+`PR-<n>` (e.g. `PR-123`) matches the pattern like any other two-letter prefix, so it extracts to `PR-123`. This is a sanctioned identity for a pull request that does not have a backing ticket, giving it a branch name and an artifact directory. Downstream URL derivation treats a `PR-<n>` id as a non-ticket: `derive-session-context` does not build a ticket URL for it, even when a ticket base URL is configured (see `resolveTicketUrls` in `compose-manifest.ts`).
 
 ## Bare-numeric fallback (out of scope)
 
-When no Jira-style ID matches, the `get-ticket-id` script falls back to a **bare numeric prefix** anchored at the start of the input, formatted via `project.ticket_ref_prefix` from `.agents/preferences.yaml`. That fallback is a separate, orthogonal feature for `#`-style projects and is not covered by this contract. See `extract_bare_number` in `packages/agents/content/scripts/get-ticket-id.sh` for the bash implementation and `extract-ticket-id.ts` in `packages/agents/src/derive-session-context/` for the equivalent TypeScript implementation.
+When the input does not contain a Jira-style ID, the `get-ticket-id` script falls back to a **bare numeric prefix** anchored at the start of the input, formatted via `project.ticket_ref_prefix` from `.agents/preferences.yaml`. That fallback is a separate, orthogonal feature for `#`-style projects and is not covered by this contract. See `extract_bare_number` in `packages/agents/content/scripts/get-ticket-id.sh` for the bash implementation and `extract-ticket-id.ts` in `packages/agents/src/derive-session-context/` for the equivalent TypeScript implementation.

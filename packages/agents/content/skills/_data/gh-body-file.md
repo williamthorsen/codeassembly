@@ -17,9 +17,9 @@ EOF
 )"
 ```
 
-Although a `<<'EOF'` heredoc performs no expansion and backticks need no escaping, agents reflexively inserted `\` before every backtick, a habit brought over from double-quoted strings. GitHub rendered the backslashes literally, producing broken code spans (`` \`foo\` ``) and fences (``\`\`\`ts``). The bug recurred across creation flows in multiple repositories.
+Although a `<<'EOF'` heredoc does not perform any expansion and backticks do not need escaping, agents reflexively inserted `\` before every backtick, a habit brought over from double-quoted strings. GitHub rendered the backslashes literally, producing broken code spans (`` \`foo\` ``) and fences (``\`\`\`ts``). The bug recurred across creation flows in multiple repositories.
 
-Writing the body through the {tool:Write} tool removes bash from the path entirely. There is no shell context in which escaping could seem necessary, so the class of bug cannot arise. See codeassembly#442 for the originating incident.
+Writing the body through the {tool:Write} tool removes bash from the path entirely. The path does not pass through any shell context in which escaping could seem necessary, so the class of bug cannot arise. See codeassembly#442 for the originating incident.
 
 ## Why the path is re-stated at every call
 

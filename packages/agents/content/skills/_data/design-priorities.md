@@ -73,4 +73,4 @@ A fresh codebase wouldn't have these shapes; their presence means the change was
 
 ## Reconciliation
 
-These rules reinforce "push back on questionable legacy": the guidance to examine, not preserve, carve-outs labelled "for backward compatibility" or "matches existing convention" when no concrete consumer would break under normalization.
+These rules reinforce "push back on questionable legacy": the guidance to examine, not preserve, carve-outs labelled "for backward compatibility" or "matches existing convention" when normalization would not break any concrete consumer.
