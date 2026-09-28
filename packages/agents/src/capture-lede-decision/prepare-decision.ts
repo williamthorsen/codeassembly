@@ -34,8 +34,8 @@ export type PrepareDecisionOutcome = { ok: true; prepared: PreparedDecision } | 
  * Tags name the group (`lede-decision`), the work type under a `type:` namespace, `breaking` for a change whose type
  * declared the marker, the verdict, and the rating under a `quality:` namespace. The namespaces keep a work type or a
  * rating from colliding with the topical tags that an event already uses: A bare `fix` already means a solved-problem
- * episode. `breaking` needs none: No event uses it topically, and it matches the label that `create-pr` and
- * `create-ticket` derive from the same marker.
+ * episode. `breaking` needs none: Existing events do not use it topically, and it matches the label that `create-pr`
+ * and `create-ticket` derive from the same marker.
  *
  * The verdict is derived from whether the two ledes differ, which also decides whether the body includes a merged
  * section. One derivation drives both, so the verdict and the sections can never describe different episodes.

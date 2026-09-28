@@ -24,7 +24,7 @@ import { prepareDecision } from './prepare-decision.ts';
 import { resolveEpisode } from './resolve-episode.ts';
 import type { DecisionErrorCode, DecisionResult } from './types.ts';
 
-/** The flags accepted by this helper; the comment comes from stdin, so it has no flag of its own. */
+/** The flags accepted by this helper; the comment comes from stdin, so it does not have a flag of its own. */
 const FLAGS: readonly FlagSpec[] = [
   { name: 'agent-lede-file', takesValue: true },
   { name: 'artifact-dir', takesValue: true },

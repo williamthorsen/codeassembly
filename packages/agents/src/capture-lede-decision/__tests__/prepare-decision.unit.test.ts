@@ -103,7 +103,7 @@ describe(prepareDecision, () => {
     expect(content).toContain(`## Merged lede\n\n${MERGED_LEDE}`);
   });
 
-  it('omits the comment section when no comment was given', () => {
+  it('omits the comment section when the author did not give a comment', () => {
     const content = expectContent(prepareDecision(decisionFor({ comment: '   \n' })));
 
     expect(content).not.toContain('## Comment');
@@ -171,7 +171,7 @@ function decisionFor(overrides: {
   };
 }
 
-/** Builds a minimal resolved episode with no optional field unless a test supplies one. */
+/** Builds a minimal resolved episode without any optional field unless a test supplies one. */
 function episodeFor(overrides: { differ?: boolean }): LedeEpisode {
   return {
     agentLede: AGENT_LEDE,

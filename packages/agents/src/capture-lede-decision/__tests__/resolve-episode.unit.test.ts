@@ -73,7 +73,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture)).mergedLede).toBe(`${FIXTURE_AGENT_LEDE}\n\nA closing paragraph.`);
   });
 
-  it('keeps a Change: line that prose follows, which is no trailer block', async () => {
+  it('keeps a Change: line that prose follows, which is not a trailer block', async () => {
     const merged = `Change: agents|feat: Adds the link\n\n${FIXTURE_AGENT_LEDE}`;
     const fixture = await createLedeFixture({ mergedLede: merged });
 
@@ -118,7 +118,7 @@ describe(resolveEpisode, () => {
     });
   });
 
-  it('reports no marker for a work type spelled without one', async () => {
+  it('does not report a marker for a work type spelled without one', async () => {
     const fixture = await createLedeFixture();
 
     expect((await resolveFor(fixture, { type: 'feat' })).identity.breaking).toBe(false);
@@ -186,7 +186,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture, { breaking: true })).identity).toMatchObject({ type: 'feat', breaking: true });
   });
 
-  it('when the flags name the identity, records no scope even though the change summary names one', async () => {
+  it('when the flags name the identity, does not record a scope even though the change summary names one', async () => {
     const fixture = await createLedeFixture();
 
     const episode = await resolveFor(fixture, { scope: null });
@@ -209,13 +209,13 @@ describe(resolveEpisode, () => {
     });
   });
 
-  it('reads a scope of * from the flags as no scope', async () => {
+  it('reads a scope of * from the flags as the absence of a scope', async () => {
     const fixture = await createLedeFixture();
 
     expect((await resolveFor(fixture, { scope: '*' })).identity).not.toHaveProperty('scope');
   });
 
-  it('reads a scope override of * from the change summary as no scope', async () => {
+  it('reads a scope override of * from the change summary as the absence of a scope', async () => {
     const fixture = await createLedeFixture();
     await writeChangeSummary(fixture, "type: feat\nscope: agents\noverride_scope: '*'");
 
@@ -244,7 +244,7 @@ describe(resolveEpisode, () => {
     expect(episode.mergedLede).toBe('A lede fetched from the forge.');
   });
 
-  it('omits the agents version when no provenance stamp is there', async () => {
+  it('omits the agents version when the fixture does not contain a provenance stamp', async () => {
     const fixture = await createLedeFixture();
 
     expect((await resolveFor(fixture)).agentsVersion).toBeUndefined();
@@ -271,7 +271,7 @@ describe(resolveEpisode, () => {
     expect((await resolveFor(fixture)).agentsVersion).toBe(readRunningPackageVersion());
   });
 
-  it('reports no version when the stamp is malformed', async () => {
+  it('does not report a version when the stamp is malformed', async () => {
     const fixture = await createLedeFixture();
     await writeFile(fixture.provenancePath, '{ not json', 'utf8');
 
@@ -294,7 +294,7 @@ describe(resolveEpisode, () => {
     expect(expectFailure(outcome).error).toBe('no-agent-lede');
   });
 
-  it('reports a merge artifact containing no body section', async () => {
+  it('reports a merge artifact without a body section', async () => {
     const fixture = await createLedeFixture({ mergedLede: '' });
 
     const outcome = await resolveEpisode(inputFor(fixture));
@@ -309,7 +309,7 @@ describe(resolveEpisode, () => {
 
     const outcome = await resolveEpisode(inputFor(fixture));
 
-    // The code names no file, so the message names the path that the caller reinstalls.
+    // The code does not name a file, so the message names the path that the caller reinstalls.
     expect(expectFailure(outcome)).toStrictEqual({
       error: 'no-doctrine',
       message: expect.stringContaining(doctrinePath),
