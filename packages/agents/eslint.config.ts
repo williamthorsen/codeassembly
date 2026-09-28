@@ -13,15 +13,15 @@ const config = defineConfig([
   {
     files: ['package.json'],
     rules: {
-      // The package ships a CLI and no importable surface: Its empty `exports` forecloses deep imports into the
-      // build output, leaving the rule no root export to style.
+      // The package ships a CLI but not an importable surface: Its empty `exports` forecloses deep imports into the
+      // build output, leaving the rule without a root export to style.
       'package-json/exports-subpaths-style': 'off',
     },
   },
   {
     // The change-grammar engine is written to move to another repository unchanged, so it depends on nothing but
-    // itself: no module outside its directory, no package, no Node builtin, and no `process`. The engine takes the
-    // taxonomy as an argument.
+    // itself: It does not import any module outside its directory, any package, or any Node builtin, and it does not
+    // read `process`. The engine takes the taxonomy as an argument.
     files: ['src/change-grammar/**/*.ts'],
     rules: {
       'import-x/no-nodejs-modules': 'error',
@@ -41,7 +41,7 @@ const config = defineConfig([
       ],
       'no-restricted-globals': [
         'error',
-        { message: 'The change-grammar engine reads no ambient environment.', name: 'process' },
+        { message: 'The change-grammar engine does not read the ambient environment.', name: 'process' },
       ],
       'no-restricted-imports': [
         'error',
@@ -49,7 +49,7 @@ const config = defineConfig([
           patterns: [
             {
               message:
-                'The change-grammar engine depends on no package, so it carries none to a repository that it moves to.',
+                'The change-grammar engine does not depend on any package, so it carries none to a repository that it moves to.',
               regex: '^[^.]',
             },
           ],
@@ -60,7 +60,7 @@ const config = defineConfig([
   {
     // The engine's own suites stay outside the dependency half of the boundary: They read the installed release-kit
     // build and run ESLint over a probe source, which needs Vitest, ESLint, and the filesystem. Because the path zone
-    // still binds them, no suite reaches into the package around it either.
+    // still binds them, the suites do not reach into the package around it either.
     files: ['src/change-grammar/**/__tests__/**/*.ts'],
     rules: {
       'import-x/no-nodejs-modules': 'off',

@@ -45,15 +45,15 @@ The record holds two line kinds, which `kind` discriminates: a `snapshot`, and t
 
 A reader of snapshots returns the last line whose `kind` is `snapshot` and reads past anything else, so a review marker in the same record does not disturb it. A malformed or truncated final line is skipped the same way: The record is machine-local telemetry, and losing one line must not fail a deployment or a report.
 
-`version` and `sourceCommit` name the build that deployed and the commit that its source sat on, matching what `home-provenance.json` stamps. A published install is not a git tree and states no `sourceCommit`.
+`version` and `sourceCommit` name the build that deployed and the commit that its source sat on, matching what `home-provenance.json` stamps. A published install is not a git tree and does not state a `sourceCommit`.
 
 `files` is keyed by deployed path relative to the harness home, or to the domain base for a file deployed outside it, prefixed by the harness that loads it. The prefix is what keeps two harnesses' copies of one skill distinct. The key is a path rather than a slug, because a rulebook deploys as `consult-<slug>` and a skill deploys as a directory of several files. Each value is an object rather than a bare number, which leaves room for later constituent fields without a migration.
 
-A file's own `kind` states whether a harness loads it into context. Classification is by extension: `.md` is a document, everything else an asset. A helper bundle loads into no context, so a ranking that placed it beside a skill body would bury the signal.
+A file's own `kind` states whether a harness loads it into context. Classification is by extension: `.md` is a document, everything else an asset. A helper bundle does not load into any context, so a ranking that placed it beside a skill body would bury the signal.
 
 ## The expansions block
 
-`expansions` states every unit that deploys inside the documents rather than as a file of its own. A partial is the one kind that it holds today: The expander inlines a partial into each document that includes it, so no partial exists in the deployed tree and the deployed vector alone cannot say which partial moved a document.
+`expansions` states every unit that deploys inside the documents rather than as a file of its own. A partial is the one kind that it holds today: The expander inlines a partial into each document that includes it, so the deployed tree does not contain any partial and the deployed vector alone cannot say which partial moved a document.
 
 A key is `{kind}:{source}/{relPath}`, where `{source}` names the declared source that owns the content root, or `library` for the built-in one, and `{relPath}` is the unit's path relative to that root, written with forward slashes on every platform. A value states two fields:
 
@@ -66,7 +66,7 @@ A key is `{kind}:{source}/{relPath}`, where `{source}` names the declared source
 
 The block is optional at schema version 1. Absent means that nothing was measured, which is what a line written before the block existed states; empty means that the measurement ran and found none. Bumping the schema version instead would make every earlier line unreadable, and every document would be re-reported once.
 
-The measurement builds one include graph per distinct content root and reuses it across that root's documents, since a graph walks every `.md` beneath its root. A root whose graph cannot be built contributes no unit and fails nothing.
+The measurement builds one include graph per distinct content root and reuses it across that root's documents, since a graph walks every `.md` beneath its root. A root whose graph cannot be built does not contribute any unit and fails nothing.
 
 ## The review marker
 
@@ -81,7 +81,7 @@ A `streamline-guidance` run appends one marker naming every document that it rea
 }
 ```
 
-`reviewed` names each document by its path relative to the content root that holds it, written with forward slashes on every platform, and carries no source name. A source's name comes from the consumer's declaration rather than from the content root, so the same content root is `library` in the home record and a named source in a project record.
+`reviewed` names each document by its path relative to the content root that holds it, written with forward slashes on every platform, and does not carry a source name. A source's name comes from the consumer's declaration rather than from the content root, so the same content root is `library` in the home record and a named source in a project record.
 
 The run writes the same marker to the repository's record and to the home record. A marker names what it reviewed, so one landing in a record whose snapshots hold none of those documents matches nothing, which is what makes writing to both safe. A global marker was rejected: A run that reads two files would reset the baseline for every document in the record.
 
@@ -97,11 +97,11 @@ A skill deploys as a directory, so the entries inside each directory that the pl
 
 ## The three aggregates
 
-| Aggregate      | What it sums                                                  |
-| -------------- | ------------------------------------------------------------- |
-| `alwaysLoaded` | The bytes that load into a session before it invokes anything |
-| `onInvocation` | Every document's bytes, which load as a session opens them    |
-| `assets`       | Every asset's bytes, which load into no session's context     |
+| Aggregate      | What it sums                                                      |
+| -------------- | ----------------------------------------------------------------- |
+| `alwaysLoaded` | The bytes that load into a session before it invokes anything     |
+| `onInvocation` | Every document's bytes, which load as a session opens them        |
+| `assets`       | Every asset's bytes, which do not load into any session's context |
 
 `alwaysLoaded` names its three components separately, because each is reduced by different work:
 
@@ -111,7 +111,7 @@ A skill deploys as a directory, so the entries inside each directory that the pl
 
 **The aggregates overlap rather than partition.** A description's bytes count in `alwaysLoaded` and again inside its document's bytes in `onInvocation`, because the description loads with the harness's listing and loads again inside the body. The three totals do not sum to a whole, and nothing that presents them may imply that they do.
 
-`ambientRegions` is the one measured quantity without a file row behind it. An ambient region is a span inside a guidance file that the deployment does not own outright, so the region's bytes reach this aggregate and no entry in `files`.
+`ambientRegions` is the one measured quantity without a file row behind it. An ambient region is a span inside a guidance file that the deployment does not own outright, so the region's bytes reach this aggregate and do not reach any entry in `files`.
 
 ## When a snapshot is appended
 
@@ -120,11 +120,11 @@ Both conditions must hold:
 1. The measurement differs from the previous snapshot. A sync that rewrites nothing appends nothing.
 2. The tree whose content was deployed is on a commit that the remote-tracking default branch contains, so that the record tracks the default branch's sizes rather than those of each branch under development.
 
-The compared measurement is `files`, `expansions`, and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which deploys no file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that the files do not back. Comparing the expansions covers a rewiring that moves a partial's reach without moving anyone's bytes, and it makes the first measurement taken after the block existed differ from a previous snapshot that states none.
+The compared measurement is `files`, `expansions`, and `aggregates` together. Comparing the files alone would miss an edit to an ambient rulebook, which does not deploy a file of its own and changes `alwaysLoaded.ambientRegions` and nothing else; comparing the aggregates too is also what covers a later measured quantity that the files do not back. Comparing the expansions covers a rewiring that moves a partial's reach without moving anyone's bytes, and it makes the first measurement taken after the block existed differ from a previous snapshot that states none.
 
-Which tree the ancestry probes follows the domain. The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch is the one judged; the home domain's comes from the running package, so the package root is. The default branch resolves from `origin/HEAD`, falling back to `origin/main`. When neither resolves, and when the probed tree is not a git tree at all, the ancestry condition is unanswerable and the append goes through: A tree with no branch has none to be wrong about, and refusing there would stop the record entirely.
+Which tree the ancestry probes follows the domain. The repo domain's content comes from the consumer repo's own declared sources and declaration, so its branch is the one judged; the home domain's comes from the running package, so the package root is. The default branch resolves from `origin/HEAD`, falling back to `origin/main`. When neither resolves, and when the probed tree is not a git tree at all, the ancestry condition is unanswerable and the append goes through: A tree without a branch has none to be wrong about, and refusing there would stop the record entirely.
 
-`--dry-run` measures nothing, appends nothing, and prints no size line. No size condition can fail a sync: A failure in the pass prints one warning in place of the block and leaves the sync's exit status unchanged.
+`--dry-run` measures nothing, appends nothing, and does not print a size line. A sync does not fail on any size condition: A failure in the pass prints one warning in place of the block and leaves the sync's exit status unchanged.
 
 ## What a sync reports
 
@@ -152,7 +152,7 @@ Assets:         2378.5 KiB
 Run `codeassembly sizes` to rank every deployed document by size.
 ```
 
-Each line leads with the bytes that it accounts for. A document's line then states its deployed path and its size after the deployment; a removed document states no size, and a removal's figure is its previous bytes negated, which puts a large removal where a large addition would be. An expansion's line states the unit under its key's `{source}/{relPath}` tail, then its own per-document delta, the documents whose change it explains, and its own size. That document count is the one that makes the line's own arithmetic check out, and it is the unit's `reach` less the documents that the collapse never reduces. The two kinds interleave in one list ordered by the bytes that each accounts for, largest first, and by key where two are equal, so a one-byte partial edit sorts by the deployment that it caused rather than by its own size. Assets contribute no line, matching what `sizes` ranks.
+Each line leads with the bytes that it accounts for. A document's line then states its deployed path and its size after the deployment; a removed document does not state a size, and a removal's figure is its previous bytes negated, which puts a large removal where a large addition would be. An expansion's line states the unit under its key's `{source}/{relPath}` tail, then its own per-document delta, the documents whose change it explains, and its own size. That document count is the one that makes the line's own arithmetic check out, and it is the unit's `reach` less the documents that the collapse never reduces. The two kinds interleave in one list ordered by the bytes that each accounts for, largest first, and by key where two are equal, so a one-byte partial edit sorts by the deployment that it caused rather than by its own size. Assets do not contribute a line, matching what `sizes` ranks.
 
 The list is uncapped. A partial or guidance-hook edit fans out to dozens of documents, and a cap would hide exactly the fan-out that the reader needs to see.
 
@@ -160,37 +160,37 @@ The list is uncapped. A partial or guidance-hook edit fans out to dozens of docu
 
 A changed unit is reported once. For each resized document, the report sums the byte deltas of the changed units in that document's current closure:
 
-- A document whose delta equals that sum is explained in full and contributes no line, which is what keeps one partial edit from printing one line per includer.
+- A document whose delta equals that sum is explained in full and does not contribute a line, which is what keeps one partial edit from printing one line per includer.
 - A document that moved beyond that sum reports the residual: its line is led by the bytes that its own content accounts for and marked `(residual, …)`.
-- A unit that explains no document's delta contributes no line either. Extracting a partial from text that already stood in its includers leaves every deployed document byte-identical, since the expander inlines a partial to the same bytes that it replaced; a line claiming the extracted bytes as growth would head a block that states what a deployment cost.
+- A unit that does not explain any document's delta does not contribute a line either. Extracting a partial from text that already stood in its includers leaves every deployed document byte-identical, since the expander inlines a partial to the same bytes that it replaced; a line claiming the extracted bytes as growth would head a block that states what a deployment cost.
 
 A unit's line therefore accounts for the bytes that it removed from the document lines, never for its own delta across every document that holds it. The two kinds of line sum to the deployment's whole document delta: Every byte that one accounts for is a byte that the other does not.
 
 Three cases attribute nothing, and report as they did before the block existed:
 
-- **An added or removed document**, whose whole bytes are not a change for a unit to explain. A unit reaching only such a document explains nothing and states no line.
+- **An added or removed document**, whose whole bytes are not a change for a unit to explain. A unit reaching only such a document explains nothing and does not state a line.
 - **A unit that the previous snapshot held and this measurement does not.** Attributing a deleted partial needs each document's previous closure, which the snapshots do not record, and crediting it against the current closures would count the same bytes twice.
-- **A previous snapshot stating no `expansions`**, which suppresses the pass entirely and leaves every document to report its own change.
+- **A previous snapshot without `expansions`**, which suppresses the pass entirely and leaves every document to report its own change.
 
 Two further cases leave bytes in the residual rather than in the unit's line, and code handles neither. A document naming one partial in two directives is inlined twice and held in the closure once, so half of the change lands in the residual. A partial whose edit adds or removes its `<!-- children -->` placeholder shifts its includer by that line, for the same reason. Nothing is hidden in either case: The unit's line appears, and the document's line appears beside it.
 
 The growth warning keeps reading a document whole rather than its residual. A crossing is about what a session loads, not about who caused it.
 
-A deployment whose vector is unchanged states the aggregates and the closing line alone. One for which the record holds no previous snapshot states, beneath the header, that it is the first recorded deployment here.
+A deployment whose vector is unchanged states the aggregates and the closing line alone. One for which the record does not hold a previous snapshot states, beneath the header, that it is the first recorded deployment here.
 
 ### The drift block
 
-The drift block answers a different question from the change list: how far each document has grown since the streamlining review that last read it, which a deployment that moved nothing still reports. A second column on the change rows was rejected: A document that drifted but that this deployment did not move has no change row, and that document is the block's subject.
+The drift block answers a different question from the change list: how far each document has grown since the streamlining review that last read it, which a deployment that moved nothing still reports. A second column on the change rows was rejected: A document that drifted but that this deployment did not move does not have a change row, and that document is the block's subject.
 
-Per document, the newest marker naming it wins. The baseline is the first snapshot recorded after that marker, which states the size that the review left the document at; a marker with no later snapshot falls back to the one standing at or before it, which is the state a freshly-marked document is in until the next deployment records it. Measuring from the earlier snapshot alone would count the review's own reduction as headroom and hide a regrowth of that size, so the blindness would be proportional to how much the review removed. The join runs at report time through the current deployment's authored provenance: each deployed document's authored file relative to its content root, which is how a marker names what it read. A deployed file that renders from no single authored document takes no row, as an asset, a delivered support entry, and a manifest-contributed file do.
+Per document, the newest marker naming it wins. The baseline is the first snapshot recorded after that marker, which states the size that the review left the document at; a marker without a later snapshot falls back to the one standing at or before it, which is the state a freshly-marked document is in until the next deployment records it. Measuring from the earlier snapshot alone would count the review's own reduction as headroom and hide a regrowth of that size, so the blindness would be proportional to how much the review removed. The join runs at report time through the current deployment's authored provenance: each deployed document's authored file relative to its content root, which is how a marker names what it read. A deployed file that does not render from any single authored document does not take a row, as an asset, a delivered support entry, and a manifest-contributed file do.
 
-Growth alone is reported. A document at or below its baseline bytes has not drifted, and one whose newest marker has no surviving snapshot on either side of it has no baseline to measure against. That second case is what a pruned record leaves behind, and it is silent: The document simply stops reporting drift.
+Growth alone is reported. A document at or below its baseline bytes has not drifted, and one whose newest marker does not have a surviving snapshot on either side of it does not have a baseline to measure against. That second case is what a pruned record leaves behind, and it is silent: The document simply stops reporting drift.
 
-The rows are ranked by growth, largest first, and capped at 20. Documents past the cap are stated as a tail count rather than dropped. No grown document means no block and no heading, and a record carrying no marker reports the delta since the previous snapshot alone.
+The rows are ranked by growth, largest first, and capped at 20. Documents past the cap are stated as a tail count rather than dropped. Unless a document has grown, the sync prints neither the block nor its heading, and a record without a marker reports the delta since the previous snapshot alone.
 
 ### The growth warning
 
-A warning fires on a **crossing**: the previous snapshot recorded the document below the ceiling and this deployment puts it at or above, a newly deployed document above the ceiling included. A document already at or above the ceiling raises none, which keeps the warning to one appearance per document on the default branch and is what lets the ceiling sit low. A first recorded deployment raises none at all, since it has no crossing to observe.
+A warning fires on a **crossing**: the previous snapshot recorded the document below the ceiling and this deployment puts it at or above, a newly deployed document above the ceiling included. A document already at or above the ceiling raises none, which keeps the warning to one appearance per document on the default branch and is what lets the ceiling sit low. A first recorded deployment raises none at all, since it does not have a crossing to observe.
 
 The ceiling is 5 KiB, held in `GROWTH_CEILING_BYTES` in `src/deployed-sizes/build-size-report.ts`.
 
@@ -206,7 +206,7 @@ A snapshot is appended only from a tree that the default branch contains, so on 
 
 ### What the block does not repeat
 
-The block labels the three totals separately and prints no combined total, so nothing implies that they sum. The overlap disclaimer stays with `sizes`, at which the closing line points.
+The block labels the three totals separately and does not print a combined total, so nothing implies that they sum. The overlap disclaimer stays with `sizes`, at which the closing line points.
 
 Warnings reach stderr and the rest of the block reaches stdout, as every other warning in the sync report does, so the two interleave only on a terminal. Each warning names its document and reads correctly on its own.
 
