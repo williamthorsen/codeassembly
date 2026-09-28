@@ -22,7 +22,7 @@ describe(validateCommand, () => {
     await rm(projectDir, { recursive: true, force: true });
   });
 
-  it('reports a clean content root as valid, with no codeassembly.yaml anywhere above it', async () => {
+  it('reports a clean content root as valid, without a codeassembly.yaml anywhere above it', async () => {
     await writeSkill(path.join(projectDir, 'content'), 'alpha');
 
     expect(await validateCommand({ content: 'content', harness: 'all' }, projectDir)).toBe(true);
@@ -72,7 +72,7 @@ describe(validateCommand, () => {
     await expect(validateCommand({ harness: 'all' }, projectDir)).rejects.toThrow(/--content <dir>/);
   });
 
-  it('names both routes when the working directory has no package.json at all', async () => {
+  it('names both routes when the working directory does not contain any package.json at all', async () => {
     await expect(validateCommand({ harness: 'all' }, projectDir)).rejects.toThrow(/--content <dir>/);
   });
 

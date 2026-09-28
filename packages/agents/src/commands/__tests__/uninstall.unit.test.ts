@@ -118,7 +118,7 @@ describe('uninstallCommand', () => {
     expect(manifest.harnesses.claude).toBeUndefined();
   });
 
-  it('should report when no installation exists for a harness', async () => {
+  it('should report when a harness does not have any installation', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });
 
@@ -194,7 +194,7 @@ describe('uninstallCommand', () => {
 
   it('removes an owned symlink whose target content changed, without force', async () => {
     const { linkPath, source } = await writeLinkedEntry('skills/helper.mjs', 'original');
-    await writeFile(source, 'changed', 'utf8'); // A symlink has no user content to preserve.
+    await writeFile(source, 'changed', 'utf8'); // A symlink doesn't have any user content to preserve.
 
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 

@@ -36,7 +36,7 @@ describe(libraryListCommand, () => {
     expect(output.indexOf('yankee-agent')).toBeLessThan(output.indexOf('sample-collection'));
   });
 
-  it('lists a collection with an em-dash delivery, since a collection has no deploy mode', async () => {
+  it('lists a collection with an em-dash delivery, since a collection does not have a deploy mode', async () => {
     const { output } = await captureList(contentDir);
     const lines = output.split('\n');
 
@@ -51,13 +51,13 @@ describe(libraryListCommand, () => {
     expect(output).not.toContain('reserved');
   });
 
-  it('falls back to the file name when a subagent declares no name', async () => {
+  it('falls back to the file name when a subagent does not declare a name', async () => {
     const { output } = await captureList(contentDir);
 
     expect(output).toContain('xray');
   });
 
-  it('lists a skill with an em-dash delivery, since a skill has no delivery mode', async () => {
+  it('lists a skill with an em-dash delivery, since a skill does not have a delivery mode', async () => {
     const { output } = await captureList(contentDir);
     const lines = output.split('\n');
 
@@ -71,7 +71,7 @@ describe(libraryListCommand, () => {
     expect(lines.find((line) => line.includes('charlie-skill'))).toContain('rovo');
   });
 
-  it('lists a subagent with an em-dash delivery, since a subagent has no delivery mode', async () => {
+  it('lists a subagent with an em-dash delivery, since a subagent does not have a delivery mode', async () => {
     const { output } = await captureList(contentDir);
     const lines = output.split('\n');
 
