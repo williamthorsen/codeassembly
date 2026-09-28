@@ -150,7 +150,7 @@ revise-prose summary
 | 0     | 12    | 31      | 4        | 2            |
 | 1     | 9     | 18      | 1        | 0            |
 
-Recorded in `.agents/revise-prose.yaml`: capitalization-after-colon 1, em-dash 1, negative-quantifier 1, plain-speech 8, sentence-case 2.
+Recorded in `.agents/revise-prose.yaml`: capitalization-after-colon 1, em-dash 1, negative-quantifier 2, plain-speech 9, sentence-case 2.
 Not recorded: other-writing-guidance, prefer-active-voice.
 No detector: capitalization-after-colon, plain-speech, sentence-case.
 5 files excluded: 1 generated, 1 machine-generated, 3 ineligible.

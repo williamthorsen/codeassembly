@@ -1,4 +1,4 @@
-<!-- unit-version: plain-speech 8 -->
+<!-- unit-version: plain-speech 9 -->
 
 ## Plain-speech sweep calibration
 
@@ -42,13 +42,13 @@ Nine shapes recur in this corpus. Each is a search pattern rather than a rule: A
 6. **Personification of an inanimate subject.** "The queue now reads as one set behind the blocking ticket" becomes "All four tickets are now marked as blocked by that ticket".
 7. **An abstract noun standing in for a small concrete set.** "The suite covers the boundary cases" becomes "The suite covers an empty list, one entry, and a list past the budget".
 8. **A concrete metaphor standing in for the literal abstraction.** The inverse of shape 7. "attrition rather than advocacy" becomes "tiring the developer rather than persuading them". "priced on your ledger" becomes "measured by you".
-9. **A negative quantifier standing in for the one actor that cannot act.** "a skill that no task invokes" becomes "a skill that the plan does not invoke".
+9. **"No" as a determiner.** "publishes no build output" becomes "doesn't publish any build output". "there's no Vercel CLI" becomes "the Vercel CLI isn't installed on this machine". "a skill that no task invokes" becomes "a skill that the plan does not invoke".
 
 ### The negative-quantifier rule
 
-<!-- rule: negative-quantifier 1 -->
+<!-- rule: negative-quantifier 2 -->
 
-The helper reports shape 9 under this rule. Report a site of that shape under `negative-quantifier`, and every other site that breaks the plain-speech rule under `plain-speech`.
+The helper reports every determiner "no" under this rule, as shape 9, in any position. Report a site of that shape under `negative-quantifier`, and every other site that breaks the plain-speech rule under `plain-speech`.
 
 ### Words to look for
 
