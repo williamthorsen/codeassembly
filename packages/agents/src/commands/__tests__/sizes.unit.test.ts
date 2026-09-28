@@ -123,10 +123,10 @@ describe(sizesCommand, () => {
     expect(info.text()).toContain('claude/skills/home-only/SKILL.md');
   });
 
-  it('prints guidance rather than failing when no deployment has been recorded', async () => {
+  it('prints guidance rather than failing when a deployment has not been recorded', async () => {
     await expect(sizesCommand({ global: true }, process.cwd(), homeDir)).resolves.toBeUndefined();
 
-    expect(info.text()).toContain('No deployment has been recorded here.');
+    expect(info.text()).toContain("A deployment hasn't been recorded here.");
   });
 });
 

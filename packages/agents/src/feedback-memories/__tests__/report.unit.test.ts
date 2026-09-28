@@ -134,7 +134,7 @@ describe(reportSummary, () => {
     expect(output).toContain('/app/memory/feedback-bad.md');
   });
 
-  it('reports skipped files even when no readable memories remain', () => {
+  it('reports skipped files even when every memory file is unreadable', () => {
     const output = reportSummary(summary({ skipped: [{ path: '/app/memory/feedback-bad.md', reason: 'bad yaml' }] }), {
       width: 120,
     });
@@ -160,7 +160,7 @@ describe(reportSummary, () => {
     expect(truncatedDescription('abcdefgh', 4)).toBe('abc…');
   });
 
-  it('drops the description entirely when no room remains for it', () => {
+  it('drops the description entirely when the line does not have any room left for it', () => {
     expect(truncatedDescription('anything at all', 0)).toBe('');
   });
 });

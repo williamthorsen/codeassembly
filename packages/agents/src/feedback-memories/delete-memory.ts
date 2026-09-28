@@ -6,7 +6,7 @@ import { removeMemoryIndexEntry } from './reconcile-memory-index.ts';
 import type { DeleteOutcome, DeleteSuccess } from './types.ts';
 
 /**
- * Deletes a batch of memory files and reconciles each affected `MEMORY.md`. An already-absent file and a store with no
+ * Deletes a batch of memory files and reconciles each affected `MEMORY.md`. An already-absent file and a store without a
  * matching `MEMORY.md` line are non-fatal and reported per path; any other I/O error propagates as a system failure.
  */
 export async function deleteMemories(input: { paths: readonly string[] }): Promise<DeleteSuccess> {

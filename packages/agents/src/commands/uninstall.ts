@@ -19,8 +19,8 @@ export async function uninstallCommand(
   const manifest = await readManifest(manifestPath);
   const harnesses = resolveHarnessIds(options.harness, baseDir);
 
-  // Retire the withdrawn `~/.agents/` tier ahead of the harness-detection return, so that a home that targets no
-  // harness is still cleared.
+  // Retire the withdrawn `~/.agents/` tier ahead of the harness-detection return, so that a home that doesn't
+  // target any harness is still cleared.
   const didRetire = await retireSharedGuidance(manifest, { force: options.force, dryRun: false }, baseDir);
 
   if (harnesses.length === 0) {
