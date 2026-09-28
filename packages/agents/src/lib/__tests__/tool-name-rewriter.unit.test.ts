@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
 describe('rewriteToolNames', () => {
-  it('returns content unchanged when no placeholders are present', () => {
+  it('returns content unchanged when it does not contain any placeholders', () => {
     const content = 'Plain text with no placeholders.';
     expect(rewriteToolNames(content, 'rovo', 'test.md')).toBe(content);
   });

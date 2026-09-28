@@ -7,7 +7,7 @@ import { renderRulebookBody, type RulebookRenderContext } from '../rulebook-tran
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
-// `shell-conventions` declares a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it deploys no skill.
+// `shell-conventions` declares a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it doesn't deploy a skill.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['a-rulebook', { skillName: 'consult-a-rulebook', skill: true }],
   ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
@@ -124,7 +124,7 @@ describe(renderRulebookBody, () => {
       );
     });
 
-    it('rejects a token naming no deployed rulebook', () => {
+    it('rejects a token that does not name any deployed rulebook', () => {
       expect(() => renderRulebookBody('See {rulebook:never-declared}.', 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
         /\{rulebook:never-declared\}[\s\S]*no rulebook in the deployed set/,
       );
@@ -194,12 +194,12 @@ describe(renderRulebookBody, () => {
       expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow(/2 unusable Markdown link target/);
     });
 
-    it('validates before rewriting, so a bad target yields no partial output', () => {
+    it('validates before rewriting, so a bad target does not yield any partial output', () => {
       const body = 'Good [a](../../skills/a.md), bad [b](../../subagents/b.md).';
       expect(() => renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toThrow();
     });
 
-    it('rejects an anchor naming no heading in the same body, naming the rulebook source file', () => {
+    it('rejects an anchor that does not name any heading in the same body, naming the rulebook source file', () => {
       expect(() => renderRulebookBody('See [x](#nowhere).', 'shell-conventions', CLAUDE_CONTEXT)).toThrow(
         /guidance\/rulebooks\/shell-conventions\.md contains 1 unresolvable anchor link target/,
       );
@@ -235,7 +235,7 @@ describe(renderRulebookBody, () => {
     });
   });
 
-  it('returns a body with no links or variables unchanged', () => {
+  it('returns a body without links or variables unchanged', () => {
     const body = '# Heading\n\nPlain guidance text.\n';
     expect(renderRulebookBody(body, 'a-rulebook', CLAUDE_CONTEXT)).toBe(body);
   });

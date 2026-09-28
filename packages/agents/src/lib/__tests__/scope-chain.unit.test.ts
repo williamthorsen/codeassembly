@@ -28,7 +28,7 @@ describe(resolveScopeChain, () => {
   /** The absolute path of the project-local `codeassembly.local.yaml`. */
   const localPath = (): string => path.join(cwd, '.agents', 'codeassembly.local.yaml');
 
-  it('returns an empty list when no tier file exists', async () => {
+  it('returns an empty list when the .agents directory does not contain a tier file', async () => {
     expect(await resolveScopeChain('codeassembly.yaml', { cwd })).toEqual([]);
   });
 

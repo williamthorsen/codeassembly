@@ -8,7 +8,7 @@ describe(extractInstalledSlugs, () => {
     expect(extractInstalledSlugs(withBoth)).toEqual(['alpha', 'beta']);
   });
 
-  it('when there are no markers, returns an empty array', () => {
+  it('when the content does not contain any markers, returns an empty array', () => {
     expect(extractInstalledSlugs('# Title\n')).toEqual([]);
   });
 
@@ -51,7 +51,7 @@ describe(injectRulebook, () => {
     );
   });
 
-  it('when the rulebook declares no version, writes no version line', () => {
+  it('when the rulebook does not declare a version, does not write a version line', () => {
     expect(injectRulebook('', 'shell', 'Body text', undefined)).toBe(injectRulebook('', 'shell', 'Body text'));
   });
 
@@ -127,7 +127,7 @@ describe(removeRulebook, () => {
     expect(removeRulebook(only, 'shell')).toBe('');
   });
 
-  it('when removing the first of two blocks in a header-less document, leaves no leading blank line', () => {
+  it('when removing the first of two blocks in a header-less document, does not leave a leading blank line', () => {
     const withBoth = injectRulebook(injectRulebook('', 'alpha', 'A body'), 'beta', 'B body');
 
     const afterRemoval = removeRulebook(withBoth, 'alpha');

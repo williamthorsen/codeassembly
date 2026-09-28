@@ -83,7 +83,7 @@ describe('source support delivery', () => {
       expect(entries.map((entry) => entry.relPath)).toEqual(['_data/x.md']);
     });
 
-    it('renders nothing for a source that contains no skills directory', async () => {
+    it('renders nothing for a source that does not contain a skills directory', async () => {
       await mkdir(sourceDir, { recursive: true });
 
       expect(await renderSourceSupport(sourceDir, context())).toEqual([]);
@@ -126,7 +126,7 @@ describe('source support delivery', () => {
   });
 
   describe(retractUndeclaredSourceSupport, () => {
-    it('removes a namespace claimed by no declared source and keeps the ones that remain', async () => {
+    it('removes a namespace not claimed by any declared source and keeps the ones that remain', async () => {
       await mkdir(path.join(destParent, 'kept', '_data'), { recursive: true });
       await writeFile(path.join(destParent, 'kept', '_data', 'a.md'), '# A\n', 'utf8');
       await mkdir(path.join(destParent, 'dropped', '_data'), { recursive: true });
@@ -149,7 +149,7 @@ describe('source support delivery', () => {
       expect(existsSync(path.join(destParent, '@williamthorsen', 'other'))).toBe(false);
     });
 
-    it('removes a scope directory left containing no declared package', async () => {
+    it('removes a scope directory left without any declared package', async () => {
       await mkdir(path.join(destParent, '@williamthorsen', 'nmr'), { recursive: true });
       await mkdir(path.join(destParent, 'org', '_data'), { recursive: true });
       await writeFile(path.join(destParent, 'org', '_data', 'a.md'), '# A\n', 'utf8');
@@ -162,7 +162,7 @@ describe('source support delivery', () => {
       expect(existsSync(path.join(destParent, 'org', '_data', 'a.md'))).toBe(true);
     });
 
-    it('removes the root once no source claims anything under it', async () => {
+    it('removes the root once the declared sources do not claim anything under it', async () => {
       await mkdir(path.join(destParent, 'dropped'), { recursive: true });
 
       await retractUndeclaredSourceSupport(destParent, { surviving: [], emptied: [] });

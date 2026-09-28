@@ -59,7 +59,7 @@ describe(injectDeclaredRulebooks, () => {
     );
   });
 
-  it('returns content declaring no rulebooks byte-identically, leaving its frontmatter unserialized', () => {
+  it('returns content byte-identically when it does not declare any rulebooks, leaving its frontmatter unserialized', () => {
     // A re-serialization would rewrite the long description and the flow sequence.
     const source = dedent`
       ---

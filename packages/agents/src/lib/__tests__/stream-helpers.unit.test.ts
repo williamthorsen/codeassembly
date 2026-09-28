@@ -16,7 +16,7 @@ describe(readAll, () => {
     await expect(readAll(stream)).resolves.toBe('café');
   });
 
-  it('returns an empty string for a stream with no chunks', async () => {
+  it('returns an empty string for a stream without any chunks', async () => {
     await expect(readAll(Readable.from([]))).resolves.toBe('');
   });
 
