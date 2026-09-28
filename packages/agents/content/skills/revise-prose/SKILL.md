@@ -156,7 +156,7 @@ No detector: capitalization-after-colon, plain-speech, sentence-case.
 5 files excluded: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
-The recorded line names each rule from the fold's `rules` at its sweep version. Give the line naming what was not recorded only if step 1 kept a rule without a sweep version, naming each such rule and the slug of each block that is not a unit and from which step 1 kept a rule.
+The recorded line names each rule from the fold's `rules` at its sweep version. Give the line naming what was not recorded only if step 1 kept an unrecorded rule, naming each kept rule without a sweep version and the slug of each block that is not a unit and from which step 1 kept a rule.
 
 Give the excluded-files clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so that a file that the sweep never opened is not mistaken for a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
 
