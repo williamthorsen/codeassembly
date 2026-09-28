@@ -12,12 +12,13 @@ import { readDirEntries } from '../../src/lib/fs-helpers.ts';
 
 // The vetted collection claims its members name nothing specific to one author's environment, and a knowledge-store
 // name is the form in which that claim fails most quietly: A reader copies the invocation, and the capture is refused
-// against a registry that has no such store. The scanned set is the collection's resolved closure, so a promotion
-// brings an artifact under the rule and a demotion releases it, and there is no exemption list to go stale.
+// against a registry that does not contain that store. The scanned set is the collection's resolved closure, so a
+// promotion brings an artifact under the rule and a demotion releases it, and the test does not keep an exemption list
+// that could go stale.
 //
 // What this cannot catch: a concrete store named in prose rather than in an argument position, and a value that is
 // further from its flag than the neighboring table cell. The guard keeps the decidable position from regressing; it
-// does not prove the closure names no store at all.
+// does not prove that the closure is entirely free of store names.
 
 /** The collection whose closure the rule applies to. */
 const VETTED_COLLECTION = 'recommended';
@@ -48,13 +49,14 @@ interface Violation {
 describe('vetted store conventions', () => {
   const contentDir = resolveContentDir();
 
-  it(`names no concrete store in a --store or --kb argument position across ${VETTED_COLLECTION}'s closure`, async () => {
+  it(`does not name a concrete store in a --store or --kb argument position across ${VETTED_COLLECTION}'s closure`, async () => {
     const violations = await findViolations(contentDir);
 
     expect(violations, formatViolations(violations)).toEqual([]);
   });
 
-  // An empty closure yields no violation and reads as a pass, so this pins the scanned set to the closure's members.
+  // An empty closure does not yield any violation and reads as a pass, so this pins the scanned set to the closure's
+  // members.
   it('scans a Markdown file for every artifact in the closure', async () => {
     const closure = await resolveClosure({ collection: [VETTED_COLLECTION] }, libraryResolver(contentDir));
     const members = [...closure.rulebooks, ...closure.skills, ...closure.subagents];
@@ -144,7 +146,7 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   if (violations.length === 0) return '';
   const header =
     `Found ${violations.length} concrete store name(s) in a --store or --kb argument position within ` +
-    `${VETTED_COLLECTION}'s closure. A vetted artifact names no store that exists only in one environment: ` +
+    `${VETTED_COLLECTION}'s closure. A vetted artifact does not name a store that exists only in one environment: ` +
     `replace each with an angle-bracket placeholder, with a role sentinel (${ROLE_SENTINELS.join(', ')}), ` +
     `or with a rule for choosing the destination.`;
   const lines = violations.map(
@@ -153,7 +155,7 @@ function formatViolations(violations: ReadonlyArray<Violation>): string {
   return [header, ...lines].join('\n');
 }
 
-/** True when a value in a flag position names no real store: a placeholder, or a role sentinel. */
+/** True when a value in a flag position does not name a real store: a placeholder, or a role sentinel. */
 function isPermittedStoreValue(value: string): boolean {
   return ROLE_SENTINELS.includes(value) || (value.startsWith('<') && value.endsWith('>'));
 }
@@ -208,7 +210,7 @@ function readFlagValues(text: string): Array<string> {
 
 /**
  * Reads the store assigned to a flag by a table row: The row has a cell that is the flag alone, and the cell beside it
- * opens with a code span. A value cell opening with prose states no argument, so it yields nothing.
+ * opens with a code span. A value cell opening with prose does not state an argument, so it yields nothing.
  */
 function readTableCellStore(line: string): string | undefined {
   const trimmedLine = line.trim();

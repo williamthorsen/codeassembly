@@ -2,7 +2,7 @@
 
 These rules apply to every comment that you write **into source**: writing new code, revising it, editing after a review, or **proposing** replacement comment text inside a review finding. A comment drafted for someone else's file is a source comment, and the same audit applies to it.
 
-The reader is an engineer six months from now with no transcript, no session, and no memory of the change. Write for that reader.
+The reader is an engineer six months from now who does not have the transcript, the session, or any memory of the change. Write for that reader.
 
 ### The baseline
 
