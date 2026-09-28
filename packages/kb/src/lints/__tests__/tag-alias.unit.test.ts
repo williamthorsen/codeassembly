@@ -12,7 +12,7 @@ describe(tagAliasFindings, () => {
     expect(findings[0]?.message).toContain('javascript');
   });
 
-  it('points the finding at the note, with no exact line', () => {
+  it('points the finding at the note, without an exact line', () => {
     const [finding] = tagAliasFindings({ path: 'a.md', fields: { tags: ['js'] } }, aliasesOf([['js', 'javascript']]));
     expect(finding?.line).toBeUndefined();
     expect(finding?.path).toBe('a.md');
@@ -45,15 +45,15 @@ describe(tagAliasFindings, () => {
     ]);
   });
 
-  it('yields no findings when tags is absent', () => {
+  it('does not yield any findings when tags is absent', () => {
     expect(tagAliasFindings({ path: 'a.md', fields: {} }, aliasesOf([['js', 'javascript']]))).toEqual([]);
   });
 
-  it('yields no findings when tags is not a list', () => {
+  it('does not yield any findings when tags is not a list', () => {
     expect(tagAliasFindings({ path: 'a.md', fields: { tags: 'js' } }, aliasesOf([['js', 'javascript']]))).toEqual([]);
   });
 
-  it('yields no findings when no aliases are configured', () => {
+  it('does not yield any findings when the alias map is empty', () => {
     expect(tagAliasFindings({ path: 'a.md', fields: { tags: ['js'] } }, aliasesOf([]))).toEqual([]);
   });
 });

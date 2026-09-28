@@ -27,8 +27,8 @@ type RegistryFileContents = { entries: KbRegistryEntry[] } & Partial<Record<Role
  * `feedback_kb` pointers each resolve by name against the merged entries (the project's value overriding the user's);
  * the resolved entries are exposed as `defaultKb` and `feedbackKb`.
  * Within a single file, relative `path` values resolve against that file's directory and a leading `~` or `~/`
- * expands against `$HOME`. Both files are optional; when neither exists the result has no entries.
- * Malformed YAML, a structural defect, or a role pointer that names no registered KB throw.
+ * expands against `$HOME`. Both files are optional; when neither exists the result does not contain any entries.
+ * Malformed YAML, a structural defect, or a role pointer that does not match any registered KB throw.
  */
 export async function loadKbRegistry(
   input: { userConfigPath?: string; projectDir?: string; home?: string } = {},
@@ -169,7 +169,8 @@ function mergeEntries(userEntries: KbRegistryEntry[], projectEntries: KbRegistry
 
 /**
  * Resolves a role pointer to its merged entry, the project file's value overriding the user file's. Returns
- * `undefined` when neither file sets the key; throws naming the source file when the name matches no registered KB.
+ * `undefined` when neither file sets the key; throws naming the source file when the name does not match any
+ * registered KB.
  */
 function resolveRoleKb(
   entries: KbRegistryEntry[],

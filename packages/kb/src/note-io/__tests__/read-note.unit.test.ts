@@ -10,7 +10,7 @@ describe(readNoteContent, () => {
     expect(body.trim()).toBe('The body.');
   });
 
-  it('reports an error when there is no frontmatter block', () => {
+  it('reports an error when the content does not contain a frontmatter block', () => {
     const { error } = readNoteContent('Just a body, no fences.\n');
     expect(error).toBeDefined();
   });

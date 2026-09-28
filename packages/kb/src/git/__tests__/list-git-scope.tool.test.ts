@@ -12,7 +12,7 @@ import { listGitScope } from '../list-git-scope.ts';
 const DECOMPOSED_NAME = 'Cafe\u{301}.md';
 
 describe(listGitScope, () => {
-  it('includes tracked notes and untracked notes that no rule ignores', async () => {
+  it('includes tracked notes and untracked notes not ignored by any rule', async () => {
     const root = await makeTree({ 'content/Tracked.md': 'x\n' });
     initGitRepo(root);
     commitAll(root, 'base');

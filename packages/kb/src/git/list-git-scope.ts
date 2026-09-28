@@ -1,7 +1,7 @@
 import { runGit } from './run-git.ts';
 
 /**
- * Returns every path that git tracks under `root`, plus every untracked path that no ignore rule covers, as an
+ * Returns every path that git tracks under `root`, plus every untracked path not covered by any ignore rule, as an
  * NFC-normalized set of root-relative, slash-separated paths. Returns `undefined` when git cannot list the paths,
  * because `root` is outside a working tree or git cannot be run at all, so a caller keeps its own scope instead of
  * reading an empty set as "git ignores everything".

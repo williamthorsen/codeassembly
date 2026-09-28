@@ -27,7 +27,7 @@ export function parseFrontmatterFields(text: string): { fields: Record<string, u
   return { fields: isRecord(plain) ? plain : {} };
 }
 
-/** Renders a field map to frontmatter text (no fences), one `key: value` line per entry, in insertion order. */
+/** Renders a field map to frontmatter text (without fences), one `key: value` line per entry, in insertion order. */
 export function renderFrontmatterFields(fields: Record<string, unknown>): string {
   return Object.entries(fields)
     .flatMap(([key, value]) => renderEntry(key, value))
