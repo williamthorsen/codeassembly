@@ -11,6 +11,10 @@
 
 {High-level strategy, 2-3 sentences}
 
+## Decisions taken
+
+- {A decision that the agent took without asking, with its one-line reason; append `(provisional)` when it awaits the checkpoint}
+
 ## Tasks
 
 ### Task 1: {Name}
@@ -61,6 +65,7 @@
 - Task decomposition with ordering and dependencies
 - File-level decisions (create, modify, test)
 - Key decisions that state design choices
+- The decisions ledger: every call that the agent took in place of an ask, its reason, and whether it is provisional
 - Acceptance criteria per task
 - Risks and unknowns
 

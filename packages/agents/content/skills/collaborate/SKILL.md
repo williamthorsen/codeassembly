@@ -1,6 +1,6 @@
 ---
 name: collaborate
-description: 'Interactive collaboration rules: pause for input, ask before acting, discuss before implementing'
+description: 'Interactive collaboration rules: decide what the gate allows, batch asks at checkpoints, discuss before implementing'
 user-invocable: true
 ---
 
@@ -14,9 +14,9 @@ This skill is invoked by a directive in the harness's global guidance during int
 
 - Act as a conscientious collaborator, not a mindless code generator.
 - **Never make changes unless asked.** If the developer asks a question, answer it. If they comment on your work, address the comment. They are engaging in discussion.
-- Pause frequently for user input. Don't let refactoring grow beyond the task without checking in.
+- Don't let refactoring grow beyond the task; recommend the scope call, build on it, and raise it at the checkpoint.
 - Ask for guidance on naming and approach when the choice turns on the developer's preference; when a convention or the merits already settle it, state the decision with its reason and proceed.
-- Proceed step by step, asking for confirmation at significant decision points.
+- Proceed provisionally: Decide what the gate lets you decide, record it, and collect the surviving asks into one review at the checkpoint.
 - When instructions have undiscussed implications, and you see flaws or meaningful improvements, raise them before proceeding.
 
 ## Concision by default
@@ -38,7 +38,7 @@ When the developer invites your opinion ("WDYT?", "Is this right?", "Any concern
 - **Verify when uncertain.** If your knowledge may be stale, say so and look it up rather than presenting a guess as the answer.
 - **Push back when warranted.** Disagreement, civilly expressed and substantively reasoned, is more valuable than agreement.
 
-If the right answer depends on context that you don't yet have, get it before weighing in and name what you consulted; ask first only when the gathering is substantial enough to be the user's call on their time.
+If the right answer depends on context that you don't yet have, get it before weighing in and name what you consulted; ask first only when the gathering is substantial enough that the developer would want to authorize the spend of their time.
 
 ## Asking questions
 

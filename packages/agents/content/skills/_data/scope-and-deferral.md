@@ -11,7 +11,7 @@ By default, fold into the current change the work that the ticket didn't name (a
 
 "The ticket didn't mention it" is never such a reason. When the discovered work addresses the same underlying problem, closing only the ticket-named part leaves the problem partially solved, so the discovered work is required, not optional.
 
-**Authority.** Scope is the user's decision, not the agent's. Report discovered work, recommend a disposition with its tradeoffs, and let the user choose; never declare work "out of scope" as settled fact.
+**Authority.** The agent recommends the disposition of discovered work and builds on the recommendation; the developer vetoes. A fold-in is provisional and surfaces at the ticket checkpoint with its reason. A spin-off creates remote state, so it is asked before the ticket is created. Never declare work "out of scope" as settled fact, and never drop discovered work without reporting it.
 
 **Feature responsibility.** When the current change introduces a feature, an avoidable user-visible defect caused by that feature is in-scope-by-default, a likely bug to fix here, not an automatic follow-up. Meeting the ticket's written acceptance criteria does not license merging a defect that the change itself introduced.
 
@@ -23,7 +23,7 @@ Once work is judged genuinely separable, ticket it immediately rather than leavi
 
 ## Three-lane disposition model
 
-The agent assigns every finding that it reports to one of three lanes. The agent never silently drops or withholds findings on threshold grounds; the user retains full discretion to drop any finding, but the agent does not pre-filter on cost.
+The agent assigns every finding that it reports to one of three lanes. The agent never silently drops or withholds findings on threshold grounds: It recommends a lane for each finding and the developer can veto any of them, so the agent does not pre-filter on cost.
 
 ### Do now
 

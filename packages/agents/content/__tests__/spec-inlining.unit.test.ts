@@ -41,9 +41,18 @@ const OPTION_FORMAT: Spec = {
     // The gate that decides whether a menu exists at all. Without it the block reads as a formatting spec, and a
     // settled call gets rendered as a fork that the reader has to evaluate.
     '**Earn the menu before rendering it.**',
+    // The gate's test, stated on the markers. Without it the gate is a judgment call again, which a skill step that
+    // says to ask overrides.
+    'Render the menu only when the two strongest options are both ■■□',
+    // The closed gated class's closing line. Without it the class reads as examples of a broader "consequential"
+    // category, which the agent interprets generously.
+    "Everything else is the agent's call by default",
     // The gate's carve-out. Without it the gate reads as license to decide an authorization ask, trading a menu
     // problem for an agent that acts when it should have asked.
-    'This gate governs judgment asks alone',
+    'The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint',
+    // The rule that keeps a gated ask from stalling the session. Without it the agent stops at the first gated
+    // decision and waits, with everything that did not depend on the answer left undone.
+    'Do everything that does not depend on an answer first',
     // The test that tells a real bullet from a manufactured one. Without it the rule states what a bullet must be
     // and not how to tell, which is the wording that four captured failures got through.
     'must be false for at least one other option',

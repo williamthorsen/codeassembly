@@ -7,6 +7,7 @@ The handoff test has two halves, and each needs a different reader. The sweep ch
 **Sweep for:**
 
 - Settled decisions, including the rejected alternatives.
+- Decisions that the agent took without asking: Every one is in the plan's `## Decisions taken` section, with its reason, marked provisional when it awaits this checkpoint.
 - Constraints and scope boundaries on which the conversation agreed.
 - Edge cases and success criteria raised in discussion but missing from the acceptance criteria.
 - Tacit context of the form "the implementer might not realize X": What the conversation established as known and the artifacts leave the reader to rediscover.
