@@ -14,7 +14,7 @@ export interface AssertionCandidate {
   tags: string[];
   /** A context snippet drawn from the ripgrep match. */
   snippet: string;
-  /** Whole days between the note's `last-verified` date and now, or `null` when no age could be computed. */
+  /** Whole days between the note's `last-verified` date and now, or `null` when the age could not be computed. */
   lastVerifiedAgeDays: number | null;
   /** Supersession status, following the `superseded-by` chain to the canonical successor. */
   supersession: Supersession;
@@ -37,7 +37,7 @@ export interface RetrieveResult {
   scopedKbs: ScopedKb[];
   /** Knowledge-base health problems, always present and possibly empty. */
   warnings: string[];
-  /** A run-level diagnostic, set when the run produced no candidates. */
+  /** A run-level diagnostic, set when the run didn't produce any candidates. */
   diagnostic?: string;
 }
 

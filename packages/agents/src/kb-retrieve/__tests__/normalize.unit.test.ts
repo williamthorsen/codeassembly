@@ -53,7 +53,7 @@ describe(normalizeHits, () => {
     });
   });
 
-  it('reports superseded: false for a note with no successor', async () => {
+  it('reports superseded: false for a note without a successor', async () => {
     const candidates = await normalizeHits({ hits: [await hitFor(join(NOTES_VAULT, 'new-guide.md'))], now: NOW });
 
     expect(candidates[0]?.supersession).toEqual({ superseded: false, canonicalPath: null });
@@ -84,7 +84,7 @@ describe(normalizeHits, () => {
 });
 
 describe('normalizeHits addressed-by reporting', () => {
-  it('omits addressedBy when the note declares no addressed-by', async () => {
+  it("omits addressedBy when the note doesn't declare addressed-by", async () => {
     const candidates = await normalizeHits({ hits: [await hitFor(join(NOTES_VAULT, 'new-guide.md'))], now: NOW });
 
     expect(candidates[0]?.addressedBy).toBeUndefined();

@@ -7,4 +7,4 @@ updated: 2026-03-01T13:24:40Z
 tags: [kitchen]
 ---
 
-Notes on pour-over ratios that share no terms with the query fixtures.
+Notes on pour-over ratios that don't share any terms with the query fixtures.
