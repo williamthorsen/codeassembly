@@ -10,8 +10,8 @@ import { enumerateCatalogSlugs } from '../library-catalog.ts';
 
 // Asserts that the content library's invocation edges resolve: Declaring a skill pulls the skills and subagents that
 // it invokes into its closure, whether the invocation is an inline body token or a non-inline dispatch declared in
-// frontmatter. An optional body token is the one invocation that contributes no edge, so the closure that it stays
-// out of is asserted here alongside the closures entered by the others.
+// frontmatter. An optional body token is the one invocation that does not contribute an edge, so the closure that
+// it stays out of is asserted here alongside the closures entered by the others.
 describe('library invocation edges', () => {
   const contentDir = resolveContentDir();
 
@@ -42,9 +42,9 @@ describe('library invocation edges', () => {
   });
 
   it('leaves capture-lede-decision out of merge-pr’s closure and in triage’s', async () => {
-    // The merge flow records no lede decision, so no body token pulls the skill in. It reaches consumers through the
-    // triage collection alone, and both halves are asserted: without the second, deleting the skill from the library
-    // would satisfy the first.
+    // The merge flow does not record a lede decision, so its body does not contain a token that pulls the skill in. It
+    // reaches consumers through the triage collection alone, and both halves are asserted: without the second,
+    // deleting the skill from the library would satisfy the first.
     const mergePr = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
     const triage = await resolveClosure({ collection: ['triage'] }, libraryResolver(contentDir));
 
@@ -84,14 +84,14 @@ describe('library invocation edges', () => {
   });
 
   it('resolves the entire content library without a cycle or missing artifact', async () => {
-    // The whole-catalog resolution exercises every self-token (dropped, so no self-cycle) and every cross-reference
-    // edge (resolves to a real artifact) at once.
+    // The whole-catalog resolution exercises every self-token (dropped, so it cannot form a self-cycle) and every
+    // cross-reference edge (resolves to a real artifact) at once.
     const catalog = await enumerateCatalogSlugs(contentDir);
 
     await expect(resolveClosure(catalog, libraryResolver(contentDir))).resolves.toBeDefined();
   });
 
-  it('leaves no literal command reference to a known skill or subagent in any deployed content', async () => {
+  it('does not leave a literal command reference to a known skill or subagent in any deployed content', async () => {
     // A bare `/slug` naming a library artifact is never rewritten (the render pass only touches `{skill:}` /
     // `{subagent:}` tokens). It renders only on Claude wherever it lives. The guard scans every deployed markdown
     // file, not just top-level skill/subagent bodies: `_data` reference docs, `_partials`, rulebooks, and collections

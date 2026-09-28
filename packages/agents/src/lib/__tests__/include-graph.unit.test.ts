@@ -93,7 +93,7 @@ describe(buildIncludeGraph, () => {
       expect(graph.countReach(path.join(root, 'guidance/shared/AGENTS.md'))).toBe(1);
     });
 
-    it('counts no file of the collection, partial, and test trees', async () => {
+    it('does not count any file of the collection, partial, and test trees', async () => {
       await writeFiles(root, {
         '__tests__/fixtures/case.md': 'Fixture.\n',
         'collections/all.md': 'All.\n',
@@ -107,7 +107,7 @@ describe(buildIncludeGraph, () => {
       expect(graph.countReach(path.join(root, 'collections/all.md'))).toBe(0);
     });
 
-    it("counts a partial's reach at every depth, and reports zero for one that no document includes", async () => {
+    it("counts a partial's reach at every depth, and reports zero for one not included by any document", async () => {
       await writeFiles(root, { '_partials/unused.md': 'Unused.\n' });
       const graph = await buildIncludeGraph(root);
 
@@ -116,7 +116,7 @@ describe(buildIncludeGraph, () => {
       expect(graph.countReach(path.join(root, '_partials/unused.md'))).toBe(0);
     });
 
-    it('counts a partial included by a test file toward no reach', async () => {
+    it("does not count a test file's inclusion of a partial toward its reach", async () => {
       await writeFiles(root, {
         '__tests__/fixtures/case.md': '<!-- include: ../../_partials/unused.md / -->\n',
         '_partials/unused.md': 'Unused.\n',
@@ -128,7 +128,7 @@ describe(buildIncludeGraph, () => {
   });
 
   describe('unresolved directives', () => {
-    it('reports a file whose own directive names no file, and fails nothing else in the root', async () => {
+    it('reports a file whose own directive names a file that does not exist, and fails nothing else in the root', async () => {
       await writeFiles(root, { 'guidance/example.md': '<!-- include: ./absent.md / -->\n' });
       const graph = await buildIncludeGraph(root);
 

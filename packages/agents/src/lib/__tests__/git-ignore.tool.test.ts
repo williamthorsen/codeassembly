@@ -36,7 +36,7 @@ describe(checkGitIgnored, () => {
     expect(await checkGitIgnored(scratch, target)).toBe(true);
   });
 
-  it('reports a path covered by no rule as not ignored', async () => {
+  it('reports a path not covered by any rule as not ignored', async () => {
     await initRepo('node_modules/\n');
     const target = path.join(scratch, 'CLAUDE.local.md');
     await writeFile(target, '# Notes\n', 'utf8');

@@ -114,7 +114,7 @@ describe(isSkillDirectory, () => {
     expect(await isSkillDirectory(path.join(contentDir, 'skills', 'people-report'))).toBe(true);
   });
 
-  it('rejects a directory named SKILL.md, which contains no body to install', async () => {
+  it('rejects a directory named SKILL.md, which does not contain a body to install', async () => {
     await mkdir(path.join(contentDir, 'skills', 'weird', 'SKILL.md'), { recursive: true });
 
     expect(await isSkillDirectory(path.join(contentDir, 'skills', 'weird'))).toBe(false);
