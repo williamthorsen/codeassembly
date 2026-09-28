@@ -70,7 +70,7 @@ describe(runCurate, () => {
     vi.mocked(check).mockClear();
   });
 
-  it('returns no-kb-resolvable when no KB can be found and none is requested', async () => {
+  it("returns no-kb-resolvable when the lookup doesn't find any KB and argv doesn't request one", async () => {
     const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
     const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
 

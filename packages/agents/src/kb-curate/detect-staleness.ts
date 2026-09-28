@@ -6,12 +6,12 @@ import { computeAgeDays } from '../kb-shared/note-helpers.ts';
 /**
  * Reports verification-staleness findings for one note, both at `warning` severity:
  *
- * - `verification.unmarked`: The note has no parseable `last-verified` date. Emitted only when
+ * - `verification.unmarked`: The note doesn't have a parseable `last-verified` date. Emitted only when
  *   `vaultUsesVerification` is true.
  * - `verification.stale`: `last-verified` is older than `staleAfterDays` whole days before `now`. Emitted regardless
  *   of `vaultUsesVerification`.
  *
- * A note with no parseable frontmatter has no `last-verified`, so it counts as unmarked.
+ * A note without parseable frontmatter doesn't have a `last-verified` value, so it counts as unmarked.
  */
 export function detectStaleness(input: {
   note: EnumeratedNote;
