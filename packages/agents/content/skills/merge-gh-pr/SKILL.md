@@ -28,12 +28,10 @@ Internal delegate that merges a pull request on GitHub. Called by `merge-pr` wit
 Use a single `gh pr view` call to fetch every field needed for validation:
 
 ```bash
-gh pr view {pr_number} --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,isCrossRepository,baseRefName,headRepository,headRepositoryOwner
+gh pr view {pr_number} --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefName,isCrossRepository,baseRefName
 ```
 
 Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`). Do not regex-extract.
-
-Step 6's remote-deletion API call needs `headRepository` and `headRepositoryOwner` so that, for cross-repo PRs (`isCrossRepository == true`), it targets the correct head repo rather than the base repo.
 
 ### 2. Run pre-merge checks
 
@@ -73,65 +71,49 @@ git rev-list --left-right --count "origin/{headRefName}...HEAD"
 
 If the counts differ from `0\t0`, refuse: "Local branch is out of sync with `origin/{headRefName}` (ahead {a}, behind {b}); push or pull before merging."
 
-### 4. Write merge-commit body to scratch file
+### 4. Write the title and body to scratch files
 
-Write `body` to a scratch file per [gh body file](#gh-body-file), naming it for the PR (`gh-body-pr{pr_number}-{timestamp}.md`); do not inline the body into the shell command.
+Write `body` to a scratch file per [gh body file](#gh-body-file), naming it for the PR (`gh-body-pr{pr_number}-{timestamp}.md`). When `strategy` is `squash`, also write `title` to `gh-title-pr{pr_number}-{timestamp}.txt` in the same directory. Do not inline either into a command.
 
-### 5. Build and execute the merge command
+**Read both files back before step 5.** Read each path that step 5 is about to pass, with the {tool:Read} tool rather than a shell command, and compare its content against the `body` and `title` received by this delegate; a single trailing newline in the title file is ignored. Refuse when either differs, naming the PR and the path: "Body file for PR #{n} at {path} is not the approved merge body." or "Title file for PR #{n} at {path} is not the approved merge title." A squash merge onto a protected default branch publishes a commit message that cannot be amended, so this is the last point at which a wrong message can be caught. Read the paths being passed rather than the ones written earlier in this step, so that a path left over from another PR is caught rather than confirmed.
 
-Map `strategy` to the corresponding `gh pr merge` flag:
+### 5. Merge and delete the branch
 
-| `strategy` | Flag       |
-| ---------- | ---------- |
-| `squash`   | `--squash` |
-| `merge`    | `--merge`  |
-| `rebase`   | `--rebase` |
-
-For `squash`, pass `--subject "{title}"` so that the rendered title becomes the merge-commit subject. For `merge` and `rebase`, omit `--subject`; GitHub composes its own subject for those strategies.
-
-For `body`, pass `--body-file "$body_path"` only when `strategy` is `squash` or `merge`. Skip the flag for `rebase`: Rebased commits retain their original messages, so the composed merge body has nothing to attach to. Passing `--body-file` to `gh pr merge --rebase` can make `gh` report an error, depending on its version. Omit it defensively.
-
-For `deletion_strategy`, append `--delete-branch` iff the value is `both`. Skip for `remote` and `none`: `remote` is handled by the new post-merge step below; `none` skips deletion entirely.
-
-**Read the scratch file back before running the command.** Read the path that this step is about to pass to `gh` and compare its content against the `body` received by this delegate. Refuse when the two differ, naming the PR and the path: "Body file for PR #{n} at {path} is not the approved merge body." A squash merge onto a protected default branch publishes a commit message that cannot be amended, so this is the last point at which a wrong body can be caught. Read the path being passed rather than the one written by step 4, so that a path left over from another PR is caught rather than confirmed.
-
-Example invocation (shown for `strategy=squash`, `deletion_strategy=both`; `--delete-branch` is included **only** when `deletion_strategy == 'both'`):
+Run the bundled helper as one command. It merges the PR, confirms that the PR is `MERGED`, and deletes the head branch as `deletion_strategy` requests:
 
 ```bash
-body_path="{absolute path from step 4}"
-[ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
-gh pr merge {pr_number} \
-  --squash \
-  --subject "{title}" \
-  --body-file "$body_path" \
-  --delete-branch  # only when deletion_strategy == 'both'
+node {harness_home_dir}/skills/merge-gh-pr/merge-gh-pr.mjs --pr {pr_number} --strategy {strategy} --delete {deletion_strategy} --title-file {absolute title path} --body-file {absolute body path}
 ```
 
-If `gh pr merge` exits non-zero, print its stderr to the user and exit non-zero. Do not retry, do not bypass with `--admin`.
+- Pass `--title-file` only when `strategy` is `squash`: GitHub composes its own subject for `merge` and `rebase`.
+- Pass `--body-file` only when `strategy` is `squash` or `merge`: Rebased commits keep their own messages, so the composed body has nothing to attach to.
+- Pass each path as the literal absolute path, unquoted, without a shell variable or a guard. The helper refuses a missing or empty file itself, and a guard or a shell composition around the command makes the harness ask for permission again.
 
-### 6. Delete remote branch (when deletion_strategy is `remote`)
+The helper calls `gh` directly, never through a shell. It passes `--delete-branch` to `gh pr merge` when `deletion_strategy` is `both`. When it is `remote`, the helper deletes the PR's head ref on the head repository, which is the contributor's fork for a cross-repo PR, and only after `gh` reports the PR as `MERGED`.
 
-Skip this step entirely when `deletion_strategy` is not `remote`: `both` is handled by step 5's `--delete-branch`, and `none` does not request a deletion.
+On success, the helper exits 0 and prints JSON on stdout:
 
-When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch: For same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it is the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
-
-```bash
-gh api -X DELETE "repos/{headRepositoryOwner.login}/{headRepository.name}/git/refs/heads/{headRefName}"
+```json
+{
+  "branchDeletion": "deleted",
+  "headRefName": "feature/cache",
+  "mergeCommit": { "oid": "abc123" },
+  "mergedAt": "2026-09-28T22:00:00Z",
+  "url": "https://github.com/acme/widgets/pull/42"
+}
 ```
 
-If the call exits non-zero, print `warning: Failed to delete remote branch '{headRefName}': {stderr}` to stderr but **do not** exit non-zero. The merge itself succeeded, and re-deleting a leftover branch is trivial.
+`branchDeletion` is one of these values:
 
-### 7. Capture merge result
+- `deleted`: The helper deleted the branch.
+- `already-deleted`: The branch or its fork was already gone, for example because the repository deletes branches on merge.
+- `failed`: A warning on stderr gives the reason. The merge still succeeded, so relay the warning and continue.
+- `by-gh`: The deletion strategy was `both`, and `gh pr merge --delete-branch` handled the deletion.
+- `not-requested`: The deletion strategy was `none`.
 
-Fetch the resulting commit SHA after the merge:
+When the helper exits non-zero, print its stderr to the user and stop. This covers a refused input file, a failed `gh pr merge` (whose stderr the helper passes on), and a PR that is not `MERGED` after `gh` accepted the merge, such as a PR placed in a merge queue. Do not retry, and do not bypass with `--admin`.
 
-```bash
-gh pr view {pr_number} --json mergeCommit,url,mergedAt
-```
-
-Extract `mergeCommit.oid` (the merge commit SHA), `url` (PR URL), and `mergedAt` (ISO 8601 timestamp).
-
-### 8. Save merge artifact
+### 6. Save merge artifact
 
 Save a `merge` artifact in the ticket directory.
 
@@ -176,6 +158,7 @@ Merged: {url}
 Commit: {mergeCommit.oid}
 Strategy: {strategy}
 Branch: {headRefName}
+Branch deletion: {branchDeletion}
 Artifact saved: {artifact path}
 ```
 

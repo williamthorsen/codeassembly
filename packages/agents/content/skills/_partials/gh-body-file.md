@@ -17,4 +17,6 @@ The guard makes the failure loud. `gh` accepts `--body-file ""` without complain
 
 A retry re-states the assignment rather than inheriting it. The file is the same file; only the handoff is re-done.
 
+A bundled helper that refuses a missing or empty file itself takes the literal absolute path, unquoted, without the assignment or the guard. The skill that invokes such a helper says so at the call.
+
 Why a file rather than the shell, and why the path is re-stated at every call: [gh body file](../_data/gh-body-file.md).
