@@ -50,8 +50,8 @@ function assertDeriveSessionContextOutput(result: unknown): void {
       `expected artifact_base_dir to include "ai-artifacts", got ${JSON.stringify(result.artifact_base_dir)}`,
     );
   }
-  // `default_branch` comes from `composeManifest`'s remote-name resolution; because the smoke fixture
-  // has no `repository.default_remote` configured, the default `origin/main` should appear.
+  // `default_branch` comes from `composeManifest`'s remote-name resolution; because the smoke fixture's
+  // preferences do not set `repository.default_remote`, the default `origin/main` should appear.
   if (result.default_branch !== 'origin/main') {
     throw new Error(`expected default_branch "origin/main", got ${JSON.stringify(result.default_branch)}`);
   }

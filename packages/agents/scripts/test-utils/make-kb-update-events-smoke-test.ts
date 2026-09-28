@@ -56,7 +56,7 @@ export function makeKbUpdateEventsSmokeTest(): SmokeTestInvocation {
 
 /**
  * Asserts the kb-update-events smoke produced an ok batch whose one event updated, with the reference written to its
- * `addressed-by` list and no assertion fields injected.
+ * `addressed-by` list and without any assertion field injected.
  */
 function assertKbUpdateEventsSmokeResult(result: unknown, eventPath: string): void {
   if (!isRecord(result)) {
@@ -83,7 +83,7 @@ function assertKbUpdateEventsSmokeResult(result: unknown, eventPath: string): vo
     throw new Error(`expected the written event to reference #849, got:\n${written}`);
   }
   if (/^(title|created|updated):/m.test(written)) {
-    throw new Error(`expected no assertion fields injected, got:\n${written}`);
+    throw new Error(`expected the written event not to contain any assertion field, got:\n${written}`);
   }
 }
 

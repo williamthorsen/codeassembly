@@ -39,7 +39,7 @@ describe(prepareEvent, () => {
     }
   });
 
-  it('writes no bare type field', () => {
+  it('does not write a bare type field', () => {
     const result = prepareEvent({
       args: argsFor({}),
       context: CONTEXT,
@@ -86,7 +86,7 @@ describe(prepareEvent, () => {
     }
   });
 
-  it('writes an event with repo absent when the context has no resolvable remote', () => {
+  it('writes an event with repo absent when the context does not include a resolvable remote', () => {
     const result = prepareEvent({
       args: argsFor({}),
       context: { session: 'session-abc', cwd: '/tmp/work' },
@@ -101,7 +101,7 @@ describe(prepareEvent, () => {
     }
   });
 
-  it('writes an event with session absent when the harness exposes no session id', () => {
+  it('writes an event with session absent when the harness does not expose a session id', () => {
     const result = prepareEvent({
       args: argsFor({}),
       context: { cwd: '/tmp/work', repo: 'owner/name' },

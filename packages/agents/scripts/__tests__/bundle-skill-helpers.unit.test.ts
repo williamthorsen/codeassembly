@@ -30,7 +30,7 @@ describe(findDriftedBundles, () => {
     expect(drifted).toEqual([{ outFile: 'content/skills/new/new.mjs', reason: 'unrecorded' }]);
   });
 
-  it('reports a tracked bundle that no target produces', () => {
+  it('reports a tracked bundle not produced by any target', () => {
     const drifted = findDriftedBundles(
       makeBuiltBundles({ 'content/skills/one/one.mjs': 'alpha' }),
       makeRecordedBundles({ 'content/skills/one/one.mjs': 'alpha', 'content/skills/gone/gone.mjs': 'orphan' }),

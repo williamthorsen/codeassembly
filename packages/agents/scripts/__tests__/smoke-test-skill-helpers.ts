@@ -1,8 +1,8 @@
 /**
  * Post-build smoke test: Build every skill helper bundle and run each `.mjs` under `node`, asserting it exits 0 and
  * prints valid JSON to stdout. A bundle listed in `smokeTests` runs with its paired invocation: specific args, piped
- * stdin, and a structural assertion; a bundle without one is exercised with no args and empty stdin (the deterministic,
- * side-effect-free baseline).
+ * stdin, and a structural assertion; a bundle without one is exercised without args and with empty stdin (the
+ * deterministic, side-effect-free baseline).
  *
  * Unit tests run the TypeScript source through vitest and never exercise the bundled artifact. The bundle is built with
  * a `createRequire` banner, the `format: 'esm'` option, and the `conditions: ['source']` resolution setting; a
@@ -39,8 +39,8 @@ import { makeStreamlineGuidanceSmokeTest } from '../test-utils/make-streamline-g
 import { makeUpdateJiraTicketSmokeTest } from '../test-utils/make-update-jira-ticket-smoke-test.ts';
 import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts';
 
-// Each bundle that needs a non-default smoke run, keyed by its `entry`; a bundle absent here runs with no args and
-// empty stdin. Because the builders run here, and not on import of the utilities module, building a bundle never
+// Each bundle that needs a non-default smoke run, keyed by its `entry`; a bundle absent here runs without args and
+// with empty stdin. Because the builders run here, and not on import of the utilities module, building a bundle never
 // triggers fixture setup.
 const smokeTests: Record<string, SmokeTestInvocation> = {
   'src/capture-event/cli.ts': makeCaptureEventSmokeTest(),

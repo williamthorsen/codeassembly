@@ -37,7 +37,7 @@ describe(writeEvent, () => {
     expect(await readFile(join(storePath, 'content', 'events', `${ID}.md`), 'utf8')).toBe(CONTENT);
   });
 
-  it('leaves no temp files in the content/events directory after a successful write', async () => {
+  it('does not leave any temp file in the content/events directory after a successful write', async () => {
     const storePath = await mkdtemp(join(tmpdir(), 'capture-write-'));
 
     await writeEvent({ storePath, id: ID, content: CONTENT });

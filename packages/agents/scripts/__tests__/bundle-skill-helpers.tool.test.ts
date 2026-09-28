@@ -29,7 +29,7 @@ describe(readRecordedBundles, () => {
     expect(readRecordedBundles(packageDir).read('content/skills/absent/absent.mjs')).toBeUndefined();
   });
 
-  it('omits a staged bundle that no commit records', () => {
+  it('omits a staged bundle that git does not record at HEAD', () => {
     const packageDir = makeCommittedPackage({ [BUNDLE]: 'committed' });
     const staged = 'content/skills/staged/staged.mjs';
     mkdirSync(join(packageDir, 'content/skills/staged'), { recursive: true });
