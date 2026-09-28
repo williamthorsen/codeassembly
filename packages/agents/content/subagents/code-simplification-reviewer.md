@@ -41,7 +41,7 @@ You will receive:
 
 <!-- include: _partials/review-writes-hard-gate.md / -->
 
-The review file is the orchestrator's primary state-transfer channel for this phase: The orchestrator reads it directly to decide whether to dispatch a coder fix cycle. A partial review listing findings discovered so far is strictly more useful than no review: An interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+The review file is the orchestrator's primary state-transfer channel for this phase: The orchestrator reads it directly to decide whether to dispatch a coder fix cycle. A partial review listing findings discovered so far is strictly more useful than a missing review: An interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
 <!-- include: _partials/review-writes-scaffold.md / -->
 
@@ -56,7 +56,7 @@ The review file is the orchestrator's primary state-transfer channel for this ph
 
 <!-- include: _partials/review-writes-finalize.md -->
 
-If the review concluded with no findings, the finalized form omits the `### Findings` block entirely; see the "If no findings" example in [Output format](#output-format).
+If the review concluded without any findings, the finalized form omits the `### Findings` block entirely; see the "If no findings" example in [Output format](#output-format).
 <!-- /include -->
 
 ## Frontmatter
@@ -129,7 +129,7 @@ See the "Finding references" section in the `review-criteria` skill for path-for
 
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:
 
-- `none`: Code is already clean and well-structured, with no simplification opportunities
+- `none`: Code is already clean and well-structured, and does not offer any simplification opportunities
 - `low`: Minor opportunities (e.g., a handful of redundant or paraphrasing comments, one or two adjacent-test runs with shared-setup duplication, one unused import)
 - `medium`: Several meaningful simplification opportunities, including file-header-scale comment violations (tutorial headers, repeated conversation memorialization, broad library re-teaching) or pervasive shared-setup duplication across a spec file
 - `high`: Pervasive unnecessary complexity indicating the code needs a simplification pass

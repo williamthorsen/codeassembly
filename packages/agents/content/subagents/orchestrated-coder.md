@@ -107,7 +107,7 @@ completed
 ### F1: {title}
 
 - **Status:** FIXED | NOT_FIXED | ALREADY_RESOLVED
-- **Action:** {What the diff does, read back from it, or why no change was made}
+- **Action:** {What the diff does, read back from it, or why you did not change anything}
 
 ### W1: {title}
 
@@ -155,7 +155,7 @@ The orchestrator may supply a sidecar artifact path in your dispatch prompt (typ
 
 **What to write:** Short notes for the next reviewer. For each surprise, name the package and version, state the gotcha precisely, and cite where it appears in the API surface. One paragraph per surprise. Do not exhaustively document the package; the goal is to shortcut reviewer investigation, not to write package docs.
 
-**Artifact path:** When the orchestrator's prompt supplies a reviewer-context sidecar path (typically `{run-dir}/{NN}_coder_reviewer-context.md`, sharing `{NN}` with the change-summary), write to that exact path. If no path is supplied (e.g., review-response mode, in which the slot does not apply), do not emit. Never write the sidecar to a path that you invented, only to the path supplied by the orchestrator.
+**Artifact path:** When the orchestrator's prompt supplies a reviewer-context sidecar path (typically `{run-dir}/{NN}_coder_reviewer-context.md`, sharing `{NN}` with the change-summary), write to that exact path. If the orchestrator's prompt does not supply a path (e.g., review-response mode, in which the slot does not apply), do not emit. Never write the sidecar to a path that you invented, only to the path supplied by the orchestrator.
 
 **Examples:**
 
@@ -234,7 +234,7 @@ You have **150 turns** (API round-trips) to complete your work. Each time you ca
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
-You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. The orchestrator does not have a fallback.
 
 ```
 Phase: {implementation|parallelReview|codeSimplifier|holisticReview}
