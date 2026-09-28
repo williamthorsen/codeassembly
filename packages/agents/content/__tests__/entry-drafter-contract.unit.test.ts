@@ -110,6 +110,9 @@ const PRESCRIBED_CONNECTIVE = 'Separately,';
 /** The phrase excluding how a change was produced, which a commit body contains and a bullet does not. */
 const PROCESS_NARRATION_PHRASE = 'review mechanics, ticket and finding numbers';
 
+/** The rule that keeps an unquoted ` #` in an entry from opening a YAML comment that drops the rest of the text. */
+const QUOTING_RULE_PHRASE = '`text` and `migration` are always double-quoted';
+
 /** Every code under which the caller redispatches, each of which the drafter has to be able to act on. */
 const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', 'unsupported-claim', 'voice'];
 
@@ -406,6 +409,14 @@ describe('entry-drafter contract', () => {
       'stops naming is one that the drafter stops emitting, which leaves the caller rendering a subsection, a ' +
       `breaking prefix, or a scope tag from nothing:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
+  });
+
+  it('double-quotes every entry’s text and migration', async () => {
+    const message =
+      'Both callers parse the returned YAML, and in an unquoted value a space followed by `#` opens a comment that ' +
+      'drops the rest of the text without an error. A rule that quotes only when YAML would mis-parse leaves the ' +
+      'drafter to judge a case that it misses.';
+    expect(await EXPANDED, message).toContain(QUOTING_RULE_PHRASE);
   });
 
   it('reads the taxonomy for each entry’s type', async () => {

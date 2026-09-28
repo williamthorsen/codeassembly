@@ -1,3 +1,5 @@
+import { isMap, isScalar, isSeq } from 'yaml';
+
 import { consolidate } from '../change-grammar/consolidate.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { isRecord } from '../lib/type-guards.ts';
@@ -17,6 +19,38 @@ export function consolidateChangeEntries(entries: readonly ChangeEntry[], taxono
     return entry.scopes.length === 0 ? [record] : entry.scopes.map((scope) => ({ ...record, scope }));
   });
   return consolidate(expanded, taxonomy);
+}
+
+/**
+ * Reports the first entry whose `text` or `migration` a YAML comment cuts short, given the parsed `entries` node.
+ *
+ * In a plain scalar, a `#` after whitespace opens a comment, so an unquoted issue reference ends the value there and the
+ * parser keeps the rest as the value's comment rather than failing. A node that is not a list, and an item that is not
+ * a mapping, report nothing here, since `readChangeEntries` refuses both.
+ */
+export function findEntryComment(node: unknown): { defect: string } | undefined {
+  if (!isSeq(node)) {
+    return undefined;
+  }
+  for (const [index, item] of node.items.entries()) {
+    if (!isMap(item)) {
+      continue;
+    }
+    for (const field of ['text', 'migration'] as const) {
+      const value = item.get(field, true);
+      const comment = isScalar(value) ? value.comment : undefined;
+      if (comment !== undefined && comment !== null && comment.trim() !== '') {
+        const dropped = comment
+          .split('\n')
+          .map((line) => `#${line.trimEnd()}`)
+          .join(' ');
+        return {
+          defect: `\`entries[${index}].${field}\` is cut short by a YAML comment (\`${dropped}\`); quote the value`,
+        };
+      }
+    }
+  }
+  return undefined;
 }
 
 /**

@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
-import { parse as parseYaml } from 'yaml';
+import { parseDocument } from 'yaml';
 
 import { applyOverrides } from '../change-grammar/apply-overrides.ts';
 import { compileTemplate } from '../change-grammar/compile-template.ts';
@@ -21,7 +21,7 @@ import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { loadTaxonomy } from '../lib/work-types.ts';
 import { amendEntry, type EntryAmendment } from './amend-entry.ts';
-import { type ChangeEntry, consolidateChangeEntries, readChangeEntries } from './change-entries.ts';
+import { type ChangeEntry, consolidateChangeEntries, findEntryComment, readChangeEntries } from './change-entries.ts';
 import {
   type ChangeRecordBlock,
   readChangeRecordBlock,
@@ -431,7 +431,10 @@ function readConsolidateEntriesArgs({ flags, positionals }: ScanResult): ParsedA
   };
 }
 
-/** Reads the entries that a YAML file declares, refusing a file that cannot be read, cannot be parsed, or is malformed. */
+/**
+ * Reads the entries that a YAML file declares, refusing a file that cannot be read, cannot be parsed, or is malformed,
+ * including one in which a comment cuts an entry's text short.
+ */
 async function readEntriesFile(input: { cwd: string; filePath: string }): Promise<ChangeEntry[]> {
   const resolved = path.resolve(input.cwd, input.filePath);
   let text: string;
@@ -440,13 +443,16 @@ async function readEntriesFile(input: { cwd: string; filePath: string }): Promis
   } catch (error) {
     throw chainError(`--entries-file ${resolved} cannot be read`, error);
   }
-  let value: unknown;
-  try {
-    value = parseYaml(text);
-  } catch (error) {
+  const document = parseDocument(text);
+  const [error] = document.errors;
+  if (error !== undefined) {
     throw chainError(`--entries-file ${resolved} is not valid YAML`, error);
   }
-  const read = readChangeEntries(value);
+  const comment = findEntryComment(document.contents);
+  if (comment !== undefined) {
+    throw new Error(`--entries-file ${resolved} is malformed: ${comment.defect}`);
+  }
+  const read = readChangeEntries(document.toJS());
   if ('defect' in read) {
     throw new Error(`--entries-file ${resolved} is malformed: ${read.defect}`);
   }

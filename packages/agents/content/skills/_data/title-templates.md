@@ -181,11 +181,11 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entrie
 - type: feat
   scopes: [agents, kb]
   breaking: false
-  text: Adds the store-qualified wikilink `[[store:Note title]]`, which `kb check` resolves against the named store.
+  text: "Adds the store-qualified wikilink `[[store:Note title]]`, which `kb check` resolves against the named store."
 - type: fix
   scopes: [agents]
   breaking: false
-  text: Stops the sync from deleting a subagent that the run had just written.
+  text: "Stops the sync from deleting a subagent that the run had just written."
 ```
 
 ```json
@@ -198,7 +198,7 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entrie
 
 **The entries arrive in a file rather than through flags** because `text` is arbitrary prose containing backticks and quotes, which a shell argument would expand or truncate.
 
-The run refuses an entries file that cannot be read, that is not valid YAML, or that is malformed, naming the defect: a value that is not a list, an item that is not a mapping, a missing or blank `type` or `text`, a `breaking` that is not a boolean, a `scopes` that is not a list of strings, and a `migration` that is not a string or spans more than one line. A blank or null `migration` reads as absent, and a key that the grammar does not declare is ignored. It also refuses outright if no taxonomy is readable, since the entries have nothing to rank against.
+The run refuses an entries file that cannot be read, that is not valid YAML, or that is malformed, naming the defect: a value that is not a list, an item that is not a mapping, a missing or blank `type` or `text`, a `breaking` that is not a boolean, a `scopes` that is not a list of strings, and a `migration` that is not a string or spans more than one line, and a `text` or `migration` cut short by a YAML comment, which a space followed by `#` opens in an unquoted value; the error names the entry, the field, and the dropped text. A blank or null `migration` reads as absent, and a key that the grammar does not declare is ignored. It also refuses outright if no taxonomy is readable, since the entries have nothing to rank against.
 
 ## `resolve-ticket-type`
 

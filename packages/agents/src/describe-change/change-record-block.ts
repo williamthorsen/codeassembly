@@ -4,7 +4,7 @@ import type { Overrides } from '../change-grammar/apply-overrides.ts';
 import { normalizeChangeRecord } from '../change-grammar/tokens.ts';
 import type { ChangeRecord } from '../change-grammar/types.ts';
 import { isRecord } from '../lib/type-guards.ts';
-import { type ChangeEntry, readChangeEntries } from './change-entries.ts';
+import { type ChangeEntry, findEntryComment, readChangeEntries } from './change-entries.ts';
 
 /**
  * Reads the last `change-record` block in a pull-request body back into what it records, as the inverse of
@@ -20,7 +20,7 @@ import { type ChangeEntry, readChangeEntries } from './change-entries.ts';
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
   const parsed = parseLastBlock(body);
-  return 'payload' in parsed ? readPayload(parsed.payload) : parsed;
+  return 'payload' in parsed ? readPayload(parsed.payload, parsed.entriesComment) : parsed;
 }
 
 /**
@@ -33,7 +33,12 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
  */
 export function readMergeChangeRecordBlock(body: string): MergeChangeRecordBlockReading {
   const parsed = parseLastBlock(body);
-  return 'payload' in parsed ? readMergePayload(parsed.payload) : parsed;
+  if (!('payload' in parsed)) {
+    return parsed;
+  }
+  return parsed.entriesComment === undefined
+    ? readMergePayload(parsed.payload)
+    : { defect: parsed.entriesComment, kind: 'malformed' };
 }
 
 /**
@@ -200,10 +205,13 @@ function normalizeOverrides(overrides: RecordOverrides): RecordOverrides {
   };
 }
 
-/** Parses the payload of a body's last `change-record` block, or reports the block absent or malformed. */
+/**
+ * Parses the payload of a body's last `change-record` block, or reports the block absent or malformed. A parsed payload
+ * includes `entriesComment` when a YAML comment cuts an entry short, since the comment is gone from the payload itself.
+ */
 function parseLastBlock(
   body: string,
-): { kind: 'absent' } | { defect: string; kind: 'malformed' } | { payload: unknown } {
+): { kind: 'absent' } | { defect: string; kind: 'malformed' } | { entriesComment?: string; payload: unknown } {
   const lines = splitLines(body);
   const fence = findFences(lines).at(-1);
   if (fence === undefined) {
@@ -219,7 +227,8 @@ function parseLastBlock(
     const message = (error.message.split('\n', 1)[0] ?? '').replace(/:$/, '');
     return { defect: `the payload is not valid YAML: ${message}`, kind: 'malformed' };
   }
-  return { payload: document.toJS() };
+  const comment = findEntryComment(document.get('entries', true));
+  return { ...(comment !== undefined && { entriesComment: comment.defect }), payload: document.toJS() };
 }
 
 /**
@@ -228,7 +237,11 @@ function parseLastBlock(
  */
 function readEntryFields(
   payload: Record<string, unknown>,
+  entriesComment: string | undefined,
 ): { defect: string } | { entries?: ChangeEntry[]; entriesCommit?: string } {
+  if (entriesComment !== undefined) {
+    return { defect: entriesComment };
+  }
   const commit = payload.entries_commit;
   if (commit !== undefined && commit !== null && typeof commit !== 'string') {
     return { defect: '`entries_commit` is not a string' };
@@ -312,8 +325,11 @@ function readMergePayload(payload: unknown): MergeChangeRecordBlockReading {
   };
 }
 
-/** Reads a parsed payload into the block that it records, reporting the first key whose value the grammar does not allow. */
-function readPayload(payload: unknown): ChangeRecordBlockReading {
+/**
+ * Reads a parsed payload into the block that it records, reporting the first key whose value the grammar does not
+ * allow. `entriesComment` is a defect that the parse found in the entries, which reads as any other entries defect.
+ */
+function readPayload(payload: unknown, entriesComment: string | undefined): ChangeRecordBlockReading {
   if (!isRecord(payload)) {
     return { defect: 'the payload is not a mapping', kind: 'malformed' };
   }
@@ -339,7 +355,7 @@ function readPayload(payload: unknown): ChangeRecordBlockReading {
     ...(scope !== undefined && { scope }),
     ...(type !== undefined && { type }),
   });
-  const entryFields = readEntryFields(payload);
+  const entryFields = readEntryFields(payload, entriesComment);
   const recorded = 'defect' in entryFields ? {} : entryFields;
   return {
     block: {
