@@ -20,10 +20,11 @@ import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts'
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: A body declares the directive itself, or a
-// subagent preloads a skill that declares it. Each route is one line that an edit can drop with no other test failing.
+// subagent preloads a skill that declares it. Each route is one line that an edit can drop without any other test
+// failing.
 //
-// Every hook is a row of one table rather than a file of its own, so a hook added with no row is visible as an absence
-// here instead of as a suite that nobody wrote.
+// Every hook is a row of one table rather than a file of its own, so a hook added without a row is visible as an
+// absence here instead of as a suite that nobody wrote.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const RULEBOOKS_ROOT = path.join(CONTENT_ROOT, 'guidance', 'rulebooks');
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
@@ -63,8 +64,8 @@ interface SpliceProbe {
 }
 
 /**
- * Subagents whose return the dispatching session folds into artifacts of its own, applying house style there, so a
- * writing-preferences fill in the subagent is weight paid on every dispatch for text that no reader keeps.
+ * Subagents whose output is rewritten by the dispatching session into its own artifacts, in house style. Nobody reads
+ * the subagent's output directly, so a writing-preferences fill in the subagent only adds tokens to every dispatch.
  */
 const HOUSE_STYLE_EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set(['handoff-reviewer']);
 
@@ -74,8 +75,8 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
     hook: 'comment-preferences',
     role: 'writes or judges source comments',
-    // The prose sweep judges comment register but writes no comment, which is why its two bodies are listed here rather
-    // than in COMMENT_AUTHORING_SUBAGENTS, whose members must also inject the comment-discipline doctrine.
+    // The prose sweep judges comment register but does not write any comment, which is why its two bodies are listed
+    // here rather than in COMMENT_AUTHORING_SUBAGENTS, whose members must also inject the comment-discipline doctrine.
     declaringBodies: [
       ...COMMENT_AUTHORING_SUBAGENTS.map(toSubagentBody),
       { label: 'prose-reviser', relativePath: 'subagents/prose-reviser.md' },
@@ -189,7 +190,7 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
   it.each(declaringBodies)('$label declares the hook', async ({ label, relativePath }) => {
     const declared = listGuidanceHooks(await expandBody(relativePath), label).map(({ name }) => name);
 
-    const message = `${label} ${role} but declares no ${hook} hook, so a binding cannot reach it`;
+    const message = `${label} ${role} but does not declare the ${hook} hook, so a binding cannot reach it`;
     expect(declared, message).toContain(hook);
   });
 
@@ -220,14 +221,14 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
 });
 
 // The reviewer subagents reach a hook through a preloaded skill rather than a directive of their own, a route that
-// only `implementation-preferences` takes. Kept beside the table rather than in it, so that no other hook has an
-// empty field for a route that it does not use.
+// only `implementation-preferences` takes. Kept beside the table rather than in it, so that the other hooks do not
+// have an empty field for a route that they do not use.
 describe('reviewer-subagent carrier', () => {
   it.each(REVIEWER_SUBAGENTS)('%s preloads the skill declaring the hook', async (slug) => {
     const content = await readFile(path.join(SUBAGENTS_ROOT, `${slug}.md`), 'utf8');
     const injected = readInjectedSkills(content, `${slug}.md`);
 
-    const message = `${slug} judges code but preloads no ${REVIEWER_CARRIER}; injected: [${injected.join(', ')}]`;
+    const message = `${slug} judges code but does not preload ${REVIEWER_CARRIER}; injected: [${injected.join(', ')}]`;
     expect(injected, message).toContain(REVIEWER_CARRIER);
   });
 });
@@ -235,7 +236,7 @@ describe('reviewer-subagent carrier', () => {
 // The rows above are hand-listed because they guard a body dropping off, which a discovered population cannot catch.
 // This one guards the opposite failure, a skill being added, which only a discovered population catches.
 describe('ambient-bound hook declarations', () => {
-  it('permits no unrecorded skill to declare a hook bound to an ambient rulebook', async () => {
+  it('does not permit an unrecorded skill to declare a hook bound to an ambient rulebook', async () => {
     const declarers = await listAmbientFillDeclarers();
     const offenders = declarers
       .entries()
@@ -256,7 +257,7 @@ describe('ambient-bound hook declarations', () => {
     const declarers = await listAmbientFillDeclarers();
 
     const message =
-      `${slug} is exempt because it ${reason}, but it declares no hook bound to an ambient rulebook, ` +
+      `${slug} is exempt because it ${reason}, but it does not declare any hook bound to an ambient rulebook, ` +
       'so the exemption is stale';
     expect(declarers.has(slug), message).toBe(true);
   });
@@ -318,7 +319,7 @@ async function listSkillSlugsDeclaring(hook: string): Promise<ReadonlyArray<stri
   const slugs: Array<string> = [];
   const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
   for (const entry of entries) {
-    // `_data` joins the skipped names here: A support entry is no skill, and the support route does not render a fill.
+    // `_data` joins the skipped names here: A support entry is not a skill, and the support route does not render a fill.
     if (!entry.isDirectory() || entry.name.startsWith('_') || isSkippedSkillEntry(entry.name)) {
       continue;
     }

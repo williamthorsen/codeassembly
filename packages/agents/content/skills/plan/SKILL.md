@@ -19,9 +19,9 @@ Create an implementation plan from a ticket or task. `plan` is the standalone pl
 
 ## Resolve the task source
 
-Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session needs no ticket argument. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description. Once the source is resolved, emit `skill.started` (payload `{"skill":"plan"}`) per [Lifecycle events](#lifecycle-events).
+Resolve the task source using the [ticket source resolution](../_data/ticket-source-resolution.md) table, then read the resolved ticket or description and plan against it. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument. `plan` does not run the staleness check or interactive design Q&A; that ceremony belongs to `design-and-plan`. When the source is a free-form description rather than a ticket, plan directly from the description. Once the source is resolved, emit `skill.started` (payload `{"skill":"plan"}`) per [Lifecycle events](#lifecycle-events).
 
-When the resolved source is a local artifact, read its `provenance.skill`: `design-and-plan` means an interactive design phase ran; another skill means the ticket was authored without one. Remote issues and free-form descriptions have no provenance.
+When the resolved source is a local artifact, read its `provenance.skill`: `design-and-plan` means an interactive design phase ran; another skill means the ticket was authored without one. Remote issues and free-form descriptions do not have provenance.
 
 ## Output format
 
@@ -63,7 +63,7 @@ If inside an active run (`run-index.json` exists in a parent directory):
 
 ### Ticket context
 
-1. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout. If no ticket ID is available, auto-generate: `{YYYYMMDD}-{4 random hex}`.
+1. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout. If the manifest does not contain a ticket ID, auto-generate: `{YYYYMMDD}-{4 random hex}`.
 2. Save as ticket-level artifact: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/{timestamp}_{slug}_plan.md`
 3. Slug per [artifact conventions](../_data/artifact-conventions.md#naming-conventions).
 
@@ -92,7 +92,7 @@ Plan saved: {plan_path}
 As you present the next-steps menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. For recommendation context, supply the source's design provenance from the resolve step; `plan` adds no interactive design phase of its own. Include both `{plan_path}` and `{ticket_source}` in each skill-invoking option line; omit the ticket path when the source was a free-form description rather than a ticket.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. For recommendation context, supply the source's design provenance from the resolve step; `plan` does not add an interactive design phase of its own. Include both `{plan_path}` and `{ticket_source}` in each skill-invoking option line; omit the ticket path when the source was a free-form description rather than a ticket.
 </HARD-GATE>
 
 <!-- include: ../_partials/next-steps-after-plan.md / -->

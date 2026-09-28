@@ -10,9 +10,9 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers.ts';
 
 // `guidance/shared/AGENTS.md` installs unconditionally, so every interactive session receives all of it. Because a
-// subagent runs on its own system prompt and loads no guidance file, a section that its role's work needs reaches it
-// only by being inlined. Both hosts source the text from one partial, and these assertions are what keep a copy from
-// creeping back into either.
+// subagent runs on its own system prompt and does not load any guidance file, a section that its role's work needs
+// reaches it only by being inlined. Both hosts source the text from one partial, and these assertions are what keep a
+// copy from creeping back into either.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 // One section per entry in SECTIONS runs the restatement check, and each pass reads every authored Markdown file in
@@ -122,7 +122,7 @@ describe('shared-doctrine reach', () => {
       expect(countOccurrences(expanded, headline)).toBe(1);
     });
 
-    it('reaches no subagent that the section does not govern', async () => {
+    it('does not reach any subagent that the section does not govern', async () => {
       const others = listGovernedSubagents().filter((slug) => !carriers.includes(slug));
       const violations: Array<string> = [];
 
@@ -132,11 +132,11 @@ describe('shared-doctrine reach', () => {
         }
       }
 
-      const message = `${name} governs no part of these subagents' work, and each line of it is weight that they pay at every invocation:\n  ${violations.join('\n  ')}`;
+      const message = `${name} does not govern any part of these subagents' work, and each line of it is weight that they pay at every invocation:\n  ${violations.join('\n  ')}`;
       expect(violations, message).toEqual([]);
     });
 
-    it('is stated in no content file but the partial', async () => {
+    it('is not stated in any content file but the partial', async () => {
       const violations = await findRestatements(`_partials/${name}.md`, phrases);
 
       const message = `The rule is stated once and inlined from there; these files restate it instead of including it:\n  ${violations.join('\n  ')}`;
@@ -147,7 +147,7 @@ describe('shared-doctrine reach', () => {
   describe.each(SKILL_CARRIERS)('$relativePath', ({ relativePath, section }) => {
     it('renders $section', async () => {
       const expected = SECTIONS[section];
-      if (expected === undefined) throw new Error(`No shared section is named ${section}`);
+      if (expected === undefined) throw new Error(`The shared sections do not include ${section}`);
       const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
 
       for (const phrase of expected.phrases) {

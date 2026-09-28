@@ -53,7 +53,7 @@ describe('work-type-choice reach', () => {
     });
   });
 
-  it('is stated in no content file but the partial', async () => {
+  it('is not stated in any content file but the partial', async () => {
     const violations: Array<string> = [];
     const files = await listMarkdownFiles(CONTENT_ROOT);
     for (const file of files) {

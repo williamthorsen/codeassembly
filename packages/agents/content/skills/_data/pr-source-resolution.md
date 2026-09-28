@@ -6,13 +6,13 @@ At session start, resolve the pull-request URL on which a skill operates, and re
 
 ## Stored PR URL
 
-The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `pr_url` so that it is reused across sessions instead of being re-discovered each time. The manifest is the single store; a skill reads the stored URL from the manifest JSON emitted by the deriver, with no extra call, and makes every write through the deriver's mutation flags, never by hand-editing the JSON.
+The branch manifest (`.agents/{branch}.branch-manifest.json`) persists a resolved `pr_url` so that it is reused across sessions instead of being re-discovered each time. The manifest is the single store; a skill reads the stored URL from the manifest JSON emitted by the deriver, without an extra call, and makes every write through the deriver's mutation flags, never by hand-editing the JSON.
 
 - **Seed**: On a `PR-<n>` branch identity, the deriver seeds `pr_url` at compose time by building the platform's PR URL shape from the git remote's `owner/repo` and the PR number (host and path from `scm` per [`pr-resolution.md`](pr-resolution.md); `null` when the remote cannot be resolved). This mirrors how the deriver seeds `ticket_url` from a base and id (see [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url)). An explicitly stored URL overrides the seed.
 - **Prefer**: Use a stored `pr_url` as the default before discovering one from the platform.
 - **Persist**: After a PR URL is resolved, store it by running `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{url}"`.
-- **Never on the default branch**: That branch belongs to no pull request, so a URL stored against it is whichever PR the last session happened to resolve. It is the stored default at step 2 of the runtime-resolution path below, which is how `merge-pr` with no `--pr` would come to merge an arbitrary PR. Because reviewing someone else's PR from the default branch is ordinary, this is a case that arises rather than a misuse. The deriver enforces it: It refuses the write, reports on stderr, exits 0, and emits a manifest whose `pr_url` is null, and it clears a value already stored there. The same rule applies to `ticket_url`; see [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url).
-- **Invalidate**: When the stored URL does not yield the expected PR (the resource is not found at that URL, whether stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-pr-url`, then re-resolve. This rule is platform-agnostic: There is no carve-out.
+- **Never on the default branch**: That branch does not belong to any pull request, so a URL stored against it is whichever PR the last session happened to resolve. It is the stored default at step 2 of the runtime-resolution path below, which is how `merge-pr` without `--pr` would come to merge an arbitrary PR. Because reviewing someone else's PR from the default branch is ordinary, this is a case that arises rather than a misuse. The deriver enforces it: It refuses the write, reports on stderr, exits 0, and emits a manifest whose `pr_url` is null, and it clears a value already stored there. The same rule applies to `ticket_url`; see [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url).
+- **Invalidate**: When the stored URL does not yield the expected PR (the resource is not found at that URL, whether stale, wrong, moved, or deleted), clear it with `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --clear-pr-url`, then re-resolve. This rule is platform-agnostic: It does not exempt any platform.
 
 ## Runtime-resolution path (`add-change-record`, `review-pr`, `merge-pr`)
 
@@ -24,7 +24,7 @@ These skills discover a PR for the current branch at runtime. Resolve in this or
    - **`"github"`**: `gh pr view --json number,title,body,labels,headRefName,baseRefName,url`.
    - **`"bitbucket"`**: The branch query in [Bitbucket pull-request access](bitbucket-pr-access.md#finding-the-pull-request-for-a-branch).
 
-   If no PR is found, stop and direct the user to create one.
+   If the lookup does not find a PR, stop and direct the user to create one.
 
 After resolving the URL by any of the three paths above, **persist** it per [Stored PR URL](#stored-pr-url). If a stored URL from step 2 does not yield the expected PR, **invalidate** it and fall through to step 3.
 
@@ -33,4 +33,4 @@ After resolving the URL by any of the three paths above, **persist** it per [Sto
 `respond-to-review` does not discover a PR from the platform at runtime. Its PR URL comes from the sibling review artifact's `pr:` frontmatter.
 
 - **When the review artifact has a `pr:` value:** Forward it to `resolve-frontmatter.sh` as `--override "pr={pr_url}"` (the frontmatter-field contract; see [`pr-resolution.md`](pr-resolution.md)), and additionally **persist** it via `--set-pr-url` so that future sessions inherit it.
-- **When the review artifact has no `pr:` field:** Fall back to the stored manifest `pr_url`, read from the manifest JSON that the deriver already emitted during session-context setup.
+- **When the review artifact does not have a `pr:` field:** Fall back to the stored manifest `pr_url`, read from the manifest JSON that the deriver already emitted during session-context setup.

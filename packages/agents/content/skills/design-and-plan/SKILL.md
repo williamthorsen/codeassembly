@@ -37,13 +37,13 @@ Do NOT generate the implementation plan until the ticket has been approved. This
 
 ### Phase 1: Resolve task source and assess relevancy
 
-1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 5's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session needs no ticket argument. Once the source is resolved, emit `skill.started` (payload `{"skill":"design-and-plan"}`) per [Lifecycle events](#lifecycle-events).
+1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 5's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument. Once the source is resolved, emit `skill.started` (payload `{"skill":"design-and-plan"}`) per [Lifecycle events](#lifecycle-events).
 
 2. **Assess relevancy**: Determine whether the ticket may be stale and, if so, verify it is still relevant.
 
 **Override arguments take precedence:**
 
-- If `--check-staleness` was passed: Run the relevancy check immediately (no prompt).
+- If `--check-staleness` was passed: Run the relevancy check immediately, without prompting the user.
 - If `--skip-staleness` was passed: Skip the relevancy check entirely.
 - If neither was passed: Evaluate the heuristic below.
 
@@ -54,7 +54,7 @@ Do NOT generate the implementation plan until the ticket has been approved. This
 3. If the ticket was updated within the last 3 days _or_ fewer than 5 commits have been made since the last update, skip the relevancy check.
 4. Otherwise, prompt the user: "This ticket may be out of date ({N} commits since the last update on {date}). Would you like me to check for staleness and relevancy?" If the user declines, continue into Phase 2.
 
-If the task source is plain text or a file (no remote metadata), skip the relevancy check unless `--check-staleness` was explicitly passed.
+If the task source is plain text or a file (without remote metadata), skip the relevancy check unless `--check-staleness` was explicitly passed.
 
 **The relevancy check** (when triggered by user approval or `--check-staleness`):
 
@@ -87,7 +87,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 **Spike mode.** If this is a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md) in place of the skeleton below; everything else in this phase is unchanged.
 
-If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately and the design surfaced no changes, propose adopting it as-is at the checkpoint. Skip the rewrite. Only add or revise sections for which the design revealed gaps or shifts in understanding.
+If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately and the design did not surface any changes, propose adopting it as-is at the checkpoint. Skip the rewrite. Only add or revise sections for which the design revealed gaps or shifts in understanding.
 
 When the ticket needs work, produce or update it to state the proposed approach:
 
@@ -160,7 +160,7 @@ Design and plan complete:
   Plan:   {plan_path}
 ```
 
-**Remote issue update**: Offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference) and the refined ticket differs from the remote body. Phase 3 may adopt a good source ticket unchanged and the sweep may find nothing to fold in; the remote is then already current, and no offer is made. This is a shared-state action; do not update without explicit consent, and never open a turn of its own for the ask.
+**Remote issue update**: Offer to update the remote issue only when the source was a remote ticket (URL or shorthand reference) and the refined ticket differs from the remote body. Phase 3 may adopt a good source ticket unchanged and the sweep may find nothing to fold in; the remote is then already current; do not make the offer. This is a shared-state action; do not update without explicit consent, and never open a turn of its own for the ask.
 
 Render the offer inside the next-steps block as its own labelled sub-block above the options, under the same `Next steps:` header. With two selects present, each shows its `A`/`Q` identifier as a bold prefix (`**A1: Remote issue**`, `**A2: Next action**`) and keeps its own 1-based option numbering, so the user answers `A1: 1, A2: 3`. The consent is independent of the single-select next-step choice, and the next-action options keep their order. Recommend the update: The offer appears only when the remote body is stale against the refined ticket. The recommended option's marker follows how stark that staleness is (■■■ when the refined ticket plainly supersedes the remote body, ■■□ when the delta is real but arguable), and Leave as-is takes ■□□.
 
@@ -180,7 +180,7 @@ Next steps:
 On consent, write the refined ticket per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write). The refined ticket is the whole body approved by the user, so it replaces the remote body outright.
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1: Remote issue**` and `**A2: Next action**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they add no option and reorder none. The plan was developed interactively, with the ticket and the plan each approved at a checkpoint; use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1: Remote issue**` and `**A2: Next action**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they do not add or reorder any option. The plan was developed interactively, with the ticket and the plan each approved at a checkpoint; use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
 **STOP.** Beyond the remote-issue update above, do not invoke any skill. Do not begin implementation.
