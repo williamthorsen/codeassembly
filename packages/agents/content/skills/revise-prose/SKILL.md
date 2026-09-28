@@ -19,8 +19,11 @@ Apply is the default. `--dry-run` produces the report alone.
 | `<path>`                 | One or more files or directories narrowing the sweep. Repeatable.         | No       |
 | `--batch-budget <bytes>` | Ceiling on a batch's combined file bytes. Passed to the helper unchanged. | No       |
 | `--dry-run`              | Report and stop: no subagent, no edit, no record write.                   | No       |
+| `--rule <id>`            | One rule that this document declares, narrowing the sweep. Repeatable.    | No       |
 
 With no path, the sweep covers the whole repository. That is this skill's default, because removing every violation from a repository requires a full sweep. It is how this skill differs from `{skill:revise-comments}`, whose default is the current branch's diff.
+
+`--rule` takes a rule's id as step 1 derives it, not a unit's name: `--rule plain-speech` sweeps the rule `plain-speech` without the rules that its calibration declares.
 
 ## Ordering with `revise-comments`
 
@@ -44,6 +47,8 @@ The record keys coverage and rejections on each rule's sweep version. A unit's v
 
 If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alone.
 
+**Narrow to the named rules.** Without `--rule`, keep every rule that this step declares. With it, first check each named id against the ids that this step declares, the ids derived from headings included; if one is not among them, stop the run before the helper runs, and name that id. Then keep only the named rules, versioned and unrecorded alike, and keep every unit. Every later step works from the rules that this step kept, and the closing summary names no other rule.
+
 ### 2. Run the sweep
 
 ```bash
@@ -56,7 +61,7 @@ node {harness_home_dir}/skills/revise-prose/revise-prose.mjs detect {paths} \
   --rule {unversioned-rule-id}={slug}
 ```
 
-Pass one `--unit` per unit from step 1, `--rule plain-speech@{version}=plain-speech` and one `--rule {id}@{rule-version}=plain-speech` per marker in the calibration for the `plain-speech` unit, and one `--rule` per marker in any other unit: with `@{rule-version}` if the marker declares a version, and without it if not. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
+Pass one `--unit` per unit from step 1, and one `--rule` per rule that step 1 kept: `--rule plain-speech@{version}=plain-speech` for `plain-speech`, `--rule {id}@{rule-version}={unit}` for a rule whose marker declares a version, and `--rule {id}={unit}` for a rule whose marker declares none. Pass nothing for a rule that has no marker or whose block is not a unit, as step 1 directs. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
 
 The helper prints one JSON object to stdout. On success it contains `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array containing the sites already adjudicated by an earlier sweep, a `batches` array in which each batch lists as `unswept` the versioned rules that its files still need, a `rules` object listing the named rules that it `detected` and those for which it has no detector as `undetected`, and a `summary`. On failure it contains `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
 
@@ -151,7 +156,7 @@ No detector: capitalization-after-colon, plain-speech, sentence-case.
 5 files excluded: 1 generated, 1 machine-generated, 3 ineligible.
 ```
 
-The recorded line names each rule from the fold's `rules` at its sweep version. Give the line naming what was not recorded only if step 1 found a rule without a sweep version or a block that is not a unit, naming each rule and each such block's slug.
+The recorded line names each rule from the fold's `rules` at its sweep version. Give the line naming what was not recorded only if step 1 kept an unrecorded rule, naming each kept rule without a sweep version and the slug of each block that is not a unit and from which step 1 kept a rule.
 
 Give the excluded-files clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so that a file that the sweep never opened is not mistaken for a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
 
