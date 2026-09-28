@@ -4,7 +4,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { App } from '../App.tsx';
 import { MantineProvider } from '../integrations/mantine/index.ts';
 
-// The shell only needs a connectable stand-in: jsdom has no EventSource, and no frames arrive in these tests.
+// The shell only needs a connectable stand-in: jsdom does not provide an EventSource, and these tests do not deliver
+// any frames.
 class StubEventSource {
   addEventListener(): void {}
   close(): void {}

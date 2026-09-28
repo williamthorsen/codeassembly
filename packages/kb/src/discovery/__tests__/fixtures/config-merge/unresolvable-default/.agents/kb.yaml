@@ -1,4 +1,4 @@
-# Registry fixture whose `default_kb` names no registered entry, so the load throws.
+# Registry fixture whose `default_kb` does not name any registered entry, so the load throws.
 default_kb: nonexistent
 kbs:
   alpha:

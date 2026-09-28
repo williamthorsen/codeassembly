@@ -1280,7 +1280,7 @@ describe(parseRunRawData, () => {
     expect(result.events[2]?.event).toBe('run_completed');
   });
 
-  it('throws no_event_log for v1 runs (no run-index.json)', async () => {
+  it('throws no_event_log for v1 runs (without a run-index.json)', async () => {
     mockFileContents({
       '/runs/test-run/status.json': JSON.stringify(currentFormatFixture),
     });

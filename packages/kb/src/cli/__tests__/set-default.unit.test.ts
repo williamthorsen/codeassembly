@@ -54,7 +54,7 @@ describe('kb set-default --none', () => {
     expect(config.defaultKb).toBeUndefined();
   });
 
-  it('succeeds when no default is set', async () => {
+  it('succeeds when the registry does not set a default', async () => {
     const home = await makeSeededHome(TWO_KBS);
 
     const result = await run({ argv: ['set-default', '--none'], cwd: home, home });
@@ -107,7 +107,7 @@ describe('kb set-default (interactive)', () => {
     expect(config.defaultKb?.name).toBe('coding');
   });
 
-  it('exits 2 when stdin is not interactive (no picker supplied)', async () => {
+  it('exits 2 when stdin is not interactive (without a picker)', async () => {
     const home = await makeSeededHome(TWO_KBS);
 
     const result = await run({ argv: ['set-default'], cwd: home, home });
@@ -118,7 +118,7 @@ describe('kb set-default (interactive)', () => {
 });
 
 describe('kb set-default error and help paths', () => {
-  it('exits 2 directing to kb create when no KBs are registered (name form)', async () => {
+  it('exits 2 directing to kb create when the registry does not contain any KBs (name form)', async () => {
     const home = await makeTempDir('kb-setdefault-home-');
 
     const result = await run({ argv: ['set-default', 'coding'], cwd: home, home });
@@ -127,7 +127,7 @@ describe('kb set-default error and help paths', () => {
     expect(result.stderr).toContain('kb create');
   });
 
-  it('exits 2 directing to kb create when no KBs are registered (interactive form)', async () => {
+  it('exits 2 directing to kb create when the registry does not contain any KBs (interactive form)', async () => {
     const home = await makeTempDir('kb-setdefault-home-');
     const { prompt } = stubPrompt({ kind: 'cancel' });
 

@@ -37,7 +37,7 @@ describe('LaneView', () => {
     expect(screen.getByText('no events yet')).toBeInTheDocument();
   });
 
-  it('shows the empty state for a fleet with no lanes', () => {
+  it('shows the empty state for a fleet without any lanes', () => {
     renderView({ lanes: [] });
     expect(screen.getByText('no events yet')).toBeInTheDocument();
   });
