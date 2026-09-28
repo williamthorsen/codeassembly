@@ -26,13 +26,13 @@ This skill receives the following inputs from the orchestrator:
 
 ### 1. Construct label flags
 
-If `labels` is empty, skip this step; no `--label` flags are needed.
+If `labels` is empty, skip this step; the create call does not need any `--label` flags.
 
-Otherwise render one `--label "{label_name}"` flag per label in the `labels` list, and write them into the create call below as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call applies no labels at all.
+Otherwise render one `--label "{label_name}"` flag per label in the `labels` list, and write them into the create call below as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call does not apply any labels at all.
 
 ### 2. Create the pull request
 
-Write the body to a scratch file per [gh body file](#gh-body-file); do not inline the body into the shell command. Name it `gh-body-pr-{timestamp}.md`, since the PR has no number until this step returns one.
+Write the body to a scratch file per [gh body file](#gh-body-file); do not inline the body into the shell command. Name it `gh-body-pr-{timestamp}.md`, since the PR does not have a number until this step returns one.
 
 ```bash
 body_path="{absolute path from the write step}"

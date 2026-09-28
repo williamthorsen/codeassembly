@@ -31,7 +31,7 @@ A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`.
 
 By default the helper searches up to two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's `default_kb` (the machine's default knowledge base). When neither source resolves, or the two resolve to the same path, the default scope contains fewer than two. `--all-kbs` widens the search to every knowledge base declared in the merged `kb.yaml` registry.
 
-`--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone: No `.kb/` discovery walk runs, so a project-local `.kb/` near which the helper happened to be invoked is never in scope. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
+`--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone: The helper does not run a `.kb/` discovery walk, so a project-local `.kb/` near which the helper happened to be invoked is never in scope. A name that does not match any registry entry yields an empty result with an explanatory diagnostic.
 
 Within each knowledge base, recall is limited to the notes declared by the store, the files matching its configured `targets`/`exclude` (the same note set that `kb check` enforces; `content/**/*.md` by default). Inside a git working tree, that set also excludes every note that the repository ignores. Markdown outside that set, such as a root `README.md` or an excluded draft, is not recalled even when it contains the query terms.
 
@@ -58,10 +58,10 @@ node {harness_home_dir}/skills/kb-retrieve/kb-retrieve.mjs "pnpm workspace setup
 
 The helper prints a JSON object to stdout:
 
-- `candidates`: An array of assertion candidates, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate also has `addressedBy` -- the references from its `addressed-by` list (what was done about the problem that it notes) -- when the note declares one. A note that matches but declares no recordType is returned as a degraded candidate with a `diagnostic`, so a note broken in that way is not hidden from recall.
+- `candidates`: An array of assertion candidates, each with `path`, `title`, `diataxis`, `tags`, `snippet`, `lastVerifiedAgeDays`, `supersession`, and `kbName`. A candidate also has `addressedBy` -- the references from its `addressed-by` list (what was done about the problem that it notes) -- when the note declares one. A note that matches but does not declare a recordType is returned as a degraded candidate with a `diagnostic`, so a note broken in that way is not hidden from recall.
 - `scopedKbs`: The knowledge bases that were actually searched.
 - `warnings`: An array (possibly empty) of registry-health problems, present even when candidates are returned.
-- `diagnostic`: Present only when scope is empty or no notes matched.
+- `diagnostic`: Present only when scope is empty or the query did not match any notes.
 
 ### 2. Rank the candidates
 
@@ -80,10 +80,10 @@ Present the ranked notes, each showing `path`, `title`, `snippet`, and `diataxis
 
 ### 4. Report empty results plainly
 
-When the helper returns a `diagnostic` and no candidates, report the empty result plainly; do not treat it as an error. `diagnostic` explains **why the result is empty**:
+When the helper returns a `diagnostic` without any candidates, report the empty result plainly; do not treat it as an error. `diagnostic` explains **why the result is empty**:
 
-- `no knowledge base configured or discovered`: No `.kb/` folder was found and no registry is configured.
-- `registry invalid: …`: The only configured `kb.yaml` registry failed to load, so no knowledge base could be searched; this is a setup problem to fix, not a missing-notes outcome.
+- `no knowledge base configured or discovered`: The helper did not find a `.kb/` folder, and a `kb.yaml` registry is not configured.
+- `registry invalid: …`: The only configured `kb.yaml` registry failed to load, so the helper could not search any knowledge base; this is a setup problem to fix, not a missing-notes outcome.
 - `no notes matched the query`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`. An empty `warnings` array is the reliable signal that the in-scope KBs were actually searched and genuinely contained nothing; when `warnings` is non-empty, a registry-health problem (a malformed registry or dead KB paths) may explain the empty or partial result even though the diagnostic reads `no notes matched the query`. Read `warnings` before concluding the query simply found nothing.
 - `all matches were filtered out`: The knowledge bases were searched and found hits, but every hit was excluded by `--diataxis`, `--tag`, or `--folder`; suggest dropping or loosening a filter rather than broadening the query.
 - `matches were found but none are assertions; use kb-retrieve-events for event recall`: The query matched only non-assertion records, such as events; the reader likely wants `kb-retrieve-events`.

@@ -111,7 +111,7 @@ If `gh pr merge` exits non-zero, print its stderr to the user and exit non-zero.
 
 ### 6. Delete remote branch (when deletion_strategy is `remote`)
 
-Skip this step entirely when `deletion_strategy` is not `remote`: `both` is handled by step 5's `--delete-branch`, and `none` requests no deletion.
+Skip this step entirely when `deletion_strategy` is not `remote`: `both` is handled by step 5's `--delete-branch`, and `none` does not request a deletion.
 
 When `deletion_strategy == 'remote'`, resolve the head-repo coordinates and call the GitHub refs API directly. The head repo is the source of the branch: For same-repo PRs it equals the base repo; for cross-repo PRs (`isCrossRepository == true`) it is the contributor's fork. Use `headRepositoryOwner.login` and `headRepository.name` from the step 1 response:
 

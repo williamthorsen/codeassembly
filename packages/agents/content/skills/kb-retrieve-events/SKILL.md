@@ -28,7 +28,7 @@ A value-bearing flag accepts both `--tag fix` and `--tag=fix`. `--min-impact` ta
 
 By default the helper searches up to two knowledge bases: the one discovered by walking up from the current directory for a `.kb/` folder, plus the registry's `default_kb`. `--all-kbs` widens the search to every knowledge base in the merged `kb.yaml` registry.
 
-`--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone: No `.kb/` discovery walk runs. A name that matches no registry entry yields an empty result with an explanatory diagnostic.
+`--store <name>` (alias `--kb <name>`) narrows the search to a single registered knowledge base, resolved by registry name alone: The helper does not run a `.kb/` discovery walk. A name that does not match any registry entry yields an empty result with an explanatory diagnostic.
 
 Within each knowledge base, recall is limited to the notes declared by the store, the files matching its configured `targets`/`exclude` (the same note set that `kb check` enforces). Events are stored under `content/events/`.
 
@@ -58,7 +58,7 @@ The helper prints a JSON object to stdout:
 - `candidates`: An array of event candidates, each with `path`, `summary` (the event's human-readable summary, or the file basename when absent), `capturedAt` (its ISO-8601 capture timestamp, or `null`), `tags`, `snippet`, and `kbName`. Each also has `occurrences` (a coarse recurrence count of how many query-matched events share its `repo`) and, when present, `repo` (its `owner/name` repository), `addressedBy` (references recording what was done about the problem that it notes), and `impact` (the author's rating, one of `low` < `medium` < `high` < `critical`; absent when the event is unrated).
 - `scopedKbs`: The knowledge bases that were actually searched.
 - `warnings`: An array (possibly empty) of registry-health problems, present even when candidates are returned.
-- `diagnostic`: Present only when scope is empty or no events matched.
+- `diagnostic`: Present only when scope is empty or the query did not match any events.
 
 ### 2. Rank the candidates
 
@@ -76,10 +76,10 @@ Present the ranked events, each showing `summary`, `path`, `capturedAt`, and `sn
 
 ### 4. Report empty results plainly
 
-When the helper returns a `diagnostic` and no candidates, report the empty result plainly; do not treat it as an error. `diagnostic` explains **why the result is empty**:
+When the helper returns a `diagnostic` without any candidates, report the empty result plainly; do not treat it as an error. `diagnostic` explains **why the result is empty**:
 
-- `no knowledge base configured or discovered`: No `.kb/` folder was found and no registry is configured.
-- `store "<name>" is not registered in kb.yaml`: The named `--store` matched no registry entry.
+- `no knowledge base configured or discovered`: The helper did not find a `.kb/` folder, and a `kb.yaml` registry is not configured.
+- `store "<name>" is not registered in kb.yaml`: The named `--store` did not match any registry entry.
 - `registry invalid: …`: The only configured `kb.yaml` registry failed to load; this is a setup problem to fix, not a missing-events outcome.
 - `no notes matched the query`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`.
 - `all matches were filtered out`: Matches were found but every one was excluded by `--tag`; suggest dropping or loosening the filter.

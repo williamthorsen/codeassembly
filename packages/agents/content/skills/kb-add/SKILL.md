@@ -21,7 +21,7 @@ The split is deliberate: The helper is narrow and mechanical; the classification
 | `--domain-description` | One-line description for a domain that the write declares. Takes prose, not a path; the path comes from `--folder`. Without it the domain is declared bare.                      | No       |
 | `--folder`             | Topic subpath beneath the assertions root (`content/assertions/`). The helper supplies the `assertions/` segment; pass the topic only. Defaults to `content/assertions/` itself. | No       |
 | `--kb`                 | Knowledge base name, or `@default` for the registry default. Overrides `.kb/` discovery; the registry default is reachable only via `--kb @default`.                             | No       |
-| `--survey`             | Report the destination's shape and exit. Takes `--kb` alone; writes nothing and reads no stdin. See [step 2](#2-survey-the-destination-kb).                                      | No       |
+| `--survey`             | Report the destination's shape and exit. Takes `--kb` alone; writes nothing and does not read stdin. See [step 2](#2-survey-the-destination-kb).                                 | No       |
 | `--tags`               | Comma-separated tag list. Known aliases are canonicalized at write time.                                                                                                         | No       |
 | `--title`              | The note title; also doubles as the filename.                                                                                                                                    | Yes      |
 
@@ -29,7 +29,7 @@ A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The
 
 ### KB selection
 
-By default the helper writes to the knowledge base discovered by walking up from the current directory for a `.kb/` folder. When no `.kb/` is discovered and no `--kb` is given, the helper refuses to write rather than guessing a destination. `--kb <name>` names a specific entry from the merged `kb.yaml` registry and overrides discovery; `--kb @default` is the only way to reach the registry's `default_kb`. The chosen KB is shown in the proposal so that the user can redirect the write via `--kb` if it is wrong.
+By default the helper writes to the knowledge base discovered by walking up from the current directory for a `.kb/` folder. When the walk does not discover a `.kb/` and the caller does not pass `--kb`, the helper refuses to write rather than guessing a destination. `--kb <name>` names a specific entry from the merged `kb.yaml` registry and overrides discovery; `--kb @default` is the only way to reach the registry's `default_kb`. The chosen KB is shown in the proposal so that the user can redirect the write via `--kb` if it is wrong.
 
 ## Runtime dependencies
 
@@ -75,7 +75,7 @@ It reports:
 - `domains`: Each declared domain with its `description`, its `provisional` flag, and the `noteCount` at or beneath it.
 - `undeclaredFolders`: Folders containing notes outside every declared domain.
 
-Then read a representative sample of notes from the folder most likely to fit the new note's topic. The survey reads no note bodies, so the sample, not the survey, reveals the title conventions and the live tag vocabulary already in use.
+Then read a representative sample of notes from the folder most likely to fit the new note's topic. The survey does not read any note bodies, so the sample, not the survey, reveals the title conventions and the live tag vocabulary already in use.
 
 ### 3. Cross-reference via kb-retrieve
 
@@ -135,18 +135,18 @@ On `ok: true`, report the written path and the canonicalization audit trail. Whe
 
 Then report the placement:
 
-- `placement.domain` names the domain that contains the note. A `null` value means the note was written to the assertions root, under no domain and outside the scope of the taxonomy rules; say so, and offer to move it under a domain.
+- `placement.domain` names the domain that contains the note. A `null` value means the note was written to the assertions root, not under any domain, and outside the scope of the taxonomy rules; say so, and offer to move it under a domain.
 - `placement.added` lists the domains declared by this capture, each with the block in which it was declared. Name them, and flag every one with `provisional: true` as awaiting review.
 - `placement.warning` means the note was written but its folder could not be declared. Report the message; `kb check` will report the folder as `taxonomy.undeclared` on its next run.
-- An absent `placement` means the store has no `.kb/taxonomy.yaml` and so has not adopted a taxonomy. Nothing was declared, and nothing is wrong.
+- An absent `placement` means the store does not contain a `.kb/taxonomy.yaml` and so has not adopted a taxonomy. Nothing was declared, and nothing is wrong.
 
 In auto mode, the user learns of an undeclared folder found by the survey from the completion report; include it there.
 
 On `ok: false`, act on the `error` code:
 
-- `no-kb-resolvable`: The explicit `--kb <name>` matched no registered entry. Report the message and propose a corrected name (or, in auto mode, fail visibly with the categorical reason).
-- `missing-destination`: No `.kb/` was discovered and no `--kb` was given. Ask the user where the note should go, passing `--kb <name>` for a specific KB or `--kb @default` for the registry default (or, in auto mode, fail visibly with the categorical reason).
-- `no-default`: `--kb @default` was given but no `default_kb` is configured. Report the message; have the user name a KB explicitly or configure a default.
+- `no-kb-resolvable`: The explicit `--kb <name>` did not match any entry in the `kb.yaml` registry. Report the message and propose a corrected name (or, in auto mode, fail visibly with the categorical reason).
+- `missing-destination`: The helper did not discover a `.kb/`, and the invocation did not pass `--kb`. Ask the user where the note should go, passing `--kb <name>` for a specific KB or `--kb @default` for the registry default (or, in auto mode, fail visibly with the categorical reason).
+- `no-default`: `--kb @default` was given but `kb.yaml` does not configure a `default_kb`. Report the message; have the user name a KB explicitly or configure a default.
 - `invalid-args` / `invalid-title`: Report the helper's message and propose a corrected invocation.
 - `invalid-config`: A survey found a malformed `.kb/config.yaml` or `.kb/taxonomy.yaml`. The message names the file; report it and have the user repair it before capturing.
 - `collision`: A note already exists at the target path. Decide whether to re-title, append the new material to the existing note (read it first, then write a follow-up edit), or abort.
