@@ -64,8 +64,9 @@ interface SpliceProbe {
 }
 
 /**
- * Subagents whose output is rewritten by the dispatching session into its own artifacts, in house style. Nobody reads
- * the subagent's output directly, so a writing-preferences fill in the subagent only adds tokens to every dispatch.
+ * Subagents whose output is rewritten by the dispatching session into its own artifacts, in house style. The user does
+ * not read the subagent's output directly, so a writing-preferences fill in the subagent only adds tokens to every
+ * dispatch.
  */
 const HOUSE_STYLE_EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set(['handoff-reviewer']);
 
