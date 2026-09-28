@@ -36,7 +36,9 @@ const OPTION_FORMAT: Spec = {
     '**Number every option**',
     'a recommendation that does not match the strongest marker is a defect',
     '| ■■■    | strongly recommended |',
-    '   - ➕ minimal surface area',
+    // The example's recommended option, shown with no con. Without an uneven example the agent copies the paired
+    // pro-and-con shape of the others and pads the leader.
+    "   - ➕ matches the package's three other loaders, so callers keep one pattern",
     'Apply this even when an option has only one pro or con.',
     // The gate that decides whether a menu exists at all. Without it the block reads as a formatting spec, and a
     // settled call gets rendered as a fork that the reader has to evaluate.
@@ -59,6 +61,20 @@ const OPTION_FORMAT: Spec = {
     // The ban on padding. Without it an option with real pros and no real con gets a con invented for balance, and
     // the invented con is what makes a settled call look like a fork.
     'Never add a bullet to fill a slot',
+    // The principle that the tests serve. Without it the agent reads an uneven menu as a formatting fault and evens it
+    // out with a minor con.
+    'Bullets report the weight of each option, not a balance between the options',
+    // The size requirement on a con. Without it a con names a cost without saying what it does, and the reader has to
+    // investigate to learn that it is trivial.
+    'concretely enough that the reader can weigh it without investigating',
+    // The one repair for a minor con. Without it the agent deletes the qualifier and keeps the bullet.
+    'The only repair is to cut the bullet',
+    // Without it one tradeoff is split into a con on one option and a pro on the other, and the reader counts two.
+    '**One tradeoff, stated once.**',
+    // The check that corrects markers set too weak. The gate reads only the markers, so without it a weak marker
+    // renders a menu that the gate would have decided.
+    '**Check the leader before rendering.**',
+    'When every alternative carries a disqualifying `➖`, the leader is ■■■',
     // The gate's one observed blind spot. Without it the agent measures each option by its own elapsed time and
     // round trips, which are scarce to it, and treats having measured one as license to rank.
     '**Never rank the options by your own elapsed time, round trips, or effort.**',
