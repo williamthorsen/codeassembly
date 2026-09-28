@@ -38,7 +38,7 @@ describe('readAppendedLines', () => {
     expect(second.lines).toEqual(['{"torn":2}']);
   });
 
-  it('when no newline has been written at all, returns no lines and keeps the offset', () => {
+  it('when the file does not contain any newline, does not return any lines and keeps the offset', () => {
     const filePath = composeFile('{"torn"');
 
     const result = expectAppended(readAppendedLines({ filePath, offset: 0 }));

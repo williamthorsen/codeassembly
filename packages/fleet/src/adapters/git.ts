@@ -13,7 +13,10 @@ import { retainKeys } from '../common/maps.ts';
 /** Ceiling on any single git invocation; without one, a wedged repository could stall a poll pass indefinitely. */
 const GIT_TIMEOUT_MS = 10_000;
 
-/** Every `rev-parse` answer that means no branch is checked out, including the `null` returned by a failed command. */
+/**
+ * Every `rev-parse` answer that means the worktree does not have a branch checked out, including the `null` returned
+ * by a failed command.
+ */
 const NO_BRANCH_OUTPUTS = new Set([null, '', 'HEAD']);
 
 const execFileAsync = promisify(execFile);

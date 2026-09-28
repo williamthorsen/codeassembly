@@ -50,7 +50,7 @@ describe('probeWorktree', () => {
     expect(await probeWorktree(dir)).toEqual(composeObservation({ branch: null }));
   });
 
-  it('leaves base comparison null when no remote-tracking base exists', async () => {
+  it('leaves base comparison null when the repo does not have a remote-tracking base', async () => {
     const dir = createRepo('no-origin');
 
     expect(await probeWorktree(dir)).toEqual(composeObservation({ ahead: null, behind: null, baseBranch: null }));

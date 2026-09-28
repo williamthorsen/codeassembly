@@ -87,7 +87,7 @@ describe('startForgePoller', () => {
     expect(poller.getFacts(REPO, '984')).toMatchObject({ pr: PR, stale: false });
   });
 
-  it('records a first-poll failure as stale with no facts', async () => {
+  it('records a first-poll failure as stale without facts', async () => {
     const poller = startTestPoller({
       adapter: composeAdapter(() => Promise.reject(new Error('unreachable'))),
       listLanes: () => [composeLane('984')],
@@ -134,7 +134,7 @@ describe('startForgePoller', () => {
     expect(poller.getFacts(REPO, '984')).toBeUndefined();
   });
 
-  it('is inert when no adapter is configured', async () => {
+  it('is inert when the poller is not given an adapter', async () => {
     const onUpdate = vi.fn();
     const listLanes = vi.fn(() => [composeLane('984')]);
     const poller = startTestPoller({ adapter: undefined, listLanes, onUpdate });

@@ -43,7 +43,7 @@ describe('createGithubAdapter', () => {
     expect(branchPrs['feature-x']?.checks).toBe(expected);
   });
 
-  it('reports no checks as undefined rather than a verdict', async () => {
+  it('reports an empty check rollup as undefined rather than a verdict', async () => {
     const { run } = createRunner({ prList: [composePr({ statusCheckRollup: [] })] });
     const adapter = createGithubAdapter({ runProcess: run });
 
@@ -92,7 +92,7 @@ describe('createGithubAdapter', () => {
     expect(calls.filter((args) => args[0] === 'pr' && args[1] === 'view')).toHaveLength(1);
   });
 
-  it('treats a branch with no pull request as a stable absence, skipping its re-probe on a later poll', async () => {
+  it('treats a branch without a pull request as a stable absence, skipping its re-probe on a later poll', async () => {
     const { run, calls } = createRunner({
       prList: [],
       prView: { 'feature-x': composeGhError('no pull requests found for branch "feature-x"') },
@@ -139,7 +139,7 @@ describe('createGithubAdapter', () => {
     });
   });
 
-  it('omits a ticket whose number resolves to no issue', async () => {
+  it('omits a ticket whose number does not resolve to an issue', async () => {
     const { run } = createRunner({
       prList: [],
       issueView: {

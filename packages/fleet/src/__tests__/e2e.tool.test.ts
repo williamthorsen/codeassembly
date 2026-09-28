@@ -12,8 +12,9 @@ import { type RunningFleetServer, startFleetServer } from '../server.ts';
 const SHORT_INTERVALS = {
   closeAfterMs: 600_000,
   debounceMs: 10,
-  // Forge polling is disabled so that the suite stays hermetic: no `gh`, no network. Forge derivation is covered by
-  // the layer tests; here one assertion confirms the server serves `forge: null` with polling off.
+  // Forge polling is disabled so that the suite stays hermetic: It does not run `gh` or use the network. Forge
+  // derivation is covered by the layer tests; here one assertion confirms the server serves `forge: null` with polling
+  // off.
   forge: 'none' as const,
   forgePollMs: 60_000,
   gitPollMs: 60_000,
@@ -92,7 +93,7 @@ describe('fleet server', () => {
     expect(closed.closedReason).toBe('worktree-gone');
   });
 
-  it('broadcasts a staleness crossing with no new event on disk', async () => {
+  it('broadcasts a staleness crossing without a new event on disk', async () => {
     const eventsDir = createEventsDir();
     const laneDir = join(eventsDir, 'acme', 'app', '101');
     mkdirSync(laneDir, { recursive: true });

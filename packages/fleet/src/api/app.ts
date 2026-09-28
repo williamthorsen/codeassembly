@@ -1,7 +1,7 @@
 // The HTTP surface: a snapshot route and an SSE stream pushing full-fleet frames. Routes are chained in one
 // expression: Splitting the registrations would silently degrade `AppType` to an empty route map and with it the
-// typed client that consumers build from it. The app owns no state: Snapshots and change notifications are injected
-// capabilities, so tests drive it without a store or a clock.
+// typed client that consumers build from it. The app does not own any state: Snapshots and change notifications are
+// injected capabilities, so tests drive it without a store or a clock.
 
 import { Hono } from 'hono';
 import { streamSSE } from 'hono/streaming';
