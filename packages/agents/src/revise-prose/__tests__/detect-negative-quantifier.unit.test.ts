@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { detectNegativeQuantifiers } from '../detect-negative-quantifier.ts';
-import { CODE_SPAN_PLACEHOLDER, maskCodeSpans } from '../mask-code-spans.ts';
+import { maskCodeSpans } from '../mask-code-spans.ts';
 import type { NegativeQuantifierCandidate } from '../types.ts';
 
 /**
@@ -71,18 +71,49 @@ const RECORDED_SITES: ReadonlyArray<{ head: string; sentence: string }> = [
 
 describe(detectNegativeQuantifiers, () => {
   describe('recall', () => {
-    it.each(REPAIRED_SITES)('reports the library site headed by "$head"', ({ head, before }) => {
-      expect(detect(before)).toEqual([expect.objectContaining({ head })]);
+    it.each(REPAIRED_SITES)('reports the library site headed by "$head" as relative', ({ before }) => {
+      expect(detect(before)).toEqual([expect.objectContaining({ positions: ['relative'] })]);
     });
 
-    it.each(RECORDED_SITES)('reports the recorded site headed by "$head"', ({ head, sentence }) => {
-      expect(detect(sentence)).toEqual([expect.objectContaining({ head })]);
+    it.each(RECORDED_SITES)('reports the recorded site headed by "$head" as relative', ({ sentence }) => {
+      expect(detect(sentence)).toEqual([expect.objectContaining({ positions: ['relative'] })]);
     });
 
-    it('reports a site whose relativizer follows a comma', () => {
+    it('reports a relative site whose relativizer follows a comma', () => {
       expect(detect('It resolves to a location, which no rewritten path could name.')).toEqual([
-        expect.objectContaining({ head: 'location', subject: 'rewritten path', verb: 'could' }),
+        expect.objectContaining({ positions: ['relative'] }),
       ]);
+    });
+
+    it.each(['a rule that no other file declares', 'a field that no such override names'])(
+      'reports "no other" and "no such" in "%s" as relative',
+      (sentence) => {
+        expect(detect(sentence)).toEqual([expect.objectContaining({ positions: ['relative'] })]);
+      },
+    );
+
+    it.each([
+      "There's no Vercel CLI.",
+      'There is no test for it.',
+      'Once the sweep ends, there will be no entry.',
+      'There’s no record.',
+    ])('reports the existential site in "%s"', (sentence) => {
+      expect(detect(sentence)).toEqual([expect.objectContaining({ positions: ['existential'] })]);
+    });
+
+    it.each([
+      'The merge publishes no build output.',
+      'A change naming no scope keeps its type prefix.',
+      'The pre-flight checker found no known issues.',
+      'The prompt explains that no run-index file exists.',
+      'No file is written.',
+      'The review ended with no findings.',
+      'It masks the link so that no URL reaches the detector.',
+      'When no consumer could observe it, the change repairs nothing.',
+      'The sweep reads no more files.',
+      'Nothing follows: no rule applies.',
+    ])('reports the site in "%s" as other', (sentence) => {
+      expect(detect(sentence)).toEqual([expect.objectContaining({ positions: ['other'] })]);
     });
   });
 
@@ -93,32 +124,31 @@ describe(detectNegativeQuantifiers, () => {
 
     it.each([
       'a file that no longer exists',
-      'a rule that no more files declare',
-      'a task that no one invokes',
-      'a rule that no other file declares',
-      'a field that no such override names',
+      'It fails, no matter which path it takes.',
+      'No sooner had it started than it stopped.',
+      'The cache is stale, no doubt.',
+      'It reads no more than ten files.',
+      'It reads no less than ten files.',
+      'It reads no fewer than ten files.',
+      'A claim is no stronger than what the change delivers.',
     ])('skips the fixed phrase in "%s"', (sentence) => {
       expect(detect(sentence)).toEqual([]);
     });
 
-    // Each `no` phrase is the object of the verb or participle before it, not the subject of a relative clause.
-    it.each([
-      'The merge publishes no change entries.',
-      'A change naming no scope keeps its type prefix.',
-      'The pre-flight checker found no known issues.',
-      'The prompt explains that no run-index file exists.',
-      'An empty list means no open pull request exists.',
-    ])('skips the object phrase in "%s"', (sentence) => {
-      expect(detect(sentence)).toEqual([]);
+    it('skips the pronoun "no one"', () => {
+      expect(detect('a task that no one invokes')).toEqual([]);
     });
 
-    it('skips a `no` phrase after the "so that" of a purpose clause', () => {
-      expect(detect('It masks the link so that no URL reaches the detector.')).toEqual([]);
+    it('skips a hyphenated compound', () => {
+      expect(detect('The hook is a no-op here.')).toEqual([]);
     });
 
-    it('skips a `no` phrase that opens a clause without a head', () => {
-      expect(detect('When no consumer could observe it, the change repairs nothing.')).toEqual([]);
-    });
+    it.each(['No, the file stays.', 'The answer is no.', 'Say no to it.'])(
+      'skips a `no` that does not open a noun phrase in "%s"',
+      (sentence) => {
+        expect(detect(sentence)).toEqual([]);
+      },
+    );
 
     it('skips a `no` inside an inline code span', () => {
       expect(detectMasked('A field that `no override` names keeps its value.')).toEqual([]);
@@ -126,30 +156,35 @@ describe(detectNegativeQuantifiers, () => {
   });
 
   describe('the candidate', () => {
-    it('reports the head, the phrase after `no`, the verb, and the phrase from head to verb', () => {
+    it('reports the sentence as the phrase, with the position of its `no`', () => {
       expect(detect('It edits an issue body that no lede audit reaches.')).toEqual([
         {
           rule: 'negative-quantifier',
           file: 'fixture.md',
           line: 1,
-          head: 'body',
-          subject: 'lede audit',
-          verb: 'reaches',
-          phrase: 'body that no lede audit reaches',
+          phrase: 'It edits an issue body that no lede audit reaches.',
           sentence: 'It edits an issue body that no lede audit reaches.',
+          positions: ['relative'],
         } satisfies NegativeQuantifierCandidate,
       ]);
     });
 
-    it('reports an inline code span in the subject as the placeholder', () => {
-      expect(detectMasked('It deploys a skill that no `skills/` directory contains.')).toEqual([
-        expect.objectContaining({ head: 'skill', subject: `${CODE_SPAN_PLACEHOLDER} directory`, verb: 'contains' }),
+    it('reports two `no`s in one sentence as one candidate with both positions in reading order', () => {
+      expect(detect('There is no test for a field that no fixture names.')).toEqual([
+        expect.objectContaining({ positions: ['existential', 'relative'] }),
       ]);
     });
 
-    it('reports the line on which the head stands', () => {
+    it('reports each sentence of a span separately', () => {
+      expect(detect('It publishes no build output. It declares no entry point.')).toEqual([
+        expect.objectContaining({ sentence: 'It publishes no build output.' }),
+        expect.objectContaining({ sentence: 'It declares no entry point.' }),
+      ]);
+    });
+
+    it("reports the line on which the sentence begins, not the `no`'s line", () => {
       const candidates = detectNegativeQuantifiers([
-        { file: 'docs/guide.md', line: 40, text: 'The first line.\nThen a skill that no task invokes.' },
+        { file: 'docs/guide.md', line: 40, text: 'The first line.\nThen a skill that\nno task invokes.' },
       ]);
 
       expect(candidates).toEqual([expect.objectContaining({ file: 'docs/guide.md', line: 41 })]);

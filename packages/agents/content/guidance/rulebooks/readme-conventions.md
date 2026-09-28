@@ -31,11 +31,11 @@ What the README describes decides its shape. Find the row; the rest of this rule
 | Content or data repository (`content`)        | What the content is, and the shape that it takes            | The authoring contract: how to add an entry, and what checks it    | Detail belonging to whatever consumes the content     |
 | Internal or agent-facing package (`internal`) | What the thing is, and its entry points                     | A pointer to the guidance that governs work on it                  | Everything else                                       |
 
-Screenshots belong in the application row and almost nowhere else. A library has no interface to show, and a terminal recording of a CLI demonstrates one path, whereas the text already shows three.
+Screenshots belong in the application row and almost nowhere else. A library does not have an interface to show, and a terminal recording of a CLI demonstrates one path, whereas the text already shows three.
 
 ## Recording the type
 
-A README records its row on its first line, as `<!-- readme-type: <slug> -->` with the slug from the Type column, so that the choice of row happens once rather than at every revision. Writing a README adds the marker. Revising one follows it; if the marker is missing or names no row, choose the row that fits and add the marker.
+A README records its row on its first line, as `<!-- readme-type: <slug> -->` with the slug from the Type column, so that the choice of row happens once rather than at every revision. Writing a README adds the marker. Revising one follows it; if the marker is missing or does not name a row, choose the row that fits and add the marker.
 
 The marker records a decision rather than a fact. When it no longer fits what the README describes, such as an internal package that is now published, say so before editing rather than following it.
 
@@ -67,7 +67,7 @@ Move the section, and leave a link where a reader looking for it would have foun
 - Content copied from another file. Two copies of one fact drift apart, and the copy that nobody owns is the one that goes wrong.
 - A claim that has gone stale. A revision checks each claim that it keeps against what the README describes.
 
-These share a failure mode: Each stays wrong with no test failing and no reader complaining.
+These share a failure mode: Each stays wrong without a test failing or a reader complaining.
 
 ## Adding a type
 

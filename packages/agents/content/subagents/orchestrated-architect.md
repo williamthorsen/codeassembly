@@ -151,7 +151,7 @@ You have **30 turns** (API round-trips) to complete your work. Each time you cal
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
-You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. The orchestrator does not have a fallback.
 
 ```
 Phase: architecture

@@ -28,14 +28,14 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // failure.
 //
 // Existing in the library is the weaker of the two properties that a rendered token needs. The other is that the
-// artifact reaches the install: A support entry ships unconditionally. A token whose target no declaration pulls in
-// renders a pointer to a skill that the consumer does not have. Nothing supplies that edge automatically, which leaves
-// the `dependencies:` declaration on each linking skill as the whole mitigation, and the second suite below is what
-// holds those declarations in place. An optional token is exempt from that second property by construction: It names a
-// target that need not deploy. The author accepted the pointer that it renders.
+// artifact reaches the install: A support entry ships unconditionally. A token whose target is not pulled in by any
+// declaration renders a pointer to a skill that the consumer does not have. Nothing supplies that edge automatically,
+// which leaves the `dependencies:` declaration on each linking skill as the whole mitigation, and the second suite
+// below is what holds those declarations in place. An optional token is exempt from that second property by
+// construction: It names a target that need not deploy. The author accepted the pointer that it renders.
 //
 // `{rulebook:<slug>}` is out of scope. The render pass rejects one in a support entry outright, since `install` ships
-// such an entry having resolved no declaration to render it against.
+// such an entry without having resolved any declaration to render it against.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures', 'support-entry-tokens');
 
@@ -110,10 +110,10 @@ describe('support entry invocation tokens', () => {
 // the same requirement as a link to the subsection itself.
 //
 // One reach is not attributed: a token that a host arrives at through a second support entry, since a support entry
-// declares no dependencies of its own and the walk stops at the first hop.
+// does not declare any dependencies of its own and the walk stops at the first hop.
 //
-// An optional token carries no requirement at all. Compelling a declaration for one would deploy the target that the
-// marker exists to leave out.
+// An optional token does not carry any requirement at all. Compelling a declaration for one would deploy the target
+// that the marker exists to leave out.
 describe('support entry token declarations', () => {
   it('are declared by every host that links into the section carrying them', async () => {
     const violations = await findUndeclaredTokens(CONTENT_ROOT);
@@ -125,10 +125,10 @@ describe('support entry token declarations', () => {
     expect(violations, message).toEqual([]);
   });
 
-  // The assertion above reports only what it fails to reach, and no support entry in the library carries a required
-  // token today: Every one naming an Atlassian skill is written in the optional form, which carries no requirement. So
-  // the live walk has nothing to judge, and these two fixtures are what prove the walk still judges correctly when a
-  // support entry next carries one.
+  // The assertion above reports only what it fails to reach, and the library does not contain a support entry that
+  // carries a required token today: Every one naming an Atlassian skill is written in the optional form, which does
+  // not carry any requirement. So the live walk has nothing to judge, and these two fixtures are what prove the walk
+  // still judges correctly when a support entry next carries one.
   describe('detection', () => {
     it('reports a host that declares none of what the linked section names', async () => {
       const violations = await findUndeclaredTokens(path.join(FIXTURES_DIR, 'undeclared'));
@@ -249,7 +249,8 @@ async function listLinkingHosts(root: string): Promise<ReadonlyArray<LinkingHost
  * Lists every Markdown file under `skills/` that ships as a support entry rather than as part of a skill.
  *
  * A support entry is a directory or a plain file, so the walk decides on what the entry is rather than on its name: A
- * `notes.json` beside `_data/` contributes no Markdown, whereas reading its suffix would send `readdir` at a file.
+ * `notes.json` beside `_data/` does not contribute any Markdown, whereas reading its suffix would send `readdir` at a
+ * file.
  */
 async function listSupportEntryFiles(root: string): Promise<ReadonlyArray<string>> {
   const skillsRoot = path.join(root, 'skills');

@@ -17,8 +17,8 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // which this guards is a consumer being *dropped*, and a discovered list would move with the bug.
 //
 // A second guard runs beside them, over the diff-audit checklist. Its risk is the mirror image: A host that states
-// the checklist in its own prose has no include directive and no anchor, so nothing in the deployment mechanism
-// can see the fork. Two carriers of `prose-line-breaks` drifted that way before it was guarded.
+// the checklist in its own prose does not have an include directive or an anchor, so nothing in the deployment
+// mechanism can see the fork. Two carriers of `prose-line-breaks` drifted that way before it was guarded.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
@@ -36,7 +36,7 @@ const OPTION_FORMAT: Spec = {
     '**Number every option**',
     'a recommendation that does not match the strongest marker is a defect',
     '| ■■■    | strongly recommended |',
-    // The example's recommended option, shown with no con. Without an uneven example the agent copies the paired
+    // The example's recommended option, shown without a con. Without an uneven example the agent copies the paired
     // pro-and-con shape of the others and pads the leader.
     "   - ➕ matches the package's three other loaders, so callers keep one pattern",
     'Apply this even when an option has only one pro or con.',
@@ -58,8 +58,8 @@ const OPTION_FORMAT: Spec = {
     // The test that tells a real bullet from a manufactured one. Without it the rule states what a bullet must be
     // and not how to tell, which is the wording that four captured failures got through.
     'must be false for at least one other option',
-    // The ban on padding. Without it an option with real pros and no real con gets a con invented for balance, and
-    // the invented con is what makes a settled call look like a fork.
+    // The ban on padding. Without it an option with real pros and without a real con gets a con invented for balance,
+    // and the invented con is what makes a settled call look like a fork.
     'Never add a bullet to fill a slot',
     // The principle that the tests serve. Without it the agent reads an uneven menu as a formatting fault and evens it
     // out with a minor con.
@@ -122,11 +122,11 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     '🚀 **Implement** -> `implement-plan`',
     // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
     // enough to turn away: the round trip that the carve-out exists to prevent.
-    'Render option 3 as 🔬 Investigate, invoking no skill',
+    'Render option 3 as 🔬 Investigate, without invoking a skill',
     // The rule that a spike matches. Without it the cascade's feature-shaped rule 2 fails on an investigation and
-    // falls through to rule 3, recommending the development pipeline for work that produces no diff.
+    // falls through to rule 3, recommending the development pipeline for work that does not produce a diff.
     'rule 2 matches whenever rule 1 does not',
-    // Rule 1's test. Without it the rule states no condition at all.
+    // Rule 1's test. Without it the rule does not state any condition at all.
     'Recommend only when you can name a load-bearing decision that the plan leaves unsettled',
     // What "unsettled" means. Without them the term is undefined and the agent falls back to instinct.
     'when it was ratified interactively',
@@ -157,15 +157,15 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // The carve-out that exempts the preview from the sub-blocks' terseness default. Without it that default
     // suppresses the preview again, which is the consent-blind render that this spec exists to prevent.
     'It never suppresses the proposed-edit preview, which is required content',
-    // The directive that keeps the Deviations edit inside the criteria that it previews. Without it the option names
-    // no bound, and the delegate's own scope is the only thing holding the edit to what the preview showed.
+    // The directive that keeps the Deviations edit inside the criteria that it previews. Without it the option does not
+    // name a bound, and the delegate's own scope is the only thing holding the edit to what the preview showed.
     'which revises acceptance criteria alone',
     // The trigger's computation order. Without it the sub-block renders off the compliance status rows again,
     // prompting for a ticket edit wherever a criterion's wording merely differs from what was built.
-    'Compute the delta first: An empty delta renders no sub-block',
+    'Compute the delta first: When it is empty, do not render the sub-block',
     // The carve-out for work that is unfinished rather than redirected. Without it a mid-implementation review
     // proposes dropping criteria that the branch has not reached yet, aligning the contract to a moving target.
-    'A criterion that is merely unbuilt contributes no line',
+    'A criterion that is merely unbuilt does not contribute a line',
     // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation already flagged by the
     // review gets the contract rewritten to match it, and the finding disappears along with the conflict.
     'revising the contract to match it',
@@ -180,7 +180,7 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // label again, and selecting it is consent to a write whose target the user was never shown.
     '**Name the artifact that the edit writes.**',
     // The rule that offers the local-only form when the snapshot may be the working contract. Without it a ticket
-    // that the user cannot edit has no path but a remote write that fails or updates a ticket that is not theirs.
+    // that the user cannot edit has only one path: a remote write that fails or updates a ticket that is not theirs.
     '**Offer the local-only form when the snapshot may be the contract.**',
     // The marker rule, here for the findings cascade.
     "The selected option's marker follows how cleanly its rule matched",
@@ -243,11 +243,11 @@ describe('output-shaping spec inlining', () => {
     });
   });
 
-  it('no skill still links to a relocated spec', async () => {
+  it('keeps every skill free of links to a relocated spec', async () => {
     const violations: Array<string> = [];
     const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
     for (const entry of entries) {
-      // `_`-prefixed entries are support directories; a directory with no `SKILL.md` (e.g. a bundled helper) is not
+      // `_`-prefixed entries are support directories; a directory without a `SKILL.md` (e.g. a bundled helper) is not
       // a skill either. Neither can contain a spec link.
       if (!entry.isDirectory() || entry.name.startsWith('_')) {
         continue;
@@ -269,7 +269,7 @@ describe('output-shaping spec inlining', () => {
 });
 
 describe('diff-audit checklist inlining', () => {
-  it('is stated in no content file but its partial', async () => {
+  it('is stated in its partial alone', async () => {
     const violations: Array<string> = [];
     const files = await listMarkdownFiles(CONTENT_ROOT);
     for (const file of files) {

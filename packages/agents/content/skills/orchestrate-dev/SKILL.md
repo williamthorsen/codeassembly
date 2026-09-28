@@ -37,7 +37,7 @@ Effort sets an upper limit on how much work the run may do. The orchestrator sca
 | architecture       | optional | optional           | optional |
 | planning           | optional | optional           | optional |
 
-The rule: Thresholds fall as effort rises; review infrastructure scales proportionally. No preset sets approval-threshold below `medium`, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, so at high effort those tiers still receive opportunistic fix cycles. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion: Even at high effort, a one-line fix does not need architectural review.
+The rule: Thresholds fall as effort rises; review infrastructure scales proportionally. Every preset sets approval-threshold at `medium` or above, because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column); budget-threshold keeps descending, so at high effort those tiers still receive opportunistic fix cycles. An explicit `--approval-threshold` overrides the preset. Architecture and planning are always orchestrator-discretion: Even at high effort, a one-line fix does not need architectural review.
 
 ### Effort x findings
 

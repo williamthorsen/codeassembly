@@ -29,7 +29,7 @@ Every Bitbucket call below goes through the tool named in [Bitbucket pull-reques
 
 ### 1. Refuse an unmappable deletion strategy
 
-`deletion_strategy: both` has no Bitbucket counterpart. `closeSourceBranch` controls the remote side alone, and nothing in the tool's surface deletes a local branch. Refuse before any other step, so that nothing is published:
+`deletion_strategy: both` does not have a Bitbucket counterpart. `closeSourceBranch` controls the remote side alone, and nothing in the tool's surface deletes a local branch. Refuse before any other step, so that nothing is published:
 
 <!-- include: ../_partials/bitbucket-delete-both-refusal.md / -->
 
@@ -41,7 +41,7 @@ Issue one `action: "get"` call with `prId` set to `pr_number`, per [Reading a pu
 
 Refuse the merge when `state` is not `OPEN`, naming the state: "PR #{n} is {state} (not OPEN); cannot merge." The refusal covers `MERGED`, `DECLINED`, and `SUPERSEDED`. When `state` is missing from the response, **fail closed**: Refuse with "Cannot determine merge state for PR #{n}; verify and merge manually."
 
-Bitbucket exposes no counterpart to GitHub's `mergeable` or `mergeStateStatus`, and this step invents none. The merge call in step 4 reports a conflict, a failing required check, or a missing required approval as its own error, before anything is published.
+Bitbucket does not expose a counterpart to GitHub's `mergeable` or `mergeStateStatus`, and this step does not invent one. The merge call in step 4 reports a conflict, a failing required check, or a missing required approval as its own error, before anything is published.
 
 ### 3. Verify branch sync
 
@@ -67,11 +67,11 @@ If the counts differ from `0\t0`, refuse: "Local branch is out of sync with `ori
 
 ### 4. Execute the merge
 
-Map `strategy` per [Merging a pull request](../_data/bitbucket-pr-access.md#merging-a-pull-request): `squash` to `squash`, `merge` to `merge_commit`, and `rebase` to `rebase_fast_forward`. Do not pre-check the repository's enabled strategies; the tool exposes no such list, and for a disabled strategy the platform returns its own error naming it.
+Map `strategy` per [Merging a pull request](../_data/bitbucket-pr-access.md#merging-a-pull-request): `squash` to `squash`, `merge` to `merge_commit`, and `rebase` to `rebase_fast_forward`. Do not pre-check the repository's enabled strategies; the tool does not expose such a list, and for a disabled strategy the platform returns its own error naming it.
 
 Compose `message` as `title`, a blank line, then `body`, for `squash` and `merge_commit`. Omit `message` for `rebase_fast_forward`: Rebased commits keep their own messages, so a composed merge message has nothing to attach to. This matches `merge-gh-pr`'s handling of `--rebase`.
 
-Passing a composed title for `merge_commit` diverges from `merge-gh-pr`, which omits `--subject` and lets GitHub compose its own subject. Because Bitbucket's single `message` field covers title and body together, there is no way to supply the body and leave the subject to the platform.
+Passing a composed title for `merge_commit` diverges from `merge-gh-pr`, which omits `--subject` and lets GitHub compose its own subject. Because Bitbucket's single `message` field covers title and body together, a caller cannot supply the body and leave the subject to the platform.
 
 Set `closeSourceBranch` to `true` for `deletion_strategy: remote` and `false` for `none`.
 
@@ -83,7 +83,7 @@ When the `action: "merge"` response contains `state`, `merge_commit.hash`, `link
 
 `updated_on` after a successful merge is the time at which the PR was merged, and it stands in for GitHub's `mergedAt`.
 
-Success in step 4 means that the PR was merged, so a `merge_commit.hash` absent from both the merge response and the fallback read is an anomaly rather than evidence of no merge. Report it as such: When `state` is `MERGED` and the hash is absent, say the merge succeeded and the hash is unavailable, and write `unavailable` into the artifact's `Merge commit:` line. Never report an absent hash as a merge that did not happen. `merge-pr` reads this report for whether a merge happened, so an absent hash reported as no merge would have it report a completed merge as one that did not happen.
+Success in step 4 means that the PR was merged, so a `merge_commit.hash` absent from both the merge response and the fallback read is an anomaly rather than evidence that the merge did not happen. Report it as such: When `state` is `MERGED` and the hash is absent, say the merge succeeded and the hash is unavailable, and write `unavailable` into the artifact's `Merge commit:` line. Never report an absent hash as a merge that did not happen. `merge-pr` reads this report for whether a merge happened, so if this report treated an absent hash as a merge that did not happen, `merge-pr` would report a completed merge as one that did not happen.
 
 ### 6. Save merge artifact
 

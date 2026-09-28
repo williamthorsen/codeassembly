@@ -1,23 +1,26 @@
 /**
  * Negative-quantifier detection.
  *
- * The construction is a relative clause whose subject is a noun phrase opened by `no`: "a condition that no user could
- * observe". The anchor is the `no`, read against a determined head noun before it, with or without a relativizer
- * between them, and a finite verb within a few words after it. A finite verb is an auxiliary or modal, or a word ending
- * in `-s` after the noun phrase's first word.
+ * The construction is `no` used as a determiner, in any position: a verb's object ("publishes no build output"), after
+ * an existential "there is" ("there's no Vercel CLI"), the subject of a relative clause ("a field that no test names"),
+ * or a sentence's subject ("No file is written"). A `no` reads as a determiner when a word follows it without clause
+ * punctuation between them, and that word neither ends a noun phrase, nor completes a fixed phrase such as `no longer`,
+ * nor is a comparative that `than` follows.
  *
  * Detection is over-inclusive: Precision is the agent's, which adjudicates each candidate with the sentence in view.
- * A candidate is rejected here only where a reading cannot change the answer: a fixed phrase opened by `no`, and a `no`
- * inside an inline code span, which the extractor has masked. The finite-verb test misses a past-tense verb ("a file
- * that no reader opened") and a plural subject's present-tense verb ("errors that no tests catch"), and a singular
- * head without a determiner before it is not read as one; the calibration's shape covers what the detector misses.
+ * A candidate is rejected here only where a reading cannot change the answer: a fixed phrase opened by `no`, the
+ * pronoun `no one`, a hyphenated compound such as `no-op`, which the tokenizer reads as one word, and a `no` inside an
+ * inline code span, which the extractor has masked. Each `no` is tagged with its position to point the agent at the
+ * likeliest repair; the tag is a heuristic, and detection does not depend on it.
  */
-import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
-import { countNewlinesBefore, findSentence, flattenWhitespace } from './span-text.ts';
+import { countNewlinesBefore, findSentenceBounds, flattenWhitespace } from './span-text.ts';
 import { AUXILIARIES, type Token, tokenize } from './tokenize-span.ts';
-import type { NegativeQuantifierCandidate, ProseSpan } from './types.ts';
+import type { NegativeQuantifierCandidate, NegativeQuantifierPosition, ProseSpan } from './types.ts';
 
-/** Scans every span for the construction, returning one candidate per site in reading order. */
+/**
+ * Scans every span for determiner `no`s, returning one candidate per sentence that contains at least one, in reading
+ * order.
+ */
 export function detectNegativeQuantifiers(spans: readonly ProseSpan[]): NegativeQuantifierCandidate[] {
   return spans.flatMap(detectInSpan);
 }
@@ -48,8 +51,17 @@ const DETERMINERS: ReadonlySet<string> = new Set([
   'your',
 ]);
 
-/** Words after `no` that complete a fixed phrase rather than open a subject: `no longer`, `no one`, and the rest. */
-const FIXED_FOLLOWERS: ReadonlySet<string> = new Set(['longer', 'more', 'one', 'other', 'such']);
+/** Forms of *be* that open an existential clause after `there`. */
+const BE_FORMS: ReadonlySet<string> = new Set(['are', 'be', 'been', 'being', 'is', 'was', 'were']);
+
+/** Contractions that open an existential clause on their own: `there's no`. */
+const EXISTENTIAL_CONTRACTIONS: ReadonlySet<string> = new Set(['there’re', 'there’s', "there're", "there's"]);
+
+/** Most words that may stand between `there` and the `no` of its existential clause, as in "there will be no". */
+const EXISTENTIAL_WINDOW = 3;
+
+/** Words after `no` that complete a fixed phrase or a pronoun rather than open a noun phrase. */
+const FIXED_FOLLOWERS: ReadonlySet<string> = new Set(['doubt', 'longer', 'matter', 'one', 'sooner']);
 
 /**
  * Most words that may stand between a determiner and the head noun that it marks, when a relativizer follows the head.
@@ -93,52 +105,49 @@ const PHRASE_BREAKERS: ReadonlySet<string> = new Set([
 /** Relativizers that may stand between the head noun and the `no` that opens the relative's subject. */
 const RELATIVIZERS: ReadonlySet<string> = new Set(['that', 'which', 'who', 'whom']);
 
-/** Builds one candidate from a resolved head, `no`, and verb, reading its sentence out of the span. */
-function buildCandidate(input: {
-  span: ProseSpan;
-  tokens: readonly Token[];
-  headIndex: number;
-  quantifierIndex: number;
-  verbIndex: number;
-}): NegativeQuantifierCandidate {
-  const { span, tokens, headIndex, quantifierIndex, verbIndex } = input;
-  const head = tokens[headIndex];
-  const verb = tokens[verbIndex];
-  if (head === undefined || verb === undefined) throw new Error('candidate resolved outside its token run');
+/** Classifies the position of the determiner `no` at `quantifierIndex`. */
+function classifyPosition(tokens: readonly Token[], quantifierIndex: number): NegativeQuantifierPosition {
+  if (isExistential(tokens, quantifierIndex)) return 'existential';
 
-  // A token's `raw` has its delimiters stripped, which would report the placeholder as an ordinary word.
-  const subject = tokens
-    .slice(quantifierIndex + 1, verbIndex)
-    .map((token) => (token.word === CODE_SPAN_PLACEHOLDER_WORD ? CODE_SPAN_PLACEHOLDER : token.raw))
-    .join(' ');
-
-  return {
-    rule: 'negative-quantifier',
-    file: span.file,
-    line: span.line + countNewlinesBefore(span.text, head.start),
-    head: head.raw,
-    subject,
-    verb: verb.raw,
-    phrase: flattenWhitespace(span.text.slice(head.start, verb.end)),
-    sentence: findSentence(span.text, head.start, verb.end),
-  };
+  const quantifier = tokens[quantifierIndex];
+  const isRelative =
+    quantifier !== undefined &&
+    !quantifier.afterBreak &&
+    findHeadIndex(tokens, quantifierIndex) !== undefined &&
+    findVerbIndex(tokens, quantifierIndex) !== undefined;
+  return isRelative ? 'relative' : 'other';
 }
 
-/** Scans one span for every `no` that opens the subject of a relative clause on a determined head. */
+/**
+ * Scans one span for every determiner `no`, grouping the ones that share a sentence into one candidate, since a rule
+ * whose phrase is the sentence would otherwise report two candidates adjudicating the same text.
+ */
 function detectInSpan(span: ProseSpan): NegativeQuantifierCandidate[] {
   const tokens = tokenize(span.text);
   const candidates: NegativeQuantifierCandidate[] = [];
+  let reportedSentenceStart = -1;
 
   for (const [quantifierIndex, token] of tokens.entries()) {
-    if (token.word !== 'no' || token.afterBreak) continue;
+    if (token.word !== 'no' || !isDeterminer(tokens, quantifierIndex)) continue;
 
-    const headIndex = findHeadIndex(tokens, quantifierIndex);
-    if (headIndex === undefined) continue;
+    const position = classifyPosition(tokens, quantifierIndex);
+    const bounds = findSentenceBounds(span.text, token.start, token.end);
+    const reported = candidates.at(-1);
+    if (reported !== undefined && bounds.start === reportedSentenceStart) {
+      reported.positions.push(position);
+      continue;
+    }
+    reportedSentenceStart = bounds.start;
 
-    const verbIndex = findVerbIndex(tokens, quantifierIndex);
-    if (verbIndex === undefined) continue;
-
-    candidates.push(buildCandidate({ span, tokens, headIndex, quantifierIndex, verbIndex }));
+    const sentence = flattenWhitespace(span.text.slice(bounds.start, bounds.end));
+    candidates.push({
+      rule: 'negative-quantifier',
+      file: span.file,
+      line: span.line + countNewlinesBefore(span.text, bounds.start),
+      phrase: sentence,
+      sentence,
+      positions: [position],
+    });
   }
 
   return candidates;
@@ -168,15 +177,10 @@ function findHeadIndex(tokens: readonly Token[], quantifierIndex: number): numbe
 }
 
 /**
- * Returns the index of the finite verb that closes the noun phrase after a `no`, or undefined if the phrase is a fixed
- * one, is broken by punctuation or a function word, or runs past {@link MAX_SUBJECT_WORDS} without a verb.
+ * Returns the index of the finite verb that closes the noun phrase after a determiner `no`, or undefined if the phrase
+ * is broken by punctuation or a function word, or runs past {@link MAX_SUBJECT_WORDS} without a verb.
  */
 function findVerbIndex(tokens: readonly Token[], quantifierIndex: number): number | undefined {
-  const first = tokens[quantifierIndex + 1];
-  if (first === undefined || first.afterBreak || FIXED_FOLLOWERS.has(first.word) || isPhraseBreaker(first.word)) {
-    return undefined;
-  }
-
   for (let index = quantifierIndex + 2; index <= quantifierIndex + 1 + MAX_SUBJECT_WORDS; index += 1) {
     const token = tokens[index];
     if (token === undefined || token.afterBreak || PHRASE_BREAKERS.has(token.word)) return undefined;
@@ -219,6 +223,34 @@ function isDeterminedHead(tokens: readonly Token[], headIndex: number, modifiers
     if (token.afterBreak) return false;
   }
   return false;
+}
+
+/**
+ * Reports whether the `no` at `quantifierIndex` is a determiner: A word follows it without clause punctuation between
+ * them, and that word opens a noun phrase rather than ending one or completing a fixed phrase.
+ */
+function isDeterminer(tokens: readonly Token[], quantifierIndex: number): boolean {
+  const next = tokens[quantifierIndex + 1];
+  if (next === undefined || next.afterBreak || isPhraseBreaker(next.word) || FIXED_FOLLOWERS.has(next.word)) {
+    return false;
+  }
+  // A word that `than` follows is a comparative that `no` modifies: `no more than`, `no stronger than`.
+  return tokens[quantifierIndex + 2]?.word !== 'than';
+}
+
+/**
+ * Reports whether the `no` at `quantifierIndex` follows an existential clause's verb: a form of *be* directly before
+ * it, with `there` at most {@link EXISTENTIAL_WINDOW} words back, or a contraction such as `there's` directly before it.
+ */
+function isExistential(tokens: readonly Token[], quantifierIndex: number): boolean {
+  const previous = tokens[quantifierIndex - 1];
+  if (previous === undefined) return false;
+  if (EXISTENTIAL_CONTRACTIONS.has(previous.word)) return true;
+  if (!BE_FORMS.has(previous.word)) return false;
+
+  return tokens
+    .slice(Math.max(0, quantifierIndex - EXISTENTIAL_WINDOW), quantifierIndex - 1)
+    .some((token) => token.word === 'there');
 }
 
 /** Reports whether a word reads as the finite verb of a relative clause: an auxiliary, a modal, or an `-s` form. */

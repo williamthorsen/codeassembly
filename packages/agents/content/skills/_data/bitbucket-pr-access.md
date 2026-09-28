@@ -4,7 +4,7 @@ Single access path for every skill that touches a Bitbucket pull request, whethe
 
 ## The tool
 
-Every Bitbucket read and every Bitbucket write goes through the `bitbucketPullRequest` MCP tool, addressed by an `action` plus the coordinates below. There is no REST endpoint, no CLI, and no credential to configure: The tool manages its own connection, so no skill reads an environment variable, a keychain entry, or a token file.
+Every Bitbucket read and every Bitbucket write goes through the `bitbucketPullRequest` MCP tool, addressed by an `action` plus the coordinates below. A skill does not call a REST endpoint or a CLI, and it does not configure a credential: The tool manages its own connection, so a skill never reads an environment variable, a keychain entry, or a token file.
 
 When the tool is not connected, stop with a stated reason naming it and the manual step that the caller can take instead. Do not fall back to another client; none is supported.
 
@@ -16,10 +16,10 @@ The `bitbucketPullRequest` MCP tool is not connected, and it is the only Bitbuck
 
 Every action takes `workspaceId` and `repoId`, both required, both accepting a slug. Resolve them once, at the first source that yields a pair:
 
-1. **A pull-request URL already in hand.** A URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}` contains both slugs and the PR number. `review-bb-pr` takes this path when its `pr_id` is that URL, and `merge-pr` takes it when its PR resolution produced a stored or discovered URL per [PR source resolution](pr-source-resolution.md). An explicit `merge-pr --pr {n}` or `review-pr {n}` is a bare number and yields no pair, so it falls through.
+1. **A pull-request URL already in hand.** A URL of the form `https://bitbucket.org/{workspace}/{repo}/pull-requests/{number}` contains both slugs and the PR number. `review-bb-pr` takes this path when its `pr_id` is that URL, and `merge-pr` takes it when its PR resolution produced a stored or discovered URL per [PR source resolution](pr-source-resolution.md). An explicit `merge-pr --pr {n}` or `review-pr {n}` is a bare number and does not yield a pair, so it falls through.
 2. **The git remote.** Otherwise take them from `git remote get-url origin`: Strip a trailing `.git`, then take the two path segments following `bitbucket.org`, which either `/` or `:` separates from the host. This accepts the HTTPS form (`https://{user}@bitbucket.org/{workspace}/{repo}.git`) and the SSH form (`git@bitbucket.org:{workspace}/{repo}.git`) alike.
 
-The second source exists because the tool exposes no "current repository" action and requires the pair on every call. It belongs here rather than in any skill: A skill states which source applies to it and links to this section, and never restates the parsing.
+The second source exists because the tool does not expose a "current repository" action and requires the pair on every call. It belongs here rather than in any skill: A skill states which source applies to it and links to this section, and never restates the parsing.
 
 ## Composing Markdown for Bitbucket
 
@@ -60,9 +60,9 @@ state: "OPEN"
 q: 'source.branch.name = "{branch}"'
 ```
 
-Take the single result's `id` and `links.html.href`. [PR source resolution](pr-source-resolution.md#stored-pr-url) persists the URL, so a discovery that yielded only the id would leave the caller to construct it. More than one open pull request from one source branch is possible; when the list returns several, ask which one rather than picking the first. An empty list means no open pull request exists for that branch.
+Take the single result's `id` and `links.html.href`. [PR source resolution](pr-source-resolution.md#stored-pr-url) persists the URL, so a discovery that yielded only the id would leave the caller to construct it. More than one open pull request from one source branch is possible; when the list returns several, ask which one rather than picking the first. An empty list means that the branch does not have an open pull request.
 
-This is the Bitbucket counterpart of `gh pr view` with no argument, which [PR source resolution](pr-source-resolution.md#runtime-resolution-path-add-change-record-review-pr-merge-pr) uses when neither an explicit argument nor a stored URL supplied the pull request.
+This is the Bitbucket counterpart of `gh pr view` without an argument, which [PR source resolution](pr-source-resolution.md#runtime-resolution-path-add-change-record-review-pr-merge-pr) uses when neither an explicit argument nor a stored URL supplied the pull request.
 
 ## Merging a pull request
 
@@ -82,8 +82,8 @@ Bitbucket Cloud offers six strategies. The three that a caller needs:
 | `merge`           | `merge_commit`        |
 | `rebase`          | `rebase_fast_forward` |
 
-A repository can disable any strategy, and the tool exposes no list of the enabled ones. Do not pre-check: Pass the mapped value and report the platform's own error, which names the strategy that it refused.
+A repository can disable any strategy, and the tool does not expose a list of the enabled ones. Do not pre-check: Pass the mapped value and report the platform's own error, which names the strategy that it refused.
 
 `message` is a single field, unlike `gh pr merge`'s separate `--subject` and `--body`. Compose it as the title, a blank line, then the body.
 
-Do not rely on the merge response's shape. Read the merge commit hash from a follow-up `action: "get"`, which returns `merge_commit.hash` once `state` is `MERGED`. A caller reads `state` alongside the hash, so that an absent hash under a `MERGED` state is reported as a completed merge with the hash unavailable rather than as no merge.
+Do not rely on the merge response's shape. Read the merge commit hash from a follow-up `action: "get"`, which returns `merge_commit.hash` once `state` is `MERGED`. A caller reads `state` alongside the hash, so that an absent hash under a `MERGED` state is reported as a completed merge with the hash unavailable rather than as a pull request that was not merged.

@@ -13,7 +13,7 @@ Append a `change-record` block to a pull request whose body has none, so that th
 
 The block is drafted by `{skill:summarize-change}`, which consolidates the branch, draws the entries, audits them, and renders the block. This skill lifts the rendered block from the summary that the run saved and appends it to the pull-request body; it drafts nothing of its own.
 
-**A block that is already written is never replaced.** A readable block, a malformed one, and one that records no entry are all left for the author to repair by hand, as [the change record](../_data/change-record.md#where-the-record-is-read) states. This skill adds a block only where there is none.
+**A block that is already written is never replaced.** A readable block, a malformed one, and one that does not record an entry are all left for the author to repair by hand, as [the change record](../_data/change-record.md#where-the-record-is-read) states. This skill adds a block only where there is none.
 
 ## Arguments
 
@@ -44,7 +44,7 @@ Read the pull request's metadata, dispatching on `scm`:
 - **`"bitbucket"`**: Issue an `action: "get"` call per [Bitbucket pull-request access](../_data/bitbucket-pr-access.md), then map its fields onto the same names: `description` to `body`, `source.branch.name` to `headRefName`, `source.commit.hash` to `headRefOid`, and `links.html.href` to `url`.
 - **Unknown or missing**: Ask the user which platform to use.
 
-If no pull request can be resolved, emit `skill.completed` (payload `{"outcome":"stopped: no PR"}`) per [Lifecycle events](#lifecycle-events), then stop with: "No open pull request found for branch `{branch_name}`. Create one with `{skill?:create-pr}` first."
+If the pull request cannot be resolved, emit `skill.completed` (payload `{"outcome":"stopped: no PR"}`) per [Lifecycle events](#lifecycle-events), then stop with: "No open pull request found for branch `{branch_name}`. Create one with `{skill?:create-pr}` first."
 
 ### 3. Confirm that HEAD is the pull request's head commit
 
@@ -58,7 +58,7 @@ Compare the local SHA with `headRefOid`. On GitHub the two are full SHAs and mus
 
 When they differ, emit `skill.completed` (payload `{"outcome":"stopped: HEAD is not the PR head"}`) per [Lifecycle events](#lifecycle-events), then stop, naming both commits and the branch to check out.
 
-### 4. Confirm that the body contains no block
+### 4. Confirm that the body does not contain a block
 
 Write the pull-request body to a scratch file per [gh body file](#gh-body-file), naming it `gh-body-pr{number}-{timestamp}.md`. On GitHub, write it from the platform, so that the file contains the body byte for byte:
 
@@ -81,7 +81,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   --pr-body-file "$body_path"
 ```
 
-The guard keeps a failed read out of the decision: An empty file contains no block, and this skill would append one to a body that it never read.
+The guard keeps a failed read out of the decision: An empty file does not contain a block, and this skill would append one to a body that it never read.
 
 Read `notices` from the output. The block reading is settled by the helper rather than by a fence scan here, so that this skill and the merge agree on what counts as a block, malformed included.
 
@@ -98,7 +98,7 @@ Invoke `{skill:summarize-change}`, passing through `--scope` and `--type` as giv
 
 Take the last `change-record` fence from the summary that this session just saved, copied character for character, the fence lines included. Read it from the saved file rather than from the transcript.
 
-When the saved summary contains no fence, emit `skill.completed` (payload `{"outcome":"stopped: no block drafted"}`) per [Lifecycle events](#lifecycle-events) and stop, relaying what `{skill:summarize-change}` reported about `render-block`. Nothing is written to the pull request.
+When the saved summary does not contain a fence, emit `skill.completed` (payload `{"outcome":"stopped: no block drafted"}`) per [Lifecycle events](#lifecycle-events) and stop, relaying what `{skill:summarize-change}` reported about `render-block`. Nothing is written to the pull request.
 
 ### 6. Show the block and ask
 
@@ -122,11 +122,11 @@ Append the block after the body read in step 4, separated by one blank line, and
   gh pr edit {number} --body-file "$body_path"
   ```
 
-- **`"bitbucket"`**: Write through the description-update action that [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) documents, if it documents one. That doc is the single statement of the tool's actions, and today it documents reading, finding, and merging alone. When it documents no such action, emit `skill.completed` (payload `{"outcome":"stopped: no Bitbucket write path"}`) per [Lifecycle events](#lifecycle-events), then stop, showing the block again and saying that the author pastes it as the description's last element in the Bitbucket UI.
+- **`"bitbucket"`**: Write through the description-update action that [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) documents, if it documents one. That doc is the single statement of the tool's actions, and today it documents reading, finding, and merging alone. When it does not document that action, emit `skill.completed` (payload `{"outcome":"stopped: no Bitbucket write path"}`) per [Lifecycle events](#lifecycle-events), then stop, showing the block again and saying that the author pastes it as the description's last element in the Bitbucket UI.
 
 ### 8. Confirm the block is the body's last element
 
-Re-read the body from the platform as step 4 does, write it to a fresh scratch file, and run `resolve-merge` over it again with the same flags. The block is in place when `notices` no longer contains `absent-block` and no `malformed-block` appears.
+Re-read the body from the platform as step 4 does, write it to a fresh scratch file, and run `resolve-merge` over it again with the same flags. The block is in place when `notices` no longer contains `absent-block` and `malformed-block` does not appear.
 
 When either check fails, say what the helper reported and that the pull request's body is the one to inspect. Do not write again.
 

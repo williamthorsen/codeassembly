@@ -49,7 +49,7 @@ When call is_scannable_extension "README.md"
 The status should be failure
 End
 
-It "rejects files with no extension"
+It "rejects files without an extension"
 When call is_scannable_extension "Makefile"
 The status should be failure
 End
@@ -85,7 +85,7 @@ The line 1 of output should equal "@hyperjump/json-schema"
 The line 2 of output should equal "react"
 End
 
-It "returns empty when the lookup table has no headings"
+It "returns empty when the lookup table does not have any headings"
 test_keys() {
   cat >"$lookup" <<'MD'
 This file has prose but no section headings.
@@ -141,7 +141,7 @@ When call extract_section_body "pkg-b"
 The output should equal "Body B only line."
 End
 
-It "returns empty when no section matches"
+It "returns empty when the key does not match any section"
 When call extract_section_body "pkg-missing"
 The output should equal ""
 End
@@ -177,7 +177,7 @@ The output should equal ""
 The status should be success
 End
 
-It "emits only the sidecar content when no lookup keys match"
+It "emits only the sidecar content when the changed files do not match any lookup key"
 run_sidecar_only() {
   cat >sidecar.md <<'SM'
 Coder note: Handler X swallows errors when Y is undefined.
@@ -293,7 +293,7 @@ The status should equal 1
 The stderr should include "Cannot read --lookup"
 End
 
-It "exits 1 with stderr message when --lookup contains no '## ' section headings"
+It "exits 1 with stderr message when --lookup does not contain any '## ' section headings"
 run_malformed_lookup() {
   cat >malformed.md <<'MD'
 # Top-level title
@@ -306,7 +306,7 @@ MD
 }
 When call run_malformed_lookup
 The status should equal 1
-The stderr should include "no package sections"
+The stderr should include "does not contain any package sections"
 End
 
 It "exits 0 with empty stdout when --sidecar points to a nonexistent path"

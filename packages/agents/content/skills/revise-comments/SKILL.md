@@ -20,7 +20,7 @@ If the `revise-prose` sweep is wanted on the same files, run this skill first: I
 
 1. **Resolve the target file set** per [Target file set](#target-file-set), keeping the comment-supporting files from what it yields.
 
-   With no argument, the target is the set of files changed in commits on the current branch relative to the default branch. Obtain `{default_branch}` via `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
+   Without an argument, the target is the set of files changed in commits on the current branch relative to the default branch. Obtain `{default_branch}` via `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`, then:
 
    ```bash
    git diff --name-only "{default_branch}...HEAD"
@@ -28,7 +28,7 @@ If the `revise-prose` sweep is wanted on the same files, run this skill first: I
 
 2. **Apply the audit per file.** Read each target file. Put every comment through the tests below. Decide one of three actions: kept, deleted, or rewritten. In normal mode, apply edits in place via the Edit tool. In `--dry-run` mode, record the proposed action without editing.
 
-3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing that it replaced. Such a file is outside the resolved target set, so the hard gate in [Target file set](#target-file-set) applies and the hit is reported to the user alongside the summary rather than repaired. Because `--dry-run` applies no edits, the step is skipped under that flag.
+3. **Audit the diff** per [Diff audit](#diff-audit), over the edits just applied. A re-worded comment is the reach sweep's central case: It can invalidate a sibling doc, a README, or a test title that echoed the phrasing that it replaced. Such a file is outside the resolved target set, so the hard gate in [Target file set](#target-file-set) applies and the hit is reported to the user alongside the summary rather than repaired. Because `--dry-run` does not apply any edits, the step is skipped under that flag.
 
 4. **Emit the summary.** After processing all targets, emit one table per file with non-trivial decisions.
 

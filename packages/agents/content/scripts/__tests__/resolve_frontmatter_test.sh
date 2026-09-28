@@ -388,7 +388,7 @@ When call echo "${extra_kinds[commits]}"
 The output should equal "list"
 End
 
-It "fails when the argument has no equals sign"
+It "fails when the argument does not contain an equals sign"
 When run add_extra "scalar" "bad_arg" extra_keys extra_values extra_kinds
 The status should be failure
 The stderr should include "missing '='"
@@ -423,7 +423,7 @@ apply_override_setup() {
 
 BeforeEach "apply_override_setup"
 
-It "returns the resolved value when no override is registered"
+It "returns the resolved value when an override is not registered"
 When call apply_override "branch" "main" overrides
 The output should equal "main"
 End
@@ -622,7 +622,7 @@ When call test "${overrides[run_id]+set}" = "set"
 The status should be success
 End
 
-It "fails when the argument has no equals sign"
+It "fails when the argument does not contain an equals sign"
 When run add_override "bad_arg" overrides
 The status should be failure
 The stderr should include "missing '='"
@@ -713,7 +713,7 @@ setup_missing_manifest() {
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty --quiet -m "initial"
-  # No `.agents/main.branch-manifest.json` exists, so the deriver must write one.
+  # `.agents/main.branch-manifest.json` does not exist, so the deriver must write one.
   # Point the bundle resolver at the on-disk bundle. shellspec sources this script via `Include`,
   # so the script's own `BASH_SOURCE[0]`-based path computation resolves to the shellspec runner
   # rather than the agents content tree.
@@ -826,7 +826,7 @@ The status should be success
 The output should include "run_id: 20260516-143946Z"
 End
 
-It "omits run_id when a leftover run breadcrumb is present and no --override run_id is given"
+It "omits run_id when a leftover run breadcrumb is present and --override run_id is not given"
 mkdir -p .claude/tmp
 echo "/some/path/20260516-143946Z" >.claude/tmp/active-run-dir
 When run main --skill foo --interactive true
@@ -871,7 +871,7 @@ The status should be success
 The output should include "pr: https://github.com/o/r/pull/7"
 End
 
-It "omits pr when no --override pr is given"
+It "omits pr when --override pr is not given"
 When run main --skill foo --interactive true
 The status should be success
 The output should not include "pr:"

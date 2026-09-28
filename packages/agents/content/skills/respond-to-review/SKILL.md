@@ -28,7 +28,7 @@ This skill runs between receiving a code review and implementing fixes. The agen
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below.
 6. **Audit the diff** per [Diff audit](#diff-audit). Every fix that you implemented is verified here, before any of it is written down.
-7. **Commit the fixes** per `{skill:create-commit}`, so that the response narrates work already recorded. A response that implements no fix commits nothing; skip this step there rather than composing an empty commit. Rejecting every finding is one such response, as are a review with no findings, a legacy observation merely acknowledged, and an ACCEPT whose change is merged in a follow-up.
+7. **Commit the fixes** per `{skill:create-commit}`, so that the response narrates work already recorded. A response that does not implement any fix commits nothing; skip this step there rather than composing an empty commit. Rejecting every finding is one such response, as are a review without findings, a legacy observation merely acknowledged, and an ACCEPT whose change is merged in a follow-up.
 8. **Write response** per the output format
 9. **Resolve frontmatter fields** per [Frontmatter resolution](#frontmatter-resolution)
 10. **Save** per the [Saving](#saving) section
@@ -42,9 +42,9 @@ Source `{model_id}` from your system-prompt environment block: the line `model n
 Resolve `{pr_url}` per the [`respond-to-review` path](../_data/pr-source-resolution.md#respond-to-review-path) in PR source resolution:
 
 - If the review's frontmatter has a `pr:` field, take `{pr_url}` from it so that the response inherits the same PR backlink, and persist it for future sessions: `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{pr_url}"`.
-- Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, `{pr_url}` has no value.
+- Otherwise, fall back to the stored manifest `pr_url` read from the session-context JSON emitted in step 1; if that is also null, `{pr_url}` does not have a value.
 
-Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag if `{pr_url}` has no value:
+Run via Bash, writing each resolved value into the call as literal text and dropping the `--override` flag if `{pr_url}` does not have a value:
 
 ```bash
 {harness_home_dir}/scripts/resolve-frontmatter.sh \
@@ -61,18 +61,18 @@ Prepend the script's output verbatim to the artifact body.
 
 ### Explicit path
 
-If a path argument is provided, read the review directly from that path. If the file does not exist or contains no parseable findings, stop and report the error.
+If a path argument is provided, read the review directly from that path. If the file does not exist or does not contain any parseable findings, stop and report the error.
 
 ### Auto-discovery (default)
 
-If no path is provided, find the most recent `reviewer_review` in the active run:
+If the invocation does not include a path, find the most recent `reviewer_review` in the active run:
 
 1. Resolve the ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 2. Find the most recent run directory (highest timestamp in directory name)
 3. List files matching `*_reviewer_review.md` or `*_overseer_review.md` in the run directory
 4. Select the file with the highest timestamp
 
-If no review artifact is found, stop and report the error.
+If the run directory does not contain a review artifact, stop and report the error.
 
 <!-- guidance-hook: ticketing-preferences -->
 
@@ -89,7 +89,7 @@ For each finding, apply technical rigor:
 4. **Consider intent.** Is the current implementation a deliberate design choice? Check commit messages, comments, and surrounding patterns.
 5. **Pushback is the default for structural recommendations.** When a recommendation is to move, promote, or restructure code or guidance across files, modules, or sections, read the destination's stated scope, conventions, and invariants in full and verify the item fits, not just that it could syntactically live there. Acceptance requires affirmative evidence; rejection does not. Reject moves that conflict with the destination's stated category, conventions, or framing, even when the destination would "read cleaner." Accept when the destination's stated doctrine clearly accommodates the item and the move resolves a duplication or location problem that the original placement created.
 6. **Partial acceptance is fine.** A finding may be partly correct. Accept the valid parts, reject the invalid parts, and explain the boundary.
-7. **Disposition is decided on substance, not on the reviewer's suggested handling.** Phrases like "consider a follow-up," "no action this PR," "future-coverage work" are the reviewer's priority signal, not a license to defer. The disposition (ACCEPT / REJECT / PARTIAL) is the agent's decision based on whether the change belongs in the codebase. There is no `ACCEPT (follow-up)`: If a change belongs but doesn't fit this PR, the disposition is ACCEPT and the follow-up is a separate decision; if the change does not belong, the disposition is REJECT.
+7. **Disposition is decided on substance, not on the reviewer's suggested handling.** Phrases like "consider a follow-up," "no action this PR," "future-coverage work" are the reviewer's priority signal, not a license to defer. The disposition (ACCEPT / REJECT / PARTIAL) is the agent's decision based on whether the change belongs in the codebase. `ACCEPT (follow-up)` is not a valid disposition: If a change belongs but doesn't fit this PR, the disposition is ACCEPT and the follow-up is a separate decision; if the change does not belong, the disposition is REJECT.
    </HARD-GATE>
 
 Implementing an ACCEPTed finding means editing code. Apply [Comment discipline](#comment-discipline) as you write. The reviewer conversation must not appear in the source.
@@ -199,7 +199,7 @@ Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):
 
 ## Output format
 
-When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref}: ` portion so that the heading reads `# Change summary: {description}`.
+When `ticket_ref` is null (the branch does not have a ticket), omit the `{ticket_ref}: ` portion so that the heading reads `# Change summary: {description}`.
 
 The artifact begins with YAML frontmatter conforming to the canonical schema; see the canonical example in [artifact-conventions.md](../_data/artifact-conventions.md#universal-artifact-frontmatter) and the field-resolution steps in the [Frontmatter resolution](#frontmatter-resolution) section above. The `responding_to` field is a response-artifact-specific extension that records the review being addressed.
 
@@ -274,12 +274,12 @@ The body following the frontmatter has this structure:
 
 - Code changes summarized under `## Changes made` must themselves satisfy [Comment discipline](#comment-discipline): Comments in the edited code state the code's current contract, not the change history or the reviewer's concern.
 - `Action taken` and `## Changes made` report the diff, read back per [Diff audit](#diff-audit). A disposition asserting that something was left unchanged is a claim about the diff too, and requires the same evidence as one asserting that something changed.
-- Omit category sections that have no findings (e.g., if the review has no TODOs, omit the `### TODOs` section)
+- Omit category sections that do not contain any findings (e.g., if the review does not contain any TODOs, omit the `### TODOs` section)
 - Preserve the finding IDs exactly as they appear in the review
 - File references in Rationale or Action-taken prose follow the path-format rule in [`review-criteria` § Finding references](../review-criteria/SKILL.md#finding-references); use repo-relative paths
 - Legacy findings (IDs with `-L` suffix) use only ACCEPT (acknowledge the observation) or REJECT (disagree with the observation); PARTIAL does not apply
-- If the review contains no findings, produce a change summary noting that no findings require disposition and omit the Dispositions section
-- A change summary with dispositions only (no code changes) is valid: This is how the coder can close a run by dispositioning all remaining findings
+- If the review does not contain any findings, produce a change summary noting that the review does not contain any findings that require disposition, and omit the Dispositions section
+- A change summary with dispositions only (without code changes) is valid: This is how the coder can close a run by dispositioning all remaining findings
 
 ## Saving
 
@@ -296,7 +296,7 @@ The response is saved as a run artifact: `{timestamp}_coder_change-summary.md`
 1. Save into the same run directory where the review was found
 2. The timestamp should reflect when this response was produced
 
-Dispositions are embedded in this document: no separate disposition artifact.
+Dispositions are embedded in this document: The skill does not write a separate disposition artifact.
 
 Once the change summary is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"change-summary"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"response-saved"}`).
 

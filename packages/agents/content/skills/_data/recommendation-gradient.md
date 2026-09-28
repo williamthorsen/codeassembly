@@ -18,9 +18,9 @@ The gate and the marker are one rule seen twice. A menu that passes the gate is 
 
 ## Why a manufactured bullet costs more than none
 
-Bullets in an option list are weighted equally by construction; there is no minor bullet. Placing a line under `➖` asserts that the reader should weigh it, so they spend attention deciding how much it matters. For a manufactured con the answer is none, and the cost is paid before the worthlessness is discovered. That makes it waste rather than merely noise.
+Bullets in an option list are weighted equally by construction; the format does not provide a minor bullet. Placing a line under `➖` asserts that the reader should weigh it, so they spend attention deciding how much it matters. For a manufactured con the answer is none, and the cost is paid before the worthlessness is discovered. That makes it waste rather than merely noise.
 
-The con is also load-bearing for the menu's existence: Because an option recommended with no drawback reads as a decision rather than an option, presenting a settled call as a fork requires inventing a drawback. A fabricated con is the sign that the gate above was skipped, not an independent formatting slip.
+The con is also load-bearing for the menu's existence: Because an option recommended without a drawback reads as a decision rather than an option, presenting a settled call as a fork requires inventing a drawback. A fabricated con is the sign that the gate above was skipped, not an independent formatting slip.
 
 When the honest cost is hard to find, that difficulty is itself evidence the option is strong. Spend the effort on finding the real cost or on omitting the bullet, never on manufacturing a plausible-sounding one.
 
@@ -38,14 +38,14 @@ Same surface phrasing, two correct renderings:
 
 > Apply these revisions? 👍🏼👎🏼
 
-"No" leads to discussion or revision; there is no enumerated alternative action.
+"No" leads to discussion or revision; the prompt does not enumerate an alternative action.
 
 **Substantive (gradient list):**
 
 > #412 asks for the flag that this change adds, and also for a short alias that the change does not add. Want me to:
 >
 > 1. ■■□ Close #412 as superseded by this change:
->    - ➖ the alias request closes with it, and no other ticket tracks it
+>    - ➖ the alias request closes with it, and it is not tracked by any other ticket
 > 2. ■■□ Leave #412 open, retitled to the alias:
 >    - ➖ its 30 comments about the shipped flag bury the one about the alias
 

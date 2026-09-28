@@ -1,4 +1,4 @@
-<!-- unit-version: plain-speech 8 -->
+<!-- unit-version: plain-speech 9 -->
 
 ## Plain-speech sweep calibration
 
@@ -11,7 +11,7 @@ How one sweep applies the rule above, so that two sweepers give the same verdict
 3. **A subject that does not perform the action, or a missing actor that the reader needs.** Rewrite when the sentence gives an action to something that does not perform it, or omits an actor that the reader must know and cannot recover from context. "Findings arrive as warnings" becomes "The function reports warnings": Findings arrive nowhere, and the original drops the function that produced them. In a skill body, "the parent rides the creation call" becomes "Set the parent in the creation call", because the agent sets it. "Refinement happens later, in bulk" becomes "A later pass refines them in bulk", because the point is which pass does it.
 4. **A constructed figure when a literal phrase exists.** The rule's mannered-prose test, applied to a site. Only a figure is a candidate under this case, so plain technical vocabulary ("renders as a subsection", "inlines the partial", "the test fails") is not one. `gate`, `sweep`, `tier`, `lede`, `drift`, and `live` are figures on which this corpus has settled, and they stay.
 
-Passive voice is not a defect on its own, and case 3 is no license to convert it. Keep the passive when the actor is obvious or beside the point, when the patient is the paragraph's topic, or when it puts a long phrase at the end of the sentence.
+Passive voice is not a defect on its own, and case 3 does not license converting it. Keep the passive when the actor is obvious or beside the point, when the patient is the paragraph's topic, or when it puts a long phrase at the end of the sentence.
 
 ### Leave these
 
@@ -28,7 +28,7 @@ After:
 
 > Behavioral rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. When the boundary below requires a restatement, put it at the step that produces the output. An agent follows a rule more reliably when the rule appears next to the action that it governs than when the agent must follow a link to read it.
 
-Three edits fall under cases 1 and 2, and two under case 3: "lands" gives the placement to the restatement rather than to the agent that places it, and "must be fetched" drops the agent from a sentence whose point is which party fetches. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them. Two edits belong to no case here: The "When" that replaces "Where" and the relativizer restored in "the action that it governs" come from the writing preferences, which a sweep applies in the same pass.
+Three edits fall under cases 1 and 2, and two under case 3: "lands" gives the placement to the restatement rather than to the agent that places it, and "must be fetched" drops the agent from a sentence whose point is which party fetches. The first sentence's passive stands, because the paragraph's topic is the rules rather than the files that state them. Two edits do not belong to any case here: The "When" that replaces "Where" and the relativizer restored in "the action that it governs" come from the writing preferences, which a sweep applies in the same pass.
 
 ### Shapes to look for
 
@@ -42,17 +42,17 @@ Nine shapes recur in this corpus. Each is a search pattern rather than a rule: A
 6. **Personification of an inanimate subject.** "The queue now reads as one set behind the blocking ticket" becomes "All four tickets are now marked as blocked by that ticket".
 7. **An abstract noun standing in for a small concrete set.** "The suite covers the boundary cases" becomes "The suite covers an empty list, one entry, and a list past the budget".
 8. **A concrete metaphor standing in for the literal abstraction.** The inverse of shape 7. "attrition rather than advocacy" becomes "tiring the developer rather than persuading them". "priced on your ledger" becomes "measured by you".
-9. **A negative quantifier standing in for the one actor that cannot act.** "a skill that no task invokes" becomes "a skill that the plan does not invoke".
+9. **"No" as a determiner.** "publishes no build output" becomes "doesn't publish any build output". "there's no Vercel CLI" becomes "the Vercel CLI isn't installed on this machine". "a skill that no task invokes" becomes "a skill that the plan does not invoke".
 
 ### The negative-quantifier rule
 
-<!-- rule: negative-quantifier 1 -->
+<!-- rule: negative-quantifier 2 -->
 
-The helper reports shape 9 under this rule. Report a site of that shape under `negative-quantifier`, and every other site that breaks the plain-speech rule under `plain-speech`.
+The helper reports every determiner "no" under this rule, as shape 9, in any position. Report a site of that shape under `negative-quantifier`, and every other site that breaks the plain-speech rule under `plain-speech`.
 
 ### Words to look for
 
-Ten words recur in this corpus in uses for which a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is no candidate.
+Ten words recur in this corpus in uses for which a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is not a candidate.
 
 - **carry**: "the change carries a flag". Instead: has, includes, declares, sets, states.
 - **cost**: "a cost to you", "the token cost". Instead: the unit itself, as in "takes 12 ms", "one round trip", "spends the reader's attention".

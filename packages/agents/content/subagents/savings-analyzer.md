@@ -45,7 +45,7 @@ Analyze in priority order:
 
 ### 2. Was the work necessary?
 
-- **Artifact-less agents:** For each `reviewer_dispatched`, check if a matching `artifact_written` exists. Flag agents dispatched but with no artifact.
+- **Artifact-less agents:** For each `reviewer_dispatched`, check if a matching `artifact_written` exists. Flag agents that were dispatched but did not produce an artifact.
 - **Low-value convergence:** If all review phases converged to `none`/`low` criticality and the holistic review also returned `none`, flag the holistic review as confirming what was already established.
 - **Disproportionate optional phases:** Compare simplifier/holistic cost against implementation using `tokens` from `phase_completed` events when available (see "Data quality" for fallback). Flag when an optional phase exceeds 50% of implementation cost.
 
@@ -120,4 +120,4 @@ Because `savings-analyzer` does not have the {tool:Bash} tool in its default too
 
 ## Artifact-write safeguard
 
-**You MUST write your artifact file before exhausting your turn budget.** If you are approaching your turn limit, immediately write what you have. A partial analysis is better than no artifact.
+**You MUST write your artifact file before exhausting your turn budget.** If you are approaching your turn limit, immediately write what you have. A partial analysis is better than a missing artifact.

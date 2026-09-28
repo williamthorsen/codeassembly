@@ -47,16 +47,16 @@ Fixture **data** -- JSON, Markdown, sample sources, directory trees -- belongs i
 
 Fixture **builders** are code, and follow the test-helper rule above.
 
-A deliberately-invalid input that a tool cannot parse takes a delimited `.malformed` marker in its name, so that lint and formatter configuration excludes it by an anchored glob. The marker means the parser cannot read the file, not that the content is wrong: An input that parses and violates a schema takes no marker and stays covered.
+A deliberately-invalid input that a tool cannot parse takes a delimited `.malformed` marker in its name, so that lint and formatter configuration excludes it by an anchored glob. The marker means the parser cannot read the file, not that the content is wrong: An input that parses and violates a schema does not take the marker and stays covered.
 
 ## File naming
 
-A file takes the name of its main export. A file with no single main export takes a kebab-case name describing its contents.
+A file takes the name of its main export. A file without a single main export takes a kebab-case name describing its contents.
 
 - `LaneCard.tsx` exports `LaneCard`
 - `status-adapter.ts` exports the adapter's several functions
 
-Components take PascalCase because their exports are PascalCase, so no framework exception is needed.
+Components take PascalCase because their exports are PascalCase, so they do not need a framework exception.
 
 Name a file for its subject, never for its audience. `test-utils.ts` names who reads it; `scaffolding.ts` names what it contains.
 

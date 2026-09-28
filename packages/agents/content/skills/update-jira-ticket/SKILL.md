@@ -12,7 +12,7 @@ The same constraint applies to creating a Jira issue and to updating one: Whatev
 
 Convert task-list syntax (`- [ ]` / `- [x]`) to plain `-` bullets before submitting Markdown or HTML, on creation and update alike. Neither conversion to ADF maps it to task items: The brackets are escaped, so the line persists as a bullet reading `\[ \] ...`.
 
-Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, which makes the [ADF path](#adf-path) the one exception. A body submitted as ADF contains real task items and keeps them. That is no reason to use ADF elsewhere: Because `contentFormat` applies to the whole field rather than a section of it, a checklist never justifies authoring an entire description as ADF on a client that takes Markdown.
+Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, which makes the [ADF path](#adf-path) the one exception. A body submitted as ADF contains real task items and keeps them. That is not a reason to use ADF elsewhere: Because `contentFormat` applies to the whole field rather than a section of it, a checklist never justifies authoring an entire description as ADF on a client that takes Markdown.
 
 Artefact-sourced content is in scope, and it is the most common source of unconverted task-list syntax: The ticket-artefact templates of `design-and-plan` and `create-ticket` write acceptance criteria as `- [ ]` checkboxes. A body forwarded verbatim from such an artefact contains them.
 
@@ -32,7 +32,7 @@ Use this branch when the client is `acli`.
 
 1. **Author Markdown, then convert it to ADF.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. Pass the converted ADF through `--description-file`.
 2. **Never pass Markdown to `--description` or `--description-file`.** `acli` parses it as Jira wiki markup, in which `#` opens an ordered list, so `## Problem` becomes a nested numbered item and every backtick, tilde, underscore, and bracket comes back backslash-escaped. Because the command reports success, only reading the work item back reveals the damage.
-3. **Reserve plain text for a body with no structure to lose**, such as a one-line comment. Submit anything containing headings, lists, or inline marks as ADF.
+3. **Reserve plain text for a body without any structure to lose**, such as a one-line comment. Submit anything containing headings, lists, or inline marks as ADF.
 4. **Keep your checkboxes**, per [Checklists](#checklists). ADF is the one format that renders them, so convert task-list syntax to `taskList` / `taskItem` here rather than flattening it to plain bullets.
 5. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`.
 
@@ -110,7 +110,7 @@ Exhaustive list. Nothing else.
 
 `h1`, `h2`, `h3`, `h4`, `h5`, `h6`, `p`, `ul`, `ol`, `li`, `strong`, `em`, `code`, `a`, `blockquote`, `hr`, `br`, `table`, `thead`, `tbody`, `tr`, `th`, `td`
 
-**Always strip `<ac:*>` and `<ri:*>` constructs unconditionally.** These are Confluence storage-format extensions: `<ac:*>` for Confluence elements like task lists and structured macros (e.g., `<ac:task-list>`, `<ac:structured-macro>`); `<ri:*>` for resource identifiers (e.g., `<ri:user>`, `<ri:page>`, `<ri:attachment>`). They have no Jira analogue, and including them produces `INVALID_INPUT`. If you have been working with Confluence content in the same session, audit the payload before sending; the checker will flag any that remain.
+**Always strip `<ac:*>` and `<ri:*>` constructs unconditionally.** These are Confluence storage-format extensions: `<ac:*>` for Confluence elements like task lists and structured macros (e.g., `<ac:task-list>`, `<ac:structured-macro>`); `<ri:*>` for resource identifiers (e.g., `<ri:user>`, `<ri:page>`, `<ri:attachment>`). They do not have a Jira analogue, and including them produces `INVALID_INPUT`. If you have been working with Confluence content in the same session, audit the payload before sending; the checker will flag any that remain.
 
 ### Composition rules (reference)
 
@@ -118,7 +118,7 @@ The pre-flight checker enforces these; this section explains why they exist.
 
 #### `<code>` combined with other inline marks
 
-`<code>` may not nest with `<strong>`, `<em>`, `<a>`, `<strike>`, `<u>`, `<sub>`, or `<sup>` in either direction. ADF represents inline styling as marks on text nodes, and the `code` mark is mutually exclusive with the other inline marks. Applying styling to monospace code has no defensible rendering anyway: Code is meant to display literal characters.
+`<code>` may not nest with `<strong>`, `<em>`, `<a>`, `<strike>`, `<u>`, `<sub>`, or `<sup>` in either direction. ADF represents inline styling as marks on text nodes, and the `code` mark is mutually exclusive with the other inline marks. Applying styling to monospace code does not have a defensible rendering anyway: Code is meant to display literal characters.
 
 **Workaround:** Move the `<code>` outside the styling wrapper so that the two apply to different text runs, or drop the styling entirely.
 
@@ -162,7 +162,7 @@ Use only if `INVALID_INPUT` still fires after the pre-flight checker returned `o
 
 Do not create a probe ticket silently. Present the situation to the user and let them choose how to proceed. Use the [option format](#option-format):
 
-> Jira rejected this payload and the pre-flight checker found no known issues. This is likely a new failure class. Only option 1 identifies it, which a fix or a new checker rule needs, and it does so by creating a real ticket tagged `mcp-probe` that has to be deleted afterward. How should I proceed?
+> Jira rejected this payload and the pre-flight checker did not find any known issues. This is likely a new failure class. Only option 1 identifies it, which a fix or a new checker rule needs, and it does so by creating a real ticket tagged `mcp-probe` that has to be deleted afterward. How should I proceed?
 >
 > 1. ■■□ Probe and bisect
 > 2. ■□□ Show the payload for manual submission:
@@ -177,7 +177,7 @@ c. **Cap retries.** Do not exceed 4 retry attempts beyond the original failure. 
 
 #### 3. Record the failure
 
-Regardless of which option the user picked, append a single JSON object (one line, no trailing comma) to `~/ai-artifacts/skill-failures/update-jira-ticket.jsonl`. Create the directory and file if absent.
+Regardless of which option the user picked, append a single JSON object (one line, without a trailing comma) to `~/ai-artifacts/skill-failures/update-jira-ticket.jsonl`. Create the directory and file if absent.
 
 Required fields:
 
@@ -221,7 +221,7 @@ Run this query periodically and bulk-transition any matches to a closed/deleted 
 
 If recorded failures concentrate in a **new trigger class** that the checker does not currently cover, file a follow-up to add a rule for it. The rule list in `rules.ts` is the canonical inventory of what the checker catches; extending it is the right unit of escalation.
 
-If recorded failures are spread across truly **unknown classes** (no clear pattern), the recovery protocol remains the right tool. See [#467](https://github.com/williamthorsen/codeassembly/issues/467) for the prior decision context and [#468](https://github.com/williamthorsen/codeassembly/issues/468) for the generic-logging follow-up.
+If recorded failures are spread across truly **unknown classes** (without a clear pattern), the recovery protocol remains the right tool. See [#467](https://github.com/williamthorsen/codeassembly/issues/467) for the prior decision context and [#468](https://github.com/williamthorsen/codeassembly/issues/468) for the generic-logging follow-up.
 
 ### Antipatterns
 

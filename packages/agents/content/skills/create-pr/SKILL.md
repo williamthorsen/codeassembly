@@ -78,7 +78,7 @@ node {harness_home_dir}/scripts/describe-change.mjs render-titles \
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('pr_title',''))"
 ```
 
-Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`), and pass `--breaking` only if the effective record is breaking. Quote `--title` so that titles with spaces and shell-special characters are preserved. Render and parse in one Bash invocation, as the pipeline does, and let the parse print: No shell variable survives to a second call, and an assignment prints nothing for the next step to read.
+Omit any flag whose value is empty or null (e.g., omit `--ticket-ref` when `ticket_ref` from session context is `null`), and pass `--breaking` only if the effective record is breaking. Quote `--title` so that titles with spaces and shell-special characters are preserved. Render and parse in one Bash invocation, as the pipeline does, and let the parse print: A shell variable does not survive to a second call, and an assignment prints nothing for the next step to read.
 
 Use a JSON parser (python3 above; `jq -r '.pr_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
@@ -114,15 +114,15 @@ Read `scm` from the session context manifest:
 
 ### 9. Insert the closing line above the record block
 
-The body copied from the change summary already ends with the rendered `change-record` block, which `summarize-change` writes from the change entries. Carry it through unchanged: Render no block here, and never re-render one from the frontmatter, which records no entries.
+The body copied from the change summary already ends with the rendered `change-record` block, which `summarize-change` writes from the change entries. Carry it through unchanged: Do not render a block here, and never re-render one from the frontmatter, which does not record any entries.
 
-If `ticket_ref` is non-null, insert `Closes {ticket_ref}` above that block, separated from the text before it and from the block by one blank line each. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when no auto-close integration is wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
+If `ticket_ref` is non-null, insert `Closes {ticket_ref}` above that block, separated from the text before it and from the block by one blank line each. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when an auto-close integration is not wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
 
 If `ticket_ref` is null, skip: no closing line.
 
 The closing line goes above the block rather than below it because the block is the body's last element, as [The `change-record` block](../_data/change-record.md#the-change-record-block) states. A merge reads the last `change-record` fence wherever it sits, so the order costs nothing to keep and the convention stays true.
 
-If the change summary's body ends with no block, append the closing line as the body's last line and say that the pull request contains no change record, naming `{skill:add-change-record}` as the skill that adds one. A body reaches this step without one when `summarize-change` reported that `render-block` was unavailable or failed.
+If the change summary's body does not end with a block, append the closing line as the body's last line and say that the pull request does not contain a change record, naming `{skill:add-change-record}` as the skill that adds one. A body reaches this step without one when `summarize-change` reported that `render-block` was unavailable or failed.
 
 ### 10. Call delegate
 

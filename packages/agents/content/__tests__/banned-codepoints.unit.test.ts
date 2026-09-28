@@ -41,7 +41,7 @@ interface Offender {
 const BANS: ReadonlyArray<Ban> = [
   {
     // The ban is total rather than indent-only: The sole reason to type one into guidance is to indent a subordinate
-    // line, and a blanket check needs no parsing to decide.
+    // line, and a blanket check does not need any parsing to decide.
     allowlist: [],
     codepoint: '\u{A0}',
     name: 'a non-breaking space (U+00A0)',
@@ -75,12 +75,12 @@ describe('banned codepoints', () => {
     const scanned = new Set((await listScannedFiles()).map((file) => path.extname(file)));
     const unscanned = [...authored].filter((extension) => !scanned.has(extension)).toSorted();
 
-    const message = `These extensions are authored under content/ but no ban reads them: ${unscanned.join(', ')}`;
+    const message = `These extensions are authored under content/ but the bans do not read them: ${unscanned.join(', ')}`;
     expect(unscanned, message).toEqual([]);
   });
 
   describe.each(BANS)('$name', (ban: Ban) => {
-    it('appears in no file outside its allowlist', async () => {
+    it('does not appear in any file outside its allowlist', async () => {
       const offenders = await findOffenders(ban);
 
       expect(offenders, formatOffenders(ban, offenders)).toEqual([]);

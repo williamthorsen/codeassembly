@@ -9,8 +9,8 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 // inventory grounded in the diffstat alone, and loosening the granularity rule, whose entry unit is what keeps the
 // diff from being catalogued edit by edit. The form is defeated by a prescribed phrase, which the model emits wherever
 // guidance names one, by an exemplar below the floor, every one of which is paragraph-form, and by an entry unit that
-// reads as one edit, whose split entries no later actor may merge. None of these failures shows up at runtime -- each
-// yields a plausible entry list -- so the guard has to be here.
+// reads as one edit, whose split entries the caller's audit may not merge. None of these failures shows up at runtime
+// -- each yields a plausible entry list -- so the guard has to be here.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The drafter's assignment, which selects what it reports. */
@@ -83,8 +83,8 @@ const MIGRATION_FIELD_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases binding an entry's `migration` to the edit, the trap, and the bound. The trap appears in no hunk, so a diff
- * review cannot recover it, and without the bound a migration grows a worked example per call shape.
+ * Phrases binding an entry's `migration` to the edit, the trap, and the bound. The trap does not appear in any hunk,
+ * so a diff review cannot recover it, and without the bound a migration grows a worked example per call shape.
  */
 const MIGRATION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'any trap present in the replacement',
@@ -128,7 +128,7 @@ const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not wo
  */
 const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   '`rejected` fence',
-  'a redispatch returns no `## lede` section',
+  'a redispatch does not return a `## lede` section',
   'one replacement per passage',
   'revise those passages and nothing else',
 ];
@@ -156,19 +156,19 @@ const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
  * sentence's opening capital still matches.
  */
 const SUPPORTING_EDIT_PHRASES: ReadonlyArray<string> = [
-  'a supporting edit is no outcome of its own',
+  'a supporting edit is not an outcome of its own',
   'the paths in which its outcome appears',
 ];
 
 /** The taxonomy that supplies each entry's `type`, and through that type's tier its reader. */
 const TAXONOMY_FILENAME = 'work-types.json';
 
-/** The flag to which the exemplar call falls back when an outcome resolves to no type in the taxonomy. */
+/** The flag to which the exemplar call falls back when an outcome does not resolve to any type in the taxonomy. */
 const TIER_FALLBACK_FLAG = '--tier {tier}';
 
 /**
  * Work types whose entry owes a fact that the assignment does not supply. Each is stated nowhere else, so a rewrite
- * that drops one leaves the drafter with no guidance at all on that type and every suite green.
+ * that drops one leaves the drafter without any guidance on that type and every suite green.
  */
 const TYPE_RULE_KEYS: ReadonlyArray<string> = ['ai', 'deps', 'deprecate', 'drop', 'fix', 'perf', 'refactor', 'sec'];
 
@@ -201,7 +201,7 @@ describe('entry-drafter contract', () => {
     const message =
       'The drafter reports what changed, so it reads the hunks. The entry list is meant to be complete at outcome ' +
       'granularity, and the lede states what those outcomes amount to. A drafter left with the diffstat alone ' +
-      'reports what the commit subjects already say. No invocation here returns hunks.';
+      'reports what the commit subjects already say. This file does not contain any invocation that returns hunks.';
     expect(found.length, message).toBeGreaterThan(0);
   });
 
@@ -229,7 +229,7 @@ describe('entry-drafter contract', () => {
     const missing = FORM_CONTRACT_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The drafter is the only file that binds the writer, so a drafter that states no form contract drafts the ' +
+      'The drafter is the only file that binds the writer, so a drafter that does not state a form contract drafts the ' +
       `paragraph out of which the exemplars were rewritten. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -303,8 +303,8 @@ describe('entry-drafter contract', () => {
 
   it('states the rule for leaving true facts out', async () => {
     const message =
-      'The drafter’s body contains no shared concision rule, so this section is the whole of what tells it to drop a fact. ' +
-      'Deleting it leaves a drafter with no leave-out rule at all, and every suite stays green.';
+      'The drafter’s body does not contain the shared concision rule, so this section is the whole of what tells it to ' +
+      'drop a fact. Deleting it leaves a drafter without any leave-out rule, and every suite stays green.';
     expect(await EXPANDED, message).toContain(LEAVE_OUT_RULE_PHRASE);
   });
 
@@ -325,8 +325,8 @@ describe('entry-drafter contract', () => {
 
     const message =
       'An entry’s `migration` is the only text addressed to a consumer whose build broke, and the merge commit ' +
-      'records it whatever else is cut. The trap present in the replacement appears in no hunk, so a caller ' +
-      `auditing against the diff cannot supply it. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'records it whatever else is cut. The trap present in the replacement does not appear in any hunk, so ' +
+      `a caller auditing against the diff cannot supply it. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -337,7 +337,7 @@ describe('entry-drafter contract', () => {
     const message =
       'An entry’s `migration` is the upgrade instruction that release notes render under its bullet, and this file ' +
       'is the only one that tells the drafter when to write it. Without the trigger, a breaking entry reaches the ' +
-      `changelog with no instruction; without the omission, every entry grows one. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      `changelog without an instruction; without the omission, every entry grows one. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -364,7 +364,7 @@ describe('entry-drafter contract', () => {
     const message =
       'The caller takes `## What` from this section and parses the entries from the next, matching each heading in ' +
       `the return. A return missing \`${LEDE_HEADING}\`, or placing it below \`${ENTRIES_HEADING}\`, leaves the ` +
-      'caller with no lede to take and a thin body that the merge flow then recomposes from the diff.';
+      'caller without a lede to take and a thin body that the merge flow then recomposes from the diff.';
     expect(ledeAt, message).toBeGreaterThan(-1);
     expect(entriesAt, message).toBeGreaterThan(ledeAt);
   });
@@ -393,7 +393,7 @@ describe('entry-drafter contract', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('prescribes no connective phrase', async () => {
+  it('does not prescribe any connective phrase', async () => {
     const message =
       `A form named in guidance is a form that the model emits, so "${PRESCRIBED_CONNECTIVE}" reaches the draft ` +
       'wherever the drafter names it. A second outcome is a second bullet.';
@@ -422,8 +422,8 @@ describe('entry-drafter contract', () => {
   it('reads the taxonomy for each entry’s type', async () => {
     const message =
       `Each entry's \`type\` is a key in \`${TAXONOMY_FILENAME}\`, and that type's tier names the entry's reader. ` +
-      'A drafter that reads no taxonomy invents type names, and the caller then has no subsection to render the ' +
-      'entry under.';
+      'A drafter that does not read the taxonomy invents type names, and the caller then lacks a subsection to ' +
+      'render the entry under.';
     expect(await EXPANDED, message).toContain(TAXONOMY_FILENAME);
   });
 

@@ -31,7 +31,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
 ### 1. Validate inputs and resolve context
 
 1. Read the plan file. If not found, report an error and stop.
-2. Parse YAML frontmatter from the plan content. If a `provenance` block is present, store it as `{input-provenance}`. If no frontmatter or no `provenance` block, set `{input-provenance}` to empty.
+2. Parse YAML frontmatter from the plan content. If a `provenance` block is present, store it as `{input-provenance}`. If the plan does not have frontmatter or a `provenance` block, set `{input-provenance}` to empty.
 3. Resolve the ticket source:
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
    - File path -> Read the file.
@@ -82,7 +82,7 @@ Parse the return block:
 
 Evaluate the finding counts:
 
-- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): Skip the reviser entirely. Emit `skill.completed` (payload `{"outcome":"no findings"}`) per [Lifecycle events](#lifecycle-events). Report that the plan needs no refinement, then present next steps, emitting `input.requested` (payload `{"prompt":"next-steps"}`) as you present the menu.
+- **0 total findings** (AutoResolvable = 0 AND UserQuestions = 0): Skip the reviser entirely. Emit `skill.completed` (payload `{"outcome":"no findings"}`) per [Lifecycle events](#lifecycle-events). Report that the plan does not need any refinement, then present next steps, emitting `input.requested` (payload `{"prompt":"next-steps"}`) as you present the menu.
 
   ```
   Plan reviewed -- no findings. The plan is ready for implementation.
@@ -90,7 +90,7 @@ Evaluate the finding counts:
   ```
 
   <HARD-GATE>
-  Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed with no issues; use this as recommendation context. Use `{plan_path}` (the original plan argument, not `{revision_output_path}`; no revised plan exists on this path) and `{ticket_source}` in each skill-invoking option line.
+  Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed, and the review did not find any issues; use this as recommendation context. Use `{plan_path}` (the original plan argument, not `{revision_output_path}`; this path does not produce a revised plan) and `{ticket_source}` in each skill-invoking option line.
   </HARD-GATE>
 
 - **0 user questions** (UserQuestions = 0, AutoResolvable > 0): Skip user interaction. Proceed to step 5 with empty user answers.
@@ -156,7 +156,7 @@ Plan revision failed -- the plan-reviser did not complete successfully.
 
 Emit `skill.completed` (payload `{"outcome":"stopped: revision failed"}`) per [Lifecycle events](#lifecycle-events). Stop here. Do not attempt provenance update or report completion.
 
-Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter: `plan-reviser` outputs no frontmatter of its own; `refine-plan` owns it.
+Stamp the revised plan with frontmatter conforming to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions. This is the single write point for the revised plan's frontmatter: `plan-reviser` does not output any frontmatter of its own; `refine-plan` owns it.
 
 The stamp writes the full canonical schema in one atomic write: the `provenance:` block plus the top-level canonical fields.
 
@@ -168,7 +168,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. 
 
 The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
 
-**Round-trip preservation:** The top-level canonical fields (`branch`, `commit`, etc.) are always re-resolved from current session context via the script; they are not carried forward from `{input-provenance}`. This is correct: The output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write; there is no rename. Provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches).
+**Round-trip preservation:** The top-level canonical fields (`branch`, `commit`, etc.) are always re-resolved from current session context via the script; they are not carried forward from `{input-provenance}`. This is correct: The output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write; the keys are not renamed. Provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches).
 
 **When `{input-provenance}` is non-empty:**
 
@@ -181,7 +181,7 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    - `baseSha`: The script's value (or preserved original)
    - `isInteractive`: Preserve from `{input-provenance}` if present
    - `iteration`: If `{input-provenance}.iteration` is present, set to `{input-provenance}.iteration + 1`. If absent, set to `2`.
-4. Prepend the unified YAML frontmatter (`provenance:` block plus top-level canonical fields from the script) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan`, `isInteractive: true`, no `iteration` field):
+4. Prepend the unified YAML frontmatter (`provenance:` block plus top-level canonical fields from the script) to the revised plan and write back. Example output (assuming input had `skill: design-and-plan` and `isInteractive: true` but did not have an `iteration` field):
 
    ```markdown
    ---
@@ -210,7 +210,7 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    - `refinedBy`: `refine-plan`
    - `timestamp`: Script's value
    - `baseSha`: Script's value (omit when absent)
-   - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill: When it stamps a plan that has no prior provenance, the stamp itself is always produced inside that interactive session.
+   - `isInteractive`: Always `true`. `refine-plan` is an interactive user-invocable skill: When it stamps a plan without prior provenance, the stamp itself is always produced inside that interactive session.
    - `iteration`: `2`
 4. Prepend the unified YAML frontmatter and write back:
 

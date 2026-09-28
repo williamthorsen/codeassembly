@@ -36,4 +36,4 @@ The permissions use `acceptEdits` mode + consolidated allowlist + deny list:
 
 ## Limitations
 
-There is no formal approval log. Recommendations are based on commands executed in this session and the agent's memory of permission prompts. Invoke this skill while the conversation context is fresh.
+A formal approval log is not available to this skill. Recommendations are based on commands executed in this session and the agent's memory of permission prompts. Invoke this skill while the conversation context is fresh.

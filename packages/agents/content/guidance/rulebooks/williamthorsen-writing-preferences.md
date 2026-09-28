@@ -36,7 +36,7 @@ Imperative mood is untouched, because it does not contain a pronoun: "Run the fo
 
 **The addressee decides.** Ask who the pronoun names. If it names the agent that the document instructs, a skill body or a subagent body directing its own executor, the pronoun is that document's address and stays. If it names a reader of documentation, someone using the package or working on it, the pronoun goes.
 
-**The replacement names an actor.** Say who or what acts: "the config sets a cap on the rule" rather than "you cap the rule". If no actor belongs in the sentence, recast so that the artifact is the subject of a verb that it performs or one that states a relation, as plain speech requires: "the flag takes a path" rather than "you pass it a path".
+**The replacement names an actor.** Say who or what acts: "the config sets a cap on the rule" rather than "you cap the rule". If an actor does not belong in the sentence, recast so that the artifact is the subject of a verb that it performs or one that states a relation, as plain speech requires: "the flag takes a path" rather than "you pass it a path".
 
 A naive substitution fails in two ways:
 

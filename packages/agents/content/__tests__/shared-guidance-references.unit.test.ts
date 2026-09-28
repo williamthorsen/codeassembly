@@ -9,7 +9,7 @@ import { resolveRulebook } from '../../src/lib/rulebook-deploy.ts';
 import { readTargetHarnesses } from '../../src/lib/skill-deploy.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Shared guidance is inlined into every harness guidance file, a route that rewrites no invocation token, so
+// Shared guidance is inlined into every harness guidance file, a route that does not rewrite any invocation token, so
 // `{skill:<slug>}` is unavailable here and a skill must be named in prose. That leaves the name outside every parse
 // gate through which the tokenized trees pass, so a rename leaves the prose naming a skill that no longer exists. A
 // dead pointer is worse than none: An agent that follows one finds nothing, treats the lookup as satisfied, and falls
@@ -46,8 +46,9 @@ describe('shared guidance references', () => {
     expect(violations, message).toEqual([]);
   });
 
-  // A `delivery: skill` rulebook deploys an invocable skill that no `skills/` directory contains. The assertion above
-  // only ever reports names that it fails to find, so a rulebook half that returned nothing would leave it green.
+  // A `delivery: skill` rulebook deploys an invocable skill that does not have a `skills/` directory. The assertion
+  // above only ever reports names that it fails to find, so a rulebook half that returned nothing would leave it
+  // green.
   it('accepts a skill that a rulebook deploys', async () => {
     expect(await listDeployedSkillNames()).toContain('consult-shell-conventions');
   });
@@ -68,7 +69,7 @@ describe('shared guidance references', () => {
       expect([...collectSkillReferences(line)]).toEqual(['git-commit-conventions']);
     });
 
-    it('ignores a backticked identifier that names no skill', () => {
+    it('ignores a backticked identifier that does not name a skill', () => {
       const line = 'Name functions with a leading verb (`show_usage`, not `usage`; `build_payload`, not `payload`).';
       expect([...collectSkillReferences(line)]).toEqual([]);
     });
@@ -102,7 +103,8 @@ async function listDeployedSkillNames(): Promise<ReadonlyArray<string>> {
 
 /**
  * Returns the names that `delivery: skill` rulebooks deploy their skills under, read off the deploy path rather than
- * recomputed here. Rulebook frontmatter has no `supported-harnesses:` field, so every such skill reaches all of them.
+ * recomputed here. Rulebook frontmatter does not have a `supported-harnesses:` field, so every such skill reaches all
+ * of them.
  */
 async function listRulebookSkillNames(): Promise<ReadonlyArray<string>> {
   const resolver = libraryResolver(CONTENT_ROOT);
@@ -112,9 +114,9 @@ async function listRulebookSkillNames(): Promise<ReadonlyArray<string>> {
 }
 
 /**
- * Returns the slugs of every catalog skill that reaches all harnesses: one whose frontmatter declares no `supported-harnesses:`
- * narrowing. Shared guidance serves every harness, so a skill received by only some of them is as dead a pointer
- * there as one that does not exist.
+ * Returns the slugs of every catalog skill that reaches all harnesses: one whose frontmatter does not declare a
+ * `supported-harnesses:` narrowing. Shared guidance serves every harness, so a skill received by only some of them is
+ * as dead a pointer there as one that does not exist.
  */
 async function listUniversalSkillSlugs(): Promise<ReadonlyArray<string>> {
   const catalogSlugs = await listSkillDirectories(SKILLS_ROOT);

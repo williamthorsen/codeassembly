@@ -22,7 +22,7 @@ const RULE_HEADING_REGEX = /^## (.+)$/;
 /**
  * Matches a marker alone on its line, whose captured groups are the id and any version token. A marker quoted inside a
  * sentence declares nothing. The version is matched loosely, so that a malformed one reads as malformed rather than as
- * no marker at all.
+ * a missing marker.
  */
 const RULE_MARKER_REGEX = /^<!--\s*rule:\s*([a-z][a-z0-9-]*)(?:\s+(\S.*?))?\s*-->$/;
 
@@ -56,7 +56,10 @@ export function listRuleSections(body: string): RuleSection[] {
 
 // region | Helpers
 
-/** Splits a body into lines, replacing each line of a code fence with a placeholder that matches no heading or marker. */
+/**
+ * Splits a body into lines, replacing each line of a code fence with a placeholder that does not match any heading or
+ * marker.
+ */
 function maskFencedLines(body: string): string[] {
   let fenced = false;
   return body.split('\n').map((line) => {

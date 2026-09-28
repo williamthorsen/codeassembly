@@ -26,19 +26,19 @@ This skill receives the following inputs from the orchestrator:
 
 ### 1. Create the pull request
 
-Call `action: "create"` on the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). No pull-request URL exists yet, so the coordinates come from that document's second source, the git remote.
+Call `action: "create"` on the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). The pull-request URL does not exist yet, so the coordinates come from that document's second source, the git remote.
 
 - **Title**: Use `title` as provided.
 - **Description**: Use `body` as provided.
-- **Source branch**: Use the current branch, `git rev-parse --abbrev-ref HEAD`. The action requires it, and the delegate interface has no head-branch input.
+- **Source branch**: Use the current branch, `git rev-parse --abbrev-ref HEAD`. The action requires it, and the delegate interface does not have a head-branch input.
 - **Destination branch**: Use `base_branch`.
 - **Draft/WIP**: Create as draft if the platform supports it.
 
 ### 2. Report every label as skipped
 
-Bitbucket pull requests have no labels, and the tool exposes no label parameter on any action. Attempt no call. Report every name in `labels` under `Labels skipped:` in the completion output, and leave `Labels applied:` as `none`.
+Bitbucket pull requests do not have labels, and the tool does not expose a label parameter on any action. Do not attempt a call. Report every name in `labels` under `Labels skipped:` in the completion output, and leave `Labels applied:` as `none`.
 
-Labels matter to `merge-pr` only for a PR whose body contains no readable `change-record` block, and a Bitbucket PR contributes none there; this step makes that true.
+Labels matter to `merge-pr` only for a PR whose body does not contain a readable `change-record` block, and a Bitbucket PR contributes none there; this step makes that true.
 
 The artifact's label lines keep `create-gh-pr`'s three-field shape: `Labels attempted:` lists the requested set, `Labels applied:` is always `none`, and `Labels skipped:` repeats the requested set.
 

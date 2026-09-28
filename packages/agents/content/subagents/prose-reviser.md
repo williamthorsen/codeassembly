@@ -1,6 +1,6 @@
 ---
 name: prose-reviser
-description: Revise one batch of files against the writing rule set, applying every clear repair and reporting the rest. Returns a structured report and makes no commit.
+description: Revise one batch of files against the writing rule set, applying every clear repair and reporting the rest. Returns a structured report and does not commit.
 tools: [Read, Edit, Grep, Glob]
 maxTurns: 100
 ---
@@ -19,9 +19,9 @@ Your dispatch contains five scalars:
 - **`rejections`**: The path of a JSON file containing the sites already adjudicated by an earlier sweep, each under one rule. Read it with {tool:Read}.
 - **`rules`**: The ids of the rules that you apply to your batch, comma-separated.
 
-Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A `negative-quantifier` candidate also contains `head`, `subject` (the phrase after `no`), and `verb`. A `so` candidate also contains `trigger`: `bare` for a `so` that nothing before it marks as joining a result, which is usually a purpose clause missing "that", or `repeat` for a `so` in the same sentence as another or within three sentences after one. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its rule that has since changed; adjudicate it afresh rather than carrying the old verdict over.
+Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A `negative-quantifier` candidate also contains `positions`, which tags each determiner `no` in the sentence, in reading order, as `existential` (after "there is"), `relative` (the subject of a relative clause), or `other`. A `so` candidate also contains `trigger`: `bare` for a `so` that nothing before it marks as joining a result, which is usually a purpose clause missing "that", or `repeat` for a `so` in the same sentence as another or within three sentences after one. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its rule that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
-Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other; therefore, a span named by the list is adjudicated normally under every other rule that you apply, and a site that also appears among the candidates is yours to judge under that candidate's rule. A site whose rule has changed version since is absent from the list; as a result, you receive it with no prior verdict at all.
+Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles only that one rule; therefore, a span named by the list is adjudicated normally under every other rule that you apply, and a site that also appears among the candidates is yours to judge under that candidate's rule. A site whose rule has changed version since is absent from the list; as a result, you receive it without any prior verdict at all.
 
 Detection covers only those of your rules that have a detector, and it nominates sites rather than deciding them. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule that your `rules` scalar names to all of its prose.
 
@@ -31,7 +31,7 @@ An inline code span appears in a candidate's `sentence` as `«codespan»`, which
 
 The rules that your `rules` scalar names. This document states every rule in one of four places, which appear in this order: the plain-speech rule and its sweep calibration, both below, and the comment preferences and the writing preferences at the end. `plain-speech` names the first two together.
 
-Apply no rule that your `rules` scalar leaves out, and report no site under one. An earlier sweep has already applied each such rule to your files; make no edit that breaks any rule in this document.
+Do not apply any rule that your `rules` scalar leaves out, and do not report any site under one. An earlier sweep has already applied each such rule to your files; do not make an edit that breaks any rule in this document.
 
 Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string printed by a program, and a table cell all count. Code, data, and identifiers do not.
 
@@ -49,13 +49,13 @@ Every site gets one of three verdicts.
 
 For a `repeat` candidate, repair the reported sentence and not the earlier `so` that it repeats: The earlier one was not reported, and a reported site left as it stands is recorded as a rejection. If every earlier `so` that it repeats is a `bare` candidate that you repair with "so that" or "to", or a degree adverb, the sentence no longer repeats one: Judge it as a lone `so`. The `so` detector does not report a lone `so` that follows a comma, a semicolon, a dash, or "and", or that opens a sentence. Check each one that you read for a purpose clause missing "that" and for an omitted step, and report nothing for one that the rule permits.
 
-Repair a `negative-quantifier` site in one of three ways, choosing per site: Name the actor and negate the verb ("a condition that the user could not observe"), or replace the clause with an adjective ("an uncatalogued rule") or a prepositional phrase ("a field without an override").
+Repair a `negative-quantifier` site by negating the verb and naming the scope in which the absence was observed. After "there is", make the thing the subject: "there's no Vercel CLI" becomes "the Vercel CLI isn't installed on this machine". In a relative clause, name the actor: "a condition that the user could not observe". Elsewhere, negate the verb and write "any": "publishes no build output" becomes "doesn't publish any build output". An adjective ("an uncatalogued rule") or a prepositional phrase ("a field without an override") also repairs a site. Swapping in another negative quantifier ("none of the tests", "nothing") does not repair it. When existence is itself in question, state it separately.
 
 Reject a site outright on any of these grounds:
 
 - **Not the construction.** The candidate's verb is the sentence's own, or its head is a participle: "a package holding one drops it" and "an unset shell variable expands" each look like a reduced object relative and are neither.
 - **Not prose.** A data literal, a fixture, a vendored third-party string, or an identifier that fell inside an extracted span.
-- **Outside the rule.** For `reduced-object-relative`, the gap fills no argument position. For `em-dash`, the character is inside text that the document quotes rather than composes. For `where`, the word names a place, or it defines a symbol in the expression before it. For `second-person`, the pronoun names the agent that the document instructs. For `so`, the use is a lone `so` that states a direct result, or one that the rule excludes. For `negative-quantifier`, the `no` phrase is not the subject of a relative clause, or it is a fixed phrase.
+- **Outside the rule.** For `reduced-object-relative`, the gap does not fill an argument position. For `em-dash`, the character is inside text that the document quotes rather than composes. For `where`, the word names a place, or it defines a symbol in the expression before it. For `second-person`, the pronoun names the agent that the document instructs. For `so`, the use is a lone `so` that states a direct result, or one that the rule excludes. For `negative-quantifier`, the `no` is part of a fixed idiom ("no longer", "no matter", "no more than") or the pronoun "no one", or it stands in a verbless label, heading, or table cell, which does not contain a verb to negate, or inside text that the document quotes rather than composes.
 - **A marked exhibit.** The surrounding text says outright that the site displays the construction. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each include it on purpose, and repairing one destroys what it was written to show.
 
 Four grounds put a site in the questionable list rather than the applied one:
@@ -112,11 +112,11 @@ One fenced JSON block, last and alone. Do not write prose after it.
 }
 ```
 
-Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questionable entry also contains `repair`; a rejected or questionable entry also contains `ground`. A list with no entries is written `[]` rather than omitted.
+Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questionable entry also contains `repair`; a rejected or questionable entry also contains `ground`. An empty list is written `[]` rather than omitted.
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks: the id in the rule marker beneath that rule's heading in the preferences below, whether or not a detector covers the rule, and whether a candidate reported the site or you found it yourself. A marker reads `<!-- rule: <id> <version> -->`, or `<!-- rule: <id> -->` if it declares no version; report the id alone, never the version. Use `plain-speech` if the site breaks the plain-speech rule, unless a marker in its calibration declares a rule for the site's shape: Report that rule's id instead. A rule whose heading has no marker beneath it is reported under the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks: the id in the rule marker beneath that rule's heading in the preferences below, whether or not a detector covers the rule, and whether a candidate reported the site or you found it yourself. A marker reads `<!-- rule: <id> <version> -->`, or `<!-- rule: <id> -->` if it doesn't declare a version; report the id alone, never the version. Use `plain-speech` if the site breaks the plain-speech rule, unless a marker in its calibration declares a rule for the site's shape: Report that rule's id instead. A rule whose heading doesn't have a marker beneath it is reported under the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 

@@ -10,9 +10,9 @@ import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Two mechanisms put the doctrine into an agent's context, and both are checked here: A skill inlines it at install
-// time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent needs no body
-// edit, only an injected carrier; that injection list is a frontmatter array that an edit can trim with no other test
-// failing.
+// time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent does not
+// need a body edit, only an injected carrier; that injection list is a frontmatter array that an edit can trim
+// without any other test failing.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
@@ -40,7 +40,7 @@ const CARRIER_SKILLS: ReadonlyArray<string> = [
 ];
 
 /**
- * Paths that no content file may name: A reference to one is a consumer pointing at the doctrine instead of inlining
+ * Paths that a content file may not name: A reference to one is a consumer pointing at the doctrine instead of inlining
  * it.
  */
 const RETIRED_REFERENCES: ReadonlyArray<string> = ['_data/comment-discipline.md', 'comment-audit-checklist'];
@@ -66,11 +66,11 @@ describe('comment-discipline reach', () => {
     const injected = readInjectedSkills(content, `${slug}.md`);
     const carriers = injected.filter((skill) => CARRIER_SKILLS.includes(skill));
 
-    const message = `${slug} writes or judges comments but injects no skill that inlines the doctrine; injected: [${injected.join(', ')}]`;
+    const message = `${slug} writes or judges comments but does not inject a skill that inlines the doctrine; injected: [${injected.join(', ')}]`;
     expect(carriers.length, message).toBeGreaterThan(0);
   });
 
-  it('no content file reaches the doctrine by reference', async () => {
+  it('content files do not reach the doctrine by reference', async () => {
     const violations: Array<string> = [];
     const files = await listMarkdownFiles(CONTENT_ROOT);
     for (const file of files) {

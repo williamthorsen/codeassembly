@@ -9,7 +9,7 @@ git ls-files -- <path>
 git ls-files --others --exclude-standard -- <path>
 ```
 
-The two forms together cover what git tracks plus what it would track, and both honor `.gitignore`, so `node_modules/`, `dist/`, and every other non-authored tree are excluded with no further configuration.
+The two forms together cover what git tracks plus what it would track, and both honor `.gitignore`, so `node_modules/`, `dist/`, and every other non-authored tree are excluded without any further configuration.
 
 **What never enters the set.** Three kinds of file are excluded, each because an edit to it would be discarded or would rewrite a record:
 

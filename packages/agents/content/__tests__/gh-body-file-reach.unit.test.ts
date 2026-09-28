@@ -26,7 +26,7 @@ const CONTRACT_PHRASES: ReadonlyArray<string> = [
   CONTRACT_HEADLINE,
   'Name the file for its consumer.',
   'Assign the path and guard it inside the call that consumes it.',
-  'tool performs no shell expansion',
+  'tool does not perform shell expansion',
 ];
 
 /**
@@ -94,7 +94,7 @@ describe('gh-body-file reach', () => {
     expect(violations, message).toEqual([]);
   });
 
-  it('states the path rule in no content file but the partial', async () => {
+  it('states the path rule in the partial alone', async () => {
     const violations: Array<string> = [];
     const files = await listMarkdownFiles(CONTENT_ROOT);
     for (const file of files) {

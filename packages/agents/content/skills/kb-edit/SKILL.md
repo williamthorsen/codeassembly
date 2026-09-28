@@ -32,7 +32,7 @@ A value-bearing flag accepts both `--retag node,react` and `--retag=node,react`.
 
 ### KB selection
 
-The destination knowledge base is inferred by walking up from the note's directory for a `.kb/` folder. There is no `--kb` override: The note's location is the selector. The helper refuses to write into a KB whose `kb.yaml` entry sets `readonly: true`, reporting `readonly-kb`.
+The destination knowledge base is inferred by walking up from the note's directory for a `.kb/` folder. The helper does not accept a `--kb` override: The note's location is the selector. The helper refuses to write into a KB whose `kb.yaml` entry sets `readonly: true`, reporting `readonly-kb`.
 
 ## Runtime dependencies
 
@@ -56,7 +56,7 @@ The `--auto` flag is for you, not for the bundled helper; it controls whether yo
 
 ## Update semantics: Which operations bump `updated:`
 
-`updated:` records the last _substantive_ change to a record (what it asserts, its body, or its lifecycle state). Operations that make no such change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
+`updated:` records the last _substantive_ change to a record (what it asserts, its body, or its lifecycle state). Operations that do not make such a change leave `updated:` untouched. Classify each new operation against this rule deliberately rather than in isolation:
 
 - **Bump `updated:`** (substantive change): `--append` (body change), `--add-addressed-by` (records a response relation), and `--supersede-with` (lifecycle-state change). `--bump-updated` is the explicit escape hatch for an out-of-band edit made elsewhere.
 - **Leave `updated:` unchanged** (no substantive change): `--retag` (curatorial: Reorganizes findability only) and `--verify` (re-confirmation: Content is unchanged).
@@ -77,7 +77,7 @@ In default mode, present the note path, the operation, and the operation-specifi
 
 ### 4. Invoke the helper
 
-`--bump-updated`, `--verify`, `--retag`, and `--supersede-with` take no stdin:
+`--bump-updated`, `--verify`, `--retag`, and `--supersede-with` do not read stdin:
 
 ```bash
 node {harness_home_dir}/skills/kb-edit/kb-edit.mjs <path> --bump-updated
@@ -106,7 +106,7 @@ EOF
 
 The helper prints a JSON object to stdout. On success the payload contains `ok: true`, the resolved `kb`, the written `record`, and (for `--retag`) the `originalTags` / `canonicalTags` audit trail. `--supersede-with` returns `oldRecord` and `newRecord` for both files.
 
-`--add-addressed-by` returns a `results` array (one entry per target note, in the order supplied) instead of a single-note payload. Each entry has its own `ok`: A success entry has the written `record`, a failure entry has an `error` code and `message`. Its top-level `ok: true` means the batch ran (no usage or system error), not that every record succeeded; inspect each `results[]` entry to see which notes were written and which failed, then re-run for the failures (the append de-duplicates, so re-running is safe).
+`--add-addressed-by` returns a `results` array (one entry per target note, in the order supplied) instead of a single-note payload. Each entry has its own `ok`: A success entry has the written `record`, a failure entry has an `error` code and `message`. Its top-level `ok: true` means the batch ran (without a usage or system error), not that every record succeeded; inspect each `results[]` entry to see which notes were written and which failed, then re-run for the failures (the append de-duplicates, so re-running is safe).
 
 On failure, `ok: false` plus a categorical `error` code:
 

@@ -37,7 +37,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
      gh issue view {ticket_id} --json labels --jq '.labels[].name'
      ```
 
-     Otherwise, pass no labels. If the fetch fails, continue without labels and say so; `ticket_type` is then absent.
+     Otherwise, do not pass any labels. If the fetch fails, continue without labels and say so; `ticket_type` is then absent.
 
    - **Consolidate the range** into a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `consolidation-{timestamp}.json`:
 
@@ -62,7 +62,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
      Read `ticket_type` from the output, leaving it absent if it is `null`; [`resolve-ticket-type`](../_data/title-templates.md#resolve-ticket-type) states when it is. If the call fails, relay its error and continue with `ticket_type` absent.
 
-   - **Report** each `unmatched` subject and each `violations` entry to the developer, then continue. If every field of `consolidated_record` is `null`, say that the branch yields no commit entries and continue; the tier that step 5 seeds falls back to `internal`.
+   - **Report** each `unmatched` subject and each `violations` entry to the developer, then continue. If every field of `consolidated_record` is `null`, say that the branch does not yield any commit entries and continue; the tier that step 5 seeds falls back to `internal`.
    - **Resolve the overrides.** `--scope` sets `override_scope`. `--type` sets `override_type`, and a `!` on it sets `override_breaking` rather than staying on the type. Record an override as given, even if it equals the consolidated record.
    - **Resolve the effective record** from the consolidated record and the overrides:
 
@@ -76,9 +76,9 @@ Both are optional, and each is recorded as an override beside the consolidated r
        --override-breaking
      ```
 
-     Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`. The effective type is the output's `effective_record.type`; [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record) states the output. If the call fails, relay its error and continue with no effective type.
+     Omit each flag whose field is absent, and pass `--breaking` and `--override-breaking` only if that field is `true`. The effective type is the output's `effective_record.type`; [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record) states the output. If the call fails, relay its error and continue without an effective type.
 
-   - **Type the change from the diff.** Apply [Work type test](#work-type-test) to the diff and resolve the type from that, whatever the consolidated record and `ticket_type` name. Agreement between the two is not evidence: The commits are often typed from the ticket's label, so one misclassification reaches both. When the test's type differs from the effective type, set `override_type` to it and re-run `resolve-effective-record`. Ask the developer only when the test leaves two types genuinely close, following [option format](#option-format): A clear result is a decision to state in one line with its reason, not a menu. Resolve here rather than later, since the lede's tier in step 5 follows the type. A session with no developer to ask takes the test's type: Set `override_type` to it, which the frontmatter records beside the consolidated `type` and `ticket_type`, and ask nothing.
+   - **Type the change from the diff.** Apply [Work type test](#work-type-test) to the diff and resolve the type from that, whatever the consolidated record and `ticket_type` name. Agreement between the two is not evidence: The commits are often typed from the ticket's label, so one misclassification reaches both. When the test's type differs from the effective type, set `override_type` to it and re-run `resolve-effective-record`. Ask the developer only when the test leaves two types genuinely close, following [option format](#option-format): A clear result is a decision to state in one line with its reason, not a menu. Resolve here rather than later, since the lede's tier in step 5 follows the type. A session without a developer to ask takes the test's type: Set `override_type` to it, which the frontmatter records beside the consolidated `type` and `ticket_type`, and ask nothing.
    - **Check the breaking policy.** Report each `policy-violation` in the last run's `defects`, such as the one that a `refactor` override on a breaking consolidated record produces, and change nothing.
 
 3. **Compose title**: Compose the change string per [`title-voice.md`](../_data/title-voice.md).
@@ -94,7 +94,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
    ticket-source: {ticket URL or reference}
    ```
 
-   **The block contains scalars only, and only these keys.** Omit `type` and `ticket-source` if they are unresolved; add `rejection: {code}` on a redispatch and on no other dispatch. Compose no prose into it: The drafter gathers every fact itself, and a sentence written here would introduce this session's weighting into the draft, which is the failure that the fresh context exists to avoid. A content test fails the build on a line that is not a `key: value` scalar and on a key outside this set, so a new flag is added deliberately rather than by a passing test.
+   **The block contains scalars only, and only these keys.** Omit `type` and `ticket-source` if they are unresolved; add `rejection: {code}` only on a redispatch. Do not compose prose into it: The drafter gathers every fact itself, and a sentence written here would introduce this session's weighting into the draft, which is the failure that the fresh context exists to avoid. A content test fails the build on a line that is not a `key: value` scalar and on a key outside this set, so a new flag is added deliberately rather than by a passing test.
 
    **A redispatch includes the passages that failed, in a fence below the block.** Step 6 decides which:
 
@@ -104,7 +104,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
    Copy each passage character for character from the draft from which it came, one per line, and send only the passages that failed: The drafter cannot change a passage that it never sees, which keeps one that passed from coming back changed. Send the lede the same way if it is what failed. The fence contains the lede, an entry's `text`, or an entry's `migration`, so the drafter returns one replacement passage per passage sent, in the order sent; put each in the place of the passage that it replaces and keep every other field of that entry, so that a replaced `text` keeps the entry's `migration` and a replaced `migration` keeps its `text`. Take the lede and every other entry from the draft unchanged. If the return contains a different number of passages than you sent, none of them can be placed: Redispatch with `rejection: unmatched-return`, which counts against the two redispatches that step 6 allows and exits as step 6 does.
 
-   On a first dispatch, take the drafter's `## Lede` section as it stands; step 9 makes it `## What`, and no step rewrites it. A redispatch returns every replacement under `## Entries` and no `## Lede` section at all, so the lede that it keeps is whichever text the placement above left in the lede's place. Parse the `## Entries` fence as YAML. Each entry declares `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry calls for one. Read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that names no key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
+   On a first dispatch, take the drafter's `## Lede` section as it stands; step 9 makes it `## What`, and later steps do not rewrite it. A redispatch returns every replacement under `## Entries` and does not return a `## Lede` section at all, so the lede that it keeps is whichever text the placement above left in the lede's place. Parse the `## Entries` fence as YAML. Each entry declares `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry calls for one. Read the `## Report` for any source that the drafter could not access. Report to the developer any `type` that does not name a key in [work-types.json](../_data/work-types.json) and continue; the rendering rule below states the heading that such an entry takes, and resolving the type here would substitute this session's judgment for the drafter's.
 
 6. **Audit the lede and the entries.** Three checks apply to the lede, to each entry's `text`, and to each entry's `migration` alike, except as the subject check states, and each names the rejection code that its failure raises, for which a redispatch is the repair rather than an edit of your own. `type`, `scopes`, and `breaking` are not prose and are never rejected.
 
@@ -134,7 +134,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
 8. **Render `## Details` from the verified entries** per [Rendering `Details`](#rendering-details).
 
-9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and take no sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here adds this session's weighting to the merge commit, the changelog, and the release notes.
+9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and do not take any sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here adds this session's weighting to the merge commit, the changelog, and the release notes.
 
 10. **Render the `change-record` block** and make it the body's last element:
 
@@ -154,7 +154,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
     [`render-block`](../_data/title-templates.md#render-block) states the output, which is JSON; the last command decodes it and prints the `block` field. Render and decode in one Bash invocation, and write the printed block verbatim below `## Details`, separated by one blank line. Never copy the block out of the raw JSON: `text` is arbitrary prose, and JSON escapes its quotes and backslashes a second time.
 
-    `create-pr` copies this block into the pull-request body rather than rendering one of its own, so a body saved without one reaches the pull request without one. If the helper is unavailable or the call fails, relay its error, say that the summary contains no block, and save the body without one.
+    `create-pr` copies this block into the pull-request body rather than rendering one of its own, so a body saved without one reaches the pull request without one. If the helper is unavailable or the call fails, relay its error, say that the summary does not contain a block, and save the body without one.
 
 11. **Save** per the [Saving](#saving) section.
 
@@ -210,16 +210,16 @@ entries:
 
 `## Details` is rendered from the verified entries, and nothing else is composed into it. It is present on every change that yields an entry.
 
-- **Subsections.** One per distinct `type` among the entries, headed `{emoji} {label}` from that type's [work-types.json](../_data/work-types.json) `types[]` entry. Order them by tier (public → internal → process) and, within a tier, in the order that `work-types.json` lists the types. A type with no entry gets no subsection.
+- **Subsections.** One per distinct `type` among the entries, headed `{emoji} {label}` from that type's [work-types.json](../_data/work-types.json) `types[]` entry. Order them by tier (public → internal → process) and, within a tier, in the order that `work-types.json` lists the types. A type without an entry does not get a subsection.
 - **Bullets.** Under each subsection, one bullet per entry of that type, in the order the drafter returned them. The bullet is `🚨 **Breaking:** ` (from `markers.breaking`, rendered as `{emoji} **{label}:** `) when the entry's `breaking` is `true`, followed by the entry's `text`. The prefix tags the entry inline rather than relocating it to a separate section.
 - **Migration.** When an entry has a `migration`, its bullet gets one nested list item, `Migration: {migration}`, and the scope tags stay on the bullet's own line. Nest it as a list item, never as an indented continuation line.
-- **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, no bullet ends with tags, since the consolidated record already names that scope.
+- **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, the bullets do not end with tags, since the consolidated record already names that scope.
 - **`## What`.** `## What` contains none of these bullets. It is the lede that the drafter wrote, composed in step 9, and the two sections therefore cover the change at different lengths rather than repeating one list.
-- **An unknown type.** A `type` naming no key in `work-types.json` has no `emoji` or `label` to head a subsection with, and no tier to order it by. Report it to the developer per step 5 and head that subsection with the bare `type`, after every subsection that the taxonomy orders, so that the entry stays visible rather than being dropped or reassigned.
+- **An unknown type.** A `type` that does not name a key in `work-types.json` does not have an `emoji` or a `label` to head a subsection with, or a tier to order it by. Report it to the developer per step 5 and head that subsection with the bare `type`, after every subsection that the taxonomy orders, so that the entry stays visible rather than being dropped or reassigned.
 
 ## Guidance
 
-- When `ticket_ref` is null (no ticket on the branch), omit the `{ticket_ref} ` portion of the heading and the title so that they read naturally without it.
+- When `ticket_ref` is null (the branch does not have a ticket), omit the `{ticket_ref} ` portion of the heading and the title so that they read naturally without it.
 - The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is every outcome that the change contains
 - Both `## What` and `## Details` come from the drafter, so neither is composed in this session
 - Ignore auto-formatter and lint-fix changes
@@ -246,7 +246,7 @@ The block is structured as:
 
 Source `{model_id}` from your system-prompt environment block: the line `model named ... model ID is ...`. Resolve the consumer extensions per [Consumer fields](#consumer-fields) below. Run this after step 7, which resolves the consolidated record's `scope`, `type`, and `breaking`.
 
-Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 consolidation file inside the same call, so that no entry is retyped into a command, in which a backtick, `$`, or `"` would be expanded or would end the argument. A file that a failed consolidation left empty yields no `changes`:
+Run via Bash, writing each resolved scalar into the call as literal text and dropping the whole flag for a field that is absent. `changes` is read from the step-2 consolidation file inside the same call, so that an entry is never retyped into a command, in which a backtick, `$`, or `"` would be expanded or would end the argument. A file that a failed consolidation left empty does not yield any `changes`:
 
 ```bash
 consolidation_path="{absolute path of the step-2 consolidation file}"

@@ -171,8 +171,8 @@ file_matches_key() {
 
 # Emits the assembled reviewer-context block: sidecar content first (when
 # non-empty), then matched lookup sections in lookup-table declaration order.
-# Exactly one blank line separates adjacent blocks, and the output carries no
-# trailing blank line.
+# Exactly one blank line separates adjacent blocks, and the output does not end
+# with a blank line.
 emit_block() {
   # Pre-compute matched keys to know whether anything follows the sidecar.
   local matched_keys=()
@@ -230,14 +230,14 @@ main() {
     exit 1
   fi
 
-  # A lookup file with no `## ` section headings yields no package keys, which
-  # would make the whole lookup mechanism a silent no-op.
+  # A lookup file without `## ` section headings does not yield any package
+  # keys, which would make the whole lookup mechanism a silent no-op.
   # `grep -c` exits 1 on zero matches, so `|| true` keeps `set -e` from ending
   # the run before the count can be tested.
   local heading_count
   heading_count="$(grep -c '^## ' "$lookup" || true)"
   if [[ "$heading_count" -eq 0 ]]; then
-    echo "$PROG: --lookup contains no package sections (expected '## <package-name>' headings): $lookup" >&2
+    echo "$PROG: --lookup does not contain any package sections (expected '## <package-name>' headings): $lookup" >&2
     exit 1
   fi
 

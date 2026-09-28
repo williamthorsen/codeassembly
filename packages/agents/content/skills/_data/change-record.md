@@ -27,7 +27,7 @@ A change's scope, type, and breaking marker are consolidated once from the chang
 | `title`      | The change's title, without any rendered prefix.                                                                                      |
 | `type`       | A work type declared in [`work-types.json`](./work-types.json).                                                                       |
 
-In the block and in the change summary's frontmatter, a field that is not determined is absent rather than empty, and `breaking` appears only as `true`. In JSON output, a field that nothing determines is `null`. The `*` scope normalizes to no scope and never appears in a consolidated record.
+In the block and in the change summary's frontmatter, a field that is not determined is absent rather than empty, and `breaking` appears only as `true`. In JSON output, a field that nothing determines is `null`. The `*` scope normalizes to an absent scope and never appears in a consolidated record.
 
 ## The `Change:` trailer
 
@@ -71,7 +71,7 @@ entries:
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `title`          | The change summary's title. Required.                                                                                                                                                                                      |
 | `overrides`      | The `scope`, `type`, or `breaking` that the author set by hand. Absent when the author set none. `breaking` appears only as `true`.                                                                                        |
-| `entries_commit` | The short SHA of the commit at which the change entries were derived. Absent when the block records no entries.                                                                                                            |
+| `entries_commit` | The short SHA of the commit at which the change entries were derived. Absent when the block does not record any entries.                                                                                                   |
 | `entries`        | The change entries, in the order that the drafter returned them. Absent when there is none. Each renders `type`, `scopes` in flow form, `breaking` only when it is `true`, `text`, and `migration` when the entry has one. |
 
 The payload is YAML rather than a surface template because `overrides` and `entries` nest, and a template renders one flat line. Nesting also leaves room for the block to gain structured keys, such as a grammar version or a ticket reference. Its inverse is a YAML parse rather than a compiled pattern, so this pair needs none of the round-trip verification required by the title grammar.
@@ -110,15 +110,15 @@ entries:
 
 `title`, `overrides`, and `entries_commit` are left out: The merge title already renders the effective record, and the rest served only to resolve it.
 
-**A merge with no change entry writes no block**, since a block without entries tells release-kit nothing. That is the case when the pull request's block is absent, is malformed, or records no entry, and the merge body is then the lede alone.
+**A merge without a change entry does not write a block**, since a block without entries tells release-kit nothing. That is the case when the pull request's block is absent, is malformed, or does not record an entry, and the merge body is then the lede alone.
 
-**The form is read under release-kit's rules**, which are stricter than the pull-request form's: Any defect makes the whole block malformed, no entry is salvaged from a defective list, and `pr_number` must be a positive integer. Before merging, `merge-pr` reads the approved body back through the `check-merge-body` subcommand and refuses to merge when the block is malformed or records a different number of entries than `resolve-merge` rendered; see [`check-merge-body`](./title-templates.md#check-merge-body).
+**The form is read under release-kit's rules**, which are stricter than the pull-request form's: Any defect makes the whole block malformed, release-kit does not salvage any entry from a defective list, and `pr_number` must be a positive integer. Before merging, `merge-pr` reads the approved body back through the `check-merge-body` subcommand and refuses to merge when the block is malformed or records a different number of entries than `resolve-merge` rendered; see [`check-merge-body`](./title-templates.md#check-merge-body).
 
 ## The effective record
 
 The overrides apply to the consolidated record one field at a time, and a field without an override keeps the consolidated record's value:
 
-- A `scope` override replaces the scope. A scope override of `*` is recorded as given, and it leaves the effective record with no scope.
+- A `scope` override replaces the scope. A scope override of `*` is recorded as given, and it leaves the effective record without a scope.
 - A `type` override replaces the type and keeps the breaking marker.
 - A `breaking` override sets the marker in the direction that it names. A block or a change summary records the override only as `true`, so there it can add the marker but never remove it. A merge's breaking override can also remove it.
 
@@ -140,11 +140,11 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 
 ## Where the record is read
 
-`merge-pr` reads the block when it merges, through the `resolve-merge` subcommand of `describe-change.mjs` (see [`resolve-merge`](./title-templates.md#resolve-merge)), and reads a record consolidated afresh from the commits up to the pull request's head commit, on which a merge falls back when the block records no entries to rank. The run reports what each source names and attributes each field of the effective record to the source that supplied it, under the names that [`resolve-merge`](./title-templates.md#resolve-merge) lists.
+`merge-pr` reads the block when it merges, through the `resolve-merge` subcommand of `describe-change.mjs` (see [`resolve-merge`](./title-templates.md#resolve-merge)), and reads a record consolidated afresh from the commits up to the pull request's head commit, on which a merge falls back when the block does not record any entries to rank. The run reports what each source names and attributes each field of the effective record to the source that supplied it, under the names that [`resolve-merge`](./title-templates.md#resolve-merge) lists.
 
 **The body's last `change-record` block is the one read.** It is malformed when it never closes, when its payload is not a YAML mapping, when `title` is missing, empty, or not a string, when `overrides` is not a mapping, and when a declared field has the wrong type. A malformed block is reported as `malformed-block` and resolved as though it were absent. A key that the grammar does not declare is ignored, and a declared key whose value is null reads as absent.
 
-**A defective `entries` list is the one exception to that rule.** The list is defective when it is not a list, when an item is not a mapping, when an item's `type` or `text` is missing, blank, or not a string, when its `breaking` is not a boolean, when its `scopes` is not a list of strings, or when its `migration` is not a string or spans more than one line; a non-string `entries_commit` reads the same way, since the commit records a claim about the entries. The block reads with its entries absent, its defect reported as `malformed-entries`, and its title and overrides still in use; its base record resolves as for a block that records no entries. Every other field keeps the all-or-nothing rule.
+**A defective `entries` list is the one exception to that rule.** The list is defective when it is not a list, when an item is not a mapping, when an item's `type` or `text` is missing, blank, or not a string, when its `breaking` is not a boolean, when its `scopes` is not a list of strings, or when its `migration` is not a string or spans more than one line; a non-string `entries_commit` reads the same way, since the commit records a claim about the entries. The block reads with its entries absent, its defect reported as `malformed-entries`, and its title and overrides still in use; its base record resolves as for a block that does not record any entries. Every other field keeps the all-or-nothing rule.
 
 **The block's entries are fresh** when the block records some, records the commit at which they were derived, and the pull request's head starts with that commit. The comparison is a prefix test rather than an equality, since the block records a short SHA and the pull request reports a full one, and it ignores case. Entries recorded without a derivation commit are stale, since nothing establishes when they were read. A block whose entries are present and not fresh raises `stale-entries`, which names the derivation commit, `null` when the block records none, and the head against which it was compared.
 
@@ -152,9 +152,9 @@ The `resolve-effective-record` subcommand of `describe-change.mjs` applies this 
 
 The block's overrides then apply to that record, as [The effective record](#the-effective-record) states, and each field that they set is attributed to `block_overrides`.
 
-**A merge does not re-derive the block's entries.** Commits pushed after the body was composed are already out of scope at merge, so staleness is reported and the merge proceeds. A body that contains no block may gain one through `add-change-record` before the merge resolves; a block that is already written is never replaced, whether it reads, is malformed, or records no entry.
+**A merge does not re-derive the block's entries.** Commits pushed after the body was composed are already out of scope at merge, so staleness is reported and the merge proceeds. A body that does not contain a block may gain one through `add-change-record` before the merge resolves; a block that is already written is never replaced, whether it reads, is malformed, or does not record an entry.
 
-**Without entries to rank**, the labels stand in for them. This covers a body that contains no block, which raises `absent-block` so that a gate can report that the entries are missing rather than empty; a block that cannot be read, which raises `malformed-block` instead; and a readable block that records no entries or whose entries are malformed. A readable block's overrides still apply to the record chosen here, attributed to `block_overrides`. The type and its breaking marker come together, from the labels if exactly one type label resolves and otherwise from the commits. A marker never pairs with a type from the other source. The scope comes from its label if exactly one resolves, and otherwise from the commits. The breaking label is the literal `breaking`. Each field is attributed to `labels` or `commits` according to its source, so a type from the labels and a scope from the commits are reported as such.
+**Without entries to rank**, the labels stand in for them. This covers a body that does not contain a block, which raises `absent-block` so that a gate can report that the entries are missing rather than empty; a block that cannot be read, which raises `malformed-block` instead; and a readable block that does not record any entries or whose entries are malformed. A readable block's overrides still apply to the record chosen here, attributed to `block_overrides`. The type and its breaking marker come together, from the labels if exactly one type label resolves and otherwise from the commits. A marker never pairs with a type from the other source. The scope comes from its label if exactly one resolves, and otherwise from the commits. The breaking label is the literal `breaking`. Each field is attributed to `labels` or `commits` according to its source, so a type from the labels and a scope from the commits are reported as such.
 
 **The merge's own overrides apply last** and outrank the block's, each on its own field, as [The effective record](#the-effective-record) states. Each field that they set is attributed to `flags`.
 

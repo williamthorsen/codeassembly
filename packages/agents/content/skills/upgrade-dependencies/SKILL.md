@@ -8,7 +8,7 @@ user-invocable: true
 
 Structured process for autonomously upgrading dependencies in a project managed by `package.json`.
 
-**Core principle:** Assess before acting. Understand the full scope, triage by risk, execute incrementally, and trust no green signal that you have not verified end to end.
+**Core principle:** Assess before acting. Understand the full scope, triage by risk, execute incrementally, and do not trust a green signal that you have not verified end to end.
 
 The skill is package-manager-agnostic. Commands are named by role ("the PM's outdated report"), with one concrete form shown as an example when that helps; the example illustrates the role, it never defines it. Ecosystem facts (which endpoint works, which plugin is compatible) go stale; when a mechanic is PM-specific or time-sensitive, resolve it at execution time from the channels in [Resolving specifics](#resolving-specifics).
 
@@ -31,8 +31,8 @@ Before touching anything:
 - **Read the full outdated report.** Run the PM's recursive outdated report (e.g. `pnpm outdated --recursive`) and read every row. Never truncate, page, or sample it; a hidden row is an upgrade that resurfaces as a surprise at final verification.
 - **Check vulnerabilities, and verify the check ran.** Run the PM's audit command and confirm it actually returned results. Audit endpoints are sometimes retired while PMs still call them (pnpm's audit endpoint, for one), so a failing audit channel is a lookup problem, not a reason to skip: Fall back to the project's own audit tooling, the registry's advisory API, or an independent vulnerability scanner. Prioritize whatever the working channel reports.
 - **Inspect ceilings before installing.** For each planned upgrade, read the registry metadata first: `<pm> view <pkg> peerDependencies engines peerDependenciesMeta`. A ceiling is anything that caps a package below latest: a transitive peer pin on a foundation package, an `engines.node` requirement above the project's floor, or the project's own support policy. Finding ceilings now shapes the plan; finding them mid-install produces thrash.
-- **Check whether a "required" peer is optional.** Before adding a peer that the upgrade appears to demand, read `peerDependenciesMeta`: An optional peer is satisfied transitively, produces no unmet-peer warning, and needs no manifest entry in a project that does not use it directly.
-- **Recall prior learnings.** If a knowledge store is registered, invoke `{skill:kb-retrieve-events}` for events touching the packages and tools in scope; past upgrades often recorded the exact ceiling, shim, or retired endpoint that you are about to rediscover. Skip this step when no store is configured.
+- **Check whether a "required" peer is optional.** Before adding a peer that the upgrade appears to demand, read `peerDependenciesMeta`: An optional peer is satisfied transitively, does not produce an unmet-peer warning, and does not need a manifest entry in a project that does not use it directly.
+- **Recall prior learnings.** If a knowledge store is registered, invoke `{skill:kb-retrieve-events}` for events touching the packages and tools in scope; past upgrades often recorded the exact ceiling, shim, or retired endpoint that you are about to rediscover. Skip this step when a knowledge store is not configured.
 
 ### 3. Triage
 
@@ -67,7 +67,7 @@ Three triage judgments go beyond the version-number table:
 4. Tooling (`eslint`, `prettier`, `vitest`)
 5. Leaf dependencies
 
-**Commit granularity:** One major per commit for bisectability, except a cohort, which forms one atomic commit because no smaller step is installable.
+**Commit granularity:** One major per commit for bisectability, except a cohort, which forms one atomic commit because any smaller step is uninstallable.
 
 **Plan every pin twice.** A package held below latest has two obligations: a recorded rationale (in the commit body or ticket, so that a future maintainer can tell a deliberate ceiling from an oversight) and a matching cap in the update tooling (ncu filter, renovate/dependabot ignore rule) so that the next automated bump does not silently revert it.
 
@@ -106,7 +106,7 @@ A green signal is only as good as what it exercised. Each check below exists bec
 
 One commit per logical change (a cohort is one logical change), each leaving the repo green. Compose each message per `{rulebook:commit-conventions}` with the `deps` work type, and put each pin's rationale in the body of the commit that introduces it.
 
-If a knowledge store is registered, invoke `{skill:capture-event}` for each ecosystem fact discovered the hard way (a retired endpoint, a shim that clears an unmet-peer false positive, a fork swap, a ceiling and its reason) so that the next upgrade recalls it instead of rediscovering it. Skip when no store is configured.
+If a knowledge store is registered, invoke `{skill:capture-event}` for each ecosystem fact discovered the hard way (a retired endpoint, a shim that clears an unmet-peer false positive, a fork swap, a ceiling and its reason) so that the next upgrade recalls it instead of rediscovering it. Skip when a knowledge store is not configured.
 
 ## Resolving specifics
 

@@ -57,7 +57,7 @@ The wrapper skill (e.g., `orchestrate-dev`) resolves effort presets and applies 
 
 1. Explicit CLI argument: `--approval-threshold=<level>` or `--budget-threshold=<level>`
 2. Preference: `orchestration.approval_threshold` / `orchestration.budget_threshold` in `.agents/preferences.yaml` then `~/.agents/preferences.yaml`
-3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so no default gates approval on them; budget defaults to `low` so that those tiers still receive opportunistic fix cycles. A project that wants the deferrable tiers to gate can still select `low` through the argument or the preference file, and an explicit value always takes precedence over the default.
+3. Default: `medium` for approval, `low` for budget. Approval defaults to `medium` because `T`, `R`, and `S` are never merge-blocking (see the finding scheme's Merge-blocking column), so the `medium` default does not gate approval on them; budget defaults to `low` so that those tiers still receive opportunistic fix cycles. A project that wants the deferrable tiers to gate can still select `low` through the argument or the preference file, and an explicit value always takes precedence over the default.
 
 ### Resolving models
 
@@ -71,7 +71,7 @@ Resolution cascade for a given {tool:Task} call:
 
 1. Look up the agent's specific key (e.g., `holistic_reviewer` for the Phase 4b reviewer)
 2. Fall back to the `default` key
-3. If no `default` is configured, omit the `model` parameter (inherit from parent)
+3. If the `default` key is not configured, omit the `model` parameter (inherit from parent)
 
 Invalid model names (e.g., `gpt4`) are rejected by the {tool:Task} tool at dispatch time.
 
@@ -128,11 +128,11 @@ Resolution cascade:
 
 `mcp_policy` is not a CLI argument; it is resolved from preferences only.
 
-| Value      | Behavior when MCP is unavailable                                                                                                                    |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `required` | Abort immediately with a message explaining that MCP is unavailable and the policy requires it                                                      |
-| `optional` | Print a one-line notice ("MCP unavailable; continuing without tracking") and continue without MCP                                                   |
-| `prompt`   | Ask the developer before continuing (default). The prompt explains that no run-index.json, run-log.jsonl, or Factory visualization will be produced |
+| Value      | Behavior when MCP is unavailable                                                                                                                           |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `required` | Abort immediately with a message explaining that MCP is unavailable and the policy requires it                                                             |
+| `optional` | Print a one-line notice ("MCP unavailable; continuing without tracking") and continue without MCP                                                          |
+| `prompt`   | Ask the developer before continuing (default). The prompt explains that the run will not produce a run-index.json, run-log.jsonl, or Factory visualization |
 
 ## Visibility
 
@@ -171,7 +171,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    When `{externalPlan}` is `true`, evaluate the plan's provenance to compute a trust tier:
 
-   **a. Parse provenance header:** Check whether the plan content starts with YAML frontmatter (`---` delimiters) containing a `provenance` block. Extract `skill`, `refinedBy`, `timestamp`, `baseSha`, `isInteractive`, and `iteration` fields. If no provenance block exists, set `{planTrust}` to `"low"` and skip remaining evaluation.
+   **a. Parse provenance header:** Check whether the plan content starts with YAML frontmatter (`---` delimiters) containing a `provenance` block. Extract `skill`, `refinedBy`, `timestamp`, `baseSha`, `isInteractive`, and `iteration` fields. If the plan content does not contain a provenance block, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
    **b. Evaluate source credibility:** The plan is credible if `provenance.skill` is one of: `design-and-plan`, `plan`, `plan-orchestrable-steps`, `planner`, `writing-plans`. If credible, proceed to sub-step c. If not credible but `provenance.refinedBy` is `refine-plan`, mark the plan as "refinement-elevated" and proceed to sub-step c (the trust tier will be capped at `"medium"` in sub-step d). If neither credible nor refinement-elevated, set `{planTrust}` to `"low"` and skip remaining evaluation.
 
@@ -233,7 +233,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
    **Failure path when MCP is unavailable** (tool not found / server not connected): Resolve `mcp_policy` (see "Resolving MCP policy" above) and apply the policy:
    - `required`: Emit `skill.completed` (payload `{"outcome":"stopped: MCP unavailable"}`) per [Lifecycle events](#lifecycle-events), then abort with a clear message explaining that MCP is unavailable and the policy requires it.
-   - `prompt`: Emit `input.requested` (payload `{"prompt":"continue without MCP"}`) per [Lifecycle events](#lifecycle-events), then ask the developer: "MCP server is unavailable; no run-index.json, run-log.jsonl, or Factory visualization will be produced. Continue without MCP tracking? (yes / no)". Abort if the developer declines, emitting `skill.completed` (payload `{"outcome":"stopped: declined"}`); continue on confirmation.
+   - `prompt`: Emit `input.requested` (payload `{"prompt":"continue without MCP"}`) per [Lifecycle events](#lifecycle-events), then ask the developer: "MCP server is unavailable; this run will not produce a run-index.json, run-log.jsonl, or Factory visualization. Continue without MCP tracking? (yes / no)". Abort if the developer declines, emitting `skill.completed` (payload `{"outcome":"stopped: declined"}`); continue on confirmation.
    - `optional`: Print one-line notice "MCP unavailable; continuing without tracking" and proceed.
 
    **Fallback local context generation** (when policy permits continuing without MCP):
@@ -255,7 +255,7 @@ Prefix the status line with a colored emoji for visual distinction:
 Before writing each artifact: Format `{seq}` as two zero-padded digits (`{NN}`), construct the filename as `{NN}_{role}_{artifact}.md`, store the full path as a named variable (e.g., `{run-manifest-path}`, `{architecture-path}`), then increment `{seq}`.
 
 - **Multi-format pairs** (`.md` / `.json`): Both files share the same sequence number. Increment `{seq}` once for the pair.
-- **Coder change-summary + optional reviewer-context sidecar**: Share the same sequence number when both are present. If only the change-summary is written (no sidecar), the sequence number is consumed once. `{seq}` always increments by 1 for the Phase 3 coder dispatch; the sidecar is conditional and never consumes its own sequence number.
+- **Coder change-summary + optional reviewer-context sidecar**: Share the same sequence number when both are present. If only the change-summary is written (without a sidecar), the sequence number is consumed once. `{seq}` always increments by 1 for the Phase 3 coder dispatch; the sidecar is conditional and never consumes its own sequence number.
 - **Skipped or conditional artifacts**: Do not consume a sequence number. `{seq}` only increments when an artifact is actually written.
 - **Subagents**: Receive the full write-target path as an argument. They do not manage sequence numbers themselves.
 
@@ -325,7 +325,7 @@ Store the full path as `{run-manifest-path}`; increment `{seq}`.
 
 ### MCP call policy
 
-When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. No per-call-site guards are needed: This one policy applies to every call site in this file and in loaded modules. It applies to MCP tool calls only: Lifecycle emissions per [Lifecycle events](#lifecycle-events) are a separate channel (a Bash helper, not an MCP tool) and run regardless of `{mcp-available}`.
+When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. Individual call sites do not need guards of their own: This one policy applies to every call site in this file and in loaded modules. It applies to MCP tool calls only: Lifecycle emissions per [Lifecycle events](#lifecycle-events) are a separate channel (a Bash helper, not an MCP tool) and run regardless of `{mcp-available}`.
 
 `get_run_state` retains its existing conversation-tracked fallback (see "Error handling" and `review-cycle.md` fallback policy note).
 
@@ -358,7 +358,7 @@ The `summary` phase is not a pipeline phase; it is an inherent engine responsibi
 
 **Skip Architecture if:**
 
-- Task is narrow, touches few files, or follows an existing pattern, **and** no external plan is present, OR
+- Task is narrow, touches few files, or follows an existing pattern, **and** the task does not include an external plan, OR
 - External plan is present with `{planTrust}` of `"high"` or `"medium"`. Emit `phase_decision` with `run: false, reason: "skipped: {planTrust}-trust plan (skill: {provenance.skill}, freshness: {freshness classification})"`.
 
 When an external plan exists with `{planTrust}` of `"low"`, always run Architecture to validate the plan's assumptions about codebase structure.
@@ -529,15 +529,15 @@ Pass the fully resolved models map to the module. The module uses `{models.revie
 
 ### review-cycle: Resolving `{change-summary-path}`
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry whose `role` is `coder` and whose `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry whose `role` is `coder` and whose `type` is `change-summary`. Construct the full path: `{run-dir}/{filename}`. If the state does not contain a matching entry (e.g., first run for this ticket via `orchestrate-review`), set to an empty string.
 
-When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_change-summary.md`. Select the most recent match by filename (filenames sort lexicographically by sequence number, so the last entry in sorted order is the most recent). If no match is found, set `{change-summary-path}` to an empty string.
+When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_change-summary.md`. Select the most recent match by filename (filenames sort lexicographically by sequence number, so the last entry in sorted order is the most recent). If the scan does not find a match, set `{change-summary-path}` to an empty string.
 
 ### review-cycle: Resolving `{reviewer-context-sidecar-path}`
 
-Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry whose `role` is `coder` and whose `type` is `reviewer-context`. Construct the full path: `{run-dir}/{filename}`. If no matching entries exist, set to an empty string.
+Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. From the returned state, locate the most recent artifact entry whose `role` is `coder` and whose `type` is `reviewer-context`. Construct the full path: `{run-dir}/{filename}`. If the state does not contain a matching entry, set to an empty string.
 
-When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_reviewer-context.md`. Select the most recent match by filename (lexicographic sort by sequence number). If no match is found, set `{reviewer-context-sidecar-path}` to an empty string.
+When `{mcp-available}` is `false`, do not call `get_run_state`. Instead, scan `{run-dir}` for files matching `*_coder_reviewer-context.md`. Select the most recent match by filename (lexicographic sort by sequence number). If the scan does not find a match, set `{reviewer-context-sidecar-path}` to an empty string.
 
 The sidecar is optional: Its absence is the documented signal that nothing surprised the coder. An empty `{reviewer-context-sidecar-path}` is normal, not an error.
 
@@ -649,7 +649,7 @@ Dispatch the savings-analyzer subagent as a background {tool:Task} and immediate
 - `prompt:` Provide:
   - the run directory path (`{run-dir}`),
   - the next sequence number after the run-summary (`{NN+1}` where `{NN}` is the run-summary sequence number; the subagent will write `{NN+1}_analyst_savings-analysis.md` to the run directory),
-  - and the frontmatter values that the subagent must stamp into its artifact. The `savings-analyzer` subagent has no Bash tool and cannot resolve these itself; the orchestrator has already resolved all of them while preparing the run-summary frontmatter (see [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) below) and forwards them verbatim:
+  - and the frontmatter values that the subagent must stamp into its artifact. The `savings-analyzer` subagent does not have the Bash tool and cannot resolve these itself; the orchestrator has already resolved all of them while preparing the run-summary frontmatter (see [run-manifest and run-summary frontmatter resolution](#run-manifest-and-run-summary-frontmatter-resolution) below) and forwards them verbatim:
     - `branch`: From session context (`branch_name`).
     - `commit`: Short SHA of HEAD, already resolved for the run-summary.
     - `baseSha`: Short SHA of `origin/main`, already resolved for the run-summary. Omit if resolution failed.
@@ -692,7 +692,7 @@ Write run-summary artifact to `{run-dir}/{NN}_orchestrator_run-summary.md`. The 
 
 ## Insights
 
-{Aggregate the `I{n}` insights emitted across this run's reviewer artifacts, deduplicating an insight that several reviewers raised into a single entry. Reviewers emit these under the insight gate, so prefer their vetted items over re-derived narration; add an orchestrator-level observation only when it is worth preserving and no reviewer already captured it. Include only items worth preserving; omit this section entirely if none emerged.
+{Aggregate the `I{n}` insights emitted across this run's reviewer artifacts, deduplicating an insight that several reviewers raised into a single entry. Reviewers emit these under the insight gate, so prefer their vetted items over re-derived narration; add an orchestrator-level observation only when it is worth preserving and the reviewer artifacts do not already capture it. Include only items worth preserving; omit this section entirely if none emerged.
 
 What belongs here:
 
@@ -752,7 +752,7 @@ Like Phase 5, this is an inherent engine responsibility, not a pipeline phase. I
 
 The `{skill:wrap-up}` skill will assess the session (including the run-summary artifact), present a checklist of recommended actions (tickets for deferred items, documentation for discoveries), and wait for user confirmation before executing. This is one of two exceptions to the autonomous execution constraint: The orchestrator pauses here for human input (the other is the MCP availability check in step 4 of run initialization when `mcp_policy` is `prompt`).
 
-If the run-summary has no deferred items and no insights, skip this phase silently.
+If the run-summary does not contain any deferred items or insights, skip this phase silently.
 
 ## Output contract
 
@@ -795,7 +795,7 @@ Subagents include a structured return block at the end of their {tool:Task} resp
 - **`max_turns` exhausted (non-reviewers):** For subagents without a dedicated recovery path, record as `needs_manual_review`. The coder has its own continuation path (see **Recovery from coder interruption** below).
 - **Recovery from coder interruption**: When a coder {tool:Task} returns without a structured return block (typically an `agentId:` marker on `max_turns` exhaustion), the coder maintains its change-summary incrementally, so the partial artifact at the canonical `{run-dir}/{NN}_coder_change-summary.md` path will list which plan tasks or findings were completed vs. pending. Read the partial summary and use it to seed a continuation dispatch or populate the run summary. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel.
 - **Recovery from reviewer interruption**: Applies after the constrained retry (per the **`max_turns` exhausted (reviewers)** rule above) has also exhausted. The reviewer maintains its review file incrementally: Read the partial artifact at the canonical reviewer path (`{run-dir}/{NN}_{reviewer}_*.md`). Inspect the `### Criticality:` line: If it is the literal sentinel `(pending)`, the reviewer did not converge. Treat the dispatch as `failed` for flow control purposes, but retain the partial findings list to inform the run summary. Do NOT use `(pending)` as a criticality value in aggregation; it is not in the enum. Do NOT fall back to working-tree inspection; the partial artifact is the authoritative state-transfer channel. See the `failed`-reviewer rule in `modules/review-cycle.md`'s "Handling failures" note for how the reviewer's contribution to aggregated criticality is computed (`medium`).
-- **Reviewer recovery scope:** The retry hook and reviewer-interruption recovery rules apply uniformly to all five reviewers. The `### Criticality: (pending)` sentinel in the artifact file is the unified interruption marker; `code-simplification-reviewer` is included despite having no structured return block, because the file-side sentinel is the authoritative trigger.
+- **Reviewer recovery scope:** The retry hook and reviewer-interruption recovery rules apply uniformly to all five reviewers. The `### Criticality: (pending)` sentinel in the artifact file is the unified interruption marker; `code-simplification-reviewer` is included although its response does not include a structured return block, because the file-side sentinel is the authoritative trigger.
 - **Quality gate failure** (coder reports failing gates): Treat as review finding at `critical` severity.
 - **`get_run_state` unavailable**: If any `get_run_state` call fails (MCP server unavailable), fall back to conversation-tracked state and record a warning in the run summary.
 - **MCP server unavailable at `init_run`**: Handled by the step 4 availability guard; the resolved `mcp_policy` determines whether to abort, prompt the developer, or continue without MCP tracking.

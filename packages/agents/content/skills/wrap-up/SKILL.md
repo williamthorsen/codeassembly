@@ -106,7 +106,7 @@ The complexity assessment is an input to the cost-aware disposition flow describ
 
 Insights are notable observations worth preserving: patterns learned, surprising findings, or knowledge that would benefit future work.
 
-**Structured sources** (high confidence). Which source applies is fixed by the run type detected in 1a; the two never both apply, so there is no structured-vs-structured overlap to dedup:
+**Structured sources** (high confidence). Which source applies is fixed by the run type detected in 1a; the two never both apply, so the agent never needs to dedup one structured source against the other:
 
 - **Orchestrated run → run-summary**: Read the `## Insights` section of the most recent `*_orchestrator_run-summary.md` in the run directory. Because it already aggregates and dedups the `I{n}` insights from every reviewer-subagent artifact in the run, reading it (rather than the per-reviewer artifacts) captures each insight exactly once.
 - **Non-orchestrated run → review artifact**: Read the `## Insights` section of the standalone review artifact (`*_reviewer_review.md`). Reviewer-subagent artifacts exist only in orchestrated runs; outside orchestration, this is the sole structured insight source.
@@ -132,7 +132,7 @@ For each insight (structured or conversation-scanned), assign an `I{n}` ID (sequ
 - Honor a destination already stated by the source insight: A reviewer may suggest `ticket comment` or `devlog`.
 - Otherwise: `ticket comment` if the insight relates to the current ticket's work; `devlog` if it is general knowledge not specific to one ticket.
 
-If no ticket is available (from the session-context manifest), default all destinations to `devlog`.
+If a ticket is not available (from the session-context manifest), default all destinations to `devlog`.
 
 #### 1d. Check code state
 
@@ -144,7 +144,7 @@ Run `git status` and `git log --oneline {default_branch}..HEAD` to understand:
 
 ### Phase 2a: Drive-by fixes
 
-If any findings were tagged as drive-by candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. This is the **do now** lane from the cost-aware disposition model; see [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) for the principle. Skip this phase entirely if no items qualify; do not show an empty section.
+If any findings were tagged as drive-by candidates (complexity levels 1–2) in step 1b-iii, present them for immediate action before the housekeeping menu. This is the **do now** lane from the cost-aware disposition model; see [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md) for the principle. Skip this phase entirely if step 1b-iii did not tag any items; do not show an empty section.
 
 #### Suitability check
 
@@ -292,7 +292,7 @@ Process confirmed actions in this order:
 1. **Batch tickets for findings**: Invoke `{skill:create-ticket}` once. The ticket title summarizes the bundle (e.g., "Address minor follow-ups from {session topic}"). The body is a markdown checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated. Apply a label that fits the bundle (typically the shared `scope:` label or `task`). The batch and per-item actions are alternatives: Execute whichever the user selected, not both.
 2. **Tickets for findings**: Invoke `{skill:create-ticket}` once per ticket (or once for combined items). Use the item description as the ticket body seed. Apply the label from the issue's context (feature, bug, refactoring, dependencies, ci, tests). Classify items using the prefix: `fixme` → bug, `todo` → task, `warning` → bug, `recommendation` → improvement, `suggestion` → improvement.
 3. **Tickets for legacy items**: Invoke `{skill:create-ticket}` once per item. Label as technical debt or the appropriate category.
-4. **Post insights to ticket**: For each `ticket comment` insight, write the insight body to a scratch file per [gh body file](#gh-body-file), naming it for the insight that it contains (`gh-body-insight{index}-{timestamp}.md`), then post it with the call below (ticket number from the session-context manifest). Do not inline insight content into the shell command. If no ticket is available, re-route to devlog.
+4. **Post insights to ticket**: For each `ticket comment` insight, write the insight body to a scratch file per [gh body file](#gh-body-file), naming it for the insight that it contains (`gh-body-insight{index}-{timestamp}.md`), then post it with the call below (ticket number from the session-context manifest). Do not inline insight content into the shell command. If a ticket is not available, re-route to devlog.
 
    ```bash
    body_path="{absolute path from the write step}"
@@ -300,7 +300,7 @@ Process confirmed actions in this order:
    gh issue comment {number} --body-file "$body_path"
    ```
 
-5. **Save session devlog**: Invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `{skill:create-devlog} --run-id={run_id}` so that the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; no separate action is needed for them.
+5. **Save session devlog**: Invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `{skill:create-devlog} --run-id={run_id}` so that the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; they do not need a separate action.
 
 After all actions complete, identify which findings were _not_ selected by any action (implicitly dropped) and pass that set forward to Phase 4 for inclusion in the report's `### Dropped` section and the artifact's `## Dropped` section.
 
@@ -326,7 +326,7 @@ Write the artifact when at least one finding became a created ticket in Phase 3 
 
 Drive-by fixes that were applied in Phase 2a do not count toward the trigger; they were completed in the ordinary course of coding. Insights that were posted or folded into the devlog do not count; they have already been recorded.
 
-If no tickets were created and no findings were dropped (e.g., a research session with only insights), skip writing entirely. Do not produce an empty artifact.
+If Phase 3 did not create any tickets and did not drop any findings (e.g., a research session with only insights), skip writing entirely. Do not produce an empty artifact.
 
 ##### Where to write
 
@@ -356,7 +356,7 @@ Prepend YAML frontmatter, then the markdown body.
 
 **Frontmatter**: See [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) for the canonical schema and [Deferred-findings frontmatter](../_data/artifact-conventions.md#deferred-findings-frontmatter) for the artifact-specific extensions.
 
-This site uses `--format json` because `tickets_created` is a list-of-objects extension that has no clean CLI expression; see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
+This site uses `--format json` because `tickets_created` is a list-of-objects extension that does not have a clean CLI expression; see [artifact-conventions.md](../_data/artifact-conventions.md#bespoke-frontmatter-composition).
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. It emits a JSON object with the universal artifact fields (`branch`, `commit`, `baseSha`, `pr`, `ticket_id`, `ticket_ref`, `scm`, `timestamp`, `run_id`). Use those values verbatim for the matching YAML keys. Optional fields that the script omits from its output (`baseSha`, `pr`, `ticket_id`, `ticket_ref`, `run_id`) must be omitted from the frontmatter too; do not emit `null` or empty strings.
 
@@ -384,7 +384,7 @@ Set these skill-specific values inline (not in the script's output):
 - {prefix} {item-ID}: {description}
 ```
 
-Render both sections from the same in-memory inventory used by the conversation report (Step 2 below); do not re-derive from conversation, so that the artifact and the report cannot drift. Omit either section when it has no entries (e.g., omit `## Dropped` when every finding was ticketed).
+Render both sections from the same in-memory inventory used by the conversation report (Step 2 below); do not re-derive from conversation, so that the artifact and the report cannot drift. Omit either section when it does not have any entries (e.g., omit `## Dropped` when every finding was ticketed).
 
 Insights, applied drive-by fixes, and devlog references do not appear in the body.
 
@@ -408,7 +408,7 @@ Insights, applied drive-by fixes, and devlog references do not appear in the bod
 - {prefix} {item-ID}: {description}
 ```
 
-Omit empty sections. The "Artifacts saved" section is omitted when no artifacts were written (Step 1 produced no deferred-findings artifact and no devlog was generated). Filename suffixes (`_devlog.md`, `_deferred-findings.md`) state the artifact type; no separate sub-headings are needed. Use the item's original ID (F1, L1, I2) so that the developer can cross-reference with the inventory.
+Omit empty sections. The "Artifacts saved" section is omitted when the skill did not write any artifacts (Step 1 did not produce a deferred-findings artifact, and Phase 3 did not generate a devlog). Filename suffixes (`_devlog.md`, `_deferred-findings.md`) state the artifact type; the report does not need separate sub-headings. Use the item's original ID (F1, L1, I2) so that the developer can cross-reference with the inventory.
 
 ### Phase 5: PR prompt
 
@@ -422,7 +422,7 @@ After the results report, check whether the branch has commits ahead of the defa
 Create a pull request for this branch? I'll open it with `{skill:create-pr}`. 👍🏼👎🏼
 ```
 
-Skip this prompt if there are no commits on the branch (e.g., a research/exploration session with no code changes).
+Skip this prompt if the branch does not have any commits ahead of the default branch (e.g., a research/exploration session without code changes).
 
 The prompt closes the turn that presents the results report, so it goes in an action-items block of its own. It is not an entry in the Phase 2b action menu, and it never auto-executes.
 

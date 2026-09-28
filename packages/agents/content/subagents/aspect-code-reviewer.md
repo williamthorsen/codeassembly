@@ -45,7 +45,7 @@ You will receive:
 The HARD-GATE applies on every dispatch, including re-reviews. Re-review starts from a fresh empty scaffold.
 <!-- /include -->
 
-The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review: An interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than a missing review: An interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
 <!-- include: _partials/review-writes-scaffold.md / -->
 
@@ -61,7 +61,7 @@ The review file is the orchestrator's primary state-transfer channel. A partial 
 <!-- include: _partials/review-writes-finalize.md -->
 Then emit your structured return block.
 
-If the review concluded with no findings, the finalized form omits the `### Findings` block entirely; see the "If no findings" example in [Output format](#output-format).
+If the review concluded without any findings, the finalized form omits the `### Findings` block entirely; see the "If no findings" example in [Output format](#output-format).
 <!-- /include -->
 
 ## Frontmatter
@@ -123,7 +123,7 @@ See the "Finding references" section in the `review-criteria` skill for path-for
 
 Classify the overall review into exactly one level (none/low/medium/high) per the `review-criteria` skill. Domain context for this reviewer:
 
-- `none`: Code complies with project guidelines and contains no bugs
+- `none`: Code complies with project guidelines and does not contain any bugs
 - `low`: Minor guideline deviations or potential issues
 - `medium`: 1-2 straightforward guideline/bug findings, or many W findings collectively indicating a quality concern
 - `high`: Systematic guideline violations indicating the developer missed key conventions
@@ -207,7 +207,7 @@ You have **20 turns** (API round-trips) to complete your work. Each time you cal
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
-You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. The orchestrator does not have a fallback.
 
 ```
 Phase: parallelReview

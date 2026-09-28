@@ -18,7 +18,7 @@ Analyze a completed orchestrated run to identify cost-saving opportunities while
    - If a run directory path is provided, use it.
    - If a run is active in the current session (run-index.json path known), use that.
    - Otherwise, invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `ticket_id`, and `artifact_base_dir` from the manifest JSON emitted on stdout, then scan `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` for the most recent completed run (directory with latest timestamp).
-   - If no run found, report "No completed run found for this context" and exit.
+   - If the scan does not find a completed run, report "No completed run found for this context" and exit.
 
 2. **Verify the run directory** contains `run-log.jsonl` and `run-index.json`. If either is missing, report and exit.
 

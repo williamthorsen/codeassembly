@@ -30,7 +30,7 @@ Generate HR analytics reports from employee data provided as CSV paste or file p
 
 If `--report-type` is provided, use the specified types. Skip the prompt.
 
-If `--report-type` is omitted, present the four report types and ask the user to choose one or more. The report that the user wants is a taste call, so the options have no strength markers:
+If `--report-type` is omitted, present the four report types and ask the user to choose one or more. The report that the user wants is a taste call, so the options do not have strength markers:
 
 > ---
 >
@@ -59,7 +59,7 @@ Examine the column headers and infer their meaning. Map each column to a recogni
 
 **If any column mapping is ambiguous**, confirm with the user before proceeding. One item per ambiguous column, so that the user can resolve them all in a single reply:
 
-> Two of your columns have no unambiguous mapping.
+> Two of your columns do not have an unambiguous mapping.
 >
 > ---
 >
@@ -95,7 +95,7 @@ The minimum required fields are:
 - **Employee identifier** (name, ID, or email)
 - **Department/team** (department, team, business unit, or org)
 
-If the dataset contains column headers but zero data rows, stop and tell the user: "Your data contains headers but no employee records."
+If the dataset contains column headers but zero data rows, stop and tell the user: "Your data contains headers but does not contain any employee records."
 
 If either minimum field is missing, stop and tell the user:
 
@@ -205,4 +205,4 @@ Use the following template for each report type. If multiple report types are re
 - **Confirm ambiguity**: When column mappings are unclear, ask rather than assume
 - **Context over numbers**: Raw metrics without interpretation are not useful; always explain what the numbers mean
 - **Note limitations**: Be transparent about what the data can and cannot support
-- **No external calls**: All analysis is performed on user-provided data; there are no HRIS or messaging integrations
+- **No external calls**: All analysis is performed on user-provided data; the skill does not integrate with any HRIS or messaging system

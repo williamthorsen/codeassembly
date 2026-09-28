@@ -110,7 +110,7 @@ Always include the PR description as a source:
   source_type: "pr_description",
   label: "pr_description: PR #{number}",
   content: <body>,
-  criteria: <optional: extracted bullets from `## What`, `## Summary`, or an explicit acceptance-criteria heading; null when no list is present>,
+  criteria: <optional: extracted bullets from `## What`, `## Summary`, or an explicit acceptance-criteria heading; null when the description does not contain a list>,
   provenance: "remote",
   last_updated: <PR `updatedAt`>
 }

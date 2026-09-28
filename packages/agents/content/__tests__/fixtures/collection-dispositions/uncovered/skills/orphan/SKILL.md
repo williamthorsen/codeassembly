@@ -1,6 +1,6 @@
 ---
 name: orphan
-description: Fixture skill claimed by no collection and covered by no standalone record.
+description: Fixture skill not claimed by any collection and not covered by any standalone record.
 ---
 
 # Orphan

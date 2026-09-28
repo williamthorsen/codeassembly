@@ -243,7 +243,7 @@ The strict-mode rule above governs a standalone script. A shellspec hook is a fu
 
 Guard the step whose failure would let a later one act on bad state. A hook without a guard continues to its next statement after a failed one, and shellspec reports the hook's status only once every statement has run. By the time the failure is reported, the writes have already happened.
 
-That step is usually the one establishing the workspace. Once it succeeds, a later failure is contained inside the temporary directory, so the example below guards the first step and no other.
+That step is usually the one establishing the workspace. Once it succeeds, a later failure is contained inside the temporary directory, so the example below guards only the first step.
 
 ```bash
 # Bad: The bare call fails under an agent sandbox, leaving `tmpdir` empty, and the writes go to the invoking directory

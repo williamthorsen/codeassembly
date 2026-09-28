@@ -19,9 +19,9 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         ├── chats/
         │   └── {timestamp}_{descriptive-title}.md
         ├── deferred-findings/
-        │   └── {timestamp}_{slug}_deferred-findings.md      ← project-scoped fallback when no ticket is in session
+        │   └── {timestamp}_{slug}_deferred-findings.md      ← project-scoped fallback when a ticket is not in session
         ├── devlogs/
-        │   └── {timestamp}_{concise-title}.md               ← project-scoped fallback when no ticket is in session
+        │   └── {timestamp}_{concise-title}.md               ← project-scoped fallback when a ticket is not in session
         └── plans/
             └── {design-documents}.md
 ```
@@ -32,7 +32,7 @@ Always present under `projects/`, even when `{base_dir}/` is inside the project.
 
 ### Ticket ID
 
-Always present under `tickets/` within the project directory. If no real ticket exists, auto-generate: `{YYYYMMDD}-{4 random hex}` (e.g., `20260221-a3f2`).
+Always present under `tickets/` within the project directory. If the work does not have a real ticket, auto-generate one: `{YYYYMMDD}-{4 random hex}` (e.g., `20260221-a3f2`).
 
 ### Run directories
 
@@ -171,7 +171,7 @@ provenance:
   isInteractive: true|false # required: true for interactive flows, false for orchestrated dispatch
   refinedBy: <skill-name> # optional: the skill that last processed/refined the artifact
   model: <model id> # optional: present when an AI model authored the body
-ticket_id: <id> # optional: omit when no ticket is in session
+ticket_id: <id> # optional: omit when a ticket is not in session
 ticket_ref: <display ref> # optional: omit when ticket_id is null
 branch: <branch name> # required: raw branch_name from session context
 commit: <short SHA of HEAD> # required: short HEAD SHA at write time
@@ -182,7 +182,7 @@ run_id: <run id> # optional: set only by callers that write into, or link back t
 ---
 ```
 
-The `pull-request` and `merge` records carry no frontmatter. Each opens with a marker that names its reader and directs a reading agent to leave the record unedited, and no other artifact states one:
+The `pull-request` and `merge` records do not have frontmatter. Each opens with a marker that names its reader and directs a reading agent to leave the record unedited, and the other artifacts do not state one:
 
 <!-- include: ../../_partials/record-marker.md / -->
 
@@ -202,7 +202,7 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 | `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                                                                                       |
 | `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                                                          |
 | `provenance.model`         | no       | The identifier of the model that authored the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                                                     |
-| `ticket_id`                | no       | Ticket ID from session context. Omitted when no ticket is in session.                                                                                                                                                  |
+| `ticket_id`                | no       | Ticket ID from session context. Omitted when a ticket is not in session.                                                                                                                                               |
 | `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                                                         |
 | `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                                              |
 | `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                                                        |
@@ -223,9 +223,9 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 
 Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Three sites are deliberate exceptions and compose the YAML block themselves:
 
-- `refine-plan`: The `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input has no provenance). The shell flag surface cannot express this conditional logic cleanly.
-- `wrap-up` (deferred-findings artifact): `tickets_created` is a list of `{id, items}` objects, a structure that has no clean CLI expression and is best composed in the skill's own logic.
-- `savings-analyzer`: The subagent has no `{tool:Bash}` in its tool set, so it cannot run the script at all and takes every field from its dispatch prompt.
+- `refine-plan`: The `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input does not have provenance). The shell flag surface cannot express this conditional logic cleanly.
+- `wrap-up` (deferred-findings artifact): `tickets_created` is a list of `{id, items}` objects, a structure that does not have a clean CLI expression and is best composed in the skill's own logic.
+- `savings-analyzer`: The subagent's tool set does not include `{tool:Bash}`, so it cannot run the script at all and takes every field from its dispatch prompt.
 
 The first two read the script's JSON output and write the YAML frontmatter themselves; `savings-analyzer` composes it from its dispatch prompt. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
 
@@ -233,7 +233,7 @@ The first two read the script's JSON output and write the YAML frontmatter thems
 
 Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/agents/src/derive-session-context/` and deployed as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose tool set includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
 
-There is no dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path, and when it is missing, `resolve-frontmatter.sh` recovers rather than stopping.
+The manifest is not a dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path, and when it is missing, `resolve-frontmatter.sh` recovers rather than stopping.
 
 Invocation surface:
 
@@ -290,17 +290,17 @@ tickets_created:
 
 This artifact uses the [universal artifact frontmatter](#universal-artifact-frontmatter) plus the following artifact-specific extensions consumed by downstream PR-creation skills (`create-pr`, `create-gh-pr`, `create-bitbucket-pr`):
 
-| Field               | Required | Description                                                                                                                                                         |
-| ------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `title`             | yes      | The change-summary title, used as the proposed PR title.                                                                                                            |
-| `scope`             | no       | The consolidated record's scope (e.g., `agents`, `root`). Omitted if consolidation leaves other than one scope (see `title-templates.md`), or if there is no entry. |
-| `type`              | no       | The consolidated record's work type (see `work-types.json`). Omitted if the change has no entries.                                                                  |
-| `breaking`          | no       | `true` if the consolidated record is breaking. Omitted otherwise; there is no `false`.                                                                              |
-| `changes`           | no       | Each commit entry rendered through `commit.title_format`, oldest first. Omitted if the branch has no commit entry.                                                  |
-| `ticket_type`       | no       | The work type that the linked ticket's labels name. Omitted if they name none or more than one, or if no labels were read.                                          |
-| `override_scope`    | no       | The scope that the author set by hand, or `*` if the author set no scope.                                                                                           |
-| `override_type`     | no       | The work type that the author set by hand, without a marker.                                                                                                        |
-| `override_breaking` | no       | `true` if the author added the breaking marker by hand. Omitted otherwise.                                                                                          |
+| Field               | Required | Description                                                                                                                                                          |
+| ------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `title`             | yes      | The change-summary title, used as the proposed PR title.                                                                                                             |
+| `scope`             | no       | The consolidated record's scope (e.g., `agents`, `root`). Omitted if consolidation leaves other than one scope (see `title-templates.md`), or if entries are absent. |
+| `type`              | no       | The consolidated record's work type (see `work-types.json`). Omitted if the change does not have entries.                                                            |
+| `breaking`          | no       | `true` if the consolidated record is breaking. Omitted otherwise; it is never `false`.                                                                               |
+| `changes`           | no       | Each commit entry rendered through `commit.title_format`, oldest first. Omitted if the branch does not have a commit entry.                                          |
+| `ticket_type`       | no       | The work type that the linked ticket's labels name. Omitted if they name none or more than one, or if the labels were not read.                                      |
+| `override_scope`    | no       | The scope that the author set by hand, or `*` if the author did not set a scope.                                                                                     |
+| `override_type`     | no       | The work type that the author set by hand, without a marker.                                                                                                         |
+| `override_breaking` | no       | `true` if the author added the breaking marker by hand. Omitted otherwise.                                                                                           |
 
 `scope`, `type`, and `breaking` contain the [consolidated record](change-record.md#terms), consolidated from the [change entries](change-record.md#terms) that the change summary drafted, so the labels, the pull-request title, and the `change-record` block all follow one record. `changes` is the separate commit-derived list: It records what the branch's commits declared, which a reviewer reads for a different question than the change entries answer.
 
@@ -318,9 +318,9 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 | Field           | Required | Description                                                                                                           |
 | --------------- | -------- | --------------------------------------------------------------------------------------------------------------------- |
-| `copies_remote` | no       | `true` when the artifact's body is a copy of the ticket of record as written. Omitted otherwise; there is no `false`. |
+| `copies_remote` | no       | `true` when the artifact's body is a copy of the ticket of record as written. Omitted otherwise; it is never `false`. |
 
-**The field is a claim about the body, not a timestamp.** A remote that already contains the snapshot's content can only move ahead of it, so the claim stays true however far the remote later advances, and `review-branch` reads it as a precedence rule rather than as a value to compare. This is why the snapshot records _that_ it copied rather than _when_: An exact source timestamp would require a re-fetch after every remote write, since `gh issue edit` returns no `updatedAt`, and would misstate what the snapshot contains when a concurrent edit was made between the write and that fetch.
+**The field is a claim about the body, not a timestamp.** A remote that already contains the snapshot's content can only move ahead of it, so the claim stays true however far the remote later advances, and `review-branch` reads it as a precedence rule rather than as a value to compare. This is why the snapshot records _that_ it copied rather than _when_: An exact source timestamp would require a re-fetch after every remote write, since `gh issue edit` does not return an `updatedAt`, and would misstate what the snapshot contains when a concurrent edit was made between the write and that fetch.
 
 **Omission is meaningful, and is the default.** The field is set when the artifact's body and the ticket of record's body are known to agree, whether because a remote write of that body succeeded or because the body was adopted from the remote unchanged. A snapshot whose body was neither written to the remote nor taken from it is the newer contract, which the absent field indicates: A write that failed, and a producer that deliberately kept its revision local, both leave the field off. A snapshot written before the field existed does not have the field either, and `review-branch` compares it by filename recency exactly as it does today.
 
@@ -644,7 +644,7 @@ V3 separates static run metadata from dynamic state. The `run-index.json` file c
 
 ### V3 header schema
 
-`run-index.json` with `version: 3` contains only the header: no `phases`, `phaseDecisions`, `status`, or `completedAt` fields in `context`. `completedAt` is stamped at the top level by `complete_run`.
+`run-index.json` with `version: 3` contains only the header, without `phases`, `phaseDecisions`, `status`, or `completedAt` fields in `context`. `completedAt` is stamped at the top level by `complete_run`.
 
 Context fields: `runId`, `projectSlug`, `ticketId?`, `projectRoot`, `branch`, `task`, `startedAt`.
 
@@ -683,7 +683,7 @@ All 13 valid event types and their required fields. Fields suffixed with `?` are
   {NN}_{role}_{artifact}.md   <- artifact files (orchestrated runs use sequential counters)
 ```
 
-Runs are always nested under a ticket ID directory. When no ticket ID is provided to `init_run`, one is auto-generated in the format `{YYYYMMDD}-{4 random hex}` (e.g., `20260302-a3f2`). The date prefix aids human navigation. Caller-supplied ticket IDs with a leading `#` are sanitized to bare numbers before use in file paths (e.g., `#152` becomes `152`).
+Runs are always nested under a ticket ID directory. When the caller does not provide a ticket ID to `init_run`, one is auto-generated in the format `{YYYYMMDD}-{4 random hex}` (e.g., `20260302-a3f2`). The date prefix aids human navigation. Caller-supplied ticket IDs with a leading `#` are sanitized to bare numbers before use in file paths (e.g., `#152` becomes `152`).
 
 ### Run ID format (v3)
 
@@ -718,13 +718,13 @@ The [Mutability](#mutability) rule applies to every type below: A saved artifact
 | `silent-failure-review`      | Aspect review: Error handling and silent failure analysis | No                                     |
 | `test-review`                | Aspect review: Test coverage quality and behavioral gaps  | No                                     |
 
-The first `coder_change-summary` in a run has no dispositions (nothing to respond to). Subsequent ones embed dispositions alongside the change summary.
+The first `coder_change-summary` in a run does not have dispositions (nothing to respond to). Subsequent ones embed dispositions alongside the change summary.
 
 ### Ticket-level artifacts
 
 - `change-summary`: Branch change summary for PRs
-- `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when no ticket is in session)
-- `devlog`: Development log entry (falls back to non-ticket path when no ticket is in session)
+- `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when a ticket is not in session)
+- `devlog`: Development log entry (falls back to non-ticket path when a ticket is not in session)
 - `merge`: Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
 - `orchestration-plan`: Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
 - `plan`: Implementation plan document
@@ -756,7 +756,7 @@ Orchestrated runs begin with `orchestrator_run-manifest` as the first artifact, 
 
 ### Termination
 
-Run ends when no party has further actionable input. The last artifact can be from any role. In orchestrated runs, the orchestrator writes `orchestrator_run-summary` as the final artifact.
+Run ends when the parties do not have any further actionable input. The last artifact can be from any role. In orchestrated runs, the orchestrator writes `orchestrator_run-summary` as the final artifact.
 
 ### Stacking
 
@@ -814,13 +814,13 @@ This gate is the [concision principle](./concision.md) applied to findings: A fi
 - "No action this PR / no action required / not actionable here"
 - "Just capturing a thought" / "mentioning so the next contributor…"
 - "Call it out only if X" / "consider when Y" / "would matter once Z" / "revisit if/when…", when the named condition is not currently met
-- A body that endorses the current state ("the current shape is correct") and then proposes a change anyway: incoherent, since no recommendation remains once you have endorsed the status quo
+- A body that endorses the current state ("the current shape is correct") and then proposes a change anyway: incoherent, since the body does not have any recommendation left once you have endorsed the status quo
 
 Self-test before writing each finding: _Would I make this change right now if it were my code?_ If no, it is not a finding.
 
 Where dropped content goes: An observation with lasting value beyond this change belongs in a follow-up ticket, a `capture-event` note, or a prose section (e.g., Technical Assessment); otherwise drop it. Silence is the correct output.
 
-This holds at the whole-review level too: A review that reports no findings is a complete, valid, mergeable result, not a failure to find something. Rigor shows in the examination, not in the length of the findings list.
+This holds at the whole-review level too: A review that does not report any findings is a complete, valid, mergeable result, not a failure to find something. Rigor shows in the examination, not in the length of the findings list.
 
 Apply this gate **hardest** to R and S, whose low criticality bar invites filler.
 
@@ -840,7 +840,7 @@ Apply this gate **hardest** to R and S, whose low criticality bar invites filler
 - Missing edge case handling that could cause runtime errors
 - Convention violations that affect maintainability
 - Decisions that seem wrong but may be intentional (require justification)
-- **Gate:** A warning must reflect a judgment call by the author about a defensible risk of functional or maintainability harm, not a mechanical oversight or a cosmetic issue. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning; classify as Suggestion at most. If the issue has no defensible risk of functional or maintainability harm (e.g., a typo in a comment), do not raise it at any tier.
+- **Gate:** A warning must reflect a judgment call by the author about a defensible risk of functional or maintainability harm, not a mechanical oversight or a cosmetic issue. If automated tooling (linters, type-checkers, CI) would catch the issue, it is not a warning; classify as Suggestion at most. If the issue does not pose a defensible risk of functional or maintainability harm (e.g., a typo in a comment), do not raise it at any tier.
 
 **TODO (T).** Should fix, not in this PR:
 
@@ -887,7 +887,7 @@ Criticality classifies; it does not decide what a reviewer shows the user. Legac
 
 ## Knowledge items
 
-Knowledge items capture observations and learnings worth preserving. They are not findings: They have no criticality and are never merge-blocking. They belong wherever knowledge is worth keeping: housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
+Knowledge items capture observations and learnings worth preserving. They are not findings: They do not have a criticality and are never merge-blocking. They belong wherever knowledge is worth keeping: housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
 
 | ID     | Category | Icon | Kind      |
 | ------ | -------- | ---- | --------- |
@@ -901,7 +901,7 @@ An insight is the deliberate complement to a finding: A finding gives the author
 
 Emit an insight only when it is **non-obvious knowledge without which a future reader is materially worse off**, and name that benefit. "A thing I noticed" does not qualify, nor does anything the code, its comments, or its tests already make plain.
 
-**Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge with no action attached. When an item implies a change that the author should weigh, it is an `S`, not an insight. When in doubt with any action implied, classify it as `S`.
+**Insight vs. Suggestion (`S`).** Both are non-blocking, so they are easy to conflate; the test is whether an action is implied. An `S` proposes a change to make in this code now (and must clear the Actionability gate); an `I` records knowledge without an attached action. When an item implies a change that the author should weigh, it is an `S`, not an insight. When in doubt with any action implied, classify it as `S`.
 
 Insights never have criticality, never block a merge, and never count toward a review score or the [Overall criticality mapping](#overall-criticality-mapping).
 
@@ -914,13 +914,13 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. Correct one that got its own subject wrong; never edit one toward what has happened since, whether a later human edit to the remote to which it was published, a rebase that leaves `baseSha` and `commit` unresolvable, or a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-The `pull-request` and `merge` records carry a marker that directs a reading agent to leave the record unedited, stated in the file rather than left to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. No other artifact carries one.
+The `pull-request` and `merge` records carry a marker that directs a reading agent to leave the record unedited, stated in the file rather than left to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. The other artifacts do not have one.
 
 A flow still composing its own artifact has reached nothing downstream of it: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` is not a record at all, being the planning loop's working state.
 
 A later flow that revises a finished record writes a new artifact rather than editing the old one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan that it refines intact.
 
-Overwriting either of those records breaks `capture-lede-decision`. It derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; if a `pull-request` body is rewritten to match a human's later edit, `capture-lede-decision` reports `differ: false` for a lede that was in fact revised, so it records an `accepted` verdict for a lede that the author rewrote. The corruption raises no error and is undetectable in any session that no longer has the original text. When a lede is genuinely needed and the artifacts do not contain it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
+Overwriting either of those records breaks `capture-lede-decision`. It derives the agent's side of a lede episode by diffing the `pull-request` artifact's `## What` against the `merge` artifact's `## Body`; if a `pull-request` body is rewritten to match a human's later edit, `capture-lede-decision` reports `differ: false` for a lede that was in fact revised, so it records an `accepted` verdict for a lede that the author rewrote. The corruption does not raise an error and is undetectable in any session that no longer has the original text. When a lede is genuinely needed and the artifacts do not contain it, `capture-lede-decision` takes `--agent-lede-file` and `--merged-lede-file`.
 
 ## Portability
 

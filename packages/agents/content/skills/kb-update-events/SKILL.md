@@ -59,7 +59,7 @@ The helper prints a JSON object to stdout:
 On `ok: true`, report the per-event outcomes. A per-event `error` is one of:
 
 - `invalid-id`: The id is not a bare filename stem (contains a path separator). Correct the id.
-- `not-found`: No event at the resolved path. Confirm the id and store.
+- `not-found`: The store does not contain an event at the resolved path. Confirm the id and store.
 - `parse`: The file is not a valid event record. Inspect it.
 - `validation`: The rendered record failed re-validation (unexpected); report the message.
 
@@ -69,8 +69,8 @@ On `ok: false`, act on the `error` code:
 - `missing-store`: `--store` was omitted; the message lists the registered stores.
 - `store-not-registered`: The named store is not in `kb.yaml`.
 - `readonly-store`: The store is marked readonly; edits are refused.
-- `no-default-store`: `--store @default` was given but no `default_kb` is configured.
-- `no-feedback-store`: `--store @feedback` was given but no `feedback_kb` is configured.
+- `no-default-store`: `--store @default` was given but `kb.yaml` does not configure a `default_kb`.
+- `no-feedback-store`: `--store @feedback` was given but `kb.yaml` does not configure a `feedback_kb`.
 
 ## Completion
 

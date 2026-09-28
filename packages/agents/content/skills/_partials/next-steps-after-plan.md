@@ -14,7 +14,7 @@ Present all three options as a numbered list per [option format](#option-format)
 
 **One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must include a `➕` line naming the specific unsettled decision that the pass would raise (rule 1). The line names an open decision, never a reassurance about work already done: "a refine pass is the cheap way to find out whether I missed something" is the shape that this requirement exists to forbid. Selecting Refine plan without such a line is a defect: If the line cannot be written, rule 1 did not match and the cascade continues to rule 2.
 
-**Spike plans.** A spike plan has `## Investigation steps` rather than `## Tasks` (see [spike conventions](../_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, invoking no skill; the agent works the investigation steps directly. Options 1 and 2 render unchanged. In the recommendation rules below, rule 2 is the Investigate option: Its feature-shaped test (verification surface, review pass, `implement-plan`'s closing menu) is written for a diff and does not apply, so rule 2 matches whenever rule 1 does not, and rule 3 never fires, since there is no implementation for the development pipeline to run.
+**Spike plans.** A spike plan has `## Investigation steps` rather than `## Tasks` (see [spike conventions](../_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, without invoking a skill; the agent works the investigation steps directly. Options 1 and 2 render unchanged. In the recommendation rules below, rule 2 is the Investigate option: Its feature-shaped test (verification surface, review pass, `implement-plan`'s closing menu) is written for a diff and does not apply, so rule 2 matches whenever rule 1 does not, and rule 3 never fires, since a spike plan does not produce an implementation for the development pipeline to run.
 
 Options that invoke a skill include context-clearing guidance:
 
@@ -37,7 +37,7 @@ Skill names for each option:
 
 - 🧠 **Refine plan** -> `refine-plan`
 - 🎶 **Orchestrate** -> `orchestrate-dev`
-- 🚀 **Implement** -> `implement-plan`; on a spike plan the option is 🔬 **Investigate** and invokes no skill
+- 🚀 **Implement** -> `implement-plan`; on a spike plan the option is 🔬 **Investigate** and does not invoke a skill
 
 ### Recommendation rules
 
@@ -45,7 +45,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
 1. **Refine plan**: Recommend only when you can name a load-bearing decision that the plan leaves unsettled and that a refine pass would raise.
 
-   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, taken from prior design work, verified against source, or copied from an established pattern already in the codebase. A `## Decisions taken` entry that survived an approval checkpoint is ratified: The developer read it and did not overrule it. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively has settled decisions, and a plan produced with no design phase is likelier to have unsettled ones.
+   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, taken from prior design work, verified against source, or copied from an established pattern already in the codebase. A `## Decisions taken` entry that survived an approval checkpoint is ratified: The developer read it and did not overrule it. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively has settled decisions, and a plan produced without a design phase is likelier to have unsettled ones.
 
    Rule 1 also fails when the plan's residual unknowns are **empirical**, answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.
 

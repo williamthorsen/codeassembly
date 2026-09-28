@@ -54,7 +54,7 @@ A named change still has to be worth making. Hedging language inside a finding (
 
 ## Insight gate
 
-Reviewers may emit insights (`I{n}`), knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: Emit it only when it is non-obvious knowledge without which a future reader is materially worse off, and name that benefit. Distinguish it from a Suggestion (`S`): An `S` proposes a change to make now; an `I` records knowledge with no action attached. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, with no severity and no `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
+Reviewers may emit insights (`I{n}`), knowledge worth preserving that is not a finding. An insight must clear a gate as strict as the Actionability gate: Emit it only when it is non-obvious knowledge without which a future reader is materially worse off, and name that benefit. Distinguish it from a Suggestion (`S`): An `S` proposes a change to make now; an `I` records knowledge without an attached action. When an action is implied, it is an `S`, not an insight. Number insights sequentially (`I1`, `I2`, …) in their own sequence, without a severity or an `-L` marker. Full treatment: [knowledge items § Insight gate](../_data/artifact-conventions.md#insight-gate).
 
 ## Finding concision
 
@@ -83,7 +83,7 @@ Conventions for how findings reference files and code locations.
 
 ## PR comment format
 
-When posting findings as PR comments (e.g., inline comments on a pull request), use a descriptive label instead of the raw finding ID. Finding IDs like `F1` or `W2` are internal to review documents and have no meaning to readers in PR context.
+When posting findings as PR comments (e.g., inline comments on a pull request), use a descriptive label instead of the raw finding ID. Finding IDs like `F1` or `W2` are internal to review documents and do not mean anything to readers in PR context.
 
 | Finding prefix | PR comment label                                                |
 | -------------- | --------------------------------------------------------------- |

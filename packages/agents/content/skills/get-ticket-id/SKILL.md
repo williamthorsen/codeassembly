@@ -20,23 +20,23 @@ Matches the canonical Jira-style ticket ID shape: case-insensitive, two-or-more 
 
 Note: Kebab-case words followed by a digit (e.g., `feat-2`, `foo-2`) are matched and uppercased per the contract; branch slugs that incidentally contain such patterns will produce non-empty ticket IDs (`FEAT-2`, `FOO-2`). See the contract for the rationale.
 
-Note: `PR-<n>` (e.g., `PR-123`) is a sanctioned identifier for a pull request that has no backing ticket. It matches the pattern like any two-letter prefix, so it resolves to `PR-123` and supplies a branch name and artifact directory. The session-context deriver treats it as a non-ticket and builds no ticket URL for it.
+Note: `PR-<n>` (e.g., `PR-123`) is a sanctioned identifier for a pull request without a backing ticket. It matches the pattern like any two-letter prefix, so it resolves to `PR-123` and supplies a branch name and artifact directory. The session-context deriver treats it as a non-ticket and does not build a ticket URL for it.
 
 ## Implementation
 
 ### From branch name
 
-The script `{harness_home_dir}/scripts/get-ticket-id.sh` extracts a ticket ID from a branch name. It accepts an optional branch name (defaults to the current branch) and prints the resolved ticket ID, or an empty string when no ID can be derived.
+The script `{harness_home_dir}/scripts/get-ticket-id.sh` extracts a ticket ID from a branch name. It accepts an optional branch name (defaults to the current branch) and prints the resolved ticket ID, or an empty string when it cannot derive an ID.
 
 In branch names, `_` and `/` are interchangeable separators (see `branch-format.md`). The Jira-style match is case-insensitive and unanchored, so it extracts the ID regardless of which separator is used or whether an author/scope prefix appears (e.g., `wt/COMPPLAN-795`, `wthorsen/MAC-130`, `feat/COMPPLAN-795-add-foo`). The result is uppercased before being returned.
 
-When no Jira-style ID matches, the script falls back to a **bare issue number** anchored to the start of the branch name (terminated by `/`, `_`, `-`, or end-of-string). The anchor on the fallback prevents false matches against digits embedded in slugs that lack a Jira-style match.
+When the branch name does not contain a Jira-style ID, the script falls back to a **bare issue number** anchored to the start of the branch name (terminated by `/`, `_`, `-`, or end-of-string). The anchor on the fallback prevents false matches against digits embedded in slugs that lack a Jira-style match.
 
 When the bare-numeric fallback applies, the script reads `project.ticket_ref_prefix` from `.agents/preferences.yaml` to format the result:
 
 - If `ticket_ref_prefix` is `#`: Return the **bare number only**. The `#` is a GitHub display convention and must not appear in file paths or returned values.
 - If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): Return `{prefix}{number}` (e.g., `MAC-147`).
-- If no `ticket_ref_prefix` is configured: Return the bare number (e.g., `42`).
+- If `.agents/preferences.yaml` does not configure a `ticket_ref_prefix`: Return the bare number (e.g., `42`).
 
 | Branch         | `ticket_ref_prefix` | Returned ticket ID |
 | -------------- | ------------------- | ------------------ |

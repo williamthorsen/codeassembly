@@ -1,6 +1,8 @@
 import { listGovernedSubagents } from './list-governed-subagents.ts';
 
-/** Subagents whose tool grant names no shell, so guidance on writing a command is weight paid for no benefit. */
+/**
+ * Subagents whose tool grant does not name a shell, so guidance on writing a command adds weight without any benefit.
+ */
 const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'savings-analyzer']);
 
 /**
@@ -13,13 +15,13 @@ const CUTTING_SUBAGENTS: ReadonlySet<string> = new Set(['entry-drafter']);
 
 /**
  * Subagents whose return is lists of items that the dispatching session folds into artifacts of its own, so the
- * composition rule governs no text that a reader keeps, and each line of it is fixed cost on every dispatch.
+ * composition rule does not govern any text that a reader keeps, and each line of it is fixed cost on every dispatch.
  */
 const LIST_RETURNING_SUBAGENTS: ReadonlySet<string> = new Set(['handoff-reviewer']);
 
 /**
  * Which subagents each shared-guidance section must reach, keyed by the partial that carries it. A section kept
- * inline by `guidance/shared/AGENTS.md` reaches no subagent and so appears here under no key.
+ * inline by `guidance/shared/AGENTS.md` does not reach any subagent and so does not appear here under any key.
  *
  * A role's population is read from the `subagents/` directory wherever the section governs every subagent. One added
  * later is covered the day it appears. When the section is role-scoped, the population is written out: The failure

@@ -2,7 +2,7 @@ import { readdirSync } from 'node:fs';
 
 const SUBAGENTS_DIR = new URL('../subagents/', import.meta.url).pathname;
 
-/** Subagents that neither compose prose nor read code, so no guidance bound by the library governs their work. */
+/** Subagents that neither compose prose nor read code, so the guidance bound by the library does not govern their work. */
 const EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set([
   // Exercises the declared-subagent deployment mechanism and is never invoked.
   'canary',

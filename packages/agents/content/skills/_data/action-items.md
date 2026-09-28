@@ -1,6 +1,6 @@
 # Action items
 
-The user runs several sessions at once and skims. An ask stated only in the prose is an ask missed, and a response with no block tells the user that the turn needs nothing from them.
+The user runs several sessions at once and skims. An ask stated only in the prose is an ask missed, and a response without a block tells the user that the turn needs nothing from them.
 
 The render contract comes first; the doctrine behind it follows. Skills that close a turn by asking include the contract inlined, so they consult this file only for the doctrine.
 
@@ -8,7 +8,7 @@ The render contract comes first; the doctrine behind it follows. Skills that clo
 
 ## Sweep before sending
 
-The failure prevented by this convention is not bad formatting. It is an ask that the agent never recognized as an ask. No formatting rule ever applied to it. Before ending a turn, scan the draft for anything that invites a response and move every hit into the block.
+The failure prevented by this convention is not bad formatting. It is an ask that the agent never recognized as an ask. The formatting rules never applied to it. Before ending a turn, scan the draft for anything that invites a response and move every hit into the block.
 
 Soft offers are the hardest form to spot. Each phrases a question as a statement:
 
@@ -19,11 +19,11 @@ Soft offers are the hardest form to spot. Each phrases a question as a statement
 - "happy to…"
 - "if you'd like…"
 - "I've not done X" (leaving the offer implicit)
-- "I couldn't run X because…" (a blocker that the user can clear, with no ask naming the action that clears it; a missing tool or dependency is no blocker until the routes that need no action from the user, such as an ephemeral runner, are exhausted)
+- "I couldn't run X because…" (a blocker that the user can clear, without an ask naming the action that clears it; a missing tool or dependency is not a blocker until the routes that do not need any action from the user, such as an ephemeral runner, are exhausted)
 
 Each is an action item. Restate it in the block as the concrete action that it proposes, and strike the offer from the prose. The observation that prompted it may stay; that is signal. The ask may not.
 
-The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence that the agent already holds is a decision that it declined to make, and handing it back makes the user evaluate what a clause would have stated. Strike it, state the decision in the prose with its reason, and leave the block to the items that only the user can settle. A block emptied this way is a turn with no ask, which is a report rather than a failure.
+The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence that the agent already holds is a decision that it declined to make, and handing it back makes the user evaluate what a clause would have stated. Strike it, state the decision in the prose with its reason, and leave the block to the items that only the user can settle. A block emptied this way is a turn without an ask, which is a report rather than a failure.
 
 ## Items
 
@@ -42,15 +42,15 @@ An item is a question, punctuated as one, naming the concrete action:
 | `A`    | An action you propose to take: A "yes" makes you act.                                            | `👍🏼👎🏼`, or a numbered gradient list when several actions compete. |
 | `Q`    | Information or a judgment that you need: A "yes" only informs you; nothing happens on your side. | `🤔`                                                              |
 
-The prefix follows from the marker, so choosing it requires no classification that the agent was not already making. A-items come first: The turn is blocked on them.
+The prefix follows from the marker, so choosing it requires only a classification that the agent was already making. A-items come first: The turn is blocked on them.
 
 A statement that is not an ask (a status note, a merge-ready report) is neither `A` nor `Q`; it stays in the prose, never the block. The prefix and marker always agree: An `A` never takes `🤔`, a `Q` never takes `👍🏼👎🏼`.
 
-A bare numeral belongs to the options under an item, so an identifier never collides with an option number and a reference is never ambiguous. The user answers the whole block in one line: "A1 y, A2 2". A single-item block has no prefix, since there is nothing to disambiguate.
+A bare numeral belongs to the options under an item, so an identifier never collides with an option number and a reference is never ambiguous. The user answers the whole block in one line: "A1 y, A2 2". A single-item block does not have a prefix, since there is nothing to disambiguate.
 
 **Blocks with more than one list.** A canonical block can contain several independently-numbered lists, such as a next-steps menu offering a remote-issue select and a next-action select. Each list is an item, so the render contract's identifier rule applies to it unchanged: Canonical blocks are not exempt, and a bare `Remote issue:` label is not an identifier that the reader can cite.
 
-**The multi-select variant.** One block shape numbers differently on purpose: a single multi-select of atomic actions, in which the user picks any subset ("reply with numbers, or 'all'"). Its actions have no options of their own. The bare numbers are themselves the identifiers, and `1a`/`1b` marks two mutually-exclusive alternatives sharing one slot. `wrap-up`'s action menu is the exemplar. A single-select list needs the letter prefix, and a multi-select does not: In the first it separates the list identifier from the option numbers beneath it; in the second there are no option numbers to separate it from.
+**The multi-select variant.** One block shape numbers differently on purpose: a single multi-select of atomic actions, in which the user picks any subset ("reply with numbers, or 'all'"). Its actions do not have options of their own. The bare numbers are themselves the identifiers, and `1a`/`1b` marks two mutually-exclusive alternatives sharing one slot. `wrap-up`'s action menu is the exemplar. A single-select list needs the letter prefix, and a multi-select does not: In the first it separates the list identifier from the option numbers beneath it; the second does not have option numbers to separate it from.
 
 ## Rendering
 
@@ -66,7 +66,7 @@ A canonical block keeps its own identifiers. When its items already have stable 
 
 ## Worked example
 
-**Before** (the ask opens as an aside, names no concrete action, and appears mid-paragraph several hundred words into a report):
+**Before** (the ask opens as an aside, does not name a concrete action, and appears mid-paragraph several hundred words into a report):
 
 > Worth knowing for #977: `agents` and `mcp` will hit the same trap. A `files: ["bin", "dist"]` allowlist is not sufficient on its own, because the compiler's ignore list and the packer's allowlist don't agree about what counts as test code. I've not added that to the ticket; say the word and I will.
 

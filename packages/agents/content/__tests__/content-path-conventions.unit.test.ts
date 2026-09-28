@@ -29,7 +29,7 @@ interface Violation {
 }
 
 describe('installable-content path conventions', () => {
-  it(`no installable Markdown file outside the allowlist contains a raw \`${FORBIDDEN_PATTERN}\` reference`, async () => {
+  it(`installable Markdown files outside the allowlist do not contain a raw \`${FORBIDDEN_PATTERN}\` reference`, async () => {
     const violations = await findViolations();
     expect(violations, formatViolations(violations)).toEqual([]);
   });

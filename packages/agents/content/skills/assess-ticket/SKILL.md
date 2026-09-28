@@ -19,7 +19,7 @@ Assess a ticket against the current codebase across five dimensions: drift, rele
 
 ### 1. Resolve ticket source
 
-Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis. Store the resolved metadata (platform, repo, issue number, last-updated date, ticket content). When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session needs no ticket argument.
+Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis. Store the resolved metadata (platform, repo, issue number, last-updated date, ticket content). When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument.
 
 ### 2. Investigate
 
@@ -32,7 +32,7 @@ Determine whether the ticket's factual assumptions still match the codebase.
 1. Extract file paths, module names, API references, and structural assumptions from the ticket body.
 2. Check whether referenced files and paths still exist.
 3. If the ticket has a last-updated date, examine commits since that date in affected areas: `git log --oneline --no-merges --after="{date}" -- {paths}`
-4. If no last-updated date is available, compare the ticket's assumptions against the current state of the affected files.
+4. If the ticket does not have a last-updated date, compare the ticket's assumptions against the current state of the affected files.
 5. Assess whether the assumptions hold, have partially drifted, or are no longer valid.
 
 **Verdicts:**
@@ -67,7 +67,7 @@ Determine whether the described work has been implemented. The output format dep
 2. For each criterion, examine the codebase to determine whether it has been met.
 3. Present the verdict with a count summary (e.g., "4 of 7 criteria met"), followed by each criterion as a checklist item.
 
-**When the ticket has no acceptance criteria:**
+**When the ticket does not have acceptance criteria:**
 
 1. Identify what the ticket's solution describes: new files, modified APIs, added tests, changed behavior.
 2. Search the codebase for evidence of these artifacts.
@@ -106,8 +106,8 @@ Classify how complex the described work is relative to the current codebase. Ref
 
 **Verdicts:**
 
-- ⚪ `trivial`: Single-line or purely mechanical; no judgment needed
-- 🟢 `mechanical`: Follows an obvious pattern; single module, no API or behavioral changes
+- ⚪ `trivial`: Single-line or purely mechanical; does not require judgment
+- 🟢 `mechanical`: Follows an obvious pattern; single module, without API or behavioral changes
 - 🟠 `involved`: Requires understanding context; touches multiple files or modules; may involve design decisions
 - 🔴 `architectural`: Cross-cutting concerns, new patterns, dependency boundary changes, or far-reaching consequences
 
@@ -151,7 +151,7 @@ Assessed at {YYYYMMDD-HHMMSSZ} against {short SHA}
 - {Evidence bullet}
 ```
 
-**When the ticket has no acceptance criteria:**
+**When the ticket does not have acceptance criteria:**
 
 ```markdown
 ## Assessment: {ticket title} (#{number})

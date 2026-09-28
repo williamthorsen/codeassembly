@@ -32,7 +32,7 @@ You will receive:
 2. **Get the diff**: Run the provided `git diff` command to see all changes in scope
 3. **Write the scaffold (HARD-GATE)**: Write the review scaffold to the orchestrator-supplied artifact path; see [Incremental review writes](#incremental-review-writes). This MUST be your next tool use after the diff command.
 4. **Read changed files**: Read both source and test files in full to understand context
-5. **Check relevance**: If the change contains no new or modified source files that require test coverage (e.g., only documentation, configuration, or formatting changes), finalize the artifact with `### Criticality: none` (replacing the `(pending)` sentinel) and a brief summary, then emit the return block
+5. **Check relevance**: If the change does not contain any new or modified source files that require test coverage (e.g., only documentation, configuration, or formatting changes), finalize the artifact with `### Criticality: none` (replacing the `(pending)` sentinel) and a brief summary, then emit the return block
 6. **Map source to tests**: Identify which source files have corresponding test files, and which new source files lack tests entirely
 7. **Iterate analysis and append findings**: As you settle each finding (location, severity, description, recommendation), classify it in the F/W/T/R/S scheme (with `-L` suffix for legacy) and **overwrite the artifact file** with the growing findings list. Leave `### Criticality:` as `(pending)` until finalize.
 8. **Finalize**: In the reserved last 3 turns, replace `### Criticality: (pending)` with the aggregate enum (`none|low|medium|high`), fill in `### Summary`, then emit your structured return block.
@@ -50,12 +50,12 @@ You will receive:
 The HARD-GATE applies on every dispatch, including re-reviews. Re-review starts from a fresh empty scaffold.
 <!-- /include -->
 
-The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than no review: An interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
+The review file is the orchestrator's primary state-transfer channel. A partial review listing findings discovered so far is strictly more useful than a missing review: An interruption must never leave the orchestrator without one. Writing the file N times during a dispatch is cheap; the artifact store is not performance-sensitive.
 
 <!-- include: _partials/review-writes-scaffold.md / -->
 
 <!-- include: _partials/review-writes-interim.md -->
-#### F1: New auth handler has no tests
+#### F1: New auth handler does not have any tests
 
 - **Location:** `src/auth/login.ts:42`
 - **Severity:** critical
@@ -66,7 +66,7 @@ The review file is the orchestrator's primary state-transfer channel. A partial 
 <!-- include: _partials/review-writes-finalize.md -->
 Then emit your structured return block.
 
-If the review concluded with no findings (or no source files required test coverage), the finalized form omits the `### Findings` block entirely; see the "If no source files require test coverage" example in [Output format](#output-format).
+If the review concluded without any findings (or the change did not contain any source files that required test coverage), the finalized form omits the `### Findings` block entirely; see the "If the change does not contain any source files that require test coverage" example in [Output format](#output-format).
 <!-- /include -->
 
 ## Frontmatter
@@ -168,14 +168,14 @@ The finalized form of the review file. See [Incremental review writes](#incremen
 - **Recommendation:** {What to do}
 ```
 
-If no source files require test coverage, or no findings:
+If the change does not contain any source files that require test coverage, or the review did not produce any findings:
 
 ```markdown
 ### Criticality: none
 
 ### Summary
 
-{Brief explanation: Either no testable source changes, or test coverage reviewed with no issues found}
+{Brief explanation: Either the change does not contain any testable source changes, or the review of test coverage did not find any issues}
 ```
 
 ## Re-review protocol
@@ -216,7 +216,7 @@ You have **20 turns** (API round-trips) to complete your work. Each time you cal
 
 After writing your artifact file, end your final response with a structured return block. The orchestrator parses these fields for flow control without reading the full artifact.
 
-You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. There is no fallback.
+You MUST include all fields in the return block. The orchestrator enforces strict parsing: Omitting any field or using an unrecognized value causes the orchestrator to record this phase as `failed`. The orchestrator does not have a fallback.
 
 ```
 Phase: parallelReview

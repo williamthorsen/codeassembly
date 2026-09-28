@@ -20,7 +20,7 @@ A name for a value ends with what the value is; qualifiers go in front.
 - ✅ `visitedNodes`, `selectedItems`, `expectedValue`, `aInteger`, `bInteger`
 - ❌ `visited`, `selected`, `expected`, `integerA`, `integerB`
 
-Booleans are the exception: A claim has no kind to name.
+Booleans are the exception: A claim does not have a kind to name.
 
 ## Unit-of-measure suffixes
 
@@ -42,7 +42,7 @@ Common verbs: `build`, `create`, `compute`, `fetch`, `find`, `get`, `load`, `par
 
 Prefix a boolean with `is`, `has`, `should`, or `does` (with conjugations: `was`, `are`, `have`, `did`) when the bare name could plausibly name a non-boolean value. Under the tail rule above, that reduces to one check: A noun or a verb takes the prefix, because the bare word names a thing or an action; an adjective or a past participle does not, because a non-boolean value's name would already state its kind. When a word reads both ways, predicative use decides: `empty` and `quiet` fit `is ___`, while `default` and `success` take an article.
 
-A finite verb takes the prefix for a second reason: This file reserves verb-led names for functions, so bare `exists` reads as a call. A past participle causes no such collision.
+A finite verb takes the prefix for a second reason: This file reserves verb-led names for functions, so bare `exists` reads as a call. A past participle does not cause such a collision.
 
 - ✅ `visible`, `processed`, `passed`, `quiet`, `verbose`, `empty`
 - ❌ `children`, `default`, `retry`, `exists`: A collection, a value, a policy, a function; take `hasChildren`, `isDefault`, `shouldRetry`, `doesExist`

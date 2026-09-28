@@ -41,21 +41,21 @@ For the same reason, the corpus is outcome-selected: It contains only changes th
 | `--quality`          | The author's rating of the lede in the merged pull request. Mutually exclusive with `--inspect`. | Mode     |
 | `--store`            | Names a corpus registered under some other name; `@default` and `@feedback` are refused.         | No       |
 | `--type`             | Work type. `--type feat!` is accepted as `--type feat --breaking`.                               | Identity |
-| `--scope`            | Package or surface scope. Omit it for a change that names no scope; `*` names none.              | Identity |
+| `--scope`            | Package or surface scope. Omit it for a change that does not name a scope; `*` names none.       | Identity |
 | `--breaking`         | Marks the change breaking.                                                                       | Identity |
 | `--ticket`           | Ticket id. Falls back to the change summary's frontmatter.                                       | No       |
-| `--merged-lede-file` | File containing the merged lede, for a pull request that wrote no merge artifact.                | No       |
-| `--agent-lede-file`  | File containing the agent's lede, for a pull request that wrote no pull-request artifact.        | No       |
+| `--merged-lede-file` | File containing the merged lede, for a pull request without a merge artifact.                    | No       |
+| `--agent-lede-file`  | File containing the agent's lede, for a pull request without a pull-request artifact.            | No       |
 | `--harness`          | The agent platform (`claude`, `rovo`); install-injected. Keep as-is.                             | Injected |
 
-Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed and records no comment section.
+Exactly one of `--inspect` and `--quality` must appear. The author's comment is read from stdin to EOF; an empty comment is allowed, and the helper then does not record a comment section.
 
-The change's identity comes wholly from one source. If any of `--type`, `--scope`, and `--breaking` is passed, it comes from those flags alone, and `--type` is required. If none is, it comes from the change summary's frontmatter, whose override fields apply to `scope`, `type`, and `breaking` as [the effective record](../_data/change-record.md#the-effective-record) states. A scope of `*` from either source names no scope. `--ticket` falls back to the change summary on its own.
+The change's identity comes wholly from one source. If any of `--type`, `--scope`, and `--breaking` is passed, it comes from those flags alone, and `--type` is required. If none is, it comes from the change summary's frontmatter, whose override fields apply to `scope`, `type`, and `breaking` as [the effective record](../_data/change-record.md#the-effective-record) states. A scope of `*` from either source does not name a scope. `--ticket` falls back to the change summary on its own.
 
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.
-- **A `kb.yaml` registering the `codeassembly` store**: The corpus to which every lede decision is written. If no registry declares it, the skill says so and records nothing, rather than filing the decision somewhere else.
+- **A `kb.yaml` registering the `codeassembly` store**: The corpus to which every lede decision is written. If the `kb.yaml` registry does not declare it, the skill says so and records nothing, rather than filing the decision somewhere else.
 
 ## Process
 
@@ -80,7 +80,7 @@ The helper prints a JSON object to stdout: `ok: true` with `episode` and `store`
 
 On `ok: false`, report the `message` on one line and stop. The merge has already succeeded; do not present this as a merge failure, and do not retry.
 
-On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The skill cannot reach the corpus, so it can record no decision; asking for one would spend the author's attention on an answer that this skill would then discard.
+On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The skill cannot reach the corpus, so it cannot record a decision; asking for one would spend the author's attention on an answer that this skill would then discard.
 
 ### 3. Present what shipped and ask
 
@@ -119,7 +119,7 @@ Report the written `path` on success.
 
 ### Recording a pull request merged outside the merge flow
 
-Such a pull request wrote no merge artifact, so the caller supplies the merged lede. The helper reads a lede file whole and records it as the lede, applying none of the heading extraction that it uses on the artifact path: If the file contains the entire pull-request body, the helper records the entire body as the lede. Extract the `## What` section as the file is written:
+The merge flow did not write a merge artifact for such a pull request, so the caller supplies the merged lede. The helper reads a lede file whole and records it as the lede, applying none of the heading extraction that it uses on the artifact path: If the file contains the entire pull-request body, the helper records the entire body as the lede. Extract the `## What` section as the file is written:
 
 ```bash
 scratch_dir=$(mktemp -d "${TMPDIR:-/tmp}/lede.XXXXXX")
@@ -133,7 +133,7 @@ gh pr view <number> --json body --jq '.body' \
 echo "$lede_path"
 ```
 
-Read the printed path and pass it to `--merged-lede-file` as literal text, because no shell variable outlives the invocation that set it: A later call naming `$lede_path` would find nothing. Continue from step 3; everything else resolves from the ticket's artifacts as usual.
+Read the printed path and pass it to `--merged-lede-file` as literal text, because a shell variable does not outlive the invocation that set it: A later call naming `$lede_path` would find nothing. Continue from step 3; everything else resolves from the ticket's artifacts as usual.
 
 ## The record
 
@@ -151,13 +151,13 @@ Handle the `error` code as follows:
 
 - `no-artifact-dir`, `no-agent-lede`, `no-merged-lede`: The ticket's artifacts do not contain both ledes. Report and stop; supply `--agent-lede-file` or `--merged-lede-file` only when the text is genuinely in hand.
 - `no-doctrine`: The installed subagent body covered by the digest is unreadable; the message names it. Report it as an install problem.
-- `no-taxonomy`: The installed `work-types.json` is unreadable. Report it as an install problem; no `--type` value resolves against a taxonomy that did not load.
+- `no-taxonomy`: The installed `work-types.json` is unreadable. Report it as an install problem; a `--type` value cannot resolve against a taxonomy that did not load.
 - `unresolved-identity`: The work type or its tier could not be resolved, or `--scope` or `--breaking` was passed without `--type`. The message names which; pass `--type`, with `--scope` and `--breaking` as they apply to the change.
 - `invalid-args`: Report the message and propose a corrected invocation.
-- `store-not-registered`: The corpus is registered in no `kb.yaml`. If it is registered under some other name, re-run with `--store <name>`.
-- `readonly-store`: The corpus is registered readonly. Report and stop; the skill substitutes no other destination for one that the registry protects.
+- `store-not-registered`: The corpus is not registered in any `kb.yaml`. If it is registered under some other name, re-run with `--store <name>`.
+- `readonly-store`: The corpus is registered readonly. Report and stop; the skill does not substitute another destination for one that the registry protects.
 - `schema-validation`: Report the `errors`.
 
 ## Completion
 
-Either one written record at the reported path, or nothing at all. There is no third outcome, and no record is ever written without the author's rating.
+Either one written record at the reported path, or nothing at all. The skill does not have a third outcome, and it never writes a record without the author's rating.

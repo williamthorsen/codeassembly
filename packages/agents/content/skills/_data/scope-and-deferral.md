@@ -39,7 +39,7 @@ Bundle related small items into a single follow-up ticket.
 
 - Preferred when several drive-by-ineligible items have accumulated and their cumulative weight justifies one ticket.
 - **Recommended over per-item ticketing when ≥2 trivial items remain** or when items share a `scope:` label or source artifact.
-- Ticket body is a checklist with one entry per finding (description plus source attribution) and no per-item complexity level.
+- Ticket body is a checklist with one entry per finding (description plus source attribution) and without a per-item complexity level.
 - Cost: One ticket's overhead amortized across N items.
 
 ### Separate ticket

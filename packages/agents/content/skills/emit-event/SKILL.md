@@ -8,7 +8,7 @@ user-invocable: false
 
 Append one lifecycle event to the live event log, so that a watching surface can render what a session is doing while it is doing it. A bundled helper does the mechanical work: It fills in the repo, branch, session, and working directory, stamps the event with a ULID and a timestamp, and appends a single line to the session's log. You supply the `--type` and, when the type has detail, a `--payload`.
 
-This is a fire-and-forget append. It emits no artifact, prompts for nothing, and (by contract) cannot fail in a way that stops the skill that it observes.
+This is a fire-and-forget append. It does not emit an artifact, prompts for nothing, and (by contract) cannot fail in a way that stops the skill that it observes.
 
 ## The never-block contract
 
@@ -47,7 +47,7 @@ A value-bearing flag accepts both `--type value` and `--type=value`.
 
 The four relayed types are emitted by the hook relay that the CLI installs into the harness. The relay fires at boundaries outside any skill's run, so a skill cannot observe them. **Never emit one from a skill**: You would double-count a boundary already reported by the harness. They are listed here so that you recognize them when reading a log, not so that you can produce them.
 
-A skill emits `input.requested` when it asks and waits, but no matching `input.received`: The relayed `turn.started` marks the resume, so the skill has nothing to add.
+A skill emits `input.requested` when it asks and waits, but it does not emit a matching `input.received`: The relayed `turn.started` marks the resume, so the skill has nothing to add.
 
 The vocabulary is convention, not a gate: The helper warns on stderr for an undeclared type and appends the event anyway. Prefer a declared type (a watching surface only renders what it recognizes), but emit a new one rather than dropping an event that the vocabulary does not yet cover.
 
@@ -69,7 +69,7 @@ Each event is one JSON line:
 }
 ```
 
-`id`, `ts`, `cwd`, and `payload` are always present. `repo`, `branch`, `session`, and `harness` are **omitted when unresolvable**: outside a git repository, on a detached HEAD, or on a harness that exposes no session id. The event is still appended in that case, under a placeholder path segment, so a session running outside a repo is observable rather than invisible.
+`id`, `ts`, `cwd`, and `payload` are always present. `repo`, `branch`, `session`, and `harness` are **omitted when unresolvable**: outside a git repository, on a detached HEAD, or on a harness that does not expose a session id. The event is still appended in that case, under a placeholder path segment, so a session running outside a repo is observable rather than invisible.
 
 ## Runtime dependencies
 
