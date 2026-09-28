@@ -97,7 +97,7 @@ describe(syncCommand, () => {
   const skillPath = (slug: string, dotDir = '.claude'): string =>
     path.join(projectRoot, dotDir, 'skills', slug, 'SKILL.md');
 
-  it('when no codeassembly.yaml exists, makes no changes', async () => {
+  it("when codeassembly.yaml doesn't exist, doesn't make any changes", async () => {
     await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
@@ -124,7 +124,7 @@ describe(syncCommand, () => {
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->\n<!-- rulebook-version: 3 -->');
   });
 
-  it('names no version for a rulebook that declares none', async () => {
+  it("doesn't name a version for a rulebook that doesn't declare one", async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
@@ -183,7 +183,7 @@ describe(syncCommand, () => {
     }
   });
 
-  it('when re-run with the same manifest, produces no file changes', async () => {
+  it("when re-run with the same manifest, doesn't change any file", async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
@@ -195,7 +195,7 @@ describe(syncCommand, () => {
     expect(await readFile(localHostPath(), 'utf8')).toBe(firstLocalHost);
   });
 
-  it('creates no local host when the scope declares no ambient rulebook', async () => {
+  it("doesn't create a local host when the scope doesn't declare any ambient rulebook", async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
@@ -513,7 +513,7 @@ describe(syncCommand, () => {
     expect(output).not.toContain('is not git-ignored');
   });
 
-  it('throws when a declared rulebook has no library file', async () => {
+  it("throws when a declared rulebook doesn't have a library file", async () => {
     await declareRulebooks('ghost');
 
     await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/ghost/);
@@ -544,7 +544,7 @@ describe(syncCommand, () => {
     );
   });
 
-  it('delivers a hook-bearing rulebook body containing no directive, in both delivery modes', async () => {
+  it('delivers a hook-bearing rulebook body without a directive, in both delivery modes', async () => {
     await writeLibraryRulebook(
       'gamma',
       'delivery: [ambient, skill]',
@@ -672,7 +672,7 @@ describe(syncCommand, () => {
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(false);
   });
 
-  it('with no harness installed for this user, writes no skill file and no local host', async () => {
+  it("when this user doesn't have any harness installed, doesn't write a skill file or a local host", async () => {
     await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
     await declareRulebooks('gamma');
 
@@ -682,7 +682,7 @@ describe(syncCommand, () => {
     expect(existsSync(localHostPath())).toBe(false);
   });
 
-  it('delivers to an installed harness for which the repository contains no directory', async () => {
+  it("delivers to an installed harness for which the repository doesn't contain a directory", async () => {
     await writeLibraryRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
     await declareRulebooks('gamma');
     await installBothHarnesses();
@@ -730,7 +730,7 @@ describe(syncCommand, () => {
     expect(output).toContain('Targeting claude (declared).');
   });
 
-  it('says so when a declaration leaves no harness targeted', async () => {
+  it("says so when a declaration doesn't leave any harness targeted", async () => {
     await writeLibraryRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  drop:\n    - claude\n    - rovo\n');
@@ -972,7 +972,7 @@ describe(syncCommand, () => {
   });
 
   describe('unresolvable declared artifacts', () => {
-    it('names the project declaration and writes nothing when a declared rulebook resolves from no source', async () => {
+    it("names the project declaration and writes nothing when a declared rulebook doesn't resolve from any source", async () => {
       await declareRulebooks('ghost');
 
       await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
@@ -1183,7 +1183,7 @@ describe(syncCommand, () => {
     );
 
     // The source root itself is unreadable while its parent stays searchable, so `stat` still reports it as a
-    // directory. With no declared rulebook to probe inside it, only the up-front readability check catches it.
+    // directory. Without a declared rulebook to probe inside it, only the up-front readability check catches it.
     it.runIf(canEnforceDirPermissions)(
       'fails the run when a declared source root is itself unreadable, even with nothing declared to resolve',
       async () => {
@@ -1560,7 +1560,7 @@ describe(syncCommand, () => {
       expect(output).toContain('rulebook "shadowed" (source "org")');
     });
 
-    it('does not warn on a real run when a source rulebook has no same-slug library artifact', async () => {
+    it("does not warn on a real run when a source rulebook doesn't have a same-slug library artifact", async () => {
       await writeSourceRulebook('source-only', 'delivery: ambient', 'Org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
 
@@ -1620,7 +1620,7 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('people-report'))).toBe(false);
     });
 
-    it('fails a dry run with nothing written when a skill body contains an anchor naming no heading', async () => {
+    it("fails a dry run with nothing written when a skill body contains an anchor that doesn't name any heading", async () => {
       await writeLibrarySkill('people-report', { body: 'See [the events](#lifecycle-events).' });
       await declareSkills('people-report');
 
@@ -1641,7 +1641,7 @@ describe(syncCommand, () => {
       expect(skill).toContain('# people-report');
     });
 
-    it('deploys a hook-bearing skill containing no directive, since `sync` binds nothing to the hook yet', async () => {
+    it('deploys a hook-bearing skill without a directive, since `sync` binds nothing to the hook yet', async () => {
       await writeLibrarySkill('people-report', {
         body: '# people-report\n\n<!-- guidance-hook: implementation-preferences -->\n\nBody.',
       });
@@ -1794,7 +1794,7 @@ describe(syncCommand, () => {
 
       await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
 
-      // The target exists in the content root but is undeclared, so no project tree contains it. Re-pointing the link
+      // The target exists in the content root but is undeclared, so it isn't in any project tree. Re-pointing the link
       // there would make it unresolvable outright; the harness home is where an installed copy can still answer it.
       expect(await readFile(skillPath('demo'), 'utf8')).toContain(
         '[the other one](~/.claude/skills/undeclared-skill/SKILL.md)',
@@ -1962,7 +1962,7 @@ describe(syncCommand, () => {
       expect(existsSync(localHostPath())).toBe(false);
     });
 
-    it('fails a dry run on an anchor naming no heading in the rulebook body, writing nothing', async () => {
+    it("fails a dry run on an anchor that doesn't name any heading in the rulebook body, writing nothing", async () => {
       await writeLibraryRulebook('alpha', 'delivery: [ambient, skill]', 'See [the events](#lifecycle-events).');
       await declareRulebooks('alpha');
 
@@ -2093,7 +2093,7 @@ describe(syncCommand, () => {
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
 
-    it('fails a dry run with nothing written when a subagent body contains an anchor naming no heading', async () => {
+    it("fails a dry run with nothing written when a subagent body contains an anchor that doesn't name any heading", async () => {
       await writeOverlays();
       await writeLibrarySubagent('canary', { body: 'See [the findings](#finding-scheme).' });
       await declareSubagents('canary');
@@ -2124,7 +2124,7 @@ describe(syncCommand, () => {
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
 
-    it('deploys a declared subagent with the transform applied and the ownership marker, no provenance marker', async () => {
+    it('deploys a declared subagent with the transform applied and the ownership marker but without a provenance marker', async () => {
       await writeOverlays();
       await writeLibrarySubagent('canary');
       await declareSubagents('canary');
@@ -2139,7 +2139,7 @@ describe(syncCommand, () => {
       expect(deployed).not.toContain('GENERATED FILE');
     });
 
-    it('deploys a hook-bearing subagent containing no directive, since `sync` binds nothing to the hook yet', async () => {
+    it('deploys a hook-bearing subagent without a directive, since `sync` binds nothing to the hook yet', async () => {
       await writeOverlays();
       await writeLibrarySubagent('canary', {
         body: '# canary\n\n<!-- guidance-hook: implementation-preferences -->\n\nBody.',
@@ -2273,7 +2273,7 @@ describe(syncCommand, () => {
 
     const promptsYmlPath = (): string => path.join(projectRoot, ROVO_HOME, 'prompts.yml');
 
-    /** Seeds a hand-authored `prompts.yml` containing a single foreign entry and no codeassembly region. */
+    /** Seeds a hand-authored `prompts.yml` containing a single foreign entry but not a codeassembly region. */
     async function seedHandAuthoredPromptsYml(): Promise<void> {
       await mkdir(path.join(projectRoot, ROVO_HOME), { recursive: true });
       await writeFile(
@@ -2298,7 +2298,7 @@ describe(syncCommand, () => {
       expect(prompts).not.toContain('internal-skill');
     });
 
-    it('leaves prompts.yml byte-identical on re-sync with no skill changes', async () => {
+    it('leaves prompts.yml byte-identical on a re-sync without any skill changes', async () => {
       await writeLibrarySkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
       await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, contentDir, homeDir);
@@ -2364,7 +2364,7 @@ describe(syncCommand, () => {
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(flowAuthored);
     });
 
-    it('leaves a region-less prompts.yml untouched when no Rovo Dev skills are declared', async () => {
+    it("leaves a region-less prompts.yml untouched when the project doesn't declare any Rovo Dev skills", async () => {
       await seedHandAuthoredPromptsYml();
       const handAuthored = await readFile(promptsYmlPath(), 'utf8');
       await declareSkills();
@@ -2442,7 +2442,7 @@ describe(syncGlobalCommand, () => {
     return file;
   }
 
-  it('names the home declaration when a declared artifact resolves from no source', async () => {
+  it("names the home declaration when a declared artifact doesn't resolve from any source", async () => {
     await declareRaw('skills:\n  use:\n    - ghost\n');
 
     await expect(syncGlobalCommand(makeOptions(), homeDir, contentDir)).rejects.toThrow(
@@ -2450,7 +2450,7 @@ describe(syncGlobalCommand, () => {
     );
   });
 
-  it('when no ~/.agents/codeassembly.yaml exists, makes no changes and points at init --global', async () => {
+  it("when ~/.agents/codeassembly.yaml doesn't exist, doesn't make any changes and points at init --global", async () => {
     const infoLines = renderReportLines(await syncGlobalCommand(makeOptions(), homeDir, contentDir), { level: 'info' });
 
     expect(existsSync(path.join(homeDir, '.agents', 'rulebooks'))).toBe(false);
@@ -2597,7 +2597,7 @@ describe(syncGlobalCommand, () => {
     expect(await readFile(damaged, 'utf8')).toBe(before);
   });
 
-  it('warns and skips ambient delivery when the guidance file contains no region', async () => {
+  it("warns and skips ambient delivery when the guidance file doesn't contain a region", async () => {
     const dir = path.join(homeDir, '.claude');
     await mkdir(dir, { recursive: true });
     const regionless = path.join(dir, 'CLAUDE.md');
@@ -2841,7 +2841,7 @@ describe(syncGlobalCommand, () => {
       expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
     });
 
-    it('leaves the stamp untouched when no home declaration exists to act on', async () => {
+    it("leaves the stamp untouched when a home declaration to act on doesn't exist", async () => {
       await syncGlobalCommand(makeOptions(), homeDir, contentDir);
 
       expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
