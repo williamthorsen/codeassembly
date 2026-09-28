@@ -28,7 +28,8 @@ export interface ScaffoldEntry {
 
 /**
  * Writes the canonical files and directories that every knowledge-base store contains, leaving an existing file as it
- * found it unless `force` is set. Directories are ensured either way, since a directory has no content to replace.
+ * found it unless `force` is set. Directories are ensured either way, since a directory does not have any content to
+ * replace.
  *
  * The function asserts nothing about the store: A caller that requires one to exist, or requires one not to, checks
  * that itself.

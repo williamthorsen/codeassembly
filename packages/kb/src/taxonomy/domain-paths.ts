@@ -35,7 +35,7 @@ export function resolveDomain(relativePath: string): string | undefined {
   return resolveParent(relativePath.slice(prefix.length));
 }
 
-/** Derives a slash-path's parent, or `undefined` when it has no separator and so is at the top level. */
+/** Derives a slash-path's parent, or `undefined` when it does not contain a separator and so is at the top level. */
 export function resolveParent(path: string): string | undefined {
   const lastSlash = path.lastIndexOf('/');
   return lastSlash === -1 ? undefined : path.slice(0, lastSlash);

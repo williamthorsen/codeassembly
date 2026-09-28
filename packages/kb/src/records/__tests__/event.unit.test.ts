@@ -33,7 +33,7 @@ describe(parseEvent, () => {
     expect(result.ok).toBe(false);
   });
 
-  it('parses an event captured with no session', () => {
+  it('parses an event captured without a session', () => {
     const { session: _session, ...withoutSession } = validFields;
     const result = parseEvent(withoutSession, '');
     expect(result.ok).toBe(true);

@@ -17,7 +17,7 @@ const BLOCKS: ReadonlySet<string> = new Set(['domains', 'provisional']);
 export interface TaxonomyDeclaration {
   /** The domain's assertions-root-relative slash-path. */
   path: string;
-  /** The one-line description; when absent or empty, `writeTaxonomy` writes the key bare, with no description. */
+  /** The one-line description; when absent or empty, `writeTaxonomy` writes the key bare, without a description. */
   description?: string;
   /** Whether to declare under `provisional:` rather than `domains:`. */
   provisional: boolean;
@@ -162,8 +162,8 @@ function isEmptyBlockValue(value: unknown): boolean {
 /**
  * Reads the taxonomy into an editable document, treating an absent file as an empty one. Refuses a file to which this
  * cannot safely append: rewriting a file with a parse error would discard whatever the parser could not read, a
- * non-mapping top level has no block to append to, and a block containing a scalar or a sequence contains content that
- * appending would destroy.
+ * non-mapping top level does not have a block to append to, and a block containing a scalar or a sequence contains
+ * content that appending would destroy.
  */
 async function readDocument(path: string): Promise<Document> {
   let text = '';

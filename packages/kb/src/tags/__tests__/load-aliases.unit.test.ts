@@ -98,7 +98,7 @@ describe(loadAliases, () => {
     expect(map.get('reactjs')).toBe('react');
   });
 
-  it('returns an empty map when the KB root has no tag-aliases file', async () => {
+  it('returns an empty map when the KB root does not contain a tag-aliases file', async () => {
     expect(await loadAliases({ kbRoot: kbRootAt('/no/such/kb') })).toEqual(new Map());
   });
 
