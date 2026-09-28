@@ -8,7 +8,7 @@ import { listRuleSections } from '../test-utils/rule-markers.ts';
 
 // A rulebook's version names the guidance that an agent holds, so a body that changes without a bump reports one
 // version for two different bodies. The include expansion is what makes the gap invisible: Editing a partial changes
-// the deployed body of every rulebook that includes it while touching no rulebook file.
+// the deployed body of every rulebook that includes it without touching any rulebook file.
 //
 // The pins below are what force the look. A body edit fails this suite until the author decides which of the two
 // remedies applies, and the failure message states both.
@@ -100,8 +100,8 @@ const PINS = new Map<string, RulebookPin>([
 
 /**
  * The sweep version that each rule's marker declares, and the section against which that version is pinned. A rule
- * declared by the plain-speech calibration has no pin here, since no rulebook includes the calibration:
- * `plain-speech-calibration.unit.test.ts` pins the calibration's whole text instead.
+ * declared by the plain-speech calibration does not have a pin here, since the calibration is not included in any
+ * rulebook: `plain-speech-calibration.unit.test.ts` pins the calibration's whole text instead.
  */
 const RULE_PINS = new Map<string, RulePin>([
   [
@@ -152,17 +152,17 @@ describe('rulebook version pins', () => {
       .map((rulebook) => `['${rulebook.slug}', ${renderPin(rulebook)}],`)
       .toArray();
 
-    const message = `A versioned rulebook has no pin. Add to \`PINS\`:\n  ${unpinned.join('\n  ')}`;
+    const message = `A versioned rulebook does not have a pin. Add to \`PINS\`:\n  ${unpinned.join('\n  ')}`;
     expect(unpinned, message).toEqual([]);
   });
 
-  it('pins no rulebook that declares no version', async () => {
+  it('pins only rulebooks that declare a version', async () => {
     const resolved = await RESOLVED;
     const orphaned = PINS.keys()
       .filter((slug) => resolved.get(slug)?.version === undefined)
       .toArray();
 
-    const message = `A pin names a rulebook that is gone or that declares no version: ${orphaned.join(', ')}`;
+    const message = `A pin names a rulebook that is gone or that does not declare a version: ${orphaned.join(', ')}`;
     expect(orphaned, message).toEqual([]);
   });
 
@@ -210,17 +210,17 @@ describe('rule version pins', () => {
       .map(([id, rule]) => `['${id}', ${renderRulePin(rule)}],`)
       .toArray();
 
-    const message = `A declared rule has no pin. Add to \`RULE_PINS\`:\n  ${unpinned.join('\n  ')}`;
+    const message = `A declared rule does not have a pin. Add to \`RULE_PINS\`:\n  ${unpinned.join('\n  ')}`;
     expect(unpinned, message).toEqual([]);
   });
 
-  it('pins no rule that no marker declares', async () => {
+  it('pins only rules that a marker declares', async () => {
     const sections = await readRuleSections();
     const orphaned = RULE_PINS.keys()
       .filter((id) => !sections.has(id))
       .toArray();
 
-    const message = `A pin names a rule that no marker declares: ${orphaned.join(', ')}`;
+    const message = `A pin names a rule that is not declared by any marker: ${orphaned.join(', ')}`;
     expect(orphaned, message).toEqual([]);
   });
 

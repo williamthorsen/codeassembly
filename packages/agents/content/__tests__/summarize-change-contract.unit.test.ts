@@ -98,7 +98,7 @@ describe('summarize-change contract', () => {
     expect(text).toContain('the step-7 `consolidated_record`, consolidated from the change entries');
   });
 
-  it('mandates no coverage of the lede by `## Details`', async () => {
+  it('does not mandate coverage of the lede by `## Details`', async () => {
     const text = (await EXPANDED).toLowerCase();
     const found = COVERAGE_MANDATE_PHRASES.filter((phrase) => text.includes(phrase));
 

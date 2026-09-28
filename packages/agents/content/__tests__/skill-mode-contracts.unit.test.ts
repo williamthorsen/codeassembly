@@ -4,7 +4,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // A skill can direct another skill into a named behavior, and the two halves of that contract are in different files
-// with no include tying them together. Deleting the definition leaves the directive naming something nothing defines,
+// without an include tying them together. Deleting the definition leaves the directive naming something nothing defines,
 // and the callee falls back to its default (the wider edit that the directive exists to prevent), with every other
 // test still passing. The directive's own reach is checked in `spec-inlining.unit.test.ts`; this file checks that what
 // it names is actually defined.

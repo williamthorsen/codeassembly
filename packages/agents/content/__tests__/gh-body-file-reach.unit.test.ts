@@ -94,7 +94,7 @@ describe('gh-body-file reach', () => {
     expect(violations, message).toEqual([]);
   });
 
-  it('states the path rule in no content file but the partial', async () => {
+  it('states the path rule in the partial alone', async () => {
     const violations: Array<string> = [];
     const files = await listMarkdownFiles(CONTENT_ROOT);
     for (const file of files) {

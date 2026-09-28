@@ -12,7 +12,7 @@ import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts
 // rule names. The helper's detector registry, the names that `prose-reviser` reports, and the fold that `revise-prose`
 // composes from that report each stay within it: A rejection under a rule that the skill leaves out of the fold's
 // versioned rules makes the `record` command refuse the whole fold, and a rule stated without a marker leaves the
-// subagent no id to report its sites under.
+// subagent without an id under which to report its sites.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 const CALIBRATION = '_partials/plain-speech-calibration.md';
@@ -35,7 +35,7 @@ const SWEPT_RULEBOOKS: ReadonlyArray<string> = [
 const FOLD_EVERY =
   '**Fold every rejection under a rule that `rules` names, whether or not the helper has its detector.**';
 
-/** The skill's text versioning `plain-speech`, which no marker declares, in the invocation and in the fold. */
+/** The skill's text versioning `plain-speech`, which lacks a rule marker, in the invocation and in the fold. */
 const PLAIN_SPEECH_VERSIONING: ReadonlyArray<string> = [
   '--rule plain-speech@{version}=plain-speech',
   '`plain-speech` included',
@@ -71,9 +71,11 @@ describe('prose-sweep rule vocabulary', () => {
     const known = new Set<string>([...(await readDeclaredIds()), await readPlainSpeechId()]);
     const unknown = reported.filter((name) => name !== undefined && !known.has(name));
 
-    const message = `${SUBAGENT} reports rule names that no marker declares: ${unknown.join(', ')}`;
+    const message = `${SUBAGENT} reports rule names that are not declared by any marker:${unknown.join(', ')}`;
     expect(unknown, message).toEqual([]);
-    expect(reported.length, `${SUBAGENT} shows no report example, so this suite proves nothing`).toBeGreaterThan(0);
+    expect(reported.length, `${SUBAGENT} does not show a report example, so this suite proves nothing`).toBeGreaterThan(
+      0,
+    );
   });
 
   it('names every detector rule in the subagent that adjudicates it', async () => {
@@ -100,10 +102,10 @@ describe('prose-sweep rule vocabulary', () => {
     const skill = await readContentFile(SKILL);
     const subagent = await readContentFile(SUBAGENT);
 
-    expect(skill, `${SKILL} names no \`${REJECTIONS_KEY}\` in its dispatch block`).toContain(REJECTIONS_KEY);
+    expect(skill, `${SKILL} does not name \`${REJECTIONS_KEY}\` in its dispatch block`).toContain(REJECTIONS_KEY);
     expect(
       subagent,
-      `${SUBAGENT} describes no \`${REJECTIONS_KEY}\` scalar, so the skill writes a file that nothing opens`,
+      `${SUBAGENT} does not describe a \`${REJECTIONS_KEY}\` scalar, so the skill writes a file that nothing opens`,
     ).toContain(REJECTIONS_SCALAR);
   });
 
@@ -120,7 +122,7 @@ describe('prose-sweep rule vocabulary', () => {
     const declared = new Set(await readDeclaredIds());
     const missing = RULE_IDS.filter((rule) => !declared.has(rule));
 
-    const message = `no \`<!-- rule: <id> <version> -->\` marker declares ${missing.join(', ')}, so step 1 of ${SKILL} names it to no run: Its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry lists a rule that no document declares`;
+    const message = `${missing.join(', ')} is not declared by any \`<!-- rule: <id> <version> -->\` marker, so step 1 of ${SKILL} does not name it to any run: Its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry lists a rule that is not declared by any document`;
     expect(missing, message).toEqual([]);
   });
 });
@@ -129,7 +131,7 @@ describe('rule-id declarations', () => {
   it.each(SWEPT_RULEBOOKS)('%s declares its rule ids', async (slug) => {
     const rulebook = (await RESOLVED).get(slug);
 
-    const message = `${slug} declares no \`<!-- rule: <id> <version> -->\` marker; therefore, none of its rules has an id that the sweep can report or record`;
+    const message = `${slug} does not declare any \`<!-- rule: <id> <version> -->\` marker; therefore, none of its rules has an id that the sweep can report or record`;
     expect(rulebook, `${slug} is not in the library`).toBeDefined();
     expect(listDeclaredIds(rulebook?.body ?? ''), message).not.toEqual([]);
   });
@@ -141,7 +143,7 @@ describe('rule-id declarations', () => {
       .flatMap((rulebook) => listUndeclaredHeadings(rulebook.body).map((heading) => `${rulebook.slug}: ${heading}`))
       .toArray();
 
-    const message = `A rule heading has no \`<!-- rule: <id> <version> -->\` marker on the first non-blank line beneath it; therefore, the sweep has no id under which to report its sites: ${undeclared.join('; ')}`;
+    const message = `A rule heading does not have a \`<!-- rule: <id> <version> -->\` marker on the first non-blank line beneath it; therefore, the sweep does not have an id under which to report its sites: ${undeclared.join('; ')}`;
     expect(undeclared, message).toEqual([]);
   });
 
@@ -155,7 +157,7 @@ describe('rule-id declarations', () => {
       )
       .toArray();
 
-    const message = `A rule marker declares no positive-integer sweep version. Write the marker as \`<!-- rule: <id> <version> -->\`, starting a new rule at 1: ${unversioned.join('; ')}`;
+    const message = `A rule marker does not declare a positive-integer sweep version. Write the marker as \`<!-- rule: <id> <version> -->\`, starting a new rule at 1: ${unversioned.join('; ')}`;
     expect(unversioned, message).toEqual([]);
   });
 
@@ -210,7 +212,7 @@ async function readDeclaredIds(): Promise<string[]> {
 /** Reads the `plain-speech` rule id from the unit-version line that names it. */
 async function readPlainSpeechId(): Promise<string> {
   const id = UNIT_VERSION_REGEX.exec(await readContentFile(CALIBRATION))?.[1];
-  if (id === undefined) throw new Error(`${CALIBRATION} has no unit-version line naming its unit`);
+  if (id === undefined) throw new Error(`${CALIBRATION} does not have a unit-version line naming its unit`);
   return id;
 }
 

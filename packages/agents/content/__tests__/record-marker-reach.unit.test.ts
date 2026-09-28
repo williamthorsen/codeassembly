@@ -6,8 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
 // The `pull-request` and `merge` artifacts carry the record marker, which puts the prohibition in the file that an
-// agent has open rather than only in the standing guidance that it may not have loaded. No other artifact carries one:
-// `capture-lede-decision` reads those two bodies, and a rewrite of either corrupts the lede corpus silently.
+// agent has open rather than only in the standing guidance that it may not have loaded. The other artifacts do not
+// carry one: `capture-lede-decision` reads those two bodies, and a rewrite of either corrupts the lede corpus
+// silently.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The marker's source of truth; every other statement of it must match this one byte for byte. */
@@ -19,8 +20,8 @@ const MARKER_KEY = 'Point-in-time record';
 // Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
 // discovered list would move with the bug.
 //
-// A carrier is a skill that writes one of the two artifacts that `capture-lede-decision` reads. Every other
-// artifact-writing skill and subagent states no marker, which the negative case below enforces.
+// A carrier is a skill that writes one of the two artifacts that `capture-lede-decision` reads. The other
+// artifact-writing skills and subagents do not state a marker, which the negative case below enforces.
 const CARRIERS: ReadonlyArray<string> = [
   'skills/create-bitbucket-pr/SKILL.md',
   'skills/create-gh-pr/SKILL.md',
@@ -44,7 +45,7 @@ describe('record-marker reach', () => {
       const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
       const lines = expanded.split('\n').filter((line) => line.includes(MARKER_KEY));
 
-      expect(lines.length, `${relativePath} states no record marker`).toBeGreaterThanOrEqual(1);
+      expect(lines.length, `${relativePath} does not state a record marker`).toBeGreaterThanOrEqual(1);
 
       const drifted = lines.filter((line) => line.trim() !== marker);
       const message = `every record marker must match ${PARTIAL} exactly:\n  ${drifted.join('\n  ')}`;

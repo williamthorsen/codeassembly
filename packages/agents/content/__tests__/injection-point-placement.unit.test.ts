@@ -11,7 +11,7 @@ import { isUnderTestDirectory } from '../../src/lib/fs-helpers.ts';
 // the parent is worse than misattributed: It is whichever rulebook the local binding supplied.
 //
 // The scan reads source rather than rendered output. Once includes expand, an inlined partial is byte-identical to the
-// text around it, and no pass over the result can tell a host heading from an injected one.
+// text around it, and a pass over the result cannot tell a host heading from an injected one.
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 // Mirrors of the production grammars in `directive-expander.ts` and `guidance-hooks.ts`: Each occupies a full line
@@ -56,7 +56,7 @@ type Token = Heading | Injection;
 const levelByPartial = new Map<string, number | undefined>();
 
 describe('injection-point placement', () => {
-  it('no directive reparents the section following it', async () => {
+  it('keeps each directive from reparenting the section following it', async () => {
     const violations: Array<string> = [];
     const relativePaths = await listContentMarkdown();
     for (const relativePath of relativePaths) {
@@ -112,8 +112,8 @@ async function listContentMarkdown(): Promise<ReadonlyArray<string>> {
 /**
  * Yields the lines of a body that contribute structure, skipping every line inside a fenced block. A `#` inside a
  * fence is content, so the fence is tracked rather than each line matched in isolation. A fenced directive is skipped
- * for a different reason: The expander tracks no fences and still expands it, but the fence turns the headings that
- * it injects into literal text, which adopts nothing.
+ * for a different reason: The expander does not track fences and still expands it, but the fence turns the headings
+ * that it injects into literal text, which adopts nothing.
  */
 function* readLiveLines(body: string): Generator<LiveLine> {
   let openFence: string | undefined;
@@ -157,7 +157,8 @@ async function readPartialLevel(partialPath: string): Promise<number | undefined
 /**
  * Reads one body's headings and injection points in source order. Lines between an open include directive and its
  * `<!-- /include -->` are slot content bound for the partial's `<!-- children -->`, not structure of this body, and a
- * partial that places that placeholder inside a fence turns them into example text, so they contribute no token.
+ * partial that places that placeholder inside a fence turns them into example text, so they do not contribute a
+ * token.
  */
 async function readStructure(relativePath: string): Promise<ReadonlyArray<Token>> {
   const filePath = path.join(CONTENT_ROOT, relativePath);
