@@ -8,7 +8,8 @@ import { type ChangeEntry, findEntryComment, readChangeEntries } from './change-
 
 /**
  * Reads the last `change-record` block in a pull-request body back into what it records, as the inverse of
- * `renderChangeRecordBlock`: the body contains no block, contains one that cannot be read, or contains one that reads.
+ * `renderChangeRecordBlock`: the body does not contain a block, contains one that cannot be read, or contains one that
+ * reads.
  *
  * A block without a `title` does not read. Its overrides normalize as the renderer normalizes them. Because a key that
  * the grammar does not declare is ignored, a later addition to the block does not break this reader. A declared key
@@ -28,8 +29,8 @@ export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
  * `renderMergeChangeRecordBlock`.
  *
  * The reader applies the rules that release-kit applies when it reads the merge commit, so any defect makes the whole
- * block malformed and no entry is salvaged from a defective list. A key that the grammar does not declare is ignored,
- * and a declared key whose value is null reads as absent.
+ * block malformed and the reader does not salvage any entry from a defective list. A key that the grammar does not
+ * declare is ignored, and a declared key whose value is null reads as absent.
  */
 export function readMergeChangeRecordBlock(body: string): MergeChangeRecordBlockReading {
   const parsed = parseLastBlock(body);
@@ -45,7 +46,7 @@ export function readMergeChangeRecordBlock(body: string): MergeChangeRecordBlock
  * Renders the fenced `change-record` block that a pull-request body contains as its final block.
  *
  * The payload is YAML rather than a surface template, because `overrides` and the entries nest and a template renders
- * one flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair needs no round-trip
+ * one flat line. Its inverse is a YAML parse rather than a compiled pattern, so the pair does not need any round-trip
  * verification of the kind required by the title grammar.
  *
  * The overrides are normalized as the engine normalizes any record. A field that the author did not override is absent
@@ -96,7 +97,7 @@ export function replaceLastChangeRecordBlock(body: string, block: string): strin
   const lines = parts.filter((_part, index) => index % 2 === 0);
   const fence = findFences(lines).at(-1);
   if (fence?.close === undefined) {
-    throw new Error('the body contains no closed change-record block to replace');
+    throw new Error('the body does not contain a closed change-record block to replace');
   }
   const lineEnding = parts[fence.open * 2 + 1] ?? '\n';
   return [
@@ -150,8 +151,8 @@ export type MergeChangeRecordBlockReading =
   { kind: 'absent' } | { defect: string; kind: 'malformed' } | { block: MergeChangeRecordBlock; kind: 'read' };
 
 /**
- * The overrides that a block records, named as the flags that set them are. A `scope` of `*` sets no scope. `breaking`
- * is only ever `true`: A block's override can add the marker to a record but not remove it.
+ * The overrides that a block records, named as the flags that set them are. A `scope` of `*` leaves the record without
+ * a scope. `breaking` is only ever `true`: A block's override can add the marker to a record but not remove it.
  */
 export interface RecordOverrides extends Overrides {
   breaking?: true;
@@ -193,7 +194,8 @@ const INFO_STRING = 'change-record';
 
 /**
  * Keeps only the overridable dimensions of a normalized record, so a marker spelled on the type becomes `breaking`. The
- * scope is kept as given, `*` included, since an override of `*` is the author's choice of no scope.
+ * scope is kept as given, `*` included, since an override of `*` is the author's choice to leave the record without a
+ * scope.
  */
 function normalizeOverrides(overrides: RecordOverrides): RecordOverrides {
   const { breaking, type } = normalizeChangeRecord(overrides);
@@ -233,7 +235,7 @@ function parseLastBlock(
 
 /**
  * Reads the entries and their derivation commit, which read together: A defect in either leaves both absent, since a
- * derivation commit records a claim about the entries. An empty list reads as no entries, as the renderer writes one.
+ * derivation commit records a claim about the entries. An empty list reads as zero entries, as the renderer writes one.
  */
 function readEntryFields(
   payload: Record<string, unknown>,

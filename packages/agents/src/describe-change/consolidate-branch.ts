@@ -11,12 +11,13 @@ import type { RawCommit } from './read-commits.ts';
  * A commit with `Change:` trailers contributes those entries and not its subject. Because a condensed commit's subject
  * renders the record to which its trailers already consolidate, reading both would count the branch's entries twice.
  *
- * A subject matched by no template is reported rather than dropped, so a mistyped prefix is visible to its author
- * instead of silently shrinking the set from which the consolidated record is derived. A violation likewise leaves its
- * entry untouched: The commit is already written, and refusing here would block the pull request behind a rebase.
+ * A subject that does not match any template is reported rather than dropped, so a mistyped prefix is visible to its
+ * author instead of silently shrinking the set from which the consolidated record is derived. A violation likewise
+ * leaves its entry untouched: The commit is already written, and refusing here would block the pull request behind a
+ * rebase.
  *
- * A branch with no entries yields no consolidated record. An empty record would be indistinguishable from a
- * consolidated record that names no scope.
+ * A branch without entries does not yield a consolidated record. An empty record would be indistinguishable from a
+ * consolidated record that does not name a scope.
  */
 export function consolidateBranch(
   commits: readonly RawCommit[],
@@ -53,7 +54,10 @@ export function consolidateBranch(
   return { entries, unmatched, violations, ...(consolidatedRecord !== undefined && { consolidatedRecord }) };
 }
 
-/** What a branch of commits adds up to. `consolidatedRecord` is absent when no entry was found to derive one from. */
+/**
+ * What a branch of commits adds up to. `consolidatedRecord` is absent when the branch does not have an entry from which
+ * to derive one.
+ */
 export interface BranchConsolidation {
   consolidatedRecord?: ChangeRecord;
   entries: BranchEntry[];
@@ -74,7 +78,7 @@ export interface EntryViolation {
   type: string;
 }
 
-/** One subject matched by no template, and the commit from which it came. */
+/** One subject that does not match any template, and the commit from which it came. */
 export interface UnmatchedSubject {
   commit: string;
   subject: string;
