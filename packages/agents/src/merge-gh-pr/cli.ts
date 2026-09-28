@@ -68,65 +68,6 @@ if (isEntryPoint()) {
   await main();
 }
 
-/**
- * Parses the helper's argv. Throws on an unknown flag, a positional argument, a missing required flag, or a value
- * outside its set.
- *
- * @internal - Exported to allow testing.
- */
-export function parseArgs(argv: readonly string[]): ParsedArgs {
-  const { flags, positionals } = scanFlags(argv, FLAGS);
-  if (positionals.length > 0) {
-    throw new Error(`unexpected argument: ${positionals.join(' ')}`);
-  }
-  const values = valueFlagMap(flags);
-
-  const pr = requireValue(values, 'pr');
-  if (!/^[1-9]\d*$/.test(pr)) {
-    throw new Error(`--pr must be a positive integer, got '${pr}'`);
-  }
-
-  return {
-    bodyFile: values['body-file'],
-    deletionStrategy: requireMember(values, 'delete', DELETION_STRATEGIES),
-    prNumber: Number(pr),
-    strategy: requireMember(values, 'strategy', STRATEGIES),
-    titleFile: values['title-file'],
-  };
-}
-
-/**
- * Reads the title and checks the body file for the strategies that use them: `squash` needs both, `merge` needs the
- * body, and `rebase` needs neither. Throws when a file that the strategy needs is not given, absent, or empty.
- *
- * @internal - Exported to allow testing.
- */
-export function readRequest(args: ParsedArgs): MergeRequest {
-  const needsBody = args.strategy !== 'rebase';
-  const needsTitle = args.strategy === 'squash';
-
-  let title: string | undefined;
-  if (needsTitle) {
-    title = readTitle(args.titleFile);
-  }
-  if (needsBody) {
-    if (args.bodyFile === undefined) {
-      throw new Error(`--body-file is required for --strategy ${args.strategy}`);
-    }
-    if (!isNonEmptyFile(args.bodyFile)) {
-      throw new Error(`Body file missing or empty: ${args.bodyFile}`);
-    }
-  }
-
-  return {
-    bodyPath: needsBody ? args.bodyFile : undefined,
-    deletionStrategy: args.deletionStrategy,
-    prNumber: args.prNumber,
-    strategy: args.strategy,
-    title,
-  };
-}
-
 // region | Helpers
 
 /**
@@ -155,6 +96,61 @@ function isNonEmptyFile(path: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * Parses the helper's argv. Throws on an unknown flag, a positional argument, a missing required flag, or a value
+ * outside its set.
+ */
+function parseArgs(argv: readonly string[]): ParsedArgs {
+  const { flags, positionals } = scanFlags(argv, FLAGS);
+  if (positionals.length > 0) {
+    throw new Error(`unexpected argument: ${positionals.join(' ')}`);
+  }
+  const values = valueFlagMap(flags);
+
+  const pr = requireValue(values, 'pr');
+  if (!/^[1-9]\d*$/.test(pr)) {
+    throw new Error(`--pr must be a positive integer, got '${pr}'`);
+  }
+
+  return {
+    bodyFile: values['body-file'],
+    deletionStrategy: requireMember(values, 'delete', DELETION_STRATEGIES),
+    prNumber: Number(pr),
+    strategy: requireMember(values, 'strategy', STRATEGIES),
+    titleFile: values['title-file'],
+  };
+}
+
+/**
+ * Reads the title and checks the body file for the strategies that use them: `squash` needs both, `merge` needs the
+ * body, and `rebase` needs neither. Throws when a file that the strategy needs is not given, absent, or empty.
+ */
+function readRequest(args: ParsedArgs): MergeRequest {
+  const needsBody = args.strategy !== 'rebase';
+  const needsTitle = args.strategy === 'squash';
+
+  let title: string | undefined;
+  if (needsTitle) {
+    title = readTitle(args.titleFile);
+  }
+  if (needsBody) {
+    if (args.bodyFile === undefined) {
+      throw new Error(`--body-file is required for --strategy ${args.strategy}`);
+    }
+    if (!isNonEmptyFile(args.bodyFile)) {
+      throw new Error(`Body file missing or empty: ${args.bodyFile}`);
+    }
+  }
+
+  return {
+    bodyPath: needsBody ? args.bodyFile : undefined,
+    deletionStrategy: args.deletionStrategy,
+    prNumber: args.prNumber,
+    strategy: args.strategy,
+    title,
+  };
 }
 
 /** Reads the title file, dropping one trailing newline. Throws when the file is not given, absent, or empty. */
