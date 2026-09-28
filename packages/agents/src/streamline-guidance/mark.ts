@@ -2,8 +2,8 @@
  * The review marker that one streamlining run appends to the deployed-size records.
  *
  * The marker names each reviewed document by its content-root-relative POSIX path, which is the join that a size
- * report runs against the current deployment's authored provenance. It carries no source name, because a source's
- * name comes from the consumer's declaration rather than from the content root.
+ * report runs against the current deployment's authored provenance. It does not contain a source name, because a
+ * source's name comes from the consumer's declaration rather than from the content root.
  */
 import path from 'node:path';
 
@@ -79,7 +79,7 @@ const MarkInputSchema = z.object({
   files: z.array(z.string().min(1)),
 });
 
-/** The POSIX path of a file within its innermost content root, or undefined for one in no content root. */
+/** The POSIX path of a file within its innermost content root, or undefined for one outside every content root. */
 function relativizeToContentRoot(file: string, contentRoots: readonly string[]): string | undefined {
   const contentRoot = findContentRoot(file, contentRoots);
   return contentRoot === undefined ? undefined : path.relative(contentRoot, file).split(path.sep).join('/');

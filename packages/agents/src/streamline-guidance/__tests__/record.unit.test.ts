@@ -51,7 +51,7 @@ describe(composeRecord, () => {
 });
 
 describe(parseFold, () => {
-  it('if a declined cut names no class, throws', () => {
+  it('if a declined cut does not name a class, throws', () => {
     const json = JSON.stringify({ declinedAt: '2026-09-10', declined: [{ file: GUIDE, phrase: 'Intro sentence.' }] });
 
     expect(() => parseFold(json)).toThrow(/Invalid fold: declined\.0\.class/);

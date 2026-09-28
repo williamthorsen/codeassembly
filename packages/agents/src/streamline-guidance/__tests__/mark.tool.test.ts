@@ -62,7 +62,7 @@ describe(runMark, () => {
     }
   });
 
-  it('reports a file in no content root and keeps the rest of the marker', async () => {
+  it('reports a file outside every content root and keeps the rest of the marker', async () => {
     const result = await runMark({
       cwd: repository,
       home,

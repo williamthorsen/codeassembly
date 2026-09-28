@@ -150,7 +150,7 @@ describe(check, () => {
       expectFinding('<pre><code>line one\nline two</code></pre>', 'pre-multiline');
     });
 
-    it('does not flag inline <code> containing a newline (no <pre> wrapper)', () => {
+    it('does not flag inline <code> containing a newline (without a <pre> wrapper)', () => {
       const result = check('<p><code>line one\nline two</code></p>');
       if (result.ok) return;
       expect(result.findings.find((entry) => entry.rule === 'pre-multiline')).toBeUndefined();
@@ -191,7 +191,7 @@ describe(check, () => {
   describe('documented parser limitations', () => {
     // The parser.ts header documents these limitations.
 
-    it('tokenizes tag-shaped content inside HTML comments as real tags (no comment handling)', () => {
+    it('tokenizes tag-shaped content inside HTML comments as real tags (the parser does not handle comments)', () => {
       expectFinding('<p>before <!-- <strong><code>x</code></strong> --> after</p>', 'composition-code-inline-mark');
     });
 

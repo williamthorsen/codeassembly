@@ -239,7 +239,7 @@ describe(runResolve, () => {
       expect(result.targets[0]).not.toHaveProperty('deployedBytes');
     });
 
-    it('omits the field for a file that lies in no content root', async () => {
+    it('omits the field for a file that lies outside every content root', async () => {
       const result = expectSuccess(await resolve('AGENTS.md'));
 
       expect(result.targets).toHaveLength(1);

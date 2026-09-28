@@ -51,12 +51,12 @@ export interface GuidanceFile {
   /**
    * The bytes that the file deploys: for a file that deploys as a document, its size once its includes are expanded;
    * for one that deploys only inside the documents that include it, its own size times the number of documents that
-   * it reaches. Absent for a file that lies in no content root, and for one whose includes cannot be expanded.
+   * it reaches. Absent for a file that lies outside every content root, and for one whose includes cannot be expanded.
    */
   deployedBytes?: number;
   /** Whether git reports uncommitted changes to the file, including an untracked file. */
   dirty: boolean;
-  /** Line ranges that a deployment rewrites, such as an ambient region, inside which no cut may fall. */
+  /** Line ranges that a deployment rewrites, such as an ambient region, inside which a run may not cut. */
   generatedRegions: LineRange[];
   /** The path as the caller named it, when that path was a deployed copy of this file. */
   redirectedFrom?: string;
@@ -91,7 +91,7 @@ export interface MarkSuccess {
   reviewed: string[];
   /** Absolute paths of the records that the marker was appended to. */
   records: string[];
-  /** Named files lying in no content root, which the marker does not name. */
+  /** Named files lying outside every content root, which the marker does not name. */
   unrooted: string[];
 }
 
