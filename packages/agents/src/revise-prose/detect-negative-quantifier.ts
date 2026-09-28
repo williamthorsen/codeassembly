@@ -4,7 +4,8 @@
  * The construction is `no` used as a determiner, in any position: a verb's object ("publishes no build output"), after
  * an existential "there is" ("there's no Vercel CLI"), the subject of a relative clause ("a field that no test names"),
  * or a sentence's subject ("No file is written"). A `no` reads as a determiner when a word follows it without clause
- * punctuation between them, and that word neither ends a noun phrase nor completes a fixed phrase such as `no longer`.
+ * punctuation between them, and that word neither ends a noun phrase, nor completes a fixed phrase such as `no longer`,
+ * nor is a comparative that `than` follows.
  *
  * Detection is over-inclusive: Precision is the agent's, which adjudicates each candidate with the sentence in view.
  * A candidate is rejected here only where a reading cannot change the answer: a fixed phrase opened by `no`, the
@@ -52,9 +53,6 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 
 /** Forms of *be* that open an existential clause after `there`. */
 const BE_FORMS: ReadonlySet<string> = new Set(['are', 'be', 'been', 'being', 'is', 'was', 'were']);
-
-/** Comparatives that complete a fixed phrase after `no` only when `than` follows them: `no more than`. */
-const COMPARATIVE_FOLLOWERS: ReadonlySet<string> = new Set(['fewer', 'less', 'more']);
 
 /** Contractions that open an existential clause on their own: `there's no`. */
 const EXISTENTIAL_CONTRACTIONS: ReadonlySet<string> = new Set(['there’re', 'there’s', "there're", "there's"]);
@@ -236,7 +234,8 @@ function isDeterminer(tokens: readonly Token[], quantifierIndex: number): boolea
   if (next === undefined || next.afterBreak || isPhraseBreaker(next.word) || FIXED_FOLLOWERS.has(next.word)) {
     return false;
   }
-  return !(COMPARATIVE_FOLLOWERS.has(next.word) && tokens[quantifierIndex + 2]?.word === 'than');
+  // A word that `than` follows is a comparative that `no` modifies: `no more than`, `no stronger than`.
+  return tokens[quantifierIndex + 2]?.word !== 'than';
 }
 
 /**

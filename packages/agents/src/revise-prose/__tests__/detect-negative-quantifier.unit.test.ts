@@ -130,6 +130,7 @@ describe(detectNegativeQuantifiers, () => {
       'It reads no more than ten files.',
       'It reads no less than ten files.',
       'It reads no fewer than ten files.',
+      'A claim is no stronger than what the change delivers.',
     ])('skips the fixed phrase in "%s"', (sentence) => {
       expect(detect(sentence)).toEqual([]);
     });
