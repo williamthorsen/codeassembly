@@ -68,7 +68,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.size).toBe(0);
   });
 
-  it('skips a skill that targets no harness to which the run deploys', async () => {
+  it('skips a skill that does not target any harness to which the run deploys', async () => {
     const skill = await writeSkill(contentDir, 'rovo-only', '<!-- guidance-hook: impl -->\n', ['rovo']);
 
     const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);
@@ -76,7 +76,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.has('impl')).toBe(false);
   });
 
-  it('omits a hook declared by no deployed body', async () => {
+  it('omits a hook not declared by any deployed body', async () => {
     const skill = await writeSkill(contentDir, 'implement-plan', 'Write the code.\n');
 
     const declared = await listDeclaredGuidanceHooks([skill], [], HARNESS_IDS);

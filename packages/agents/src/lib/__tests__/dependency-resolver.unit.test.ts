@@ -20,7 +20,7 @@ describe(resolveClosure, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  it('passes through directly-declared leaf artifacts that declare no dependencies', async () => {
+  it('passes through directly-declared leaf artifacts that do not declare any dependencies', async () => {
     await writeArtifact(contentDir, 'skill', 'people-report');
     await writeArtifact(contentDir, 'subagent', 'canary');
 
@@ -117,7 +117,7 @@ describe(resolveClosure, () => {
     expect(closure.subagents.toSorted()).toEqual(['canary']);
   });
 
-  it('includes a newly added artifact in @library with no edit to the collection', async () => {
+  it('includes a newly added artifact in @library without an edit to the collection', async () => {
     await writeArtifact(contentDir, 'skill', 'people-report');
     await writeArtifact(contentDir, 'collection', 'all', '@library');
 
@@ -467,7 +467,7 @@ describe(resolveClosure, () => {
       expect(closure.rulebooks.toSorted()).toEqual(['library-dep', 'source-book', 'source-dep']);
     });
 
-    it('throws naming every searched location when a slug resolves from no source or the library', async () => {
+    it('throws naming every searched location when a slug does not resolve from any source or the library', async () => {
       const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir);
 
       const searched = resolveClosure({ rulebook: ['ghost'] }, resolver);
