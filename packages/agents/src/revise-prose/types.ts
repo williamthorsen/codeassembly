@@ -37,15 +37,11 @@ export interface EmDashCandidate extends CandidateBase {
   rule: 'em-dash';
 }
 
-/** One over-inclusive site: a head noun whose relative clause may take a subject opened by `no`. */
+/** One over-inclusive site: a sentence containing at least one `no` read as a determiner. */
 export interface NegativeQuantifierCandidate extends CandidateBase {
   rule: 'negative-quantifier';
-  /** The head noun that the relative clause modifies. */
-  head: string;
-  /** The noun phrase after `no`, as matched. */
-  subject: string;
-  /** The finite verb that closes the subject. */
-  verb: string;
+  /** The position of each determiner `no` in the sentence, in reading order, which points at the likeliest repair. */
+  positions: NegativeQuantifierPosition[];
 }
 
 /** One over-inclusive site: a head noun whose relative clause may be missing its relativizer. */
@@ -254,6 +250,12 @@ export interface ProseSpan {
   /** The prose, stripped of the syntax that delimited it. */
   text: string;
 }
+
+/**
+ * Where a determiner `no` stands: after an existential "there is", as the subject of a relative clause on a head noun,
+ * or anywhere else, such as a verb's object or a sentence's subject.
+ */
+export type NegativeQuantifierPosition = 'existential' | 'relative' | 'other';
 
 /** The embedded subject's form, in the order the rulebook ranks it: worst first. */
 export type SubjectShape = 'quantified' | 'definite' | 'bare' | 'pronoun';
