@@ -157,16 +157,16 @@ Three sections, in this order. Return nothing else, and write no file.
 - type: feat
   scopes: [agents, kb]
   breaking: false
-  text: Adds the store-qualified wikilink `[[store:Note title]]`, which `kb check` resolves against the named store.
+  text: "Adds the store-qualified wikilink `[[store:Note title]]`, which `kb check` resolves against the named store."
 - type: fix
   scopes: [agents]
   breaking: false
-  text: Stops `codeassembly sync` from deleting a subagent that the run had just written.
+  text: "Stops `codeassembly sync` from deleting a subagent that the run had just written."
 - type: drop
   scopes: [kb]
   breaking: true
-  text: Removes the `kb find` alias of `kb search`.
-  migration: Replace `kb find` with `kb search`, which exits nonzero when nothing matches.
+  text: "Removes the `kb find` alias of `kb search`."
+  migration: "Replace `kb find` with `kb search`, which exits nonzero when nothing matches."
 ```
 
 ## Report
@@ -174,7 +174,7 @@ Three sections, in this order. Return nothing else, and write no file.
 {One line per source that you could not read, naming the source and what you drafted from instead. `None.` when you read them all.}
 ````
 
-Every entry declares `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are quoted when YAML would otherwise mis-parse the value, and a colon followed by a space is the case that most often requires it.
+Every entry declares `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are always double-quoted, with each `"` and `\` inside escaped by a backslash: Unquoted, a colon followed by a space mis-parses the value, and a space followed by `#` opens a comment that drops the rest of the text without an error.
 
 On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading contains every replacement, whether its passage was an entry's `text`, an entry's `migration`, or the lede, and a redispatch returns no `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence contains an entry's `text`, an entry's `migration`, or the lede and nothing else, and a replacement is the same kind of passage as the one that it replaces; the caller places each one and keeps every other field.
 
