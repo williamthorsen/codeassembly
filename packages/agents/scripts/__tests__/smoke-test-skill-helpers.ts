@@ -31,6 +31,7 @@ import { makeKbCurateSmokeTest } from '../test-utils/make-kb-curate-smoke-test.t
 import { makeKbEditSmokeTest } from '../test-utils/make-kb-edit-smoke-test.ts';
 import { makeKbRetrieveEventsSmokeTest } from '../test-utils/make-kb-retrieve-events-smoke-test.ts';
 import { makeKbUpdateEventsSmokeTest } from '../test-utils/make-kb-update-events-smoke-test.ts';
+import { makeMergeGhPrSmokeTest } from '../test-utils/make-merge-gh-pr-smoke-test.ts';
 import { makeRelayHookEventSmokeTest } from '../test-utils/make-relay-hook-event-smoke-test.ts';
 import { makeReviseProseSmokeTest } from '../test-utils/make-revise-prose-smoke-test.ts';
 import { makeSelectLedeExemplarsSmokeTest } from '../test-utils/make-select-lede-exemplars-smoke-test.ts';
@@ -51,6 +52,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   'src/kb-edit/cli.ts': makeKbEditSmokeTest(),
   'src/kb-retrieve-events/cli.ts': makeKbRetrieveEventsSmokeTest(),
   'src/kb-update-events/cli.ts': makeKbUpdateEventsSmokeTest(),
+  'src/merge-gh-pr/cli.ts': makeMergeGhPrSmokeTest(),
   'src/relay-hook-event/cli.ts': makeRelayHookEventSmokeTest(),
   'src/revise-prose/cli.ts': makeReviseProseSmokeTest(),
   'src/select-lede-exemplars/cli.ts': makeSelectLedeExemplarsSmokeTest(),
