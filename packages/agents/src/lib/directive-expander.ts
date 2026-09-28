@@ -173,7 +173,7 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
   }
 }
 
-/** Builds the error reported for a line that uses `include:` syntax in no recognized shape. */
+/** Builds the error reported for a line that uses `include:` syntax in an unrecognized shape. */
 function buildUnrecognizedParameterError(filePath: string, lineNumber: number, line: string): DirectiveExpansionError {
   return new DirectiveExpansionError(
     `Include directive has unrecognized parameter: ${filePath}:${lineNumber} line="${line}" reason=unrecognized-parameter`,
@@ -188,8 +188,8 @@ function buildUnrecognizedParameterError(filePath: string, lineNumber: number, l
 function resolveTarget(filePath: string, contentDir: string, target: string, lineNumber: number): string {
   const resolved = path.resolve(path.dirname(filePath), target);
 
-  // Containment is lexical: a symlink under `contentDir` pointing outside is not realpath'd, since a source tree holds
-  // no symlinks. Widen this guard if that changes.
+  // Containment is lexical: a symlink under `contentDir` pointing outside is not realpath'd, since a source tree does
+  // not contain any symlinks. Widen this guard if that changes.
   const relative = path.relative(contentDir, resolved);
   if (relative.startsWith('..') || path.isAbsolute(relative)) {
     throw new DirectiveExpansionError(
@@ -211,8 +211,8 @@ function resolveTarget(filePath: string, contentDir: string, target: string, lin
 /**
  * Expands a partial file and substitutes its `<!-- children -->` placeholder with the
  * caller's slot content (recursively expanded). Returns the expanded partial as an array
- * of lines (no trailing-newline normalization). Throws `slot-without-children` when the
- * caller provided slot content but the partial has no placeholder.
+ * of lines (without trailing-newline normalization). Throws `slot-without-children` when
+ * the caller provided slot content but the partial does not contain a placeholder.
  *
  * `visited` is the caller's cycle-detection set, threaded through to `expandFile` so that a cycle reached through the
  * slot path throws.
@@ -257,7 +257,7 @@ async function expandPartialWithSlot(
 
 /**
  * Appends lines either to the top of the open-frame stack (accumulating slot content) or
- * to the output buffer when no frame is open. `filePath` is included in invariant-failure
+ * to the output buffer when the stack is empty. `filePath` is included in invariant-failure
  * messages so that a runaway invariant violation points at the file under expansion.
  */
 function appendLines(

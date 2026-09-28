@@ -6,7 +6,7 @@ import type { HarnessConfig } from './types.ts';
 
 /**
  * Reads the subagent frontmatter overlay that one harness applies to the content root at `contentDir`, returning an
- * empty string when the file is absent. A root shipping no overlay therefore contributes no `_defaults` and no
+ * empty string when the file is absent. A root without an overlay therefore does not contribute `_defaults` or a
  * per-agent override, which makes the merge source-scoped.
  */
 export async function loadHarnessOverlay(contentDir: string, harnessConfig: HarnessConfig): Promise<string> {

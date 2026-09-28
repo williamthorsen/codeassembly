@@ -6,7 +6,7 @@ import { EntrySchema } from './codeassembly-schema.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
 import { isRecord } from './type-guards.ts';
 
-/** The artifacts on which one artifact depends, grouped by type. An absent type contributes no edge. */
+/** The artifacts on which one artifact depends, grouped by type. An absent type does not contribute an edge. */
 export type ArtifactDependencies = Partial<Record<ArtifactType, ReadonlyArray<string>>>;
 
 /** A collection's constituents: the computed whole library, or an explicit per-type edge set. */
@@ -25,8 +25,8 @@ for (const meta of Object.values(ARTIFACT_TYPES)) {
  * Reads a non-collection artifact's `dependencies:` frontmatter block -- the prerequisite edges that resolution
  * follows transitively. The block groups slugs by their plural type key (`rulebooks`, `skills`, `subagents`, `collections`);
  * each entry is a bare slug or a `{ name }` object (extra keys tolerated). Absent frontmatter, an absent block, or a
- * null value all resolve to no dependencies. A `members:` key is collections-only and throws here; an unknown type
- * key or a non-list value also throws. Every error names `sourceLabel` when provided.
+ * null value all resolve to an empty set of dependencies. A `members:` key is collections-only and throws here; an
+ * unknown type key or a non-list value also throws. Every error names `sourceLabel` when provided.
  */
 export function readDependencies(content: string, sourceLabel?: string): ArtifactDependencies {
   const { lines } = parseFrontmatter(content);
@@ -65,8 +65,8 @@ export function readInjectedRulebooks(content: string, sourceLabel?: string): Re
 /**
  * Reads a subagent's top-level `skills:` frontmatter -- the runtime injection list that the harness loads into the
  * subagent's context. Each entry is a bare slug or a `{ name }` object (extra keys tolerated). Absent frontmatter,
- * an absent `skills:` key, or a null value all resolve to no injected skills. A non-list value throws, naming
- * `sourceLabel` when provided.
+ * an absent `skills:` key, or a null value all resolve to an empty list of injected skills. A non-list value
+ * throws, naming `sourceLabel` when provided.
  */
 export function readInjectedSkills(content: string, sourceLabel?: string): ReadonlyArray<string> {
   return readInjectionList(content, 'skills', sourceLabel);
@@ -118,9 +118,9 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
 
 /**
  * Parses a per-type block (`rulebooks`/`skills`/`subagents`/`collections` → slug lists) into edges. Each entry is a
- * bare slug or a `{ name }` object (extra keys tolerated); a null sub-key contributes no edges of that type.
- * `errorPrefix` opens each message so that the caller names its own key (`dependencies:` or `members:`). Throws on an
- * unknown type key or a non-list value.
+ * bare slug or a `{ name }` object (extra keys tolerated); a null sub-key does not contribute any edges of that
+ * type. `errorPrefix` opens each message so that the caller names its own key (`dependencies:` or `members:`). Throws
+ * on an unknown type key or a non-list value.
  */
 function parseTypeBlock(block: Record<string, unknown>, errorPrefix: string): ArtifactDependencies {
   const edges: { [Type in ArtifactType]?: ReadonlyArray<string> } = {};
@@ -129,7 +129,8 @@ function parseTypeBlock(block: Record<string, unknown>, errorPrefix: string): Ar
     if (type === undefined) {
       throw new Error(`${errorPrefix}: unknown type "${key}"; expected one of ${Object.keys(TYPE_BY_KEY).join(', ')}.`);
     }
-    // A sub-key with no list (`skills:`, e.g. all entries commented out) declares no edges of that type, not an error.
+    // A sub-key without a list (`skills:`, e.g. all entries commented out) does not declare any edges of that type,
+    // and it is not an error.
     if (value === null) {
       continue;
     }
@@ -144,7 +145,7 @@ function parseTypeBlock(block: Record<string, unknown>, errorPrefix: string): Ar
 
 /**
  * Reads one top-level injection list, whose entries are bare slugs or `{ name }` objects (extra keys tolerated).
- * Absent frontmatter, an absent key, and a null value all resolve to no entries; a non-list value throws.
+ * Absent frontmatter, an absent key, and a null value all resolve to an empty list; a non-list value throws.
  */
 function readInjectionList(content: string, key: string, sourceLabel?: string): ReadonlyArray<string> {
   const { lines } = parseFrontmatter(content);
