@@ -33,7 +33,7 @@ describe('emitEvent', () => {
     expect(parsed).toMatchObject({ event: 'run_started' });
   });
 
-  it('injects a timestamp if the event has no t field', async () => {
+  it('injects a timestamp if the event does not have a t field', async () => {
     const runDir = await createRunDir();
     await emitEvent({
       runDir,

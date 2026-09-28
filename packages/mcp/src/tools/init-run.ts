@@ -60,8 +60,8 @@ export function sanitizeTicketId(ticketId: string): string {
  * The artifact base directory comes from `resolveBaseDir`, which takes
  * `baseDir` as an override. Runs are stored at
  * `{artifactBase}/projects/{projectSlug}/tickets/{ticketId}/{runId}/`.
- * When no ticket ID is provided, one is generated from the date and a random
- * suffix. A caller-supplied ticket ID is sanitized before use.
+ * When the caller does not provide a ticket ID, one is generated from the date
+ * and a random suffix. A caller-supplied ticket ID is sanitized before use.
  */
 export async function initRun(input: InitRunInput): Promise<InitRunResult> {
   const { ticketId, projectSlug, projectRoot, branch, task, pipeline, models, config, baseDir } = input;
