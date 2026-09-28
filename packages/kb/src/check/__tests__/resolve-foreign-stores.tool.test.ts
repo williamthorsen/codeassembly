@@ -45,7 +45,7 @@ describe(resolveForeignStores, () => {
     expect((await resolveOne('journal', makeRegistry({ journal: target }), 'private')).status).toBe('resolved');
   });
 
-  it('reports a name that matches no registry entry as unknown', async () => {
+  it("reports a name that doesn't match any registry entry as unknown", async () => {
     expect((await resolveOne('nowhere', makeRegistry({}), 'private')).status).toBe('unknown');
   });
 
@@ -101,7 +101,7 @@ async function resolveOne(
 ): Promise<ForeignStore> {
   const resolved = await resolveForeignStores({ prefixes: [prefix], registry, sourceVisibility });
   const store = resolved.get(prefix);
-  if (store === undefined) throw new Error(`no entry resolved for "${prefix}"`);
+  if (store === undefined) throw new Error(`resolveForeignStores did not record an entry for "${prefix}"`);
   return store;
 }
 

@@ -24,7 +24,7 @@ describe(formatKbSelection, () => {
     expect(text).not.toContain('coding  (current default)');
   });
 
-  it('marks (none) as current when no default is set', () => {
+  it('marks (none) as current when the default is unset', () => {
     const text = formatKbSelection(entries, undefined);
 
     expect(text).toContain('(none): no default  (current)');

@@ -88,7 +88,7 @@ describe('kb scaffold', () => {
     expect(await pathExists(join(store, CONFIG_FILE))).toBe(true);
   });
 
-  it('exits 2 when no .kb/ directory is found', async () => {
+  it("exits 2 when a .kb/ directory isn't found", async () => {
     const empty = await makeTempDir('kb-scaffold-empty-');
 
     const result = await run({ argv: ['scaffold'], cwd: empty });
@@ -107,7 +107,7 @@ describe('kb scaffold', () => {
     expect(result.stderr).toContain('does not match any registered knowledge base');
   });
 
-  it('exits 2 for a registered path containing no .kb/, writing nothing there', async () => {
+  it("exits 2 for a registered path that doesn't contain a .kb/, writing nothing there", async () => {
     const bare = await makeTempDir('kb-scaffold-bare-');
     const home = await makeTempDir('kb-scaffold-home-');
     await seedRegistry(getRegistryPathFor(home), `kbs:\n  phantom:\n    path: ${bare}\n`);

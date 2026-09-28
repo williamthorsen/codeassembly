@@ -60,9 +60,9 @@ kbs:
     description: Shared team knowledge base
 ```
 
-The top-level `default_kb` key names the machine's default knowledge base: the single KB that searches and discovery-based writes fall back on when no store is named or discovered. `capture-event` writes there only when explicitly selected with `--store @default`, never by omission. It must name an entry under `kbs`; a value that matches none fails the load. Set, change, or clear it from the command line with `kb set-default`.
+The top-level `default_kb` key names the machine's default knowledge base: the single KB that searches and discovery-based writes fall back on when a store is neither named nor discovered. `capture-event` writes there only when explicitly selected with `--store @default`, never by omission. It must name an entry under `kbs`; a value that matches none fails the load. Set, change, or clear it from the command line with `kb set-default`.
 
-The top-level `feedback_kb` key names the knowledge base that receives feedback about agent guidance: the KB read by the pass that refines that guidance. `capture-event` writes there on `--store @feedback`, and refuses when the key is unset. It follows the same rules as `default_kb`: It must name an entry under `kbs`, and a value that matches none fails the load. No command sets it; edit the registry file.
+The top-level `feedback_kb` key names the knowledge base that receives feedback about agent guidance: the KB read by the pass that refines that guidance. `capture-event` writes there on `--store @feedback`, and refuses when the key is unset. It follows the same rules as `default_kb`: It must name an entry under `kbs`, and a value that matches none fails the load. The `kb` command doesn't have a subcommand that sets it; edit the registry file.
 
 Configuration keys, per KB entry under `kbs.<name>`:
 
@@ -97,7 +97,7 @@ const config = await loadKbRegistry({ projectDir: process.cwd() });
 - `addressed-by` (on the problem record, available on `assertion` and `event`) is the canonical, recall-facing field: a list of references to whatever addressed the problem. It is the only viable store when the responder is external, so its entries are heterogeneous: a KB wikilink or relative path, a commit SHA, a PR/issue ref, or a URL. The field's shape is validated as a list by the record parser, while its entries are free-form, like `sources`. It is set on events with `kb-update-events` and on assertions with `kb-edit`.
 - `addresses` (on a KB-note responder, available on `assertion`) is the optional inverse for the rare "what does this address?" query. It is **non-authoritative**: keeping it in sync would be an N-file write, so `kb-curate` deliberately does not enforce it.
 
-The relation is many-to-many (one response can address many problems, and one problem can accrue many responses) and recall reports it flat, with no chain-walking. This is distinct from `supersedes`/`superseded-by`, which _deprecates_ a record through an enforced 1:1 chain; an addressed problem is not deprecated. It remains a true observation whose recurrence is worth keeping.
+The relation is many-to-many (one response can address many problems, and one problem can accrue many responses) and recall reports it flat, without walking chains. This is distinct from `supersedes`/`superseded-by`, which _deprecates_ a record through an enforced 1:1 chain; an addressed problem is not deprecated. It remains a true observation whose recurrence is worth keeping.
 
 ## Frontmatter parsing and writing
 
@@ -130,7 +130,7 @@ const findings = checkVaultIntegrity(notes);
 
 ## Checking a store
 
-`check({ kbRoot })` runs a store's full check in one call: It loads `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`, enumerates the notes that the config selects (inside a git working tree, the enumeration drops [ignored notes](#ignored-notes)), and composes whole-vault integrity and taxonomy drift with the `tag-alias` and `paths` lints. It performs no frontmatter validation; record types own that at write time. It returns **both** the enumerated notes and the findings, so that a consumer can layer its own detectors over the same enumeration without walking the store twice.
+`check({ kbRoot })` runs a store's full check in one call: It loads `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`, enumerates the notes that the config selects (inside a git working tree, the enumeration drops [ignored notes](#ignored-notes)), and composes whole-vault integrity and taxonomy drift with the `tag-alias` and `paths` lints. It doesn't validate frontmatter; record types own that at write time. It returns **both** the enumerated notes and the findings, so that a consumer can layer its own detectors over the same enumeration without walking the store twice.
 
 ```ts
 import { check } from '@williamthorsen/kb/check';
@@ -138,7 +138,7 @@ import { check } from '@williamthorsen/kb/check';
 const { notes, findings } = await check({ kbRoot });
 ```
 
-No subpath exports the lints, so `check`, and the `kb check` command built on it, is the only way to run them. Two type-blind per-note lints catch what write-time record validation can't: `tag-alias` (warning) reports alias-vocabulary drift, and `paths.user-home` (error) reports a hardcoded `/Users/{name}/` path in captured content. The `taxonomy.*` rules, all warnings, report drift between a store's assertion folders and its declared taxonomy (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Their findings have `scope: 'vault'`: They describe the store rather than any one note. A consumer that narrows a report to selected notes must keep them rather than filter them out by path.
+The package doesn't export the lints from any subpath, so `check`, and the `kb check` command built on it, is the only way to run them. Two type-blind per-note lints catch what write-time record validation can't: `tag-alias` (warning) reports alias-vocabulary drift, and `paths.user-home` (error) reports a hardcoded `/Users/{name}/` path in captured content. The `taxonomy.*` rules, all warnings, report drift between a store's assertion folders and its declared taxonomy (see [`.kb/taxonomy.yaml`](#the-declared-structure-kbtaxonomyyaml)). Their findings have `scope: 'vault'`: They describe the store rather than any one note. A consumer that narrows a report to selected notes must keep them rather than filter them out by path.
 
 A structural defect in any loaded file throws a `KbLoaderError` (see below). Any other error from enumeration or the checks propagates unchanged.
 
@@ -169,29 +169,29 @@ Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `
 
 #### Ignored notes
 
-When the store is in a git working tree, the repository's ignore rules narrow the selection further. A note is enumerated when git tracks it, or when no ignore rule covers it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: Such a link is broken for every clone but the author's. This lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
+When the store is in a git working tree, the repository's ignore rules narrow the selection further. A note is enumerated when git tracks it, or when the repository's ignore rules don't cover it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: Such a link is broken for every clone but the author's. This lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
 
-A store outside a git working tree, or a machine with no git, keeps the filesystem walk alone. When the repository ignores every note that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting an empty note set as clean.
+A store outside a git working tree, or a machine without git installed, keeps the filesystem walk alone. When the repository ignores every note that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting an empty note set as clean.
 
 ### Linking into another store
 
-A wikilink names a store by qualifying its target: `[[fde:Note title]]` resolves `Note title` in the store registered as `fde`, whereas a bare `[[Note title]]` stays inside the store being checked. A qualifier is recognized only when the text before the first colon is non-empty and contains no whitespace and no `/`, so a title that happens to contain a colon resolves whole.
+A wikilink names a store by qualifying its target: `[[fde:Note title]]` resolves `Note title` in the store registered as `fde`, whereas a bare `[[Note title]]` stays inside the store being checked. A qualifier is recognized only when the text before the first colon is non-empty and doesn't contain whitespace or `/`, so a title that happens to contain a colon resolves whole.
 
 Direction is decided by `visibility`: A link may point at a store as shareable as its own or more so, never at a less shareable one. A private note may therefore link to the share-safe assertion from which its detail was stripped, while the reverse is refused, because a note's title tends to be its claim and a link into a private store discloses that claim through the link itself.
 
-Only the stores that a run's own links name are consulted, and each is enumerated under its own `targets`/`exclude` and its own repository's ignore rules, reading note paths alone. A run whose links qualify no store reads no registry.
+Only the stores that a run's own links name are consulted, and each is enumerated under its own `targets`/`exclude` and its own repository's ignore rules, reading note paths alone. A run whose links don't qualify any store doesn't read the registry.
 
 | Rule                            | Severity | Reported when                                                                       |
 | ------------------------------- | -------- | ----------------------------------------------------------------------------------- |
 | `wikilinks.disallowed-store`    | error    | The named store is less shareable than the one being checked                        |
 | `wikilinks.registry-unloadable` | error    | A run with qualified links could not load `kb.yaml`; vault-scoped, reported once    |
 | `wikilinks.store-unavailable`   | warning  | The named store is registered but could not be read here, so the link is unverified |
-| `wikilinks.unknown-store`       | error    | No `kb.yaml` entry declares the named store                                         |
-| `wikilinks.unresolved`          | error    | The named store contains no note of that basename                                   |
+| `wikilinks.unknown-store`       | error    | `kb.yaml` doesn't declare the named store                                           |
+| `wikilinks.unresolved`          | error    | The named store doesn't contain a note of that basename                             |
 
 `wikilinks.store-unavailable` is a warning rather than an error because a store absent from this machine leaves its links unverifiable rather than broken: A correct link should not fail a check run on a machine that has not cloned the target.
 
-A run that reports `wikilinks.registry-unloadable` reports nothing per link. No store was looked up, so whether one is registered is undetermined, and naming each link would send the reader to fix a registration that may already be correct.
+A run that reports `wikilinks.registry-unloadable` reports nothing per link. The run didn't look up any store, so whether one is registered is undetermined, and naming each link would send the reader to fix a registration that may already be correct.
 
 ### The declared structure: `.kb/taxonomy.yaml`
 
@@ -213,11 +213,11 @@ Keys are relative to `content/assertions/` and may nest to any depth. Parents ar
 
 An absent taxonomy, and one present but declaring nothing, are both valid and report nothing, so the rules apply only to a store that has adopted a taxonomy. Three warnings report drift once one has:
 
-| Rule                  | Meaning                                            |
-| --------------------- | -------------------------------------------------- |
-| `taxonomy.undeclared` | A folder contains notes but no domain declares it. |
-| `taxonomy.unused`     | A declared domain has no note at or beneath it.    |
-| `taxonomy.orphan`     | A declared domain's parent is undeclared.          |
+| Rule                  | Meaning                                                 |
+| --------------------- | ------------------------------------------------------- |
+| `taxonomy.undeclared` | A folder contains notes but isn't declared as a domain. |
+| `taxonomy.unused`     | A declared domain doesn't have a note at or beneath it. |
+| `taxonomy.orphan`     | A declared domain's parent is undeclared.               |
 
 A domain counts as used when any note lives at or beneath it, so a grouping domain that contains only subfolders is not reported unused. A domain inside a `config.exclude` subtree is exempt from `taxonomy.unused`, since its notes are never enumerated.
 
@@ -252,7 +252,7 @@ The check config is serialized from the in-package `defaultKbConfig` and the Pre
 
 The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. `--description` sets the new entry's description, and requires registration: combining it with `--no-register` is a usage error. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, which tidies a registry that has drifted out of order as stores are added. `kb create` refuses to overwrite: It exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered. Use `kb scaffold` to add canonical files to a store that already exists.
 
-`kb create` also keeps a default knowledge base set. When the registry's top-level `default_kb` pointer is unset and the new store is the only registered KB, it becomes the default. When other KBs are already registered with no default, `kb create` prompts for one on an interactive terminal, and points to `kb set-default` when stdin is not interactive. An existing `default_kb` is never overwritten.
+`kb create` also keeps a default knowledge base set. When the registry's top-level `default_kb` pointer is unset and the new store is the only registered KB, it becomes the default. When other KBs are already registered and `default_kb` is unset, `kb create` prompts for one on an interactive terminal, and points to `kb set-default` when stdin is not interactive. An existing `default_kb` is never overwritten.
 
 ### kb scaffold
 
@@ -266,9 +266,9 @@ kb scaffold --force          # replace every canonical file with a fresh seed
 
 The canonical set is the one that `kb create` writes, defined once and shared by both commands so that neither can drift from the other. `.kb/taxonomy.yaml` is not part of it: `kb taxonomy init` derives that file's content from the notes that a store already contains rather than writing a fixed template.
 
-An existing file is left untouched unless `--force` is given, which replaces it with a fresh seed and discards any edits. A directory has no content to replace, so `--force` governs files alone. The command reports each canonical path as `created`, `present`, or `replaced`.
+An existing file is left untouched unless `--force` is given, which replaces it with a fresh seed and discards any edits. A directory doesn't have content to replace, so `--force` governs files alone. The command reports each canonical path as `created`, `present`, or `replaced`.
 
-Store resolution matches `kb check`: the nearest ancestor `.kb/` directory, or a `--kb <name>` entry in the merged `kb.yaml` registry. The command exits 2 on three grounds: no store resolves, the registry marks the resolved store `readonly`, or the resolved path contains no `.kb/`. The last keeps the command to back-filling a store rather than creating one, which is `kb create`'s job; a registry entry names a path without proving a store is there.
+Store resolution matches `kb check`: the nearest ancestor `.kb/` directory, or a `--kb <name>` entry in the merged `kb.yaml` registry. The command exits 2 on three grounds: the store doesn't resolve, the registry marks the resolved store `readonly`, or the resolved path doesn't contain a `.kb/`. The last keeps the command to back-filling a store rather than creating one, which is `kb create`'s job; a registry entry names a path without proving a store is there.
 
 ### kb set-default
 
@@ -280,11 +280,11 @@ kb set-default --none   # clear default_kb
 kb set-default          # list the registered KBs and choose interactively
 ```
 
-With a name, it sets `default_kb` to that KB, exiting 2 if the name is not registered. With `--none`, it clears the pointer. With no arguments on an interactive terminal, it lists the registered KBs, marking the current default and offering a `(none)` option, and writes the choice; cancelling with an empty line leaves the registry unchanged. With no arguments on a non-interactive stdin, it exits 2 rather than hanging. Writes resolve against and target the user-global registry only, and preserve existing comments and formatting.
+With a name, it sets `default_kb` to that KB, exiting 2 if the name is not registered. With `--none`, it clears the pointer. Without arguments on an interactive terminal, it lists the registered KBs, marking the current default and offering a `(none)` option, and writes the choice; cancelling with an empty line leaves the registry unchanged. Without arguments on a non-interactive stdin, it exits 2 rather than hanging. Writes resolve against and target the user-global registry only, and preserve existing comments and formatting.
 
 ### kb check
 
-`kb check` validates a store's notes and reports the findings. With no path arguments it checks every note; path arguments or `--vs` scope the run to a subset.
+`kb check` validates a store's notes and reports the findings. Without path arguments it checks every note; path arguments or `--vs` scope the run to a subset.
 
 ```bash
 kb check                       # check every note in the nearest ancestor .kb/ store
@@ -299,20 +299,20 @@ kb check --vs=main             # check only the notes changed since a ref
 
 **Targeting.** Path arguments and `--vs` each scope the run to a subset of notes; they are mutually exclusive, and both compose with `--kb` and `--json`. Cross-note rules always resolve against the whole store, and a store-qualified link against the whole store that it names, so a targeted run never misreports a link to an unselected note; only the report and the exit code narrow to the selection.
 
-- **`[paths...]`**: One or more glob patterns, files, or directories (store-root-relative). Because the command expands globs itself, a quoted glob behaves the same as a shell-expanded one. A directory checks every note beneath it. A path that matches no note is a usage error, unless it names a real non-note (a README, a triage note, or a file that `exclude` or git rules out), which is skipped silently.
+- **`[paths...]`**: One or more glob patterns, files, or directories (store-root-relative). Because the command expands globs itself, a quoted glob behaves the same as a shell-expanded one. A directory checks every note beneath it. A path that doesn't match any note is a usage error, unless it names a real non-note (a README, a triage note, or a file that `exclude` or git rules out), which is skipped silently.
 - **`--vs <ref>`**: The notes changed between the working tree and the merge-base of `<ref>` and HEAD. The diff follows renames (checking the destination), includes uncommitted edits to tracked notes, and excludes deletions, so a `git mv`-heavy migration batch reports the notes that it actually touched.
 
 Because the exit code reflects only the selected notes, a per-batch or pre-commit gate can pass while the rest of the vault still has a migration backlog.
 
 Exit codes:
 
-| Code | Meaning                                                                                                                                  |
-| ---- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `0`  | No error-severity findings in the checked notes (warnings are allowed). A run that selects no notes also exits 0.                        |
-| `1`  | One or more error-severity findings in the checked notes.                                                                                |
-| `2`  | A usage error, an unresolvable store or `--vs` ref, a path matching no note, or a malformed `config`, `tag-aliases`, or `taxonomy` file. |
+| Code | Meaning                                                                                                                                             |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`  | No error-severity findings in the checked notes (warnings are allowed). A run that doesn't select any notes also exits 0.                           |
+| `1`  | One or more error-severity findings in the checked notes.                                                                                           |
+| `2`  | A usage error, an unresolvable store or `--vs` ref, a path that doesn't match any note, or a malformed `config`, `tag-aliases`, or `taxonomy` file. |
 
-A finding with `scope: 'vault'` describes the store rather than any one note, so it is reported under every run, including a targeted one, a `--vs` one, and one that matched no notes at all. The taxonomy rules are the ones that produce them.
+A finding with `scope: 'vault'` describes the store rather than any one note, so it is reported under every run, including a targeted one, a `--vs` one, and one that didn't match any notes at all. The taxonomy rules are the ones that produce them.
 
 ### kb taxonomy
 
@@ -324,20 +324,20 @@ kb taxonomy init --kb coding # back-fill the named store from the kb.yaml regist
 kb taxonomy init --merge     # add only the domains that an existing taxonomy omits
 ```
 
-Every derived domain is written under `provisional:` with no description: The command cannot invent descriptions, and provisional already means "declared, not yet reviewed". Because the derivation reads the same enumeration that `kb check` reads, a back-filled store reports no taxonomy drift.
+Every derived domain is written under `provisional:` without a description: The command cannot invent descriptions, and provisional already means "declared, not yet reviewed". Because the derivation reads the same enumeration that `kb check` reads, a back-filled store doesn't report any taxonomy drift.
 
 Without `--merge`, a store that already declares a taxonomy is left untouched and the command exits 2.
 
 ## Formatting a knowledge base
 
-A knowledge base is formatted by Prettier, invoked directly. kb owns the configuration and scaffolds it; it does not run the formatter and does not bundle one. A store therefore needs Prettier available on the machine and the two config files that `kb create` and `kb scaffold` write, and nothing else: no `package.json`, no lockfile, and no linter or TypeScript configuration.
+A knowledge base is formatted by Prettier, invoked directly. kb owns the configuration and scaffolds it; it does not run the formatter and does not bundle one. A store therefore needs Prettier available on the machine and the two config files that `kb create` and `kb scaffold` write, and nothing else: It doesn't need a `package.json`, a lockfile, or a linter or TypeScript configuration.
 
 ```bash
 prettier --write .   # format the store
 prettier --check .   # report drift without writing
 ```
 
-Prettier 3 reads `.gitignore` and `.prettierignore` by default, so neither command needs a flag to skip what the repository ignores, and it loads a config file from a directory containing no `package.json`.
+Prettier 3 reads `.gitignore` and `.prettierignore` by default, so neither command needs a flag to skip what the repository ignores, and it loads a config file from a directory that doesn't contain a `package.json`.
 
 ### The two config files
 
@@ -363,7 +363,7 @@ Prettier reads this file, and so does every editor that supports EditorConfig, w
 
 The `[*.md]` exemption is the one entry that is not self-explanatory. Two trailing spaces are a hard line break in Markdown, and Prettier preserves them; an editor trimming trailing whitespace on save would destroy a break that the formatter deliberately keeps.
 
-`.prettierrc.yaml` contains the one setting that `.editorconfig` has no key for:
+`.prettierrc.yaml` contains the one setting for which `.editorconfig` doesn't have a key:
 
 ```yaml
 embeddedLanguageFormatting: off
@@ -382,12 +382,12 @@ A store that keeps a `package.json` only to obtain Prettier can retire it.
 3. Delete `package.json`, the lockfile, `pnpm-workspace.yaml`, `.npmrc`, and any `eslint.config.*`, `tsconfig.json`, and dependency-upgrade config. Delete the superseded `.prettierrc.*` too; keep `.prettierignore` if it names anything still present.
 4. Check that `.editorconfig` still governs the width. Prettier reads it for every key that the Prettier config leaves unset, so a store whose `max_line_length` disagrees with the canonical 120 formats to its own value, and two stores that disagree format differently.
 5. Repoint the pre-commit hook. A hook running `pnpm exec prettier --write {staged_files}` becomes `prettier --write {staged_files}`. Under lefthook, `stage_fixed: true` continues to apply. Note that lefthook was installed by `package.json`'s `prepare` script, so it now needs installing on the machine and enabling in the store with `lefthook install`.
-6. Repoint CI. A workflow calling `pnpm run check` needs a command that assumes no `package.json`: `prettier --check .`, plus `kb check` for the store's own rules.
+6. Repoint CI. A workflow calling `pnpm run check` needs a command that doesn't assume a `package.json`: `prettier --check .`, plus `kb check` for the store's own rules.
 7. Format once: `prettier --write .`. Commit the result on its own, so that the reformatting does not obscure later diffs.
 
 A store with its own note checker needs one more step before it is retired: compare its rules against what `kb check` covers, and port anything missing. `kb check` validates wikilinks, tag aliases, hardcoded home paths, and taxonomy drift, and deliberately leaves frontmatter validity to the record types that own it at write time.
 
-A store with no `package.json` runs steps 1, 2, and 7, and skips 3 through 6: It has nothing to retire, only Prettier to install, the config to adopt, and a first format to run.
+A store without a `package.json` runs steps 1, 2, and 7, and skips 3 through 6: It has nothing to retire, only Prettier to install, the config to adopt, and a first format to run.
 
 ## Error and exception model
 

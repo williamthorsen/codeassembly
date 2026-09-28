@@ -31,7 +31,7 @@ describe('kb taxonomy init', () => {
     );
   });
 
-  it('leaves the back-filled store with no taxonomy findings', async () => {
+  it('leaves the back-filled store without taxonomy findings', async () => {
     const store = await makeStore(POPULATED);
 
     await run({ argv: ['taxonomy', 'init'], cwd: store });
@@ -127,7 +127,7 @@ describe('kb taxonomy init', () => {
     expect(result.exitCode).toBe(0);
   });
 
-  it('writes nothing for a store whose assertion folders contain no notes', async () => {
+  it("writes nothing for a store whose assertion folders don't contain any notes", async () => {
     const store = await makeStore({ 'content/assertions/Loose.md': VALID });
 
     const result = await run({ argv: ['taxonomy', 'init'], cwd: store });
@@ -146,7 +146,7 @@ describe('kb taxonomy init', () => {
     expect(result.stderr).toContain('taxonomy.yaml');
   });
 
-  it('exits 2 when no .kb/ directory is found', async () => {
+  it("exits 2 when a .kb/ directory isn't found", async () => {
     const empty = await makeTempDir('kb-taxonomy-empty-');
 
     const result = await run({ argv: ['taxonomy', 'init'], cwd: empty });
@@ -164,7 +164,7 @@ describe('kb taxonomy init', () => {
     expect(result.stderr).toContain('unknown subcommand');
   });
 
-  it('exits 2 when no subcommand is given', async () => {
+  it("exits 2 when a subcommand isn't given", async () => {
     const store = await makeStore(POPULATED);
 
     const result = await run({ argv: ['taxonomy'], cwd: store });

@@ -28,8 +28,8 @@ export interface CheckResult {
 /**
  * Runs the store's config-driven check: load `.kb/config.yaml`, `.kb/tag-aliases.yaml`, and `.kb/taxonomy.yaml`,
  * enumerate notes under the config's `targets`/`exclude`, and compose whole-vault integrity and taxonomy drift with
- * the type-blind per-note lints across them. Frontmatter validity is owned by the record types at write time, so no
- * frontmatter re-validation runs here.
+ * the type-blind per-note lints across them. Frontmatter validity is owned by the record types at write time, so
+ * the check doesn't re-validate frontmatter here.
  *
  * A `[[store:Target]]` link resolves against the store named by its prefix rather than this one. Those stores are looked
  * up in the merged `kb.yaml` registry, which is read from `~/.agents/kb.yaml` and from `cwd`'s project-local registry.
@@ -89,8 +89,8 @@ function registryFindings(error: string | undefined): Finding[] {
 }
 
 /**
- * Looks up the stores that a run's links qualify. A run whose links name none reads no registry at all, so a store that
- * makes no cross-store link neither performs the lookup nor reports a defect in a registry elsewhere on the
+ * Looks up the stores that a run's links qualify. A run whose links name none doesn't read the registry at all, so a
+ * store without cross-store links neither performs the lookup nor reports a defect in a registry elsewhere on the
  * machine.
  */
 async function resolveQualifiedStores(input: {
@@ -118,7 +118,10 @@ async function resolveQualifiedStores(input: {
   return { foreignStores };
 }
 
-/** Names the registry in a finding's `path`, which no single file on disk stands for once the two tiers are merged. */
+/**
+ * Names the registry in a finding's `path`, which doesn't stand for any single file on disk once the two tiers are
+ * merged.
+ */
 const KB_REGISTRY_LABEL = 'kb.yaml';
 
 // endregion | Helpers

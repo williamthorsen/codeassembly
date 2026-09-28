@@ -268,7 +268,7 @@ describe('kb create', () => {
     expect(config.defaultKb).toBeUndefined();
   });
 
-  it('still succeeds with no default when the picker is cancelled', async () => {
+  it('still succeeds without setting a default when the picker is cancelled', async () => {
     const cwd = await makeTempDir('kb-cli-store-');
     const home = await makeTempDir('kb-cli-home-');
     await seedRegistry(getRegistryPathFor(home), 'kbs:\n  existing:\n    path: /abs/existing\n');
@@ -281,7 +281,7 @@ describe('kb create', () => {
     expect(config.defaultKb).toBeUndefined();
   });
 
-  it('leaves an existing default unchanged and announces no default', async () => {
+  it("leaves an existing default unchanged and doesn't announce a default", async () => {
     const cwd = await makeTempDir('kb-cli-store-');
     const home = await makeTempDir('kb-cli-home-');
     await seedRegistry(getRegistryPathFor(home), 'default_kb: existing\nkbs:\n  existing:\n    path: /abs/existing\n');

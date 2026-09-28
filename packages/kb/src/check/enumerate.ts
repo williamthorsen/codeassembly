@@ -42,18 +42,18 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
 }
 
 /**
- * Walks a KB root and parses every note whose KB-root-relative path matches a `config.targets` glob and no
- * `config.exclude` glob into an {@link EnumeratedNote}.
+ * Walks a KB root and parses every note whose KB-root-relative path matches a `config.targets` glob and doesn't match
+ * any `config.exclude` glob into an {@link EnumeratedNote}.
  *
  * Because matching uses `picomatch` with `dot:false`, dot-prefixed directories (`.kb`, `.git`, `.agents`) are excluded
  * implicitly without naming them in `exclude`. The walk prunes the tree to each target's leading literal segment
- * (`content/**` descends only into `content/`); a target with no leading literal (e.g. `**\/*.md`) falls back to a
+ * (`content/**` descends only into `content/`); a target without a leading literal (e.g. `**\/*.md`) falls back to a
  * full walk. Excludes are honored during descent so that an excluded subtree is never entered.
  *
  * If the store is in a git working tree, the enumeration keeps only the notes that git tracks and the untracked
- * notes that no ignore rule covers. A note that the repository ignores is therefore neither enumerated nor available
- * as a wikilink target, so a link pointing at one resolves to nothing. A store outside a working tree, or a machine
- * with no git, keeps what the walk alone found.
+ * notes that the repository's ignore rules don't cover. A note that the repository ignores is therefore neither
+ * enumerated nor available as a wikilink target, so a link pointing at one resolves to nothing. A store outside a
+ * working tree, or a machine without git installed, keeps what the walk alone found.
  *
  * Notes with malformed or absent frontmatter are kept: `readNoteContent` records the parse error in `error` and
  * returns an empty field map rather than throwing, so that they remain valid wikilink targets. A note that cannot be
@@ -106,7 +106,7 @@ async function collectNoteLocations(input: { kbRoot: string; config: KbConfig })
 
 /**
  * Derives the top-level directory names to descend into from the targets' leading literal segments. A target whose
- * first segment is a literal (`content/**\/*.md` → `content`) contributes that name; a target with no leading literal
+ * first segment is a literal (`content/**\/*.md` → `content`) contributes that name; a target without a leading literal
  * (a glob-first pattern like `**\/*.md` or `*.md`) forces a full walk, signalled by returning `undefined`.
  */
 function leadingLiteralSegments(targets: readonly string[]): ReadonlySet<string> | undefined {
