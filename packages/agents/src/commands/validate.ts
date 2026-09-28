@@ -60,7 +60,7 @@ async function resolveContentRoot(content: string | undefined, cwd: string): Pro
       throw error;
     }
     throw new Error(
-      `No content root to validate: There is no package.json at ${manifestPath}. Pass --content <dir>, or run from a package that declares "codeassembly": { "content": "<dir>" }.`,
+      `No content root to validate: ${manifestPath} doesn't exist. Pass --content <dir>, or run from a package that declares "codeassembly": { "content": "<dir>" }.`,
       { cause: error },
     );
   }
@@ -68,7 +68,7 @@ async function resolveContentRoot(content: string | undefined, cwd: string): Pro
   const declared = findContentPath(manifestPath, parseManifest(manifestPath, raw));
   if (declared === undefined) {
     throw new Error(
-      `No content root to validate: ${manifestPath} declares no "codeassembly": { "content": "<dir>" } key. Pass --content <dir>, or add the key.`,
+      `No content root to validate: ${manifestPath} doesn't declare a "codeassembly": { "content": "<dir>" } key. Pass --content <dir>, or add the key.`,
     );
   }
   return path.resolve(cwd, declared);

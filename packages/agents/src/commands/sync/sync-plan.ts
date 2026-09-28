@@ -12,7 +12,7 @@ import type { SizeReportOutcome } from './record-deployed-sizes.ts';
 import type { HarnessSkillTarget, HarnessSubagentTarget } from './render-contexts.ts';
 import type { SourceSupportPlan } from './source-support.ts';
 
-/** A scope with no `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
+/** A scope without a `codeassembly.yaml` to act on, and the tier whose remedy the report names. */
 export interface MissingDeclaration {
   readonly kind: 'no-declaration';
   readonly declarationPath: string;
@@ -73,7 +73,7 @@ export interface SyncPlan {
    * there.
    */
   readonly sourceSupportPlans: ReadonlyArray<SourceSupportPlan>;
-  /** Namespace paths under each target's support root that no declared source claims. */
+  /** Namespace paths under each target's support root not claimed by any declared source. */
   readonly sourceSupportRetractions: ReadonlyArray<string>;
   readonly promptsYmlPaths: ReadonlyArray<string>;
   /** Declared sources whose directory does not exist, and so contribute nothing to resolution. */

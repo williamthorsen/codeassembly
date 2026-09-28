@@ -33,8 +33,8 @@ export async function planSourceSupportRetractions(
 
 /**
  * Delivers each source's skill support entries into that source's namespace under every targeted harness's skills dir,
- * then retracts the namespaces that no declared source claims. Delivery runs first so that a source that dropped its
- * last support entry leaves an empty namespace root for the retraction to retire in the same pass.
+ * then retracts the namespaces not claimed by any declared source. Delivery runs first so that a source that dropped
+ * its last support entry leaves an empty namespace root for the retraction to retire in the same pass.
  */
 export async function reconcileSourceSupport(
   targets: ReadonlyArray<HarnessSkillTarget>,
@@ -43,8 +43,8 @@ export async function reconcileSourceSupport(
   for (const plan of plans) {
     await deploySourceSupport(plan.destDir, plan.entries);
   }
-  // Rooted in the targets rather than the plans: A run that declares no source has no plans, and its support roots
-  // are exactly the ones whose every namespace is now undeclared.
+  // Rooted in the targets rather than the plans: A run that doesn't declare any source doesn't have any plans, and
+  // its support roots are exactly the ones whose every namespace is now undeclared.
   for (const sourcesRoot of resolveSupportRoots(targets)) {
     await retractUndeclaredSourceSupport(sourcesRoot, resolveSupportOutcome(plans, sourcesRoot));
   }
