@@ -60,7 +60,7 @@ describe('configure-hooks', () => {
       expect(config).toContain('on_session_start');
     });
 
-    it('prints snippets for every harness when no harness home exists', async () => {
+    it("prints snippets for every harness when the harness homes don't exist", async () => {
       using silent = silenceConsole(['info']);
       await configureHooksCommand({ harness: 'all', print: true }, tempDir);
       const output = silent.info.mock.calls.map((call) => String(call[0])).join('\n');

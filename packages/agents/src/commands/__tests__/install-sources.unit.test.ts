@@ -103,7 +103,7 @@ describe('install with declared sources', () => {
     );
   });
 
-  it('deploys from the library alone when no declaration exists', async () => {
+  it("deploys from the library alone when the project doesn't declare any sources", async () => {
     using _silent = silenceConsole(['info', 'warn']);
     await installCommand(makeOptions(), tempDir, contentDir);
 
@@ -209,7 +209,7 @@ describe('install with declared sources', () => {
 
   // A template contains the ambient region into which `sync --global` writes. Install deploys one that omits it,
   // leaving the region's absence for sync to classify and report.
-  it('deploys a source template containing no ambient region', async () => {
+  it('deploys a source template without an ambient region', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       claudeGuidance: { 'CLAUDE.md': 'Org claude preamble, no ambient region.\n' },
     });

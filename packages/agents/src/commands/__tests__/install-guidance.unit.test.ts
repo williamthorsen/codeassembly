@@ -53,7 +53,7 @@ describe('guidance installation', () => {
   /**
    * Recreates what a previous version left behind: a `~/.agents/AGENTS.md` and the `shared` manifest tier tracking it.
    * `contentOnDisk` writes different bytes than the tracked hash records, which is how a hand-modified copy is staged;
-   * `linked` records the entry as a `--link` symlink, whose fate no drift check governs.
+   * `linked` records the entry as a `--link` symlink, whose fate isn't governed by any drift check.
    */
   async function seedRetiredSharedGuidance(
     options: { contentOnDisk?: string; linked?: boolean } = {},
@@ -105,7 +105,7 @@ describe('guidance installation', () => {
       expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
-    it('removes a tracked copy when no harness home directories exist', async () => {
+    it("removes a tracked copy when the harness home directories don't exist", async () => {
       const retiredPath = await seedRetiredSharedGuidance();
 
       await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
@@ -114,7 +114,7 @@ describe('guidance installation', () => {
       expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
-    it('removes a tracked symlink, which contains no content to preserve', async () => {
+    it("removes a tracked symlink, which doesn't contain any content to preserve", async () => {
       await setupClaudeHome();
       const retiredPath = await seedRetiredSharedGuidance({ linked: true });
 
@@ -169,7 +169,7 @@ describe('guidance installation', () => {
       expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
-    it('removes a tracked copy when no harness home directories exist', async () => {
+    it("removes a tracked copy when the harness home directories don't exist", async () => {
       const retiredPath = await seedRetiredSharedGuidance();
 
       await uninstallCommand({ harness: 'all', force: false }, tempDir);
@@ -460,7 +460,7 @@ describe('guidance installation', () => {
         installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, fakeContentDir),
       ).rejects.toMatchObject({ name: 'DirectiveExpansionError', reason: 'not-found' });
 
-      // No harness guidance file should be written in dry-run mode regardless of the failure.
+      // Dry-run mode shouldn't write any harness guidance file, regardless of the failure.
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
 
@@ -480,7 +480,7 @@ describe('guidance installation', () => {
   describe('unresolvable in-body anchors', () => {
     const DEAD_ANCHOR_BODY = '# Fixture guidance\n\nSee [the events](#lifecycle-events).\n';
 
-    it('fails a dry run on a harness guidance file whose anchor names no heading, writing nothing', async () => {
+    it("fails a dry run on a harness guidance file whose anchor doesn't name any heading, writing nothing", async () => {
       const badContentDir = path.join(tempDir, 'bad-content');
       await buildContentTree(badContentDir, { harnessGuidance: { claude: { 'CLAUDE.md': DEAD_ANCHOR_BODY } } });
       const claudeHome = await setupClaudeHome();
