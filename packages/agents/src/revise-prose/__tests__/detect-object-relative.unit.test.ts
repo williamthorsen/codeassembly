@@ -148,7 +148,7 @@ describe(detectObjectRelatives, () => {
       },
     );
 
-    it('passes over a modal carrying no lexical verb', () => {
+    it('passes over a modal not followed by any lexical verb', () => {
       expect(detect('Reports whether the file the parser should.')).toStrictEqual([]);
     });
 
@@ -182,7 +182,7 @@ describe(detectObjectRelatives, () => {
     it.each([
       { sentence: 'Declares the version the consumer has for this kit.', verb: 'has' },
       { sentence: 'Reports the check it does on every run.', verb: 'does' },
-    ])("reads a $verb carrying no lexical verb as the clause's own", ({ sentence, verb }) => {
+    ])("reads a $verb not followed by any lexical verb as the clause's own", ({ sentence, verb }) => {
       const candidates = detect(sentence);
 
       expect(candidates).toHaveLength(1);
@@ -193,7 +193,7 @@ describe(detectObjectRelatives, () => {
       { sentence: 'Reports the state it found.', verb: 'found' },
       { sentence: 'Reports a message the console never wrote.', verb: 'wrote' },
       { sentence: 'Reports the ticket the branch name held.', verb: 'held' },
-    ])('reads $verb, an irregular past tense that no suffix marks', ({ sentence, verb }) => {
+    ])('reads $verb, an irregular past tense not marked by any suffix', ({ sentence, verb }) => {
       const candidates = detect(sentence);
 
       expect(candidates).toHaveLength(1);
@@ -342,7 +342,7 @@ describe(detectObjectRelatives, () => {
     it.each([
       { sentence: 'That is the consent these checks rest on.', verb: 'rest' },
       { sentence: 'The report names the baseline the values sit above.', verb: 'sit' },
-    ])('rescues a verb that no lexicon holds: $verb', ({ sentence, verb }) => {
+    ])("rescues a verb absent from the detector's lexicons: $verb", ({ sentence, verb }) => {
       const candidates = detect(sentence);
 
       expect(candidates).toHaveLength(1);
@@ -399,7 +399,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('The double is the throwing mock it is today.')).toStrictEqual([]);
     });
 
-    it('passes over a degree question, whose predicate is no head noun', () => {
+    it('passes over a degree question, whose predicate is not a head noun', () => {
       expect(detect('Nobody said how big the problem is.')).toStrictEqual([]);
     });
 
@@ -453,7 +453,7 @@ describe(detectObjectRelatives, () => {
     it.each([
       'The sweep covers the sources this prose about the idioms lists.',
       'The sweep covers the sources this prose about the idioms lists in the appendix.',
-    ])('passes over a verb stranding no clause-final preposition: %s', (sentence) => {
+    ])('passes over a verb that does not strand a clause-final preposition: %s', (sentence) => {
       expect(detect(sentence)).toStrictEqual([]);
     });
 
@@ -559,7 +559,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('The ticket that the branch name encodes is the value it reports.')).toHaveLength(1);
     });
 
-    it('passes over a main clause, whose determiner reaches no noun before the verb', () => {
+    it('passes over a main clause, whose determiner does not reach a noun before the verb', () => {
       expect(detect('An unset shell variable expands to the empty string.')).toStrictEqual([]);
     });
 
@@ -567,7 +567,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('The ticket a long and rather overqualified branch name encodes is unresolved.')).toStrictEqual([]);
     });
 
-    it('passes over a participial phrase, whose participle no determiner turns into a head noun', () => {
+    it('passes over a participial phrase, whose participle lacks a determiner to turn it into a head noun', () => {
       expect(detect('A package holding one drops it silently.')).toStrictEqual([]);
     });
 
@@ -628,7 +628,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ head: 'key', subject: 'an older one', verb: 'ignores' });
     });
 
-    it('keeps a pro-form subject that no comparative precedes', () => {
+    it('keeps a pro-form subject not preceded by a comparative', () => {
       const candidates = detect('The report names the source one names.');
 
       expect(candidates).toHaveLength(1);
@@ -655,15 +655,15 @@ describe(detectObjectRelatives, () => {
   });
 
   describe('inline code', () => {
-    it('reports no head noun drawn from a code span', () => {
+    it('does not report a head noun drawn from a code span', () => {
       expect(detectMasked('Supplies the `_defaults` the subagent frontmatter merge applies.')).toStrictEqual([]);
     });
 
-    it('reports no verb drawn from a code span', () => {
+    it('does not report a verb drawn from a code span', () => {
       expect(detectMasked('The directive uses `include` for that.')).toStrictEqual([]);
     });
 
-    it('reports no embedded subject drawn from a code span', () => {
+    it('does not report an embedded subject drawn from a code span', () => {
       expect(detectMasked("A note's `tags` include the store.")).toStrictEqual([]);
     });
 

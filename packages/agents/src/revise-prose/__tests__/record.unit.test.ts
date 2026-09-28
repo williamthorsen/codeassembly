@@ -62,7 +62,7 @@ describe(parseRecord, () => {
     ).toThrow(/ISO calendar date/);
   });
 
-  it('reads a rejection under a rule for which the helper has no detector', () => {
+  it('reads a rejection under a rule for which the helper does not have a detector', () => {
     const record = parseRecord(rejectionYaml({ rule: 'plain-speech' }), NO_VERSIONS);
 
     expect(record.rejections[0]?.rule).toBe('plain-speech');
@@ -417,7 +417,7 @@ describe(containsPhrase, () => {
     expect(containsPhrase(text, 'the source\n * it names')).toBe(true);
   });
 
-  it('finds no phrase that neither the prose nor the content contains', () => {
+  it('does not find a phrase that neither the prose nor the content contains', () => {
     const text = { prose: 'Resolves the source that it names.', content: '// Resolves the source that it names.' };
 
     expect(containsPhrase(text, 'the source it names')).toBe(false);
@@ -430,7 +430,7 @@ describe(listUnsweptRules, () => {
     ['sentence-case', '1'],
   ]);
 
-  it("lists no rule for a file under a recorded root at each rule's current version, with each available detector having run", () => {
+  it("returns an empty list for a file under a recorded root at each rule's current version, with each available detector having run", () => {
     const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage({ detected: false }) });
 
     expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual([]);
@@ -466,7 +466,7 @@ describe(listUnsweptRules, () => {
     ]);
   });
 
-  it('lists no rule for a run that versions no rule', () => {
+  it('returns an empty list for a run that does not version any rule', () => {
     const record = coveredRecord({ 'em-dash': coverage() });
 
     expect(listUnsweptRules(record, new Map(), hasEmDashDetector, 'docs/guide.md')).toStrictEqual([]);
@@ -492,7 +492,7 @@ describe(parseRunFold, () => {
     expect(() => parseRunFold(json)).toThrow(/positive integer/);
   });
 
-  it('refuses a fold that names no roots', () => {
+  it('refuses a fold that does not name any roots', () => {
     const rootless = Object.fromEntries(Object.entries(fold({})).filter(([key]) => key !== 'roots'));
 
     expect(() => parseRunFold(JSON.stringify(rootless))).toThrow(/roots/);
@@ -508,7 +508,7 @@ describe(isStaleRejection, () => {
     expect(isStaleRejection(rejection(), new Map([['em-dash', '1']]))).toBe(false);
   });
 
-  it('reports a rejection whose rule the run does not version as current, the run having no version to compare', () => {
+  it('reports a rejection whose rule the run does not version as current, the run not having a version to compare', () => {
     expect(isStaleRejection(rejection({ 'rule-version': '0' }), new Map())).toBe(false);
   });
 });
@@ -524,7 +524,7 @@ describe(selectPriorRejections, () => {
     ]);
   });
 
-  it('selects a rejection under a rule for which the helper has no detector', () => {
+  it('selects a rejection under a rule for which the helper does not have a detector', () => {
     const record: ProseRecord = { rules: {}, rejections: [rejection({ rule: 'plain-speech', 'rule-version': '6' })] };
 
     expect(selectPriorRejections(record, new Map([['plain-speech', '6']]), ['docs/guide.md'])).toHaveLength(1);
@@ -536,7 +536,7 @@ describe(selectPriorRejections, () => {
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
   });
 
-  it('withholds a rejection whose rule the run does not version, no version standing to re-open it', () => {
+  it('withholds a rejection whose rule the run does not version, since the run does not have a version that would re-open it', () => {
     const record: ProseRecord = { rules: {}, rejections: [rejection({ rule: 'sentence-case' })] };
 
     expect(selectPriorRejections(record, versions, ['docs/guide.md'])).toStrictEqual([]);
@@ -563,7 +563,7 @@ describe(stringifyRecord, () => {
     expect(parseRecord(stringifyRecord(record), NO_VERSIONS)).toStrictEqual(record);
   });
 
-  it('round-trips a rejection under a rule with no detector', () => {
+  it('round-trips a rejection under a rule without a detector', () => {
     const record = composeRecord(
       EMPTY,
       fold({
@@ -635,7 +635,7 @@ function coverage(overrides: Partial<RuleCoverage> = {}): RuleCoverage {
   return { version: '1', 'swept-at': '2026-09-01', detected: true, roots: ['.'], ...overrides };
 }
 
-/** Builds a record holding the given coverage and no rejection. */
+/** Builds a record holding the given coverage and an empty rejection list. */
 function coveredRecord(rules: ProseRecord['rules']): ProseRecord {
   return { rules, rejections: [] };
 }
@@ -652,7 +652,7 @@ function fold(overrides: Partial<RunFold>): RunFold {
   };
 }
 
-/** Builds a fold rejection, which declares no version; the helper derives it from the fold's entry for its rule. */
+/** Builds a fold rejection, which does not declare a version; the helper derives it from the fold's entry for its rule. */
 function foldRejection(overrides: Partial<FoldRejection> = {}): FoldRejection {
   return {
     rule: 'em-dash',
