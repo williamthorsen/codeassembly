@@ -121,7 +121,7 @@ When call extract_bare_number "feat/foo-2"
 The output should equal ""
 End
 
-It "returns empty when the branch contains no digits"
+It "returns empty when the branch does not contain any digits"
 When call extract_bare_number "main"
 The output should equal ""
 End
@@ -407,7 +407,7 @@ When call run_script
 The output should equal "MAC-147"
 End
 
-It "returns the bare number when no preferences file exists"
+It "returns the bare number when the preferences file does not exist"
 When run bash "$script" "42"
 The output should equal "42"
 The status should be success

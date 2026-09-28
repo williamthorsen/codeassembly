@@ -7,7 +7,7 @@
 # Arguments:
 #   BRANCH_NAME   Branch to extract from. Defaults to the current git branch.
 #
-# Output: The resolved ticket ID on stdout, or an empty string when no ID can be derived. Exit status is always 0.
+# Output: The resolved ticket ID on stdout, or an empty string when the script cannot derive an ID. Exit status is always 0.
 
 set -euo pipefail
 
@@ -59,7 +59,7 @@ read_ticket_ref_prefix() {
   line="${line#*ticket_ref_prefix:}"
   line="${line#"${line%%[![:space:]]*}"}"
 
-  # No value (`ticket_ref_prefix:`) or a comment-only value
+  # An empty value (`ticket_ref_prefix:`) or a comment-only value
   # (`ticket_ref_prefix: # note`) both resolve to empty.
   if [[ -z "$line" || "$line" == "#"* ]]; then
     return
@@ -96,7 +96,7 @@ format_bare_ticket_id() {
   fi
 }
 
-# Resolves a ticket ID for the given branch name, or returns empty when no pattern matches.
+# Resolves a ticket ID for the given branch name, or returns empty when the branch name does not match either pattern.
 extract_ticket_id() {
   local branch_name="$1"
   local ticket_id

@@ -3,7 +3,7 @@
 #
 # Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced on demand by the bundled `derive-session-context`
 # helper) for session-level fields and runs git for the rest. When the manifest is absent, the script invokes the
-# bundled deriver to create it, so a caller needs no precondition.
+# bundled deriver to create it, so a caller does not need to meet any precondition.
 #
 # Flags:
 #   --skill NAME              provenance.skill value (required in yaml mode).
