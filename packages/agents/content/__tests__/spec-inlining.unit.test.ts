@@ -122,7 +122,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     '🚀 **Implement** -> `implement-plan`',
     // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
     // enough to turn away: the round trip that the carve-out exists to prevent.
-    'Render option 3 as 🔬 Investigate, invoking no skill',
+    'Render option 3 as 🔬 Investigate, without invoking a skill',
     // The rule that a spike matches. Without it the cascade's feature-shaped rule 2 fails on an investigation and
     // falls through to rule 3, recommending the development pipeline for work that does not produce a diff.
     'rule 2 matches whenever rule 1 does not',
@@ -162,10 +162,10 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     'which revises acceptance criteria alone',
     // The trigger's computation order. Without it the sub-block renders off the compliance status rows again,
     // prompting for a ticket edit wherever a criterion's wording merely differs from what was built.
-    'Compute the delta first: An empty delta renders no sub-block',
+    'Compute the delta first: When it is empty, do not render the sub-block',
     // The carve-out for work that is unfinished rather than redirected. Without it a mid-implementation review
     // proposes dropping criteria that the branch has not reached yet, aligning the contract to a moving target.
-    'A criterion that is merely unbuilt contributes no line',
+    'A criterion that is merely unbuilt does not contribute a line',
     // Rule 2's ground for leaving the criteria alone. Without it a conflicting implementation already flagged by the
     // review gets the contract rewritten to match it, and the finding disappears along with the conflict.
     'revising the contract to match it',

@@ -30,7 +30,7 @@ const RULES: ReadonlyArray<TitleRule> = [
   { label: 'the imperative-voice contrast', pattern: /task-oriented/i },
   { label: 'the jargon prohibition', pattern: /coined to describe/i },
   { label: 'the no-backticks rule', pattern: /no backticks/i },
-  { label: 'the ticket-reference prohibition', pattern: /no ticket reference/i },
+  { label: 'the ticket-reference prohibition', pattern: /not contain a ticket reference/i },
 ];
 
 const AUTHORED_FILES = readAuthoredFiles();

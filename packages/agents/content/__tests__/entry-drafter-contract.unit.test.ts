@@ -128,7 +128,7 @@ const READER_PHRASES: ReadonlyArray<string> = ['uses the package and does not wo
  */
 const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   '`rejected` fence',
-  'a redispatch returns no `## lede` section',
+  'a redispatch does not return a `## lede` section',
   'one replacement per passage',
   'revise those passages and nothing else',
 ];
@@ -156,7 +156,7 @@ const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
  * sentence's opening capital still matches.
  */
 const SUPPORTING_EDIT_PHRASES: ReadonlyArray<string> = [
-  'a supporting edit is no outcome of its own',
+  'a supporting edit is not an outcome of its own',
   'the paths in which its outcome appears',
 ];
 

@@ -41,11 +41,11 @@ interface RulePin {
 const PINS = new Map<string, RulebookPin>([
   [
     'codeassembly-content-specification',
-    { bodyHash: 'b7a95790d02e301e0017a534d88bb24deac518612f4a67f3641cf8e5c08d7b0a', version: '24' },
+    { bodyHash: 'c60633ed692c42fe6ce70b46831f101db121610813c60e813b95400efe8ec601', version: '24' },
   ],
   [
     'commit-conventions',
-    { bodyHash: '2e1ce57bcd5a4eecf1a5e0d75b4383809d222a382a70ef4e6d8c7bd51ebb383b', version: '10' },
+    { bodyHash: '4f412f4c3c80dca26ca887e4138e17619aaeccbba2084d2053807b7f41e35634', version: '10' },
   ],
   [
     'generated-content-policy',
@@ -53,20 +53,20 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'live-worktree-policy',
-    { bodyHash: '968e7a5bcc19d7562ceb19c3c97163803e4c484c5dfc6cdcc4a1856f326d91aa', version: '2' },
+    { bodyHash: '3562a8832e8135553382d7251b0e2ce626495aa23c6d7829f65a31845ada0e08', version: '2' },
   ],
   [
     'readme-conventions',
-    { bodyHash: '52782185ccfb9035606eb01610e0332abc8c90684909daeaa70e3456cada3bf4', version: '2' },
+    { bodyHash: 'b9afef082bd1fbb8e16001eab2d447df70453114717c999292fdc7ffcb3376f2', version: '2' },
   ],
-  ['shell-conventions', { bodyHash: 'c19e983da4149b03d4a3105d2a9c115a8b5545f036d8cfcace21d0da03e8f073', version: '4' }],
+  ['shell-conventions', { bodyHash: '103a9cc7851e27d5f263e5f135d6ef48fac38490973c43e899bff9479ec6b078', version: '4' }],
   [
     'williamthorsen-code-layout-preferences',
-    { bodyHash: 'defa4f720cbd50e1fc8830ca0552e6b4ec8b623006f0101ed981124caa86823c', version: '6' },
+    { bodyHash: '619c042ceaa8c83758f18368339d0d03821aa35d02acf68a1fae22dacd79f45a', version: '6' },
   ],
   [
     'williamthorsen-collaboration-preferences',
-    { bodyHash: 'b2fdb4ea4ef9fe5b8d33884cddb289946eae86c782d611c8dc4df8e475db3102', version: '8' },
+    { bodyHash: 'f5cd279fa29869b2e373cf413c92a1a10bbea4e7373fceaadcd40e33a4f0b902', version: '8' },
   ],
   [
     'williamthorsen-comment-preferences',
@@ -78,19 +78,19 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-tooling-preferences',
-    { bodyHash: '01cee84a42f586f08d1290af2f051a8417edd63f13fa685f518cbb612af1613a', version: '2' },
+    { bodyHash: 'efa6049c58d791a952bbf772f5e4b67fce27b9daefa22f92e9ee51288d0350d0', version: '2' },
   ],
   [
     'williamthorsen-typescript-preferences',
-    { bodyHash: '9ae7ee862d8ae5c16a478b1d9c1a8f5a3d0642d5d78a69ee5ec2fd52bd656ee1', version: '4' },
+    { bodyHash: 'cd058c41986c8189c1bd5aa59e7a897e9b26e00d7b739c987f616e2814b9ba64', version: '4' },
   ],
   [
     'williamthorsen-workflow-preferences',
-    { bodyHash: '394999b3ae594812521b910268f9c82800dce50b597c510e1d4d85ac602e0389', version: '6' },
+    { bodyHash: '0c1678183827dda8f95785106560840479bcb52b8f6f7e62d3775bd3aaba6022', version: '6' },
   ],
   [
     'williamthorsen-writing-preferences',
-    { bodyHash: '5eb64f272934d221c795cd0e5e0c16da5e8d666ac70b582ea5712b677494ccaf', version: '9' },
+    { bodyHash: 'ec46bcbf1419ecd669076c129f6386fe7571a785eddc8fd7191320d320ac6c43', version: '9' },
   ],
 ]);
 
@@ -120,9 +120,9 @@ const RULE_PINS = new Map<string, RulePin>([
   ['line-wrapping', { sectionHash: '6cb583e22c0a9310f995e204516a15b7a06b0dd3edf6c5f386b6498727434fff', version: '1' }],
   [
     'reduced-object-relative',
-    { sectionHash: '4684e326f45433355e589b90c65fd0721fd779d98ebcef585e4ffc8288874220', version: '1' },
+    { sectionHash: 'b9bacdfc8ed42750f19bfae41dda9a07de29263b182e4e49d660876c886b780e', version: '1' },
   ],
-  ['second-person', { sectionHash: '398f568c087a8a004d17ac1eacf21e9bff800063c67b884a55d4d053d5d29015', version: '1' }],
+  ['second-person', { sectionHash: '5b5fa597c03587feb40ba41386593007c04370bd01eb4e042bccf8e1b9e46427', version: '1' }],
   ['sentence-case', { sectionHash: 'e19ffdafdd6eb84f47e229d07871a70ab55114981c8052b365f4bd33330d9b18', version: '1' }],
   ['so', { sectionHash: '2ed8a0d1f531d1d33778f9006214931528d13f0ccd79ad004a87d05e0ba97bf3', version: '1' }],
   ['where', { sectionHash: '95f7aa780c5110a9392d5377ad6078978a37dbfcd6ff631e7a884550c86aa67c', version: '1' }],

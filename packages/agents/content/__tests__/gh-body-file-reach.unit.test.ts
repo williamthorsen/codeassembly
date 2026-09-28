@@ -26,7 +26,7 @@ const CONTRACT_PHRASES: ReadonlyArray<string> = [
   CONTRACT_HEADLINE,
   'Name the file for its consumer.',
   'Assign the path and guard it inside the call that consumes it.',
-  'tool performs no shell expansion',
+  'tool does not perform shell expansion',
 ];
 
 /**

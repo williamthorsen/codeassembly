@@ -33,7 +33,7 @@ const RENDERING_PHRASES: ReadonlyArray<string> = [
   'one bullet per entry of that type',
   'order them by tier',
   'bare `#scope` tags',
-  'when every entry names the same scopes, no bullet ends with tags',
+  'when every entry names the same scopes, the bullets do not end with tags',
   'one nested list item, `migration: {migration}`',
 ];
 
