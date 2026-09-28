@@ -4,7 +4,7 @@ export interface ArtifactMarker {
   extractSlug(content: string): string | undefined;
   /**
    * Stamps the ownership marker into `content`, placed on its own line immediately after the frontmatter block.
-   * Idempotent; throws when `content` has no frontmatter block.
+   * Idempotent; throws when `content` does not have a frontmatter block.
    */
   injectMarker(content: string, slug: string): string;
 }
@@ -28,7 +28,7 @@ export function makeArtifactMarker(type: 'skill' | 'subagent'): ArtifactMarker {
     injectMarker(content: string, slug: string): string {
       const frontmatter = FRONTMATTER_PATTERN.exec(content)?.[1];
       if (frontmatter === undefined) {
-        throw new Error(`Cannot inject the ${type} ownership marker: The content has no frontmatter block.`);
+        throw new Error(`Cannot inject the ${type} ownership marker: The content does not have a frontmatter block.`);
       }
 
       const afterFrontmatter = content.slice(frontmatter.length).replace(leadingMarkerLinePattern, '');

@@ -26,7 +26,10 @@ export interface ResolvedDeclaration {
    * `node_modules`, which is filesystem work that the caller does.
    */
   readonly packages: ReadonlyArray<string>;
-  /** The names that a tier dropped and no higher tier re-adopted, distinguishing "declined" from "never mentioned". */
+  /**
+   * The names dropped by a tier and not re-adopted by any higher tier, distinguishing "declined" from "never
+   * mentioned".
+   */
   readonly declinedPackages: ReadonlyArray<string>;
   /**
    * Each bound hook name mapped to the rulebooks bound to it, in declaration order. A hook dropped by every binding is
@@ -47,8 +50,8 @@ export interface ResolvedDeclaration {
  * contributions before that tier is applied. Each type accumulates independently.
  *
  * Returns the direct, unexpanded sets: A declared collection appears in `collections`, not yet expanded into its
- * members; the caller passes the result to the closure resolver for that. Returns `undefined` when no
- * `codeassembly.yaml` exists anywhere in the chain: a total no-op for `sync`, distinct from a present-but-empty
+ * members; the caller passes the result to the closure resolver for that. Returns `undefined` when
+ * `codeassembly.yaml` does not exist anywhere in the chain: a total no-op for `sync`, distinct from a present-but-empty
  * declaration, which returns empty lists.
  *
  * `options.domain` names which tier pair the chain belongs to, deciding which keys the files may declare.

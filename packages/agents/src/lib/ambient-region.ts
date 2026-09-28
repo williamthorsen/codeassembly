@@ -3,8 +3,8 @@
  * `~/.claude/CLAUDE.md`). The region is delimited by `<!-- codeassembly-ambient:start -->` /
  * `<!-- codeassembly-ambient:end -->` markers. Its location is `install`'s authority (the guidance templates contain
  * an empty region); its content is `sync`'s (regenerated wholesale from the resolved ambient rulebooks on each run).
- * Every function is a pure string transform with no filesystem access, and every one depends on the host holding at
- * most one region.
+ * Every function is a pure string transform that does not access the filesystem, and every one depends on the host
+ * holding at most one region.
  */
 
 export const AMBIENT_OPEN_MARKER = '<!-- codeassembly-ambient:start -->';
@@ -28,8 +28,8 @@ const CLOSE_MARKER_LINE = /^<!-- codeassembly-ambient:end -->[ \t]*$/gm;
 /**
  * Appends a region containing `body` to `content`, separated from any existing text by a blank line. Content that is
  * blank yields the region alone. For a host that `sync` owns but did not necessarily create, this adds the region
- * without disturbing what the user wrote above it. The caller must have established that `content` contains no
- * region: Appending to content that already holds one produces a malformed host.
+ * without disturbing what the user wrote above it. The caller must have established that `content` does not
+ * contain a region: Appending to content that already holds one produces a malformed host.
  */
 export function appendAmbientRegion(content: string, body: string): string {
   const region = `${renderRegion(body)}\n`;
@@ -37,10 +37,11 @@ export function appendAmbientRegion(content: string, body: string): string {
 }
 
 /**
- * Reports whether `content` holds no markers, exactly one well-formed region, or a region that no transform may
- * touch. Malformed covers an unmatched marker, a close marker preceding its open, and any duplication: two regions,
- * or a stray marker beside a well-formed one. Each of those either destroys text on the next injection or leaves a
- * second region permanently stale, so they are one category: The caller must repair the host rather than write to it.
+ * Reports whether `content` doesn't hold any markers, holds exactly one well-formed region, or holds a region that a
+ * transform must not touch. Malformed covers an unmatched marker, a close marker preceding its open, and any
+ * duplication: two regions, or a stray marker beside a well-formed one. Each of those either destroys text on the next
+ * injection or leaves a second region permanently stale, so they are one category: The caller must repair the host
+ * rather than write to it.
  */
 export function classifyAmbientRegion(content: string): AmbientRegionState {
   const openCount = countMatches(content, OPEN_MARKER_LINE);
@@ -52,7 +53,7 @@ export function classifyAmbientRegion(content: string): AmbientRegionState {
 }
 
 /**
- * Returns the region's inner content with no surrounding newlines (an empty string for an empty region), or
+ * Returns the region's inner content without surrounding newlines (an empty string for an empty region), or
  * `undefined` unless exactly one well-formed region is present. A damaged host yields `undefined` rather than the
  * widened span matched there by `REGION_PATTERN`. A caller preserving region content across a re-render cannot carry
  * text that the region does not own back into it.
@@ -125,7 +126,7 @@ function countMatches(content: string, pattern: RegExp): number {
   return (content.match(pattern) ?? []).length;
 }
 
-/** Wraps `body` in the region markers, with no surrounding newlines; an empty body yields adjacent marker lines. */
+/** Wraps `body` in the region markers, without surrounding newlines; an empty body yields adjacent marker lines. */
 function renderRegion(body: string): string {
   const trimmed = body.replace(/\n+$/, '');
   return trimmed === ''

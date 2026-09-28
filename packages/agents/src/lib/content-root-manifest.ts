@@ -24,7 +24,9 @@ export const OPTIONAL_TOKEN_CONTENT_FORMAT = 2;
  */
 export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1, 2];
 
-/** The format that a root with no manifest is treated as declaring: the contract that predates the manifest itself. */
+/**
+ * The format that a root without a manifest is treated as declaring: the contract that predates the manifest itself.
+ */
 const DEFAULT_CONTENT_FORMAT = 1;
 
 /**
@@ -66,8 +68,8 @@ export interface ContentRootRef {
  * Throws when any of `roots` declares a content format that this tool does not support, or contains a manifest that it
  * cannot read, so a mismatch fails a run before any file is written rather than surfacing as an unfilled hook or a
  * dead token. Every offending root is reported together, and a declaration with two of them takes one fix rather than
- * two runs; the two conditions raise separately, because a manifest that will not parse has no declared version to
- * compare and a reader fixing one is not helped by the other.
+ * two runs; the two conditions raise separately, because a manifest that will not parse does not have a declared
+ * version to compare and a reader fixing one is not helped by the other.
  */
 export async function assertSupportedContentFormats(roots: ReadonlyArray<ContentRootRef>): Promise<void> {
   const problems: Array<{ root: ContentRootRef; problem: ContentFormatProblem }> = [];
