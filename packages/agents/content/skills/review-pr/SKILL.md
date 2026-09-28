@@ -119,5 +119,5 @@ gh pr checkout 1024
 ## Important
 
 - **Always check out the PR first.** The delegate compares `git rev-parse HEAD` to the PR's head commit and fails closed if they differ. The error message includes the platform-specific checkout command (e.g., `gh pr checkout <n>`).
-- **The orchestrator owns no review logic.** All findings, scoring, and the "Specification compliance" rendering happen inside `review-branch`. This skill is platform detection + delegate dispatch + invocation of the shared review process.
+- **The orchestrator does not own any review logic.** All findings, scoring, and the "Specification compliance" rendering happen inside `review-branch`. This skill is platform detection + delegate dispatch + invocation of the shared review process.
 - **Two specification sources by default.** Unlike `{skill:review-branch}` (one source: the ticket), `{skill:review-pr}` adds the PR description as a second source so that the review evaluates the implementation against both. Source-vs-source divergence is reported in the `## Specification consistency` section of the review output (see `review-branch/SKILL.md`).

@@ -52,7 +52,7 @@ The block is assembled from two independent sources by the helper script `{harne
 
 ### Steps
 
-1. **Recompute the changed-file list:** The dispatch site already has `{changed-files}` available (Phase 4 computes it once at the start of the parallel review; Phase 4a recomputes it before the simplifier dispatch; Phase 4b recomputes it before the holistic dispatch). Write the value to a temp file `{run-dir}/.tmp_changed-files.txt`. The temp file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
+1. **Recompute the changed-file list:** The dispatch site already has `{changed-files}` available (Phase 4 computes it once at the start of the parallel review; Phase 4a recomputes it before the simplifier dispatch; Phase 4b recomputes it before the holistic dispatch). Write the value to a temp file `{run-dir}/.tmp_changed-files.txt`. The temp file is overwritten on each call; explicit cleanup is not required because the run-dir is per-run.
 
 2. **Invoke the helper script:** Capture stdout into `{reviewer-context}` and redirect stderr to a temp file so that the failure-handling step below can read it:
 
@@ -66,7 +66,7 @@ The block is assembled from two independent sources by the helper script `{harne
      2>"{run-dir}/.tmp_reviewer-context-stderr.txt"
    ```
 
-   The temp stderr file is overwritten on each call; no explicit cleanup is required because the run-dir is per-run.
+   The temp stderr file is overwritten on each call; explicit cleanup is not required because the run-dir is per-run.
 
 3. **Inline conditionally:** If `{reviewer-context}` is non-empty, the dispatch's prompt template appends a final block:
 
@@ -112,7 +112,7 @@ The retry prompt is assembled by prepending parts 1-3 above the original prompt 
    The following reviewers already produced findings: {peer-coverage-summary}. Do NOT re-investigate those areas.
    ```
 
-   Omit this block entirely when no peer findings are available; do not emit a header with no body.
+   Omit this block entirely when peer findings are not available; do not emit a header without a body.
 
 4. **Forced structured return** (always present, appended at the end of the prompt):
 
@@ -122,8 +122,8 @@ The retry prompt is assembled by prepending parts 1-3 above the original prompt 
 
 ### Resolution
 
-- **`{file-allow-list}`**: Extracted from the interrupted reviewer's partial artifact at its original write-target path. Take all file paths cited in the partial's findings list (the `### Findings` section) and any paths cited elsewhere in the scaffold. Deduplicate. If the partial yields no file references, fall back to the full `{changed-files}` set computed at the dispatch site.
-- **`{peer-coverage-summary}`**: For Phase 4 retries, draw from peer reviewers in the same parallel batch whose {tool:Task} return parsed cleanly with a finalized `### Criticality:` enum value. For Phase 4a and Phase 4b retries, draw from the Phase 4 batch's completed reviewers (always available by that point). Format as a comma-separated list of `{reviewer-name}: {one-line scope or focus area}` entries derived from each peer's findings file. If no peer findings are available, the negative-scope block is omitted entirely.
+- **`{file-allow-list}`**: Extracted from the interrupted reviewer's partial artifact at its original write-target path. Take all file paths cited in the partial's findings list (the `### Findings` section) and any paths cited elsewhere in the scaffold. Deduplicate. If the partial does not yield any file references, fall back to the full `{changed-files}` set computed at the dispatch site.
+- **`{peer-coverage-summary}`**: For Phase 4 retries, draw from peer reviewers in the same parallel batch whose {tool:Task} return parsed cleanly with a finalized `### Criticality:` enum value. For Phase 4a and Phase 4b retries, draw from the Phase 4 batch's completed reviewers (always available by that point). Format as a comma-separated list of `{reviewer-name}: {one-line scope or focus area}` entries derived from each peer's findings file. If peer findings are not available, the negative-scope block is omitted entirely.
 
 ## Retry-on-interruption hook
 
@@ -162,13 +162,13 @@ Dispatch the core reviewer and all aspect reviewers in parallel on the same code
 Before dispatching aspect reviewers, determine which ones are relevant to the change. The core reviewer (`orchestrated-reviewer`) always runs. Each aspect reviewer's activation is resolved in two steps:
 
 1. **Check `{aspect_reviewers}` override**: If the reviewer has an explicit `false` in the `{aspect_reviewers}` map, skip it.
-2. **Apply file-pattern default**: If no override exists (key absent from `{aspect_reviewers}`), activate based on the changed-file list:
+2. **Apply file-pattern default**: If the reviewer does not have an override (key absent from `{aspect_reviewers}`), activate based on the changed-file list:
 
 | Aspect reviewer                                          | File-pattern default                                                                                            | Skip reason                     |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------- |
 | `aspect-code-reviewer` (key: `code`)                     | Always                                                                                                          | -                               |
-| `aspect-silent-failure-reviewer` (key: `silent_failure`) | Changed files include source code (`.ts`, `.js`, `.tsx`, `.jsx`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.zsh`)   | No source files changed         |
-| `aspect-test-reviewer` (key: `test`)                     | Changed files include source code (same extensions as above) or test files (`*.test.*`, `*.spec.*`, `*_test.*`) | No source or test files changed |
+| `aspect-silent-failure-reviewer` (key: `silent_failure`) | Changed files include source code (`.ts`, `.js`, `.tsx`, `.jsx`, `.py`, `.go`, `.rs`, `.java`, `.sh`, `.zsh`)   | Source files unchanged          |
+| `aspect-test-reviewer` (key: `test`)                     | Changed files include source code (same extensions as above) or test files (`*.test.*`, `*.spec.*`, `*_test.*`) | Source and test files unchanged |
 
 ### Dispatch
 
@@ -279,7 +279,7 @@ Call MCP tool emit_event with:
            tokens: {tokens}, toolUses: {toolUses}, durationMs: {durationMs} }
 ```
 
-For each aspect reviewer that was **not activated** (skipped by activation rules), emit a separate `reviewer_completed` event (no usage fields, since the agent was not invoked):
+For each aspect reviewer that was **not activated** (skipped by activation rules), emit a separate `reviewer_completed` event (without usage fields, since the agent was not invoked):
 
 ```
 Call MCP tool emit_event with:
@@ -305,10 +305,10 @@ Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned sta
 Before applying these rules, check the iteration budget. If N iterations have been reached, exit with `needs_manual_review` regardless of criticality. Otherwise, use the aggregated criticality and the two thresholds to determine next steps:
 
 - **criticality >= approval_threshold** AND review rounds remain: Delegate fixes to coder, then run selective re-review. These findings must be fixed for code approval.
-- **criticality >= approval_threshold** AND no review rounds remain: Exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
+- **criticality >= approval_threshold** AND the review-round budget is exhausted: Exit with `needs_manual_review`. These findings block approval and cannot be left unresolved.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then run selective re-review. These findings are opportunistic, worth fixing if budget allows.
-- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
-- **criticality < budget_threshold**: Proceed to Phase 4a (report only, no fix attempt). This includes `none`, in which case reviewers produced no authored findings.
+- **criticality >= budget_threshold** (but below approval_threshold) AND the review-round budget is exhausted: Proceed to Phase 4a. These findings do not block approval, so exhausting budget is acceptable.
+- **criticality < budget_threshold**: Proceed to Phase 4a (report only, without a fix attempt). This includes `none`, in which case reviewers did not produce any authored findings.
 
 ### Consolidated coder fixes
 
@@ -348,7 +348,7 @@ Before dispatching re-review: Call MCP tool `emit_event` with `{ runDir: {run-di
 
 If re-review is warranted, assign new `{NN}` values for each re-dispatched reviewer (same sequencing rules as initial dispatch; only activated reviewers consume sequence numbers). Update the named path variables (`{core-review-path}`, `{sf-review-path}`, `{test-review-path}`, `{code-review-path}`) to point to the new artifact files. Old review files are preserved on disk.
 
-Recompute `{changed-files}` (a coder fix cycle may have added or removed files) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. The re-review prompts use the freshly computed value; do not reuse the value captured at initial dispatch time. `{reviewer-context-sidecar-path}` does not need to be re-resolved here: Fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear during a Phase 4 fix cycle.
+Recompute `{changed-files}` (a coder fix cycle may have added or removed files) and re-run the reviewer-context assembly steps to produce a fresh `{reviewer-context}`. The re-review prompts use the freshly computed value; do not reuse the value captured at initial dispatch time. `{reviewer-context-sidecar-path}` does not need to be re-resolved here: Fix-cycle coder prompts do not supply a sidecar path, so a new sidecar cannot appear during a Phase 4 fix cycle.
 
 Send re-review {tool:Task} calls in a single message (parallel) using the same prompts, models, and turn budgets as the initial dispatch but adding context:
 
@@ -362,13 +362,13 @@ After the parallel re-dispatch returns and before parsing usage, apply the "Retr
 
 After re-reviews complete: Parse usage from each re-reviewer's {tool:Task} result (see "Usage capture" in SKILL.md). Aggregate usage across all re-review {tool:Task} results by summing `tokens`, `toolUses`, and `durationMs` independently. Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "re_review_completed", criticalities: { "{name}": "{level}", ... }, tokens: {summed-tokens}, toolUses: {summed-toolUses}, durationMs: {summed-durationMs} } }`. Call `register_artifact` for each re-reviewer's artifact file.
 
-Aggregate findings again using the same rules. If the re-review produces new actionable findings and review rounds remain (< N), loop back: Run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with no remaining budget) or the iteration budget is exhausted.
+Aggregate findings again using the same rules. If the re-review produces new actionable findings and review rounds remain (< N), loop back: Run another coder fix cycle, then selective re-review. Repeat until convergence (aggregated criticality is `none`, or below both thresholds, or below approval_threshold with the budget exhausted) or the iteration budget is exhausted.
 
 ### Loop termination
 
 Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned `reviewRoundsUsed` from state rather than relying on conversation-tracked iteration count.
 
-- After N iterations unresolved (where N is the configured `max-review-rounds`): Exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs; if findings exist, the phase exits as `needs_manual_review` with no fix attempt. Set N >= 2 for effective iterative review.
+- After N iterations unresolved (where N is the configured `max-review-rounds`): Exit with `needs_manual_review` status. The iteration count includes the initial review dispatch as round 1 and each selective re-review as an additional round. With N=1, only the initial review dispatch runs; if findings exist, the phase exits as `needs_manual_review` without a fix attempt. Set N >= 2 for effective iterative review.
 - Structural issues: May return to Planning once per run.
 
 At phase completion (converged or `needs_manual_review`): Compute aggregate usage for the entire review phase by summing `tokens`, `toolUses`, and `durationMs` across all {tool:Task} calls within Phase 4 (all reviewer dispatches, coder fix cycles, and re-reviews). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "review", status: "completed"|"failed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { aggregatedCriticality: "{level}", reviewRoundsUsed: {N} } } }`. Then emit `phase_decision` for `parallelReview`:
@@ -438,7 +438,7 @@ After: If a coder fix cycle ran, update `{change-summary-path}` to the new file;
 
 ## Phase 4b: Final comprehensive review
 
-After the parallel review and code-simplification-reviewer complete, perform one additional review with a clean context. This is NOT part of the parallel review. Skip Phase 4b if Phase 4 exited with unresolved findings (`needs_manual_review`); in that case Phase 4a was also skipped. Under the parallel review structure, `needs_manual_review` is the only non-converged exit path, so no other skip condition is needed. If Phase 4 converged, always run Phase 4b (whether or not Phase 4a produced findings).
+After the parallel review and code-simplification-reviewer complete, perform one additional review with a clean context. This is NOT part of the parallel review. Skip Phase 4b if Phase 4 exited with unresolved findings (`needs_manual_review`); in that case Phase 4a was also skipped. Under the parallel review structure, `needs_manual_review` is the only non-converged exit path, so another skip condition is not needed. If Phase 4 converged, always run Phase 4b (whether or not Phase 4a produced findings).
 
 The initial Phase 4b review always runs regardless of remaining budget. Phase 4b shares the review-round budget with Phase 4 only for subsequent fix-and-re-review cycles: Rounds consumed in Phase 4 reduce the budget available for those cycles.
 
@@ -491,11 +491,11 @@ Extract `Criticality` using {tool:Task} return parsing (see SKILL.md).
 Call MCP tool `get_run_state` with `{ runDir: {run-dir} }`. Use the returned state to read total `reviewRoundsUsed` across Phase 4 and 4b combined for the budget decision below.
 
 - **criticality >= approval_threshold** AND review rounds remain: Delegate fixes to coder, then re-review using remaining budget; apply the same threshold-based flow-control rules as Phase 4. If the budget is exhausted without resolution, set `{review-status}` to `needs_manual_review`.
-- **criticality >= approval_threshold** AND no review rounds remain: Delegate one coder fix round (no re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted; the holistic review is a final sanity check, not a gating review.
+- **criticality >= approval_threshold** AND the review-round budget is exhausted: Delegate one coder fix round (without re-review), then set `{review-status}` to `converged`. These findings warranted a fix attempt but do not justify blocking approval when the budget is exhausted; the holistic review is a final sanity check, not a gating review.
 - **criticality >= budget_threshold** (but below approval_threshold) AND review rounds remain: Delegate fixes to coder, then re-review using remaining budget (opportunistic).
-- **criticality >= budget_threshold** (but below approval_threshold) AND no review rounds remain: Set `{review-status}` to `converged` (findings do not block approval).
-- **criticality < budget_threshold**: Set `{review-status}` to `converged` (report only). This includes `none`, in which case reviewers produced no authored findings.
+- **criticality >= budget_threshold** (but below approval_threshold) AND the review-round budget is exhausted: Set `{review-status}` to `converged` (findings do not block approval).
+- **criticality < budget_threshold**: Set `{review-status}` to `converged` (report only). This includes `none`, in which case reviewers did not produce any authored findings.
 
-When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so no new sidecar can appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch. Apply the "Retry-on-interruption hook" (see above) after the re-review returns; re-reviews are subject to the hook on the same terms as initial dispatches.
+When a Phase 4b re-review runs, recompute the reviewer-context block before re-dispatching (re-run the assembly steps to produce a fresh `{reviewer-context}`). `{reviewer-context-sidecar-path}` does not need to be re-resolved: Fix-cycle coder prompts do not supply a sidecar path, so a new sidecar cannot appear. The re-review prompt uses the same conditional `## Reviewer context` block as the initial Phase 4b dispatch. Apply the "Retry-on-interruption hook" (see above) after the re-review returns; re-reviews are subject to the hook on the same terms as initial dispatches.
 
 After: Compute aggregate usage for the holistic phase by summing `tokens`, `toolUses`, and `durationMs` across all {tool:Task} calls within Phase 4b (the holistic reviewer dispatch and, if applicable, coder fix and re-review cycles). Call MCP tool `emit_event` with `{ runDir: {run-dir}, event: { event: "phase_completed", phase: "holistic", status: "completed"|"needs_manual_review", tokens: {aggregate-tokens}, toolUses: {aggregate-toolUses}, durationMs: {aggregate-durationMs}, data: { criticality: "{level}" } } }`. Call `register_artifact` for any coder change-summary artifacts produced during Phase 4b fix cycles.
