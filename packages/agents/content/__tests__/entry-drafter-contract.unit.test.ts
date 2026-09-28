@@ -110,10 +110,10 @@ const PRESCRIBED_CONNECTIVE = 'Separately,';
 /** The phrase excluding how a change was produced, which a commit body contains and a bullet does not. */
 const PROCESS_NARRATION_PHRASE = 'review mechanics, ticket and finding numbers';
 
-/** Every code under which the caller redispatches, each of which the drafter has to be able to act on. */
 /** The rule that keeps an unquoted ` #` in an entry from opening a YAML comment that drops the rest of the text. */
 const QUOTING_RULE_PHRASE = '`text` and `migration` are always double-quoted';
 
+/** Every code under which the caller redispatches, each of which the drafter has to be able to act on. */
 const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', 'unsupported-claim', 'voice'];
 
 /**
