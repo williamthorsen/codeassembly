@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { surveyKb } from '../survey.ts';
 
-/** Every path with which `readFile` was called, so that the survey can be shown to open no note. */
+/** Every path with which `readFile` was called, so that the survey can be shown not to open any note. */
 const readFilePaths: string[] = [];
 
 vi.mock('node:fs/promises', async (importOriginal) => {
@@ -60,7 +60,7 @@ describe(surveyKb, () => {
     ]);
   });
 
-  it('reports a folder holding notes that no domain declares', async () => {
+  it('reports a folder holding notes that the taxonomy does not declare as a domain', async () => {
     const kbPath = await makeStore({
       '.kb/taxonomy.yaml': 'domains:\n  engineering: Practice\n',
       'content/assertions/engineering/Tooling.md': NOTE,
@@ -83,7 +83,7 @@ describe(surveyKb, () => {
     expect(survey.undeclaredFolders).toEqual([{ path: 'engineering/tooling', noteCount: 1 }]);
   });
 
-  it('reports every folder holding notes and no domains when the store declares no taxonomy', async () => {
+  it('reports every folder holding notes and an empty domain list when the store does not declare a taxonomy', async () => {
     const kbPath = await makeStore({
       'content/assertions/engineering/Tooling.md': NOTE,
       'content/assertions/languages/Types.md': NOTE,
@@ -98,7 +98,7 @@ describe(surveyKb, () => {
     ]);
   });
 
-  it('counts no folder for a note at the assertions root', async () => {
+  it('does not count any folder for a note at the assertions root', async () => {
     const kbPath = await makeStore({ 'content/assertions/Loose.md': NOTE });
 
     const survey = await surveyKb({ kbPath });
@@ -126,7 +126,7 @@ describe(surveyKb, () => {
     expect(survey.taxonomyPath).toBe(join(kbPath, '.kb', 'taxonomy.yaml'));
   });
 
-  it('opens no note file', async () => {
+  it('does not open any note file', async () => {
     const kbPath = await makeStore({
       '.kb/taxonomy.yaml': 'domains:\n  engineering: Practice\n',
       'content/assertions/engineering/Tooling.md': NOTE,

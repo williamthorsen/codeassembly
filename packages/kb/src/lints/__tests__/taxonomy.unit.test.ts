@@ -8,7 +8,7 @@ import { taxonomyFindings, type TaxonomyNote } from '../taxonomy.ts';
 const TAXONOMY_PATH = '/store/.kb/taxonomy.yaml';
 
 describe(taxonomyFindings, () => {
-  it('reports nothing when the taxonomy declares no domains', () => {
+  it('reports nothing when the taxonomy does not declare any domains', () => {
     const findings = run({ notes: ['engineering/note.md'], declared: [] });
 
     expect(findings).toEqual([]);
@@ -23,14 +23,14 @@ describe(taxonomyFindings, () => {
     expect(findings).toEqual([]);
   });
 
-  it('reports a folder holding notes that no domain declares', () => {
+  it('reports a folder holding notes that the taxonomy does not declare as a domain', () => {
     const findings = run({ notes: ['engineering/note.md'], declared: ['languages'] });
 
     expect(rulesIn(findings)).toContain('taxonomy.undeclared');
     expect(messageFor(findings, 'taxonomy.undeclared')).toContain('"engineering"');
   });
 
-  it('reports a declared domain that contains no notes', () => {
+  it('reports a declared domain that does not contain any notes', () => {
     const findings = run({ notes: ['engineering/note.md'], declared: ['engineering', 'languages'] });
 
     expect(messageFor(findings, 'taxonomy.unused')).toContain('"languages"');
@@ -117,7 +117,7 @@ describe(taxonomyFindings, () => {
 
 // region | Helpers
 
-/** Builds a taxonomy declaring each path under `domains:` with no description. */
+/** Builds a taxonomy declaring each path under `domains:` without a description. */
 function buildTaxonomy(paths: readonly string[]): Taxonomy {
   return new Map(paths.map((path) => [path, { description: '', provisional: false }]));
 }

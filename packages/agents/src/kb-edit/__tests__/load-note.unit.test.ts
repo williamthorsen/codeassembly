@@ -67,7 +67,7 @@ describe(loadNote, () => {
     }
   });
 
-  it('returns note-parse when no frontmatter block is present', async () => {
+  it('returns note-parse when the note does not contain a frontmatter block', async () => {
     const dir = await makeTempDir('kb-edit-load-no-fm-');
     const path = join(dir, 'note.md');
     await writeFile(path, 'Just body, no frontmatter.\n', 'utf8');

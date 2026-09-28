@@ -6,7 +6,7 @@ import { DEFAULT_KB_SENTINEL } from './kb-role-sentinels.ts';
 
 /** A knowledge base resolved as the write target. */
 export interface ResolvedKb {
-  /** The KB's display name. `null` for a `.kb/`-discovered KB with no registry entry. */
+  /** The KB's display name. `null` for a `.kb/`-discovered KB without a registry entry. */
   name: string | null;
   /** Absolute path to the KB's root directory. */
   path: string;
@@ -33,12 +33,12 @@ export type ResolveKbOutcome =
  * write.
  *
  * Precedence: The `--kb @default` sentinel, the only way to select the registry's `default_kb`, takes precedence over a
- * concrete `--kb <name>`, which takes precedence over `.kb/` discovery. With no `--kb` and no discoverable `.kb/`,
+ * concrete `--kb <name>`, which takes precedence over `.kb/` discovery. Without a `--kb` or a discoverable `.kb/`,
  * resolution fails with `missing-destination`; the registry default is never a silent fall-through.
  *
  * `requireWritable` defaults to `true`, so a caller that omits it gets the write-safe answer; a report or a survey
- * passes `false` and reads a store that the registry marks `readonly: true`. A discovered KB with no registry entry
- * has no `readonly` flag to consult and counts as writable.
+ * passes `false` and reads a store that the registry marks `readonly: true`. A discovered KB without a registry entry
+ * does not have a `readonly` flag to consult and counts as writable.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.

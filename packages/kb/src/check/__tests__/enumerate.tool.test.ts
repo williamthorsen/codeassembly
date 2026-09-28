@@ -61,7 +61,7 @@ describe(enumerateNotePaths, () => {
     expect(paths.toSorted()).toEqual(await enumerateIn(root, config));
   });
 
-  it('opens no note file', async () => {
+  it('does not open any note file', async () => {
     const root = await makeTree({ 'content/top.md': VALID, 'content/sub/nested.md': VALID });
 
     await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
@@ -101,7 +101,7 @@ describe(enumerateNotes, () => {
     expect(await enumerateIn(root, defaultKbConfig)).toEqual(['content/kept.md']);
   });
 
-  it('enumerates the whole tree for a glob-first target with no leading literal', async () => {
+  it('enumerates the whole tree for a glob-first target without a leading literal', async () => {
     const root = await makeTree({
       'top.md': VALID,
       'sub/nested.md': VALID,
@@ -185,7 +185,7 @@ describe(`${enumerateNotePaths.name} under git`, () => {
     expect(paths).toEqual(['content/Kept.md']);
   });
 
-  it('keeps an untracked note that no ignore rule covers', async () => {
+  it('keeps an untracked note not covered by any ignore rule', async () => {
     const root = await makeTree({ 'content/Tracked.md': VALID });
     initGitRepo(root);
     commitAll(root, 'base');

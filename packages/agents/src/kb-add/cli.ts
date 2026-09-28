@@ -183,8 +183,8 @@ export async function runAdd(input: {
   }
 
   // Declare after the note is written, never before: A failure between the two leaves a real note in an undeclared
-  // folder, which `taxonomy.undeclared` reports. The reverse order leaves a declared domain containing no notes,
-  // reported as `taxonomy.unused` and indistinguishable from a domain that someone declared on purpose.
+  // folder, which `taxonomy.undeclared` reports. The reverse order leaves a declared domain that does not contain any
+  // notes, reported as `taxonomy.unused` and indistinguishable from a domain that someone declared on purpose.
   const placement = await declareDomain({
     kbPath: kb.path,
     notePath: write.path,

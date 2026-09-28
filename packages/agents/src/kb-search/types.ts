@@ -26,7 +26,7 @@ export interface RecallFilters {
 
 /** A knowledge base resolved as in-scope for the current query. */
 export interface ScopedKb {
-  /** The KB's display name. `null` for a `.kb/`-discovered KB with no registry entry. */
+  /** The KB's display name. `null` for a `.kb/`-discovered KB without a registry entry. */
   name: string | null;
   /** Absolute path to the KB's root directory. */
   path: string;
