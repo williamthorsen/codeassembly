@@ -3,7 +3,7 @@
  *
  * The construction is `no` used as a determiner, in any position: a verb's object ("publishes no build output"), after
  * an existential "there is" ("there's no Vercel CLI"), the subject of a relative clause ("a field that no test names"),
- * or a sentence's subject ("No file is written"). A `no` reads as a determiner when a word follows it with no clause
+ * or a sentence's subject ("No file is written"). A `no` reads as a determiner when a word follows it without clause
  * punctuation between them, and that word neither ends a noun phrase nor completes a fixed phrase such as `no longer`.
  *
  * Detection is over-inclusive: Precision is the agent's, which adjudicates each candidate with the sentence in view.
