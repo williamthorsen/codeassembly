@@ -123,7 +123,7 @@ describe(recordDeployedSizes, () => {
     expect(snapshot?.sourceCommit).toMatch(/^[0-9a-f]{40}$/);
   });
 
-  it('appends no second line when a later run measures the same vector', async () => {
+  it('does not append a second line when a later run measures the same vector', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
     const plan = planWithSkill('plan', skillsDir);
@@ -242,7 +242,7 @@ describe(recordDeployedSizes, () => {
     expect(outcome.kind === 'measured' && outcome.report.isFirstRecorded).toBe(false);
   });
 
-  it('reports a deployment that the record holds no snapshot for as the first recorded one', async () => {
+  it('reports a deployment without a snapshot in the record as the first recorded one', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
@@ -311,7 +311,7 @@ describe('sync --dry-run', () => {
     expect(existsSync(recordRoot(homeDir))).toBe(false);
   });
 
-  it('reports no size line', async () => {
+  it('does not report a size line', async () => {
     const outcome = await syncCommand(options({ dryRun: true }), projectRoot, contentDir, homeDir);
 
     expect(renderReportText(outcome, { dryRun: true })).not.toContain('Deployed sizes:');

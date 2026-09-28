@@ -11,7 +11,7 @@ import { renderReportText } from '../test-utils/render-report-text.ts';
 
 // Exercises the `packages:` declaration: A package's content dir joins the source search order and its catalog seeds
 // the closure, so naming the package is the whole declaration. Fixture packages live under the temp project's own
-// `node_modules`, which is the first directory that Node's resolver searches from there (no real install involved).
+// `node_modules`, which is the first directory that Node's resolver searches from there (without a real install).
 describe('sync with a declared package', () => {
   const PACKAGE_NAME = '@ca-fixture/guide';
 
@@ -133,7 +133,7 @@ describe('sync with a declared package', () => {
     expect(deployed).not.toContain('model: sonnet');
   });
 
-  it('applies no defaults to a subagent from a source shipping no overlay', async () => {
+  it('does not apply any defaults to a subagent from a source without an overlay', async () => {
     await writeSubagent(packageContent(), 'pkg-agent');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
