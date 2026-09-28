@@ -19,7 +19,7 @@ export interface GuidanceStaleness {
 
 /**
  * Measures how many meaningful commits were made after `guidancePath` was last modified. Returns undefined in
- * two cases: `repoPath` is not a git repository, or the file has no history in it.
+ * two cases: `repoPath` is not a git repository, or the file doesn't have any history in it.
  */
 export async function readGuidanceStaleness(
   repoPath: string,
@@ -31,7 +31,7 @@ export async function readGuidanceStaleness(
   } catch {
     return undefined;
   }
-  // A path with no history is not an error: git reports it as empty output and a zero exit.
+  // A path without history is not an error: git reports it as empty output and a zero exit.
   const separatorIndex = stamp.indexOf(' ');
   if (separatorIndex === -1) {
     return undefined;

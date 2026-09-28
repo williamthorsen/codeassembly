@@ -34,7 +34,7 @@ describe(resolveGuidanceImports, () => {
     });
   });
 
-  it('does not reach it through a prose mention containing no import', () => {
+  it('does not reach it through a prose mention without an import', () => {
     const outcome = resolveGuidanceImports('Read ../AGENTS.md before starting.\n', IMPORTING_DIR, GUIDANCE_PATH);
 
     expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
@@ -72,13 +72,13 @@ describe(resolveGuidanceImports, () => {
     expect(outcome.doesReachGuidance).toBe(true);
   });
 
-  it('reads no import from an address embedded in a word', () => {
+  it('does not read an import from an address embedded in a word', () => {
     const outcome = resolveGuidanceImports('Mail william@example.com about it.\n', IMPORTING_DIR, GUIDANCE_PATH);
 
     expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
   });
 
-  it('reads no import from a fenced code block', () => {
+  it('does not read an import from a fenced code block', () => {
     const document = '# CLAUDE.md\n\n```markdown\n@../AGENTS.md\n```\n';
 
     const outcome = resolveGuidanceImports(document, IMPORTING_DIR, GUIDANCE_PATH);
@@ -86,13 +86,13 @@ describe(resolveGuidanceImports, () => {
     expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
   });
 
-  it('reads no import from a tilde-fenced code block', () => {
+  it('does not read an import from a tilde-fenced code block', () => {
     const outcome = resolveGuidanceImports('~~~\n@../AGENTS.md\n~~~\n', IMPORTING_DIR, GUIDANCE_PATH);
 
     expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
   });
 
-  it('reads no import from a fence left unclosed', () => {
+  it('does not read an import from a fence left unclosed', () => {
     const outcome = resolveGuidanceImports('```\n@../AGENTS.md\n', IMPORTING_DIR, GUIDANCE_PATH);
 
     expect(outcome).toEqual({ doesReachGuidance: false, resolvedPaths: [] });
@@ -106,7 +106,7 @@ describe(resolveGuidanceImports, () => {
     expect(outcome).toEqual({ doesReachGuidance: true, resolvedPaths: [GUIDANCE_PATH] });
   });
 
-  it('reads no import from a code span containing a spaced path', () => {
+  it('does not read an import from a code span containing a spaced path', () => {
     const document = 'Write ` @../AGENTS.md ` to import it.\n';
 
     const outcome = resolveGuidanceImports(document, IMPORTING_DIR, GUIDANCE_PATH);

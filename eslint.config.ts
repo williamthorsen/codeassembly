@@ -17,7 +17,7 @@ const config = defineConfig([
     '**/local/**',
     // Throwaway spikes live outside the workspace and are exempt from lint.
     'spikes/**',
-    // Ignore test fixtures that no parser can read, marked by a `.malformed` infix.
+    // Ignore test fixtures that ESLint's parsers cannot read, marked by a `.malformed` infix.
     '**/__tests__/**/fixtures/**/*.malformed/**',
     '**/__tests__/**/fixtures/**/*.malformed.*',
   ]),

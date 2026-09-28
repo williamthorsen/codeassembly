@@ -59,7 +59,7 @@ describe(readGuidanceStaleness, () => {
     expect(staleness?.lastModifiedEpochSec).toBeGreaterThanOrEqual(beforeEpochSec);
   });
 
-  it('measures nothing when the guidance file has no history', async () => {
+  it("measures nothing when the guidance file doesn't have any git history", async () => {
     const { commitFiles, root } = await createGuidanceRepoFixture();
     await commitFiles('source.ts');
 
@@ -82,7 +82,7 @@ describe(countMeaningfulCommits, () => {
     expect(countMeaningfulCommits('COMMIT\nsource.ts\n')).toBe(1);
   });
 
-  it('counts a trailing commit that no blank line follows', () => {
+  it('counts a trailing commit not followed by a blank line', () => {
     expect(countMeaningfulCommits('COMMIT\nfirst.ts\n\nCOMMIT\nsecond.ts')).toBe(2);
   });
 

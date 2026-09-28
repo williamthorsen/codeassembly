@@ -35,7 +35,7 @@ describe(findHarnessScopedPaths, () => {
     expect(findHarnessScopedPaths('Config lives in .config/vitest/ and .github/workflows/.')).toEqual([]);
   });
 
-  it('finds nothing in content that names no path', () => {
+  it("finds nothing in content that doesn't name any path", () => {
     expect(findHarnessScopedPaths('Run the bootstrap before anything else.')).toEqual([]);
   });
 
@@ -77,7 +77,7 @@ describe(findRulebookMarkers, () => {
     expect(findRulebookMarkers('<!-- rulebooks are installed by sync -->')).toEqual([]);
   });
 
-  it('finds nothing in content containing no comment', () => {
+  it('finds nothing in content without a comment', () => {
     expect(findRulebookMarkers('## Gotchas\n\nThe cache is keyed on inputs alone.\n')).toEqual([]);
   });
 });
@@ -91,7 +91,7 @@ describe(describeViolations, () => {
     expect(describeViolations(violations)).toBe('line 3: ~/.claude/skills/foo.md; line 9: <!-- rulebook:x -->');
   });
 
-  it('renders no violations as an empty string', () => {
+  it('renders an empty violation list as an empty string', () => {
     expect(describeViolations([])).toBe('');
   });
 });
