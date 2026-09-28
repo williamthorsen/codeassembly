@@ -52,7 +52,7 @@ async function main(): Promise<void> {
   const ranked = await rankEntries(filteredEntries, opts);
 
   if (ranked.length === 0) {
-    process.stdout.write('No runs matched the given filters.\n');
+    process.stdout.write('The given filters did not match any run.\n');
     return;
   }
 

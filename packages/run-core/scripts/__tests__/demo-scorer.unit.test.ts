@@ -14,7 +14,7 @@ import { scoreRun, WEIGHTS } from '../demo-scorer.ts';
 
 const NOW = new Date('2026-04-19T00:00:00Z');
 
-/** Builds a run status from per-signal inputs. With no override, `recent` is the only signal that the status sets. */
+/** Builds a run status from per-signal inputs. When the caller doesn't pass any override, `recent` is the only signal that the status sets. */
 function buildStatus(
   overrides: {
     status?: RunStatus;
@@ -89,7 +89,7 @@ function buildStatus(
   };
 }
 
-/** Builds `count` completed reviewers with no findings. */
+/** Builds `count` completed reviewers that don't report any findings. */
 function buildReviewers(count: number): Record<string, ReviewerInfo> {
   const reviewers: Record<string, ReviewerInfo> = {};
   for (let i = 0; i < count; i++) {
@@ -158,7 +158,7 @@ describe('scoreRun', () => {
       expect(result.summary).toContain('50 events');
     });
 
-    it('scores a baseline run with no signals at 0', () => {
+    it('scores a baseline run without any signal at 0', () => {
       const result = scoreRun(buildStatus({ startedAt: '2020-01-01T00:00:00Z' }), buildEvents(5), NOW);
 
       expect(result.score).toBe(0);
@@ -211,7 +211,7 @@ describe('scoreRun', () => {
         hasParallelReview: true,
       });
       const result = scoreRun(status, buildEvents(10), NOW);
-      // substantiveFindings implies parallelReview presence but not architecture/planning, so no fullPipeline.
+      // substantiveFindings implies parallelReview presence but not architecture/planning, so the status doesn't set fullPipeline.
       expect(result.score).toBe(WEIGHTS.substantiveFindings);
     });
 
@@ -244,7 +244,7 @@ describe('scoreRun', () => {
   });
 
   describe('event-count boundaries', () => {
-    /** Builds a status that sets no signal: Its start date is outside the recency window. */
+    /** Builds a status that doesn't set any signal: Its start date is outside the recency window. */
     const baseStatus = () => buildStatus({ startedAt: '2020-01-01T00:00:00Z' });
 
     it('29 events is out of range', () => {
@@ -277,7 +277,7 @@ describe('scoreRun', () => {
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(false);
     });
 
-    it('future startedAt is treated as recent (no clock-skew handling)', () => {
+    it("future startedAt is treated as recent (scoreRun doesn't correct for clock skew)", () => {
       const future = new Date(NOW.getTime() + 24 * 60 * 60 * 1_000).toISOString();
       const status = buildStatus({ startedAt: future });
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(true);
@@ -348,7 +348,7 @@ describe('scoreRun', () => {
   });
 
   describe('usageData detection', () => {
-    /** Builds a status that sets no signal: Its start date is outside the recency window. */
+    /** Builds a status that doesn't set any signal: Its start date is outside the recency window. */
     const status = () => buildStatus({ startedAt: '2020-01-01T00:00:00Z' });
 
     it('no usage fields → false', () => {
