@@ -595,6 +595,17 @@ describe('consolidate-entries', () => {
     ).rejects.toThrow(/is malformed: `entries\[0\]\.text` is missing/);
   });
 
+  it('if a YAML comment cuts an entry short, refuses the invocation ahead of any other defect', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(
+      '- type: feat\n- type: fix\n  text: Leaves no release flow until #19 lands.',
+    );
+
+    await expect(
+      runDescribe({ argv: ['consolidate-entries', '--entries-file', entriesFile], cwd, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(/is malformed: `entries\[1\]\.text` is cut short by a YAML comment \(`#19 lands\.`\)/);
+  });
+
   it('if the entries file is not valid YAML, refuses the invocation', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const entriesFile = await writeEntries('- type: [unclosed');
@@ -877,6 +888,40 @@ describe('resolve-ticket-type', () => {
         title: 'Add the parser',
       }),
     });
+  });
+
+  it('records an issue reference in a quoted entry text intact', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const text = 'Leaves no release flow until #19 adds the workflows.';
+    const entriesFile = await writeEntries(`- type: fix\n  scopes: [agents]\n  text: "${text}"`);
+
+    const { output } = await runDescribe({
+      argv: ['render-block', '--title', 'Fix the flow', '--entries-file', entriesFile],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({
+      block: renderChangeRecordBlock({
+        entries: [{ breaking: false, scopes: ['agents'], text, type: 'fix' }],
+        title: 'Fix the flow',
+      }),
+    });
+  });
+
+  it('if a YAML comment cuts an entry short, refuses the invocation and names the entry', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries('- type: fix\n  text: Leaves no release flow until #19 lands.');
+
+    await expect(
+      runDescribe({
+        argv: ['render-block', '--title', 'Fix the flow', '--entries-file', entriesFile],
+        cwd,
+        dataDir: DATA_DIR,
+        home,
+      }),
+    ).rejects.toThrow(/is malformed: `entries\[0\]\.text` is cut short by a YAML comment/);
   });
 
   it('if the entries file cannot be read, refuses the invocation', async () => {

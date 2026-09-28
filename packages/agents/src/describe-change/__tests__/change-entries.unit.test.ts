@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { parse as parseYaml } from 'yaml';
+import { parse as parseYaml, parseDocument } from 'yaml';
 
 import type { Taxonomy } from '../../change-grammar/types.ts';
-import { type ChangeEntry, consolidateChangeEntries, readChangeEntries } from '../change-entries.ts';
+import { type ChangeEntry, consolidateChangeEntries, findEntryComment, readChangeEntries } from '../change-entries.ts';
 
 const TAXONOMY: Taxonomy = {
   tiers: ['public', 'internal', 'process'],
@@ -88,6 +88,46 @@ describe(consolidateChangeEntries, () => {
 
   it('consolidates an empty list to an empty record', () => {
     expect(consolidateChangeEntries([], TAXONOMY)).toStrictEqual({});
+  });
+});
+
+describe(findEntryComment, () => {
+  it.each<{ defect: string; name: string; yaml: string[] }>([
+    {
+      name: 'an issue reference in an unquoted text',
+      yaml: ['- type: fix', '  text: Leaves no release flow until #19 adds the workflows.'],
+      defect: '`entries[0].text` is cut short by a YAML comment (`#19 adds the workflows.`); quote the value',
+    },
+    {
+      name: 'a comment on a continuation line of the text',
+      yaml: ['- type: fix', '  text: Leaves no release flow', '    #19 adds the workflows.'],
+      defect: '`entries[0].text` is cut short by a YAML comment (`#19 adds the workflows.`); quote the value',
+    },
+    {
+      name: 'a comment after an unquoted migration',
+      yaml: ['- type: drop', '  text: Removes foo', '  migration: Use bar # see #12'],
+      defect: '`entries[0].migration` is cut short by a YAML comment (`# see #12`); quote the value',
+    },
+    {
+      name: 'a comment in a later entry',
+      yaml: ['- type: feat', '  text: Adds foo', '- type: fix', '  text: Fixes bar until #3 lands'],
+      defect: '`entries[1].text` is cut short by a YAML comment (`#3 lands`); quote the value',
+    },
+  ])('reports $name', ({ defect, yaml }) => {
+    expect(findEntryComment(parseDocument(yaml.join('\n')).contents)).toStrictEqual({ defect });
+  });
+
+  it.each<{ name: string; yaml: string[] }>([
+    { name: 'an issue reference in a double-quoted text', yaml: ['- type: fix', '  text: "Waits until #19 lands."'] },
+    {
+      name: 'a comment on its own line between keys',
+      yaml: ['- type: fix', '  text: Fixes foo', '  # note', '  scopes: []'],
+    },
+    { name: 'a comment after a field other than text', yaml: ['- type: fix # the type', '  text: Fixes foo'] },
+    { name: 'a list of scalars', yaml: ['- feat'] },
+    { name: 'a mapping rather than a list', yaml: ['type: fix # the type'] },
+  ])('reports nothing for $name', ({ yaml }) => {
+    expect(findEntryComment(parseDocument(yaml.join('\n')).contents)).toBeUndefined();
   });
 });
 

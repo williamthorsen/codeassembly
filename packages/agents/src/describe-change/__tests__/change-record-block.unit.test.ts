@@ -143,6 +143,11 @@ describe(readChangeRecordBlock, () => {
       payload: 'title: Add foo\noverrides:\n  type: sec\nentries_commit: 42',
       defect: /`entries_commit` is not a string/,
     },
+    {
+      name: 'an entry text cut short by a YAML comment',
+      payload: 'title: Add foo\noverrides:\n  type: sec\nentries:\n  - type: feat\n    text: Adds foo until #19 lands',
+      defect: /`entries\[0\].text` is cut short by a YAML comment \(`#19 lands`\)/,
+    },
   ])('reads a block with $name, leaving the entries absent and reporting the defect', ({ defect, payload }) => {
     const reading = readChangeRecordBlock(`\`\`\`change-record\n${payload}\n\`\`\``);
 
@@ -257,6 +262,11 @@ describe(readMergeChangeRecordBlock, () => {
     { name: 'a non-string ticket_ref', payload: 'ticket_ref: 1827', defect: /`ticket_ref` is not a string/ },
     { name: 'entries that are not a list', payload: 'entries: feat', defect: /not a list/ },
     { name: 'an entry that is not a mapping', payload: 'entries: [feat]', defect: /`entries\[0\]` is not a mapping/ },
+    {
+      name: 'an entry text cut short by a YAML comment',
+      payload: 'entries:\n  - type: feat\n    text: Adds foo until #19 lands',
+      defect: /`entries\[0\].text` is cut short by a YAML comment \(`#19 lands`\)/,
+    },
     {
       name: 'an entry missing its text',
       payload: 'entries:\n  - type: feat\n  - type: fix',
