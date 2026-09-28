@@ -7,7 +7,7 @@ import { LaneCard } from '../LaneCard.tsx';
 
 const NOW_MS = Date.parse('2026-07-19T12:00:00.000Z');
 
-/** Builds an open lane with no ticket attribution and no sessions; tests override fields as needed. */
+/** Builds an open lane without ticket attribution or sessions; tests override fields as needed. */
 function buildLane(overrides: Partial<LaneSnapshot> = {}): LaneSnapshot {
   return {
     repo: 'owner/repo',

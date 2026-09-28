@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { useFleetSnapshot } from '../useFleetSnapshot.ts';
 
-// jsdom has no EventSource; the hook's contract with it is exercised through this fake.
+// jsdom doesn't implement EventSource; the hook's contract with it is exercised through this fake.
 class FakeEventSource {
   static instances: FakeEventSource[] = [];
 
@@ -72,7 +72,7 @@ function buildSnapshot(branch: string): FleetSnapshot {
 function getOpenedSource(): FakeEventSource {
   const source = FakeEventSource.instances[0];
   if (source === undefined) {
-    throw new Error('The hook opened no EventSource');
+    throw new Error('The hook did not open an EventSource');
   }
   return source;
 }

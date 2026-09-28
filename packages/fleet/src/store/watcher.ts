@@ -50,7 +50,7 @@ export function startWatcher(input: {
 
   try {
     // `fs.watch` reports a missing target inconsistently across platforms, returning an inert watcher on Linux, so its
-    // not throwing is no evidence that the watch is live.
+    // not throwing isn't evidence that the watch is live.
     statSync(input.dir);
     watcher = startWatch(input.dir, handleWatchEvent);
     watcher.on('error', (error) => {
