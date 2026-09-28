@@ -19,7 +19,7 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, 
   it('includes build output', () => {
     expect(
       packed.filter((entry) => entry.startsWith('dist/')),
-      `${name} packs no build output. Run \`nmr build\` before this suite.`,
+      `${name} doesn't pack any build output. Run \`nmr build\` before this suite.`,
     ).not.toHaveLength(0);
   });
 
@@ -32,7 +32,7 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, 
   });
 
   it('excludes the TypeScript sources', () => {
-    // A package with no `files` allowlist falls back to `.gitignore`, which ignores `dist/` and includes `src/`.
+    // A package without a `files` allowlist falls back to `.gitignore`, which ignores `dist/` and includes `src/`.
     expect(packed.filter((entry) => entry.startsWith('src/'))).toEqual([]);
   });
 
@@ -88,7 +88,7 @@ function readBinPaths(manifest: object): ReadonlyArray<string> {
 }
 
 /**
- * Lists the paths that `npm pack` would include for the package at `dir`. The dry run writes no tarball, so a
+ * Lists the paths that `npm pack` would include for the package at `dir`. The dry run doesn't write a tarball, so a
  * failing assertion cannot leave a `.tgz` in a package root.
  */
 function readPackedPaths(dir: string): ReadonlyArray<string> {
@@ -107,22 +107,22 @@ function readPackedPaths(dir: string): ReadonlyArray<string> {
 function readReportPaths(stdout: string): ReadonlyArray<string> {
   const parsed: unknown = JSON.parse(stdout);
   if (!Array.isArray(parsed) || parsed.length === 0) {
-    throw new TypeError('`npm pack --json` returned no report.');
+    throw new TypeError("`npm pack --json` didn't return any report.");
   }
   // `Array.isArray` narrows an `unknown` to `any[]`, so the explicit annotations here and below keep an implicit
   // `any` from flowing through every access and defeating the validation.
   const [report]: ReadonlyArray<unknown> = parsed;
   if (typeof report !== 'object' || report === null || !('files' in report)) {
-    throw new TypeError('`npm pack --json` report contains no `files` array.');
+    throw new TypeError("`npm pack --json` report doesn't contain a `files` array.");
   }
   const files: unknown = report.files;
   if (!Array.isArray(files)) {
-    throw new TypeError('`npm pack --json` report contains no `files` array.');
+    throw new TypeError("`npm pack --json` report doesn't contain a `files` array.");
   }
   const entries: ReadonlyArray<unknown> = files;
   return entries.map((file) => {
     if (typeof file !== 'object' || file === null || !('path' in file) || typeof file.path !== 'string') {
-      throw new TypeError('`npm pack --json` report contains a file entry with no `path`.');
+      throw new TypeError('`npm pack --json` report contains a file entry without a `path`.');
     }
     return file.path;
   });
