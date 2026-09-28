@@ -162,17 +162,12 @@ Use only if `INVALID_INPUT` still fires after the pre-flight checker returned `o
 
 Do not create a probe ticket silently. Present the situation to the user and let them choose how to proceed. Use the [option format](#option-format):
 
-> Jira rejected this payload and the pre-flight checker found no known issues. This is likely a new failure class. How should I proceed?
+> Jira rejected this payload and the pre-flight checker found no known issues. This is likely a new failure class. Only option 1 identifies it, which a fix or a new checker rule needs, and it does so by creating a real ticket tagged `mcp-probe` that has to be deleted afterward. How should I proceed?
 >
-> 1. ■■□ Probe and bisect:
->    - ➕ pinpoints the exact failing fragment for a fix or a future checker rule
->    - ➖ creates a real ticket tagged `mcp-probe` that needs eventual cleanup
+> 1. ■■□ Probe and bisect
 > 2. ■□□ Show the payload for manual submission:
->    - ➕ no probe ticket created; you can edit and submit via the Jira UI
->    - ➖ no diagnostic captured for future hardening
-> 3. ■□□ Skip ticket creation:
->    - ➕ no further side effects
->    - ➖ the failure class remains unidentified
+>    - ➕ the ticket is still created, by hand through the Jira UI
+> 3. ■□□ Skip ticket creation
 
 #### 2. If the user picks option 1 (probe and bisect)
 

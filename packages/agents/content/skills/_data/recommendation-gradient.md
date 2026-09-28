@@ -10,7 +10,7 @@ The render contract comes first; the doctrine behind it follows. Skills that ask
 
 Asking is not a neutral act. It is cheap for the agent (it discharges responsibility for the call, rules out being wrong, and costs one paragraph) and expensive twice over: The developer pays a context switch to load the context, weigh the options, and answer, and the session that asked idles until the answer arrives. Across a dozen concurrent sessions those costs compound into decision fatigue and a stalled pipeline. A menu that the agent could have resolved itself transfers cost from the cheap side to the expensive one, and it looks like diligence while it happens, which is why it goes unnoticed and recurs.
 
-The gate reads the markers rather than asking for judgment, because a judgment gate loses to a step that says to ask: An agent following a step list executes the step, and a rendered ■■■ makes the ask feel legitimate. Markers leave nothing to override. Two ■■□ at the top is a real fork, an unmarked list is a preference, and every other field is decided. The gated class is a closed list for the same reason: "consequential" is read generously, and a list is not.
+The gate reads the markers rather than asking for judgment, because a judgment gate loses to a step that says to ask: An agent following a step list executes the step, and a rendered ■■■ makes the ask feel legitimate. The gate is only as reliable as the markers that it reads, and the observed bias is a marker set too weak: An option whose alternatives have disqualifying flaws gets ■■□, and the menu renders. The contract's leader check corrects that before the gate reads the markers. Two ■■□ at the top is a real fork, an unmarked list is a preference, and every other field is decided. The gated class is a closed list for the same reason: "consequential" is read generously, and a list is not.
 
 A wrong-but-stated recommendation is cheaper to correct than a decision handed back: Correcting one costs a word, answering one costs an evaluation and a wait. The record keeps the developer's veto at the cheaper price. They read the ledger and overrule the entries with which they disagree, and the session has kept working in the meantime. "When in doubt, ask" is therefore the expensive default, not the safe one, and "when in doubt, record" is the rule that replaces it.
 
@@ -23,6 +23,8 @@ Bullets in an option list are weighted equally by construction; there is no mino
 The con is also load-bearing for the menu's existence: Because an option recommended with no drawback reads as a decision rather than an option, presenting a settled call as a fork requires inventing a drawback. A fabricated con is the sign that the gate above was skipped, not an independent formatting slip.
 
 When the honest cost is hard to find, that difficulty is itself evidence the option is strong. Spend the effort on finding the real cost or on omitting the bullet, never on manufacturing a plausible-sounding one.
+
+A menu that looks balanced when the options are not misreports the analysis: It tells the developer that the agent found a close call. The developer relies on the menu for objective advice, and an even-handed look is the opposite of that when one option is sound and the others are flawed. A con whose size the reader cannot see does the same damage in a smaller form, since the reader has to investigate to learn that it is trivial. Both failures recur after being named, because a menu with a con on every option looks diligent while it misleads.
 
 ## Confirmation prompts vs. substantive binaries
 
@@ -40,16 +42,14 @@ Same surface phrasing, two correct renderings:
 
 **Substantive (gradient list):**
 
-> Want me to:
+> #412 asks for the flag that this change adds, and also for a short alias that the change does not add. Want me to:
 >
-> 1. ■■□ Extract the helper now:
->    - ➕ enables reuse across the next two call sites
->    - ➖ adds a file and a name to maintain
-> 2. ■□□ Keep it inline:
->    - ➕ minimal surface area today
->    - ➖ duplicates the next time the pattern recurs
+> 1. ■■□ Close #412 as superseded by this change:
+>    - ➖ the alias request closes with it, and no other ticket tracks it
+> 2. ■■□ Leave #412 open, retitled to the alias:
+>    - ➖ its 30 comments about the shipped flag bury the one about the alias
 
-Both "yes" (extract) and "no" (inline) are concrete agent actions with their own tradeoffs.
+Both "yes" (close) and "no" (retitle) are concrete agent actions with their own tradeoffs. The decision edits a remote ticket, so it is in the gated class and is asked whatever the markers say.
 
 ## Ranking criteria
 
@@ -81,8 +81,8 @@ Multiple questions in one response (Q1/Q2 identifiers):
    - ➕ matches the package's public API style
 
 **Q2: File location?**
-1. ■■□ Co-locate with consumer:
-   - ➕ keeps related code close
-2. ■□□ Place in shared utility module:
-   - ➕ reusable across packages
+1. ■■□ Co-locate with its only consumer:
+   - ➕ the check changes together with the form that it validates
+2. ■■□ Place in the shared utility package:
+   - ➕ the billing package needs the same check once #588 lands
 ```

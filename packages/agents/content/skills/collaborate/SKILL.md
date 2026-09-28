@@ -64,11 +64,10 @@ This (a numbered gradient list, in the action-items block that closes the turn):
 >
 > Want me to:
 >
-> 1. ■□□ Use a single config file:
->    - ➕ minimal surface area
->    - ➖ couples concerns
+> 1. ■■□ Keep a single config file:
+>    - ➕ the deploy script reads one fixed path, and changing it touches three repositories
 > 2. ■■□ Split into two configs:
->    - ➕ separates lifecycle and runtime concerns
+>    - ➕ runtime settings then reload without a restart, which #640 asks for
 
 <!-- include: ../_partials/action-items.md / -->
 

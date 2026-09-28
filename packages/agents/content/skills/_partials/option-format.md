@@ -1,6 +1,6 @@
 ## Option format
 
-**Earn the menu before rendering it.** Mark the options first, then read the markers: Render the menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class below. Every other field is decided: State the decision in one line with its reason, record it, and proceed. An all-■□□ field is decided too. An unmarked list is a pure-preference call, and a preference is in the gated class. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
+**Earn the menu before rendering it.** Mark the options first, check the leader as "Check the leader before rendering" below states, then read the markers: Render the menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class below. Every other field is decided: State the decision in one line with its reason, record it, and proceed. An all-■□□ field is decided too. An unmarked list is a pure-preference call, and a preference is in the gated class. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
 
 The gated class is closed. These decisions are asked whatever the markers say:
 
@@ -45,29 +45,37 @@ Every line subordinate to an option (a pro, a con, invocation guidance) is a nes
 
 Nesting stops at one level. An option never contains sub-options, and a pro never contains a sub-pro. Terminal rendering stops being reliable at deeper nesting, so this contract is written never to need it.
 
-**Write only bullets that are real.** A `➕` or `➖` asserts that the reader should weigh it, and bullets render at equal visual weight. A manufactured one reads exactly like a load-bearing one, and it takes a round trip to discover that it was empty. Four tests:
+**Write only bullets that are real.** Bullets report the weight of each option, not a balance between the options: When the options differ in quality, an uneven menu is the accurate one, and a menu that looks balanced misreports the analysis. A `➕` or `➖` asserts that the reader should weigh it, and bullets render at equal visual weight. A manufactured one reads exactly like a load-bearing one, and it takes a round trip to discover that it was empty. Six tests:
 
 - **Falsifiability.** A `➖` must be false for at least one other option on the menu, and a `➕` likewise. Anything that would still be true if this were the only option is a mechanic of carrying it out rather than a tradeoff; it belongs on the invocation line or nowhere.
 - **Decision weight.** Would a reader who believed this bullet choose differently? Bookkeeping, mechanically-implied, and trivially-reversible consequences (a doc line to update, a criterion to reword, a rename to propagate) are real, specific, and decision-irrelevant. Restatements of an option's inherent properties ("longer wall time", "structured review pass", "ships faster") are one instance of the same failure.
-- **The qualifier tell.** A bullet undercut by its own qualifier ("negligible", "inert", "harmless") is filler. Cut it rather than soften it.
+- **Consequence.** A `➖` states what breaks or what it costs, and for whom, concretely enough that the reader can weigh it without investigating. Cut a con that cannot be stated that way.
+- **The qualifier tell.** A bullet undercut by its own qualifier ("negligible", "inert", "harmless") is filler. The only repair is to cut the bullet: Deleting the qualifier leaves the same minor con, now looking weighty.
+- **One tradeoff, stated once.** When one option's `➕` restates another option's `➖`, the two options are the sides of one tradeoff. State it once, in a line above the list, rather than as bullets split between the options, which the reader counts as separate reasons.
 - **Check before you hedge.** If a cheap check would settle whether a con is real, run the check. Presenting the uncertainty as a bullet transfers the check to the user.
 
 Asymmetry is a report, not a defect. An option with three real pros and no real con gets three pros and no con. Never add a bullet to fill a slot, reach parity between options, or avoid looking one-sided; when the honest cost is hard to find, that difficulty is itself evidence the option is strong. When no option has a real bullet, omit them all and let the markers alone convey the recommendation. Add no tiebreaker text for equal-strength options; the developer picks the number.
 
 A `□□□` option keeps the `➖` that explains why it was ruled out. Under the falsifiability test that bullet is real by construction, and without it the reader is left with a veto that they cannot check.
 
+**Check the leader before rendering.** Once the bullets are drafted, and before the gate reads the markers:
+
+1. For each `➖` on the strongest-marked option, name the reader who would choose differently because of it. Cut the bullet if there is none.
+2. Re-mark the options. When every alternative carries a disqualifying `➖`, the leader is ■■■. The observed bias is a marker set too weak, not one set too strong.
+3. Re-apply the gate. Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and render no menu.
+
 **Identify each question** when a single response contains 2 or more option-style questions: Prefix them `Q1`, `Q2`, and so on, so that the user can reference answers unambiguously. When the underlying data already has stable identifiers (plan-review findings such as `C1` or `X2`), use those in place of `Q1`/`Q2`. For a single option-style question, omit the identifier. Inside an [action-items block](../_data/action-items.md), identifiers are mandatory whenever the block contains more than one item (or more than one independently-numbered list), and they distinguish actions (`A`) from questions (`Q`).
 
 Example:
 
 ```
-Want me to:
-1. ■□□ Use a single config file:
-   - ➕ minimal surface area
-   - ➖ couples concerns
-2. ■■■ Split into two configs:
-   - ➕ separates lifecycle and runtime concerns
-   - ➕ matches existing repo pattern
-3. □□□ Use three configs:
-   - ➖ over-decomposed for current scope
+How should the exported `loadConfig` report a missing file?
+1. ■■■ Return `undefined`:
+   - ➕ matches the package's three other loaders, so callers keep one pattern
+2. ■□□ Throw `ConfigNotFoundError`:
+   - ➖ each of the 14 call sites needs a new `try`/`catch` to keep its current behavior
+3. □□□ Return an empty config:
+   - ➖ a caller cannot tell a missing file from an empty one, so a mistyped path silently disables every setting
 ```
+
+The decision is the shape of a public API, so the gate renders the menu although one option leads. The leader has no `➖` because none survived the check.
