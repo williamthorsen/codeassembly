@@ -15,7 +15,7 @@ import { SURFACES } from '../types.ts';
 
 // This repository configures its own title templates, and the engine's semantics decide what they render. A group
 // containing both `{scope}` and `{type}` drops the type along with an absent scope, and the `*` scope is absent by the
-// time the group decides, so a multi-workspace commit would name no work type for the changelog to read.
+// time the group decides, so a multi-workspace commit would not name any work type for the changelog to read.
 
 /** The repository root, five levels above this suite. */
 const REPO_ROOT = fileURLToPath(new URL('../../../../../', import.meta.url));
