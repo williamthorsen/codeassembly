@@ -110,7 +110,10 @@ describe('the deployed bundle', () => {
 
 // region | Helpers
 
-/** Narrows the bundle's parsed stdout to a successful sweep, since the process boundary offers no type of its own. */
+/**
+ * Narrows the bundle's parsed stdout to a successful sweep, since the process boundary does not offer a type of its
+ * own.
+ */
 function isSweepSuccess(value: unknown): value is DetectSuccess {
   return typeof value === 'object' && value !== null && 'ok' in value && value.ok === true && 'batches' in value;
 }

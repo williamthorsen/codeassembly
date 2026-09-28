@@ -8,7 +8,7 @@ describe(parseArgs, () => {
     expect(parseArgs(['docs', 'packages/agents/README.md']).paths).toStrictEqual(['docs', 'packages/agents/README.md']);
   });
 
-  it('reads no argument as the whole repository, naming no rule and no unit', () => {
+  it('reads an empty argument list as the whole repository, without naming a rule or a unit', () => {
     expect(parseArgs([])).toStrictEqual({
       paths: [],
       rules: [],
@@ -28,7 +28,7 @@ describe(parseArgs, () => {
     expect(args.units).toStrictEqual(new Map([['writing', '2']]));
   });
 
-  it('reads a rule that declares no sweep version', () => {
+  it('reads a rule that does not declare a sweep version', () => {
     const args = parseArgs(['--unit', 'writing=2', '--rule', 'em-dash=writing']);
 
     expect(args.rules).toStrictEqual([{ rule: 'em-dash', unit: 'writing', version: undefined }]);
@@ -55,7 +55,7 @@ describe(parseArgs, () => {
     expect(args.rules.map((named) => named.rule)).toStrictEqual(['em-dash', 'reduced-object-relative']);
   });
 
-  it('reads a rule for which the helper has no detector', () => {
+  it('reads a rule for which the helper does not have a detector', () => {
     const args = parseArgs(['--unit', 'writing=2', '--rule', 'sentence-case@1=writing']);
 
     expect(args.rules).toStrictEqual([{ rule: 'sentence-case', unit: 'writing', version: '1' }]);
@@ -65,7 +65,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--unit', 'writing=2', '--rule', 'Sentence_Case=writing'])).toThrow(/kebab-case/);
   });
 
-  it('refuses a rule naming a unit that no flag declares', () => {
+  it('refuses a rule naming a unit that the --unit flags do not declare', () => {
     expect(() => parseArgs(['--rule', 'em-dash=writing'])).toThrow(/which no --unit declares/);
   });
 
@@ -88,7 +88,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--unit', 'writing'])).toThrow(/takes <name>=<value>/);
   });
 
-  it('refuses a batch budget that no batch could satisfy', () => {
+  it('refuses a batch budget that a batch could not satisfy', () => {
     expect(() => parseArgs(['--batch-budget', '0'])).toThrow(/positive integer/);
   });
 

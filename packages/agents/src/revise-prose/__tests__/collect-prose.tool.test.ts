@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { collectProse, NotARepositoryError, type ProseCollection } from '../collect-prose.ts';
 
-/** The fixture tree, written into a throwaway repository so that no sweep runs against the working checkout. */
+/** The fixture tree, written into a throwaway repository so that the sweep does not run against the working checkout. */
 const FIXTURE_FILES: Readonly<Record<string, string>> = {
   '.agents/revise-prose.yaml': 'units: {}\nrejections:\n  - ground: Recorded prose the sweep may not edit.\n',
   '.claude/skills/deployed/SKILL.md': 'Deployed prose the sweep may not edit.\n',
@@ -135,7 +135,7 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('leaves a YAML file containing only data out of the scanned set, so no batch includes it', async () => {
+  it('leaves a YAML file containing only data out of the scanned set, so the batches do not include it', async () => {
     const collection = await sweep();
 
     expect(collection.files).toContain('data.yaml');
@@ -149,7 +149,7 @@ describe(collectProse, () => {
     expect(joinText(collection)).not.toContain('Recorded prose');
   });
 
-  it('counts a file whose extension is read by no extractor as ineligible', async () => {
+  it('counts a file whose extension is not read by any extractor as ineligible', async () => {
     const collection = await sweep(['data.json']);
 
     expect(collection.skipped.ineligible).toBe(1);
@@ -163,7 +163,7 @@ describe(collectProse, () => {
     expect(collection.scannedFiles).toHaveLength(0);
   });
 
-  it('counts an extensionless file with no shebang as ineligible', async () => {
+  it('counts an extensionless file without a shebang as ineligible', async () => {
     const collection = await sweep(['NOTICE']);
 
     expect(collection.skipped.ineligible).toBe(1);
@@ -233,7 +233,7 @@ describe(collectProse, () => {
 
   // region | Helpers
 
-  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so the run reads no real preferences. */
+  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so the run does not read the real preferences. */
   async function sweep(paths: readonly string[] = []): Promise<ProseCollection> {
     return collectProse({ root: scratch, paths, home: scratch });
   }

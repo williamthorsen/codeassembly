@@ -14,7 +14,10 @@ import type { DetectResult, DetectSuccess, LegacyRecord, ProseRecord, RunFold, S
 /** The detector rules that `bothRules` names under unit `writing`. */
 const BOTH_RULES: ReadonlyArray<string> = ['em-dash', 'reduced-object-relative'];
 
-/** What a written record is read back against: no versions, which a record in the per-rule shape needs none of. */
+/**
+ * What a written record is read back against: empty version maps, since a record in the per-rule shape does not need
+ * any versions.
+ */
 const NO_VERSIONS: SweepVersions = { units: new Map(), rules: new Map() };
 
 const OBJECT_RELATIVE = 'The helper reports the source it names.';
@@ -87,7 +90,7 @@ describe(runDetect, () => {
       });
     });
 
-    it('detects the object relative alone, naming no rule', async () => {
+    it('detects the object relative alone when the invocation does not name a rule', async () => {
       const { candidates } = expectSuccess(await sweep());
 
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['reduced-object-relative']);
@@ -100,7 +103,7 @@ describe(runDetect, () => {
       expect(expectSuccess(await sweep()).candidates).toHaveLength(1);
     });
 
-    it('reads no record, so a repository with one sweeps as though it had none', async () => {
+    it('does not read the record, so a repository with one sweeps as though it had none', async () => {
       await writeRecord(recordFor(await rejectedPhrase()));
 
       expect(expectSuccess(await sweep()).candidates).toHaveLength(1);
@@ -128,7 +131,7 @@ describe(runDetect, () => {
       });
     });
 
-    it('reports which named rules it detected and which it has no detector for', async () => {
+    it('reports which named rules it detected and which it does not have a detector for', async () => {
       const { rules } = expectSuccess(await sweep([...bothRules(), '--rule', 'sentence-case@1=writing']));
 
       expect(rules).toStrictEqual({ detected: BOTH_RULES, undetected: ['sentence-case'] });
@@ -201,14 +204,14 @@ describe(runDetect, () => {
       expect(summary.batchesPlanned).toBeGreaterThan(0);
     });
 
-    it('skips a covered batch although the run names a rule that declares no sweep version and was never recorded', async () => {
+    it('skips a covered batch although the run names a rule that does not declare a sweep version and was never recorded', async () => {
       await writeRecord(recordFor(await rejectedPhrase()));
       const { summary } = expectSuccess(await sweep([...bothRules(), '--rule', 'sentence-case=writing']));
 
       expect(summary.batchesSkipped).toBe(summary.batchesPlanned);
     });
 
-    it('skips a covered batch after a unit version change that raises no sweep version', async () => {
+    it('skips a covered batch after a unit version change that does not raise any sweep version', async () => {
       await writeRecord(recordFor(await rejectedPhrase()));
       const { candidates, summary } = expectSuccess(await sweep(bothRules('3')));
 
@@ -231,7 +234,7 @@ describe(runDetect, () => {
       expect(expectSuccess(await sweep(raisedEmDash())).rejections).toStrictEqual([]);
     });
 
-    it('keeps the candidates of a rule named without a version in a dispatched batch, listing no such rule', async () => {
+    it('keeps the candidates of a rule named without a version in a dispatched batch, without listing that rule', async () => {
       const argv = ['--unit', 'writing=2', '--rule', 'em-dash@1=writing', '--rule', 'reduced-object-relative=writing'];
       const { batches, candidates } = expectSuccess(await sweep(argv));
 
@@ -239,7 +242,7 @@ describe(runDetect, () => {
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['reduced-object-relative', 'em-dash']);
     });
 
-    it('reports every batch for a run that versions no rule, whatever the record covers', async () => {
+    it('reports every batch for a run that does not version any rule, whatever the record covers', async () => {
       await writeRecord(recordFor(await rejectedPhrase()));
       const { batches, summary } = expectSuccess(await sweep(['--unit', 'writing=2', '--rule', 'em-dash=writing']));
 
@@ -300,7 +303,7 @@ describe(runDetect, () => {
       expect(expectSuccess(await sweep(bothRules())).rejections).toStrictEqual([]);
     });
 
-    it('reports a rejection under a rule covered by no detector', async () => {
+    it('reports a rejection under a rule not covered by any detector', async () => {
       const phrase = 'a figure the document displays on purpose';
       await writeRecord({
         rules: {},
@@ -381,7 +384,7 @@ describe(runDetect, () => {
       });
     });
 
-    it('writes the same bytes for the same fold, so a re-record leaves no diff', async () => {
+    it('writes the same bytes for the same fold, so a re-record does not leave a diff', async () => {
       runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
       const first = await readFile(path.join(scratch, RECORD_PATH), 'utf8');
       runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
@@ -567,7 +570,10 @@ describe(runDetect, () => {
     };
   }
 
-  /** The fold from `fold`, reporting no rejection, as a run reports a batch that leaves every inherited site alone. */
+  /**
+   * The fold from `fold`, not reporting any rejection, as a run reports a batch that leaves every inherited site
+   * alone.
+   */
   async function foldRejectingNothing(): Promise<RunFold> {
     return { ...(await fold()), rejections: [] };
   }
@@ -590,11 +596,14 @@ describe(runDetect, () => {
    */
   async function rejectedPhrase(): Promise<string> {
     const candidate = expectSuccess(await sweep()).candidates[0];
-    if (candidate === undefined) throw new Error('the fixture yielded no object-relative candidate');
+    if (candidate === undefined) throw new Error('the fixture did not yield an object-relative candidate');
     return candidate.phrase;
   }
 
-  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so that the run reads no real preferences. */
+  /**
+   * Sweeps the fixture repository, anchoring `home` at the scratch tree so that the run does not read the real
+   * preferences.
+   */
   async function sweep(argv: readonly string[] = []): Promise<DetectResult> {
     return runDetect({ argv, root: scratch, home: scratch });
   }
@@ -661,7 +670,7 @@ function recordFor(phrase: string, version = '1', file = 'docs/guide.md'): Prose
   };
 }
 
-/** The record from `recordFor` with no coverage, so that the batch holding the rejected site applies both rules. */
+/** The record from `recordFor` without coverage, so that the batch holding the rejected site applies both rules. */
 function uncoveredRecordFor(phrase: string): ProseRecord {
   return { ...recordFor(phrase), rules: {} };
 }
