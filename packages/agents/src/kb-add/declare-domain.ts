@@ -21,9 +21,9 @@ export interface AddedDomain {
 }
 
 /**
- * Records a written note's folder in `.kb/taxonomy.yaml`, declaring it and every undeclared ancestor when no domain
- * declares it. Returns where the note is and what the declaration added, or `undefined` for a store that has not
- * adopted a taxonomy, which this leaves untouched.
+ * Records a written note's folder in `.kb/taxonomy.yaml`, declaring it and every undeclared ancestor when the taxonomy
+ * does not declare it. Returns where the note is and what the declaration added, or `undefined` for a store that has
+ * not adopted a taxonomy, which this leaves untouched.
  *
  * Because adoption is the file's presence, not what it declares, the first capture into a store whose taxonomy is
  * empty declares that store's first domain.
@@ -57,7 +57,8 @@ export async function declareDomain(input: {
     if (!(await pathExists(join(input.kbPath, TAXONOMY_FILE)))) {
       return undefined;
     }
-    // A note at the assertions root is in no folder, so there is no domain to declare and no lint that can see it.
+    // A note at the assertions root is not in any folder, so it does not have a domain to declare, and the lints cannot
+    // see it.
     if (domain === null) {
       return { domain, added: [] };
     }

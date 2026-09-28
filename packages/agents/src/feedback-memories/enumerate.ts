@@ -30,7 +30,7 @@ export async function enumerateFeedbackMemories(input: {
     memoryStores = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name);
   } catch (error) {
     if (isMissingFile(error)) {
-      return { ok: false, error: 'no-projects-root', message: `no projects root at ${input.projectsRoot}` };
+      return { ok: false, error: 'no-projects-root', message: `projects root ${input.projectsRoot} does not exist` };
     }
     throw error;
   }
@@ -74,7 +74,9 @@ export async function enumerateFeedbackMemories(input: {
 
 // region | Helpers
 
-/** Lists the `.md` memory files in a store, excluding the `MEMORY.md` index; an absent directory yields no files. */
+/**
+ * Lists the `.md` memory files in a store, excluding the `MEMORY.md` index; an absent directory yields an empty list.
+ */
 async function listMemoryFiles(memoryDir: string): Promise<string[]> {
   let entries: string[];
   try {
@@ -100,7 +102,7 @@ async function readMemory(input: {
   const note = readNoteContent(content);
   if (note.error !== undefined) {
     // Report a malformed memory (a fence wrapping unparseable YAML) so that an operator can route it by hand. A file
-    // with no fence is not a memory at all, and a feedback memory always has frontmatter, so skipping it never hides
+    // without a fence is not a memory at all, and a feedback memory always has frontmatter, so skipping it never hides
     // one.
     return hasFrontmatterFence(content) ? { kind: 'unreadable', reason: note.error } : { kind: 'other' };
   }

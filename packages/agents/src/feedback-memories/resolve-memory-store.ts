@@ -34,7 +34,7 @@ export async function resolveMemoryStore(input: {
     return {
       ok: false,
       error: 'no-such-memory-store',
-      message: `no memory store "${input.requested}" under ${input.projectsRoot}`,
+      message: `"${input.requested}" does not name a memory store under ${input.projectsRoot}`,
     };
   }
   if (matched.length > 1) {
