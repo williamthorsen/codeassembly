@@ -36,7 +36,7 @@ You act on the `--auto` flag, which controls whether you present the routing pla
 ## Modes
 
 - **Default mode**: Enumerate, classify, dedup, present the routing plan, and execute only after confirmation.
-- **Auto mode (`--auto`)**: Enumerate, classify, dedup, and execute silently, with no confirmation.
+- **Auto mode (`--auto`)**: Enumerate, classify, dedup, and execute silently, without confirmation.
 
 ## Process
 
@@ -48,7 +48,7 @@ Run the helper's `enumerate` subcommand (it is read-only):
 node {harness_home_dir}/skills/migrate-feedback-memories/feedback-memories.mjs enumerate [--memory-store <name>]
 ```
 
-Omit `--memory-store` to enumerate every store on the machine; pass `--memory-store <name>` to scope the run to one store. The name is either the directory name reported in each memory's `memoryStore` field, or the project label printed by the `list` subcommand (`configs-macos` rather than `-Users-me-repos-configs-macos`); prefer the directory name when you have it, since it is unambiguous. For a value that names no store, `enumerate` returns `{ ok: false, error: 'no-such-memory-store' }`, and for a label shared by two stores it returns `{ ok: false, error: 'ambiguous-memory-store' }` listing them, so a mistyped or ambiguous name fails loudly rather than looking like an already-clean store.
+Omit `--memory-store` to enumerate every store on the machine; pass `--memory-store <name>` to scope the run to one store. The name is either the directory name reported in each memory's `memoryStore` field, or the project label printed by the `list` subcommand (`configs-macos` rather than `-Users-me-repos-configs-macos`); prefer the directory name when you have it, since it is unambiguous. For a value that does not name a store, `enumerate` returns `{ ok: false, error: 'no-such-memory-store' }`, and for a label shared by two stores it returns `{ ok: false, error: 'ambiguous-memory-store' }` listing them, so a mistyped or ambiguous name fails loudly rather than looking like an already-clean store.
 
 It prints `{ ok, machine, projectsRoot, memories, skipped }`. Each entry in `memories` includes `path`, `memoryStore`, `machine`, `slug`, `name`, `description`, `originSessionId`, `body`, `memoryIndexPath`, and `repoPath` (the origin project's working directory when the memory-store slug resolves to a live repo on this machine, else null). `skipped` lists memory files that have a frontmatter fence but unparseable YAML; read and route each one by hand (they are usually feedback memories whose `name:` value needs quoting).
 
@@ -62,7 +62,7 @@ Then decide one destination per memory:
 
 - **Capture** when the lesson generalizes beyond its origin project (a behavior, correction, or convention that should propagate). This is the default for behavioral feedback.
 - **Retain** when the fact is genuinely local and non-propagating (a project-specific deadline, a one-off quirk).
-- **Delete** only when the memory _restates_ a rule that shared guidance, a prior capture, or the origin project's own guidance already codifies, adding no signal that the guidance does not already state. Redundancy here is of signal, not topic. A memory that **narrates a violation** of already-existing guidance is not redundant: An agent breaking a codified rule is fresh evidence the guidance is not taking effect, so route it to **Capture** with `,mistake`, never Delete. When a body is ambiguous between restatement and violation, prefer Capture; a needless capture dedups away on the next run, but a deleted violation is gone for good. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is a delete like any other, because it is a pure restatement (`shared/AGENTS.md` now states its rule).
+- **Delete** only when the memory _restates_ a rule that shared guidance, a prior capture, or the origin project's own guidance already codifies, without adding any signal that the guidance does not already state. Redundancy here is of signal, not topic. A memory that **narrates a violation** of already-existing guidance is not redundant: An agent breaking a codified rule is fresh evidence the guidance is not taking effect, so route it to **Capture** with `,mistake`, never Delete. When a body is ambiguous between restatement and violation, prefer Capture; a needless capture dedups away on the next run, but a deleted violation is gone for good. The redirect memory `feedback-capture-feedback-in-kb-not-memory` is a delete like any other, because it is a pure restatement (`shared/AGENTS.md` now states its rule).
 
 ### 3. Dedup capture candidates by origin
 
@@ -104,7 +104,7 @@ On approval, run all captures first, then a single deletion pass:
    )
    ```
 
-   `--store @feedback` here names the **KB store** (the capture's destination, not the memory store from which it came). It resolves to the `feedback_kb` of `~/.agents/kb.yaml` independently of the working directory, so the capture writes the event to the same store wherever it runs. When the memory's `repoPath` is null (the memory-store slug resolves to no live repo on this machine), omit the `(cd "<repoPath>" && … )` wrapper and run the capture from the current directory as today; `capture-event` then stamps this run's `cwd`/`repo`, and the body's `Origin:` line still records the origin.
+   `--store @feedback` here names the **KB store** (the capture's destination, not the memory store from which it came). It resolves to the `feedback_kb` of `~/.agents/kb.yaml` independently of the working directory, so the capture writes the event to the same store wherever it runs. When the memory's `repoPath` is null (the memory-store slug does not resolve to a live repo on this machine), omit the `(cd "<repoPath>" && … )` wrapper and run the capture from the current directory as today; `capture-event` then stamps this run's `cwd`/`repo`, and the body's `Origin:` line still records the origin.
 
    Only when `capture-event` returns `ok: true`, add that memory's source `path` to the deletion batch: Because a capture migrates the memory out of its store, its source is removed once the event is recorded. When a capture fails, leave the source in place and report the failure; never delete a memory whose capture did not succeed.
 
@@ -125,7 +125,7 @@ On approval, run all captures first, then a single deletion pass:
 - `--skill <slug>` when the lesson targets a specific skill.
 - `--impact <low|medium|high|critical>`: Rate on the merits of the memory's content: how much acting on the lesson would improve future behavior. Omit only on a genuine toss-up.
 - `--harness {harness_id}`: Keep verbatim; the installer injects the value.
-- **Provenance**: Running the capture from the origin `repoPath` (step 5) records the origin's `cwd` and `repo` in the event's structured fields. `session` is still this migration run's, and the origin machine and `memoryStore` have no structured field, so record the origin project (`memoryStore`), machine, and `originSessionId` in the body's `Origin:` line.
+- **Provenance**: Running the capture from the origin `repoPath` (step 5) records the origin's `cwd` and `repo` in the event's structured fields. `session` is still this migration run's, and the origin machine and `memoryStore` do not have a structured field, so record the origin project (`memoryStore`), machine, and `originSessionId` in the body's `Origin:` line.
 
 ### 6. Report
 
