@@ -8,15 +8,15 @@ The gated class is closed. These decisions are asked whatever the markers say:
 - remote shared state: a ticket edit, a push, a merge, the creation of a branch or a ticket
 - data loss, or any action that cannot be undone
 - spend or budget
-- a preference for which you hold no evidence
+- a preference for which you do not hold any evidence
 
-Everything else is the agent's call by default. A gated action is not decided in the agent's voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; the gated action itself waits for the developer's authorization. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you hold no evidence.
+Everything else is the agent's call by default. A gated action is not decided in the agent's voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; the gated action itself waits for the developer's authorization. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you do not hold any evidence.
 
-**Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only where the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it provisional in the record, and ask at the checkpoint; revise if overruled. A skill with no phase structure treats its own approval gate, or the end of its work, as the checkpoint.
+**Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only where the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it provisional in the record, and ask at the checkpoint; revise if overruled. A skill without a phase structure treats its own approval gate, or the end of its work, as the checkpoint.
 
 **Batch, never stream.** Asks that survive the gate collect into one review at the checkpoint, not one per turn.
 
-**Record what you did not ask.** Write every decision that the gate let you take into the plan's `## Decisions taken` section, with a one-line reason, marked `(provisional)` when it awaits the checkpoint; where no plan exists, write it into the turn's summary. Recording is mandatory: A silent decision is worse than an ask.
+**Record what you did not ask.** Write every decision that the gate let you take into the plan's `## Decisions taken` section, with a one-line reason, marked `(provisional)` when it awaits the checkpoint; when the work does not have a plan, write it into the turn's summary. Recording is mandatory: A silent decision is worse than an ask.
 
 **Never rank the options by your own elapsed time, round trips, or effort.** You measure these costs yourself, and that measure counts the user's context switch and review cycles as nothing. Measuring one does not make the call yours, and a more accurate measurement still cannot rank the options.
 
@@ -28,7 +28,7 @@ Render every option-style question in this form: any numbered list of 2 or more 
 
 **Number every option**: `1.`, `2.`, `3.` The number is how the user selects. Never render the options as bullets or bare prose.
 
-**Mark every option with a strength marker.** The recommended option is the one with the strongest marker. There is no separate "I recommend option N" sentence, and a recommendation that does not match the strongest marker is a defect.
+**Mark every option with a strength marker.** The recommended option is the one with the strongest marker. Do not write a separate "I recommend option N" sentence, and a recommendation that does not match the strongest marker is a defect.
 
 | Marker | Label                | When to use                                                                                                                                   |
 | ------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -37,9 +37,9 @@ Render every option-style question in this form: any numbered list of 2 or more 
 | ■□□    | weakly recommended   | A slight edge; mostly preference.                                                                                                             |
 | □□□    | not recommended      | Clear drawbacks; included for completeness or to rule out explicitly.                                                                         |
 
-Marking is all-or-none: Once any option has a marker, every option has one. With no preference (a pure taste call), omit markers from every option and don't explain the omission; the absence is the signal. Mark at the strength that you actually hold: A marker that reads the same whatever the analysis found conveys no information, and the reader must do all the work of telling a real choice from a formality. Render markers as plain text, never inside backticks; backticks shrink the glyphs and hurt readability.
+Marking is all-or-none: Once any option has a marker, every option has one. Without a preference (a pure taste call), omit markers from every option and don't explain the omission; the absence is the signal. Mark at the strength that you actually hold: A marker that reads the same whatever the analysis found does not convey any information, and the reader must do all the work of telling a real choice from a formality. Render markers as plain text, never inside backticks; backticks shrink the glyphs and hurt readability.
 
-**Format each option** as marker, then title, then a colon. Each pro (`➕`) and con (`➖`) is a nested list item beneath its option, with no terminal punctuation. Apply this even when an option has only one pro or con. Lead with the strongest argument.
+**Format each option** as marker, then title, then a colon. Each pro (`➕`) and con (`➖`) is a nested list item beneath its option, without terminal punctuation. Apply this even when an option has only one pro or con. Lead with the strongest argument.
 
 Every line subordinate to an option (a pro, a con, invocation guidance) is a nested list item, never a whitespace-indented continuation. Indentation by spaces, ASCII or non-breaking alike, does not survive terminal rendering: The lines collapse to the left margin, and the reader cannot tell which reason belongs to which option. Markdown structure survives; whitespace does not.
 
@@ -54,7 +54,7 @@ Nesting stops at one level. An option never contains sub-options, and a pro neve
 - **One tradeoff, stated once.** When one option's `➕` restates another option's `➖`, the two options are the sides of one tradeoff. State it once, in a line above the list, rather than as bullets split between the options, which the reader counts as separate reasons.
 - **Check before you hedge.** If a cheap check would settle whether a con is real, run the check. Presenting the uncertainty as a bullet transfers the check to the user.
 
-Asymmetry is a report, not a defect. An option with three real pros and no real con gets three pros and no con. Never add a bullet to fill a slot, reach parity between options, or avoid looking one-sided; when the honest cost is hard to find, that difficulty is itself evidence the option is strong. When no option has a real bullet, omit them all and let the markers alone convey the recommendation. Add no tiebreaker text for equal-strength options; the developer picks the number.
+Asymmetry is a report, not a defect. An option that has three real pros but lacks a real con gets three pros and does not get a con. Never add a bullet to fill a slot, reach parity between options, or avoid looking one-sided; when the honest cost is hard to find, that difficulty is itself evidence the option is strong. When every option lacks a real bullet, omit them all and let the markers alone convey the recommendation. Do not add tiebreaker text for equal-strength options; the developer picks the number.
 
 A `□□□` option keeps the `➖` that explains why it was ruled out. Under the falsifiability test that bullet is real by construction, and without it the reader is left with a veto that they cannot check.
 
@@ -62,7 +62,7 @@ A `□□□` option keeps the `➖` that explains why it was ruled out. Under t
 
 1. For each `➖` on the strongest-marked option, name the reader who would choose differently because of it. Cut the bullet if there is none.
 2. Re-mark the options. When every alternative carries a disqualifying `➖`, the leader is ■■■. The observed bias is a marker set too weak, not one set too strong.
-3. Re-apply the gate. Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and render no menu.
+3. Re-apply the gate. Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and do not render a menu.
 
 **Identify each question** when a single response contains 2 or more option-style questions: Prefix them `Q1`, `Q2`, and so on, so that the user can reference answers unambiguously. When the underlying data already has stable identifiers (plan-review findings such as `C1` or `X2`), use those in place of `Q1`/`Q2`. For a single option-style question, omit the identifier. Inside an [action-items block](../_data/action-items.md), identifiers are mandatory whenever the block contains more than one item (or more than one independently-numbered list), and they distinguish actions (`A`) from questions (`Q`).
 
@@ -78,4 +78,4 @@ How should the exported `loadConfig` report a missing file?
    - ➖ a caller cannot tell a missing file from an empty one, so a mistyped path silently disables every setting
 ```
 
-The decision is the shape of a public API, so the gate renders the menu although one option leads. The leader has no `➖` because none survived the check.
+The decision is the shape of a public API, so the gate renders the menu although one option leads. The leader does not have a `➖` because none survived the check.

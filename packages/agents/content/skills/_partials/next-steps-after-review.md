@@ -1,6 +1,6 @@
 ## Next-steps options
 
-The next-steps block has four independent sub-blocks. Each is shown only when its condition is met. If no condition is met, no next-steps block appears. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header. When two or more sub-blocks appear, label each with its `A` identifier as a bold prefix (`**A1: Deviations from ticket**`, and so on) and keep each sub-block's own 1-based numbering, so the user answers `A1: 1, A2: 2`; a lone sub-block has no identifier.
+The next-steps block has four independent sub-blocks. Each is shown only when its condition is met. If every condition is unmet, the next-steps block does not appear. Whatever combination of sub-blocks is shown, always wrap the output in a `Next steps:` header. When two or more sub-blocks appear, label each with its `A` identifier as a bold prefix (`**A1: Deviations from ticket**`, and so on) and keep each sub-block's own 1-based numbering, so the user answers `A1: 1, A2: 2`; a lone sub-block does not take an identifier.
 
 Use `~/`-relative paths when possible and absolute paths otherwise. Every line subordinate to an option (invocation guidance as much as a pro or con) is a nested list item, never a whitespace-indented continuation; see [option format](#option-format).
 
@@ -12,13 +12,13 @@ Use `~/`-relative paths when possible and absolute paths otherwise. Every line s
 
 Three of the sub-blocks below offer options that rewrite an artifact, one each: the Deviations sub-block rewrites the ticket's acceptance criteria, the source-divergence sub-block rewrites the PR description, and the Findings sub-block rewrites the source. The user consents to that rewrite by picking a number, so every such option renders a preview of the edit that it would make. The reviewer judges which criteria are genuinely in conflict with the implementation and which findings name a change that it can carry out; the preview makes those judgments reviewable instead of silent.
 
-**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change; the source target's label is plural, `Proposed edits to the source:`, because it covers every open finding. Option lines stay bare actions: The preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", has no preview.
+**Placement.** The preview renders above the numbered options, inside its sub-block, under a `Proposed edit to the {target}:` label naming what it would change; the source target's label is plural, `Proposed edits to the source:`, because it covers every open finding. Option lines stay bare actions: The preview is never a pro, a con, or a line nested beneath an option. An option that mutates nothing, such as "Leave as-is", does not render a preview.
 
 Ticket and PR-description deltas render as a flat list, one line per change. Source entries render as blocks instead, each led by its bolded finding ID.
 
 **Notation.** The preview is a delta. It never restates the ticket, the PR description, or a finding's Recommendation, which would duplicate the artifact in the terminal, and it contains one entry per change:
 
-- **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection, and from nothing else. Unplanned work is never a source: Implementation that goes beyond the criteria is not a deviation, so it yields no line. Because a ticket's `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when it was written, no edit offered by this menu changes them; a divergence between one of them and the implementation is reported in the PR description instead.
+- **Ticket targets** derive their delta from the in-conflict criteria rows of `## Specification compliance`'s ticket subsection, and from nothing else. Unplanned work is never a source: Implementation that goes beyond the criteria is not a deviation, so it does not yield a line. Because a ticket's `## Problem`, `## Context`, and `## Proposed solution` record what was known and proposed when it was written, this menu does not offer an edit that changes them; a divergence between one of them and the implementation is reported in the PR description instead.
   - `Reword: {old} → {new}` for a criterion whose direction the implementation deliberately contradicts
   - `Drop: {criterion}` for a criterion that the implementation deliberately abandoned, never for one that it has not yet reached
 - **PR-description targets** render the concrete claim changes, each keyed to the divergent `D{n}` row from which it came: `D2: {claim as written} → {claim as built}`.
@@ -27,21 +27,21 @@ Ticket and PR-description deltas render as a flat list, one line per change. Sou
 
 Every finding has one of the two shapes that the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) defines, and a source entry renders which one it has: a single named change, or a choice among named alternatives that the author decides. The second is tagged as the author's choice, and its alternatives are named rather than resolved.
 
-Render no exclusions line. A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it. Listing what was left out adds noise and hides the proposal that it was meant to qualify.
+Do not render an exclusions line. A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it. Listing what was left out adds noise and hides the proposal that it was meant to qualify.
 
 **Open findings.** When a ticket or PR-description delta line would settle or obviate an open finding, follow it with a sibling `⚠️` list item naming that finding, so that the user can see that accepting the edit pre-empts the finding's disposition. Those preview lists stay flat; nothing nests beneath a delta line.
 
 **The preview is the contract.** The edit executed is the edit previewed. When carrying it out reveals a change that the preview did not contain, stop and re-confirm with the new line shown; never widen the edit under consent already given.
 
-**Empty delta.** When no line survives the judgment, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). When a source divergence proposes a PR-description edit, that delta is never empty, because a divergence that the implementation resolves in the ticket's favor always leaves a claim to reconcile.
+**Empty delta.** When the judgment drops every line, the Deviations sub-block has nothing to propose and does not render at all; see its [trigger](#deviations-sub-block). When a source divergence proposes a PR-description edit, that delta is never empty, because a divergence that the implementation resolves in the ticket's favor always leaves a claim to reconcile.
 
 ### Deviations sub-block
 
-Shown when at least one criterion in the ticket subsection of `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta contains at least one line. Compute the delta first: An empty delta renders no sub-block.
+Shown when at least one criterion in the ticket subsection of `## Specification compliance` is in conflict with the implementation, equivalently when the criteria delta contains at least one line. Compute the delta first: When it is empty, do not render the sub-block.
 
 A criterion from another spec source never fires this sub-block, whose only edit rewrites the ticket. Every ticket edit offered by a review is this sub-block's, and a PR description at odds with the implementation is the [source divergence sub-block](#source-divergence-sub-block)'s.
 
-A criterion that is merely unbuilt contributes no line. The work is unfinished, not redirected, and a contract is not revised to match a moving target. Implementation that exceeds the criteria contributes none either.
+A criterion that is merely unbuilt does not contribute a line. The work is unfinished, not redirected, and a contract is not revised to match a moving target. Implementation that exceeds the criteria contributes none either.
 
 #### Options
 
@@ -82,7 +82,7 @@ Proposed edit to the acceptance criteria:
 2. ⏭️ ■□□ Leave as-is
 ```
 
-When the recommendation rules indicate no preference, omit markers from both options per the gradient's pure-taste-call form.
+When the recommendation rules do not indicate a preference, omit markers from both options per the gradient's pure-taste-call form.
 
 #### Recommendation rules
 
@@ -92,7 +92,7 @@ When the recommendation rules indicate no preference, omit markers from both opt
 
 #### Marker strengths
 
-For rules 1 and 2, the recommended option's marker follows how cleanly the rule's test is met: ■■■ when the evidence is unambiguous (the direction is plainly deliberate and sound for rule 1, or the finding plainly stands for rule 2), and ■■□ when the reading is defensible but arguable. The other option takes ■□□. Rule 3 has no markers.
+For rules 1 and 2, the recommended option's marker follows how cleanly the rule's test is met: ■■■ when the evidence is unambiguous (the direction is plainly deliberate and sound for rule 1, or the finding plainly stands for rule 2), and ■■□ when the reading is defensible but arguable. The other option takes ■□□. Under rule 3, both options go unmarked.
 
 ### Source divergence sub-block
 
@@ -147,17 +147,17 @@ Determine the case from the implementation column of the consistency-section tab
 
 #### Marker strengths
 
-For case 2, the recommended option's marker follows how cleanly the case's own test is met: ■■■ when the divergence is unambiguous and the PR description is plainly the stale source, ■■□ when which source leads is arguable. The other option takes ■□□. Case 4 has no markers.
+For case 2, the recommended option's marker follows how cleanly the case's own test is met: ■■■ when the divergence is unambiguous and the PR description is plainly the stale source, ■■□ when which source leads is arguable. The other option takes ■□□. In case 4, both options go unmarked.
 
 ### Findings sub-block
 
 Shown when the review has at least one finding.
 
-There is no tier condition, and none should be reintroduced. Every finding emitted by a review has already cleared the [Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate), which requires it to name a change on which the author can act; anything with no envisioned change was dropped before it was written to the artifact. Severity orders how findings rank and what blocks merge. It never decides whether they are shown, or whether the user is offered a way to act on them.
+The trigger does not include a tier condition; do not reintroduce one. Every finding emitted by a review has already cleared the [Proposed-change gate](../_data/artifact-conventions.md#proposed-change-gate), which requires it to name a change on which the author can act; anything without an envisioned change was dropped before it was written to the artifact. Severity orders how findings rank and what blocks merge. It never decides whether they are shown, or whether the user is offered a way to act on them.
 
 Stating the trigger as a list of tiers is the failure that this rule replaces: An enumeration goes stale the next time the finding scheme changes, and silently withdraws the menu from whichever tier it omits.
 
-Legacy (`-L`) findings trigger the sub-block on the same terms, with the full option pool. Do not trim the author hand-offs for a legacy-only review: That would leave implementing-in-place as the only route and forfeit the adversarial second look, which pre-existing code needs at least as much as authored code, since no ticket criterion constrains a legacy fix and no design discussion supports it. The recommendation rules handle legacy findings without a carve-out: A legacy fix naming a single change satisfies rule 2 like any other, and one leaving its choice to the author falls through to a ticket or a hand-off.
+Legacy (`-L`) findings trigger the sub-block on the same terms, with the full option pool. Do not trim the author hand-offs for a legacy-only review: That would leave implementing-in-place as the only route and forfeit the adversarial second look, which pre-existing code needs at least as much as authored code, since a legacy fix is not constrained by any ticket criterion or supported by any design discussion. The recommendation rules handle legacy findings without a carve-out: A legacy fix naming a single change satisfies rule 2 like any other, and one leaving its choice to the author falls through to a ticket or a hand-off.
 
 The option set depends on whether the review covers a pull request. Select the variant by the review that the agent just produced: A `review-pr` run has a PR reference in the review header and a PR-description spec source, and its author is typically someone else; a `review-branch` run has neither, and its code is typically our own.
 
@@ -172,11 +172,11 @@ The option set depends on whether the review covers a pull request. Select the v
 
 #### Options: PR variant (review-pr)
 
-| #   | Emoji | Option                        | Description                                                                                                                                                                                                    |
-| --- | ----- | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | 📋    | Post findings on the PR       | Post the findings as comments anchored to file and line. On Bitbucket, use the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md); GitHub has no posting mechanism yet (see #1018) |
-| 2   | 🚀    | Implement directly and commit | Fix the findings in this session and commit the fix                                                                                                                                                            |
-| 3   | 🎫    | Create a follow-up ticket     | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the next matching rule decides the rest                                                                                        |
+| #   | Emoji | Option                        | Description                                                                                                                                                                                                             |
+| --- | ----- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | 📋    | Post findings on the PR       | Post the findings as comments anchored to file and line. On Bitbucket, use the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md); GitHub does not have a posting mechanism yet (see #1018) |
+| 2   | 🚀    | Implement directly and commit | Fix the findings in this session and commit the fix                                                                                                                                                                     |
+| 3   | 🎫    | Create a follow-up ticket     | Spin the separable findings into their own ticket, per `scope-and-deferral.md`; the next matching rule decides the rest                                                                                                 |
 
 #### Output format
 
@@ -281,7 +281,7 @@ Per the session-boundary rule, two options name a skill in the render:
 
 #### Recommendation rules
 
-Both variants share one cascade. Check the rules in order and stop at the first match. Every rule states a firing condition, and no option is a default that fires for want of one: A conditionless option outranks a conditioned one in practice, however the conditions are worded.
+Both variants share one cascade. Check the rules in order and stop at the first match. Every rule states a firing condition, and an option is never a default that fires for want of one: A conditionless option outranks a conditioned one in practice, however the conditions are worded.
 
 1. **Create a follow-up ticket**: Every open finding clears one of [`scope-and-deferral.md`](../_data/scope-and-deferral.md)'s affirmative reasons for spinning off, namely a genuinely separable concern, a materially different risk surface, size that would overwhelm the current change, or independent prioritization. "The ticket didn't mention it" is never such a reason. Absent an affirmative reason the fold-in default applies and the cascade continues.
 2. **Implement directly and commit**: Every open finding names a single change rather than a choice among alternatives, which are the two shapes that the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) admits. Implementing forfeits the second look, and the single-change shape makes that acceptable: The fix's diff is the finding restated, so a reviewer would be re-reading text that the review already contains. One finding leaving its choice to the author is enough to fail this rule, however small the alternatives look, since implementing would settle it on the author's behalf.
@@ -304,7 +304,7 @@ When the cascade's conditions leave two options genuinely in balance, prefer the
 
 ### Blocked-step sub-block
 
-Shown when something that the user can clear, such as a sandbox denial, a missing credential, or a stopped service, blocked a review step and remains once the routes that need no action from the user, such as an ephemeral runner for a missing tool, are exhausted. A clean review renders it like any other trigger. The line above the options names the step and the blocker, and the first option names the action that supplies the missing resource, such as a login or a grant, never the blocked step for the user to run:
+Shown when something that the user can clear, such as a sandbox denial, a missing credential, or a stopped service, blocked a review step and remains once the routes that do not need any action from the user, such as an ephemeral runner for a missing tool, are exhausted. A clean review renders it like any other trigger. The line above the options names the step and the blocker, and the first option names the action that supplies the missing resource, such as a login or a grant, never the blocked step for the user to run:
 
 ```
 {step} was blocked: {blocker}.

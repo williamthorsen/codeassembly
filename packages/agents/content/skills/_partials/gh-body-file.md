@@ -2,9 +2,9 @@
 
 Pass a Markdown body to a CLI through a file, never through the shell. This governs every invocation taking a body file: `git commit`, `gh issue create`, `gh issue edit`, `gh issue comment`, `gh pr create`, `gh pr edit`, `gh pr comment`, `gh pr merge`, `acli jira workitem create`, and `acli jira workitem comment create`. A body passed as a double-quoted argument instead has its backticks and `$(…)` expanded, so the shell runs what the message only meant to quote.
 
-**Resolve the scratch directory; never reference it.** Create one with `mktemp -d "${TMPDIR:-/tmp}/gh-body.XXXXXX"` in a Bash call and use the absolute path that call prints; bare `mktemp -d` picks a path denied by the agent sandbox. Because the {tool:Write} tool performs no shell expansion, a path containing `$TMPDIR` handed to it creates a directory named `$TMPDIR`.
+**Resolve the scratch directory; never reference it.** Create one with `mktemp -d "${TMPDIR:-/tmp}/gh-body.XXXXXX"` in a Bash call and use the absolute path that call prints; bare `mktemp -d` picks a path denied by the agent sandbox. Because the {tool:Write} tool does not perform shell expansion, a path containing `$TMPDIR` handed to it creates a directory named `$TMPDIR`.
 
-**Name the file for its consumer.** `gh-body-pr123-{timestamp}.md`, `gh-body-issue456-{timestamp}.md`, `gh-body-insight2-{timestamp}.md`, with `{timestamp}` in `YYYYMMDD-HHMMSSZ` format. A body written for a different target is then visibly not this one's, and a loop needs no separate collision rule.
+**Name the file for its consumer.** `gh-body-pr123-{timestamp}.md`, `gh-body-issue456-{timestamp}.md`, `gh-body-insight2-{timestamp}.md`, with `{timestamp}` in `YYYYMMDD-HHMMSSZ` format. A body written for a different target is then visibly not this one's, and a loop does not need a separate collision rule.
 
 **Assign the path and guard it inside the call that consumes it.** Nothing survives a Bash invocation: neither `$TMPDIR`, whose value changes between calls, nor a variable set by an earlier call. Every invocation that passes a body file opens with the assignment and refuses on a missing or empty file.
 

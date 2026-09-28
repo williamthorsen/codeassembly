@@ -2,7 +2,7 @@
 
 State conclusions, not the journey to them. Naming a chosen approach (including "X, not Y") is a durable decision and belongs in the ticket. The _story_ of how the decision was reached does not: Drop the design back-and-forth, the false starts, restated context, and motivating episodes.
 
-**Self-check before presenting.** For each sentence, ask: Would removing it change what the reader does or how the work gets executed? If not, cut it. State each acceptance criterion once: no restatement in surrounding prose.
+**Self-check before presenting.** For each sentence, ask: Would removing it change what the reader does or how the work gets executed? If not, cut it. State each acceptance criterion once, and do not restate it in surrounding prose.
 
 Add a design-narrative section (rationale, alternatives explored) only when the user explicitly asks for it.
 
