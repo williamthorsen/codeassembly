@@ -59,7 +59,7 @@ describe(readCommits, () => {
     expect(commits[0]?.trailers).toStrictEqual(['agents|feat: Add the parser']);
   });
 
-  it('yields nothing for a range holding no commits', async () => {
+  it('yields nothing for a range without commits', async () => {
     const cwd = await buildRepo([]);
 
     expect(await readCommits({ baseRef: 'base', cwd })).toStrictEqual([]);
@@ -97,8 +97,8 @@ describe(readCommits, () => {
 
     const commits = await readCommits({ baseRef: 'base', cwd });
 
-    // Two branches committed in the same second have no stable order between them, so this fixes membership alone;
-    // the linear-history case above fixes the order.
+    // Two branches committed in the same second do not have a stable order between them, so this fixes membership
+    // alone; the linear-history case above fixes the order.
     expect(commits.map((commit) => commit.subject).toSorted()).toStrictEqual([
       'agents|feat: Add the parser',
       'agents|fix: Correct the guard',

@@ -31,9 +31,9 @@ describe(readDeclaredScopes, () => {
   });
 
   it.each([
-    ['there is no preferences file', undefined],
-    ['the file has no `project` section', 'commit:\n  title_format: x\n'],
-    ['the `project` section has no `scopes` key', 'project:\n  slug: demo\n'],
+    ['the root does not contain a preferences file', undefined],
+    ['the file does not have a `project` section', 'commit:\n  title_format: x\n'],
+    ['the `project` section does not have a `scopes` key', 'project:\n  slug: demo\n'],
   ])('reads nothing and warns nothing when %s', async (_case, content) => {
     const root = await writeRoot([], content);
 

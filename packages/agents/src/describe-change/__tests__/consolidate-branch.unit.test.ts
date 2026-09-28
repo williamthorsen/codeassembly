@@ -46,7 +46,7 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ breaking: true, scope: 'agents', type: 'sec' });
   });
 
-  it('names no scope when the entries disagree on one', () => {
+  it('does not name a scope when the entries disagree on one', () => {
     const result = consolidateBranch(
       buildCommits(['agents|feat: Add the parser', 'kb|feat: Add the reader']),
       NODES,
@@ -95,7 +95,7 @@ describe(consolidateBranch, () => {
     });
   });
 
-  it('lists a subject matched by no template and keeps it out of the entries', () => {
+  it('lists a subject that the template does not match and keeps it out of the entries', () => {
     const result = consolidateBranch(buildCommits(['agents|feat: Add the parser', 'wip']), NODES, TAXONOMY);
 
     expect(result.unmatched).toStrictEqual([{ commit: 'commit1', subject: 'wip' }]);
@@ -103,7 +103,7 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
-  it('yields no consolidated record for a branch whose every subject went unmatched', () => {
+  it('does not yield a consolidated record for a branch whose every subject went unmatched', () => {
     const result = consolidateBranch(buildCommits(['wip', 'more wip']), NODES, TAXONOMY);
 
     expect(result.consolidatedRecord).toBeUndefined();
@@ -111,7 +111,7 @@ describe(consolidateBranch, () => {
     expect(result.unmatched).toHaveLength(2);
   });
 
-  it('yields no consolidated record for an empty range', () => {
+  it('does not yield a consolidated record for an empty range', () => {
     expect(consolidateBranch([], NODES, TAXONOMY).consolidatedRecord).toBeUndefined();
   });
 
