@@ -42,8 +42,8 @@ import { renderRulebookBody } from '../../src/lib/rulebook-transform.ts';
 // same way this test does: against the file's own place in the content tree. The rest of `guidance/` stays out of
 // scope for the opposite reason. `_harnesses/` files are rewritten at install time, but anchored at the harness home
 // into which they install rather than at their source directory, so resolving one here against the source tree would
-// misreport every link in it. `shared/` installs verbatim to a harness-neutral location, which no rewritten path
-// could name a harness in.
+// misreport every link in it. `shared/` installs verbatim to a harness-neutral location, in which a rewritten path
+// could not name a harness.
 //
 // A rulebook has a second requirement that the file-existence check cannot express: Its target must be rooted in a
 // tree that deploys under a harness home. A link to `subagents/canary.md` names a file that exists. It satisfies
@@ -79,7 +79,7 @@ describe('installable-content link resolution', () => {
     expect(anchors, formatViolations(anchors)).toEqual([]);
   });
 
-  it('no installable host leaves a code fence open, which would hide every anchor below it', () => {
+  it('installable hosts do not leave a code fence open, which would hide every anchor below it', () => {
     const fences = violations.filter((v) => v.reason === 'unterminated-fence');
     expect(fences, formatFenceViolations(fences)).toEqual([]);
   });
@@ -183,8 +183,8 @@ async function findViolations(): Promise<ReadonlyArray<Violation>> {
     const body = normalizeForAnchorScan(expanded);
 
     for (const match of body.matchAll(MARKDOWN_LINK_REGEX)) {
-      // The rewriter's own set, plus anchor-only targets: Those name no file to rewrite, but they do name a fragment
-      // that this test resolves against the host's own headings.
+      // The rewriter's own set, plus anchor-only targets: Those do not name a file to rewrite, but they do name a
+      // fragment that this test resolves against the host's own headings.
       const target = match[2];
       if (target === undefined || !(isRewritableLinkTarget(target) || target.startsWith('#'))) {
         continue;
@@ -225,8 +225,8 @@ function formatFenceViolations(violations: ReadonlyArray<Violation>): string {
     return '';
   }
   const header =
-    `Found ${violations.length} unterminated code fence(s). Everything below an open fence reads as code, so no ` +
-    `anchor there is checked and a clean result over it proves nothing. A closing fence repeats the opening ` +
+    `Found ${violations.length} unterminated code fence(s). Everything below an open fence reads as code, so the ` +
+    `test does not check any anchor there, and a clean result over it proves nothing. A closing fence repeats the opening ` +
     `character at least as many times.`;
   const lines = violations.map((v) => `  [${v.reason}] ${v.file}: opened with ${v.target}`);
   return [header, ...lines].join('\n');

@@ -13,7 +13,7 @@ import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
 
 // Declaring a collection is a claim about its members, so an artifact in none of them is deploying under a claim that
 // nobody made. These two checks are what make the claim real rather than nominal: Coverage catches the artifact that
-// was added with no disposition, and closure catches the unexamined artifact that a vetted collection reaches through
+// was added without a disposition, and closure catches the unexamined artifact that a vetted collection reaches through
 // an edge. Neither can be replaced by reading the collection files, because both defects are invisible there.
 
 /** An artifact addressed as `<type>:<slug>`, the form used by the resolver's own errors. */
@@ -28,9 +28,9 @@ const STANDALONE_DISPOSITION = 'standalone';
 const TRIAGE_DISPOSITION = 'triage';
 
 /**
- * The artifacts belonging to no collection, each with the reason it stands alone. Recorded here so that the coverage
- * check reads an absence as a decision; an artifact missing from both this record and every collection is the
- * oversight that the check exists to catch.
+ * The artifacts that do not belong to any collection, each with the reason it stands alone. Recorded here so that the
+ * coverage check reads an absence as a decision; an artifact missing from both this record and every collection is
+ * the oversight that the check exists to catch.
  */
 const STANDALONE: Readonly<Record<ArtifactId, string>> = {
   'rulebook:codeassembly-content-specification': 'applies to this repository alone, which declares it directly',
@@ -47,9 +47,9 @@ const VETTED_CLOSURES: ReadonlyArray<{ collection: string; reaches: ReadonlyArra
 ];
 
 /**
- * The opt-in collections: vetted, and additionally reached by no collection outside themselves. A member is deployed
- * only where its own collection is declared, which is what an opt-in claim promises and what the check below holds it
- * to. The outbound half of that claim is `VETTED_CLOSURES` above, which every opt-in collection also appears in.
+ * The opt-in collections: vetted, and additionally not reached by any collection outside themselves. A member is
+ * deployed only where its own collection is declared, which is what an opt-in claim promises and what the check below
+ * holds it to. The outbound half of that claim is `VETTED_CLOSURES` above, which every opt-in collection also appears in.
  */
 const OPT_IN_COLLECTIONS: ReadonlyArray<string> = ['atlassian'];
 
@@ -89,8 +89,8 @@ describe('collection dispositions', () => {
   });
 
   // Standalone spares an artifact the skill-index line that every collection member gets, and that is true only while
-  // no collection's closure reaches it. `triage` is the largest surface by far, so a new edge is likeliest there, and
-  // no vetted-closure rule constrains it.
+  // the collections' closures do not reach it. `triage` is the largest surface by far, so a new edge is likeliest
+  // there, and the vetted-closure rules do not constrain it.
   it('keeps every standalone artifact out of the collections’ combined closure', async () => {
     const collections = await readExplicitCollections(contentDir);
     const closure = await resolveClosure({ collection: collections.keys().toArray() }, libraryResolver(contentDir));
@@ -114,11 +114,12 @@ describe('collection dispositions', () => {
     const members = listArtifactIds(collections.get(optIn) ?? {});
     const defects: Array<string> = [];
 
-    // A slug naming no collection leaves no members to claim, which the loop below reads as no leak. Failing here is
-    // what keeps a renamed or mistyped entry from retiring the check in silence.
-    expect(members, `${optIn} names no collection with members, so the check below would pass vacuously.`).not.toEqual(
-      [],
-    );
+    // A slug that does not name a collection leaves the member list empty, and the loop below does not report a leak
+    // for an empty list. Failing here is what keeps a renamed or mistyped entry from retiring the check in silence.
+    expect(
+      members,
+      `${optIn} does not name a collection with members, so the check below would pass vacuously.`,
+    ).not.toEqual([]);
 
     for (const collection of collections.keys()) {
       if (collection === optIn) {
@@ -139,7 +140,7 @@ describe('collection dispositions', () => {
   });
 
   describe('coverage', () => {
-    it('reports an artifact claimed by no collection', async () => {
+    it('reports an artifact not claimed by any collection', async () => {
       const fixtureDir = path.join(FIXTURES_DIR, 'uncovered');
       const [catalog, collections] = await Promise.all([
         enumerateCatalogSlugs(fixtureDir),
@@ -147,7 +148,7 @@ describe('collection dispositions', () => {
       ]);
 
       expect(findCoverageDefects(catalog, collections, [])).toEqual([
-        'skill:orphan has no disposition; add it to a collection, or record it standalone with the reason.',
+        'skill:orphan does not have a disposition; add it to a collection, or record it standalone with the reason.',
       ]);
     });
 
@@ -173,7 +174,7 @@ describe('collection dispositions', () => {
       const collections = new Map([['bitbucket', { skill: ['unexamined'] }]]);
 
       expect(findCoverageDefects({ skill: ['unexamined'] }, collections, [])).toEqual([
-        'skill:unexamined has no disposition; add it to a collection, or record it standalone with the reason.',
+        'skill:unexamined does not have a disposition; add it to a collection, or record it standalone with the reason.',
       ]);
     });
 
@@ -181,7 +182,7 @@ describe('collection dispositions', () => {
       const collections = new Map([['triage', { skill: ['contested'] }]]);
 
       expect(findCoverageDefects({ skill: ['contested'] }, collections, ['skill:contested'])).toEqual([
-        'skill:contested is recorded standalone yet claimed by triage; standalone means membership in no collection.',
+        'skill:contested is recorded standalone yet claimed by triage; standalone excludes membership in any collection.',
       ]);
     });
 
@@ -250,9 +251,9 @@ describe('collection dispositions', () => {
       ]);
     });
 
-    it('reports a reached artifact with no claim at all', () => {
+    it('reports a reached artifact without any claim at all', () => {
       expect(findClosureDefects('recommended', ['skill:unclaimed'], ['recommended'], new Map())).toEqual([
-        "recommended's closure reaches skill:unclaimed, which has no disposition; claim it or drop the edge.",
+        "recommended's closure reaches skill:unclaimed, which does not have a disposition; claim it or drop the edge.",
       ]);
     });
   });
@@ -302,9 +303,9 @@ function buildClaimMap(
 }
 
 /**
- * Reports each artifact reached by `collection`'s closure that has no permitted claim, naming the dispositions that
- * it does have. An artifact with no claim at all is reported too: The coverage check names it as well, but a closure
- * that reaches an unclaimed artifact is the more urgent of the two readings.
+ * Reports each artifact reached by `collection`'s closure that does not have a permitted claim, naming the
+ * dispositions that it does have. An artifact without any claim at all is reported too: The coverage check names it
+ * as well, but a closure that reaches an unclaimed artifact is the more urgent of the two readings.
  */
 function findClosureDefects(
   collection: string,
@@ -322,7 +323,7 @@ function findClosureDefects(
     const held = [...claims].filter((claim) => DISPOSITIONS.has(claim)).toSorted();
     const clause =
       held.length === 0
-        ? 'which has no disposition; claim it or drop the edge'
+        ? 'which does not have a disposition; claim it or drop the edge'
         : `whose disposition${held.length === 1 ? ' is' : 's are'} ${held.join(', ')}; promote it or drop the edge`;
     defects.push(`${collection}'s closure reaches ${id}, ${clause}.`);
   }
@@ -330,10 +331,10 @@ function findClosureDefects(
 }
 
 /**
- * Reports every departure from the coverage rules: a catalog artifact with no disposition, a membership
+ * Reports every departure from the coverage rules: a catalog artifact without a disposition, a membership
  * contradicting an absence asserted by a disposition (standalone excludes every other claim, triage every vetted
  * one), and a claim naming an artifact that the catalog no longer contains. The third is what a deletion leaves
- * behind, and no closure resolution reaches it, since only the vetted collections are resolved.
+ * behind, and closure resolution does not reach it, since only the vetted collections are resolved.
  */
 function findCoverageDefects(
   catalog: ArtifactDependencies,
@@ -359,11 +360,13 @@ function findCoverageDefects(
     const claimed = claimants.get(id) ?? [];
     const vetted = claimed.filter((claimant) => VETTED_COLLECTIONS.includes(claimant));
     if (claimed.every((claimant) => !DISPOSITIONS.has(claimant))) {
-      defects.push(`${id} has no disposition; add it to a collection, or record it standalone with the reason.`);
+      defects.push(
+        `${id} does not have a disposition; add it to a collection, or record it standalone with the reason.`,
+      );
     } else if (claimed.includes(STANDALONE_DISPOSITION) && claimed.length > 1) {
       const others = claimed.filter((claimant) => claimant !== STANDALONE_DISPOSITION);
       defects.push(
-        `${id} is recorded standalone yet claimed by ${others.join(', ')}; standalone means membership in no collection.`,
+        `${id} is recorded standalone yet claimed by ${others.join(', ')}; standalone excludes membership in any collection.`,
       );
     } else if (claimed.includes(TRIAGE_DISPOSITION) && vetted.length > 0) {
       defects.push(`${id} is in both triage and ${vetted.join(', ')}; promotion moves an artifact out of triage.`);
@@ -410,7 +413,7 @@ function listClosureIds(closure: ResolvedClosure): Array<ArtifactId> {
 
 /**
  * Reads every collection in `contentDir` that enumerates its members, keyed by slug. One computing its members from
- * the whole catalog is excluded: It has no disposition, and counting it would put every artifact in two
+ * the whole catalog is excluded: It does not have a disposition, and counting it would put every artifact in two
  * collections at once.
  */
 async function readExplicitCollections(contentDir: string): Promise<ReadonlyMap<string, ArtifactDependencies>> {

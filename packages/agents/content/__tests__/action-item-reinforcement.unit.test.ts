@@ -42,8 +42,8 @@ interface IncludeSites {
 
 /**
  * Locates the skill's action-items directives, separating those inside a fenced block from those outside it. The
- * include expander is line-anchored and tracks no fence state, so a directive inside a fence still expands; the
- * partial's own fence then closes the enclosing one and the rest of the template renders as prose.
+ * include expander is line-anchored and does not track fence state, so a directive inside a fence still expands;
+ * the partial's own fence then closes the enclosing one and the rest of the template renders as prose.
  */
 async function findIncludeSites(slug: string): Promise<IncludeSites> {
   const body = await readFile(path.join(SKILLS_ROOT, slug, 'SKILL.md'), 'utf8');

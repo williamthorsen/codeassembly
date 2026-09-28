@@ -37,7 +37,7 @@ describe('content fences', () => {
     const missing = [...DECLARED_FENCES.difference(found)];
 
     const message =
-      'Each declared info string names a channel that some skill sends. One that no fence carries makes its half ' +
+      'Each declared info string names a channel that some skill sends. One that does not appear on any fence makes its half ' +
       `of the assertions below pass vacuously, so drop it from DECLARED_FENCES:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -52,7 +52,7 @@ describe('content fences', () => {
       );
 
     const message =
-      "A content fence carries placeholders that the caller fills with a subagent's own earlier text, and no prose: " +
+      "A content fence carries placeholders that the caller fills with a subagent's own earlier text, and does not carry prose:" +
       'A sentence templated here makes the caller the author of the facts, which is the arrangement replaced by the ' +
       `fresh-context dispatch. These lines are not placeholder bullets:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);

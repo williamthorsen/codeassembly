@@ -26,13 +26,13 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 const EXCLUDED_COMMANDS: ReadonlyArray<string> = ['codeassembly', 'gh'];
 
 // The shell supplies these, so reading one is not a defect. Because a variable falling out of use is not a defect
-// either, the set has no stale-entry check. Positional and special parameters need no entry: `$1`, and awk's `$4`
-// inside a quoted program, fall outside the identifier shape matched by `VARIABLE_READ`.
+// either, the set does not have a stale-entry check. Positional and special parameters do not need an entry: `$1`,
+// and awk's `$4` inside a quoted program, fall outside the identifier shape matched by `VARIABLE_READ`.
 const ALLOWED_VARIABLES: ReadonlySet<string> = new Set(['HOME', 'PWD', 'TMPDIR', 'USER']);
 
 // Content not authored by the corpus is out of every rule's reach here: The extract is marked do-not-edit. A
-// violation in one has no available repair. `banned-codepoints` exempts the same files by path and pairs them with
-// a stale-entry check; because the marker is the predicate that those paths stand for, reading it needs neither.
+// violation in one does not have an available repair. `banned-codepoints` exempts the same files by path and pairs them
+// with a stale-entry check; because the marker is the predicate that those paths stand for, reading it needs neither.
 const EXTRACTION_MARKER = '<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->';
 
 // An inline code span is one Bash call by construction, so a read in it is unassigned unless the span assigns it. Only
@@ -46,7 +46,7 @@ const INVOCATION_OPENINGS: ReadonlyArray<string> = ['git ', 'node ', '{harness_h
 const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SCANNED_DIRS: ReadonlyArray<string> = ['_partials', 'skills', 'subagents'];
 
-// A fence's delimiter is a run of three or more backticks, and it closes on a run at least as long with no info
+// A fence's delimiter is a run of three or more backticks, and it closes on a run at least as long without an info
 // string. Tracking the run's length keeps a longer fence that wraps shorter ones from inverting the state: An
 // inverted tracker reads the next real bash opener as a close and silently stops scanning the rest of the file.
 //
@@ -57,7 +57,7 @@ const FENCE = /^\s*(`{3,})(.*)$/;
 const ASSIGNMENT = /^\s*\w+\+?=/;
 
 // The three forms that bind a name within one invocation. `ASSIGNMENT_TARGET` needs the `m` flag: Anchored to the
-// joined body alone, it reads an assignment indented inside a list item as no assignment at all.
+// joined body alone, it does not read an assignment indented inside a list item as an assignment at all.
 const ASSIGNMENT_TARGET =
   /(?:^|[;&|(]|\bdo\b|\belse\b|\bthen\b)\s*(?:declare\s+|export\s+|local\s+|readonly\s+)?([A-Za-z_][A-Za-z0-9_]*)\+?=/gm;
 const LOOP_TARGET = /\bfor\s+([A-Za-z_][A-Za-z0-9_]*)\s+in\b/gm;
@@ -66,7 +66,7 @@ const READ_TARGET = /\bread\s+(?:-r\s+)?([A-Za-z_][A-Za-z0-9_]*)/gm;
 // A read of a named variable. `$(cmd)` opens a command substitution rather than a name, so it does not match.
 const VARIABLE_READ = /\$\{?([A-Za-z_][A-Za-z0-9_]*)/g;
 
-// A single-backtick code span containing no newline, and not part of a longer backtick run.
+// A single-backtick code span without a newline, and not part of a longer backtick run.
 const INLINE_SPAN = /(?<!`)`([^`\n]+)`(?!`)/g;
 
 // The two substitution openings, each followed by optional whitespace and then the command name. A command that
@@ -101,7 +101,7 @@ interface Partition {
 }
 
 describe('bash-invocation conventions', () => {
-  it('no bash fence wraps an excluded command in a command substitution', async () => {
+  it('bash fences do not wrap an excluded command in a command substitution', async () => {
     const violations = await findViolations((fence) =>
       fence.filter((fenceLine) => containsExcludedSubstitution(fenceLine.text)),
     );
@@ -112,23 +112,23 @@ describe('bash-invocation conventions', () => {
     expect(violations, formatViolations(violations, message)).toEqual([]);
   });
 
-  it('no bash fence ends on an assignment', async () => {
+  it('bash fences do not end on an assignment', async () => {
     const violations = await findViolations((fence) => {
       const terminal = findTerminalStatement(fence);
       return terminal && ASSIGNMENT.test(terminal.command) ? [terminal.start] : [];
     });
     const message =
       `Found ${violations.length} bash fence(s) whose last statement is an assignment. An assignment prints ` +
-      `nothing, and no shell variable survives the invocation, so the value never reaches the agent. Let the ` +
+      `nothing, and a shell variable does not survive the invocation, so the value never reaches the agent. Let the ` +
       `terminal command print instead.`;
     expect(violations, formatViolations(violations, message)).toEqual([]);
   });
 
-  it('no bash invocation reads a variable that it does not assign', async () => {
+  it('bash invocations read only the variables that they assign', async () => {
     const violations = await findUnassignedReads();
     const message =
       `Found ${violations.length} Bash invocation(s) reading a variable that the same invocation does not assign. ` +
-      `No shell state survives an invocation, so the read expands to nothing however carefully the prose above ` +
+      `Shell state does not survive an invocation, so the read expands to nothing however carefully the prose above ` +
       `establishes the name. Write the value in as a brace placeholder that the agent substitutes as literal text, ` +
       `or assign the variable inside the invocation where it genuinely runs as written.`;
     expect(violations, formatViolations(violations, message)).toEqual([]);
@@ -220,7 +220,7 @@ describe('bash-invocation conventions', () => {
   });
 
   describe('fence read finder', () => {
-    it('flags a read that no line assigns', () => {
+    it('flags a read that the fence does not assign', () => {
       const fence = [{ line: 1, text: '--model "$MODEL_ID"' }];
       expect(listFenceUnassignedReads(fence)).toEqual([
         { line: 1, text: '--model "$MODEL_ID"', variables: ['MODEL_ID'] },
@@ -298,7 +298,7 @@ describe('bash-invocation conventions', () => {
       expect(listInlineUnassignedReads([{ line: 1, text: 'Run `node x.mjs --set-url "{url}"`.' }])).toEqual([]);
     });
 
-    it('reads no span from a line that the partitioner reports as fenced', () => {
+    it('does not read a span from a line that the partitioner reports as fenced', () => {
       const content = ['```bash', 'Run `git diff "$default_branch"` first.', '```'].join('\n');
       expect(listInlineUnassignedReads(partitionFences(content).unfenced)).toEqual([]);
     });

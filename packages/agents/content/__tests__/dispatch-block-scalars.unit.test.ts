@@ -52,7 +52,7 @@ const BLOCKS = collectDispatchBlocks();
 describe('dispatch blocks', () => {
   it('exist somewhere in the content tree', async () => {
     const message =
-      `Because no fence carries the \`${FENCE_INFO}\` info string, the scalars-only assertion below passes ` +
+      `Because the content tree does not contain a fence with the \`${FENCE_INFO}\` info string, the scalars-only assertion below passes ` +
       'vacuously. Re-key this suite on the info string that the dispatch blocks carry now, or drop it.';
     expect((await BLOCKS).length, message).toBeGreaterThan(0);
   });
@@ -61,7 +61,7 @@ describe('dispatch blocks', () => {
     const violations = await findViolations((text) => !SCALAR_LINE.test(text) || BLOCK_SCALAR_VALUE.test(text));
 
     const message =
-      'A dispatch block carries the scalars that a subagent cannot derive, and no prose: A sentence written here ' +
+      'A dispatch block carries the scalars that a subagent cannot derive, and does not carry prose: A sentence written here ' +
       'makes the caller the author of the facts, which is the arrangement replaced by the fresh-context dispatch. ' +
       `These lines are not \`key: value\` scalars:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
@@ -71,7 +71,7 @@ describe('dispatch blocks', () => {
     const violations = await findViolations((text) => !DECLARED_KEYS.has(readKey(text)));
 
     const message =
-      `A dispatch block carries these keys and no others: ${[...DECLARED_KEYS].toSorted().join(', ')}. An ` +
+      `A dispatch block carries only these keys:${[...DECLARED_KEYS].toSorted().join(', ')}. An ` +
       'undeclared key is how a seeding sentence enters as a well-formed scalar. Add the key to DECLARED_KEYS if ' +
       `the drafter reads it, and drop it from the block if it does not:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
