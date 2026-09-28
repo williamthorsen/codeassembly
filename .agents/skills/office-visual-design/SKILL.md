@@ -13,10 +13,10 @@ Principles for visual design work on the CodeAssembly office visualization. This
 These are not open for re-evaluation:
 
 - **The visualization is a place, not a diagram.** Rooms, walls, corridors, furnished interiors. The building exists before any data populates it.
-- **Warm, light office aesthetic.** Inspired by The Sims, Stardew Valley, Habbo Hotel. No dark mode. No cyberpunk. No near-black backgrounds. Comfortable for extended viewing.
+- **Warm, light office aesthetic.** Inspired by The Sims, Stardew Valley, Habbo Hotel. The office doesn't use dark mode, a cyberpunk style, or near-black backgrounds. Comfortable for extended viewing.
 - **Three-zone layout.** Prep area (top-left), workshop (top-right), governor's office (bottom-right). Info panel occupies bottom-left.
-- **Decorative items at the periphery.** Plants in corners, bookshelves against walls. Workstations contain functional items only: desks, monitors, boards. No mid-room decoration.
-- **LimeZu tilesets are the art source.** Modern Office Revamped + Modern Interiors. No mixing with other tileset families.
+- **Decorative items at the periphery.** Plants in corners, bookshelves against walls. Workstations contain functional items only: desks, monitors, boards. Don't place decoration mid-room.
+- **LimeZu tilesets are the art source.** Modern Office Revamped + Modern Interiors. Don't mix them with other tileset families.
 
 ## Palette
 

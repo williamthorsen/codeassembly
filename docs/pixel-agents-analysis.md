@@ -26,7 +26,7 @@ Six base character palettes define skin, shirt, pants, hair, and shoe colors. Ch
 
 Depth sorting (`zY` values) is computed once when the layout changes, not per frame. Each furniture instance stores its `zY = row * TILE_SIZE + spriteHeight`, with special cases for chairs and surface items. Characters interpolate their `zY` during movement.
 
-**Takeaway:** Excalibur handles z-ordering natively via `z` properties on actors. No need to replicate this pattern, but the principle of precomputing sort keys during layout changes (rather than per-frame) is worth keeping in mind for performance.
+**Takeaway:** Excalibur handles z-ordering natively via `z` properties on actors. Factory doesn't need to replicate this pattern, but the principle of precomputing sort keys during layout changes (rather than per-frame) is worth keeping in mind for performance.
 
 ## Animation techniques
 
@@ -34,7 +34,7 @@ Depth sorting (`zY` values) is computed once when the layout changes, not per fr
 
 Characters have three states (`IDLE`, `WALK`, `TYPE`) and four directions (`DOWN`, `LEFT`, `RIGHT`, `UP`). Each state has its own frame duration: walking cycles at 0.15s/frame, typing at 0.3s/frame. The animation state machine is a simple switch statement in the per-frame update, with frame timers tracking elapsed time.
 
-**Takeaway:** Factory's agent actors already have movement and status-driven animation (CODY-7). Pixel Agents confirms that a simple enum-based state machine with per-state frame durations is sufficient: no need for a heavier animation framework.
+**Takeaway:** Factory's agent actors already have movement and status-driven animation (CODY-7). Pixel Agents confirms that a simple enum-based state machine with per-state frame durations is sufficient: Factory doesn't need a heavier animation framework.
 
 ### ✨ Matrix effect for spawn/despawn
 
@@ -98,7 +98,7 @@ Waiting state is detected through two heuristics: (1) a `turn_duration` system e
 
 ### 👤 Agent identity with appearance persistence
 
-Each agent gets a sequential ID, a palette assignment, and a hue shift. The first six agents get unique palettes (0–5) with no shift; subsequent agents cycle palettes with progressively larger hue shifts. Appearance is persisted in workspace state and restored across sessions.
+Each agent gets a sequential ID, a palette assignment, and a hue shift. The first six agents get unique palettes (0–5) without a hue shift; subsequent agents cycle palettes with progressively larger hue shifts. Appearance is persisted in workspace state and restored across sessions.
 
 **Takeaway:** Factory maps agents to roles and colors. The pattern of deterministic, visually-distinct appearance assignment that persists across sessions is directly applicable. Factory could use its existing color palette with a similar cycling + shift algorithm for more than a handful of agents.
 
@@ -110,7 +110,7 @@ When a `Task` tool is detected (indicating a sub-agent), a new character with a 
 
 ### 🔗 Extension ↔ Webview message passing
 
-The extension backend and webview frontend communicate asynchronously via `postMessage()`. Message types include lifecycle events (`agentCreated`, `agentClosed`), activity events (`agentToolStart`, `agentToolDone`), and layout sync (`layoutLoaded`, `saveLayout`). No shared memory or synchronous calls.
+The extension backend and webview frontend communicate asynchronously via `postMessage()`. Message types include lifecycle events (`agentCreated`, `agentClosed`), activity events (`agentToolStart`, `agentToolDone`), and layout sync (`layoutLoaded`, `saveLayout`). The two sides don't share memory or make synchronous calls.
 
 **Takeaway:** Factory already separates client and server with an HTTP API. Pixel Agents' message-passing architecture validates the pattern of clearly-typed event messages for state synchronization. Factory could adopt a similar typed-message approach for WebSocket/SSE events if real-time updates are added.
 
@@ -118,7 +118,7 @@ The extension backend and webview frontend communicate asynchronously via `postM
 
 ### 🗺️ BFS pathfinding on a tile grid
 
-Movement uses breadth-first search on a 4-connected grid (no diagonals). Walkability is determined by tile type (not WALL or VOID) and furniture occupancy (blocked tiles tracked as a `Set<string>` of `"col,row"` keys). Paths are computed on-demand when an agent's destination changes.
+Movement uses breadth-first search on a 4-connected grid (without diagonal moves). Walkability is determined by tile type (not WALL or VOID) and furniture occupancy (blocked tiles tracked as a `Set<string>` of `"col,row"` keys). Paths are computed on-demand when an agent's destination changes.
 
 **Takeaway:** Factory uses Excalibur's built-in movement actions. If Factory adds obstacle avoidance or multi-agent collision, BFS on a tile grid is a simple and proven approach. The blocked-tile set pattern (`Set<"col,row">`) is an efficient O(1) walkability check.
 
@@ -158,7 +158,7 @@ The game loop (`requestAnimationFrame` → update → render) runs independently
 
 ### 🔊 Audio feedback via Web Audio API
 
-Completion notifications use a two-note chime (E5 → E6, 659 Hz → 1319 Hz) generated via the Web Audio API with `OscillatorNode` and `GainNode`. The sound is toggleable in settings. No audio files are used; everything is synthesized.
+Completion notifications use a two-note chime (E5 → E6, 659 Hz → 1319 Hz) generated via the Web Audio API with `OscillatorNode` and `GainNode`. The sound is toggleable in settings. Pixel Agents doesn't use any audio files; everything is synthesized.
 
 **Takeaway:** If Factory adds audio feedback for run completion or errors, synthesized tones via Web Audio API are simpler to maintain than audio file assets. Two-note sequences (low → high for success, high → low for failure) provide intuitive feedback.
 

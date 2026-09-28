@@ -117,8 +117,8 @@ export function computeDefaultPositions() {
   return result.positions;
 }
 
-// Computes compact positions for the stations that no `absent` step names, placing the others at -200.
-// Returns { positions, platformW }, or null when no station is absent.
+// Computes compact positions for the stations not named by any of the scenario's `absent` steps, placing the others at -200.
+// Returns { positions, platformW }, or null when the scenario doesn't mark any station absent.
 export function computeCompactPositions(scenario) {
   var absent = new Set();
   for (var s = 0; s < scenario.steps.length; s++) {
