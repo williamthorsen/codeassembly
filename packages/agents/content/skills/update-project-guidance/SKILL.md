@@ -14,7 +14,7 @@ Generate or refresh the repository-root `AGENTS.md`, the repo-specific guidance 
 
 Explore the codebase, classify each finding by scope and tier, and produce a concise `AGENTS.md` that covers everything an agent needs to know about this specific project, and nothing more.
 
-**Two paths.** When no guidance content exists yet, the **authoring path** drafts a file from the skeleton. When it does, the **refresh path** reconciles against what is already there: It audits the file's claims against the codebase and emits edits, never a replacement. Discovery is shared, and both paths converge on the same closing steps. Phase 1 selects between them.
+**Two paths.** When the repository does not contain any guidance content yet, the **authoring path** drafts a file from the skeleton. When it does, the **refresh path** reconciles against what is already there: It audits the file's claims against the codebase and emits edits, never a replacement. Discovery is shared, and both paths converge on the same closing steps. Phase 1 selects between them.
 
 **Core principle:** Every line must merit its inclusion. Omit anything an agent would figure out on its own or that is already covered by general guidance.
 
@@ -68,7 +68,7 @@ When both legacy files have content, `.agents/PROJECT.md` is the baseline as the
 
 Resolve the baseline in memory. A legacy file is not moved here; its content becomes the baseline and moves to the repo root when Phase 3 writes, which is the only point at which this skill is permitted to write anything.
 
-The path follows from what was found. With a baseline, take the **refresh path**. With none (no guidance file, or nothing but stubs), take the **authoring path**, because there is nothing to preserve and a bounded gap scan would produce almost nothing.
+The path follows from what was found. With a baseline, take the **refresh path**. With none (a missing guidance file, or nothing but stubs), take the **authoring path**, because there is nothing to preserve and a bounded gap scan would produce almost nothing.
 
 State which path was selected, and why, before proceeding.
 
@@ -92,7 +92,7 @@ For each finding, assign one of these classes:
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, place the finding on the recommended side provisionally and collect every ambiguous finding into one review at the gate below, as multiple-choice questions where possible.
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
-- Content that is obvious from reading the code (e.g., "this project uses TypeScript") adds no value. Include only what would save an agent from a wrong assumption or a slow discovery.
+- Content that is obvious from reading the code (e.g., "this project uses TypeScript") does not add any value. Include only what would save an agent from a wrong assumption or a slow discovery.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -101,7 +101,7 @@ For each finding, assign one of these classes:
 Two constraints apply to the repo-root `AGENTS.md`, whichever path produced it:
 
 - **No path into a harness-owned directory**, home-anchored or repository-local. One body of text serves every harness (Rovo Dev reads the file directly, Claude Code through an include), so wiring belonging to one of them misleads every other reader. State the fact without the harness path, or record it in that harness's own guidance file.
-- **No `<!-- rulebook:` marker.** `sync` strips a rulebook region from this file: A region introduced by hand disappears on the next run with no warning. Because the sweep matches complete open/close pairs and leaves an unpaired marker in place, the rule covers the marker rather than the region.
+- **No `<!-- rulebook:` marker.** `sync` strips a rulebook region from this file: A region introduced by hand disappears on the next run without any warning. Because the sweep matches complete open/close pairs and leaves an unpaired marker in place, the rule covers the marker rather than the region.
 
 #### 3a. Ensure prerequisites
 
@@ -109,7 +109,7 @@ Before generating the main file, check these prerequisites:
 
 **`.agents/preferences.yaml` and `project.slug`:**
 
-1. Read `.agents/preferences.yaml`. If it does not exist, or if it exists but has no `project.slug` value, ask the user to confirm the project slug (suggest one derived from the repo directory name).
+1. Read `.agents/preferences.yaml`. If it does not exist, or if it exists but does not have a `project.slug` value, ask the user to confirm the project slug (suggest one derived from the repo directory name).
 2. Create or update `.agents/preferences.yaml` to include the confirmed `project.slug`.
 
 #### 3b. Authoring path: Produce the draft
@@ -173,7 +173,7 @@ Record every audited claim as a ledger row (claim, verdict, evidence):
 - `drifted`: No longer true, stating what is true now.
 - `unchecked`: Not verified, stating why.
 
-A `holds` row without an evidence token is not a permitted state. The audit is otherwise unfalsifiable: A claim that holds produces no edit, so a run that checked nothing emits the same change list as one that checked everything.
+A `holds` row without an evidence token is not a permitted state. The audit is otherwise unfalsifiable: A claim that holds does not produce an edit, so a run that checked nothing emits the same change list as one that checked everything.
 
 Close the ledger by naming what was not audited, so that a bounded run reads as bounded.
 
@@ -185,9 +185,9 @@ Bounded, because an unbounded "what else should this file say?" is effectively a
 
 **The window extends back to whichever is earlier**: the last commit touching `AGENTS.md`, or twenty commits. Twenty is a floor, never a ceiling: A drive-by edit that touched the file two commits ago leaves the window at twenty, not at two. Add `git status --porcelain`, since the common case is an author invoking this mid-session with uncommitted work.
 
-Every `git log` here names its own `--format`. A global or repository `format.pretty` rewrites the output, and a naive parse then reads mangled text with no sign that anything went wrong.
+Every `git log` here names its own `--format`. A global or repository `format.pretty` rewrites the output, and a naive parse then reads mangled text without any sign that anything went wrong.
 
-When git cannot answer (no repository, or the file untracked), state the bound at the gate as "whole repo, additions only" rather than leaving it unstated.
+When git cannot answer (outside a repository, or the file untracked), state the bound at the gate as "whole repo, additions only" rather than leaving it unstated.
 
 Then one unbounded check against the skeleton: Is an ambient category missing altogether, such as a required bootstrap, a dependency ordering, or a tool that behaves surprisingly? It is the only check for a fact that was always worth stating and never captured.
 
@@ -204,7 +204,7 @@ Four kinds of edit, and nothing else:
 
 Anything not named passes through byte-identical.
 
-**A repair quotes verbatim.** It is an old-text/new-text pair whose old text is copied from the baseline. Render `AGENTS.md` content in no other form: no rewritten section, no "here is how that section should read". An edit that cannot quote what it replaces is not a repair, and this rule exists to catch a rewritten section presented as one large repair.
+**A repair quotes verbatim.** It is an old-text/new-text pair whose old text is copied from the baseline. Do not render `AGENTS.md` content in any other form: not as a rewritten section, and not as "here is how that section should read". An edit that cannot quote what it replaces is not a repair, and this rule exists to catch a rewritten section presented as one large repair.
 
 Placement:
 
@@ -243,12 +243,12 @@ Do NOT write any files until the user has reviewed and approved both the ledger 
 
 After the user approves:
 
-1. Write `AGENTS.md` at the repository root. Rovo Dev loads it from there with no further wiring. On the refresh path the content is the baseline with the approved edits applied: Apply them rather than re-rendering the file, so that everything the change list does not name survives unaltered. A baseline that came from a legacy path is written here too.
+1. Write `AGENTS.md` at the repository root. Rovo Dev loads it from there without further wiring. On the refresh path the content is the baseline with the approved edits applied: Apply them rather than re-rendering the file, so that everything the change list does not name survives unaltered. A baseline that came from a legacy path is written here too.
 2. Ensure `.claude/CLAUDE.md` points to it through a raw include. Claude Code resolves a relative include against the directory of the file that contains it, not against the repository root, so an include written in `.claude/CLAUDE.md` must point up out of `.claude/` to the root: `@../AGENTS.md`. Derive the include from where the importing file is rather than copying a literal, and confirm that the path to which it resolves is the guidance file that you just wrote.
    - If `.claude/CLAUDE.md` does not exist, create it with that include as its content.
    - If it exists and contains a prose instruction referencing the guidance file (e.g., `Read @../AGENTS.md, which provides...`), replace it with the raw include.
    - If it exists with an include that resolves anywhere else (a stale `@.agents/PROJECT.md`, or any path that does not point up out of `.claude/`), repoint it.
-   - If it exists with other content that points to no guidance file, add the include on its own line.
+   - If it exists with other content that does not point to any guidance file, add the include on its own line.
    - If it exists with content that has special instructions beyond a simple include, present a recommendation to the user and wait for their decision before modifying.
 
 #### 3e. Handle legacy files
@@ -264,14 +264,14 @@ If legacy guidance files were found in Phase 1 (`.agents/PROJECT.md` or `.agents
 If any findings were classified as **general** (cross-repo) in Phase 2:
 
 1. Present them as a bulleted list after the main file is written.
-2. Name where each one belongs, deciding by whether the harness's guidance file is generated. A file containing a `codeassembly` marker is rendered on every install, so an edit to it is discarded or freezes the file against later updates; the content belongs in a rulebook with `delivery: ambient` in a source declared by the user's `codeassembly.yaml`, and `sync --global` renders that rulebook into the file. A file containing no marker is the user's own. See [deployed-file provenance](../_data/deployed-file-provenance.md) for the detection rule and the routes that it implies.
+2. Name where each one belongs, deciding by whether the harness's guidance file is generated. A file containing a `codeassembly` marker is rendered on every install, so an edit to it is discarded or freezes the file against later updates; the content belongs in a rulebook with `delivery: ambient` in a source declared by the user's `codeassembly.yaml`, and `sync --global` renders that rulebook into the file. A file without a marker is the user's own. See [deployed-file provenance](../_data/deployed-file-provenance.md) for the detection rule and the routes that it implies.
 3. When the file is the user's own, offer to integrate the recommendations: On approval, read it, place each one in the section that fits, and propose a name before adding a new section. Never append blindly, and never write into a generated file.
 
 #### 3g. Run the guidance checklist
 
 Close by running the published `guidance` checklist against the result: `rdy run --packages`, from the repository root.
 
-Skip the step when `rdy` is unavailable, or when no configured package publishes the checklist. It is a development dependency of the package that publishes it, not something a consuming repository inherits. Report the step as skipped; never report a pass that it did not produce.
+Skip the step when `rdy` is unavailable, or when the checklist is not published by any configured package. It is a development dependency of the package that publishes it, not something a consuming repository inherits. Report the step as skipped; never report a pass that it did not produce.
 
 The freshness check reads committed history, so the write just made does not change its result. On the stale file that motivated a refresh it still reports stale, and its remediation text advises running this very skill. That is expected, and it clears when the change is committed: Do not act on that advice, and do not commit in order to clear it.
 
@@ -279,11 +279,11 @@ The freshness check reads committed history, so the write just made does not cha
 
 Before presenting the draft or the change list, verify:
 
-- [ ] No path points into a harness-owned directory, home-anchored or repository-local
-- [ ] No `<!-- rulebook:` marker appears anywhere in the file
+- [ ] The file does not contain a path into a harness-owned directory, home-anchored or repository-local
+- [ ] The file does not contain a `<!-- rulebook:` marker anywhere
 - [ ] The file is at most 200 lines, matching the ambient budget against which the published guidance checklist reports; anything that pushed it over was moved to the package level behind a pointer
-- [ ] No line duplicates content from `{harness_home_dir}/{harness_guidance_file}`
-- [ ] No section merely restates what's obvious from the code
+- [ ] The file does not duplicate any content from `{harness_home_dir}/{harness_guidance_file}`
+- [ ] The file does not contain a section that merely restates what's obvious from the code
 - [ ] Commands listed are ones that an agent would actually need (not exhaustive npm script listings)
 - [ ] Each command group states where to run it (repo root, package directory, etc.); don't assume the agent knows
 - [ ] Architecture section focuses on decisions that affect how to make changes, not documentation for its own sake
