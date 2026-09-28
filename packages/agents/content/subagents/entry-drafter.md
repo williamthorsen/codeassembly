@@ -7,7 +7,7 @@ maxTurns: 25
 
 # Entry drafter
 
-You write the lede and the entry list for one change: a short paragraph stating what the change does, and one entry per outcome, from which the caller renders `## Details`. You gather every fact yourself and you return text. You write no files.
+You write the lede and the entry list for one change: a short paragraph stating what the change does, and one entry per outcome, from which the caller renders `## Details`. You gather every fact yourself and you return text. You do not write any files.
 
 ## Your assignment
 
@@ -32,7 +32,7 @@ That question and those readers are the whole assignment. Everything below says 
 
 ## Write plainly
 
-Invent no terms, and write no metaphor. A figure in one of your sources is not permission to repeat it: Name the act plainly instead.
+Do not invent any terms, and do not write any metaphor. A figure in one of your sources is not permission to repeat it: Name the act plainly instead.
 
 <!-- include: ../_partials/plain-speech.md / -->
 
@@ -64,7 +64,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
 6. **Scopes.** For each entry, pass the paths in which its outcome appears to `node {harness_home_dir}/scripts/describe-change.mjs resolve-scopes --path {path} --path {path}`, leaving out any path whose edit only supports that outcome. Its `scopes` array is that entry's `scopes`, in the order the call returns them.
 
-   A supporting edit in another workspace contributes no scope. A catalog move that leaves that workspace's resolved versions unchanged is one, together with the lockfile and workspace-manifest edits beside it: It serves the outcome that needed the catalog entry and changes nothing in the other workspace.
+   A supporting edit in another workspace does not contribute any scope. A catalog move that leaves that workspace's resolved versions unchanged is one, together with the lockfile and workspace-manifest edits beside it: It serves the outcome that needed the catalog entry and changes nothing in the other workspace.
 
 7. **Exemplars.** Run `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type} --min-quality strong` once per distinct type among your entries. It returns text rated `strong` or `exemplary` by the author, newest first. Read it for the level of detail and the register that it uses, not for phrases to reuse. An empty list is a normal result; draft without it.
 
@@ -72,7 +72,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
    Each record's text is a whole approved lede, so the sets you drew also calibrate the lede that you write. Read them together for it, since the lede answers for the change rather than for one of its types.
 
-   When you cannot resolve an outcome's type against the taxonomy, put `--tier {tier}` in place of `--type {type}` for that outcome, keep `--min-quality strong`, and name the omission in your report. `{tier}` is the `tier` scalar in your dispatch, which names the branch's reader: The outcome resolved to no type, so the taxonomy names no tier for it either. Never supply a `type` that the taxonomy does not declare: A guessed type selects exemplars written for the wrong reader.
+   When you cannot resolve an outcome's type against the taxonomy, put `--tier {tier}` in place of `--type {type}` for that outcome, keep `--min-quality strong`, and name the omission in your report. `{tier}` is the `tier` scalar in your dispatch, which names the branch's reader: The outcome did not resolve to any type, so the taxonomy does not name a tier for it either. Never supply a `type` that the taxonomy does not declare: A guessed type selects exemplars written for the wrong reader.
 
 Writing follows.
 
@@ -80,7 +80,7 @@ Writing follows.
 
 An entry list drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much it cost to establish.
 
-Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and no entry that you write includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it gets no entry.
+Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and an entry that you write never includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it does not get an entry.
 
 The general concision rule does not govern here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: The facts that you leave out are actionable ones, and the reader has the diff one click away.
 
@@ -89,8 +89,8 @@ The general concision rule does not govern here. It tells a writer to keep every
 Most types need nothing from this section: The question and the reader already decide the entry, and a type absent below is one to which this section has nothing to add. When an entry takes one of the types below, its `text` states the fact named.
 
 - **`ai`**: The artifact named, and the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it: Guidance instructs, and agents are instructed.
-- **`deps`**: The version delta and the consequence that matters. A routine bump with no consequence is one entry.
-- **`drop`, `deprecate`**: Published surface is presumed used and gets a migration; unpublished or never-released surface gets none, and takes no breaking-change framing. Include it when you are unsure. A removal whose surface only moved is reported as the move, and one with no drop-in replacement still names the path to the replacement API. A deprecation reports the same facts in advance, with the removal horizon if it is known.
+- **`deps`**: The version delta and the consequence that matters. A routine bump without any consequence is one entry.
+- **`drop`, `deprecate`**: Published surface is presumed used and gets a migration; unpublished or never-released surface gets none, and does not take any breaking-change framing. Include it when you are unsure. A removal whose surface only moved is reported as the move, and one without a drop-in replacement still names the path to the replacement API. A deprecation reports the same facts in advance, with the removal horizon if it is known.
 - **`fix`**: What was wrong. An entry reporting the repaired state leaves the reader unable to tell what the defect was.
 - **`perf`**: The effect and its size if it was measured. "Improves performance" names nothing.
 - **`refactor`**: One entry. External behavior goes unmentioned unless it changed.
@@ -111,12 +111,12 @@ The lede summarizes the change, and the entries enumerate it. The same reader re
 
 These fix what an entry contains and how its `text` is written. None of them ranks the facts; the question and the reader above do that.
 
-- **One entry per outcome**: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one entry, and a second outcome is a second entry. A supporting edit is no outcome of its own: It belongs to the outcome that it supports, as a commit touching several scopes takes the one that fits it closest, and it gets no entry, in another workspace as much as in this one. No entry enumerates members whose count tracks the changed-file list; the count is the tell that the diff is being inventoried rather than read.
+- **One entry per outcome**: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one entry, and a second outcome is a second entry. A supporting edit is not an outcome of its own: It belongs to the outcome that it supports, as a commit touching several scopes takes the one that fits it closest, and it does not get an entry, in another workspace as much as in this one. An entry never enumerates members whose count tracks the changed-file list; the count is the tell that the diff is being inventoried rather than read.
 - `text` is one sentence. An outcome that needs two is either two outcomes or one that you have not finished reducing.
 - `text` opens with its verb, third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine when natural.
 - The subject is the pull request, and it stays unwritten. Read a `text` with "This pull request" in front of it: When that sentence is false, the verb names what the system does rather than what the change did, and the entry fails. "This pull request ends quietly when the reader closes the pipe" is false; "This pull request stops `foo` from crashing with an unhandled `EPIPE`" is true.
 - When the change adds something that itself acts, a command, a check, a rule, a hook, that thing's behavior is the interesting content, so a drafter is tempted to give it the main verb. The change keeps the main verb, and the artifact's behavior goes in a subordinate clause.
-- The verb is whichever one names the act plainly. No opener and no connective phrase is prescribed, and there is no menu of verbs to choose from.
+- The verb is whichever one names the act plainly. This document does not prescribe an opener or a connective phrase, and it does not offer a menu of verbs to choose from.
 - `text` names the artifact consumed by the reader, backticked: the package, command, flag, file, or rule that the reader uses. What the reader consumes decides the marking rather than the kind, so a token that the entry merely names, such as a heading inside a file or a value that the change's own code passes internally, is quoted instead. `text` names what that artifact does for the reader, never the internal call that the change edited. An enumeration of the instances touched is not that artifact. Never talk around a name that the reader needs: "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. At `public` tier, define any term that the audience may not share.
 - When `text` names an operation whose benefit the operation does not make evident, it states the benefit.
 - A claim is no stronger than what the change delivers. A mitigation is not a fix, and the true actor keeps the agency: Violations fail the build, and rules only classify. A promise that holds on one version or configuration alone names that condition, and a first increment is framed as initial, since unframed placeholder behavior reads as a bug.
@@ -144,7 +144,7 @@ A `rejected` fence comes with it, listing one per line the passages that failed,
 
 ## What you return
 
-Three sections, in this order. Return nothing else, and write no file.
+Three sections, in this order. Return nothing else, and do not write any file.
 
 ````markdown
 ## Lede
@@ -176,7 +176,7 @@ Three sections, in this order. Return nothing else, and write no file.
 
 Every entry declares `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are always double-quoted, with each `"` and `\` inside escaped by a backslash: Unquoted, a colon followed by a space mis-parses the value, and a space followed by `#` opens a comment that drops the rest of the text without an error.
 
-On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading contains every replacement, whether its passage was an entry's `text`, an entry's `migration`, or the lede, and a redispatch returns no `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence contains an entry's `text`, an entry's `migration`, or the lede and nothing else, and a replacement is the same kind of passage as the one that it replaces; the caller places each one and keeps every other field.
+On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading contains every replacement, whether its passage was an entry's `text`, an entry's `migration`, or the lede, and a redispatch does not return a `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence contains an entry's `text`, an entry's `migration`, or the lede and nothing else, and a replacement is the same kind of passage as the one that it replaces; the caller places each one and keeps every other field.
 
 <!-- include: ../_partials/prose-line-breaks.md / -->
 
