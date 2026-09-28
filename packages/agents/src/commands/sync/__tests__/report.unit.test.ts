@@ -117,7 +117,7 @@ describe('dropped-harness retraction', () => {
     expect(textOf(renderDryRunReport(reconciled({ droppedHarnesses: [damaged] })))).toContain(warning);
   });
 
-  it('names no ambient action for a damaged host, whose block contains only the other removals', () => {
+  it('does not name an ambient action for a damaged host, whose block contains only the other removals', () => {
     const output = textOf(
       renderSyncReport(
         reconciled({
@@ -131,7 +131,7 @@ describe('dropped-harness retraction', () => {
     expect(output).not.toContain('stripped the ambient region');
   });
 
-  it('renders no block header for a harness whose only residue is a damaged host', () => {
+  it('does not render a block header for a harness whose only residue is a damaged host', () => {
     const damagedOnly = {
       harnessId: 'rovo',
       skillDirs: [],
@@ -149,7 +149,7 @@ describe('dropped-harness retraction', () => {
     );
   });
 
-  it('adds no line when the run dropped no harness', () => {
+  it('does not add a line when the run did not drop any harness', () => {
     expect(textOf(renderSyncReport(reconciled()))).not.toContain('dropped from the declaration');
     expect(textOf(renderDryRunReport(reconciled()))).not.toContain('dropped from the declaration');
   });
@@ -285,7 +285,7 @@ describe('guidance-hook advisories', () => {
     }
   });
 
-  it('advises on both paths that a binding reaches no body at all', () => {
+  it('advises on both paths that a binding does not reach any body at all', () => {
     const outcome = reconciled({ guidanceHookAdvisories: [{ kind: 'bound-unreached', hook: 'impl' }] });
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
@@ -309,7 +309,7 @@ describe('guidance-hook advisories', () => {
     }
   });
 
-  it('adds no line to either path when the declaration and the deliveries agree', () => {
+  it('does not add a line to either path when the declaration and the deliveries agree', () => {
     const outcome = reconciled();
 
     for (const lines of [renderDryRunReport(outcome), renderSyncReport(outcome)]) {
@@ -556,7 +556,7 @@ describe('deployed sizes', () => {
     expect(output).toContain('and 3 more documents grown since their review');
   });
 
-  it('prints no drift block when nothing has grown since its review', () => {
+  it('does not print a drift block when nothing has grown since its review', () => {
     const output = textOf(renderSyncReport(withSizes({})));
 
     expect(output).not.toContain('Grown since last streamlined:');
@@ -574,7 +574,7 @@ describe('deployed sizes', () => {
     expect(output).not.toContain('Deployed sizes:');
   });
 
-  it('states nothing at all for an outcome carrying no sizes, as a dry run does', () => {
+  it("states nothing at all for an outcome without sizes, such as a dry run's", () => {
     expect(textOf(renderSyncReport(reconciled()))).not.toContain('Deployed sizes:');
     expect(textOf(renderDryRunReport(reconciled()))).not.toContain('Deployed sizes:');
   });

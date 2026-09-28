@@ -102,7 +102,7 @@ describe('syncCommand with guidance-hook bindings', () => {
     expect(existsSync(consultSkill)).toBe(true);
   });
 
-  it('leaves a hook named by no binding contributing nothing at all', async () => {
+  it('leaves a hook not named by any binding contributing nothing at all', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', 'Prose.\n\n<!-- guidance-hook: glossary -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n');
     await declare(projectRoot, [
@@ -202,7 +202,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       expect(advisories).toEqual([]);
     });
 
-    it('reports a binding whose hook no deployed skill or subagent declares', async () => {
+    it('reports a binding whose hook is not declared by any deployed skill or subagent', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', 'Prose carrying no directive.\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
       await declareBinding(projectRoot, 'layout-preferences');
@@ -212,7 +212,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       expect(advisories).toEqual([{ kind: 'bound-unreached', hook: 'impl' }]);
     });
 
-    it('reports a bound rulebook that is ambient and claims no hook route', async () => {
+    it('reports a bound rulebook that is ambient and does not claim the hook route', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'ambient');
       await declareBinding(projectRoot, 'layout-preferences');
@@ -222,7 +222,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       expect(advisories).toEqual([{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }]);
     });
 
-    it('reports a rulebook that claims the hook route while no binding names it', async () => {
+    it('reports a rulebook that claims the hook route but is not named by any binding', async () => {
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
       await declare(projectRoot, ['rulebooks:', '  use:', '    - layout-preferences']);
 
@@ -276,7 +276,9 @@ async function syncAdvisories(
 ): Promise<ReadonlyArray<GuidanceHookAdvisory>> {
   const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
   if (outcome.kind !== 'reconciled') {
-    throw new Error(`Expected a reconciled sync, but no declaration was found at ${outcome.declarationPath}.`);
+    throw new Error(
+      `Expected a reconciled sync, but the sync did not find a declaration at ${outcome.declarationPath}.`,
+    );
   }
   return outcome.plan.guidanceHookAdvisories;
 }

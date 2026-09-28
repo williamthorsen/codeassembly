@@ -93,7 +93,7 @@ describe(collectDeployedPaths, () => {
     expect(sortedKeys(set)).toEqual(['claude/skills/consult-comments/SKILL.md']);
   });
 
-  it('leaves out a rulebook that deploys no skill', async () => {
+  it('leaves out a rulebook that does not deploy a skill', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', baseDir);
     await writeDeployedFile(path.join(skillsDir, 'ambient-only', 'SKILL.md'), 'body');
     const sources = {
@@ -235,7 +235,7 @@ describe(collectDeployedPaths, () => {
     expect(sourceRootsByKey(set)).toStrictEqual({ 'claude/agents/prose-reviser.md': '/sources/acme' });
   });
 
-  it('attributes an artifact that resolved from no declared source to the library', async () => {
+  it('attributes an artifact that did not resolve from any declared source to the library', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', baseDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
@@ -249,7 +249,7 @@ describe(collectDeployedPaths, () => {
     expect(sourceRootsByKey(set)).toStrictEqual({ 'claude/skills/plan/SKILL.md': LIBRARY_DIR });
   });
 
-  it('attributes a delivered support entry to no source, since no artifact backs it', async () => {
+  it('does not attribute a delivered support entry to any source, since it is not backed by any artifact', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', baseDir);
     const destDir = path.join(skillsDir, '_sources', 'acme');
     await writeDeployedFile(path.join(destDir, 'guide.md'), 'guide');
@@ -331,7 +331,7 @@ describe(collectDeployedPaths, () => {
     });
   });
 
-  it('names no authored source for a delivered support entry, which renders from no authored document', async () => {
+  it('does not name an authored source for a delivered support entry, which does not render from any authored document', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', baseDir);
     const destDir = path.join(skillsDir, '_sources', 'acme');
     await writeDeployedFile(path.join(destDir, 'guide.md'), 'guide');
@@ -353,7 +353,7 @@ describe(collectDeployedPaths, () => {
     expect(authoredByKey(set)).toStrictEqual({ 'claude/skills/_sources/acme/guide.md': undefined });
   });
 
-  it('names no authored source for a manifest-contributed file', async () => {
+  it('does not name an authored source for a manifest-contributed file', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', baseDir);
     await writeDeployedFile(path.join(skillsDir, '_data', 'work-types.json'), '{}');
     await writeInstallManifest(baseDir, [
@@ -370,7 +370,7 @@ describe(collectDeployedPaths, () => {
     expect(authoredByKey(set)).toStrictEqual({ 'claude/skills/_data/work-types.json': undefined });
   });
 
-  it('attributes a manifest-contributed file to no source, since no artifact backs it', async () => {
+  it('does not attribute a manifest-contributed file to any source, since it is not backed by any artifact', async () => {
     const { harnessHome } = resolveHarnessPaths('claude', baseDir);
     await writeDeployedFile(path.join(harnessHome, 'scripts', 'describe-change.mjs'), 'code');
     await writeInstallManifest(baseDir, [
