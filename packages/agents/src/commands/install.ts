@@ -110,8 +110,8 @@ async function deployHomeDomain(
   const harnesses = targets.harnessIds;
   console.info(describeHarnessTargeting(targets));
 
-  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the no-target return: A home that targets no
-  // harness still contains whatever a previous install left in `~/.agents/`.
+  // Retire the withdrawn shared-guidance tier unconditionally, ahead of the no-target return: A home that doesn't
+  // target any harness still contains whatever a previous install left in `~/.agents/`.
   const didRetire = await retireSharedGuidance(manifest, options, baseDir);
 
   // Above the no-target return for the same reason: A declaration resolving to an empty set targets nothing and still
@@ -252,8 +252,8 @@ async function installSupportDirectories(
   const entries: Array<ManifestEntry> = [];
 
   // Because `listSupportEntries` reports an absent directory as empty, the absence is probed separately: Content
-  // shipping no `skills/` has lost the support files that every skill reads at runtime, and a silent success would
-  // hide that.
+  // that doesn't ship `skills/` has lost the support files that every skill reads at runtime, and a silent success
+  // would hide that.
   try {
     await stat(skillsSrcDir);
   } catch (error: unknown) {
@@ -311,8 +311,9 @@ async function installSkillEntry(
   label = '',
 ): Promise<ManifestEntry | undefined> {
   // Eagerly render the entry before the dry-run gate, so that missing include targets, cycles, out-of-tree references,
-  // dead anchors, and unmapped tool placeholders surface even when no files are written. `renderSupportEntry` is the
-  // same render that `validate` runs, which is what keeps the two passes agreeing on what a support entry is.
+  // dead anchors, and unmapped tool placeholders surface even when the dry run doesn't write any files.
+  // `renderSupportEntry` is the same render that `validate` runs, which is what keeps the two passes agreeing on what
+  // a support entry is.
   const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
     anchor: homeAnchor(skillsPrefix),
     guidanceFileName: variables.guidanceFileName,
@@ -323,7 +324,8 @@ async function installSkillEntry(
   });
 
   // A support directory holding only dotfiles or `_partials/` renders to zero entries: nothing to install. Skip it
-  // entirely: no destination, no markers, no manifest entry. The orphan-prune pass clears any previously installed copy.
+  // entirely, without creating a destination, markers, or a manifest entry. The orphan-prune pass clears any
+  // previously installed copy.
   if (rendered.kind === 'directory' && rendered.entries.length === 0) {
     console.info(`    [skip] ${relativePath}${label ? ` ${label}` : ''} (no installable entries)`);
     return undefined;
@@ -384,7 +386,7 @@ async function writeRenderedSkillDir(destDir: string, entries: ReadonlyArray<Ren
 
 /**
  * Installs script files from every content root's `scripts/` directory into the target scripts directory.
- * Scripts are flat files (no frontmatter, no harness-specific variants), so the roots merge by file name rather than
+ * Scripts are flat files without frontmatter or harness-specific variants, so the roots merge by file name rather than
  * one root owning the directory.
  * Copied scripts receive the executable bit (0o755); symlinked scripts inherit the source's permissions.
  */
@@ -399,7 +401,7 @@ async function installScripts(
   const { claims, foundDirectory, warnings } = await collectScriptClaims(roots);
   emitReport(warnings);
   if (!foundDirectory) {
-    console.warn('  ⚠️ Warning: No scripts directory found in any content root, skipping script installation');
+    console.warn("  ⚠️ Warning: The content roots don't contain a scripts directory, skipping script installation");
     return [];
   }
 
@@ -461,7 +463,7 @@ async function installHarnessGuidance(
   const owner = shippingRoots.at(0);
   if (owner === undefined) {
     console.warn(
-      `  ⚠️ Warning: No ${harnessId} guidance directory found in any content root, skipping harness guidance installation`,
+      `  ⚠️ Warning: The content roots don't contain a ${harnessId} guidance directory, skipping harness guidance installation`,
     );
     return [];
   }
@@ -488,7 +490,7 @@ async function installHarnessGuidance(
     // Resolve include directives at source-tree level, strip the guidance-hook declarations that the expansion
     // carried in, then check the result for anchors that name nothing. All three run before the dry-run gate so that
     // missing targets, cycles, out-of-tree references, malformed hooks, and dead in-body locators surface even when
-    // no files are written.
+    // the dry run doesn't write any files.
     let expandedContent: string | undefined;
     if (entry.endsWith('.md')) {
       const sourceLabel = `guidance/_harnesses/${harnessId}/${entry}`;
@@ -559,8 +561,8 @@ async function installHarnessGuidance(
  * flat directory, and their file names are undeclared, so a collision states none of the override intent that a
  * declared artifact's slug does.
  *
- * `foundDirectory` distinguishes a run in which no root ships a `scripts/` directory at all from one in which the
- * directories exist and hold nothing installable, because only the first is worth a warning.
+ * `foundDirectory` distinguishes a run in which the roots don't ship any `scripts/` directory at all from one in which
+ * the directories exist and hold nothing installable, because only the first is worth a warning.
  */
 async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promise<{
   claims: ReadonlyMap<string, string>;
@@ -666,7 +668,7 @@ async function findTemplateRoots(
 
 /**
  * Reads the ambient-region content of the file at `filePath`, returning `undefined` when the file is absent or
- * contains no complete region.
+ * doesn't contain a complete region.
  */
 async function readAmbientRegionContent(filePath: string): Promise<string | undefined> {
   try {
