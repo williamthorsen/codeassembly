@@ -11,11 +11,10 @@ Prefix with `A` an action that you propose to take (a "yes" makes you act) and w
 
 **A2:** The fixture helper now has three call sites. Extract, or leave inline?
 
-1. ■■□ Extract it into `__tests__/helpers/`:
+1. ■■□ Extract it into `test-utils/`:
    - ➕ the third call site copy-pasted a stale variant, which is how the leak got in
-   - ➖ a new file while the shape is still moving
-2. ■□□ Leave it inline:
-   - ➕ no new surface today
+2. ■■□ Leave it inline until #981 settles the fixture format:
+   - ➕ #981 changes every fixture's shape, so an extracted helper would be rewritten within the week
 
 **Q1:** Which package owns the shared fixture once it moves? 🤔
 ```
