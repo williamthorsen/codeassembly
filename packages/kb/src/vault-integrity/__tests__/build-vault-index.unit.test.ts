@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { buildVaultIndex } from '../build-vault-index.ts';
 
 describe(buildVaultIndex, () => {
-  it('returns an empty index for no notes', () => {
+  it('returns an empty index for an empty note list', () => {
     expect(buildVaultIndex([])).toEqual(new Map());
   });
 

@@ -20,7 +20,7 @@ const JIRA_STYLE_PATTERN = /(?<ticketId>[A-Za-z]{2,}-[0-9]+)(?:\.(?<revisit>[0-9
 const BARE_NUMERIC_PATTERN = /^(?<ticketId>[0-9]+)(?:\.(?<revisit>[0-9]+))?/;
 
 /**
- * Parses `branch` into a ticket ref, or `undefined` when the name encodes no ticket id. Jira-style keys are
+ * Parses `branch` into a ticket ref, or `undefined` when the name does not encode a ticket id. Jira-style keys are
  * uppercased to their canonical spelling; a `PR-<n>` name parses as a Jira-style key.
  */
 export function parseTicketRef(branch: string): TicketRef | undefined {

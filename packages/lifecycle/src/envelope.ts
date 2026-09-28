@@ -5,8 +5,8 @@
  * type before the vocabulary catches up.
  *
  * Two channels feed the vocabulary. The `session.*` and `turn.*` boundaries come from the harness, relayed from its
- * event hooks: A session ends and a turn completes at moments when no skill is running to observe them. The rest is
- * work narration that an instrumented skill emits about itself.
+ * event hooks: A session ends and a turn completes at moments when the session is not running any skill that could
+ * observe them. The rest is work narration that an instrumented skill emits about itself.
  */
 export const EVENT_TYPES = [
   'session.started',

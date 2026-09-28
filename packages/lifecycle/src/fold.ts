@@ -115,12 +115,12 @@ export function applySessionEvent(state: SessionState, envelope: EventEnvelope):
   }
 }
 
-/** A lane with no events yet, its ticket attribution derived from the branch name. */
+/** A lane that has not received any events yet, its ticket attribution derived from the branch name. */
 export function createLaneState(input: { repo: string; branch: string }): LaneState {
   return { repo: input.repo, branch: input.branch, ticketRef: parseTicketRef(input.branch), sessions: {} };
 }
 
-/** A session to which no events have been applied. */
+/** A session that has not had any events applied to it. */
 export function createSessionState(): SessionState {
   return {
     phase: 'idle',
@@ -134,8 +134,8 @@ export function createSessionState(): SessionState {
 
 /**
  * Derives a lane's open/closed state. Closure signals in precedence order: a probe reporting the worktree gone, every
- * session ended, then lane-wide quiet past `closeAfterMs`. A lane with none of them (recent activity, or no events at
- * all) is open.
+ * session ended, then lane-wide quiet past `closeAfterMs`. A lane with none of them (recent activity, or an empty
+ * event history) is open.
  */
 export function deriveLaneStatus(
   lane: LaneState,
@@ -164,7 +164,10 @@ export function deriveSessionStatus(state: SessionState, input: { nowMs: number;
   return { phase: state.phase, skill: state.currentSkill, ask: state.ask, stale, lastEventTs: state.lastEventTs };
 }
 
-/** The `cwd` of the lane's most recently active session (its worktree), or `undefined` when no session has one. */
+/**
+ * The `cwd` of the lane's most recently active session (its worktree), or `undefined` when the lane doesn't have a
+ * session with a `cwd`.
+ */
 export function resolveLaneCwd(lane: LaneState): string | undefined {
   let newestMs = -1;
   let cwd: string | undefined;

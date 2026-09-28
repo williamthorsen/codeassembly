@@ -9,7 +9,7 @@ import {
 } from '../check-vault-integrity.ts';
 
 describe(checkVaultIntegrity, () => {
-  it('returns no findings for an empty vault', () => {
+  it('does not return any findings for an empty vault', () => {
     expect(checkVaultIntegrity([])).toEqual([]);
   });
 
@@ -43,7 +43,7 @@ describe(checkVaultIntegrity, () => {
     expect(findings[0]?.line).toBe(9);
   });
 
-  it('warns once, vault-wide, for a basename shared by two notes even with no referencing link', () => {
+  it('warns once, vault-wide, for a basename shared by two notes even when the vault does not contain any link to it', () => {
     const findings = checkVaultIntegrity([note('engineering/Foo.md'), note('tools/Foo.md')]);
     expect(findings).toHaveLength(1);
     expect(findings[0]?.rule).toBe('wikilinks.basename');
@@ -73,7 +73,7 @@ describe(checkVaultIntegrity, () => {
     expect(checkVaultIntegrity(notes, options({ fde: resolvedStore('content/Shared assertion.md') }))).toEqual([]);
   });
 
-  it('flags a qualified link whose store no registry entry declares', () => {
+  it('flags a qualified link whose store is not declared by any registry entry', () => {
     const notes = [note('a/Journal.md', 'See [[fed:Shared assertion]].')];
 
     const findings = checkVaultIntegrity(notes, options({ fed: { status: 'unknown' } }));
@@ -114,7 +114,7 @@ describe(checkVaultIntegrity, () => {
     expect(findings[0]?.message).toContain('a shared store');
   });
 
-  it('names the store when a qualified link resolves to no note there', () => {
+  it('names the store when a qualified link does not resolve to any note there', () => {
     const notes = [note('a/Journal.md', 'See [[fde:Missing]].')];
 
     const findings = checkVaultIntegrity(notes, options({ fde: resolvedStore('content/Other.md') }));
@@ -138,7 +138,7 @@ describe(checkVaultIntegrity, () => {
     expect(checkVaultIntegrity(notes, options({ fde: resolvedStore('content/Shared assertion.md') }))).toEqual([]);
   });
 
-  it('treats a qualified target as a bare basename when no options are supplied', () => {
+  it('treats a qualified target as a bare basename when called without options', () => {
     const findings = checkVaultIntegrity([note('a/Journal.md', 'See [[fde:Shared assertion]].')]);
 
     expect(findings[0]?.rule).toBe('wikilinks.unresolved');

@@ -56,7 +56,7 @@ describe('parseTicketRef', () => {
     ['a single-letter prefix', 'a-1-test'],
     ['a bare revisit suffix', '.2'],
     ['a description without digits', 'fix-login-redirect'],
-  ])('yields no ref for %s', (_label, branch) => {
+  ])('does not yield a ref for %s', (_label, branch) => {
     expect(parseTicketRef(branch)).toBeUndefined();
   });
 });
