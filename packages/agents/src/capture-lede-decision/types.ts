@@ -51,8 +51,8 @@ export type ResolveEpisodeOutcome =
  * every field of {@link EpisodeIdentity} under one code, with the message naming the field that failed: The caller's
  * recourse is the same in each case (supply the flag), so splitting it per field would buy the caller nothing.
  *
- * An unreadable taxonomy is `no-taxonomy` rather than `unresolved-identity`, because no `--type` value resolves against
- * a taxonomy that did not load: The caller's recourse is to repair the install, as it is for `no-doctrine`.
+ * An unreadable taxonomy is `no-taxonomy` rather than `unresolved-identity`, because a `--type` value cannot resolve
+ * against a taxonomy that did not load: The caller's recourse is to repair the install, as it is for `no-doctrine`.
  */
 export type EpisodeErrorCode =
   'no-artifact-dir' | 'no-agent-lede' | 'no-merged-lede' | 'no-doctrine' | 'no-taxonomy' | 'unresolved-identity';

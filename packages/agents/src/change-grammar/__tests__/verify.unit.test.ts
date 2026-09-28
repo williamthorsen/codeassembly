@@ -105,7 +105,7 @@ describe(verify, () => {
       expect(defects.some((defect) => defect.includes('does not round-trip'))).toBe(true);
     });
 
-    it('accepts a template that names no token at all', () => {
+    it('accepts a template that does not name any token', () => {
       expect(verify('Release', TAXONOMY)).toStrictEqual([]);
     });
   });

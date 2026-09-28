@@ -81,7 +81,7 @@ describe(parse, () => {
       expect(record).toStrictEqual({ scope: 'agents', title: 'Add foo', type: 'feat' });
     });
 
-    it('reads the marker off the type when the template names no {breaking}', () => {
+    it('reads the marker off the type when the template does not name {breaking}', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), 'agents|feat!: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ breaking: true, scope: 'agents', title: 'Add foo', type: 'feat' });
@@ -110,7 +110,7 @@ describe(parse, () => {
       expect(record?.type).toBe('feat');
     });
 
-    it('drops the wildcard scope that release-kit keeps, since the engine reads it as no scope', () => {
+    it('drops the wildcard scope that release-kit keeps, since the engine reads it as the absence of a scope', () => {
       const record = parse(compileTemplate(FLAT_SCOPE_COMMIT), '*|feat: Add foo', TAXONOMY);
 
       expect(record).toStrictEqual({ title: 'Add foo', type: 'feat' });
@@ -122,7 +122,7 @@ describe(parse, () => {
       expect(parse(compileTemplate(FLAT_SCOPE_COMMIT), 'Add foo', TAXONOMY)).toBeUndefined();
     });
 
-    it('refuses a subject naming a scope but no type', () => {
+    it('refuses a subject naming a scope but not a type', () => {
       expect(parse(compileTemplate(FLAT_SCOPE_COMMIT), 'agents|: Add foo', TAXONOMY)).toBeUndefined();
     });
 
@@ -130,11 +130,11 @@ describe(parse, () => {
       expect(parse(compileTemplate(FLAT_SCOPE_COMMIT), 'Support a|b: syntax', TAXONOMY)).toBeUndefined();
     });
 
-    it('refuses a scoped subject under a template that names no scope', () => {
+    it('refuses a scoped subject under a template that does not name a scope', () => {
       expect(parse(compileTemplate(TEMPLATE_CATALOGUE.typeOnly), 'feat(agents): Add foo', TAXONOMY)).toBeUndefined();
     });
 
-    it('accepts a bare title under a template naming no {type}', () => {
+    it('accepts a bare title under a template that does not name {type}', () => {
       expect(parse(compileTemplate(PROJECT_PR), 'Add foo', TAXONOMY)).toStrictEqual({ title: 'Add foo' });
     });
   });
@@ -176,7 +176,7 @@ describe(parse, () => {
 
 // region | Helpers
 
-/** Drops the fields that a template names no token for, which a round trip cannot recover. */
+/** Drops the fields for which a template does not name a token, which a round trip cannot recover. */
 function dropScopelessFields(template: string, record: ChangeRecord): ChangeRecord {
   const normalized = normalizeChangeRecord(record);
   const carried: ChangeRecord = {};

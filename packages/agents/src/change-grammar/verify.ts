@@ -78,7 +78,7 @@ function describeRecord(record: ChangeRecord | undefined): string {
   return JSON.stringify(Object.entries(record).toSorted(([a], [b]) => a.localeCompare(b)));
 }
 
-/** Reports two tokens with no literal between them, which a parse cannot split. `{breaking}` has its own rule. */
+/** Reports two tokens without a literal between them, which a parse cannot split. `{breaking}` has its own rule. */
 function findAdjacentTokenDefects(template: string, flattened: readonly FlatNode[]): string[] {
   const defects: string[] = [];
   for (const [index, node] of flattened.entries()) {
@@ -141,7 +141,7 @@ function findGroupBoundaryDefects(template: string, nodes: readonly TemplateNode
   return defects;
 }
 
-/** Reports a token named more than once, which leaves a parse no way to decide which occurrence a value belongs to. */
+/** Reports a token named more than once, because a parse cannot decide which occurrence a value belongs to. */
 function findRepeatedTokenDefects(template: string, flattened: readonly FlatNode[]): string[] {
   const counts = new Map<TokenName, number>();
   for (const node of flattened) {
@@ -155,9 +155,9 @@ function findRepeatedTokenDefects(template: string, flattened: readonly FlatNode
 }
 
 /**
- * Renders well-formed values and reads them back, so that a defect that no structural rule names is still reported. One
- * pass includes every token named by the template; one further pass per optional group drops that group, since a group
- * that a parse cannot tell from an absent one is the ordinary case for which a group exists.
+ * Renders well-formed values and reads them back, so that a defect not named by any structural rule is still reported.
+ * One pass includes every token named by the template; one further pass per optional group drops that group, since a
+ * group that a parse cannot tell from an absent one is the ordinary case for which a group exists.
  *
  * A group containing `{type}` is left populated. Dropping it takes the type out of the rendered string, which the
  * type-required rule then reads as unmatched however well-formed the template is.
