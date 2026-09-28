@@ -2,9 +2,9 @@ import { HARNESSES } from './harness.ts';
 import type { HarnessId } from './types.ts';
 
 /**
- * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder naming no canonical tool.
+ * Thrown when `rewriteToolNames` encounters a `{tool:NAME}` placeholder that doesn't name any canonical tool.
  *
- * The message names no harness, because every harness maps the same closed set of canonical names: A name unmapped
+ * The message doesn't name a harness, because every harness maps the same closed set of canonical names: A name unmapped
  * for one is unmapped for all, so a caller collecting defects folds it to a single line. The harness stays on the
  * instance for a caller that needs to know which render raised it.
  */
@@ -33,8 +33,8 @@ const PLACEHOLDER_RE = /\{tool:([A-Za-z][A-Za-z0-9_]*)}/g;
 /**
  * Replaces every `{tool:NAME}` placeholder in `content` with what `harnessId` calls `NAME`. A name to which the
  * harness maps nothing throws `ToolNameRewriteError` with the canonical name, `contextLabel`, and the 1-based line
- * number of the offending match. There is no identity pass-through; every match must resolve through the harness table or the call
- * fails.
+ * number of the offending match. The rewrite doesn't fall back to an identity pass-through; every match must resolve
+ * through the harness table or the call fails.
  */
 export function rewriteToolNames(content: string, harnessId: HarnessId, contextLabel: string): string {
   const toolNames: Readonly<Record<string, string>> = HARNESSES[harnessId].toolNames;

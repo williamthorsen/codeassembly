@@ -14,8 +14,8 @@ export interface SourceProblem {
 /**
  * Reports what disqualifies a source `name` from serving as the directory segments under which its support entries
  * deploy, or `undefined` when it can. A scoped package name is valid and nests as its own segments, so `/` separates
- * segments rather than being rejected outright; what is rejected is anything that would escape the namespace or name
- * no directory at all.
+ * segments rather than being rejected outright; what is rejected is anything that would escape the namespace or
+ * wouldn't name any directory at all.
  *
  * Checked for every source rather than only those shipping support entries: The segment is part of a source's
  * contract, and a check deferred until a producer first adds support files would fail at that producer's consumers
@@ -58,7 +58,7 @@ export async function findSourceProblem(dir: string): Promise<SourceProblem | un
     }
     // Probe the read+traverse access on which the resolver's frontmatter lookups rely, so that a directory that
     // stats as a directory but is itself unreadable (e.g. mode 000) fails here with the attributed error rather than
-    // as a raw EACCES mid-resolution, or not at all when no declared artifact happens to reach into it.
+    // as a raw EACCES mid-resolution, or not at all when the declared artifacts happen not to reach into it.
     await access(dir, constants.R_OK | constants.X_OK);
     return undefined;
   } catch (error: unknown) {

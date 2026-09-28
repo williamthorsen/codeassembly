@@ -22,13 +22,13 @@ export interface SkillDeployContext extends TemplateVariables {
   /** Sigil prefixed to a rendered `{subagent:<slug>}` invocation token (empty on both current harnesses). */
   readonly subagentSigil: string;
   /**
-   * Guidance bound to each hook that a declared skill's body may declare. Absent for every caller that resolves no
-   * declaration (`install`, `validate`, and the support-entry route), which keeps them stripping.
+   * Guidance bound to each hook that a declared skill's body may declare. Absent for every caller that doesn't
+   * resolve a declaration (`install`, `validate`, and the support-entry route), which keeps them stripping.
    */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
   /**
    * The deployed rulebooks that a `{rulebook:<slug>}` token may address. Absent for the support-entry route, which
-   * `install` ships having resolved no declaration, so a token there is rejected rather than rendered.
+   * `install` ships without having resolved a declaration, so a token there is rejected rather than rendered.
    */
   readonly rulebooks?: RulebookInvocationCatalog | undefined;
 }
@@ -93,8 +93,8 @@ export async function renderSkillDirectory(
  * A support entry never fills a hook, whichever route it takes, so any fills that the caller supplies are dropped
  * here. A support entry is reached by a link rather than inlined, and guidance behind a link is what the hook
  * mechanism exists to route around. Its rulebook catalog is dropped for a different reason: `install` ships a support
- * entry having resolved no declaration. Honoring a `{rulebook:<slug>}` token under `sync` or `validate` alone would
- * pass a gate that the ship then fails. Dropping both here rather than at each call site keeps the three routes
+ * entry without having resolved a declaration. Honoring a `{rulebook:<slug>}` token under `sync` or `validate` alone
+ * would pass a gate that the ship then fails. Dropping both here rather than at each call site keeps the three routes
  * agreeing on what a support entry is.
  *
  * `destName` is the entry's deployed name, which anchors link rewriting: the directory that contains a directory

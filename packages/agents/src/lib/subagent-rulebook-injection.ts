@@ -21,11 +21,11 @@ const ROUND_TRIP_OPTIONS = { flowCollectionPadding: false, lineWidth: 0 } as con
  * the extra keys tolerated by `EntrySchema`, and a flow sequence stays flow. Only the entries that the injection adds
  * are new.
  *
- * Content declaring no `rulebooks:` is returned unchanged rather than re-serialized. A subagent that does not opt in
+ * Content that doesn't declare `rulebooks:` is returned unchanged rather than re-serialized. A subagent that does not opt in
  * cannot have its frontmatter normalized as a side effect.
  *
- * Throws when a declared rulebook is unknown to `rulebooks` or deploys no skill to inject, reporting every offending
- * entry at once so that an author sees the whole list. `sourceLabel` names the subagent in that error.
+ * Throws when a declared rulebook is unknown to `rulebooks` or doesn't deploy a skill to inject, reporting every
+ * offending entry at once so that an author sees the whole list. `sourceLabel` names the subagent in that error.
  */
 export function injectDeclaredRulebooks(
   content: string,
