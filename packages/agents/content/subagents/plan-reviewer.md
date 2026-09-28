@@ -128,9 +128,9 @@ Write the review to the output path provided in your task prompt. The artifact b
 | {requirement} | Step {N}  | Covered / Gap / Partial |
 ```
 
-If there are no auto-resolvable findings, omit the "Auto-resolvable findings" section entirely. If there are no decision gaps, omit the "Decision gaps" section entirely.
+If the review doesn't raise any auto-resolvable findings, omit the "Auto-resolvable findings" section entirely. If the review doesn't raise any decision gaps, omit the "Decision gaps" section entirely.
 
-If the plan has no findings at all, write:
+If the review doesn't raise any findings at all, write:
 
 ```markdown
 # Plan review

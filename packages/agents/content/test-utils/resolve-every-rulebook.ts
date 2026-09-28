@@ -8,7 +8,7 @@ export async function resolveEveryRulebook(contentRoot: string): Promise<Readonl
   const slugs = (await enumerateCatalogSlugs(contentRoot)).rulebook;
   if (slugs === undefined || slugs.length === 0) {
     // A suite that reports what it finds would stay green over an empty catalog.
-    throw new Error(`The catalog at ${contentRoot} names no rulebook`);
+    throw new Error(`The catalog at ${contentRoot} doesn't name any rulebook`);
   }
 
   return indexRulebooksBySlug(await Promise.all(slugs.map((slug) => resolveRulebook(slug, resolver))));

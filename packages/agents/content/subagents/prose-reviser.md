@@ -1,6 +1,6 @@
 ---
 name: prose-reviser
-description: Revise one batch of files against the writing rule set, applying every clear repair and reporting the rest. Returns a structured report and makes no commit.
+description: Revise one batch of files against the writing rule set, applying every clear repair and reporting the rest. Returns a structured report and does not commit.
 tools: [Read, Edit, Grep, Glob]
 maxTurns: 100
 ---
@@ -21,7 +21,7 @@ Your dispatch contains five scalars:
 
 Each candidate object contains `rule`, `file`, `line`, `phrase` (the span that a repair rewrites), and `sentence` (the whole sentence around it). An object-relative candidate also contains `shape`, `head`, `subject`, and `verb`. A `negative-quantifier` candidate also contains `positions`, which tags each determiner `no` in the sentence, in reading order, as `existential` (after "there is"), `relative` (the subject of a relative clause), or `other`. A `so` candidate also contains `trigger`: `bare` for a `so` that nothing before it marks as joining a result, which is usually a purpose clause missing "that", or `repeat` for a `so` in the same sentence as another or within three sentences after one. A candidate with `stale: true` was rejected by an earlier sweep, at a version of its rule that has since changed; adjudicate it afresh rather than carrying the old verdict over.
 
-Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles that one rule and no other; therefore, a span named by the list is adjudicated normally under every other rule that you apply, and a site that also appears among the candidates is yours to judge under that candidate's rule. A site whose rule has changed version since is absent from the list; as a result, you receive it with no prior verdict at all.
+Each rejection object contains `rule`, `file`, and `phrase`. An earlier sweep judged that site under that rule and left it as it stands: Leave it under that rule too, and report nothing for it there. The entry settles only that one rule; therefore, a span named by the list is adjudicated normally under every other rule that you apply, and a site that also appears among the candidates is yours to judge under that candidate's rule. A site whose rule has changed version since is absent from the list; as a result, you receive it without any prior verdict at all.
 
 Detection covers only those of your rules that have a detector, and it nominates sites rather than deciding them. The candidates tell you where to look first; they are not the assignment. Read each file in your batch whole and apply every rule that your `rules` scalar names to all of its prose.
 
@@ -31,7 +31,7 @@ An inline code span appears in a candidate's `sentence` as `«codespan»`, which
 
 The rules that your `rules` scalar names. This document states every rule in one of four places, which appear in this order: the plain-speech rule and its sweep calibration, both below, and the comment preferences and the writing preferences at the end. `plain-speech` names the first two together.
 
-Apply no rule that your `rules` scalar leaves out, and report no site under one. An earlier sweep has already applied each such rule to your files; make no edit that breaks any rule in this document.
+Do not apply any rule that your `rules` scalar leaves out, and do not report any site under one. An earlier sweep has already applied each such rule to your files; do not make an edit that breaks any rule in this document.
 
 Prose is any span that a reader reads as prose: Markdown text, a comment, a doc description, a string printed by a program, and a table cell all count. Code, data, and identifiers do not.
 
@@ -112,11 +112,11 @@ One fenced JSON block, last and alone. Do not write prose after it.
 }
 ```
 
-Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questionable entry also contains `repair`; a rejected or questionable entry also contains `ground`. A list with no entries is written `[]` rather than omitted.
+Every entry contains `file`, `line`, `rule`, and `phrase`. An applied or questionable entry also contains `repair`; a rejected or questionable entry also contains `ground`. An empty list is written `[]` rather than omitted.
 
 `phrase` is the exact source text, so that the dispatching agent's own edit is phrase to phrase. For an applied entry it is the text as it read before your edit; for the other two it is the text as it still reads.
 
-`rule` names the rule that the site breaks: the id in the rule marker beneath that rule's heading in the preferences below, whether or not a detector covers the rule, and whether a candidate reported the site or you found it yourself. A marker reads `<!-- rule: <id> <version> -->`, or `<!-- rule: <id> -->` if it declares no version; report the id alone, never the version. Use `plain-speech` if the site breaks the plain-speech rule, unless a marker in its calibration declares a rule for the site's shape: Report that rule's id instead. A rule whose heading has no marker beneath it is reported under the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
+`rule` names the rule that the site breaks: the id in the rule marker beneath that rule's heading in the preferences below, whether or not a detector covers the rule, and whether a candidate reported the site or you found it yourself. A marker reads `<!-- rule: <id> <version> -->`, or `<!-- rule: <id> -->` if it doesn't declare a version; report the id alone, never the version. Use `plain-speech` if the site breaks the plain-speech rule, unless a marker in its calibration declares a rule for the site's shape: Report that rule's id instead. A rule whose heading doesn't have a marker beneath it is reported under the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends. Do not report a unit: The dispatching agent owns the mapping from a rule to the unit that contains it.
 
 <!-- include: ../_partials/concision.md / -->
 
