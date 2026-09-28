@@ -119,7 +119,7 @@ describe('work-types.schema.json', () => {
     },
     {
       description: 'rejects a type record missing `description`',
-      // Guards `description` in `types[].required`, which no other case omits.
+      // Guards `description` in `types[].required`, which every other case in this table includes.
       input: buildMinimalDoc({
         types: [
           {
@@ -228,7 +228,7 @@ describe('work-types.schema.json', () => {
     expect(duplicates, `Duplicate type keys: ${duplicates.join(', ')}`).toEqual([]);
   });
 
-  it('enforces globally unique `aliases` (no alias collides with another alias or any `key`)', () => {
+  it("enforces globally unique `aliases` (an alias doesn't collide with another alias or with any `key`)", () => {
     // Cross-element uniqueness is asserted in-test. Aliases must be globally unique and must not
     // shadow any canonical `key`; otherwise resolution from alias to canonical key is ambiguous.
     const keys = new Set(liveData.types.map((entry) => entry.key));
