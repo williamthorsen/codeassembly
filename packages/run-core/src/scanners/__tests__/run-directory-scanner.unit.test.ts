@@ -54,7 +54,7 @@ describe('discoverRunDirectories', () => {
     ]);
   });
 
-  it('discovers run directories using Pattern 2 (no tickets/ directory)', async () => {
+  it('discovers run directories using Pattern 2 (without a tickets/ directory)', async () => {
     mockReaddirResult(['storefront']);
     mockStatDirectory();
     mockReaddirResult(['ACME-1']);
@@ -93,7 +93,7 @@ describe('discoverRunDirectories', () => {
   it('skips hidden directories at project level', async () => {
     mockReaddirResult(['.hidden', 'visible']);
     mockStatDirectory(); // stat for visible
-    mockReaddirResult([]); // visible has no entries
+    mockReaddirResult([]); // visible is empty
 
     const result = await discoverRunDirectories('/base');
 
@@ -106,7 +106,7 @@ describe('discoverRunDirectories', () => {
     mockStatDirectory();
     mockReaddirResult(['.hidden-ticket', 'TICKET-1']);
     mockStatDirectory(); // stat for TICKET-1
-    mockReaddirResult([]); // TICKET-1 has no runs
+    mockReaddirResult([]); // TICKET-1 doesn't contain any runs
 
     const result = await discoverRunDirectories('/base');
 
@@ -119,7 +119,7 @@ describe('discoverRunDirectories', () => {
     mockReaddirResult(['TICKET-1']);
     mockStatDirectory();
     mockReaddirResult(['run-1-interactive', 'run-2']);
-    // No stat for -interactive: skipped before stat
+    // The scan skips run-1-interactive before it calls stat.
     mockStatDirectory(); // stat for run-2
 
     const result = await discoverRunDirectories('/base');
@@ -132,7 +132,7 @@ describe('discoverRunDirectories', () => {
     mockReaddirResult(['file.txt', 'proj']);
     mockStatDirectory(false); // file.txt is not a directory
     mockStatDirectory(true); // proj is a directory
-    mockReaddirResult([]); // proj has no entries
+    mockReaddirResult([]); // proj is empty
 
     const result = await discoverRunDirectories('/base');
 
