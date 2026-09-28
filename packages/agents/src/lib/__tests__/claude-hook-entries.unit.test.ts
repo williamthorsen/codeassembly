@@ -34,7 +34,7 @@ describe(checkHookEntries, () => {
     expect(checkHookEntries({ hooks }, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status }]);
   });
 
-  it('reports absent when the settings contain no hooks', () => {
+  it('reports absent when the settings do not contain any hooks', () => {
     expect(checkHookEntries({ model: 'opus' }, [ENTRY], SENTINEL)).toEqual([{ entry: ENTRY, status: 'absent' }]);
   });
 
@@ -78,7 +78,7 @@ describe(ensureHookEntries, () => {
     expect(result).toEqual({ changed: true });
   });
 
-  it('reports no change when the entry is already installed as supplied', () => {
+  it('reports unchanged when the entry is already installed as supplied', () => {
     const installed = { hooks: { PreToolUse: [OWNED] } };
 
     const { settings, result } = ensureHookEntries(installed, [ENTRY], SENTINEL);
@@ -113,7 +113,7 @@ describe(ensureHookEntries, () => {
     expect(updated).toEqual({ hooks: { PreToolUse: [OWNED, FOREIGN] } });
   });
 
-  it('appends after foreign entries when the event contains no owned entry', () => {
+  it('appends after foreign entries when the event does not contain an owned entry', () => {
     const settings = { hooks: { PreToolUse: [FOREIGN] } };
 
     const { settings: updated } = ensureHookEntries(settings, [ENTRY], SENTINEL);
@@ -150,7 +150,7 @@ describe(ensureHookEntries, () => {
     expect(settings).toEqual(before);
   });
 
-  it('reports no change when no entries are supplied', () => {
+  it('reports unchanged when the supplied entry list is empty', () => {
     expect(ensureHookEntries({ hooks: { PreToolUse: [FOREIGN] } }, [], SENTINEL).result).toEqual({ changed: false });
   });
 
@@ -194,7 +194,7 @@ describe(removeHookEntries, () => {
     expect(removeHookEntries(settings, SENTINEL).result).toEqual({ changed: true, removedCount: 2 });
   });
 
-  it('reports no change when no owned entry exists', () => {
+  it('reports unchanged when the settings do not contain an owned entry', () => {
     const settings = { hooks: { PreToolUse: [FOREIGN] } };
 
     const { settings: updated, result } = removeHookEntries(settings, SENTINEL);

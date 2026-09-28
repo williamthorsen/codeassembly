@@ -16,7 +16,7 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });
 
-    it('rejects an anchor naming no heading', () => {
+    it('rejects an anchor that does not name any heading', () => {
       const body = '## Option format\n\nSee [the events](#lifecycle-events).\n';
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/#lifecycle-events -- names no heading/);
     });
@@ -49,7 +49,8 @@ describe(assertAnchorsResolve, () => {
     });
 
     it('offers the partial as a conditional lead rather than asserting one was inlined', () => {
-      // Two wiring sites expand no includes at all, so a body reaching this error may have no partial behind it.
+      // Two wiring sites do not expand any includes at all, so a body reaching this error may not have any partial
+      // behind it.
       expect(() => assertAnchorsResolve('[a](#nope)\n', LABEL)).toThrow(/If a target was authored in an inlined/);
     });
   });
@@ -75,7 +76,7 @@ describe(assertAnchorsResolve, () => {
       expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/names no heading/);
     });
 
-    it('scans a body opening on a thematic break, whose delimiters enclose no YAML key', () => {
+    it('scans a body opening on a thematic break, whose delimiters do not enclose any YAML key', () => {
       const body = '---\n\n## Lifecycle events\n\n---\n\n[x](#lifecycle-events)\n';
       expect(() => assertAnchorsResolve(body, LABEL)).not.toThrow();
     });

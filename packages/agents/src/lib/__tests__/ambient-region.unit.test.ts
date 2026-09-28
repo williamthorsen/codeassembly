@@ -51,7 +51,7 @@ describe(appendAmbientRegion, () => {
 });
 
 describe(classifyAmbientRegion, () => {
-  it('reports content with no marker as absent', () => {
+  it('reports content without a marker as absent', () => {
     expect(classifyAmbientRegion('# Notes\n')).toBe('absent');
     expect(classifyAmbientRegion('')).toBe('absent');
   });
@@ -124,7 +124,7 @@ describe(extractAmbientRegionContent, () => {
     expect(extractAmbientRegionContent(GUIDANCE)).toBe('');
   });
 
-  it('returns undefined when no region is present', () => {
+  it('returns undefined when the content does not contain a region', () => {
     expect(extractAmbientRegionContent('# Guidance\n')).toBeUndefined();
   });
 
@@ -182,7 +182,7 @@ describe(injectAmbientRegion, () => {
     expect(extractAmbientRegionContent(injectAmbientRegion(GUIDANCE, "price is $' and $1"))).toBe("price is $' and $1");
   });
 
-  it('throws when no region is present', () => {
+  it('throws when the content does not contain a region', () => {
     expect(() => injectAmbientRegion('# Guidance\n', BODY)).toThrow(/No ambient region/);
   });
 });
@@ -198,11 +198,11 @@ describe(removeAmbientRegion, () => {
     expect(removeAmbientRegion(`${FILLED_REGION}\n`)).toBe('');
   });
 
-  it('leaves no trailing blank line when the region ends the content', () => {
+  it('does not leave a trailing blank line when the region ends the content', () => {
     expect(removeAmbientRegion(`# Guidance\n\n${FILLED_REGION}\n`)).toBe('# Guidance\n');
   });
 
-  it('leaves no leading blank line when the region opens the content', () => {
+  it('does not leave a leading blank line when the region opens the content', () => {
     expect(removeAmbientRegion(`${FILLED_REGION}\n\n## Tail section\n`)).toBe('## Tail section\n');
   });
 
