@@ -41,8 +41,8 @@ export function buildGuidanceHookFills(
 
 /**
  * Collects every disagreement between the rulebooks bound by a declaration and the delivery that those rulebooks
- * declare. No disagreement throws: Each is reported to the reader as a line, because a binding and a `delivery` are
- * written by different people and a run whose output is correct must not fail over their disagreement.
+ * declare. A disagreement does not throw: Each is reported to the reader as a line, because a binding and a
+ * `delivery` are written by different people and a run whose output is correct must not fail over their disagreement.
  *
  * Order is fixed so that both reports render alike: The bound findings follow the bindings in declaration order, each
  * hook's own finding ahead of its rulebooks', and the unbound ones follow `resolved`, whose order the closure walk
@@ -83,7 +83,7 @@ export function findGuidanceHookAdvisories(
 
 /**
  * A disagreement between what a declaration's guidance-hook bindings do and what they find: a rulebook whose
- * `delivery` does not match the binding, or a hook that no body declares. Every kind is advisory: A rulebook's
+ * `delivery` does not match the binding, or a hook not declared by any body. Every kind is advisory: A rulebook's
  * delivery is written by its author and a binding by its consumer, so a mismatch is not always the consumer's to fix
  * and never fails their run.
  *

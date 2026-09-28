@@ -44,8 +44,8 @@ export async function deliverAmbient(plans: ReadonlyArray<PlannedAmbientHost>): 
 /**
  * The hosts that a sync writes and that git does not ignore, so that machine-local guidance does not quietly become a
  * commit candidate. Purely advisory: An ignored host is omitted, and so is one that the check cannot answer for; the
- * project may not be a repository at all, which is no reason to fail a sync. A host skipped by the run is never asked
- * about.
+ * project may not be a repository at all, which is not a reason to fail a sync. A host skipped by the run is never
+ * asked about.
  */
 export async function findUnignoredHosts(
   projectRoot: string,
