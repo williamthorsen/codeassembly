@@ -106,7 +106,7 @@ describe(runFeedbackMemories, () => {
     expect(result.message).toContain('frobnicate');
   });
 
-  it('returns invalid-args when no subcommand is given', async () => {
+  it("returns invalid-args when the arguments don't include a subcommand", async () => {
     const result = jsonValue(await runFeedbackMemories({ argv: [], stdin: bodyStream(''), env: {} }));
 
     expect(result.ok).toBe(false);
@@ -165,7 +165,7 @@ describe(runFeedbackMemories, () => {
     expect(result.memories.map((memory) => memory.memoryStore)).toEqual(['-store-a']);
   });
 
-  it('returns invalid-args when --memory-store has no value', async () => {
+  it("returns invalid-args when --memory-store doesn't have a value", async () => {
     const result = jsonValue(
       await runFeedbackMemories({ argv: ['enumerate', '--memory-store'], stdin: bodyStream(''), env: {} }),
     );

@@ -54,7 +54,7 @@ describe(resolveRepoPath, () => {
     expect(resolved).toBe('/repos/node-tools');
   });
 
-  it('returns null when the slug maps to no existing directory', async () => {
+  it("returns null when the slug doesn't map to an existing directory", async () => {
     const isDirectory = makeDirectoryProbe(['/Users', '/Users/william']);
 
     const resolved = await resolveRepoPath('-Users-someone-else-project', isDirectory);

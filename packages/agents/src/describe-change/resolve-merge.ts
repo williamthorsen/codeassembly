@@ -106,8 +106,8 @@ export interface MergeInput {
   /** The pull-request body's last `change-record` block, as read. */
   block: ChangeRecordBlockReading;
   /**
-   * The record to which the pull request's commits consolidate, absent when they have no entry, or the reason that the
-   * commits could not be read.
+   * The record to which the pull request's commits consolidate, absent when they don't contain any entry, or the reason
+   * that the commits could not be read.
    */
   commits: { consolidatedRecord?: ChangeRecord; kind: 'read' } | { kind: 'unavailable'; reason: string };
   /** The record that the pull request's labels name, as `resolveLabeledRecord` resolves it. */
@@ -160,7 +160,10 @@ export interface ResolveMergeOutcome {
   effective_sources: EffectiveSourcesOutcome;
   /** The number of change entries that `merge_block` records. */
   entry_count: number;
-  /** The `change-record` block that the merge body contains below its lede, `null` when there is no entry to record. */
+  /**
+   * The `change-record` block that the merge body contains below its lede, `null` when the merge doesn't have any entry
+   * to record.
+   */
   merge_block: string | null;
   merge_title: string;
   notices: MergeNotice[];

@@ -31,7 +31,7 @@ export interface CheckMergeBodyOutcome {
 
 /**
  * A consolidated record, in the shape that the JSON output names: the scope, type, and breaking marker of a branch,
- * each `null` when the branch has no entries to determine it.
+ * each `null` when the branch doesn't have any entries to determine it.
  */
 export interface ConsolidatedRecordOutcome {
   breaking: boolean | null;

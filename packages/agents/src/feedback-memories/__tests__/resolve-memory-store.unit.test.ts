@@ -41,7 +41,7 @@ describe(resolveMemoryStore, () => {
     expect(result).toEqual({ ok: true, memoryStore: '-Users-me-repos-app' });
   });
 
-  it('resolves a store with no live repo by the slug that it falls back to displaying', async () => {
+  it('resolves a store without a live repo by the slug that it falls back to displaying', async () => {
     const result = await resolveMemoryStore({
       requested: '-Users-me-repos-gone',
       memoryStores: ['-Users-me-repos-gone'],
@@ -52,7 +52,7 @@ describe(resolveMemoryStore, () => {
     expect(result).toEqual({ ok: true, memoryStore: '-Users-me-repos-gone' });
   });
 
-  it('fails with no-such-memory-store when the name matches no store or label', async () => {
+  it("fails with no-such-memory-store when the name doesn't match any store or label", async () => {
     const result = await resolveMemoryStore({
       requested: 'nowhere',
       memoryStores: ['-Users-me-repos-app'],

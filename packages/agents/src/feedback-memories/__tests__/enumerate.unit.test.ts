@@ -32,7 +32,7 @@ originSessionId: sess-legacy
 Legacy schema body.
 `;
 
-/** A legacy feedback memory with no session id. */
+/** A legacy feedback memory without a session id. */
 const LEGACY_NO_SESSION = `---
 name: Atlaskit xcss requires static literals
 description: no session id present
@@ -167,7 +167,7 @@ describe(enumerateFeedbackMemories, () => {
     expect(result.skipped).toEqual([]);
   });
 
-  it('skips a store with no memory directory and returns an empty list when nothing matches', async () => {
+  it('skips a store without a memory directory and returns an empty list when nothing matches', async () => {
     const root = await makeProjectsRoot();
     await mkdir(join(root, '-store-empty'), { recursive: true });
     await writeMemory(root, '-store-b', 'user-preference.md', USER_MEMORY);
@@ -228,7 +228,7 @@ describe(enumerateFeedbackMemories, () => {
     expect(result.memories[0]?.repoPath).toBe(repoPath);
   });
 
-  it('fails with no-such-memory-store when memoryStore names no directory under the root', async () => {
+  it("fails with no-such-memory-store when memoryStore doesn't name a directory under the root", async () => {
     const root = await makeProjectsRoot();
     await writeMemory(root, '-store-a', 'feedback-nested-example.md', NESTED_FEEDBACK);
 

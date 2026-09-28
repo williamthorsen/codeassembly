@@ -160,10 +160,10 @@ async function resolveContext(input: { args: ParsedArgs; cwd: string; env: NodeJ
 }
 
 /**
- * The checked-out branch at `cwd`, or `undefined` when there is none to read: The git call fails (no repository, no
- * git binary) or HEAD is detached, which git reports as an empty branch name. The function warns in both cases,
- * because an emitter that silently files every event under the no-branch placeholder is indistinguishable from one
- * that is working.
+ * The checked-out branch at `cwd`, or `undefined` when there is none to read: The git call fails (`cwd` is outside
+ * any repository, or the git binary isn't installed) or HEAD is detached, which git reports as an empty branch name.
+ * The function warns in both cases, because an emitter that silently files every event under the no-branch
+ * placeholder is indistinguishable from one that is working.
  */
 async function resolveBranch(cwd: string): Promise<string | undefined> {
   let branch: string;
