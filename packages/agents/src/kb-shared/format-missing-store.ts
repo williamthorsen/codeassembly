@@ -2,7 +2,8 @@
  * Builds the agent-facing error message for an omitted `--store`.
  *
  * The `--kb` family has its own wording in `formatMissingDestinationMessage`: Those tools discover a `.kb/` by walking
- * the working directory, so their refusal has to explain that the walk found nothing as well as that no flag was given.
+ * the working directory, so their refusal has to explain that the walk found nothing as well as that the flag was not
+ * given.
  */
 export function formatMissingStoreMessage(resolved: {
   registeredStores: string[];
@@ -14,7 +15,7 @@ export function formatMissingStoreMessage(resolved: {
     return `--store is required, but the kb.yaml registry could not be loaded: ${resolved.registryError}`;
   }
   if (resolved.registeredStores.length === 0) {
-    return '--store is required, but no stores are registered in kb.yaml';
+    return '--store is required, but kb.yaml does not register any stores';
   }
   const stores = resolved.registeredStores.join(', ');
   const roleHints = [
@@ -25,6 +26,7 @@ export function formatMissingStoreMessage(resolved: {
       ? []
       : [`the feedback store is "${resolved.feedbackName}", available as --store @feedback`]),
   ];
-  const roleHint = roleHints.length === 0 ? 'no default_kb or feedback_kb is configured' : roleHints.join('; ');
+  const roleHint =
+    roleHints.length === 0 ? 'kb.yaml does not configure a default_kb or a feedback_kb' : roleHints.join('; ');
   return `--store is required. Registered stores: ${stores}. Pass --store <name> to choose one; ${roleHint}.`;
 }

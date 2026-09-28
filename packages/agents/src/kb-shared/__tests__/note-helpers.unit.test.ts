@@ -60,7 +60,7 @@ describe(dedupeInOrder, () => {
     expect(dedupeInOrder(['a', 'b', 'a', 'c', 'b'])).toEqual(['a', 'b', 'c']);
   });
 
-  it('preserves a list with no duplicates exactly', () => {
+  it('preserves a list without duplicates exactly', () => {
     expect(dedupeInOrder(['one', 'two', 'three'])).toEqual(['one', 'two', 'three']);
   });
 

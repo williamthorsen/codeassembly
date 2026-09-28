@@ -17,8 +17,8 @@ const ROLE_WORDING: Record<RoleFailure['reason'], RoleWording> = {
 };
 
 /**
- * Builds the error code and agent-facing message for a role sentinel (`@default` or `@feedback`) that resolved to no
- * usable store, naming the registry-load cause when one occurred.
+ * Builds the error code and agent-facing message for a role sentinel (`@default` or `@feedback`) that did not resolve
+ * to a usable store, naming the registry-load cause when one occurred.
  */
 export function formatRoleFailure(resolved: RoleFailure): { error: RoleWording['error']; message: string } {
   const role = ROLE_WORDING[resolved.reason];

@@ -8,7 +8,7 @@ export interface ScopeResult {
   kbs: ScopedKb[];
   /** The `kb.yaml` load error message, present only when the registry was malformed or unreadable. */
   registryError?: string;
-  /** The requested `--store`/`--kb` name that matched no registry entry; present only on a named-store miss. */
+  /** The requested `--store`/`--kb` name that did not match any registry entry; present only on a named-store miss. */
   storeNotFound?: string;
 }
 
@@ -22,7 +22,7 @@ export interface ScopeResult {
  * `allKbs` widens scope to every entry in the merged `kb.yaml` registry. A KB that is both discovered and registered
  * is added to scope once, de-duplicated by absolute path.
  *
- * Degrades a malformed or unreadable registry to no registry entries, and records its message in `registryError`.
+ * Degrades a malformed or unreadable registry to an empty list of registry entries, and records its message in `registryError`.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.

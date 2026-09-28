@@ -10,7 +10,7 @@ describe(extractApprovedLede, () => {
     expect(extractApprovedLede(bodyWith({ merged: true }))).toBe(MERGED_LEDE);
   });
 
-  it('reads the agent lede from a record containing no merged section, whichever verdict its author recorded', () => {
+  it('reads the agent lede from a record without a merged section, whichever verdict its author recorded', () => {
     expect(extractApprovedLede(bodyWith({ merged: false }))).toBe(AGENT_LEDE);
   });
 

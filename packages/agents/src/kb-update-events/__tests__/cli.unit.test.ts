@@ -120,7 +120,7 @@ describe(parseArgs, () => {
 });
 
 describe(runUpdate, () => {
-  it('marks an event addressed-by a reference, injecting no assertion fields', async () => {
+  it('marks an event addressed-by a reference, without injecting any assertion fields', async () => {
     const { storePath, home } = await makeStore('codeassembly');
     const path = await seedEvent(storePath, EVENT_ID);
 

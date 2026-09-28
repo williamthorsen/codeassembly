@@ -31,7 +31,7 @@ export interface LedeDecisionPair {
  * Presence decides, never the verdict. Some records in the corpus state a verdict that disagrees with the sections
  * beside it, so a reader keying off the verdict would take the wrong text.
  *
- * A comment is critique of a lede rather than a lede, and no path here reads it.
+ * A comment is critique of a lede rather than a lede, and this module does not read it.
  */
 export function extractApprovedLede(body: string): string | null {
   return (
@@ -41,8 +41,8 @@ export function extractApprovedLede(body: string): string | null {
 }
 
 /**
- * Reads a decision record's body as the pair produced by an author's edit. Yields `null` for a body containing no
- * agent lede, which is the one section that every decision has.
+ * Reads a decision record's body as the pair produced by an author's edit. Yields `null` for a body without an agent
+ * lede, which is the one section that every decision has.
  */
 export function extractDecisionPair(body: string): LedeDecisionPair | null {
   const agentLede = extractSection({ text: body, heading: AGENT_LEDE_HEADING });
