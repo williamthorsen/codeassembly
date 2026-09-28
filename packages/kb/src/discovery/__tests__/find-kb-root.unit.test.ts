@@ -28,7 +28,7 @@ describe(findKbRoot, () => {
     expect(root?.path).toBe(NESTED_PROJECT);
   });
 
-  it('returns null when no ancestor contains a .kb directory', async () => {
+  it('returns null when a .kb directory is not found in any ancestor', async () => {
     const root = await findKbRoot({ startDir: '/' });
 
     expect(root).toBeNull();

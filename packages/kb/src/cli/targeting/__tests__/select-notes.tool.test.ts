@@ -16,7 +16,7 @@ const FILES: Record<string, string> = {
   'content/assertions/Beta.md': NOTE,
   'content/events/Gamma.md': NOTE,
   'content/assets/logo.png': 'binary', // a directory whose only file is not a note
-  'content/data/info.json': '{}', // a directory backing a glob that matches no note
+  'content/data/info.json': '{}', // a directory backing a glob that does not match any note
   'README.md': '# readme', // a real file that is not a validatable note
 };
 
@@ -74,14 +74,14 @@ describe(selectNotes, () => {
     expect(unmatched).toEqual([]);
   });
 
-  it('silently drops a directory that contains no validatable notes', async () => {
+  it('silently drops a directory that does not contain any validatable notes', async () => {
     const { selected, unmatched } = await select(['content/assets']);
 
     expect(selected).toEqual([]);
     expect(unmatched).toEqual([]);
   });
 
-  it('silently drops a glob whose literal prefix exists but matches no notes', async () => {
+  it('silently drops a glob whose literal prefix exists but does not match any notes', async () => {
     const { selected, unmatched } = await select(['content/data/**']);
 
     expect(selected).toEqual([]);

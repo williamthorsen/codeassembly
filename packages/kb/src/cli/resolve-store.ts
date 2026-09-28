@@ -14,7 +14,8 @@ export type ResolveStoreOutcome = { ok: true; store: StoreRef; readonly: boolean
  * The registry's `readonly` flag is reported rather than enforced: A command that writes into the store refuses on it,
  * and a read-only command ignores it. It is kept off {@link StoreRef}, which contains the identity that a report
  * renders. A discovered store is cross-referenced against the registry by path, so a vault marked readonly is reported
- * as such however it was named; one with no registry entry has no metadata to consult and is reported writable.
+ * as such however it was named; one without a registry entry does not have any metadata to consult and is reported
+ * writable.
  */
 export async function resolveStore(input: {
   explicitKb: string | null;

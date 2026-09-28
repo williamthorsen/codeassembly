@@ -15,7 +15,7 @@ Scaffold a new knowledge base in the current directory and register it in the us
 
 Registering leaves the registry's entries in alphabetical order, preserving its comments and formatting.
 
-When the registry has no default knowledge base, the new store becomes the default.
+When the registry does not have a default knowledge base, the new store becomes the default.
 If other knowledge bases are already registered, the command prompts for a choice (or "kb set-default" sets one later).
 
 Creates:
@@ -39,10 +39,10 @@ Exit codes:
 /**
  * Runs `kb create`: parses options, scaffolds a store in `cwd`, and (unless `--no-register`) registers it in the
  * user-global `~/.agents/kb.yaml`. After registering, it ensures a default knowledge base: The new store becomes the
- * default when none is set and it is the only KB; when other KBs already exist with no default, it delegates to
- * `kb set-default`'s picker (or, with no `selectKb` on a non-interactive stdin, points the user there). A precondition
- * failure from `create` (an existing `.kb/` or an already-registered name) maps to exit 2; a genuine I/O error
- * propagates to the caller.
+ * default when none is set and it is the only KB; when other KBs already exist without a default, it delegates to
+ * `kb set-default`'s picker (or, without a `selectKb` on a non-interactive stdin, points the user there). A
+ * precondition failure from `create` (an existing `.kb/` or an already-registered name) maps to exit 2; a genuine I/O
+ * error propagates to the caller.
  */
 export async function runCreate(input: {
   argv: readonly string[];
@@ -81,7 +81,8 @@ export async function runCreate(input: {
     return { exitCode: 0, stdout: summary, stderr: '' };
   }
 
-  // No default is set and other KBs already exist: Let the user pick one, reusing `kb set-default`'s interactive form.
+  // The registry does not set a default and other KBs already exist: Let the user pick one, reusing `kb set-default`'s
+  // interactive form.
   if (input.selectKb === undefined) {
     return { exitCode: 0, stdout: summary + UNSET_DEFAULT_HINT, stderr: '' };
   }
@@ -158,7 +159,7 @@ export function parseCreateArgs(argv: readonly string[]): CreateOptions {
 // region | Helpers
 
 const UNSET_DEFAULT_HINT =
-  'Multiple knowledge bases are registered and no default is set. Run `kb set-default` to choose one.\n';
+  'Multiple knowledge bases are registered, but the registry does not set a default. Run `kb set-default` to choose one.\n';
 
 /** Builds a usage-error `CommandOutput` (exit 2) from a thrown parse error. */
 function buildUsageError(error: unknown): CommandOutput {

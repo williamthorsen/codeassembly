@@ -17,7 +17,7 @@ export const TAXONOMY_HELP = `Usage: kb taxonomy init [options]
 Derive a starting taxonomy from the notes that a knowledge base already
 contains, so that a taxonomy can be introduced to a populated store without
 every folder reporting as undeclared. Every folder containing notes is
-declared, along with each of its ancestors, under "provisional:" with no
+declared, along with each of its ancestors, under "provisional:" without a
 description: The command cannot invent descriptions, and provisional already
 means "declared, not yet reviewed".
 
@@ -38,8 +38,8 @@ Exit codes:
 /**
  * Runs `kb taxonomy`: parses options, resolves the store, derives the domains implied by its notes, and declares them.
  *
- * The derivation reads the same enumeration as `kb check`, so a store back-filled by this command reports no
- * taxonomy drift. A store that the registry marks `readonly` is refused. The loaders throw a `KbLoaderError` for a
+ * The derivation reads the same enumeration as `kb check`, so a store back-filled by this command does not report
+ * any taxonomy drift. A store that the registry marks `readonly` is refused. The loaders throw a `KbLoaderError` for a
  * malformed `.kb/config.yaml` or `.kb/taxonomy.yaml`, and the command maps that error to exit 2; any other error
  * propagates to the caller as a real crash.
  */

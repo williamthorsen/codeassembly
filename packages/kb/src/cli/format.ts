@@ -2,7 +2,7 @@ import type { Finding } from '../types.ts';
 
 /** A resolved store's identity, shown in both human and JSON output. */
 export interface StoreRef {
-  /** The store's display name, or `null` for a `.kb/`-discovered store with no registry entry. */
+  /** The store's display name, or `null` for a `.kb/`-discovered store without a registry entry. */
   name: string | null;
   /** Absolute path to the store root. */
   path: string;
@@ -24,12 +24,12 @@ export type CheckScope = 'vault' | 'patterns' | 'vs';
  * Renders the default human output. Findings are grouped by file, in the order in which each file first appears, each
  * line reading `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints
  * `✓ no findings (N notes checked)`; a run that checked nothing prints a zero-match line worded for its `scope` (naming
- * the config targets for a whole-vault run, and a scope-appropriate line for a targeted one) without the `✓`, since no
- * check ran.
+ * the config targets for a whole-vault run, and a scope-appropriate line for a targeted one) without the `✓`, since
+ * the run did not perform any check.
  *
- * A run can check no notes and still include vault-scoped findings, which describe the store rather than any note. The
- * zero-match line then heads the report instead of replacing it: It explains why no note was checked, and the findings
- * follow.
+ * A run that does not check any notes can still include vault-scoped findings, which describe the store rather than
+ * any note. The zero-match line then heads the report instead of replacing it: It explains why the run did not check
+ * any note, and the findings follow.
  */
 export function formatHuman(input: {
   summary: CheckSummary;

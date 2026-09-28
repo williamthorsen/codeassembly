@@ -11,8 +11,8 @@ import { configFileShape, defaultKbConfig, type KbConfig } from './config-schema
 import { KbLoaderError } from './kb-loader-error.ts';
 
 /**
- * Loads the effective check configuration for a KB root. Returns {@link defaultKbConfig} verbatim when no
- * `.kb/config.yaml` exists; a file present but omitting a field inherits that field's default.
+ * Loads the effective check configuration for a KB root. Returns {@link defaultKbConfig} verbatim when
+ * `.kb/config.yaml` does not exist; a file present but omitting a field inherits that field's default.
  *
  * Structural defects (malformed YAML, wrong types) throw a {@link KbLoaderError} naming the file. I/O errors other than
  * a missing file propagate.
