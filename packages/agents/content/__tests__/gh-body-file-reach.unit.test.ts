@@ -94,6 +94,18 @@ describe('gh-body-file reach', () => {
     expect(violations, message).toEqual([]);
   });
 
+  it('passes literal paths to the merge-gh-pr helper, without shell composition', async () => {
+    const content = await readFile(path.join(CONTENT_ROOT, 'skills/merge-gh-pr/SKILL.md'), 'utf8');
+    const helperBlocks = listShellBlocks(content).filter((block) => block.includes('merge-gh-pr.mjs'));
+
+    expect(helperBlocks).toHaveLength(1);
+    for (const block of helperBlocks) {
+      expect(block).not.toContain('$');
+      expect(block).not.toMatch(/\{\s/);
+      expect(block).not.toContain('gh api');
+    }
+  });
+
   it('states the path rule in the partial alone', async () => {
     const violations: Array<string> = [];
     const files = await listMarkdownFiles(CONTENT_ROOT);

@@ -121,6 +121,10 @@ export const targets: BundleTarget[] = [
     entry: 'src/select-lede-exemplars/cli.ts',
     outFile: 'content/scripts/select-lede-exemplars.mjs',
   },
+  {
+    entry: 'src/merge-gh-pr/cli.ts',
+    outFile: 'content/skills/merge-gh-pr/merge-gh-pr.mjs',
+  },
 ];
 
 // A CommonJS dependency (`yaml`) imports Node built-ins via bare `require('process')` calls.
