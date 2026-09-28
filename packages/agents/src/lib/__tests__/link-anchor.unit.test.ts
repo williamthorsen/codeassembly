@@ -44,8 +44,8 @@ describe(createSkillLinkAnchor, () => {
   });
 
   describe('home domain', () => {
-    // With the domain base at `~`, both destinations render the same string, so no home-domain output shifts however
-    // the deployed set is populated.
+    // With the domain base at `~`, both destinations render the same string, so the home-domain output does not
+    // shift however the deployed set is populated.
     it.each([
       ['a deployed skill', 'commit/SKILL.md', '~/.claude/skills/commit/SKILL.md'],
       ['a support entry', '_data/concision.md', '~/.claude/skills/_data/concision.md'],

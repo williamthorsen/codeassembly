@@ -11,7 +11,7 @@ const NOTE =
  * shape that could most plausibly confuse marker detection.
  */
 const BODY = `${NOTE}\n  - name: 'x'\n    description: 'd'\n    content_file: skills/x/SKILL.md\n`;
-/** The sentinel-wrapped region for `BODY`, with no surrounding newlines. */
+/** The sentinel-wrapped region for `BODY`, without surrounding newlines. */
 const REGION = `  # codeassembly:managed:start\n${BODY}  # codeassembly:managed:end`;
 
 const FOREIGN = "prompts:\n  - name: 'foreign'\n    description: 'h'\n    content_file: foo.md\n";
@@ -91,7 +91,7 @@ describe(removePromptsRegion, () => {
     expect(removePromptsRegion(injectPromptsRegion('other: value\n', BODY))).toBe('other: value\n');
   });
 
-  it('returns content unchanged when no region is present', () => {
+  it('returns content unchanged when it does not contain a region', () => {
     expect(removePromptsRegion(FOREIGN)).toBe(FOREIGN);
     expect(removePromptsRegion('# hand-authored\n')).toBe('# hand-authored\n');
   });

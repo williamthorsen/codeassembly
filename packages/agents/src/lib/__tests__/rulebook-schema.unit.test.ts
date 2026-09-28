@@ -59,7 +59,7 @@ describe(parseRulebookFile, () => {
     expect(rulebook.delivery).toEqual(['ambient', 'hook', 'skill']);
   });
 
-  it('throws when a delivery list is empty, which would name no delivery mode', () => {
+  it('throws when a delivery list is empty, which would not name any delivery mode', () => {
     expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: []'))).toThrow(DELIVERY_MESSAGE);
   });
 

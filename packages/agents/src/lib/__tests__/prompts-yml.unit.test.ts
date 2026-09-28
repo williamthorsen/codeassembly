@@ -55,7 +55,7 @@ describe(collectPromptEntries, () => {
 });
 
 describe(renderPromptEntries, () => {
-  it('returns an empty string when there are no entries', () => {
+  it('returns an empty string for an empty entry list', () => {
     expect(renderPromptEntries([])).toBe('');
   });
 

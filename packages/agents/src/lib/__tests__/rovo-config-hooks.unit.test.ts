@@ -216,7 +216,7 @@ describe(checkHookEntries, () => {
     expect(results[1]?.status).toBe('drifted');
   });
 
-  it('reports absent when the document contains no owned entries', () => {
+  it('reports absent when the document does not contain any owned entries', () => {
     const document = parseConfig(VENDOR_SHAPED_CONFIG);
 
     const result = checkHookEntries(document, [buildOwnedEntry('on_session_start')], isOwned);
@@ -295,7 +295,7 @@ describe(removeHookEntries, () => {
     expect(out).not.toContain('events:');
   });
 
-  it('returns unchanged when no owned entries exist', () => {
+  it('returns unchanged when the document does not contain any owned entries', () => {
     const document = parseConfig(VENDOR_SHAPED_CONFIG);
     expect(removeHookEntries(document, isOwned)).toEqual({ changed: false, removedCount: 0 });
   });

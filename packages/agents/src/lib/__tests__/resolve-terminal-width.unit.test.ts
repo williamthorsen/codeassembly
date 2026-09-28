@@ -11,11 +11,11 @@ describe(resolveTerminalWidth, () => {
     expect(resolveTerminalWidth({ isTTY: false, columns: 73 })).toBe(120);
   });
 
-  it('falls back for a TTY stream that reports no width', () => {
+  it('falls back for a TTY stream that does not report a width', () => {
     expect(resolveTerminalWidth({ isTTY: true })).toBe(120);
   });
 
-  it('falls back for a stream that declares no TTY flag', () => {
+  it('falls back for a stream that does not declare a TTY flag', () => {
     expect(resolveTerminalWidth({})).toBe(120);
   });
 });

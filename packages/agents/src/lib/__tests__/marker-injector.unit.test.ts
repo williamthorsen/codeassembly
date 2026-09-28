@@ -111,7 +111,7 @@ describe(injectProvenanceMarker, () => {
 });
 
 describe(buildSourceReference, () => {
-  it('renders the library blob URL for a root with no name', () => {
+  it('renders the library blob URL for a root without a name', () => {
     expect(buildSourceReference({ dir: '/anywhere/content' }, 'scripts/relay-hook-event.mjs')).toBe(
       buildSourceUrl('scripts/relay-hook-event.mjs'),
     );
