@@ -1,7 +1,7 @@
 /**
  * Idempotent management of per-rulebook sentinel blocks within a host document (e.g. a repo-root `AGENTS.md`).
  * Each rulebook owns a region delimited by `<!-- rulebook:<slug> -->` / `<!-- /rulebook:<slug> -->` markers.
- * Every function is a pure string transform with no filesystem access.
+ * Every function is a pure string transform without filesystem access.
  */
 
 import { renderRulebookVersionLines } from './rulebook-version-line.ts';

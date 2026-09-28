@@ -179,7 +179,7 @@ describe(runCapture, () => {
     }
   });
 
-  it('captures an event with no session field when the harness exposes no session id', async () => {
+  it('captures an event without a session field when the harness does not expose a session id', async () => {
     const { home } = await makeStore('codeassembly');
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
@@ -200,7 +200,7 @@ describe(runCapture, () => {
     }
   });
 
-  it('treats a blank session id as no session at all', async () => {
+  it('treats a blank session id as a missing one', async () => {
     const { home } = await makeStore('codeassembly');
     const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
@@ -308,7 +308,7 @@ describe(runCapture, () => {
     }
   });
 
-  it('writes an event with repo absent when cwd has no git remote', async () => {
+  it('writes an event with repo absent when cwd does not have a git remote', async () => {
     const { home } = await makeStore('codeassembly');
     const bareDir = await mkdtemp(join(tmpdir(), 'capture-cli-norepo-'));
 
@@ -424,7 +424,7 @@ describe(runCapture, () => {
     }
   });
 
-  it('fails with no-default-store when --store @default is given but no default_kb is configured', async () => {
+  it('fails with no-default-store when --store @default is given but default_kb is not configured', async () => {
     const home = await mkdtemp(join(tmpdir(), 'capture-cli-nodefault-'));
     await mkdir(join(home, '.agents'), { recursive: true });
     await writeFile(join(home, '.agents', 'kb.yaml'), 'kbs:\n  codeassembly:\n    path: /tmp/whatever\n', 'utf8');
@@ -471,7 +471,7 @@ describe(runCapture, () => {
     }
   });
 
-  it('fails with no-feedback-store naming the key when --store @feedback is given but no feedback_kb is configured', async () => {
+  it('fails with no-feedback-store naming the key when --store @feedback is given but feedback_kb is not configured', async () => {
     const { home } = await makeStore('codeassembly');
 
     const result = await runCapture({

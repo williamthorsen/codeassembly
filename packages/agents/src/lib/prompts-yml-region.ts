@@ -2,7 +2,7 @@
  * Idempotent management of a single codeassembly-owned region within a Rovo Dev `prompts.yml`. The region lives inside
  * the `prompts:` sequence, delimited by `# codeassembly:managed:start` / `# codeassembly:managed:end` comment markers
  * that double as the ownership marker. Everything outside the region (foreign list items and other top-level keys)
- * is preserved verbatim. Every function is a pure string transform with no filesystem access.
+ * is preserved verbatim. Every function is a pure string transform without filesystem access.
  */
 
 const OPEN_MARKER = '  # codeassembly:managed:start';
@@ -46,7 +46,8 @@ export function injectPromptsRegion(content: string, regionBody: string): string
           "block-style 'prompts:' sequence, then re-run.",
       );
     }
-    // An empty flow sequence holds no foreign items, so rewrite it as a block header and insert the region below.
+    // An empty flow sequence does not hold any foreign items, so rewrite it as a block header and insert the region
+    // below.
     lines[promptsIdx] = 'prompts:';
   }
 
@@ -69,9 +70,9 @@ export function injectPromptsRegion(content: string, regionBody: string): string
 }
 
 /**
- * Strips the codeassembly region. When that leaves the `prompts:` key with no remaining list items, the now-empty
- * `prompts:` line is dropped too. Foreign items and other top-level content survive. Returns the content unchanged
- * when no region is present.
+ * Strips the codeassembly region. When that leaves the `prompts:` key without any remaining list items, the
+ * now-empty `prompts:` line is dropped too. Foreign items and other top-level content survive. Returns the content
+ * unchanged when the content does not contain a region.
  */
 export function removePromptsRegion(content: string): string {
   if (!hasPromptsRegion(content)) {
@@ -122,7 +123,7 @@ function isCloseMarker(line: string): boolean {
   return line.trim() === '# codeassembly:managed:end';
 }
 
-/** True for an empty flow-style sequence (`prompts: []`), which contains no foreign items. */
+/** True for an empty flow-style sequence (`prompts: []`), which does not contain any foreign items. */
 function isEmptyFlowPrompts(line: string): boolean {
   return /^prompts:[ \t]*\[[ \t]*\][ \t]*$/.test(line);
 }
@@ -137,12 +138,12 @@ function isTopLevelPromptsKey(line: string): boolean {
   return line.startsWith('prompts:');
 }
 
-/** Rejoins content lines, restoring a single trailing newline; returns an empty string for no lines. */
+/** Rejoins content lines, restoring a single trailing newline; returns an empty string for an empty list. */
 function joinContentLines(lines: ReadonlyArray<string>): string {
   return lines.length === 0 ? '' : `${lines.join('\n')}\n`;
 }
 
-/** Wraps the rendered entry body in the region markers, with no surrounding newlines. */
+/** Wraps the rendered entry body in the region markers, without surrounding newlines. */
 function renderRegion(regionBody: string): string {
   const body = regionBody.replace(/\n+$/, '');
   return body === '' ? `${OPEN_MARKER}\n${CLOSE_MARKER}` : `${OPEN_MARKER}\n${body}\n${CLOSE_MARKER}`;

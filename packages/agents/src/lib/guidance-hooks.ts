@@ -6,15 +6,15 @@ import { renderRulebookBlock } from './sentinel-inliner.ts';
 /**
  * Recognition, removal, and filling of the `<!-- guidance-hook: <name> -->` directive, the named slot declared by a
  * skill or subagent body for the guidance that a declaration binds to it. Every function is a pure string transform
- * with no filesystem access.
+ * without filesystem access.
  *
  * The grammar mirrors the include directive's: A directive occupies a full line, tolerates surrounding whitespace, and
  * is never recognized inline, so a hook named in prose or a code span stays prose. Because it is disjoint from the
  * reserved `slot:` tokens that `_partials/README.md` holds for future named-slot support, neither grammar can absorb
  * the other.
  *
- * A declared hook is inert until a binding fills it. A seam that resolves no declaration strips the directive, which
- * makes a hook legal to declare and invisible in deployed output; a seam that does passes the fills through and
+ * A declared hook is inert until a binding fills it. A seam that does not resolve any declaration strips the directive,
+ * which makes a hook legal to declare and invisible in deployed output; a seam that does passes the fills through and
  * splices the bound guidance in its place.
  */
 
@@ -29,7 +29,7 @@ const HOOK_DIRECTIVE_REGEX = /^[ \t]*<!--[ \t]*guidance-hook:[ \t]*(.*?)[ \t]*--
 
 /**
  * Matches a full-line comment whose opening token is a near-miss of `guidance-hook:` -- a plural `guidance-hooks:`, a
- * space for the hyphen, a different case, or the token with no name at all. Tested only once the directive pattern has
+ * space for the hyphen, a different case, or the token without any name. Tested only once the directive pattern has
  * failed, so a well-formed directive never reaches it.
  *
  * The plural is the likeliest miss, because `guidance-hooks:` is the key under which a declaration binds. An author
@@ -96,15 +96,15 @@ export interface GuidanceHookFill {
 
 /**
  * The rulebooks bound to each guidance hook, keyed by hook name and ordered as they fill. An absent key is an unbound
- * hook, and so is the whole map: A seam that resolves no declaration passes `undefined` and strips every hook that it
- * meets.
+ * hook, and so is the whole map: A seam that does not resolve any declaration passes `undefined` and strips every
+ * hook that it meets.
  */
 export type GuidanceHookFills = ReadonlyMap<string, ReadonlyArray<GuidanceHookFill>>;
 
 /**
- * Throws when an anchor-only link target in a filled body names no heading, or more than one, attributing the failure
- * to a binding when the host resolves without its fills. Every fillable seam calls this in place of a bare anchor
- * assert, so the verdict always covers the body as deployed rather than the body as authored.
+ * Throws when an anchor-only link target in a filled body does not name any heading, or names more than one,
+ * attributing the failure to a binding when the host resolves without its fills. Every fillable seam calls this in
+ * place of a bare anchor assert, so the verdict always covers the body as deployed rather than the body as authored.
  */
 export function assertFilledAnchorsResolve(result: FilledBody, sourceLabel: string): void {
   try {
@@ -131,8 +131,8 @@ export function assertFilledAnchorsResolve(result: FilledBody, sourceLabel: stri
  *
  * Because a bound body arrives already rendered, the splice point is free: Link and token resolution vary with
  * position, and both are settled before the body gets here. Headings are demoted one level as they splice, which
- * keeps a rulebook's h1 title from competing with the host's own structure and moves no anchor, since a fragment
- * derives from heading text alone.
+ * keeps a rulebook's h1 title from competing with the host's own structure and does not move any anchor, since a
+ * fragment derives from heading text alone.
  */
 export function fillGuidanceHooks(body: string, fills: GuidanceHookFills | undefined, sourceLabel: string): FilledBody {
   // Listing validates: A malformed name, a near-miss directive, or a duplicate declaration fails before anything splices.
@@ -182,8 +182,8 @@ export function isGuidanceHookName(value: string): boolean {
  * grammar, for a line that misses the directive shape while plainly reaching for it, and for a hook declared twice,
  * each anchored to `sourceLabel` and the offending line.
  *
- * A duplicate is rejected rather than collapsed because a binding fills a hook by name: Two slots of one name have no
- * defined fill order and no way for an author to tell which one received the guidance.
+ * A duplicate is rejected rather than collapsed because a binding fills a hook by name: Two slots of one name do not
+ * have a defined fill order, and an author cannot tell which one received the guidance.
  */
 export function listGuidanceHooks(body: string, sourceLabel: string): ReadonlyArray<GuidanceHookDeclaration> {
   const declarations: Array<GuidanceHookDeclaration> = [];
@@ -275,7 +275,9 @@ function findFrontmatterEnd(lines: ReadonlyArray<string>): number {
   return lines[0] === '---' ? lines.indexOf('---', 1) : -1;
 }
 
-/** Reports whether `body` contains an anchor-only link target naming no heading, or more than one. */
+/**
+ * Reports whether `body` contains an anchor-only link target that does not name any heading, or names more than one.
+ */
 function hasUnresolvableAnchors(body: string, sourceLabel: string): boolean {
   try {
     assertAnchorsResolve(body, sourceLabel);
