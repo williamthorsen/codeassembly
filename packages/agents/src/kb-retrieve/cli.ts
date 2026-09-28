@@ -107,7 +107,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end, from argv to the candidate table. A result with no candidates states the cause in its
+ * Runs the helper end to end, from argv to the candidate table. A result without candidates states the cause in its
  * `diagnostic`.
  *
  * @internal - Exported to allow testing.
