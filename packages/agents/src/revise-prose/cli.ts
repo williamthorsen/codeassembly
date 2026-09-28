@@ -7,14 +7,15 @@
  * repository's record and is the only path that writes it. Positional arguments narrow the sweep to the files that
  * they name or contain; with none, the sweep covers the whole repository.
  *
- * With no unit declared, `detect` runs the reduced-object-relative detector alone and does not read the record, which
- * keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an invocation naming no rule
- * declares no unit unless it names one on its own. Coverage and rejections are keyed on each rule's sweep version; a
- * unit's version is read only to convert a record written before rules were versioned.
+ * When the invocation does not declare any unit, `detect` runs the reduced-object-relative detector alone and does not
+ * read the record, which keeps the pre-rules invocation stable. A rule cannot be named without its unit, so an
+ * invocation that does not name any rule declares a unit only when it names one on its own. Coverage and rejections
+ * are keyed on each rule's sweep version; a unit's version is read only to convert a record written before rules were
+ * versioned.
  *
  * JSON on stdout is the only output: The human-readable report is the agent's, composed once each candidate has been
- * adjudicated. The helper revises no prose. The agent applies repairs with its own editing tool, which keeps one write
- * path and leaves the harness its file tracking.
+ * adjudicated. The helper does not revise any prose. The agent applies repairs with its own editing tool, which keeps
+ * one write path and leaves the harness its file tracking.
  */
 import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -68,10 +69,10 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<'batch-budget' | 'rule' | 'unit'>> = [
   { name: 'unit', takesValue: true },
 ];
 
-/** What an invocation declaring no unit reads in place of the repository's record. */
+/** What an invocation that does not declare any unit reads in place of the repository's record. */
 const EMPTY_RECORD: ProseRecord = { rules: {}, rejections: [] };
 
-/** What an invocation naming no rule detects, which is what the pre-rules skill still calls. */
+/** What an invocation that does not name any rule detects, which is what the pre-rules skill still calls. */
 const LEGACY_RULES: ReadonlyArray<RuleId> = ['reduced-object-relative'];
 
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
@@ -98,8 +99,8 @@ if (isEntryPoint()) {
  * Parses the helper's argv: positional paths narrowing the sweep, plus the rules and units that the caller holds.
  *
  * `--rule <name>@<version>=<unit>` names a rule, its sweep version, and the unit owning it, whether or not the helper
- * has a detector for it; `--rule <name>=<unit>` names a rule that declares no sweep version, which is swept but never
- * recorded. `--unit <name>=<version>` names a unit in force and the version it is at. Both repeat.
+ * has a detector for it; `--rule <name>=<unit>` names a rule that does not declare a sweep version, which is swept but
+ * never recorded. `--unit <name>=<version>` names a unit in force and the version it is at. Both repeat.
  * `--batch-budget <bytes>` overrides the default ceiling.
  *
  * @internal - Exported to allow testing.
@@ -152,9 +153,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /**
  * Runs a sweep end to end: parses args, collects prose, detects every named rule's candidates, applies the record,
  * plans the batches left to adjudicate with the versioned rules that each one's files still need, and narrows the
- * candidates and rejections to what those batches apply. A run that versions no rule reports every batch. Invalid
- * args, a root outside a git working tree, and a malformed record all become structured `{ ok: false, ... }` results;
- * anything else propagates to `main`'s try/catch.
+ * candidates and rejections to what those batches apply. A run that does not version any rule reports every batch.
+ * Invalid args, a root outside a git working tree, and a malformed record all become structured `{ ok: false, ... }`
+ * results; anything else propagates to `main`'s try/catch.
  *
  * @internal - Exported to allow testing.
  */
@@ -173,8 +174,8 @@ export async function runDetect(input: {
   const versions = buildArgVersions(args);
   const ruleVersions = selectRuleVersions(versions);
 
-  // Read only when a unit is declared: With none, no version exists to compare coverage or a rejection against, and
-  // a malformed record would otherwise fail an invocation that never consults it.
+  // Read only when a unit is declared: With none, the invocation does not hold any version against which to compare
+  // coverage or a rejection, and a malformed record would otherwise fail an invocation that never consults it.
   let record: ProseRecord = EMPTY_RECORD;
   if (args.units.size > 0) {
     try {
@@ -298,7 +299,7 @@ function buildFoldVersions(fold: RunFold): SweepVersions {
 
 /**
  * Builds the predicate with which `record` decides whether a rejection's site still exists, reading each file at most
- * once. The predicate finds no site in a file that it cannot read.
+ * once. The predicate does not find any site in a file that it cannot read.
  */
 function buildSitePredicate(root: string): (rejection: RecordedRejection) => boolean {
   const texts = new Map<string, SiteText | undefined>();

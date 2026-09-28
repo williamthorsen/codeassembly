@@ -71,7 +71,9 @@ const MAX_HEAD_MODIFIERS = 2;
 /** Most words that the noun phrase after `no` may contain before its verb. */
 const MAX_SUBJECT_WORDS = 3;
 
-/** Words that end a noun phrase, whether the word after `no` or a later one: No verb of the relative follows them. */
+/**
+ * Words that end a noun phrase, whether the word after `no` or a later one: A verb of the relative never follows them.
+ */
 const PHRASE_BREAKERS: ReadonlySet<string> = new Set([
   'about',
   'after',
@@ -195,7 +197,7 @@ function hasVerbEnding(word: string): boolean {
 }
 
 /**
- * Reports whether a word is a plural head noun with no determiner: an `-s` form that opens its phrase, after a
+ * Reports whether a word is a plural head noun without a determiner: an `-s` form that opens its phrase, after a
  * function word, a participle, or punctuation. A plural form after any other word is usually a verb, as in "the prompt
  * explains that no file exists".
  */
@@ -209,7 +211,7 @@ function isBarePluralHead(tokens: readonly Token[], headIndex: number): boolean 
 }
 
 /**
- * Reports whether a word is a head noun that a determiner marks, directly or across at most `modifiers` words, with no
+ * Reports whether a word is a head noun that a determiner marks, directly or across at most `modifiers` words, without
  * punctuation between them.
  */
 function isDeterminedHead(tokens: readonly Token[], headIndex: number, modifiers: number): boolean {
