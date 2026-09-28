@@ -6,9 +6,9 @@
  * The CLI writes every diagnostic to stderr, so stdout contains the JSON manifest alone. When the derivation throws an
  * error, the CLI exits 1.
  *
- * - Default-branch invariant: A manifest whose branch is the default branch has no `ticket_url`
- *   and no `pr_url`. Because the default branch is derived from no ticket and belongs to no pull request,
- *   a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. Only this invariant
+ * - Default-branch invariant: A manifest whose branch is the default branch does not store a `ticket_url`
+ *   or a `pr_url`. Because the default branch is not derived from any ticket and does not belong to any pull
+ *   request, a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. Only this invariant
  *   causes a write on a no-mutation cache hit: An already-stored value is cleared, once.
  */
 import { execFile } from 'node:child_process';
@@ -127,7 +127,7 @@ export async function deriveSessionContext(input: {
   return final;
 }
 
-/** Reads the manifest at `filePath`, or returns `null` when there is no current-schema manifest to read. */
+/** Reads the manifest at `filePath`, or returns `null` when a current-schema manifest isn't found at that path. */
 async function tryReadManifest(filePath: string): Promise<BranchManifest | null> {
   let text: string;
   try {
@@ -163,11 +163,11 @@ function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMu
 
 /**
  * Enforces the default-branch invariant: On the default branch, `ticket_url` and `pr_url` are null.
- * That branch is derived from no ticket and belongs to no pull request, so a value there is not the
- * branch's association but whichever one the last session happened to resolve, and a later session
+ * That branch is not derived from any ticket and does not belong to any pull request, so a value there is
+ * not the branch's association but whichever one the last session happened to resolve, and a later session
  * auto-resolving from it would proceed against an arbitrary ticket or PR.
  *
- * A field with no value is left exactly as found, absent or null alike. Both a refused `--set-*` and the repair of
+ * A field without a value is left exactly as found, absent or null alike. Both a refused `--set-*` and the repair of
  * a value already stored are reported, since a silently vanishing URL is the harder of the two to explain.
  */
 function enforceDefaultBranchInvariant(
@@ -197,8 +197,8 @@ function enforceDefaultBranchInvariant(
 /**
  * True when the manifest's branch is the repository's default branch. `default_branch` is
  * remote-qualified (`origin/main`) whereas `branch_name` is bare, so the remote is stripped before the
- * comparison. Only the first segment is stripped: A remote name contains no slash, and a branch name may
- * contain one (`origin/release/2.x` yields `release/2.x`).
+ * comparison. Only the first segment is stripped: A remote name does not contain a slash, and a branch name
+ * may contain one (`origin/release/2.x` yields `release/2.x`).
  */
 function isOnDefaultBranch(manifest: BranchManifest): boolean {
   const { default_branch: defaultBranch, branch_name: branchName } = manifest;
@@ -279,7 +279,7 @@ async function resolveBaseManifest(input: {
   }
 
   const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
-  // Resolve the git remote only on this path, so that a cache hit runs no git command.
+  // Resolve the git remote only on this path, so that a cache hit does not run any git command.
   const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
   const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
   const composed = composeManifest({

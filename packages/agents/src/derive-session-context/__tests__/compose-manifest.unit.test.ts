@@ -186,7 +186,7 @@ describe(composeManifest, () => {
       expect(manifest.scm).toBe('github');
     });
 
-    it('defaults default_branch to origin/main when no remote configured', () => {
+    it('defaults default_branch to origin/main when the preferences do not configure a remote', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
         branchName: 'main',
@@ -339,7 +339,7 @@ describe(composeManifest, () => {
       expect(manifest.ticket_url).toBe('https://org.atlassian.net/browse/MAC-130');
     });
 
-    it('leaves ticket_url null when no base_url is configured', () => {
+    it('leaves ticket_url null when the preferences do not configure a base_url', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
         branchName: 'MAC-130',
@@ -351,7 +351,7 @@ describe(composeManifest, () => {
       expect(manifest.ticket_url).toBeNull();
     });
 
-    it('leaves ticket_url null when a base_url is set but no ticket id can be derived', () => {
+    it('leaves ticket_url null when a base_url is set but a ticket id cannot be derived from the branch', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse/' } },
         branchName: 'experiment/no-ticket',
@@ -428,7 +428,7 @@ describe(composeManifest, () => {
       expect(manifest.pr_url).toBeNull();
     });
 
-    it('leaves pr_url null for a PR identity when no remote is known', () => {
+    it('leaves pr_url null for a PR identity when the remote URL is unknown', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
         branchName: 'PR-950',

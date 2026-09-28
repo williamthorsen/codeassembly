@@ -91,7 +91,7 @@ describe(extractTicketId, () => {
       });
     });
 
-    it('returns the bare number when no prefix is configured', () => {
+    it('returns the bare number when a prefix is not configured', () => {
       expect(extractTicketId({ branchName: '42_fix_login-redirect' })).toEqual({
         ticket_id: '42',
         ticket_ref: '42',
@@ -106,14 +106,14 @@ describe(extractTicketId, () => {
       });
     });
 
-    it('returns null when no Jira-style match and no leading digits', () => {
+    it('returns null when the branch does not contain a Jira-style match or leading digits', () => {
       expect(extractTicketId({ branchName: 'experiment/try-new-parser' })).toEqual({
         ticket_id: null,
         ticket_ref: null,
       });
     });
 
-    it('treats an empty prefix as no prefix', () => {
+    it('treats an empty prefix as an absent one', () => {
       expect(extractTicketId({ branchName: '99', ticketRefPrefix: '' })).toEqual({
         ticket_id: '99',
         ticket_ref: '99',
