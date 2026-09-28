@@ -21,9 +21,9 @@ Condense the current branch into a single commit with a comprehensive message.
      node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base {default_branch} > "$consolidation_path" && cat "$consolidation_path"
      ```
 
-     If the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a consolidated record: The subject renders with no scope or type, and the message contains no trailer.
+     If the call fails, as it does when `commit.title_format` is empty, it leaves the file empty. Relay its error and continue without a consolidated record: The subject renders without a scope or type, and the message does not contain a trailer.
 
-   - Report each `unmatched` subject and each `violations` entry to the developer. An unmatched subject gets no trailer in step 4, so it drops out of the entries that the condensed commit declares.
+   - Report each `unmatched` subject and each `violations` entry to the developer. An unmatched subject does not get a trailer in step 4, so it drops out of the entries that the condensed commit declares.
 
    [The change record](../_data/change-record.md) states the consolidated record and the `Change:` trailer.
 
@@ -39,7 +39,7 @@ If branch exists, increment version number.
 
    Write the title, a blank line, and the body to a scratch file per [gh body file](#gh-body-file), naming it `commit-message-{timestamp}.md`; do not inline the message into the shell command.
 
-   The call below composes the final message from that file and the step-2 consolidation: the body, a blank line, and one `Change: {change}` trailer per entry, oldest first, as the last paragraph. The trailers are read from the consolidation file inside the call, so no entry is retyped into a command, and a retry rebuilds the message rather than appending to it. If the consolidation found no entry, or failed and left the file empty, the message contains no trailer.
+   The call below composes the final message from that file and the step-2 consolidation: the body, a blank line, and one `Change: {change}` trailer per entry, oldest first, as the last paragraph. The trailers are read from the consolidation file inside the call, so the agent does not retype any entry into a command, and a retry rebuilds the message rather than appending to it. If the consolidation did not find any entry, or failed and left the file empty, the message does not contain a trailer.
 
    ```bash
    body_path="{absolute path from the write step}"

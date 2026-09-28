@@ -4,7 +4,7 @@ Prompt for follow-up actions when any assessment verdict is non-baseline. The pr
 
 ## Baseline definition
 
-A verdict is **baseline** when it indicates no concern or action needed:
+A verdict is **baseline** when it does not indicate any concern or needed action:
 
 | Dimension    | Baseline verdict |
 | ------------ | ---------------- |

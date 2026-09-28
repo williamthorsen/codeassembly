@@ -22,11 +22,11 @@ For a single note's edit, use `kb-edit`. For new notes, use `kb-add`. For findin
 | `--apply`           | Perform the two safe fixes (tag canonicalization, path-only wikilink rewrites). Default off.           | No       |
 | `--stale-after <n>` | Verification-staleness threshold in whole days. Positive integer; defaults to 90.                      | No       |
 
-A value-bearing flag accepts both `--kb coding` and `--kb=coding`. With no flags, the helper produces a read-only report.
+A value-bearing flag accepts both `--kb coding` and `--kb=coding`. Without flags, the helper produces a read-only report.
 
 ### KB selection
 
-The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` takes precedence over a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When no `--kb` is given and no `.kb/` is discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Each run curates a single KB: Wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
+The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` takes precedence over a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When `--kb` is not given and a `.kb/` folder is not discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Each run curates a single KB: Wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
 
 The store's `.kb/config.yaml` decides which notes are curated: By default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `tag-aliases.yaml`, or `taxonomy.yaml` fails the run with `invalid-config` rather than being silently ignored.
 
@@ -39,35 +39,35 @@ The store's `.kb/config.yaml` decides which notes are curated: By default, only 
 
 The helper reports findings across six categories. Each finding has a rule code and a severity. A `[[store:Target]]` link resolves against the store named by its prefix in the `kb.yaml` registry, and only into a store as shareable as this one; see the kb package's README for the rule.
 
-| Rule code                       | Severity | Meaning                                                                                |
-| ------------------------------- | -------- | -------------------------------------------------------------------------------------- |
-| `wikilinks.unresolved`          | error    | A `[[Target]]` does not resolve to any vault note.                                     |
-| `wikilinks.basename`            | warning  | Two or more notes share a basename (reported once for the vault).                      |
-| `wikilinks.unknown-store`       | error    | A `[[store:Target]]` names a store declared by no `kb.yaml` entry.                     |
-| `wikilinks.disallowed-store`    | error    | A `[[store:Target]]` names a store less shareable than this one.                       |
-| `wikilinks.store-unavailable`   | warning  | A `[[store:Target]]` names a store that could not be read on this machine.             |
-| `wikilinks.registry-unloadable` | error    | `kb.yaml` would not load, so no `[[store:Target]]` can resolve (once per run).         |
-| `paths.user-home`               | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.                                   |
-| `tag-alias`                     | warning  | A `tags` entry is a known alias of a canonical tag.                                    |
-| `taxonomy.undeclared`           | warning  | A folder contains notes but `.kb/taxonomy.yaml` declares no domain for it.             |
-| `taxonomy.unused`               | warning  | A declared domain has no note at or beneath it.                                        |
-| `taxonomy.orphan`               | warning  | A declared domain's parent is undeclared.                                              |
-| `verification.unmarked`         | warning  | The note has no `last-verified` field; reported only when the vault uses verification. |
-| `verification.stale`            | warning  | `last-verified` is older than `--stale-after` days.                                    |
-| `supersede.dangling`            | error    | A `superseded-by`/`supersedes` target is not a vault note.                             |
-| `supersede.cycle`               | error    | The note is in a `superseded-by` loop.                                                 |
-| `supersede.asymmetric`          | warning  | `A.superseded-by → B` without the matching `B.supersedes → A`.                         |
+| Rule code                       | Severity | Meaning                                                                                         |
+| ------------------------------- | -------- | ----------------------------------------------------------------------------------------------- |
+| `wikilinks.unresolved`          | error    | A `[[Target]]` does not resolve to any vault note.                                              |
+| `wikilinks.basename`            | warning  | Two or more notes share a basename (reported once for the vault).                               |
+| `wikilinks.unknown-store`       | error    | A `[[store:Target]]` names a store not declared by any `kb.yaml` entry.                         |
+| `wikilinks.disallowed-store`    | error    | A `[[store:Target]]` names a store less shareable than this one.                                |
+| `wikilinks.store-unavailable`   | warning  | A `[[store:Target]]` names a store that could not be read on this machine.                      |
+| `wikilinks.registry-unloadable` | error    | `kb.yaml` would not load, so a `[[store:Target]]` cannot resolve (once per run).                |
+| `paths.user-home`               | error    | A hardcoded `/Users/{name}/` path; use `~/` instead.                                            |
+| `tag-alias`                     | warning  | A `tags` entry is a known alias of a canonical tag.                                             |
+| `taxonomy.undeclared`           | warning  | A folder contains notes but `.kb/taxonomy.yaml` does not declare a domain for it.               |
+| `taxonomy.unused`               | warning  | A declared domain does not have a note at or beneath it.                                        |
+| `taxonomy.orphan`               | warning  | A declared domain's parent is undeclared.                                                       |
+| `verification.unmarked`         | warning  | The note does not have a `last-verified` field; reported only when the vault uses verification. |
+| `verification.stale`            | warning  | `last-verified` is older than `--stale-after` days.                                             |
+| `supersede.dangling`            | error    | A `superseded-by`/`supersedes` target is not a vault note.                                      |
+| `supersede.cycle`               | error    | The note is in a `superseded-by` loop.                                                          |
+| `supersede.asymmetric`          | warning  | `A.superseded-by → B` without the matching `B.supersedes → A`.                                  |
 
 The three `taxonomy.*` rules describe the vault rather than a note, so each is reported once against `.kb/taxonomy.yaml` with the domain named in the message. They are self-configuring in the same way `verification.unmarked` is: The helper reports none of them for a vault whose `.kb/taxonomy.yaml` is absent, or present but declaring nothing.
 
-`verification.unmarked` is self-configuring: It is reported only when the vault actually uses verification (that is, when at least one note has a well-formed `last-verified` value). In a vault that has not adopted verification stamps, an unmarked note is not a finding. A malformed `last-verified` value does not count as adoption, so the helper reports no unmarked findings for a vault whose only verification-ish value is unparseable. `verification.stale` is unaffected: A note with a stale `last-verified` is always flagged.
+`verification.unmarked` is self-configuring: It is reported only when the vault actually uses verification (that is, when at least one note has a well-formed `last-verified` value). In a vault that has not adopted verification stamps, an unmarked note is not a finding. A malformed `last-verified` value does not count as adoption, so the helper does not report any unmarked findings for a vault whose only verification-ish value is unparseable. `verification.stale` is unaffected: A note with a stale `last-verified` is always flagged.
 
 ## Remediation under `--apply`
 
 Only two fixes are applied; everything else stays report-only.
 
 - **Tag canonicalization**: For each note with a `tag-alias` finding, the helper invokes `{skill:kb-edit} --retag` once with the note's current tags, so that `kb-edit` remains the sole writer of frontmatter. `kb-edit` rewrites each tag through the KB's alias map.
-- **Path-only wikilink rewrites**: A cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: A bare-basename link that resolves uniquely is valid, produces no finding, and is left untouched, so remediation never changes a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
+- **Path-only wikilink rewrites**: A cross-file sweep that normalizes a link's stale path prefix when its basename resolves to exactly one note. Only path-qualified links (those containing a `/`) are repaired: A bare-basename link that resolves uniquely is valid, does not produce a finding, and is left untouched, so remediation never changes a vault's link style. The rewrite preserves any `|alias`, `#anchor`, and the path-qualified style; unresolved and ambiguous links are never auto-rewritten.
 
 Each fix returns a per-finding result reporting `ok: true/false` and the operation invoked. A single fix failure does not abort the run.
 
@@ -103,12 +103,12 @@ The helper prints a JSON object to stdout. On success the payload contains `ok: 
 
 On failure, `ok: false` plus a categorical `error` code:
 
-| Code               | What it means                                                                                                                                | What to do                                                                   |
-| ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                                                                      | Correct the invocation. The message names the specific defect.               |
-| `invalid-config`   | A malformed `.kb/config.yaml`, `.kb/tag-aliases.yaml`, or `.kb/taxonomy.yaml` in the store.                                                  | Fix the named file. The message names the offending file.                    |
-| `no-kb-resolvable` | A KB could not be resolved: `--kb` matched no entry, or no `--kb` and no discoverable `.kb/`, or `--kb @default` with no configured default. | Confirm the `--kb` name, run from inside the vault, or pass `--kb @default`. |
-| `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                                                                        | Drop `--apply` for a read-only report, or use a writable KB.                 |
+| Code               | What it means                                                                                                                                                                | What to do                                                                   |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                                                                                                      | Correct the invocation. The message names the specific defect.               |
+| `invalid-config`   | A malformed `.kb/config.yaml`, `.kb/tag-aliases.yaml`, or `.kb/taxonomy.yaml` in the store.                                                                                  | Fix the named file. The message names the offending file.                    |
+| `no-kb-resolvable` | A KB could not be resolved: `--kb` did not match an entry, or `--kb` was absent and `.kb/` was not discoverable, or `--kb @default` was passed without a configured default. | Confirm the `--kb` name, run from inside the vault, or pass `--kb @default`. |
+| `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                                                                                                        | Drop `--apply` for a read-only report, or use a writable KB.                 |
 
 System failures (out-of-disk, permission denied) print to stderr and exit non-zero. They are out of band and never appear as a structured `error` code.
 

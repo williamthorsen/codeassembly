@@ -33,7 +33,7 @@ Both are captured the same way; the difference is recorded in the tags.
 Decide one question: **Did relevant guidance already exist?**
 
 - **Yes: misapplied existing guidance.** A rule was in force and the agent missed it. This is a mistake plus its correction.
-- **No: no such guidance.** The user is establishing a net-new expectation. There is no mistake, only a refinement to propose.
+- **No: no such guidance.** The user is establishing a net-new expectation. The agent did not make a mistake; there is only a refinement to propose.
 
 Assess this best-effort from the guidance that you can see. When you genuinely cannot tell, record the uncertainty in the body rather than forcing the call.
 
@@ -53,7 +53,7 @@ Invoke the `{skill:capture-event}` skill to append the record, composing its arg
 - `--store @feedback`: Always. The registry's `feedback_kb` names the KB read by the pass that refines guidance in this environment, whichever repository the guidance came from.
 - `--tags feedback`: Always. Add `,mistake` when existing guidance was misapplied (step 1, "Yes").
 - `--skill <slug>`: When the refinement target is a skill.
-- `--impact <level>`: Optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you have no clear read; the rating is revisable later with `kb-update-events`.
+- `--impact <level>`: Optionally rate how much addressing this feedback would improve the agent's future behavior: `low`, `medium`, `high`, or `critical`. Omit it when you do not have a clear read; the rating is revisable later with `kb-update-events`.
 - `--summary`: A one-line recall label, for example "Agent title-cased a heading; sentence case is the rule."
 - **Body**: The generalized lesson, only to the extent needed to act on it later:
   - The **error→correction pair** (misapplied-guidance mode) or the **desired behavior** (no-guidance mode), generalized, not the raw artifact or diff.
@@ -62,7 +62,7 @@ Invoke the `{skill:capture-event}` skill to append the record, composing its arg
 
 ### 4. Report
 
-State what was fixed (or that the feedback was behavioral-only) and the captured record's id and path. If no `feedback_kb` is configured, say so in place of the id and path, and name the key to set.
+State what was fixed (or that the feedback was behavioral-only) and the captured record's id and path. If `~/.agents/kb.yaml` does not configure `feedback_kb`, say so in place of the id and path, and name the key to set.
 
 If the user then says the record is inaccurate, correct it in place with `capture-event --amend <id>` rather than capturing a second record; amend rewrites the record in place. Capture a fresh record only when the correction is a genuinely distinct lesson.
 
