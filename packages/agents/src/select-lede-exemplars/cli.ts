@@ -33,8 +33,8 @@ const FLAGS: readonly FlagSpec[] = [
 const LEDE_DECISION_STORE = 'codeassembly';
 
 /**
- * How many exemplars a request returns when `--count` names no number. Exemplars calibrate a drafter, and a larger set
- * dilutes toward an average while spending the drafter's context.
+ * How many exemplars a request returns when the invocation omits `--count`. Exemplars calibrate a drafter, and a larger
+ * set dilutes toward an average while spending the drafter's context.
  */
 const DEFAULT_COUNT = 5;
 
@@ -73,10 +73,10 @@ if (isEntryPoint()) {
 
 /**
  * Parses the helper's argv. Exactly one of `--type` and `--tier` is required: The exemplars that a drafter needs are
- * the ones written under its own work type, and `--tier` serves a caller whose dispatch resolved no type, so that
- * the fallback is a narrower request rather than an invented type. `--with-pair` serves a caller calibrating an edit
- * rather than a draft and changes no selection. `--count`, `--min-quality`, `--store`, and `--data-dir` each fall back
- * to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
+ * the ones written under its own work type, and `--tier` serves a caller whose dispatch did not resolve a type, so
+ * that the fallback is a narrower request rather than an invented type. `--with-pair` serves a caller calibrating an
+ * edit rather than a draft and does not change the selection. `--count`, `--min-quality`, `--store`, and `--data-dir`
+ * each fall back to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
  * sparse is not filtered down to nothing. The `@default` and `@feedback` sentinels are refused: Each names whichever
  * store a machine's registry assigns that role rather than this corpus, and reading the wrong corpus yields plausible
  * exemplars drawn from nothing relevant.
@@ -248,7 +248,7 @@ function parseRequest(raw: { type: string | undefined; tier: string | undefined 
 }
 
 /**
- * Resolves the corpus by registry name alone: no `.kb/` discovery and no ancestor walk, so a project-local store
+ * Resolves the corpus by registry name alone, without `.kb/` discovery or an ancestor walk, so a project-local store
  * that the invocation happened to run inside cannot stand in for the corpus. A store marked `readonly` resolves like
  * any other, since that marker refuses writes and nothing here writes.
  */

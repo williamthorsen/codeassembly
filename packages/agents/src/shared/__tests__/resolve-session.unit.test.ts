@@ -7,13 +7,13 @@ describe(resolveSession, () => {
     expect(resolveSession({ CLAUDE_CODE_SESSION_ID: 'abc123' })).toBe('abc123');
   });
 
-  it('returns undefined when the harness exposes no session id', () => {
+  it('returns undefined when the harness does not expose a session id', () => {
     expect(resolveSession({})).toBeUndefined();
   });
 
-  it('treats an empty value as no session rather than an empty id', () => {
-    // A harness that defines the variable without populating it has no session to name; an empty string must never
-    // reach a consumer as a real id.
+  it('treats an empty value as an absent session rather than an empty id', () => {
+    // A harness that defines the variable without populating it does not have a session to name; an empty string must
+    // never reach a consumer as a real id.
     expect(resolveSession({ CLAUDE_CODE_SESSION_ID: '' })).toBeUndefined();
   });
 });

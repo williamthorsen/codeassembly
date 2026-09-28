@@ -39,7 +39,10 @@ export interface DecisionSpec {
 export interface CorpusFixture {
   storePath: string;
   dataDir: string;
-  /** Isolated home containing a `kb.yaml` that registers the store, so that no test reads the developer's own registry. */
+  /**
+   * Isolated home containing a `kb.yaml` that registers the store, so that a test never reads the developer's own
+   * registry.
+   */
   home: string;
 }
 

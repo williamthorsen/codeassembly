@@ -25,7 +25,7 @@ describe(parseRemoteToOwnerRepo, () => {
     expect(parseRemoteToOwnerRepo('https://gitlab.com/group/subgroup/project.git')).toBe('subgroup/project');
   });
 
-  it('returns null for a single-segment path with no owner/repo pair', () => {
+  it('returns null for a single-segment path without an owner/repo pair', () => {
     expect(parseRemoteToOwnerRepo('https://github.com/onlyone.git')).toBeNull();
   });
 

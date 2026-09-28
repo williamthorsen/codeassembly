@@ -19,7 +19,7 @@ type GitToplevelResult = { readonly root: string } | { readonly failure: string 
  * correct from any subdirectory of the repo regardless of where the agent happened to invoke it.
  *
  * Precedence, highest first:
- *   1. An explicit `cwd` override, used verbatim with no git invocation.
+ *   1. An explicit `cwd` override, used verbatim without invoking git.
  *   2. The git repo root (`git rev-parse --show-toplevel`, which is worktree-aware).
  *   3. The ambient working directory, as a last resort, accompanied by a one-line stderr diagnostic quoting git.
  *

@@ -48,7 +48,7 @@ describe(parseArgs, () => {
     expect(parseArgs(['--type', 'feat', '--with-pair']).withPair).toBe(true);
   });
 
-  it('reads every record when --min-quality names no floor', () => {
+  it('reads every record when the invocation omits --min-quality', () => {
     expect(parseArgs(['--type', 'feat']).minQuality).toBeNull();
   });
 
@@ -56,7 +56,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--type', 'feat', '--min-quality', 'excellent'])).toThrow('--min-quality must be one of');
   });
 
-  it('returns five exemplars when --count names no number', () => {
+  it('returns five exemplars when the invocation omits --count', () => {
     expect(parseArgs(['--type', 'feat']).count).toBe(5);
   });
 
@@ -68,7 +68,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs([])).toThrow('one of --type and --tier is required');
   });
 
-  it('reads --tier as a request of its own, for a caller whose dispatch resolved no type', () => {
+  it('reads --tier as a request of its own, for a caller whose dispatch did not resolve a type', () => {
     expect(parseArgs(['--tier', 'internal']).request).toStrictEqual({ kind: 'tier', tier: 'internal' });
   });
 
@@ -167,7 +167,7 @@ describe(runSelect, () => {
     expect(success.diagnostic).toContain('rated strong or better');
   });
 
-  it('reports no floor when the request named none', async () => {
+  it('reports the floor as none when the request did not name one', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
     const result = await run({ argv: ['--type', 'feat'], fixture });
@@ -221,7 +221,7 @@ describe(runSelect, () => {
     expect(success.exemplars).toHaveLength(2);
   });
 
-  it('reports a corpus registered under no name', async () => {
+  it('reports a corpus name that kb.yaml does not register', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS, storeName: OTHER_STORE_NAME });
 
     const result = await run({ argv: ['--type', 'feat'], fixture });
@@ -229,7 +229,7 @@ describe(runSelect, () => {
     expect(expectFailure(result)).toBe('store-not-registered');
   });
 
-  it('reports a data directory containing no taxonomy', async () => {
+  it('reports a data directory that does not contain a taxonomy', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
     const result = await runSelect({

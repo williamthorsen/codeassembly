@@ -15,8 +15,8 @@ export function splitRepo(repo: string | undefined): [owner: string, name: strin
 }
 
 /**
- * Reduces `value` to one path component: Separators are flattened to hyphens, and a value that names no directory
- * (empty, or dots only, which would traverse upward) is replaced by `placeholder`.
+ * Reduces `value` to one path component: Separators are flattened to hyphens, and a value that does not name a
+ * directory (empty, or dots only, which would traverse upward) is replaced by `placeholder`.
  */
 export function toSafeSegment(value: string, placeholder: string): string {
   const flattened = value.trim().replaceAll(/[/\\]/g, '-');

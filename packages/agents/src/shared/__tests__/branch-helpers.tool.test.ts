@@ -68,8 +68,8 @@ describe(resolveCurrentBranch, () => {
     ]);
     await execFileAsync('git', ['-C', scratch, 'checkout', '--quiet', '--detach']);
 
-    // Git reports no branch rather than failing; each caller decides whether an empty branch is a
-    // hard failure (the deriver) or an unresolvable field (emit-event).
+    // Git reports an empty branch name rather than failing; each caller decides whether an empty
+    // branch is a hard failure (the deriver) or an unresolvable field (emit-event).
     await expect(resolveCurrentBranch(scratch)).resolves.toBe('');
   });
 
