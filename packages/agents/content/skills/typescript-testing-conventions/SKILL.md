@@ -41,7 +41,7 @@ it('should handle optional values', () => {
 
 ### Why conditional expects are problematic
 
-1. **Silent failures**: If condition is false, no assertions run and test passes incorrectly
+1. **Silent failures**: If condition is false, the test does not run any assertions and passes incorrectly
 2. **Unclear intent**: Ambiguous whether condition failing should pass or fail
 3. **Reduced coverage**: Conditional paths may not be tested consistently
 4. **Debugging difficulty**: Hard to determine why a test passed when it should have failed

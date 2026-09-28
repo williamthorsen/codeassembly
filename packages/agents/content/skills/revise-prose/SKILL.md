@@ -14,14 +14,14 @@ Apply is the default. `--dry-run` produces the report alone.
 
 ## Arguments
 
-| Argument                 | Description                                                               | Required |
-| ------------------------ | ------------------------------------------------------------------------- | -------- |
-| `<path>`                 | One or more files or directories narrowing the sweep. Repeatable.         | No       |
-| `--batch-budget <bytes>` | Ceiling on a batch's combined file bytes. Passed to the helper unchanged. | No       |
-| `--dry-run`              | Report and stop: no subagent, no edit, no record write.                   | No       |
-| `--rule <id>`            | One rule that this document declares, narrowing the sweep. Repeatable.    | No       |
+| Argument                 | Description                                                                     | Required |
+| ------------------------ | ------------------------------------------------------------------------------- | -------- |
+| `<path>`                 | One or more files or directories narrowing the sweep. Repeatable.               | No       |
+| `--batch-budget <bytes>` | Ceiling on a batch's combined file bytes. Passed to the helper unchanged.       | No       |
+| `--dry-run`              | Report and stop without dispatching a subagent, editing, or writing the record. | No       |
+| `--rule <id>`            | One rule that this document declares, narrowing the sweep. Repeatable.          | No       |
 
-With no path, the sweep covers the whole repository. That is this skill's default, because removing every violation from a repository requires a full sweep. It is how this skill differs from `{skill:revise-comments}`, whose default is the current branch's diff.
+Without a path, the sweep covers the whole repository. That is this skill's default, because removing every violation from a repository requires a full sweep. It is how this skill differs from `{skill:revise-comments}`, whose default is the current branch's diff.
 
 `--rule` takes a rule's id as step 1 derives it, not a unit's name: `--rule plain-speech` sweeps the rule `plain-speech` without the rules that its calibration declares.
 
@@ -39,15 +39,15 @@ Both come from this document, never from a list kept elsewhere. Because a rule d
 - **Each `<!-- rulebook:<slug> -->` block** in the comment-preferences and writing-preferences fills at the end of this document is a unit, at the version that its `<!-- rulebook-version: <version> -->` line names. A block that does not specify a version is not a unit: Do not name its rules to the helper, sweep it without recording anything for it, and name that slug in the closing summary.
 - **Each `<!-- rule: <id> <version> -->` marker** in a unit's body declares a rule at that sweep version, whether or not the helper has a detector for it. The rule's unit is the block containing the marker.
 - **A marker that reads `<!-- rule: <id> -->`** declares a rule without a sweep version. It is swept, but nothing records it: Name it to the helper without a version, and name it in the closing summary.
-- **A rule heading with no marker beneath it** declares no id and no sweep version. Its id is the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends; its unit is the block containing the heading. Do not name it to the helper, and name it in the closing summary.
+- **A rule heading without a marker beneath it** does not declare an id or a sweep version. Its id is the heading's text lowercased, with backticks dropped, each run of characters other than letters and digits replaced by one hyphen, and hyphens trimmed from both ends; its unit is the block containing the heading. Do not name it to the helper, and name it in the closing summary.
 
-**The unrecorded rules** are the rules that nothing records: each marker without a sweep version, each heading with no marker, and each rule in a block that is not a unit, whose id is its marker's id or, without a marker, its heading's id derived as above. Keep their ids for step 4, which dispatches them with every batch.
+**The unrecorded rules** are the rules that nothing records: each marker without a sweep version, each heading without a marker, and each rule in a block that is not a unit, whose id is its marker's id or, without a marker, its heading's id derived as above. Keep their ids for step 4, which dispatches them with every batch.
 
 The record keys coverage and rejections on each rule's sweep version. A unit's version is passed only to convert a record written before rules had versions.
 
 If the fills are empty, nothing is bound here: The run sweeps `plain-speech` alone.
 
-**Narrow to the named rules.** Without `--rule`, keep every rule that this step declares. With it, first check each named id against the ids that this step declares, the ids derived from headings included; if one is not among them, stop the run before the helper runs, and name that id. Then keep only the named rules, versioned and unrecorded alike, and keep every unit. Every later step works from the rules that this step kept, and the closing summary names no other rule.
+**Narrow to the named rules.** Without `--rule`, keep every rule that this step declares. With it, first check each named id against the ids that this step declares, the ids derived from headings included; if one is not among them, stop the run before the helper runs, and name that id. Then keep only the named rules, versioned and unrecorded alike, and keep every unit. Every later step works from the rules that this step kept, and the closing summary does not name any other rule.
 
 ### 2. Run the sweep
 
@@ -61,9 +61,9 @@ node {harness_home_dir}/skills/revise-prose/revise-prose.mjs detect {paths} \
   --rule {unversioned-rule-id}={slug}
 ```
 
-Pass one `--unit` per unit from step 1, and one `--rule` per rule that step 1 kept: `--rule plain-speech@{version}=plain-speech` for `plain-speech`, `--rule {id}@{rule-version}={unit}` for a rule whose marker declares a version, and `--rule {id}={unit}` for a rule whose marker declares none. Pass nothing for a rule that has no marker or whose block is not a unit, as step 1 directs. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
+Pass one `--unit` per unit from step 1, and one `--rule` per rule that step 1 kept: `--rule plain-speech@{version}=plain-speech` for `plain-speech`, `--rule {id}@{rule-version}={unit}` for a rule whose marker declares a version, and `--rule {id}={unit}` for a rule whose marker declares none. Pass nothing for a rule that does not have a marker or whose block is not a unit, as step 1 directs. Add `--batch-budget {bytes}` if the invocation included one. Omit the paths for a whole-repository sweep.
 
-The helper prints one JSON object to stdout. On success it contains `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array containing the sites already adjudicated by an earlier sweep, a `batches` array in which each batch lists as `unswept` the versioned rules that its files still need, a `rules` object listing the named rules that it `detected` and those for which it has no detector as `undetected`, and a `summary`. On failure it contains `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
+The helper prints one JSON object to stdout. On success it contains `ok: true`, the `root` that it swept, a `candidates` array, a `rejections` array containing the sites already adjudicated by an earlier sweep, a `batches` array in which each batch lists as `unswept` the versioned rules that its files still need, a `rules` object listing the named rules that it `detected` and those for which it does not have a detector as `undetected`, and a `summary`. On failure it contains `ok: false` with `invalid-args`, `invalid-record`, or `not-a-repository`, the last because the sweep reads what git tracks and has nothing to read outside a working tree. Report a failure and stop.
 
 Read `summary` before anything else. `filesSkipped` counts the files that the sweep excluded, keyed by the reason for each: `generated` and `machine-generated` for output whose edit belongs to its source, `vendored` for a verbatim extract whose edit belongs to the project from which it was extracted, `unreadable` for a file whose prose cannot be read, and `ineligible` for one not read by any extractor. `batchesSkipped` counts the batches that the record already covers; `stale` counts the candidates whose recorded rejection was taken at an older version of its rule.
 
@@ -87,7 +87,7 @@ On a no-go, ask the user before reverting, then revert that batch's files and st
 
 Send up to four `{tool:Task}` calls with `subagent_type: prose-reviser` in one message. A harness that returns each before the next is the series case; do not attempt to detect which one you are on.
 
-Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even if it contains no entry, so that every dispatch names the same keys. `{scratch}` is a scratch directory created once for the run with `mktemp -d "${TMPDIR:-/tmp}/revise-prose.XXXXXX"`, written out as an absolute path in each place below and in each dispatch block, since these writes and the subagent's reads all go through a file tool that does not expand shell syntax.
+Before each dispatch, write two files under `{scratch}/revise-prose/`: that batch's candidate objects, exactly as the helper reported them and `stale` flags included, to `batch-{index}.json`, and the run's `rejections` entries whose `file` the batch covers, to `rejections-{index}.json`. Write the second even if it does not contain any entry, so that every dispatch names the same keys. `{scratch}` is a scratch directory created once for the run with `mktemp -d "${TMPDIR:-/tmp}/revise-prose.XXXXXX"`, written out as an absolute path in each place below and in each dispatch block, since these writes and the subagent's reads all go through a file tool that does not expand shell syntax.
 
 A batch's `rules` value lists its `unswept` rules and step 1's unrecorded rules, sorted, each named once. A rule without a sweep version is therefore swept in every batch that the helper reports, and it never causes a batch to be dispatched. Dispatch each batch with this block:
 
@@ -160,7 +160,7 @@ The recorded line names each rule from the fold's `rules` at its sweep version. 
 
 Give the excluded-files clause only if `filesSkipped` reports a non-zero count, naming each reason and its count, so that a file that the sweep never opened is not mistaken for a clean result. A whole-repository sweep reports a large `ineligible` count, because every image, lockfile, and data file in the repository is one; a narrowed sweep reports the files that it was given and could not read.
 
-Give the line naming the rules that have no detector only if the helper's `rules.undetected` lists any, naming each. If a marker misspells a detector rule's id, the misspelled id appears only on this line: The subagent still sweeps the rule wherever a batch applies it, and no detector runs for it.
+Give the line naming the rules without a detector only if the helper's `rules.undetected` lists any, naming each. If a marker misspells a detector rule's id, the misspelled id appears only on this line: The subagent still sweeps the rule wherever a batch applies it, and the helper does not run a detector for it.
 
 Present the questionables as one table grouped by ground, before the per-batch tables:
 

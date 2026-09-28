@@ -24,18 +24,18 @@ If a rule above forbids a test and the case seems exceptional, stop before writi
 
 ## When tests are required
 
-Every change to a behavior, as defined above, is covered by a test. A change that adds no runtime behavior needs no new test: a deletion, a type consumed only within this compile, prose, styling.
+Every change to a behavior, as defined above, is covered by a test. A change that does not add runtime behavior does not need a new test: a deletion, a type consumed only within this compile, prose, styling.
 
 A test that guards a behavior still has to clear two checks:
 
 1. **Nothing else fails first.** If the compiler, the linter, or a gate that already reproduces the failure condition on every run would catch the regression, that gate is the guard, and a narrower test is a weaker and more brittle duplicate. A gate that merely exercises the same area does not qualify; it has to reproduce the condition.
 2. **It would catch the failure that it guards against.** Run it against what it rejects: Break the guarded thing, watch the test fail, restore it. A test that still passes is not a guard. If reaching the cause means replicating a dependency's private shape, the test breaks or silently stops testing at the next upgrade.
 
-If a change needs coverage and no candidate test clears these sections, it is merged without one; say which answer ruled the candidate out.
+If a change needs coverage and these sections rule out every candidate test, it is merged without one; say which answer ruled the candidate out.
 
 ## Do not test that removed things stay removed
 
-This is the commonest test that guards a decision. When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it guards no regression class, and such assertions accumulate without limit. The positive assertion describing the replacement behavior is the real guard.
+This is the commonest test that guards a decision. When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it does not guard any regression class, and such assertions accumulate without limit. The positive assertion describing the replacement behavior is the real guard.
 
 Diagnostic: Would this test exist if the deleted code had never existed? If no, don't write it.
 
@@ -45,7 +45,7 @@ When a test guards that a set is closed, the witness is an arbitrary non-member,
 
 ## Loosen a test broken by a wording-only change
 
-When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if no behavior depends on the text.
+When a wording-only change forces a test update, don't re-pin the new wording: Match just the part that identifies the behavior, or drop the assertion if the behavior does not depend on the text.
 
 ## Naming of tests
 

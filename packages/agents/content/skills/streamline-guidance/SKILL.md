@@ -19,7 +19,7 @@ The effect of a cut on agent behavior cannot be measured directly, so the level 
 | `<path>`          | A guidance file, or a directory of them. Repeatable.                         | Yes      |
 | `--level <level>` | `cautious`, `conservative`, `moderate`, or `aggressive`. Default `moderate`. | No       |
 
-There is no `--dry-run`: A reply that names no rows changes nothing.
+The skill does not take a `--dry-run` flag: A reply that does not name any row changes nothing.
 
 ## Ordering with `revise-prose`
 
@@ -32,7 +32,7 @@ A cut is one contiguous removal, rewording, or merge. Each level may cut everyth
 - **`cautious`**: At most two cuts per run, from the `conservative` class, chosen as the two least likely to impair what the guidance does. Removing text that directs nothing ranks safer than rewording text that directs something.
 - **`conservative`**: Text that directs nothing. Filler, hedges, intros, restated context, narration of how a rule was reached, a repeat within one body that is not reinforcement, and a rewording that directs the same thing in fewer words.
 - **`moderate`** (default): The agent still receives every instruction, stated once or reported by a check that fails on violation. Overlapping rules merged, all but the strongest of several examples that teach one point, rationale that does not calibrate a judgment call, and prose restating a constraint that a validator reports with a readable error.
-- **`aggressive`**: Nothing shows the text to be load-bearing. Rules that the agent follows without being told, examples in which the directive works alone and shows no output shape, remaining rationale, and reference-only content moved behind a link.
+- **`aggressive`**: Nothing shows the text to be load-bearing. Rules that the agent follows without being told, examples in which the directive works alone and does not show an output shape, remaining rationale, and reference-only content moved behind a link.
 
 A transitive file, one that a target includes or links to, is also read by consumers that nobody targeted. Cut it at `cautious` whatever the run's level.
 
@@ -46,7 +46,7 @@ At any level, in any file:
 - The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since every description loads into the skill index of every session.
 - Text inside a generated region, which the next deployment rewrites.
 
-Edit no file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 8 updates.
+Do not edit any file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 8 updates.
 
 ## Process
 
@@ -76,7 +76,7 @@ Read every target and transitive file whole. Compose candidates in the target fi
 
 Make each `phrase` long enough to occur only once in its file, and keep it from overlapping any other candidate's phrase. A cut is applied by replacing its phrase, so a repeated or overlapping phrase cannot be applied.
 
-Compose no candidate that removes or rewords a `declined` phrase in its file, and none inside a file's `generatedRegions`.
+Do not compose a candidate that removes or rewords a `declined` phrase in its file, or one inside a file's `generatedRegions`.
 
 A rewording follows the plain-speech rule and the writing preferences in your guidance. A shorter sentence that breaks either is lengthened again by the next prose sweep.
 
@@ -93,7 +93,7 @@ EOF
 Each report repeats the candidate's `file` and `phrase` and adds two lists. Drop a candidate if either list rules it out:
 
 - **`assertedBy`**: Test string literals that the phrase contains, each with its `file` and `line`. The helper errs toward reporting, so read the test line. Drop the candidate if the test checks guidance text for that literal; a literal that matches by accident, such as a common phrase in a test of unrelated code, does not rule it out.
-- **`history`**: The commits that changed how often the phrase occurs in its file, newest first, each with its `sha`, `date`, `subject`, and `body`. Drop the candidate if a commit added or restored the phrase to correct a failure: Its subject or body names a fix, a regression, or a behavior that an agent got wrong. A commit that added the phrase as part of new guidance is no such evidence. If `history` is empty for text that `git blame` attributes to a commit, read that commit before deciding, because the phrase may have been reflowed since it was added.
+- **`history`**: The commits that changed how often the phrase occurs in its file, newest first, each with its `sha`, `date`, `subject`, and `body`. Drop the candidate if a commit added or restored the phrase to correct a failure: Its subject or body names a fix, a regression, or a behavior that an agent got wrong. A commit that added the phrase as part of new guidance is not such evidence. If `history` is empty for text that `git blame` attributes to a commit, read that commit before deciding, because the phrase may have been reflowed since it was added.
 
 Drop every candidate that touches an output shape or its skill-local reinforcement.
 
@@ -103,7 +103,7 @@ Drop every candidate that touches an output shape or its skill-local reinforceme
 - At any level, propose at most two cuts in transitive files, ranked the same way.
 - Otherwise, propose every remaining candidate.
 
-If nothing remains, report that the files have no cut to propose at this level, then mark the review per step 5 and stop.
+If nothing remains, report that the files do not have any cut to propose at this level, then mark the review per step 5 and stop.
 
 ### 5. Mark the review
 
@@ -115,7 +115,7 @@ cat <<'EOF' | node {harness_home_dir}/skills/streamline-guidance/streamline-guid
 EOF
 ```
 
-`reviewedAt` is the current instant as an ISO 8601 timestamp. `files` names every target and every transitive file from step 1: A transitive file is read whole, so it was reviewed. The result's `unrooted` names each file lying in no content root, which the marker leaves out.
+`reviewedAt` is the current instant as an ISO 8601 timestamp. `files` names every target and every transitive file from step 1: A transitive file is read whole, so it was reviewed. The result's `unrooted` names each file that is not in any content root, which the marker leaves out.
 
 ### 6. Present the cuts
 
@@ -134,15 +134,15 @@ Present one numbered table per [Cut table](#cut-table), then ask which rows to a
 
    `declinedAt` is today's ISO calendar date. Each `phrase` is the text as it reads in the file.
 
-If no row was applied or declined, skip to the summary.
+If the run did not apply any row and the user did not decline any, skip to the summary.
 
 ### 8. Bump versions and run the quality gate
 
-Skip this step if no row was applied.
+Skip this step if the run did not apply any row.
 
 1. Bump the `version` of each rulebook for which a cut changed what the rulebook asks: a rulebook that a cut edited, and a rulebook that includes an edited file. Find the second kind by searching the rulebooks for an include directive that names the edited file. A `conservative` cut directs nothing, so it changes nothing that a rulebook asks.
 2. Run the project's quality gate as {skill:development-workflows} resolves it.
-   - If it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone if no cut changed what the rulebook asks.
+   - If it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone if the cuts did not change what the rulebook asks.
    - If it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again. If the restored cut was the only cut to change what its rulebook asks, also restore that rulebook's `version`, and its pin if this step updated it.
 
 ### 9. Commit
