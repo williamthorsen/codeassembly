@@ -7,7 +7,7 @@ This file lists third-party packages whose API surfaces are known to surprise re
 - One `## <package-name>` heading per entry. The package name is the exact npm package identifier (for example, `@hyperjump/json-schema`).
 - Section bodies are free-form markdown written for the reviewer. Keep entries short: The goal is to shortcut investigation, not to document the package.
 - Section bodies must not contain any line beginning with `## `: The parser splits on that prefix. Use `###` or higher for sub-headings inside a body.
-- Entries are added as new packages cause reviewer failures. There is no schema beyond the heading convention above.
+- Entries are added as new packages cause reviewer failures. This file does not define a schema beyond the heading convention above.
 
 See `packages/agents/content/scripts/resolve-reviewer-context.sh` for the helper script that consumes this file, and ticket #506 for the design rationale.
 
