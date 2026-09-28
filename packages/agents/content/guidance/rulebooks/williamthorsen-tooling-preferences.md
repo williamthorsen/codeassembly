@@ -17,7 +17,7 @@ Reach for `grep` or `find` only when the faster tool is genuinely unavailable: o
 
 ## Missing tools and resources
 
-Before reporting a tool, dependency, or service as missing, exhaust the routes that need no action from the developer:
+Before reporting a tool, dependency, or service as missing, exhaust the routes that do not need any action from the developer:
 
 - Run the tool through an ephemeral runner, such as `pnpm dlx`, `npx`, `uvx`, or `go run`.
 - Use a copy already present in the project, or an equivalent tool.
@@ -31,6 +31,6 @@ Ask for the resource when none of those routes works, when the missing resource 
 
 This rule runs before any fallback that a skill names for an unavailable tool. A skill's "unavailable" means unavailable once these routes are exhausted, and the skill's fallback applies from that point.
 
-The rule licenses no write. Acquiring a resource in a way that mutates shared state, such as installing a tool globally, restarting a service that the project does not define, minting a credential, or widening a sandbox grant, still needs the developer's authorization, and the ask is how to obtain it.
+The rule does not license any write. Acquiring a resource in a way that mutates shared state, such as installing a tool globally, restarting a service that the project does not define, minting a credential, or widening a sandbox grant, still needs the developer's authorization, and the ask is how to obtain it.
 
 Where a `sandbox-conventions` rulebook is deployed, consult it first for a denial that misreports itself as a missing resource.

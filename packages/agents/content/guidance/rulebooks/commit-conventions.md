@@ -7,7 +7,7 @@ version: '10'
 
 # Git commit conventions
 
-A commit on the default branch is extracted into the changelog and, for release-notes-contributing work types, into release notes. Under a squash merge that is the merge commit alone, whose body `merge-pr` composes from the pull request's `## What`; the branch commits collapsed by a squash appear in no changelog and no release notes. A branch commit is input to `summarize-change`'s entry drafter instead, which reads the branch's commit log alongside the diff to answer what changed. Write with that reader in mind.
+A commit on the default branch is extracted into the changelog and, for release-notes-contributing work types, into release notes. Under a squash merge that is the merge commit alone, whose body `merge-pr` composes from the pull request's `## What`; the branch commits collapsed by a squash do not appear in any changelog or release notes. A branch commit is input to `summarize-change`'s entry drafter instead, which reads the branch's commit log alongside the diff to answer what changed. Write with that reader in mind.
 
 ## Commit metadata
 
