@@ -28,10 +28,10 @@ export interface ScanResult<Name extends string = string> {
 /**
  * Scans `argv` into positionals and recognized flags, resolving each value-bearing flag's value.
  *
- * Matching: A token equal to `--name` (or an alias) matches with no inline value; a token `--name=value` matches and
- * binds `value` inline. The inline form binds **verbatim**: An empty or `--`-prefixed value is accepted, because the
- * `=` already disambiguates the value from a following flag. A value-bearing flag with no inline value consumes the next
- * token, which is rejected when it is absent or itself begins with `--`.
+ * Matching: A token equal to `--name` (or an alias) matches without an inline value; a token `--name=value` matches
+ * and binds `value` inline. The inline form binds **verbatim**: An empty or `--`-prefixed value is accepted, because
+ * the `=` already disambiguates the value from a following flag. A value-bearing flag without an inline value consumes
+ * the next token, which is rejected when it is absent or itself begins with `--`.
  *
  * The scanner owns matching and value resolution only. It does not enforce which flags are required, how many times one
  * may appear, mutual exclusivity, or whether an empty value is meaningful; each command composes those from the result.
@@ -104,7 +104,10 @@ export function valueFlagMap(flags: readonly MatchedFlag[]): Record<string, stri
 
 // region | Helpers
 
-/** Matches a token against the flag specs, returning the spec and any inline `=value`; `null` when no spec matches. */
+/**
+ * Matches a token against the flag specs, returning the spec and any inline `=value`; `null` when the token does not
+ * match any spec.
+ */
 function matchFlag<Name extends string>(
   arg: string,
   specs: readonly FlagSpec<Name>[],

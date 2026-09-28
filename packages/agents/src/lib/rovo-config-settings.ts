@@ -61,7 +61,7 @@ export async function removeRovoHookEntries(filePath: string, isOwned: HookSenti
 
 /**
  * Reads and parses the config file; an absent file reads as an empty document. A file that parses with errors throws
- * here, naming the file, so no operation ever mutates or rewrites a document that the parser could not fully
+ * here, naming the file, so an operation never mutates or rewrites a document that the parser could not fully
  * understand.
  */
 async function readConfigDocument(filePath: string): Promise<Document> {

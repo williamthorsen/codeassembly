@@ -37,8 +37,9 @@ export interface PackageSource {
 
 /**
  * Reads the content directory declared by a package manifest under `codeassembly.content`, or `undefined` when the
- * key is absent. A malformed `codeassembly` key still throws, naming the package: Absence is a package that ships no
- * content, which some callers answer for themselves, but a key that is present and wrong is a defect either way.
+ * key is absent. A malformed `codeassembly` key still throws, naming the package: Absence is a package that does not
+ * ship any content, which some callers answer for themselves, but a key that is present and wrong is a defect either
+ * way.
  */
 export function findContentPath(name: string, manifest: unknown): string | undefined {
   const result = PackageManifestSchema.safeParse(manifest);
@@ -55,9 +56,9 @@ export function findContentPath(name: string, manifest: unknown): string | undef
  * Reports the direct dependencies of the project at `baseDir` that ship CodeAssembly content and are absent from
  * `addressed`, sorted by name, so that a caller can name the declaration that would adopt each. `addressed` lists
  * every name that the project has spoken about, adopted and declined alike, so a package that a project turned down
- * is not reported. Purely advisory: It contributes no source and cannot fail a run. An unreadable or absent
- * `package.json` yields nothing, which also lets the home domain share this path with no carve-out. Because a package
- * must declare its content directory to ship any, detection reads that declaration and cannot report a false
+ * is not reported. Purely advisory: It does not contribute any source and cannot fail a run. An unreadable or absent
+ * `package.json` yields nothing, which also lets the home domain share this path without a carve-out. Because a
+ * package must declare its content directory to ship any, detection reads that declaration and cannot report a false
  * positive.
  */
 export async function findUndeclaredGuidancePackages(
@@ -72,7 +73,7 @@ export async function findUndeclaredGuidancePackages(
     );
     return shipping.filter((name): name is string => name !== undefined).toSorted((a, b) => a.localeCompare(b));
   } catch {
-    // A suggestion is never worth failing a run for, so any surprise here yields no advice rather than an error.
+    // A suggestion is never worth failing a run for, so any surprise here yields an empty list rather than an error.
     return [];
   }
 }
@@ -82,9 +83,9 @@ export async function findUndeclaredGuidancePackages(
  * content source. Resolution walks the `node_modules` chain that Node itself would search from `baseDir`, so it holds
  * under pnpm's symlinked layout and under `workspace:*` links, which lets a producing repo consume its own guidance
  * through the same declaration that a third party writes. Throws when a declared name is a filesystem path rather
- * than a package name, when a declared package is not installed, or when it declares no content directory; whether
- * that directory exists is left to the caller's source validation, which covers a package source and a hand-declared
- * one alike.
+ * than a package name, when a declared package is not installed, or when it does not declare a content directory;
+ * whether that directory exists is left to the caller's source validation, which covers a package source and a
+ * hand-declared one alike.
  */
 export async function resolvePackageSources(
   names: ReadonlyArray<string>,
@@ -122,8 +123,8 @@ function assertPackageName(name: string): void {
 /**
  * Locates the installed directory of `name`, with its parsed `package.json`, by probing each candidate directory that
  * Node's resolver would search. Probes the filesystem rather than resolving a package subpath: A modern `exports` map
- * does not expose `./package.json`, so `require.resolve` cannot reach it, and a guidance-only package has no
- * importable entry to resolve instead.
+ * does not expose `./package.json`, so `require.resolve` cannot reach it, and a guidance-only package does not
+ * have an importable entry to resolve instead.
  */
 async function findInstalledPackage(
   name: string,
@@ -166,10 +167,10 @@ function parsePackageManifest(name: string, raw: string): unknown {
 }
 
 /**
- * Reads the content directory that a package declares under `codeassembly.content`. The key is required and has no
- * default: A default location would claim a directory name in every producer's package root, so a producer states
- * where its content lives and can nest it under a directory that it already owns. Throws when the key is malformed or
- * absent, naming the package either way.
+ * Reads the content directory that a package declares under `codeassembly.content`. The key is required and does not
+ * have a default: A default location would claim a directory name in every producer's package root, so a producer
+ * states where its content lives and can nest it under a directory that it already owns. Throws when the key is
+ * malformed or absent, naming the package either way.
  */
 function readContentPath(name: string, manifest: unknown): string {
   const content = findContentPath(name, manifest);
@@ -182,7 +183,8 @@ function readContentPath(name: string, manifest: unknown): string {
 }
 
 /**
- * Reads the direct dependency names declared by the project at `baseDir`, or nothing when it has no readable manifest.
+ * Reads the direct dependency names declared by the project at `baseDir`, or nothing when it does not have a readable
+ * manifest.
  * Direct dependencies only: Guidance is something a project opts into by depending on the package that ships it, and
  * pnpm's strict layout would not expose a transitive package at the probed paths anyway.
  */

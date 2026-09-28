@@ -16,8 +16,8 @@ export function readRunningPackageVersion(): string {
 
 /**
  * Resolves the root of the package from which this code runs: the nearest ancestor of this module holding a
- * `package.json`. The module is at `src/lib/` in a source tree and `dist/esm/lib/` in a build, and no intermediate
- * directory contains a manifest of its own, so both layouts resolve to the same root.
+ * `package.json`. The module is at `src/lib/` in a source tree and `dist/esm/lib/` in a build, and the intermediate
+ * directories do not contain a manifest of their own, so both layouts resolve to the same root.
  */
 export function resolveRunningPackageRoot(): string {
   let currentDir = path.dirname(fileURLToPath(import.meta.url));
@@ -26,7 +26,7 @@ export function resolveRunningPackageRoot(): string {
     // `path.dirname` returns its own argument at the filesystem root, which is where the walk has run out of ancestors.
     const parentDir = path.dirname(currentDir);
     if (parentDir === currentDir) {
-      throw new Error(`Could not locate the running package: no package.json above ${import.meta.url}`);
+      throw new Error(`Could not locate the running package: package.json not found above ${import.meta.url}`);
     }
     currentDir = parentDir;
   }

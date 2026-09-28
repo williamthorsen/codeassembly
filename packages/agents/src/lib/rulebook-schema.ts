@@ -44,7 +44,7 @@ export const RulebookFrontmatterSchema = z.object({
     .optional(),
   delivery: z
     // The message is declared on the union rather than on `DeliveryModeSchema`, whose own message a union discards.
-    // `.min(1)` rejects an empty list, which would otherwise parse and name no route at all.
+    // `.min(1)` rejects an empty list, which would otherwise parse without naming any route.
     .union([DeliveryModeSchema, z.array(DeliveryModeSchema).min(1, DELIVERY_ERROR)], { error: DELIVERY_ERROR })
     .default('ambient')
     .transform((value) => (typeof value === 'string' ? [value] : value)),
@@ -76,7 +76,10 @@ export function parseRulebookFile(content: string, sourceLabel?: string): { rule
 
 // region | Helpers
 
-/** Whether a version can occupy its own `<!-- rulebook-version: ... -->` line: non-blank, one line, closing no comment. */
+/**
+ * Whether a version can occupy its own `<!-- rulebook-version: ... -->` line: non-blank, one line, not closing a
+ * comment.
+ */
 function isRenderableVersion(version: string): boolean {
   return version.trim() !== '' && !/[\r\n]/.test(version) && !version.includes('-->');
 }

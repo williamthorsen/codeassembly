@@ -9,7 +9,7 @@ import { isEnoent } from './type-guards.ts';
  * Materializes a rendered entry tree into `destDir`: Markdown entries are written from their transformed text, assets
  * are copied verbatim from source.
  *
- * The write is byte-stable, so re-deploying unchanged content makes no filesystem change: Unchanged files are left
+ * The write is byte-stable, so re-deploying unchanged content does not change the filesystem: Unchanged files are left
  * untouched, and destination files that the source no longer contains (along with any directory left empty by their
  * removal) are pruned. Callers wanting a marker or any other per-file transform apply it to the entries first. This
  * stays the one place a rendered tree meets the filesystem.

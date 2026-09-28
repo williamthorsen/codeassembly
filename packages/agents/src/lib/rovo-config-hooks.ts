@@ -1,7 +1,7 @@
 /**
  * Managed event-hook entries within a Rovo Dev `config.yml`. CodeAssembly owns individual items of the
  * `eventHooks.events` list, interleaved with foreign items written by other tools. Ownership is per-item, identified by
- * a caller-supplied sentinel matcher: No comment fence can delimit interleaved ownership. Every function operates on a
+ * a caller-supplied sentinel matcher: A comment fence cannot delimit interleaved ownership. Every function operates on a
  * parsed `yaml` `Document` and mutates it in place via the comment-preserving Document API, so foreign items, foreign
  * comments, and unrelated keys survive untouched. File IO belongs to the caller.
  *
@@ -46,9 +46,9 @@ export class RovoConfigParseError extends Error {
 
 /**
  * Reports each supplied entry as `present` (an owned item with its name is equal to it), `drifted` (an owned item with
- * its name differs, or owned items exist under other names only), or `absent` (no owned item anywhere). The report is
- * scoped to the entries supplied; an all-present result does not imply ensure would leave the document unchanged,
- * since ensure would still drop an owned item that the caller did not supply.
+ * its name differs, or owned items exist under other names only), or `absent` (the list does not contain any owned
+ * item). The report is scoped to the entries supplied; an all-present result does not imply ensure would leave the
+ * document unchanged, since ensure would still drop an owned item that the caller did not supply.
  */
 export function checkHookEntries(
   doc: Document,
@@ -142,8 +142,8 @@ function assertParsable(doc: Document): void {
 
 /**
  * Classifies a desired entry against the owned items present, matched by name: `present` needs an equal, pristine
- * match; an owned item under its name that differs (or owned items under other names only) is `drifted`; no owned
- * item anywhere is `absent`.
+ * match; an owned item under its name that differs (or owned items under other names only) is `drifted`; a list
+ * without any owned item is `absent`.
  */
 function classify(owned: readonly ReadItem[], desired: HookEntry): ManagedEntryStatus {
   const match = owned.find((item) => item.entry.name === desired.name);
