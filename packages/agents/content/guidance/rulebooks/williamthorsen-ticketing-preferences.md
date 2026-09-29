@@ -1,6 +1,6 @@
 ---
 slug: williamthorsen-ticketing-preferences
-description: William Thorsen's preferences for how work is split across tickets and how the relationships between them are recorded.
+description: William Thorsen's preferences for how work is split across tickets, how the relationships between them are recorded, and which figures a ticket body states.
 delivery: hook
 version: '5'
 ---
