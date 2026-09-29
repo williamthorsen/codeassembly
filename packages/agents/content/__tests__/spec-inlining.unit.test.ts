@@ -115,23 +115,23 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
   name: 'next-steps-after-plan',
   heading: '## Next-steps options',
   rules: [
-    '| 3   | 🚀    | Implement   |',
-    '🎶 **Orchestrate** -> `orchestrate-dev`',
+    '| 2   | ✂️    | Split the ticket |',
+    '| 3   | 🚀    | Implement        |',
     // The Implement option's skill mapping. Without it the agent improvises "implement manually", which is the
     // ungoverned path that this option exists to replace.
     '🚀 **Implement** -> `implement-plan`',
     // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
     // enough to turn away: the round trip that the carve-out exists to prevent.
     'Render option 3 as 🔬 Investigate, without invoking a skill',
-    // The rule that a spike matches. Without it the cascade's feature-shaped rule 2 fails on an investigation and
-    // falls through to rule 3, recommending the development pipeline for work that does not produce a diff.
-    'rule 2 matches whenever rule 1 does not',
+    // The rule that a spike falls through to. Without it rule 2 can match on an investigation and propose cutting
+    // into tickets work that produces findings rather than a diff.
+    'Investigate is the fallthrough whenever rule 1 does not match',
     // Rule 1's test. Without it the rule does not state any condition at all.
     'Recommend only when you can name a load-bearing decision that the plan leaves unsettled',
     // What "unsettled" means. Without them the term is undefined and the agent falls back to instinct.
     'when it was ratified interactively',
     'from prior design work, verified against source, or copied from an established pattern',
-    // Why a refine pass cannot resolve an empirical unknown, which is what sends such plans to rule 2.
+    // Why a refine pass cannot resolve an empirical unknown, which is what sends such plans past rule 1.
     'A refine pass re-reads the plan and structurally cannot answer those',
     // The demotion of the structural triggers. Without it they are sufficient again, and every substantive plan
     // trips them.
@@ -139,9 +139,22 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // The obligation that makes the test structural rather than advisory: An agent with nothing to name cannot
     // render the recommendation. Without it rule 1 is only advice.
     '`➕` line naming the specific unsettled decision that the pass would raise',
-    // The marker rule and its fallthrough carve-out, as on `IMPLEMENT_PLAN_MENU` above.
+    // Rule 2's test. Without both halves the rule matches on size alone, which is the Orchestrate fallthrough that
+    // this option replaced, or on any seam, which cuts plans that one pass would carry.
+    'Recommend only when the plan is too large for one implement-and-review pass, and it holds two or more pieces that each ship and can be verified on their own',
+    // The same demotion for rule 2. Without it a multi-package plan is split on structure alone.
+    'none of them matches rule 2 on its own',
+    // The same obligation for rule 2. Without it the seam stays a hunch that the developer has to ask about.
+    'Being unable to write the line means rule 2 did not match',
+    // Why Implement is a safe fallthrough. Without it the agent hedges toward splitting rather than trusting the
+    // closing menu to raise the review depth.
+    "`implement-plan`'s closing menu re-decides the review depth from the realized diff",
+    // The marker rule, as on `IMPLEMENT_PLAN_MENU` above, and the fallthrough's own marker rule. Without the latter
+    // the fallthrough is either capped at ■■□, demoting a trivial plan's Implement, or free to claim ■■■ unearned.
     "The selected option's marker follows how cleanly its rule matched",
-    "Rule 3 is the cascade's fallthrough rather than a positive match",
+    'its marker follows how squarely rules 1 and 2 failed',
+    // The consent gate on the split. Without it selection creates tickets whose bodies the developer has not seen.
+    'the bodies get one confirmation before anything is created',
   ],
 };
 

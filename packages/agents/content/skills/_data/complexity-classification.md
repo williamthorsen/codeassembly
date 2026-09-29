@@ -56,4 +56,4 @@ When characteristics span two levels, prefer the higher level.
 
 Consumers above level 2 should use the level descriptions to inform their own routing logic rather than relying solely on this table.
 
-The complexity rubric and the [scope-and-deferral](scope-and-deferral.md) model compose: Complexity decides the orchestration routing (which skill picks the work up next), and scope-and-deferral decides whether the work needs its own ticket at all.
+The complexity rubric and the [scope-and-deferral](scope-and-deferral.md) model compose: Complexity decides the routing (which skill picks the work up next), and scope-and-deferral decides whether the work needs its own ticket at all.
