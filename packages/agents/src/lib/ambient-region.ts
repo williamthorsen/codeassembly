@@ -80,7 +80,7 @@ export function hasAmbientRegion(content: string): boolean {
 export function injectAmbientRegion(content: string, body: string): string {
   if (!hasAmbientRegion(content)) {
     throw new Error(
-      'No ambient region found to inject into; the guidance file contains the region only once `install` has rendered it.',
+      'The guidance file does not contain an ambient region to inject into; it contains the region only once `install` has rendered it.',
     );
   }
   // Replace via a function so that `$`-sequences in the body are not treated as replacement patterns.

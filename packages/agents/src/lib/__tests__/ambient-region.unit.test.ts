@@ -183,7 +183,7 @@ describe(injectAmbientRegion, () => {
   });
 
   it('throws when the content does not contain a region', () => {
-    expect(() => injectAmbientRegion('# Guidance\n', BODY)).toThrow(/No ambient region/);
+    expect(() => injectAmbientRegion('# Guidance\n', BODY)).toThrow(/does not contain an ambient region/);
   });
 });
 

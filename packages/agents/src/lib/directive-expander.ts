@@ -240,7 +240,7 @@ async function expandPartialWithSlot(
   if (placeholderIndex === -1) {
     if (slotLines.length > 0) {
       throw new DirectiveExpansionError(
-        `Include directive provided slot content, but partial has no <!-- children --> placeholder: ${callerPath}:${callerLineNumber} target="${path.relative(contentDir, partialPath)}" reason=slot-without-children`,
+        `Include directive provided slot content, but partial does not contain a <!-- children --> placeholder: ${callerPath}:${callerLineNumber} target="${path.relative(contentDir, partialPath)}" reason=slot-without-children`,
         'slot-without-children',
       );
     }

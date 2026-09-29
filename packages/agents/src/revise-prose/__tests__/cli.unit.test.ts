@@ -66,7 +66,7 @@ describe(parseArgs, () => {
   });
 
   it('refuses a rule naming a unit that the --unit flags do not declare', () => {
-    expect(() => parseArgs(['--rule', 'em-dash=writing'])).toThrow(/which no --unit declares/);
+    expect(() => parseArgs(['--rule', 'em-dash=writing'])).toThrow(/which is not declared by any --unit/);
   });
 
   it('refuses one rule named twice, since a rule has one unit', () => {

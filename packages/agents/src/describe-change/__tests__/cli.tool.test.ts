@@ -259,7 +259,7 @@ describe('render-titles', () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     await expect(runDescribe({ argv: ['render-titles'], cwd, dataDir: DATA_DIR, home })).rejects.toThrow(
-      /commit\.title_format: Template .* places \{scope\} and \{type\} with no literal between them/,
+      /commit\.title_format: Template .* places \{scope\} and \{type\} without a literal between them/,
     );
   });
 
@@ -290,7 +290,7 @@ describe('render-titles', () => {
     });
 
     expect(output).toMatchObject({ ticket_title: 'Add foo' });
-    expect(warnings).toEqual([expect.stringContaining('no readable work-types.json')]);
+    expect(warnings).toEqual([expect.stringContaining('work-types.json is missing or unreadable')]);
   });
 });
 
@@ -1023,7 +1023,7 @@ describe('resolve-labels', () => {
 
     expect(output).toStrictEqual({ labels: ['feature'] });
     expect(warnings).toStrictEqual([
-      'the body’s change-record block is malformed, so no entry adds a label: `title` is missing',
+      'the body’s change-record block is malformed, so the entries do not add any label: `title` is missing',
     ]);
   });
 
@@ -1037,7 +1037,7 @@ describe('resolve-labels', () => {
 
     expect(output).toStrictEqual({ labels: ['feature'] });
     expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toMatch(/^the body’s change entries are malformed, so no entry adds a label: /);
+    expect(warnings[0]).toMatch(/^the body’s change entries are malformed, so the entries do not add any label: /);
   });
 
   it('yields an empty label list when the repository does not configure a label map', async () => {
@@ -1630,7 +1630,9 @@ describe('check-merge-body', () => {
   it('refuses a body containing a block when the expected entry count is zero', async () => {
     const bodyFile = await writeBody(`Adds the parser.\n\n${MERGE_BLOCK}\n`);
 
-    await expect(runCheck(bodyFile, 0)).rejects.toThrow(/contains a change-record block, but no entry was expected/);
+    await expect(runCheck(bodyFile, 0)).rejects.toThrow(
+      /contains a change-record block, but the expected entry count is 0/,
+    );
   });
 
   it('refuses a body whose block is malformed, naming the defect', async () => {

@@ -32,7 +32,8 @@ export function detectStaleness(input: {
         path: note.path,
         rule: 'verification.unmarked',
         severity: 'warning',
-        message: 'no last-verified field; run kb-edit --verify after confirming the note still holds',
+        message:
+          'the note does not have a last-verified field; run kb-edit --verify after confirming the note still holds',
       },
     ];
   }

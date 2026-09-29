@@ -25,7 +25,7 @@ const DELIVERY_ERROR = "delivery must be 'ambient', 'hook', or 'skill', or a non
 const VERSION_TYPE_ERROR = "version must be quoted (e.g. version: '1.10'); unquoted, 1.10 is read as the number 1.1";
 
 /** The rejection reported for a `version` that cannot occupy the line naming it in deployed output. */
-const VERSION_SHAPE_ERROR = "version must be a non-blank single line containing no '-->'";
+const VERSION_SHAPE_ERROR = "version must be a non-blank single line that does not contain '-->'";
 
 /**
  * Frontmatter schema for a rulebook source file. The operational fields drive the resolver; unknown keys

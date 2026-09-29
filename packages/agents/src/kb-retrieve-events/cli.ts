@@ -155,7 +155,7 @@ export async function runRetrieveEvents(input: {
 /** Phrases the empty-result diagnostic, naming the stage at which the query lost its matches. */
 function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: number }): string {
   if (input.recalledCount === 0) {
-    return 'no notes matched the query';
+    return 'the query did not match any notes';
   }
   if (input.filteredHits === 0) {
     return 'all matches were filtered out';

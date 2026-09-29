@@ -97,13 +97,13 @@ function groupByIndex(paths: readonly string[]): Map<string, string[]> {
 /** Builds the per-path note describing any non-fatal condition, or `undefined` when the delete was clean. */
 function noteFor(fileGone: boolean, indexHit: boolean): string | undefined {
   if (!fileGone && !indexHit) {
-    return 'file already absent and no MEMORY.md line matched';
+    return 'file already absent and did not match any MEMORY.md line';
   }
   if (!fileGone) {
     return 'file already absent';
   }
   if (!indexHit) {
-    return 'no MEMORY.md line matched';
+    return 'did not match any MEMORY.md line';
   }
   return undefined;
 }

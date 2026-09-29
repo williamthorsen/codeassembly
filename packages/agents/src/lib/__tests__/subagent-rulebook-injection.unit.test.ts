@@ -140,7 +140,7 @@ describe(injectDeclaredRulebooks, () => {
     const source = '---\nname: demo-agent\nrulebooks:\n  - nmr-cheatsheet\n  - never-declared\n---\n\nBody.\n';
 
     expect(() => injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toThrow(
-      /subagents\/demo-agent\.md declares 2 unusable rulebook injection\(s\):[\s\S]*nmr-cheatsheet -- it names an ambient-only rulebook[\s\S]*never-declared -- it names no rulebook in the deployed set/,
+      /subagents\/demo-agent\.md declares 2 unusable rulebook injection\(s\):[\s\S]*nmr-cheatsheet -- it names an ambient-only rulebook[\s\S]*never-declared -- it does not name any rulebook in the deployed set/,
     );
   });
 });

@@ -26,11 +26,11 @@ export async function readNote(path: string): Promise<ReadNote> {
 export function readNoteContent(content: string): ReadNote {
   const lines = content.split('\n');
   if (lines[0] !== FENCE) {
-    return { fields: {}, body: content, bodyStartLine: 1, error: 'no frontmatter block found' };
+    return { fields: {}, body: content, bodyStartLine: 1, error: 'the note does not contain a frontmatter block' };
   }
   const endIndex = lines.findIndex((line, index) => index > 0 && line === FENCE);
   if (endIndex === -1) {
-    return { fields: {}, body: content, bodyStartLine: 1, error: 'no frontmatter block found' };
+    return { fields: {}, body: content, bodyStartLine: 1, error: 'the note does not contain a frontmatter block' };
   }
   const text = lines.slice(1, endIndex).join('\n');
   const body = lines.slice(endIndex + 1).join('\n');

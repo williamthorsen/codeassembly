@@ -87,7 +87,7 @@ function findAdjacentTokenDefects(template: string, flattened: readonly FlatNode
       continue;
     }
     defects.push(
-      `Template ${JSON.stringify(template)} places {${node.name}} and {${next.name}} with no literal between them.`,
+      `Template ${JSON.stringify(template)} places {${node.name}} and {${next.name}} without a literal between them.`,
     );
   }
   return defects;

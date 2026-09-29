@@ -71,7 +71,7 @@ async function readEntry(entry: unknown, projectRoot: string): Promise<ScopeDir 
   }
   const { name, path: declaredPath } = entry;
   if (typeof declaredPath !== 'string' || declaredPath === '') {
-    return 'has no string `path`';
+    return 'does not have a string `path`';
   }
   if ('name' in entry && (typeof name !== 'string' || name.trim() === '')) {
     return 'has a `name` that is not a non-empty string';

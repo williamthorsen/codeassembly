@@ -76,7 +76,7 @@ describe(loadNote, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok && result.reason === 'note-parse') {
-      expect(result.parseError).toBe('no frontmatter block found');
+      expect(result.parseError).toBe('the note does not contain a frontmatter block');
     }
   });
 

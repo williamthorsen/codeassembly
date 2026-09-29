@@ -126,7 +126,7 @@ describe(renderRulebookBody, () => {
 
     it('rejects a token that does not name any deployed rulebook', () => {
       expect(() => renderRulebookBody('See {rulebook:never-declared}.', 'a-rulebook', CLAUDE_CONTEXT)).toThrow(
-        /\{rulebook:never-declared\}[\s\S]*no rulebook in the deployed set/,
+        /\{rulebook:never-declared\}[\s\S]*does not name any rulebook in the deployed set/,
       );
     });
 

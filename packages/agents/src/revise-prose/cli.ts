@@ -143,7 +143,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
   for (const named of rules) {
     if (!units.has(named.unit)) {
-      throw new Error(`rule "${named.rule}" names unit "${named.unit}", which no --unit declares`);
+      throw new Error(`rule "${named.rule}" names unit "${named.unit}", which is not declared by any --unit`);
     }
   }
 

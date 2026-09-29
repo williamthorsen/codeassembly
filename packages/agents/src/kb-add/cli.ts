@@ -320,7 +320,7 @@ async function resolveKb(input: {
           message:
             resolved.registryError !== undefined
               ? `could not resolve the default knowledge base: ${resolved.registryError}`
-              : '--kb @default was given but no default_kb is configured in kb.yaml',
+              : '--kb @default was given but kb.yaml does not configure default_kb',
         },
       };
     case 'readonly-kb':

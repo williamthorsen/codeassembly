@@ -273,7 +273,9 @@ describe(selectExemplars, () => {
 
     const selection = await select({ decisions: [], files, type: 'feat', count: 1, withPair: true });
 
-    expect(selection.warnings).toStrictEqual(['Z.md: contains no agent lede, so its decision pair cannot be read']);
+    expect(selection.warnings).toStrictEqual([
+      'Z.md: does not contain an agent lede, so its decision pair cannot be read',
+    ]);
     expect(selection.exemplars[0]).not.toHaveProperty('agentLede');
   });
 

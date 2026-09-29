@@ -152,7 +152,7 @@ describe(runSelect, () => {
 
     const success = expectSuccess(result);
     expect(success.exemplars).toStrictEqual([]);
-    expect(success.diagnostic).toContain('no lede decisions were found');
+    expect(success.diagnostic).toContain('does not contain any lede decisions');
   });
 
   it('reports the floor applied by a request, so an empty draw names its cause', async () => {

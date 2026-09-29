@@ -82,8 +82,8 @@ describe(readDeclaredScopes, () => {
       scopeDirs: [{ dir: join(root, 'apps/devopticon'), name: 'devopticon' }],
       warnings: [
         `${file}: project.scopes[0] is not a mapping; skipping it`,
-        `${file}: project.scopes[1] has no string \`path\`; skipping it`,
-        `${file}: project.scopes[2] has no string \`path\`; skipping it`,
+        `${file}: project.scopes[1] does not have a string \`path\`; skipping it`,
+        `${file}: project.scopes[2] does not have a string \`path\`; skipping it`,
         `${file}: project.scopes[3] has a \`name\` that is not a non-empty string; skipping it`,
         `${file}: project.scopes[4] has an absolute path /etc; skipping it`,
         `${file}: project.scopes[5] has a path ../elsewhere outside the repository; skipping it`,

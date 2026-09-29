@@ -88,7 +88,7 @@ describe(deleteMemories, () => {
     const result = await deleteMemories({ paths: [join(memory, 'feedback-orphan.md')] });
 
     expect(result.results[0]).toMatchObject({ deleted: true, indexUpdated: false });
-    expect(result.results[0]?.note).toContain('no MEMORY.md line matched');
+    expect(result.results[0]?.note).toContain('did not match any MEMORY.md line');
     expect(await exists(join(memory, 'feedback-orphan.md'))).toBe(false);
   });
 

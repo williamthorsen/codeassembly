@@ -211,7 +211,7 @@ async function readDecision(input: {
   // A decision written by `capture-lede-decision` always includes an agent lede. A body without one was edited by hand.
   const pair = input.withPair ? extractDecisionPair(parsed.record.body) : null;
   if (input.withPair && pair === null) {
-    warnings.push(`${basename}: contains no agent lede, so its decision pair cannot be read`);
+    warnings.push(`${basename}: does not contain an agent lede, so its decision pair cannot be read`);
   }
 
   return {

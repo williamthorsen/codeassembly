@@ -486,7 +486,7 @@ describe(runCapture, () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.error).toBe('no-feedback-store');
-      expect(result.message).toBe('--store @feedback was given but no feedback_kb is configured in kb.yaml');
+      expect(result.message).toBe('--store @feedback was given but kb.yaml does not configure feedback_kb');
     }
   });
 

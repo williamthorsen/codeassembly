@@ -133,7 +133,7 @@ describe(resolveRulebookToken, () => {
       name: 'when the slug does not name a deployed rulebook, rejects as absent from the deployed set',
       slug: 'never-declared',
       rulebooks: RULEBOOKS,
-      reason: /no rulebook in the deployed set/,
+      reason: /does not name any rulebook in the deployed set/,
     },
     {
       name: 'when the target is ambient-only, rejects and names dependencies: as the alternative',

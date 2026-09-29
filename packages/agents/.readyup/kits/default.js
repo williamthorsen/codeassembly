@@ -205,7 +205,7 @@ var default_default = defineRdyKit({
           fix: `State the fact without the harness path, or record it in that harness's own guidance file; one body of text serves every harness, so wiring owned by one of them misleads the rest`
         },
         {
-          name: `${GUIDANCE_PATH} hosts no rulebook region`,
+          name: `${GUIDANCE_PATH} doesn't host any rulebook region`,
           severity: "recommend",
           skip: () => fileExists(GUIDANCE_PATH) ? false : `${GUIDANCE_PATH} is absent`,
           check: () => {
@@ -247,7 +247,7 @@ function describeCommitCount(count) {
 }
 function describeImportTargets(resolvedPaths) {
   if (resolvedPaths.length === 0) {
-    return "no `@` import found";
+    return "didn't find any `@` import";
   }
   return `imports resolve to ${resolvedPaths.map((path) => relative(process.cwd(), path)).join(", ")}`;
 }

@@ -96,7 +96,10 @@ export async function runRelay(input: {
 
   const mapping = resolveHookMapping({ harness: args.harness, hook: args.hook });
   if (mapping === undefined) {
-    return failure('unknown-hook', `${args.harness} hook "${args.hook}" maps to no event type; relaying nothing`);
+    return failure(
+      'unknown-hook',
+      `${args.harness} hook "${args.hook}" does not map to any event type; relaying nothing`,
+    );
   }
 
   const payload = parseHookPayload({ stdin: input.stdin, mapping });

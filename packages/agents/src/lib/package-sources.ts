@@ -176,7 +176,7 @@ function readContentPath(name: string, manifest: unknown): string {
   const content = findContentPath(name, manifest);
   if (content === undefined) {
     throw new Error(
-      `Package "${name}" declares no CodeAssembly content. A package that ships content sets "codeassembly": { "content": "<dir>" } in its package.json, and includes that directory in its published "files".`,
+      `Package "${name}" does not declare any CodeAssembly content. A package that ships content sets "codeassembly": { "content": "<dir>" } in its package.json, and includes that directory in its published "files".`,
     );
   }
   return content;

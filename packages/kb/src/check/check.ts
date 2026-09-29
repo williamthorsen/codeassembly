@@ -83,7 +83,7 @@ function registryFindings(error: string | undefined): Finding[] {
       scope: 'vault',
       rule: 'wikilinks.registry-unloadable',
       severity: 'error',
-      message: `no store-qualified link can resolve: ${error}`,
+      message: `store-qualified links cannot resolve: ${error}`,
     },
   ];
 }

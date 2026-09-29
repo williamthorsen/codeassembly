@@ -5,7 +5,7 @@ import type { SearchHit } from '../kb-search/types.ts';
 import { normalizeHits } from './normalize.ts';
 import type { AssertionCandidate } from './types.ts';
 
-const NO_RECORD_TYPE_DIAGNOSTIC = 'note has no recordType; degraded to a low-signal candidate';
+const NO_RECORD_TYPE_DIAGNOSTIC = 'note does not declare a recordType; degraded to a low-signal candidate';
 
 /**
  * Projects notes that do not declare a usable `recordType` into degraded candidates, so that recall still returns a

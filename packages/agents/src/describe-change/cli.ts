@@ -740,7 +740,7 @@ async function runCheckMergeBody(
     throw new Error(`the merge body's change-record block is malformed: ${reading.defect}`);
   }
   if (reading.kind === 'read' && args.entryCount === 0) {
-    throw new Error('the merge body contains a change-record block, but no entry was expected');
+    throw new Error('the merge body contains a change-record block, but the expected entry count is 0');
   }
   const found = reading.kind === 'absent' ? 0 : reading.block.entries.length;
   if (found !== args.entryCount) {
@@ -842,7 +842,7 @@ async function runRenderBlock(
 async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplates(input);
   if (taxonomy === null) {
-    warnings.push(`no readable work-types.json under ${input.dataDir}; templates are not verified`);
+    warnings.push(`work-types.json is missing or unreadable under ${input.dataDir}; templates are not verified`);
   }
   return {
     output: {
@@ -908,9 +908,13 @@ async function runResolveLabels(
 
   const reading = readChangeRecordBlock(body);
   if (reading.kind === 'malformed') {
-    warnings.push(`the body’s change-record block is malformed, so no entry adds a label: ${reading.defect}`);
+    warnings.push(
+      `the body’s change-record block is malformed, so the entries do not add any label: ${reading.defect}`,
+    );
   } else if (reading.kind === 'read' && reading.entriesDefect !== undefined) {
-    warnings.push(`the body’s change entries are malformed, so no entry adds a label: ${reading.entriesDefect}`);
+    warnings.push(
+      `the body’s change entries are malformed, so the entries do not add any label: ${reading.entriesDefect}`,
+    );
   }
   const entries = reading.kind === 'read' ? (reading.block.entries ?? []) : [];
   const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));

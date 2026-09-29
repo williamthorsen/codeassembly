@@ -159,7 +159,7 @@ export function resolveRulebookToken(
   }
   const target = rulebooks.get(slug);
   if (target === undefined) {
-    return { kind: 'rejected', reason: 'names no rulebook in the deployed set' };
+    return { kind: 'rejected', reason: 'does not name any rulebook in the deployed set' };
   }
   if (!target.skill) {
     return {

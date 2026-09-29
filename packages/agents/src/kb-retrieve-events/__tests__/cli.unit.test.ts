@@ -96,7 +96,7 @@ describe(runRetrieveEvents, () => {
     });
 
     expect(result.candidates).toEqual([]);
-    expect(result.diagnostic).toBe('no notes matched the query');
+    expect(result.diagnostic).toBe('the query did not match any notes');
   });
 
   it('reports an unregistered-store diagnostic when --store does not name a registry entry', async () => {

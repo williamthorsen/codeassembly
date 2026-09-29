@@ -139,7 +139,7 @@ export async function runSelect(input: {
   const dataDir = args.dataDir ?? input.defaultDataDir;
   const workTypes = await loadWorkTypes(dataDir);
   if (workTypes === null) {
-    return { ok: false, error: 'no-taxonomy', message: `no readable work-types.json under ${dataDir}` };
+    return { ok: false, error: 'no-taxonomy', message: `work-types.json is missing or unreadable under ${dataDir}` };
   }
 
   const resolved = resolveRequest(args.request, workTypes);
@@ -184,8 +184,8 @@ export async function runSelect(input: {
 function describeEmptyResult(storeName: string, minQuality: LedeQuality | null): string {
   const corpus = `the "${storeName}" corpus`;
   return minQuality === null
-    ? `no lede decisions were found in ${corpus}`
-    : `no lede decisions rated ${minQuality} or better were found in ${corpus}`;
+    ? `${corpus} does not contain any lede decisions`
+    : `${corpus} does not contain any lede decisions rated ${minQuality} or better`;
 }
 
 /**

@@ -27,6 +27,6 @@ export function formatRoleFailure(resolved: RoleFailure): { error: RoleWording['
     message:
       resolved.registryError !== undefined
         ? `could not resolve the ${role.label} event store: ${resolved.registryError}`
-        : `--store ${role.sentinel} was given but no ${role.key} is configured in kb.yaml`,
+        : `--store ${role.sentinel} was given but kb.yaml does not configure ${role.key}`,
   };
 }

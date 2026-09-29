@@ -171,7 +171,7 @@ describe(renderSkillDirectory, () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\n## {tool:Read} return parsing\n\n[x](#read-return-parsing)\n' });
 
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
-      /#read-return-parsing -- names no heading/,
+      /#read-return-parsing -- does not name any heading/,
     );
   });
 

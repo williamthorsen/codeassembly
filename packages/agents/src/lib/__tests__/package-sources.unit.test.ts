@@ -103,7 +103,7 @@ describe(resolvePackageSources, () => {
     await installPackage(baseDir, '@ca-fixture/plain', {});
 
     await expect(resolvePackageSources(['@ca-fixture/plain'], baseDir)).rejects.toThrow(
-      /"@ca-fixture\/plain" declares no CodeAssembly content/,
+      /"@ca-fixture\/plain" does not declare any CodeAssembly content/,
     );
   });
 

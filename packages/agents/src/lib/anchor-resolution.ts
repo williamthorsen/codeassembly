@@ -66,7 +66,7 @@ export function assertAnchorsResolve(body: string, sourceLabel: string): void {
 
     const matches = headings.get(target.slice(1)) ?? 0;
     if (matches === 0) {
-      rejections.push(`  ${target} -- names no heading`);
+      rejections.push(`  ${target} -- does not name any heading`);
     } else if (matches > 1) {
       rejections.push(`  ${target} -- names ${matches} headings`);
     }

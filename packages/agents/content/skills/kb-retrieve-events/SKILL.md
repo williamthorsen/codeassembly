@@ -81,7 +81,7 @@ When the helper returns a `diagnostic` without any candidates, report the empty 
 - `no knowledge base configured or discovered`: The helper did not find a `.kb/` folder, and a `kb.yaml` registry is not configured.
 - `store "<name>" is not registered in kb.yaml`: The named `--store` did not match any registry entry.
 - `registry invalid: …`: The only configured `kb.yaml` registry failed to load; this is a setup problem to fix, not a missing-events outcome.
-- `no notes matched the query`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`.
+- `the query did not match any notes`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`.
 - `all matches were filtered out`: Matches were found but every one was excluded by `--tag`; suggest dropping or loosening the filter.
 - `all matches were below the --min-impact threshold of <level>`: Events matched, but every one was rated below the `--min-impact` floor or was unrated; suggest lowering or dropping the filter.
 - `matches were found but none are events; use kb-retrieve for assertion recall`: The query matched only non-event records; the reader likely wants `kb-retrieve`.

@@ -52,7 +52,7 @@ export function taxonomyFindings(input: {
   for (const domain of [...observed].toSorted()) {
     if (!taxonomy.has(domain)) {
       findings.push(
-        buildFinding(taxonomyPath, 'undeclared', `folder "${domain}" contains notes but no domain declares it`),
+        buildFinding(taxonomyPath, 'undeclared', `folder "${domain}" contains notes but is not declared as a domain`),
       );
     }
   }
@@ -64,7 +64,9 @@ export function taxonomyFindings(input: {
     if (holdsNote(domain, observed) || matcher.isExcluded(`${ASSERTIONS_DIR}/${domain}`)) {
       continue;
     }
-    findings.push(buildFinding(taxonomyPath, 'unused', `domain "${domain}" is declared but contains no notes`));
+    findings.push(
+      buildFinding(taxonomyPath, 'unused', `domain "${domain}" is declared but does not contain any notes`),
+    );
   }
 
   for (const domain of declared) {

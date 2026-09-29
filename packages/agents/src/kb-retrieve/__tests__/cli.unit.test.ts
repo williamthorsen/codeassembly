@@ -162,7 +162,7 @@ describe(runRetrieve, () => {
 
     expect(result.candidates).toEqual([]);
     expect(result.warnings).toEqual([]);
-    expect(result.diagnostic).toBe('no notes matched the query');
+    expect(result.diagnostic).toBe('the query did not match any notes');
   });
 
   it('distinguishes filtered-out matches from a no-hit query in the diagnostic', async () => {
@@ -262,7 +262,7 @@ describe(runRetrieve, () => {
     expect(result.candidates).toEqual([]);
     expect(result.scopedKbs).toEqual([]);
     expect(result.warnings).toEqual([`registry KB "ghost-vault" path does not exist: ${ghostPath}`]);
-    expect(result.diagnostic).toBe('no notes matched the query');
+    expect(result.diagnostic).toBe('the query did not match any notes');
   });
 
   it('returns candidates while warning about a dead-path entry alongside a live KB', async () => {

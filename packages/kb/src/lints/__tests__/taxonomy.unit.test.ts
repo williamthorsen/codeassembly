@@ -108,9 +108,9 @@ describe(taxonomyFindings, () => {
     expect(
       findings.filter((finding) => finding.rule === 'taxonomy.undeclared').map((finding) => finding.message),
     ).toEqual([
-      'folder "engineering" contains notes but no domain declares it',
-      'folder "languages" contains notes but no domain declares it',
-      'folder "tools" contains notes but no domain declares it',
+      'folder "engineering" contains notes but is not declared as a domain',
+      'folder "languages" contains notes but is not declared as a domain',
+      'folder "tools" contains notes but is not declared as a domain',
     ]);
   });
 });

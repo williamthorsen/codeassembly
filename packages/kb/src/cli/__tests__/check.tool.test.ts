@@ -55,7 +55,7 @@ describe(run, () => {
     const result = await run({ argv: ['check'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toBe('no notes matched content/**/*.md (0 checked)\n');
+    expect(result.stdout).toBe('content/**/*.md did not match any notes (0 checked)\n');
     expect(result.stdout).not.toContain('✓');
   });
 
@@ -267,7 +267,7 @@ describe('kb check targeting', () => {
     const result = await run({ argv: ['check', 'content/assets'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('no notes matched the given paths');
+    expect(result.stdout).toContain('the given paths did not match any notes');
     expect(result.stdout).not.toContain('content/**/*.md');
   });
 
@@ -384,7 +384,7 @@ describe('kb check vault-scoped findings', () => {
 
     const result = await run({ argv: ['check'], cwd: store });
 
-    expect(result.stdout).toContain('no notes matched content/**/*.md (0 checked)');
+    expect(result.stdout).toContain('content/**/*.md did not match any notes (0 checked)');
     expect(result.stdout).toContain('taxonomy.undeclared');
     expect(result.stdout).toContain('in 0 notes');
   });
@@ -458,7 +458,7 @@ function stubVaultFinding(): void {
           scope: 'vault',
           rule: 'taxonomy.undeclared',
           severity: 'warning',
-          message: 'folder "engineering" contains notes but no domain declares it',
+          message: 'folder "engineering" contains notes but is not declared as a domain',
         },
       ],
     };

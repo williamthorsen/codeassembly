@@ -18,7 +18,7 @@ describe(assertAnchorsResolve, () => {
 
     it('rejects an anchor that does not name any heading', () => {
       const body = '## Option format\n\nSee [the events](#lifecycle-events).\n';
-      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/#lifecycle-events -- names no heading/);
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/#lifecycle-events -- does not name any heading/);
     });
 
     it('rejects an anchor naming more than one heading', () => {
@@ -58,7 +58,7 @@ describe(assertAnchorsResolve, () => {
   describe('regions that illustrate rather than declare', () => {
     it('does not offer a heading inside a fence as a target', () => {
       const body = '```markdown\n## Specification consistency\n```\n\n[x](#specification-consistency)\n';
-      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/names no heading/);
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/does not name any heading/);
     });
 
     it('does not scan a link inside a fence', () => {
@@ -73,7 +73,7 @@ describe(assertAnchorsResolve, () => {
 
     it('does not count a comment line in frontmatter as a heading', () => {
       const body = '---\n# Deprecated key\nname: a-skill\n---\n\n[x](#deprecated-key)\n';
-      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/names no heading/);
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/does not name any heading/);
     });
 
     it('scans a body opening on a thematic break, whose delimiters do not enclose any YAML key', () => {
@@ -88,7 +88,7 @@ describe(assertAnchorsResolve, () => {
 
     it('does not offer a heading inside a tilde fence as a target', () => {
       const body = '~~~markdown\n## Sample heading\n~~~\n\n[x](#sample-heading)\n';
-      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/names no heading/);
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/does not name any heading/);
     });
 
     it('keeps a shorter fence run inside a longer one as content', () => {
@@ -122,7 +122,7 @@ describe(assertAnchorsResolve, () => {
       // Telling an indented block from a nested list item needs block-level parsing, and a wrong call there would
       // blank a list item's real anchor. The specification records the exemption boundary.
       const body = 'Example:\n\n    [x](#nowhere)\n';
-      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/#nowhere -- names no heading/);
+      expect(() => assertAnchorsResolve(body, LABEL)).toThrow(/#nowhere -- does not name any heading/);
     });
 
     it('scans a body whose leading delimiter is never closed', () => {

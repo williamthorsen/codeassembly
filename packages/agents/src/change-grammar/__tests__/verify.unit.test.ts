@@ -45,7 +45,7 @@ describe(verify, () => {
       const defects = verify('{scope}{type}: {title}', TAXONOMY);
 
       expect(defects).toContain(
-        'Template "{scope}{type}: {title}" places {scope} and {type} with no literal between them.',
+        'Template "{scope}{type}: {title}" places {scope} and {type} without a literal between them.',
       );
     });
 

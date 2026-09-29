@@ -100,11 +100,11 @@ function groupByPath(findings: readonly Finding[]): Map<string, Finding[]> {
 function zeroMatchLine(scope: CheckScope, targets: readonly string[]): string {
   switch (scope) {
     case 'patterns':
-      return 'no notes matched the given paths (0 checked)';
+      return 'the given paths did not match any notes (0 checked)';
     case 'vs':
       return 'no changed notes to check (0 checked)';
     case 'vault':
-      return `no notes matched ${targets.join(', ')} (0 checked)`;
+      return `${targets.join(', ')} did not match any notes (0 checked)`;
   }
 }
 
