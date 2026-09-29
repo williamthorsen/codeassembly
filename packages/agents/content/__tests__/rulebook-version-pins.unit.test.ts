@@ -40,6 +40,10 @@ interface RulePin {
 /** The version that each rulebook declares, and the deployed body against which that version is pinned. */
 const PINS = new Map<string, RulebookPin>([
   [
+    'accessibility-conventions',
+    { bodyHash: 'a36fdbc73a8052a77888144492f3ef612b3f3d78ad97c249b703e725f114d31a', version: '1' },
+  ],
+  [
     'codeassembly-content-specification',
     { bodyHash: 'c60633ed692c42fe6ce70b46831f101db121610813c60e813b95400efe8ec601', version: '24' },
   ],
