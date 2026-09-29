@@ -3077,6 +3077,11 @@ rejections:
     ground: 'not prose: memory-file content written by a test fixture'
   - rule: negative-quantifier
     rule-version: '2'
+    file: packages/agents/src/feedback-memories/__tests__/report.unit.test.ts
+    phrase: No feedback memories found.
+    ground: asserted CLI output produced by source outside the batch
+  - rule: negative-quantifier
+    rule-version: '2'
     file: packages/agents/src/feedback-memories/report.ts
     phrase: No feedback memories found.
     ground: a status label without a finite verb, left as a verbless label
@@ -3500,6 +3505,11 @@ rejections:
     file: packages/kb/src/cli/__tests__/select-kb-prompt.unit.test.ts
     phrase: '(none): no default'
     ground: asserted prompt output, a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/kb/src/cli/__tests__/set-default.unit.test.ts
+    phrase: No changes made.
+    ground: asserted CLI output produced by source outside the batch
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/kb/src/cli/commands/check.ts
