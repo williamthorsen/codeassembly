@@ -61,6 +61,13 @@ const LEDE_SOURCE_PHRASES: ReadonlyArray<string> = [
   'write nothing of your own into it',
 ];
 
+/**
+ * Phrases that a restored type ask contains. The ask let a close call under the work-type test reach the developer,
+ * who holds less of the evidence than the session that applied the test. Lowercased, so that a sentence's opening
+ * capital still matches.
+ */
+const TYPE_ASK_PHRASES: ReadonlyArray<string> = ['ask the developer only when', 'genuinely close'];
+
 /** Every subagent that this skill may dispatch, matched against the tokens that the installer rewrites. */
 const PERMITTED_SUBAGENTS: ReadonlyArray<string> = ['entry-drafter'];
 
@@ -118,6 +125,17 @@ describe('summarize-change contract', () => {
       'context for the reader who meets the change without the entries. A skill left free to compose it writes a ' +
       `plausible one weighted by this session's judgment. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
+  });
+
+  it('decides each type rather than asking the developer', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const found = TYPE_ASK_PHRASES.filter((phrase) => text.includes(phrase));
+
+    const message =
+      'A type is a determination by the work-type test, which this session applies with the diff in hand. An ask ' +
+      `hands the developer a close call with less of the evidence. These phrases are back:\n  ${found.join('\n  ')}`;
+    expect(text).toContain("set `type` to the test's result");
+    expect(found, message).toEqual([]);
   });
 
   it('dispatches the drafter alone', async () => {
