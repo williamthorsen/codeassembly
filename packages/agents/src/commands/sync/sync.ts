@@ -89,7 +89,7 @@ export async function syncCommand(
  * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
  * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Writes ambient blocks into
  * the ambient region of each targeted harness's guidance file (e.g. `~/.claude/CLAUDE.md`), which the harness loads
- * mechanically, and does not write any agent-read host file. When the home declaration is absent, changes nothing and
+ * mechanically. It does not write any agent-read host file. When the home declaration is absent, changes nothing and
  * returns the outcome naming `init --global` as the remedy.
  */
 export async function syncGlobalCommand(
