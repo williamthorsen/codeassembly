@@ -56,6 +56,8 @@
 
 **Per-task README guidance:** When a task writes or revises a README, consult {rulebook:readme-conventions} while planning the task. Its key decisions name the rulebook, the table row that fits the README, and what that row says the README leads with, keeps, and omits, so that the constraints are available to an implementer that cannot load the rulebook.
 
+**Per-task interface guidance:** When a task defines colour tokens, styles text, or builds a page, a prototype, or a UI component, consult {rulebook:accessibility-conventions} while planning the task. Its key decisions state the rulebook's contrast and size floors and the contrast check, so that the constraints are available to an implementer that cannot load the rulebook.
+
 **Per-task invoked-skill guidance:** When a task invokes a skill, read that skill while planning the task and record in the task's key decisions what the skill declares under three headings: its ordering relative to other skills, its default target when the task does not pass an argument, and the preconditions that it states. Read every skill that the plan's tasks name, and record a skill declaring none of the three as declaring none, so that a reader can tell a completed check from an absent one. A skill that cannot be read is recorded as unread, never as declaring none. When an ordering constraint names a skill that the plan's tasks do not invoke, add the task rather than record the constraint alone.
 
 **Resources that the user supplies:** Check a resource's availability before naming it as a risk. When a step needs something that only the user can supply, such as a credential or a running service, the step states the ask; a plan never writes a degraded fallback as a sanctioned path.
