@@ -375,7 +375,8 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    // parallelReview should remain in its initial state from phase_started (the fold doesn't set coderFixCycleRan without coder_fix_started)
+    // parallelReview should remain in its initial state from phase_started (the fold doesn't set coderFixCycleRan
+    // without coder_fix_started)
     expect(result.phases.parallelReview).toMatchObject({
       status: 'in_progress',
       coderFixCycleRan: false,

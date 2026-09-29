@@ -30,8 +30,8 @@ export function describeHarnessTargeting(targets: ResolvedHarnessTargets): strin
  * `--harness all` means "do not narrow" rather than "every known harness".
  *
  * Detection reads the home directory rather than `cwd`, because a harness home is created by that harness's own
- * installer while a repository doesn't have a reason to hold one. A declaration is honored even when it resolves to an empty
- * set: A run that deploys nowhere on purpose is distinct from one that never declared a target.
+ * installer while a repository doesn't have a reason to hold one. A declaration is honored even when it resolves to an
+ * empty set: A run that deploys nowhere on purpose is distinct from one that never declared a target.
  *
  * `options.cwd` is the domain's base: the project root for a repo sync, the home directory for a global one or for
  * `install`.

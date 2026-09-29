@@ -267,7 +267,10 @@ function describeFile(file: string, context: ResolutionContext, measures: FileMe
   };
 }
 
-/** Returns the line ranges of every region that a deployment rewrites, running to the end for a region without an end marker. */
+/**
+ * Returns the line ranges of every region that a deployment rewrites, running to the end for a region without an end
+ * marker.
+ */
 function findGeneratedRegions(content: string): LineRange[] {
   const lines = content.split('\n');
   const regions: LineRange[] = [];

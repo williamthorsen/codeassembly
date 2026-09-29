@@ -211,7 +211,8 @@ describe(renderSkillDirectory, () => {
   });
 
   it('rejects a hook declared by both the host and an included partial', async () => {
-    // Expansion runs first, so the partial's declaration is the host's own: two slots of one name, without a fill order.
+    // Expansion runs first, so the partial's declaration is the host's own: two slots of one name, without a fill
+    // order.
     await writeSkill({
       'SKILL.md': '# Demo\n\n<!-- guidance-hook: preferences -->\n\n<!-- include: _partials/hook.md / -->\n',
       '_partials/hook.md': '<!-- guidance-hook: preferences -->\n',

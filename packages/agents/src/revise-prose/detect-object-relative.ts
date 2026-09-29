@@ -1029,8 +1029,8 @@ function isMannerAdverb(word: string): boolean {
 
 /**
  * Returns the index of the verb carried by a chain when that verb closes a relative clause, or undefined if the
- * clause doesn't have a gap for the head noun to fill. A passive has promoted its own object, so it closes one only when
- * something else leaves a gap open; an intransitive verb closes one only when it strands a preposition.
+ * clause doesn't have a gap for the head noun to fill. A passive has promoted its own object, so it closes one only
+ * when something else leaves a gap open; an intransitive verb closes one only when it strands a preposition.
  */
 function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): number | undefined {
   const { carriedIndex, isPassive } = chain;

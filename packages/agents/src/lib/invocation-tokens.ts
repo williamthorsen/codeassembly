@@ -5,8 +5,7 @@
  * resolver's missing-artifact check, so the grammar does not police existence.
  *
  * Because `{rulebook?:<slug>}` matches although a body must not contain one, `rewriteInvocationTokens` rejects it by
- * name.
- * A pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
+ * name. A pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
  *
  * The constant is global and shared: `String.replace` resets `lastIndex` and `String.matchAll` clones the regex, so
  * neither call leaks match state to the other.

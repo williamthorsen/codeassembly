@@ -22,7 +22,8 @@ export interface ScopeResult {
  * `allKbs` widens scope to every entry in the merged `kb.yaml` registry. A KB that is both discovered and registered
  * is added to scope once, de-duplicated by absolute path.
  *
- * Degrades a malformed or unreadable registry to an empty list of registry entries, and records its message in `registryError`.
+ * Degrades a malformed or unreadable registry to an empty list of registry entries, and records its message in
+ * `registryError`.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read; it defaults to the real `$HOME`
  * and exists so that tests can isolate registry resolution from the developer's environment.

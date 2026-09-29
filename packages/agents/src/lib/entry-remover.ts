@@ -5,7 +5,10 @@ import { detectDrift } from './manifest.ts';
 import type { ReportLine } from './report-line.ts';
 import type { ManifestEntry } from './types.ts';
 
-/** Fate of an owned manifest entry during removal: delete it, keep it (user-modified, without force), or note it is already gone from disk. */
+/**
+ * Fate of an owned manifest entry during removal: delete it, keep it (user-modified, without force), or note it is
+ * already gone from disk.
+ */
 export type OwnedEntryVerdict = 'remove' | 'retain' | 'absent';
 
 /** Options controlling orphan pruning, mirroring the install flags that govern it. */

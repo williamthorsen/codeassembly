@@ -7,7 +7,9 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { collectProse, NotARepositoryError, type ProseCollection } from '../collect-prose.ts';
 
-/** The fixture tree, written into a throwaway repository so that the sweep does not run against the working checkout. */
+/**
+ * The fixture tree, written into a throwaway repository so that the sweep does not run against the working checkout.
+ */
 const FIXTURE_FILES: Readonly<Record<string, string>> = {
   '.agents/revise-prose.yaml': 'units: {}\nrejections:\n  - ground: Recorded prose the sweep may not edit.\n',
   '.claude/skills/deployed/SKILL.md': 'Deployed prose the sweep may not edit.\n',
@@ -233,7 +235,9 @@ describe(collectProse, () => {
 
   // region | Helpers
 
-  /** Sweeps the fixture repository, anchoring `home` at the scratch tree so the run does not read the real preferences. */
+  /**
+   * Sweeps the fixture repository, anchoring `home` at the scratch tree so the run does not read the real preferences.
+   */
   async function sweep(paths: readonly string[] = []): Promise<ProseCollection> {
     return collectProse({ root: scratch, paths, home: scratch });
   }

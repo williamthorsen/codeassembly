@@ -13,8 +13,8 @@ import { isEnoent } from './type-guards.ts';
  * namespace directory.
  *
  * A source that doesn't ship a `skills/` directory renders to nothing, which is the ordinary case: most sources ship
- * skills and subagents alone. That is not an error, unlike the library's own missing `skills/`, whose absence leaves every
- * skill without the reference files that it reads at runtime.
+ * skills and subagents alone. That is not an error, unlike the library's own missing `skills/`, whose absence leaves
+ * every skill without the reference files that it reads at runtime.
  */
 export async function renderSourceSupport(
   sourceDir: string,
@@ -111,8 +111,8 @@ export async function listUndeclaredSourceSupport(
 
 /**
  * Walks one level under `sourcesRoot`, accumulating what isn't claimed by any surviving source and recursing into any
- * directory that leads to one. Reports whether the level is absent, holds something a source claims, or survives holding
- * nothing. The last of these lets a caller retire a scope directory emptied by its final package.
+ * directory that leads to one. Reports whether the level is absent, holds something a source claims, or survives
+ * holding nothing. The last of these lets a caller retire a scope directory emptied by its final package.
  *
  * A level counts as retained when a surviving name is at or under it, whether or not that name is on disk yet, so
  * the answer describes the tree after delivery rather than before it.

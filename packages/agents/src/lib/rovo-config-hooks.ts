@@ -1,8 +1,8 @@
 /**
  * Managed event-hook entries within a Rovo Dev `config.yml`. CodeAssembly owns individual items of the
  * `eventHooks.events` list, interleaved with foreign items written by other tools. Ownership is per-item, identified by
- * a caller-supplied sentinel matcher: A comment fence cannot delimit interleaved ownership. Every function operates on a
- * parsed `yaml` `Document` and mutates it in place via the comment-preserving Document API, so foreign items, foreign
+ * a caller-supplied sentinel matcher: A comment fence cannot delimit interleaved ownership. Every function operates on
+ * a parsed `yaml` `Document` and mutates it in place via the comment-preserving Document API, so foreign items, foreign
  * comments, and unrelated keys survive untouched. File IO belongs to the caller.
  *
  * The schema is the one that real configs use: `eventHooks.events` is a YAML list of `{name, commands}` items, where

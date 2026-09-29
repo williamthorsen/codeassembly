@@ -459,7 +459,10 @@ async function readEntriesFile(input: { cwd: string; filePath: string }): Promis
   return read.entries;
 }
 
-/** Reads the override flags that `render-block` and `resolve-effective-record` share. A blank value does not set an override. */
+/**
+ * Reads the override flags that `render-block` and `resolve-effective-record` share. A blank value does not set an
+ * override.
+ */
 function readOverrideFlags(flags: readonly MatchedFlag[]): RecordOverrides {
   const values = valueFlagMap(flags);
   const scope = values['override-scope']?.trim();
@@ -838,7 +841,10 @@ async function runRenderBlock(
   return { output: { block: renderChangeRecordBlock(block) }, warnings: [] };
 }
 
-/** Renders every surface's title from the record, warning rather than refusing when a taxonomy is not readable to verify the templates. */
+/**
+ * Renders every surface's title from the record, warning rather than refusing when a taxonomy is not readable to verify
+ * the templates.
+ */
 async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplates(input);
   if (taxonomy === null) {

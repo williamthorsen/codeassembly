@@ -14,7 +14,10 @@ import { scoreRun, WEIGHTS } from '../demo-scorer.ts';
 
 const NOW = new Date('2026-04-19T00:00:00Z');
 
-/** Builds a run status from per-signal inputs. When the caller doesn't pass any override, `recent` is the only signal that the status sets. */
+/**
+ * Builds a run status from per-signal inputs. When the caller doesn't pass any override, `recent` is the only signal
+ * that the status sets.
+ */
 function buildStatus(
   overrides: {
     status?: RunStatus;
@@ -211,7 +214,8 @@ describe('scoreRun', () => {
         hasParallelReview: true,
       });
       const result = scoreRun(status, buildEvents(10), NOW);
-      // substantiveFindings implies parallelReview presence but not architecture/planning, so the status doesn't set fullPipeline.
+      // substantiveFindings implies parallelReview presence but not architecture/planning, so the status doesn't set
+      // fullPipeline.
       expect(result.score).toBe(WEIGHTS.substantiveFindings);
     });
 

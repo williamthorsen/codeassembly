@@ -7,9 +7,9 @@ import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 const execFileAsync = promisify(execFile);
 
 /**
- * Resolves the current branch name via `git -C {cwd} branch --show-current`. Throws when git fails: a missing git binary,
- * or a `cwd` outside a repository. A detached HEAD is not a failure: git reports an empty string, which is returned
- * verbatim so that each caller decides whether to refuse it or fall back.
+ * Resolves the current branch name via `git -C {cwd} branch --show-current`. Throws when git fails: a missing git
+ * binary, or a `cwd` outside a repository. A detached HEAD is not a failure: git reports an empty string, which is
+ * returned verbatim so that each caller decides whether to refuse it or fall back.
  */
 export async function resolveCurrentBranch(cwd: string): Promise<string> {
   try {

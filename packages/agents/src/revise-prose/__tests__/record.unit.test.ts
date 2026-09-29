@@ -652,7 +652,9 @@ function fold(overrides: Partial<RunFold>): RunFold {
   };
 }
 
-/** Builds a fold rejection, which does not declare a version; the helper derives it from the fold's entry for its rule. */
+/**
+ * Builds a fold rejection, which does not declare a version; the helper derives it from the fold's entry for its rule.
+ */
 function foldRejection(overrides: Partial<FoldRejection> = {}): FoldRejection {
   return {
     rule: 'em-dash',

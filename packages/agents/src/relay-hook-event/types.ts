@@ -6,7 +6,8 @@ import type { HarnessId } from '../lib/types.ts';
  * One relayed hook: the event type that it becomes, and the payload keys copied into the event body.
  *
  * Discriminators are copied verbatim, in each harness's own shape: Claude at the payload's top level, Rovo nested
- * under `attributes`. Only the harness knows what its keys mean, and the harnesses don't publish a mapping between them.
+ * under `attributes`. Only the harness knows what its keys mean, and the harnesses don't publish a mapping between
+ * them.
  */
 export interface HookMapping {
   /** The event type that the hook is relayed as. */

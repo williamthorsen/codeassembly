@@ -184,9 +184,8 @@ function readContentPath(name: string, manifest: unknown): string {
 
 /**
  * Reads the direct dependency names declared by the project at `baseDir`, or nothing when it does not have a readable
- * manifest.
- * Direct dependencies only: Guidance is something a project opts into by depending on the package that ships it, and
- * pnpm's strict layout would not expose a transitive package at the probed paths anyway.
+ * manifest. Direct dependencies only: Guidance is something a project opts into by depending on the package that ships
+ * it, and pnpm's strict layout would not expose a transitive package at the probed paths anyway.
  */
 async function readDirectDependencies(baseDir: string): Promise<ReadonlyArray<string>> {
   const raw = await readFileIfPresent(path.join(baseDir, 'package.json'));

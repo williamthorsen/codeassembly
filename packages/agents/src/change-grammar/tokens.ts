@@ -55,8 +55,8 @@ export function normalizeChangeRecord(record: ChangeRecord): ChangeRecord {
 
 /**
  * Splits a scope value into the workspaces that it names, in first-occurrence order, dropping the empty names, the
- * wildcard, and the duplicates. A value that leaves nothing behind does not name a scope, which is how a whole-value `*`
- * normalizes away and how `agents,*` reads as `agents`.
+ * wildcard, and the duplicates. A value that leaves nothing behind does not name a scope, which is how a whole-value
+ * `*` normalizes away and how `agents,*` reads as `agents`.
  */
 export function splitScopes(scope: string | undefined): string[] {
   if (scope === undefined) {

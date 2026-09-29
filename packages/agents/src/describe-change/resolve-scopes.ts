@@ -7,8 +7,8 @@ import { ROOT_SCOPE } from '../change-grammar/tokens.ts';
 /**
  * Discovers the workspace directories that `projectRoot` declares, as absolute paths.
  *
- * A root that doesn't declare a pnpm workspace has none, as in a repository on another package manager. Its scopes are then
- * the directories that it declares, if any.
+ * A root that doesn't declare a pnpm workspace has none, as in a repository on another package manager. Its scopes are
+ * then the directories that it declares, if any.
  */
 export function discoverWorkspaceDirs(projectRoot: string): string[] {
   return isMonorepoRoot(projectRoot) ? getWorkspacePackageDirs(projectRoot) : [];
