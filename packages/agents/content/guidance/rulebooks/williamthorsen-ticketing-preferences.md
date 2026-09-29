@@ -2,7 +2,7 @@
 slug: williamthorsen-ticketing-preferences
 description: William Thorsen's preferences for how work is split across tickets and how the relationships between them are recorded.
 delivery: hook
-version: '4'
+version: '5'
 ---
 
 # William Thorsen's ticketing preferences
@@ -16,3 +16,7 @@ A piece earns a ticket when it ships and can be verified on its own, not when it
 This governs work already judged to need more than one pull request. Whether work discovered mid-change becomes a ticket at all is decided first by the fold-in default in [scope-and-deferral.md](../../skills/_data/scope-and-deferral.md).
 
 Record the relationships natively when the tracker supports them -- blockers, and parent to child -- rather than as prose in a body.
+
+## Counts in a ticket body
+
+State a condition rather than a measurement: "the record covers one file and contains rejections taken at older rule versions", not "257 candidates, 8 of them stale". Admit a figure only when it defines the work: a budget, a threshold, or a value that an acceptance criterion is checked against. A count in an existing ticket that has since drifted is not a defect: Do not re-measure it, report it, or propose an edit to correct it.
