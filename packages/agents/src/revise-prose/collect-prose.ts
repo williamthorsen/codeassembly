@@ -29,7 +29,7 @@ export interface ProseCollection {
    * reads.
    */
   scannedFiles: readonly ScannedFile[];
-  /** Files excluded, by the reason each was excluded, so that no exclusion is silent. */
+  /** Files excluded, by the reason each was excluded, so that an exclusion is never silent. */
   skipped: Readonly<Record<SkipReason, number>>;
   spans: readonly ProseSpan[];
 }
@@ -116,8 +116,8 @@ export async function collectProse(input: {
 
 /**
  * Extracts every block of prose from one file's content, classifying the file as {@link collectProse} does: by its
- * extension, or by its shebang when it has none. A file that no extractor reads, and YAML that the parser cannot read,
- * yield no spans.
+ * extension, or by its shebang when it has none. A file not read by any extractor, and YAML that the parser cannot
+ * read, do not yield any spans.
  */
 export function extractFileProse(input: { file: string; content: string }): ProseSpan[] {
   const kind = path.extname(input.file) === '' ? classifyByShebang(input.content) : classifyByExtension(input.file);
@@ -133,7 +133,7 @@ export function extractFileProse(input: { file: string; content: string }): Pros
 
 /**
  * Extracts every block of prose from one file's content, each naming the line on which it begins. Inline code spans
- * are masked on the way out, so that no detector reads a span's content as words whatever kind the file is. Throws
+ * are masked on the way out, so that a detector never reads a span's content as words whatever kind the file is. Throws
  * {@link UnparsableYamlError} when the content is YAML that the parser cannot read.
  */
 export function extractProse(input: { file: string; content: string; kind: ProseKind }): ProseSpan[] {
@@ -248,7 +248,7 @@ const REGEX_PRECEDERS = new Set(['(', ',', '=', ':', '[', '!', '&', '|', '?', '{
 /**
  * Builds one span from a block comment's body, stripping each line's leading `*` and the blank lines contributed by
  * a `/**` opener and a closing line. The span's own line advances past each blank line dropped, so it still names the
- * source line on which its first word sits. Returns undefined for a comment holding no prose at all.
+ * source line on which its first word sits. Returns undefined for a comment that does not contain any prose at all.
  */
 function buildBlockCommentSpan(file: string, line: number, body: string): ProseSpan | undefined {
   const texts = body.split('\n').map(stripCommentMarkers);
@@ -289,7 +289,10 @@ function buildVendorMarker(openerPattern: string): RegExp {
   return new RegExp(String.raw`${buildCommentAnchor(openerPattern)}extracted verbatim from\b.*\bdo not edit\b`, 'im');
 }
 
-/** Classifies a file by extension, which needs no read. Returns undefined for an extension read by no extractor. */
+/**
+ * Classifies a file by extension, which does not need a read. Returns undefined for an extension not read by any
+ * extractor.
+ */
 function classifyByExtension(file: string): ProseKind | undefined {
   return PROSE_KINDS_BY_EXTENSION[path.extname(file).toLowerCase()];
 }
@@ -334,8 +337,8 @@ function extractFrontmatterProse(file: string, lines: readonly string[], bodySta
 
 /**
  * Extracts Markdown prose: the frontmatter's own prose, then body paragraphs, list items, headings, and table cells.
- * Fenced code, HTML comments, and link definitions are dropped, and a link is reduced to its own text so that no URL
- * reaches the detector.
+ * Fenced code, HTML comments, and link definitions are dropped, and a link is reduced to its own text so that the
+ * detector does not receive any URL.
  */
 function extractMarkdownProse(file: string, content: string): ProseSpan[] {
   const lines = content.split('\n');
@@ -524,7 +527,7 @@ function findStringEnd(content: string, start: number, quote: string): number {
   return content.length;
 }
 
-/** Reports whether a script has a line produced by no formatter, which marks it as bundled output. */
+/** Reports whether a script has a line not produced by any formatter, which marks it as bundled output. */
 function hasMachineWidthLines(content: string): boolean {
   return content.split('\n').some((line) => line.length > MACHINE_LINE_WIDTH);
 }
@@ -540,7 +543,7 @@ function isBlockStart(line: string): boolean {
 /**
  * Reports whether `file` is outside what the sweep may edit: a harness's deployed `skills/` or `scripts/` tree, whose
  * source lives elsewhere, the artifact tree, whose files record a moment and stay as written, or the sweep's own
- * record, which the helper writes and whose grounds are no subagent's to rewrite.
+ * record, which the helper writes and whose grounds a subagent may not rewrite.
  */
 function isExcludedPath(input: { file: string; root: string; artifactBaseDir: string }): boolean {
   return (

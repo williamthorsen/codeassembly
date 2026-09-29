@@ -1,8 +1,8 @@
 /**
  * CLI entry for the harness hook relay.
  *
- * A harness's event hooks fire at boundaries that no skill is running to observe, so the hook reports them in the
- * agent's place. Configured as a hook command, this relay reads the hook's JSON payload on stdin and appends the
+ * A harness's event hooks fire at boundaries at which a skill isn't running to observe them, so the hook reports them
+ * in the agent's place. Configured as a hook command, this relay reads the hook's JSON payload on stdin and appends the
  * lifecycle event that `{harness, hook}` maps to.
  *
  * The hook's identity comes from the flags: Because the two harnesses' payload shapes differ, stdin supplies only
@@ -96,7 +96,10 @@ export async function runRelay(input: {
 
   const mapping = resolveHookMapping({ harness: args.harness, hook: args.hook });
   if (mapping === undefined) {
-    return failure('unknown-hook', `${args.harness} hook "${args.hook}" maps to no event type; relaying nothing`);
+    return failure(
+      'unknown-hook',
+      `${args.harness} hook "${args.hook}" does not map to any event type; relaying nothing`,
+    );
   }
 
   const payload = parseHookPayload({ stdin: input.stdin, mapping });
@@ -249,8 +252,8 @@ function isEntryPoint(): boolean {
 /**
  * Reads the hook's payload from stdin to EOF.
  *
- * When stdin is a terminal, `readStdin` returns the empty string without reading: With no harness on the other end
- * there is no payload coming, and reading would block until the operator typed EOF. Under a hook, stdin is a pipe that
+ * When stdin is a terminal, `readStdin` returns the empty string without reading: Without a harness on the other end,
+ * a payload isn't coming, and reading would block until the operator typed EOF. Under a hook, stdin is a pipe that
  * the harness closes.
  */
 async function readStdin(): Promise<string> {
@@ -267,8 +270,9 @@ function readString(payload: Record<string, unknown>, key: string): string | und
 }
 
 /**
- * The checked-out branch at `cwd`, or `undefined` when there is none to read: git cannot answer (no repository, no git
- * binary, a working directory that no longer exists) or HEAD is detached, which git reports as an empty branch name.
+ * The checked-out branch at `cwd`, or `undefined` when there is none to read: git cannot answer (`cwd` isn't in a
+ * repository, the git binary isn't installed, or the working directory no longer exists) or HEAD is detached, which
+ * git reports as an empty branch name.
  * In both cases `resolveBranch` warns, because a relay that silently files every event under the no-branch placeholder
  * is indistinguishable from one that is working.
  */

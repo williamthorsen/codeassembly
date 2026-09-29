@@ -10,8 +10,8 @@ import { resolveStoreByName, type ResolveStoreOutcome } from './resolve-store-by
  * - `missing-store`: `--store` was omitted, and the helper cannot tell a deliberate default from a forgotten
  *   destination, so it refuses. The registered store names and the resolved role names let the caller name the
  *   alternatives in its error.
- * - `no-default`: `--store @default` was given but the registry declares no usable `default_kb`.
- * - `no-feedback`: `--store @feedback` was given but the registry declares no usable `feedback_kb`.
+ * - `no-default`: `--store @default` was given but the registry does not declare a usable `default_kb`.
+ * - `no-feedback`: `--store @feedback` was given but the registry does not declare a usable `feedback_kb`.
  *
  * Each includes the registry-load error when one occurred, so that the caller can report an unusable registry's cause.
  */

@@ -8,4 +8,4 @@ repo: owner/repo-content
 summary: A snorkleweft observation left unrated
 ---
 
-The snorkleweft observation has no impact rating.
+The snorkleweft observation doesn't have an impact rating.

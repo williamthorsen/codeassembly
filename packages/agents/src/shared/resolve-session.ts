@@ -5,8 +5,8 @@ const SESSION_ID_VAR = 'CLAUDE_CODE_SESSION_ID';
 
 /**
  * Reads the harness-supplied session id, or `undefined` when the harness exposes none. An empty value counts as absent:
- * A harness that defines the variable without populating it reports that it has no session to name, and an empty
- * session must not reach a consumer as a real id.
+ * A harness that defines the variable without populating it reports that it does not have a session to name, and an
+ * empty session must not reach a consumer as a real id.
  */
 export function resolveSession(env: NodeJS.ProcessEnv): string | undefined {
   const session = env[SESSION_ID_VAR];

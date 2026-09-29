@@ -55,8 +55,8 @@ export function normalizeChangeRecord(record: ChangeRecord): ChangeRecord {
 
 /**
  * Splits a scope value into the workspaces that it names, in first-occurrence order, dropping the empty names, the
- * wildcard, and the duplicates. A value that leaves nothing behind names no scope, which is how a whole-value `*`
- * normalizes away and how `agents,*` reads as `agents`.
+ * wildcard, and the duplicates. A value that leaves nothing behind does not name a scope, which is how a whole-value
+ * `*` normalizes away and how `agents,*` reads as `agents`.
  */
 export function splitScopes(scope: string | undefined): string[] {
   if (scope === undefined) {
@@ -72,7 +72,7 @@ export function splitScopes(scope: string | undefined): string[] {
 /** The marker of a breaking change, whether as its own token or as the tail of a rendered type. */
 export const BREAKING_MARKER = '!';
 
-/** The scope of the files that belong to no workspace. */
+/** The scope of the files that do not belong to any workspace. */
 export const ROOT_SCOPE = 'root';
 
 /** The character that joins the workspaces of a scope naming more than one. */

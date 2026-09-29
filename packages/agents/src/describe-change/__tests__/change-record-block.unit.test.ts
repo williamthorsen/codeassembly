@@ -76,7 +76,7 @@ describe(readChangeRecordBlock, () => {
     expect(readChangeRecordBlock(body)).toStrictEqual({ block: expected, kind: 'read' });
   });
 
-  it('reports a body containing no block as absent', () => {
+  it('reports a body without a block as absent', () => {
     expect(readChangeRecordBlock('## What\n\n- Adds the parser\n')).toStrictEqual({ kind: 'absent' });
   });
 
@@ -158,7 +158,7 @@ describe(readChangeRecordBlock, () => {
     });
   });
 
-  it('reads an empty entry list as no entries', () => {
+  it('reads an empty entry list as absent entries', () => {
     const body = '```change-record\ntitle: Add foo\nentries: []\n```';
 
     expect(readChangeRecordBlock(body)).toStrictEqual({ block: { title: 'Add foo' }, kind: 'read' });
@@ -233,7 +233,7 @@ describe(readMergeChangeRecordBlock, () => {
     expect(readMergeChangeRecordBlock(renderMergeChangeRecordBlock(block))).toStrictEqual({ block, kind: 'read' });
   });
 
-  it('reports a body containing no block as absent', () => {
+  it('reports a body without a block as absent', () => {
     expect(readMergeChangeRecordBlock('Adds the parser.')).toStrictEqual({ kind: 'absent' });
   });
 
@@ -305,7 +305,7 @@ describe(readMergeChangeRecordBlock, () => {
     expect(reading).toHaveProperty('defect', expect.stringMatching(defect));
   });
 
-  it('reads no entry from a list that has a defective item', () => {
+  it('does not read any entry from a list that has a defective item', () => {
     const body = fence('entries:\n  - type: feat\n    text: Adds foo\n  - type: fix');
 
     expect(readMergeChangeRecordBlock(body)).not.toHaveProperty('block');
@@ -415,7 +415,7 @@ describe(renderChangeRecordBlock, () => {
     expect(readBlock(rendered)).toStrictEqual({ title: 'Add foo' });
   });
 
-  it('omits the derivation commit when the block records no entries', () => {
+  it('omits the derivation commit when the block does not record any entries', () => {
     const rendered = renderChangeRecordBlock({ entries: [], entriesCommit: 'e5029924', title: 'Add foo' });
 
     expect(readBlock(rendered)).toStrictEqual({ title: 'Add foo' });

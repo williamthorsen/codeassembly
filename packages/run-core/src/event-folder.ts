@@ -388,8 +388,8 @@ function applyReviewPhaseCompleted(
 }
 
 /**
- * Completes a phase by merging the event's data into the phase's entry. Creates the entry when no `phase_started`
- * event preceded this one, except for the review phase, which stays absent.
+ * Completes a phase by merging the event's data into the phase's entry. Creates the entry when this event
+ * doesn't follow any `phase_started` event, except for the review phase, which stays absent.
  */
 function applyPhaseCompleted(state: CanonicalRunStatus, event: Extract<RunEvent, { event: 'phase_completed' }>): void {
   const { phase, status, data, t: timestamp } = event;

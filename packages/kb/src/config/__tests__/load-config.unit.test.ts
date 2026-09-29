@@ -6,7 +6,7 @@ import { isKbLoaderError, KbLoaderError } from '../kb-loader-error.ts';
 import { loadKbConfig } from '../load-config.ts';
 
 describe(loadKbConfig, () => {
-  it('returns the default config when no config.yaml exists', async () => {
+  it('returns the default config when config.yaml does not exist', async () => {
     const kbRoot = await makeKbRoot();
 
     expect(await loadKbConfig({ kbRoot })).toEqual(defaultKbConfig);

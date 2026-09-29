@@ -1,10 +1,10 @@
 // The GitHub forge adapter: satisfies `ForgeAdapter` by shelling out to `gh --json` and normalizing its output at this
 // boundary, so nothing downstream sees a `gh`-specific shape. The adapter runs `gh` through an injected runner, an
-// `execFile`-shaped seam. Tests drive the adapter with fixture JSON captured from real `gh` output, and CI needs no
-// `gh` binary.
+// `execFile`-shaped seam. Tests drive the adapter with fixture JSON captured from real `gh` output, and CI doesn't need
+// a `gh` binary.
 //
 // Call volume is bounded across polls by two per-repo caches. A merged or closed pull request is terminal: It is cached
-// and never re-viewed, so steady state is ~1 `pr list` per repo plus 1 `issue view` per ticket. A branch with no pull
+// and never re-viewed, so steady state is ~1 `pr list` per repo plus 1 `issue view` per ticket. A branch without a pull
 // request is remembered as a stable absence and skipped, with a periodic re-check that catches a pull request opened and
 // merged entirely between probes; an open one is caught immediately by the next `pr list`.
 
@@ -40,7 +40,7 @@ const ISSUE_JSON_FIELDS = 'title,state,url,createdAt,labels';
  */
 const OPEN_PR_LIST_LIMIT = 500;
 
-/** Polls between re-checks of branches remembered as having no pull request. */
+/** Polls between re-checks of branches remembered as not having a pull request. */
 export const ABSENCE_RECHECK_INTERVAL = 10;
 
 /** Output cap for one `gh` invocation, generous against large check rollups so that a busy repo never truncates. */
@@ -185,12 +185,12 @@ function classifyStatusState(state: unknown): CheckState {
   }
 }
 
-/** True when a `gh issue view` failure means the number resolves to no issue, rather than a repo-level fault. */
+/** True when a `gh issue view` failure means the number doesn't resolve to an issue, rather than a repo-level fault. */
 function isMissingIssueError(error: unknown): boolean {
   return /could not resolve/i.test(readErrorText(error));
 }
 
-/** True when a `gh pr view` failure means the branch has no pull request, rather than a repo-level fault. */
+/** True when a `gh pr view` failure means the branch doesn't have a pull request, rather than a repo-level fault. */
 function isNoPullRequestError(error: unknown): boolean {
   return /no (?:open )?pull requests found/i.test(readErrorText(error));
 }
@@ -353,7 +353,7 @@ async function viewBranchPr(runProcess: ProcessRunner, repo: string, branch: str
   }
 }
 
-/** Resolves a ticket via `gh issue view`, returning `undefined` when the number resolves to no issue. */
+/** Resolves a ticket via `gh issue view`, returning `undefined` when the number doesn't resolve to an issue. */
 async function viewTicket(runProcess: ProcessRunner, repo: string, ticketId: string): Promise<TicketFacts | undefined> {
   try {
     const { stdout } = await runProcess('gh', ['issue', 'view', ticketId, '--repo', repo, '--json', ISSUE_JSON_FIELDS]);

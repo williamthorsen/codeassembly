@@ -31,8 +31,8 @@ const SUPPORTED_HARNESSES_LINE = new RegExp(String.raw`^${SUPPORTED_HARNESSES_KE
  * A declared skill resolved through the source resolver: its stable slug, the directory to copy from, the content root
  * against which its includes resolve, the source from which it resolved, and the harnesses that it targets.
  * `contentRoot` is the library for a library skill and the declaring source for a source skill. `source` is the
- * declaring source's name, or `undefined` for the built-in library. `targetHarnesses` is absent when the skill declares
- * no `supported-harnesses:` field, meaning it deploys to all harnesses.
+ * declaring source's name, or `undefined` for the built-in library. `targetHarnesses` is absent when the skill doesn't
+ * declare a `supported-harnesses:` field, meaning it deploys to all harnesses.
  */
 export interface ResolvedSkill {
   readonly slug: string;
@@ -46,8 +46,8 @@ export interface ResolvedSkill {
  * Resolves a declared skill slug through the source resolver (declared sources first, then the library), confirming its
  * `SKILL.md` exists and reading the harnesses that it targets from frontmatter. The result names the resolved content
  * root (the source or library directory from which the slug resolved), so the render pass expands the skill's includes
- * against its own tree. A slug found in no source or the library throws an error naming every location searched; an
- * unknown harness id in the `supported-harnesses:` field throws naming the slug and the offending id.
+ * against its own tree. A slug not found in any source or in the library throws an error naming every location
+ * searched; an unknown harness id in the `supported-harnesses:` field throws naming the slug and the offending id.
  */
 export async function resolveDeclaredSkill(slug: string, resolver: SourceResolver): Promise<ResolvedSkill> {
   const resolved = await resolver.resolve('skill', slug);
@@ -71,8 +71,8 @@ export async function resolveDeclaredSkill(slug: string, resolver: SourceResolve
  * tool-name/link/template-rewritten through the shared skill transform, non-`.md` files are mirrored verbatim, and the
  * declared-skill ownership marker is stamped into the deployed root `SKILL.md`.
  * The write is byte-stable: Unchanged files are left untouched, and destination files that the source no longer
- * contains (along with any directory left empty by their removal) are pruned, so re-deploying an unchanged skill makes
- * no filesystem change.
+ * contains (along with any directory left empty by their removal) are pruned, so re-deploying an unchanged skill
+ * doesn't change the filesystem.
  */
 export async function deploySkill(skill: ResolvedSkill, destDir: string, context: SkillDeployContext): Promise<void> {
   const entries = await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, context);
@@ -119,7 +119,7 @@ export function readTargetHarnesses(skillContent: string, slug: string): Readonl
   return harnesses;
 }
 
-/** True when a skill targets `harnessId`; either it names no harnesses (so all of them) or lists this one. */
+/** True when a skill targets `harnessId`; either it doesn't name any harness (so all of them) or lists this one. */
 export function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
   return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
 }

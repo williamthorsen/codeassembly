@@ -204,8 +204,8 @@ function classifyFile(
 
 /**
  * Collects the transitive files reached from the targets, each with the edges that reach it, and lists the targets
- * whose includes do not resolve, which contribute no edge. A link inside an included file resolves against the
- * target's directory, because an include is rendered into the target's body and its links are rewritten there.
+ * whose includes do not resolve, which do not contribute any edge. A link inside an included file resolves against
+ * the target's directory, because an include is rendered into the target's body and its links are rewritten there.
  */
 async function collectTransitiveEdges(
   targets: readonly string[],
@@ -267,7 +267,10 @@ function describeFile(file: string, context: ResolutionContext, measures: FileMe
   };
 }
 
-/** Returns the line ranges of every region that a deployment rewrites, running to the end when no end marker closes one. */
+/**
+ * Returns the line ranges of every region that a deployment rewrites, running to the end for a region without an end
+ * marker.
+ */
 function findGeneratedRegions(content: string): LineRange[] {
   const lines = content.split('\n');
   const regions: LineRange[] = [];
@@ -363,13 +366,13 @@ async function loadIncludeGraph(contentRoot: string, context: ResolutionContext)
 
 /**
  * Measures what each file deploys: for a document, its size once its includes are expanded; for a file that deploys
- * only inside the documents that include it, its own size times the number of documents that it reaches. A file in
- * no content root, and one whose includes cannot be expanded, is absent from the result.
+ * only inside the documents that include it, its own size times the number of documents that it reaches. A file
+ * outside every content root, and one whose includes cannot be expanded, is absent from the result.
  *
  * The transforms that a deployment applies per harness are excluded: the provenance header, the ownership marker,
  * path rewriting, and guidance-hook injection. A hook's bound rulebooks are declared in the machine's agent
  * configuration rather than in the content root, so their bytes are not computable from the repository, and their
- * text lands in a generated region that no cut may touch. The rest add a constant of a few hundred bytes.
+ * text lands in a generated region that a run may not cut. The rest add a constant of a few hundred bytes.
  */
 async function measureDeployedBytes(
   files: readonly string[],
@@ -400,7 +403,7 @@ async function measureDeployedBytes(
  * Measures a document's body once its includes are expanded, and reports undefined when they cannot be expanded.
  *
  * Expansion rejects directive shapes that the include graph accepts: an unclosed open directive, an orphan close, a
- * slot with no `<!-- children -->` placeholder to fill, and a cycle, which the graph's walk terminates rather than
+ * slot without a `<!-- children -->` placeholder to fill, and a cycle, which the graph's walk terminates rather than
  * refuses. A file carrying one deploys nothing that this helper can size, which an absent figure already reports.
  */
 async function measureExpandedBytes(file: string, contentRoot: string): Promise<number | undefined> {
@@ -412,7 +415,7 @@ async function measureExpandedBytes(file: string, contentRoot: string): Promise<
   }
 }
 
-/** Resolves a Markdown link target to an absolute path, or undefined for a target naming no local file. */
+/** Resolves a Markdown link target to an absolute path, or undefined when the target is not a local file. */
 function resolveLinkTarget(
   rawTarget: string,
   input: { contentRoot: string | undefined; home: string; hostDir: string },

@@ -72,7 +72,7 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
   }
   const store = resolved.store;
 
-  // Load the alias map only for `retag`, because no other operation canonicalizes through it.
+  // Load the alias map only for `retag`, because the other operations do not canonicalize through it.
   const aliases: AliasMap =
     args.operation === 'retag' ? await loadAliasesForStore(store.path) : new Map<string, string>();
 
@@ -136,8 +136,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /**
  * Applies the parsed operation to an event, returning the mutated record.
  *
- * Every operation here is a curatorial annotation and stamps no timestamp. A substantive content edit goes through
- * `capture-event --amend` instead.
+ * Every operation here is a curatorial annotation and does not stamp a timestamp. A substantive content edit goes
+ * through `capture-event --amend` instead.
  */
 function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): KbEvent {
   switch (args.operation) {
@@ -171,7 +171,7 @@ async function editOne(input: {
       ok: false,
       id,
       error: 'invalid-id',
-      message: `event id "${id}" must be a bare filename stem (no path separators)`,
+      message: `event id "${id}" must be a bare filename stem (without path separators)`,
     };
   }
 
@@ -182,7 +182,7 @@ async function editOne(input: {
     read = await readNote(path);
   } catch (error) {
     if (isMissingFile(error)) {
-      return { ok: false, id, error: 'not-found', message: `no event at ${path}` };
+      return { ok: false, id, error: 'not-found', message: `could not find an event at ${path}` };
     }
     throw error;
   }

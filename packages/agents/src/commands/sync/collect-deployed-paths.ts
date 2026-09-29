@@ -31,8 +31,8 @@ export type ResolveSourceRoot = (source: string | undefined) => string | undefin
 
 /**
  * The authored Markdown behind one deployed document, and the tree against which its include directives resolved.
- * Report-time provenance alone, from which a measurement reads the partials that the document inlines; no snapshot
- * records it.
+ * Report-time provenance alone, from which a measurement reads the partials that the document inlines; a snapshot
+ * does not record it.
  */
 export interface AuthoredSource {
   /** Absolute path of the authored file. */
@@ -55,15 +55,16 @@ export interface DeployedPath {
   readonly role: DeployedFileRole;
   readonly harnessId: HarnessId;
   /**
-   * Canonical directory of the source from which the artifact resolved, or `undefined` for a file that no declared
-   * artifact backs: an install-manifest entry or a source-support delivery. Report-time provenance alone, which is
-   * what lets a report decide whether the reader can edit what a deployed file came from; no snapshot records it.
+   * Canonical directory of the source from which the artifact resolved, or `undefined` for a file not backed by any
+   * declared artifact: an install-manifest entry or a source-support delivery. Report-time provenance alone, which
+   * is what lets a report decide whether the reader can edit what a deployed file came from; a snapshot does not
+   * record it.
    */
   readonly sourceRoot: string | undefined;
   /**
    * The authored Markdown that this file rendered from, on the three authored bodies alone (a skill's `SKILL.md`, a
-   * rulebook-delivered skill's `SKILL.md`, and a subagent file). `undefined` on every file that renders from no
-   * single authored document: an asset, a delivered support entry, and a manifest-contributed file.
+   * rulebook-delivered skill's `SKILL.md`, and a subagent file). `undefined` on every file that does not render
+   * from a single authored document: an asset, a delivered support entry, and a manifest-contributed file.
    */
   readonly authored: AuthoredSource | undefined;
 }
@@ -128,7 +129,7 @@ export interface DeployedPathSet {
  * unreachable from it.
  *
  * The install manifest contributes in the home domain alone, since `install` resolves its paths under the home
- * directory and the CLI passes no other base. A repo-domain collection reads the plan alone, whose
+ * directory and the CLI does not pass any other base. A repo-domain collection reads the plan alone, whose
  * `sourceSupportPlans` cover that domain's `skills/_data/`.
  */
 export async function collectDeployedPaths(
@@ -233,7 +234,7 @@ function classifyFile(absPath: string): DeployedFileKind {
  * Records every file inside one deployed directory, at every depth. An absent directory contributes nothing.
  *
  * `skillRoot` marks the directory as a deployed skill, whose `SKILL.md` carries the description that a harness lists;
- * a directory walked from the install manifest names no skill and passes it as false.
+ * a directory walked from the install manifest does not name a skill and passes it as false.
  */
 async function collectDirectory(
   collected: Map<string, DeployedPath>,

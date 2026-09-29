@@ -22,8 +22,8 @@ import type { HookEntry, HookSentinelMatcher } from './rovo-config-hooks.ts';
  *
  * The value is frozen. Because it is matched against entries already written into users' harness configs, any new
  * value strands them: The config utilities stop recognizing what they wrote, `configure-hooks` adds a parallel set
- * alongside, and every session-lifecycle event fires twice. The relay accepts the flag and ignores it; the value has
- * no meaning beyond being stable.
+ * alongside, and every session-lifecycle event fires twice. The relay accepts the flag and ignores it; the value does
+ * not have any meaning beyond being stable.
  */
 export const HOOK_SENTINEL = '--sentinel codeassembly-agents';
 

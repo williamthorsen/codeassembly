@@ -27,7 +27,7 @@ export interface CandidateBase {
    * takes the whole sentence, nothing shorter being distinctive.
    */
   phrase: string;
-  /** The whole sentence containing the phrase, so that adjudication needs no file read. */
+  /** The whole sentence containing the phrase, so that an adjudicator does not need to read the file. */
   sentence: string;
   /** Present when a rejection recorded at an older version of its rule matched, which re-opens it for review. */
   stale?: boolean;
@@ -204,7 +204,8 @@ export interface SweepVersions {
 }
 
 /**
- * One rejection as a run reports it. It names no version, which the helper derives from the fold's entry for its rule.
+ * One rejection as a run reports it. It does not name a version; the helper derives one from the fold's entry for its
+ * rule.
  */
 export interface FoldRejection {
   /** The rule under which the site was adjudicated, detected or not, which must be one that the fold versions. */
@@ -269,13 +270,16 @@ export interface ParsedArgs {
    * a detector for it. Empty detects the legacy rule alone.
    */
   rules: readonly NamedRule[];
-  /** The units in force, by name, each at the version that the caller names. Empty reads and writes no record. */
+  /**
+   * The units in force, by name, each at the version that the caller names. When empty, the run neither reads nor
+   * writes a record.
+   */
   units: ReadonlyMap<string, string>;
   /** Ceiling on a batch's combined file bytes. */
   budget: number;
 }
 
-/** A rule as an invocation names it. A rule with no sweep version is swept but never recorded. */
+/** A rule as an invocation names it. A rule without a sweep version is swept but never recorded. */
 export interface NamedRule {
   rule: string;
   unit: string;
@@ -332,8 +336,8 @@ export interface DetectSuccess {
   /** The batches left to adjudicate, those that the record already covers for every versioned rule having been dropped. */
   batches: readonly ReportedBatch[];
   /**
-   * The rules that the run detected, and the named rules for which the helper has no detector, each sorted. A name in
-   * `undetected` that a rulebook meant as a detector rule is misspelt.
+   * The rules that the run detected, and the named rules for which the helper does not have a detector, each sorted. A
+   * name in `undetected` that a rulebook meant as a detector rule is misspelt.
    */
   rules: { detected: readonly RuleId[]; undetected: readonly string[] };
   summary: CandidateSummary;

@@ -21,7 +21,7 @@ describe(validateContentRoot, () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it('passes a content root containing every artifact type, with no declaration anywhere above it', async () => {
+  it('passes a content root containing every artifact type, without any declaration above it', async () => {
     await writeSkill(root, 'alpha');
     await writeSubagent(root, 'helper');
     await writeRulebook(root, 'house-style');
@@ -66,7 +66,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]).toMatchObject({ file: 'subagents/lib-helper.md', kind: 'render' });
   });
 
-  it('reports an unmapped tool placeholder in a skill support file, which has no SKILL.md', async () => {
+  it('reports an unmapped tool placeholder in a skill support file, which does not have a SKILL.md', async () => {
     await writeSkill(root, 'alpha');
     await writeFileAt(root, 'skills/_data/reference.md', '# Reference\n\nRun {tool:NoSuchTool} to proceed.\n');
 
@@ -234,7 +234,7 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
-  it('reports a skill body token naming a rulebook that deploys no skill to invoke', async () => {
+  it('reports a skill body token naming a rulebook that does not deploy a skill to invoke', async () => {
     await writeRulebook(root, 'house-style', { delivery: 'ambient' });
     await writeSkill(root, 'alpha', { body: 'See {rulebook:house-style}.' });
 
@@ -244,7 +244,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('ambient-only rulebook');
   });
 
-  it('reports a subagent body token naming a rulebook that deploys no skill to invoke', async () => {
+  it('reports a subagent body token naming a rulebook that does not deploy a skill to invoke', async () => {
     await writeRulebook(root, 'house-style', { delivery: 'ambient' });
     await writeSubagent(root, 'helper', { body: 'See {rulebook:house-style}.' });
 
@@ -266,7 +266,7 @@ describe(validateContentRoot, () => {
     expect(defects.find((defect) => defect.file === 'subagents/stray.md')).toMatchObject({ kind: 'render' });
   });
 
-  it('reports a rulebook link target that no harness home would contain', async () => {
+  it('reports a rulebook link target outside every harness home', async () => {
     await writeRulebook(root, 'house-style', { body: 'Read [the notes](../../notes.md).' });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);

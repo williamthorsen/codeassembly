@@ -64,8 +64,8 @@ const execFileAsync = promisify(execFile);
 
 /**
  * Reads one preferences file into the `title_format` value declared by each surface, absent when the file omits the key.
- * A missing file contributes nothing; a key present with no value reads as the empty string, which is the explicit way
- * to opt a surface out.
+ * A missing file contributes nothing; a key present without a value reads as the empty string, which is the explicit
+ * way to opt a surface out.
  */
 async function readTitleFormats(file: string, warnings: string[]): Promise<Partial<Record<Surface, string>>> {
   let content: string;

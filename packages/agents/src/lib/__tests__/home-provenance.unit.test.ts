@@ -147,7 +147,7 @@ describe('home provenance', () => {
       expect(stamp?.lastAttempt).toBeUndefined();
     });
 
-    it('reports nothing when no stamp has been written', async () => {
+    it('reports nothing when the home directory does not contain a stamp', async () => {
       await expect(readHomeProvenance(homeDir)).resolves.toBeUndefined();
     });
 
@@ -163,7 +163,7 @@ describe('home provenance', () => {
       await expect(readHomeProvenance(homeDir)).resolves.toBeUndefined();
     });
 
-    it('reports nothing for a stamp naming a command that no home write can issue', async () => {
+    it('reports nothing for a stamp naming a command that a home write cannot issue', async () => {
       await writeStamp(
         JSON.stringify({
           schemaVersion: 1,

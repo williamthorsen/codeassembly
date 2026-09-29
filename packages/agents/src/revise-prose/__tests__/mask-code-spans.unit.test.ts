@@ -8,11 +8,11 @@ import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD, maskCodeSpans } from
 const MASK = ` ${CODE_SPAN_PLACEHOLDER} `;
 
 describe(maskCodeSpans, () => {
-  it('returns text containing no code span unchanged', () => {
+  it('returns text without a code span unchanged', () => {
     expect(maskCodeSpans('The source that it names.')).toBe('The source that it names.');
   });
 
-  it('replaces a span, leaving no backtick behind', () => {
+  it('replaces a span without leaving a backtick behind', () => {
     expect(maskCodeSpans('The root `tsconfig.json` names it.')).toBe(`The root ${MASK} names it.`);
   });
 

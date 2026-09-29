@@ -2,7 +2,8 @@
  * Idempotent management of codeassembly-owned hook entries within a parsed Claude Code `settings.json` value. An entry
  * is one element of a `hooks.{Event}` array (a matcher group) and is owned when any of its inner `hooks[].command`
  * strings contains the sentinel token. Owned entries are replaced or deleted as a unit; foreign entries, foreign
- * events, and unrelated settings keys are preserved. Every function is a pure transform with no filesystem access.
+ * events, and unrelated settings keys are preserved. Every function is a pure transform that does not access the
+ * filesystem.
  */
 
 import { isDeepStrictEqual } from 'node:util';
@@ -27,8 +28,8 @@ export interface HookEntriesTransform<TResult> {
 
 /**
  * Reports each supplied entry as `present` (an owned entry under its event is deep-equal to it), `drifted` (its event
- * holds owned entries but none match), or `absent` (its event holds no owned entry). Deep equality ignores key order,
- * so a re-serialized file never reads as drift.
+ * holds owned entries but none match), or `absent` (its event does not hold any owned entry). Deep equality ignores
+ * key order, so a re-serialized file never reads as drift.
  *
  * The report is scoped to the entries supplied. Because an owned entry that the caller does not supply has nothing to
  * be reported against, an all-present result does not imply `ensureHookEntries` would leave the document unchanged:
@@ -99,8 +100,8 @@ export function ensureHookEntries(
 
 /**
  * Deletes every owned entry, whichever event holds it, and prunes the structure emptied by the deletion: An event
- * array left with no entries is dropped, and `hooks` is dropped once it holds no events. Takes only the sentinel, so
- * it also deletes entries written by earlier versions. An event array that was already empty is foreign content and
+ * array left empty is dropped, and `hooks` is dropped once it does not hold any events. Takes only the sentinel, so it
+ * also deletes entries written by earlier versions. An event array that was already empty is foreign content and
  * survives.
  */
 export function removeHookEntries(settings: unknown, sentinel: string): HookEntriesTransform<RemoveResult> {
@@ -191,8 +192,8 @@ function readSettingsRoot(settings: unknown): Record<string, unknown> {
 
 /**
  * Rebuilds an event array with `groups` standing in for its owned entries: They take the first owned position, or the
- * end of the array when the event holds no owned entry. Everything preceding the first owned entry is foreign by
- * construction, so only the tail needs filtering.
+ * end of the array when the event does not hold an owned entry. Everything preceding the first owned entry is foreign
+ * by construction, so only the tail needs filtering.
  */
 function replaceOwnedGroups(
   current: ReadonlyArray<unknown>,

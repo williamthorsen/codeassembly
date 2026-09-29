@@ -40,7 +40,7 @@ describe('install harness targeting', () => {
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude (declared).');
   });
 
-  it('falls back to the installed harnesses when no file declares the block', async () => {
+  it("falls back to the installed harnesses when the block isn't declared in any file", async () => {
     using silent = silenceConsole(['info', 'warn']);
     await setupHarnessHomes();
 
@@ -61,7 +61,7 @@ describe('install harness targeting', () => {
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting rovo (declared).');
   });
 
-  it('reports a flag-narrowed run as decided by the flag, reading no declaration', async () => {
+  it('reports a flag-narrowed run as decided by the flag, without reading any declaration', async () => {
     using silent = silenceConsole(['info', 'warn']);
     await setupHarnessHomes();
     await declareHarnesses('harnesses:\n  use:\n    - rovo\n');

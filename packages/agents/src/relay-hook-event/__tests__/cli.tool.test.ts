@@ -337,7 +337,7 @@ describe(runRelay, () => {
 
     expect(result).toMatchObject({ ok: false, error: 'unknown-hook' });
     await expect(listEventsRoot(home)).resolves.toEqual([]);
-    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/maps to no event type/));
+    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/does not map to any event type/));
   });
 
   it('relays nothing for a hook belonging to the other harness', async () => {

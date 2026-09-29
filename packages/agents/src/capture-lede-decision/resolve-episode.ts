@@ -37,10 +37,10 @@ type DoctrineHashOutcome = { ok: true; hash: string } | { ok: false; unreadableP
  * Assembles a lede decision episode from a ticket's artifact directory: the lede published by the agent, the lede that
  * merged, the change's identity, and a fingerprint of the doctrine that governed the agent's text.
  *
- * Each lede accepts an override file, so a pull request merged outside the merge flow (which writes no `_merge.md`)
- * can still be recorded from text fetched by the caller. Absent an override, each is read from the newest artifact of
- * its kind, searched recursively because an orchestrated run nests its artifacts in a run subdirectory. Artifact
- * filenames open with a `YYYYMMDDD-HHMMSSZ` stamp. The lexicographically greatest basename is the newest.
+ * Each lede accepts an override file, so a pull request merged outside the merge flow (which does not write a
+ * `_merge.md`) can still be recorded from text fetched by the caller. Absent an override, each is read from the newest
+ * artifact of its kind, searched recursively because an orchestrated run nests its artifacts in a run subdirectory.
+ * Artifact filenames open with a `YYYYMMDDD-HHMMSSZ` stamp. The lexicographically greatest basename is the newest.
  *
  * The doctrine is fingerprinted by content rather than recorded as a version, which lets records group by doctrine
  * generation with nothing written at install time: The mapping back to a commit stays recoverable afterwards by
@@ -79,7 +79,7 @@ export async function resolveEpisode(input: {
     return {
       ok: false,
       error: 'no-agent-lede',
-      message: `no "## ${AGENT_LEDE_SOURCE.heading}" section in a ${AGENT_LEDE_SOURCE.suffix}.md artifact under ${input.artifactDir}`,
+      message: `could not find a "## ${AGENT_LEDE_SOURCE.heading}" section in a ${AGENT_LEDE_SOURCE.suffix}.md artifact under ${input.artifactDir}`,
     };
   }
 
@@ -92,7 +92,7 @@ export async function resolveEpisode(input: {
     return {
       ok: false,
       error: 'no-merged-lede',
-      message: `no "## ${MERGED_LEDE_SOURCE.heading}" section in a ${MERGED_LEDE_SOURCE.suffix}.md artifact under ${input.artifactDir}`,
+      message: `could not find a "## ${MERGED_LEDE_SOURCE.heading}" section in a ${MERGED_LEDE_SOURCE.suffix}.md artifact under ${input.artifactDir}`,
     };
   }
   const mergedLede = stripChangeTrailers(stripChangeRecordBlocks(mergedBody).trimEnd());
@@ -155,7 +155,7 @@ async function findNewestArtifact(input: { artifactDir: string; suffix: string }
 
 /**
  * Digests the subagent bodies that govern a draft. Each body is hashed on its own and the digests are hashed
- * together, so a change to any of them moves the result and no content can straddle the boundary between two.
+ * together, so a change to any of them moves the result and content cannot straddle the boundary between two.
  */
 async function hashDoctrine(subagentsDir: string): Promise<DoctrineHashOutcome> {
   const digests: string[] = [];
@@ -192,7 +192,7 @@ function normalizeLede(value: string): string {
 
 /**
  * Reads the installed agents-package version from the home-provenance stamp, which records the version of the package
- * whose binary last wrote the home domain; `null` when no readable stamp is there.
+ * whose binary last wrote the home domain; `null` when the stamp is missing or unreadable.
  */
 async function readAgentsVersion(input: {
   provenancePath: string | undefined;
@@ -294,8 +294,8 @@ async function readLede(input: {
  * Resolves the change's identity from one source: the caller's `--type`, `--scope`, and `--breaking` when any of them
  * is passed, and otherwise the newest change-summary artifact's frontmatter, which is the only artifact in the chain
  * that has typed fields. One identity never combines fields from both, so a caller passing a type for a change that
- * names no scope records no scope. The ticket falls back to the change summary on its own, being no part of the
- * consolidated record. A scope of `*` from either source names no scope.
+ * does not name a scope does not record one. The ticket falls back to the change summary on its own, because it is not
+ * part of the consolidated record. A scope of `*` from either source does not name a scope.
  *
  * Because the work type is resolved through the installed taxonomy rather than taken as spelled, the identity records
  * the canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
@@ -343,7 +343,7 @@ async function resolveIdentity(input: {
     return {
       ok: false,
       error: 'no-taxonomy',
-      message: `no readable work-types.json under ${input.dataDir}`,
+      message: `could not read work-types.json under ${input.dataDir}`,
     };
   }
 
@@ -376,7 +376,7 @@ async function resolveIdentity(input: {
  * Removes the trailing `Change:` trailer block from a merge commit's body, leaving the lede that stands above it.
  *
  * Only a run at the end qualifies, and only when every line of it is a trailer: a body whose last paragraph is prose
- * keeps every line, and one that is trailers alone leaves nothing. A body containing no trailer block is returned
+ * keeps every line, and one that is trailers alone leaves nothing. A body without a trailer block is returned
  * whole.
  */
 function stripChangeTrailers(body: string): string {

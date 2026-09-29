@@ -14,7 +14,7 @@ import { homeAnchor } from '../path-rewriter.ts';
 import { deploySubagent, resolveDeclaredSubagent, type SubagentDeployContext } from '../subagent-deploy.ts';
 import { renderSubagentForHarness } from '../subagent-transform.ts';
 
-/** An empty catalog: No source under test contains a `{rulebook:<slug>}` token, so nothing addresses one. */
+/** An empty catalog: The sources under test do not contain any `{rulebook:<slug>}` token, so nothing addresses one. */
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
 const CLAUDE_OVERLAY = dedent`
@@ -91,7 +91,7 @@ describe(deploySubagent, () => {
 
   `;
 
-  it('writes the transformed body with the ownership marker but no provenance marker', async () => {
+  it('writes the transformed body with the ownership marker but without a provenance marker', async () => {
     await writeLibrarySubagent('canary', SOURCE);
     const destPath = path.join(destParent, 'canary.md');
 

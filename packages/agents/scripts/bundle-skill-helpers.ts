@@ -3,14 +3,14 @@
  *
  * A helper installs to a platform directory outside the monorepo, so it cannot import a private workspace package.
  * esbuild bundles it with `@williamthorsen/kb` and its `yaml` / `zod` dependencies inlined, producing a file that runs
- * under `node` with no monorepo packages present on disk.
+ * under `node` without any monorepo package present on disk.
  * Because the bundle is written under `content/`, a subsequent `copy-content.ts` copies it into `dist/content/`
  * and the dev and built layouts both ship the helper.
  *
  * A helper's destination follows its consumer: A skill's helper bundles into that skill's own directory under
- * `content/skills/`, while a helper with no skill to belong to (one that the harness invokes, or one that a subagent
- * reaches through the `{harness_home_dir}/scripts/` prefix) bundles into `content/scripts/`, alongside the shell
- * helpers that install to every harness home.
+ * `content/skills/`, while a helper that does not belong to any skill (one that the harness invokes, or one that a
+ * subagent reaches through the `{harness_home_dir}/scripts/` prefix) bundles into `content/scripts/`, alongside the
+ * shell helpers that install to every harness home.
  *
  * The bundles are tracked files, so `--check` guards them: It builds every target into a temporary directory and
  * compares the result against what git records at `HEAD`. The working tree is not a usable comparison target, since
@@ -128,7 +128,7 @@ export const targets: BundleTarget[] = [
 ];
 
 // A CommonJS dependency (`yaml`) imports Node built-ins via bare `require('process')` calls.
-// esbuild's ESM output otherwise has no `require`, so this banner restores a real one via `createRequire`.
+// esbuild's ESM output otherwise doesn't define `require`, so this banner restores a real one via `createRequire`.
 const requireShim =
   "import { createRequire as __cjsCreateRequire } from 'node:module';\nconst require = __cjsCreateRequire(import.meta.url);";
 
@@ -221,7 +221,7 @@ const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
 /** How each drift reason reads in the check's failure output. */
 const driftMessages: Record<DriftReason, string> = {
   differs: 'differs from a fresh build',
-  orphaned: 'is tracked but no target produces it',
+  orphaned: 'is tracked but not produced by any target',
   unrecorded: 'is not recorded at HEAD',
 };
 

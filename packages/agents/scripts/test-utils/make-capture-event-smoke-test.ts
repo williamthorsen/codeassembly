@@ -42,7 +42,7 @@ export function makeCaptureEventSmokeTest(): SmokeTestInvocation {
 
 /**
  * Asserts the capture-event smoke produced an ok result with a ULID id, ISO-8601 capturedAt, a written path whose
- * record contains the stored `recordType: event` discriminant, and no bare `type` field.
+ * record contains the stored `recordType: event` discriminant and omits a bare `type` field.
  */
 function assertCaptureEventSmokeResult(result: unknown): void {
   if (!isRecord(result)) {

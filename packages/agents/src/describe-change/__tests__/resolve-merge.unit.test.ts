@@ -127,7 +127,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('lets the entries’ record stand over commits that contain no entry', () => {
+    it('lets the entries’ record stand over commits that do not contain any entry', () => {
       const report = resolveMerge(
         buildInput({
           block: readBlock([entryOf({ scope: 'agents', type: 'feat' })], STALE),
@@ -270,7 +270,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('with no label, takes every field from the commits and shows only the absent block', () => {
+    it('without a label, takes every field from the commits and shows only the absent block', () => {
       const report = resolveMerge(buildInput({ commitsRecord: { scope: 'agents', type: 'feat' } }));
 
       expect(report).toMatchObject({
@@ -376,7 +376,7 @@ describe(resolveMerge, () => {
   });
 
   describe('defects', () => {
-    it('reports an effective record that names no type', () => {
+    it('reports an effective record that does not name a type', () => {
       const report = resolveMerge(buildInput({ block: readBlock([]) }));
 
       expect(report.defects).toStrictEqual([{ kind: 'missing-type' }]);
@@ -493,7 +493,7 @@ describe(resolveMerge, () => {
       ]);
     });
 
-    it('when entries record no derivation commit, reports staleness with a null commit', () => {
+    it('when the entries do not record a derivation commit, reports staleness with a null commit', () => {
       const block = readBlock(ENTRIES, { entriesCommit: null });
 
       const report = resolveMerge(buildInput({ block, commitsRecord: { type: 'fix' } }));
@@ -506,7 +506,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('resolves a block that records no entry from the labels and the commits, applying its overrides', () => {
+    it('resolves a block that does not record any entry from the labels and the commits, applying its overrides', () => {
       const block = readBlock([], { overrides: { breaking: true } });
 
       const report = resolveMerge(
@@ -520,7 +520,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('reports a malformed entry list as a notice, resolving the record as for a block that records no entry', () => {
+    it('reports a malformed entry list as a notice, resolving the record as for a block that does not record any entry', () => {
       const block = readBlock([], {
         entriesDefect: '`entries[0].text` is missing',
         overrides: { scope: 'kb' },
@@ -608,7 +608,7 @@ describe(resolveMerge, () => {
     });
 
     it.each<{ block: ChangeRecordBlockReading; name: string }>([
-      { name: 'a block that records no entry', block: readBlock([]) },
+      { name: 'a block that does not record any entry', block: readBlock([]) },
       {
         name: 'a malformed entry list',
         block: readBlock([], { entriesDefect: '`entries[0].text` is missing' }),
@@ -708,7 +708,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('when the title does not invert and no block is readable, uses the pull-request title verbatim', () => {
+    it('when the title does not invert and the body does not contain a readable block, uses the pull-request title verbatim', () => {
       const templates = { ...TEMPLATES, pr: '{ticket_ref} {title}' };
 
       const report = resolveMerge(buildInput({ prTitle: 'Add foo', templates }));
@@ -741,7 +741,7 @@ describe(resolveMerge, () => {
       });
     });
 
-    it('when no ticket reference is known, renders the merge title without one', () => {
+    it('when the ticket reference is unknown, renders the merge title without one', () => {
       const report = resolveMerge(
         buildInput({ block: readBlock([entryOf({ type: 'feat' })]), prTitle: 'Add foo', ticketRef: null }),
       );
@@ -795,7 +795,7 @@ describe(resolveMerge, () => {
       expect(report.body).toBe('- Fixes #12 by guarding the parser.');
     });
 
-    it('yields an empty body when the pull request has no ## What', () => {
+    it('yields an empty body when the pull request does not have a ## What', () => {
       const report = resolveMerge(buildInput({ prBody: 'Adds foo.\n' }));
 
       expect(report.body).toBe('');
@@ -808,7 +808,8 @@ describe(resolveMerge, () => {
 /**
  * Builds a merge input from the house templates and a taxonomy of one type per policy. A `commitsRecord` stands for
  * commits that were read and consolidate to it; without one, the commits agree with the record ranked from the block's
- * entries, or contain no entry when the block records none. A `ticketRef` of null leaves the flag's reference out.
+ * entries, or do not contain any entry when the block records none. A `ticketRef` of null leaves the flag's reference
+ * out.
  */
 function buildInput(
   changes: Partial<Omit<MergeInput, 'pr' | 'ticketRef'>> & {

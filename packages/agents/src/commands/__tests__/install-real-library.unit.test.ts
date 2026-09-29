@@ -38,7 +38,7 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
     return { harness: 'all', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  it('installs the full library cleanly with the expected skill count and no unresolved tokens or links', async () => {
+  it('installs the full library cleanly with the expected skill count and without any unresolved tokens or links', async () => {
     // A throw here means the real catalog failed to expand/rewrite/write end-to-end.
     await installCommand(makeOptions(), tempDir);
 
@@ -52,14 +52,14 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
       expect(installedSkills.length).toBe(supportEntries.length);
     }
 
-    // No installed file retains a raw template token.
+    // The installed files don't retain any raw template token.
     const tokenOffenders = await collectMarkdownMatches(
       tempDir,
       (content) => content.includes('{harness_home_dir}') || content.includes('{harness_guidance_file}'),
     );
     expect(tokenOffenders).toEqual([]);
 
-    // No installed Markdown link points at a bare-relative target (all are rewritten to absolute/tilde paths).
+    // The installed Markdown links don't point at any bare-relative target (all are rewritten to absolute/tilde paths).
     const linkViolations = await collectBareRelativeLinks(tempDir);
     expect(linkViolations, formatViolations(linkViolations)).toEqual([]);
   });

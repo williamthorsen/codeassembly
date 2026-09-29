@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-/** Width assumed when no terminal width is available, as for piped output. */
+/** Width assumed when the terminal width is not available, as for piped output. */
 const FALLBACK_WIDTH = 120;
 
 /** The stream properties that the width decision reads, so that a test can supply a stub. */

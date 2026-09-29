@@ -43,8 +43,8 @@ export interface HomeFailure {
  *
  * The version-1 write fields are still mirrored at the top level, so that a `codeassembly` predating `lastWrite`
  * reads the stamp rather than rejecting it and reporting nothing. Every worktree has a binary of its own, so a
- * machine mid-upgrade is the normal case rather than an edge one. The mirror is removable once no such binary is in
- * use.
+ * machine mid-upgrade is the normal case rather than an edge one. The mirror is removable once such binaries are no
+ * longer in use.
  */
 export interface HomeProvenance {
   readonly schemaVersion: number;
@@ -75,8 +75,8 @@ export function getHomeProvenancePath(homeDir?: string): string {
 }
 
 /**
- * Reads the provenance stamp, or `undefined` when none can be read: No stamp has been written, or the one on disk
- * is truncated or malformed. `status` then omits one line rather than failing the whole report.
+ * Reads the provenance stamp, or `undefined` when none can be read: A stamp has not been written, or the one on
+ * disk is truncated or malformed. `status` then omits one line rather than failing the whole report.
  */
 export async function readHomeProvenance(homeDir?: string): Promise<HomeProvenance | undefined> {
   return readHomeProvenanceAt(getHomeProvenancePath(homeDir));
@@ -107,9 +107,9 @@ export async function readHomeProvenanceAt(provenancePath: string): Promise<Home
 }
 
 /**
- * Reads the commit that `packageRoot` is on, or `undefined` when the question has no answer: The path is not a git
- * tree, or git is absent. A published install has no commit to report, so the lookup must never fail the write that
- * it describes.
+ * Reads the commit that `packageRoot` is on, or `undefined` when the question does not have an answer: The path is
+ * not a git tree, or git is absent. A published install does not have a commit to report, so the lookup must never
+ * fail the write that it describes.
  */
 export async function readSourceCommit(packageRoot: string): Promise<string | undefined> {
   try {

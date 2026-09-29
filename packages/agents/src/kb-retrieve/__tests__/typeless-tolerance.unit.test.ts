@@ -10,17 +10,17 @@ const NORMALIZE = join(import.meta.dirname, 'fixtures', 'normalize');
 const NOW = new Date('2026-05-01T00:00:00Z');
 
 describe(collectTypelessCandidates, () => {
-  it('returns a note that parses but declares no recordType, keeping its fields and marking it degraded', async () => {
+  it('returns a note that parses but does not declare a recordType, keeping its fields and marking it degraded', async () => {
     const candidates = await collectTypelessCandidates({
       hits: [await hitFor(join(NORMALIZE, 'no-record-type.md'))],
       now: NOW,
     });
 
     expect(candidates[0]?.title).toBe('A note that predates record typing');
-    expect(candidates[0]?.diagnostic).toBe('note has no recordType; degraded to a low-signal candidate');
+    expect(candidates[0]?.diagnostic).toBe('note does not declare a recordType; degraded to a low-signal candidate');
   });
 
-  it('keeps the malformed-frontmatter diagnostic for a note with no parseable frontmatter', async () => {
+  it('keeps the malformed-frontmatter diagnostic for a note without parseable frontmatter', async () => {
     const candidates = await collectTypelessCandidates({
       hits: [await hitFor(join(NORMALIZE, 'malformed.md'))],
       now: NOW,

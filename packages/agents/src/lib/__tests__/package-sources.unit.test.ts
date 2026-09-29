@@ -33,7 +33,7 @@ describe(resolvePackageSources, () => {
     ]);
   });
 
-  it('resolves a package that ships no JavaScript at all', async () => {
+  it('resolves a package that does not ship any JavaScript at all', async () => {
     const dir = await installPackage(baseDir, '@ca-fixture/guidance-only', { codeassembly: { content: 'guidance' } });
 
     expect(await resolvePackageSources(['@ca-fixture/guidance-only'], baseDir)).toEqual([
@@ -99,11 +99,11 @@ describe(resolvePackageSources, () => {
     await expect(resolvePackageSources(['./guidance'], baseDir)).rejects.toThrow(/is a filesystem path/);
   });
 
-  it('throws when a package declares no codeassembly content', async () => {
+  it('throws when a package does not declare any codeassembly content', async () => {
     await installPackage(baseDir, '@ca-fixture/plain', {});
 
     await expect(resolvePackageSources(['@ca-fixture/plain'], baseDir)).rejects.toThrow(
-      /"@ca-fixture\/plain" declares no CodeAssembly content/,
+      /"@ca-fixture\/plain" does not declare any CodeAssembly content/,
     );
   });
 
@@ -158,7 +158,7 @@ describe(findUndeclaredGuidancePackages, () => {
     expect(await findUndeclaredGuidancePackages(['@ca-fixture/ships'], baseDir)).toEqual([]);
   });
 
-  it('never reports a dependency that declares no content', async () => {
+  it('never reports a dependency that does not declare any content', async () => {
     await installPackage(baseDir, '@ca-fixture/plain', {});
     await writeProjectManifest(baseDir, { dependencies: { '@ca-fixture/plain': '1.0.0' } });
 
@@ -182,7 +182,7 @@ describe(findUndeclaredGuidancePackages, () => {
     expect(await findUndeclaredGuidancePackages([], baseDir)).toEqual(['@ca-fixture/alpha', '@ca-fixture/zulu']);
   });
 
-  it('reports nothing when the project has no package.json', async () => {
+  it('reports nothing when the project does not have a package.json', async () => {
     expect(await findUndeclaredGuidancePackages([], baseDir)).toEqual([]);
   });
 

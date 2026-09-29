@@ -6,7 +6,7 @@ set -euo pipefail
 # A thin launcher: It resolves the monorepo root from this script's (possibly
 # symlinked) location and runs the toolbox CLI via tsx, forwarding every
 # argument. Running the TypeScript source directly means the command tracks the
-# checkout with no rebuild. All verbs, flags, and the --help text belong to the
+# checkout without a rebuild. All verbs, flags, and the --help text belong to the
 # CLI; this script forwards everything to it.
 #
 # Usage:

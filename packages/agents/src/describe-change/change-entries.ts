@@ -7,11 +7,11 @@ import { isRecord } from '../lib/type-guards.ts';
 /**
  * Consolidates a change's entries into the record that represents the change.
  *
- * Each entry expands to one record per scope, and an entry naming no scope expands to one record with no scope, so a
- * change touching nothing scoped stays rankable on its type. The expanded list is ranked by `consolidate`, which
- * resolves the type by rank and the scope by unanimity once process-tier scopes and incidental `root` are set aside, so
- * the change entries and the commit entries consolidate under one rule. An entry whose type the taxonomy does not declare is unrankable, and
- * `consolidate` skips it.
+ * Each entry expands to one record per scope, and an entry that does not name any scope expands to one record without a
+ * scope, so a change touching nothing scoped stays rankable on its type. The expanded list is ranked by `consolidate`,
+ * which resolves the type by rank and the scope by unanimity once process-tier scopes and incidental `root` are set
+ * aside, so the change entries and the commit entries consolidate under one rule. An entry whose type the taxonomy does
+ * not declare is unrankable, and `consolidate` skips it.
  */
 export function consolidateChangeEntries(entries: readonly ChangeEntry[], taxonomy: Taxonomy): ChangeRecord {
   const expanded = entries.flatMap((entry) => {

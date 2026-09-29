@@ -71,7 +71,7 @@ export async function removeClaudeHookEntries(filePath: string, sentinel: string
 
 /**
  * Reads the indent unit from the first indented line. A single-line document containing members demonstrates compact
- * style and keeps it; a document with no members demonstrates nothing, so it takes the default that a missing file
+ * style and keeps it; a document without members demonstrates nothing, so it takes the default that a missing file
  * takes.
  */
 function detectIndent(body: string): string | number {

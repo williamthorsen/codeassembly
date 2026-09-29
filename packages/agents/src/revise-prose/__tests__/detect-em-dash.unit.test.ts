@@ -57,7 +57,7 @@ describe(detectEmDashes, () => {
     expect(candidates).toHaveLength(1);
   });
 
-  it('reports an em-dash when an unclosed backtick run delimits no span', () => {
+  it('reports an em-dash when an unclosed backtick run does not delimit a span', () => {
     const candidates = detect(`A stray \` backtick${EM_DASH}then a dash.`);
 
     expect(candidates).toHaveLength(1);

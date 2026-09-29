@@ -4,7 +4,7 @@ set -euo pipefail
 # test-sh.sh: Runs shellspec against the package's shell tests.
 #
 # Forwards positional arguments to shellspec, falling back to the package's default test directory
-# when no paths or options are supplied.
+# when the caller does not supply any paths or options.
 # Drops a single leading `--` so that callers can use the standard `pnpm <script> -- <args>` convention
 # to forward shellspec flags such as `--example`.
 #
@@ -38,7 +38,7 @@ Usage:
   $PROG [shellspec-args...]
   $PROG --help
 
-When invoked with no arguments, runs all tests under content/scripts/. When
+When invoked without arguments, runs all tests under content/scripts/. When
 invoked with arguments, forwards them to shellspec (after consuming a single
 leading \`--\` separator added by pnpm).
 

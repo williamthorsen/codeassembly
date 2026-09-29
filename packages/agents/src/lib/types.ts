@@ -99,7 +99,7 @@ export interface ManifestEntry {
 
 /**
  * Manifest data for the retired cross-harness tier that a previous version installed to `~/.agents/`. Retained as the
- * shape read by the retirement pass; no pass writes it.
+ * shape read by the retirement pass; it isn't written by any pass.
  */
 export interface SharedManifest {
   readonly version: string;

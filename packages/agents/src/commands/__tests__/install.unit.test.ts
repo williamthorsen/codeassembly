@@ -81,7 +81,7 @@ describe(installCommand, () => {
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
 
     expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(true);
-    // No skill directory is planted: Harness skills and catalog skills deploy via sync, not install.
+    // `install` doesn't plant any skill directory: Harness skills and catalog skills deploy via sync, not install.
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'))).toBe(false);
 
@@ -181,7 +181,7 @@ describe(installCommand, () => {
     expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
   });
 
-  it('warns when the content ships no skills directory, rather than reporting a clean install', async () => {
+  it('warns when the content does not ship a skills directory, rather than reporting a clean install', async () => {
     await setupClaudeHome();
     await rm(path.join(contentDir, 'skills'), { recursive: true, force: true });
 
@@ -209,7 +209,7 @@ describe(installCommand, () => {
     }
   });
 
-  it('installs support directories for claude but no harness-specific skill directories', async () => {
+  it('installs support directories for claude but not harness-specific skill directories', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
@@ -220,7 +220,7 @@ describe(installCommand, () => {
     expect(skills).not.toContain('rovo-only');
   });
 
-  it('installs support directories for rovo but no harness-specific skill directories', async () => {
+  it('installs support directories for rovo but not harness-specific skill directories', async () => {
     const rovoHome = await setupRovoHome();
 
     await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
@@ -231,7 +231,7 @@ describe(installCommand, () => {
     expect(skills).not.toContain('claude-only');
   });
 
-  it('deploys the _data support tree and scripts but no skill directories or subagents', async () => {
+  it('deploys the _data support tree and scripts but not skill directories or subagents', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
@@ -386,7 +386,7 @@ describe(installCommand, () => {
       expect(installed).toContain('`~/.claude/scripts/x.sh`');
     });
 
-    it('fails the run when its anchor names no heading', async () => {
+    it('fails the run when its anchor does not name any heading in the skill', async () => {
       await setupClaudeHome();
       await writeFlatSkill('# Flat note\n\nSee [the events](#lifecycle-events).\n');
 
@@ -418,7 +418,7 @@ describe(installCommand, () => {
       expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
     });
 
-    it('installs no file that is neither a shell script nor a bundle', async () => {
+    it('does not install a file that is neither a shell script nor a bundle', async () => {
       const claudeHome = await setupClaudeHome();
       await buildContentTree(contentDir, { scripts: { 'README.md': '# Helper scripts\n' } });
 
@@ -454,7 +454,7 @@ describe(installCommand, () => {
       }
     });
 
-    it('creates no scripts directory in dry-run mode', async () => {
+    it('does not create a scripts directory in dry-run mode', async () => {
       const claudeHome = await setupClaudeHome();
 
       await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);

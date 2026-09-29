@@ -8,7 +8,7 @@ import { criticalitySchema, runStatusSchema } from './run-index-schema.ts';
 // Each schema uses plain `.object()` (not `.loose()`). Zod 4's default behavior
 // for `.object()` is to strip unknown keys during parse. This means:
 //   1. Lines containing future/unknown fields parse without throwing.
-//   2. The inferred output type exactly matches RunEvent (no index signature).
+//   2. The inferred output type exactly matches RunEvent (without an index signature).
 // This eliminates the need for type assertions on the parse result.
 
 const phaseStatusSchema = z.enum(['completed', 'skipped', 'failed', 'in_progress', 'approved']);
@@ -159,7 +159,7 @@ export function parseRunLogLine(line: string): RunEvent {
 
 // -- V3 run-index.json schema --
 
-/** V3 context: header-only (no phases, status, completedAt, or phaseDecisions). */
+/** V3 context: header-only (without phases, status, completedAt, or phaseDecisions). */
 const v3ContextSchema = z.object({
   runId: z.string(),
   projectSlug: z.string(),

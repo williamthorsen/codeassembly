@@ -18,8 +18,8 @@ export type SelectKbPrompt = (input: {
 
 /**
  * Renders the numbered selection list: each registered KB (marking the current default) followed by a trailing
- * `(none)` option numbered `entries.length + 1`. When no default is set, the current marker appears on `(none)`
- * instead.
+ * `(none)` option numbered `entries.length + 1`. When the registry does not set a default, the current marker appears
+ * on `(none)` instead.
  */
 export function formatKbSelection(entries: readonly KbRegistryEntry[], currentDefaultName?: string): string {
   const lines = ['Select the default knowledge base:'];

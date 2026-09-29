@@ -17,8 +17,8 @@ const ROLE_WORDING: Record<RoleFailure['reason'], RoleWording> = {
 };
 
 /**
- * Builds the error code and agent-facing message for a role sentinel (`@default` or `@feedback`) that resolved to no
- * usable store, naming the registry-load cause when one occurred.
+ * Builds the error code and agent-facing message for a role sentinel (`@default` or `@feedback`) that did not resolve
+ * to a usable store, naming the registry-load cause when one occurred.
  */
 export function formatRoleFailure(resolved: RoleFailure): { error: RoleWording['error']; message: string } {
   const role = ROLE_WORDING[resolved.reason];
@@ -27,6 +27,6 @@ export function formatRoleFailure(resolved: RoleFailure): { error: RoleWording['
     message:
       resolved.registryError !== undefined
         ? `could not resolve the ${role.label} event store: ${resolved.registryError}`
-        : `--store ${role.sentinel} was given but no ${role.key} is configured in kb.yaml`,
+        : `--store ${role.sentinel} was given but kb.yaml does not configure ${role.key}`,
   };
 }

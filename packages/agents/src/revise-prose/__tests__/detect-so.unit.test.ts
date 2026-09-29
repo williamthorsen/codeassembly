@@ -18,7 +18,7 @@ describe(detectSoUses, () => {
       ]);
     });
 
-    it('reports a degree adverb before an adjective, which no neighboring word distinguishes from a purpose clause', () => {
+    it('reports a degree adverb before an adjective, which the neighboring words do not distinguish from a purpose clause', () => {
       expect(detect('The run is so slow.')).toStrictEqual([expect.objectContaining({ trigger: 'bare' })]);
     });
   });

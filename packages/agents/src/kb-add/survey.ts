@@ -51,7 +51,7 @@ export async function surveyKb(input: { kbPath: string }): Promise<KbSurvey> {
   const [config, taxonomy] = await Promise.all([loadKbConfig({ kbRoot }), loadTaxonomy({ kbRoot })]);
   const relativePaths = await enumerateNotePaths({ kbRoot: input.kbPath, config });
 
-  // A note at the assertions root resolves to no domain and so counts toward no folder.
+  // A note at the assertions root does not resolve to a domain and so does not count toward any folder.
   const notesByFolder = new Map<string, number>();
   for (const relativePath of relativePaths) {
     const folder = resolveDomain(relativePath);

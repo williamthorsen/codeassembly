@@ -89,8 +89,8 @@ export async function syncCommand(
  * Resolves the user-global `~/.agents/codeassembly.yaml` scope chain and reconciles it into the home harness dirs (the
  * home domain). A thin wrapper over `reconcileDomain` that supplies the home `SyncDomain`. Writes ambient blocks into
  * the ambient region of each targeted harness's guidance file (e.g. `~/.claude/CLAUDE.md`), which the harness loads
- * mechanically; no agent-read host file is written. When the home declaration is absent, changes nothing and returns
- * the outcome naming `init --global` as the remedy.
+ * mechanically. It does not write any agent-read host file. When the home declaration is absent, changes nothing and
+ * returns the outcome naming `init --global` as the remedy.
  */
 export async function syncGlobalCommand(
   options: InstallOptions,
@@ -120,7 +120,8 @@ export async function syncGlobalCommand(
     );
     retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
   } catch (error: unknown) {
-    // Recorded past the designated-writer guard above, so an installation refused by the guard touches no home state.
+    // Recorded past the designated-writer guard above, so an installation refused by the guard doesn't touch any home
+    // state.
     if (!options.dryRun) {
       await recordFailedHomeAttempt('sync --global', describeSyncFailure(error), homeDir);
     }
@@ -180,8 +181,8 @@ async function reconcileDomain(
   const resolver = createSourceResolver(sources, contentDir);
 
   // Everything a declared package ships seeds the closure, which makes naming the package the whole declaration. A
-  // package whose content dir is missing enumerates nothing: The walk reads through a directory listing that returns
-  // no entries for an absent directory.
+  // package whose content dir is missing enumerates nothing: The walk reads through a directory listing that doesn't
+  // return any entries for an absent directory.
   const packageCatalogs = await Promise.all(
     sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
   );
@@ -260,8 +261,8 @@ async function reconcileDomain(
     resolved.filter((rulebook) => rulebook.skill).map((rulebook) => [rulebook.slug, rulebook.skillName] as const),
   );
 
-  // One catalog for every body that addresses a rulebook by token (rulebook, skill, and subagent alike), so that no
-  // two passes can disagree about what is addressable. The closure that it indexes already contains a rulebook named
+  // One catalog for every body that addresses a rulebook by token (rulebook, skill, and subagent alike), so that two
+  // passes cannot disagree about what is addressable. The closure that it indexes already contains a rulebook named
   // only by a skill's or subagent's token, since those tokens are dependency edges.
   const rulebookCatalog = buildRulebookInvocationCatalog(resolved);
   const declaredSkillSet = new Set(resolvedSkills.map((skill) => skill.slug));
@@ -450,8 +451,8 @@ async function reconcileDomain(
   // inside the repository that maintains it.
   const sourceRoots = await resolveCanonicalSourceRoots(sources, contentDir);
 
-  // Last of all, so that the measurement reads the tree that every pass above left. Cannot fail: No size condition
-  // may fail a sync.
+  // Last of all, so that the measurement reads the tree that every pass above left. Cannot fail: A size condition
+  // must not fail a sync.
   const sizes = await recordDeployedSizes({
     plan,
     domain,

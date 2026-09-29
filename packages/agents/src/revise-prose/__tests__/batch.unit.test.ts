@@ -138,7 +138,7 @@ describe(planBatches, () => {
     expect(planBatches({ files: [file('docs/a.md', 40)], candidates: [] })[0]?.files).toStrictEqual(['docs/a.md']);
   });
 
-  it('refuses a budget that no batch could satisfy', () => {
+  it('refuses a budget that a batch could not satisfy', () => {
     expect(() => plan([], [], 0)).toThrow(/positive integer/);
     expect(() => plan([], [], 1.5)).toThrow(/positive integer/);
   });

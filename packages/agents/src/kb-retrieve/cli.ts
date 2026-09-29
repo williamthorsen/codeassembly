@@ -107,7 +107,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end, from argv to the candidate table. A result with no candidates states the cause in its
+ * Runs the helper end to end, from argv to the candidate table. A result without candidates states the cause in its
  * `diagnostic`.
  *
  * @internal - Exported to allow testing.
@@ -172,7 +172,7 @@ export async function runRetrieve(input: {
  */
 function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: number }): string {
   if (input.recalledCount === 0) {
-    return 'no notes matched the query';
+    return 'the query did not match any notes';
   }
   if (input.filteredHits === 0) {
     return 'all matches were filtered out';

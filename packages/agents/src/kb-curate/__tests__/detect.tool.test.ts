@@ -32,13 +32,13 @@ const CLEAN =
   '---\ntitle: Clean\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\nlast-verified: 2026-05-25\ntags: [git]\n---\n\nA clean note with no defects.\n';
 
 describe(detectCurateFindings, () => {
-  it('produces no curate findings for a clean vault', async () => {
+  it("doesn't produce any curate findings for a clean vault", async () => {
     const root = await makeVault({ 'Clean.md': CLEAN });
 
     expect(await detectIn(root)).toEqual([]);
   });
 
-  it('reports no verification.unmarked findings when no note uses verification', async () => {
+  it("doesn't report any verification.unmarked findings when the vault doesn't use verification", async () => {
     const root = await makeVault({
       'A.md': '---\ntitle: A\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [git]\n---\n\nBody.\n',
       'B.md': '---\ntitle: B\ntype: howto\ncreated: 2026-05-01\nupdated: 2026-05-01\ntags: [git]\n---\n\nBody.\n',

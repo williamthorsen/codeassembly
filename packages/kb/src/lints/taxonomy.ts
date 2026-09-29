@@ -13,16 +13,16 @@ export interface TaxonomyNote {
 
 /**
  * Reports each disagreement between a store's assertion folders and its declared taxonomy: `taxonomy.undeclared` for a
- * folder holding notes outside every declared domain, `taxonomy.unused` for a declared domain holding no note at or
+ * folder holding notes outside every declared domain, `taxonomy.unused` for a declared domain without a note at or
  * beneath it, and `taxonomy.orphan` for a declared domain whose parent is undeclared. All are warnings, so drift is
  * reported without failing the run. All are vault-scoped: A run narrowed to selected notes still reports them.
  *
- * A taxonomy declaring nothing disables all three, whether because the file is absent or because it declares no
- * domains. The rules therefore report nothing for a store that has not adopted a taxonomy, rather than flagging
+ * A taxonomy declaring nothing disables all three, whether because the file is absent or because it does not declare
+ * any domains. The rules therefore report nothing for a store that has not adopted a taxonomy, rather than flagging
  * every folder that the store owns.
  *
  * Because the observed structure comes from the enumerated notes' own paths rather than a directory listing, the rules
- * add no filesystem traversal and consider exactly the notes that the run's `targets` and `exclude` admitted.
+ * do not add any filesystem traversal and consider exactly the notes that the run's `targets` and `exclude` admitted.
  */
 export function taxonomyFindings(input: {
   notes: readonly TaxonomyNote[];
@@ -52,19 +52,21 @@ export function taxonomyFindings(input: {
   for (const domain of [...observed].toSorted()) {
     if (!taxonomy.has(domain)) {
       findings.push(
-        buildFinding(taxonomyPath, 'undeclared', `folder "${domain}" contains notes but no domain declares it`),
+        buildFinding(taxonomyPath, 'undeclared', `folder "${domain}" contains notes but is not declared as a domain`),
       );
     }
   }
 
   for (const domain of declared) {
     // An excluded subtree is pruned during the walk, so the walk never enumerates its notes, and every domain inside
-    // it would otherwise be reported as unused forever. The exemption is needed here only: With no notes to
-    // observe, an excluded subtree cannot produce an undeclared folder in the first place.
+    // it would otherwise be reported as unused forever. The exemption is needed here only: Because the walk does not
+    // observe any of its notes, an excluded subtree cannot produce an undeclared folder in the first place.
     if (holdsNote(domain, observed) || matcher.isExcluded(`${ASSERTIONS_DIR}/${domain}`)) {
       continue;
     }
-    findings.push(buildFinding(taxonomyPath, 'unused', `domain "${domain}" is declared but contains no notes`));
+    findings.push(
+      buildFinding(taxonomyPath, 'unused', `domain "${domain}" is declared but does not contain any notes`),
+    );
   }
 
   for (const domain of declared) {

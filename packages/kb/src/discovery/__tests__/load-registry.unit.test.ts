@@ -24,7 +24,7 @@ describe(loadKbRegistry, () => {
     expect(config.sources).toEqual({});
   });
 
-  it('loads only the user registry when no project directory is given', async () => {
+  it('loads only the user registry when the options omit a project directory', async () => {
     const config = await loadKbRegistry({ home: join(MERGE_DIR, 'only-user-home') });
 
     expect(config.entries).toHaveLength(1);
@@ -34,7 +34,7 @@ describe(loadKbRegistry, () => {
     expect(config.sources.project).toBeUndefined();
   });
 
-  it('loads only the project registry when no user registry exists', async () => {
+  it('loads only the project registry when the user registry file is absent', async () => {
     const config = await loadKbRegistry({
       home: '/no/such/home',
       projectDir: join(MERGE_DIR, 'only-project'),
@@ -53,7 +53,7 @@ describe(loadKbRegistry, () => {
     expect(shared?.description).toBe('Project-local override of the shared KB');
   });
 
-  it('appends a project-only entry that has no user counterpart', async () => {
+  it('appends a project-only entry without a user counterpart', async () => {
     const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
 
     expect(config.entries.map((entry) => entry.name).toSorted()).toEqual(['project-only', 'shared', 'user-only']);
@@ -80,7 +80,7 @@ describe(loadKbRegistry, () => {
     expect(config.defaultKb?.source).toBe('project');
   });
 
-  it('leaves defaultKb undefined when no registry sets default_kb', async () => {
+  it('leaves defaultKb undefined when default_kb is not set in either registry', async () => {
     const config = await loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'only-project') });
 
     expect(config.defaultKb).toBeUndefined();
@@ -100,7 +100,7 @@ describe(loadKbRegistry, () => {
     expect(config.feedbackKb?.path).toBe(join(HOME, 'user-only-kb'));
   });
 
-  it('leaves feedbackKb undefined when no registry sets feedback_kb', async () => {
+  it('leaves feedbackKb undefined when feedback_kb is not set in either registry', async () => {
     const config = await loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'only-project') });
 
     expect(config.feedbackKb).toBeUndefined();
@@ -112,19 +112,19 @@ describe(loadKbRegistry, () => {
     );
   });
 
-  it('throws naming the source file when default_kb names no registered KB', async () => {
+  it('throws naming the source file when default_kb does not match any registered KB', async () => {
     await expect(
       loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'unresolvable-default') }),
     ).rejects.toThrow(/unresolvable-default.*default_kb "nonexistent" does not match any registered KB/s);
   });
 
-  it('throws naming the source file when feedback_kb names no registered KB', async () => {
+  it('throws naming the source file when feedback_kb does not match any registered KB', async () => {
     await expect(
       loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'unresolvable-feedback') }),
     ).rejects.toThrow(/unresolvable-feedback.*feedback_kb "nonexistent" does not match any registered KB/s);
   });
 
-  it('throws naming the user file when a user feedback_kb names no registered KB', async () => {
+  it('throws naming the user file when a user feedback_kb does not match any registered KB', async () => {
     await expect(
       loadKbRegistry({ userConfigPath: join(MERGE_DIR, 'unresolvable-feedback', '.agents', 'kb.yaml'), home: HOME }),
     ).rejects.toThrow(/unresolvable-feedback.*feedback_kb "nonexistent"/s);
@@ -150,7 +150,7 @@ describe(loadKbRegistry, () => {
 });
 
 describe(tryLoadKbRegistry, () => {
-  it('returns the merged config with no error for a valid registry', async () => {
+  it('returns the merged config without an error for a valid registry', async () => {
     const result = await tryLoadKbRegistry({ home: HOME, projectDir: PROJECT });
 
     expect(result.error).toBeUndefined();
@@ -161,7 +161,7 @@ describe(tryLoadKbRegistry, () => {
     ]);
   });
 
-  it('returns an empty config with no error when neither registry file exists', async () => {
+  it('returns an empty config without an error when neither registry file exists', async () => {
     const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: '/no/such/project' });
 
     expect(result.error).toBeUndefined();
@@ -176,7 +176,7 @@ describe(tryLoadKbRegistry, () => {
     expect(result.config).toEqual({ entries: [], sources: {} });
   });
 
-  it('describes a thrown error carrying no message by its class rather than as an empty string', async () => {
+  it('describes a thrown error with an empty message by its class rather than as an empty string', async () => {
     // eslint-disable-next-line unicorn/error-message -- the empty message is the condition under test.
     vi.mocked(readFile).mockRejectedValueOnce(new Error(''));
 

@@ -21,7 +21,9 @@ export interface DroppedHarnessRetraction {
   /** Owned dirs across both skill namespaces: rulebook-delivered and declared. */
   readonly skillDirs: ReadonlyArray<string>;
   readonly subagentFiles: ReadonlyArray<string>;
-  /** Paths under the harness's support root that no source claims, which for a dropped harness is the root itself. */
+  /**
+   * Paths under the harness's support root not claimed by any source, which for a dropped harness is the root itself.
+   */
   readonly supportPaths: ReadonlyArray<string>;
   readonly ambientHost: AmbientRetraction | undefined;
   readonly promptsYml: HostRetraction | undefined;
@@ -29,7 +31,7 @@ export interface DroppedHarnessRetraction {
 
 /**
  * What retraction does to one dropped harness's ambient host. `damaged` is the ambient host's own case: a region that
- * no transform may touch, which the sweep leaves standing and the report names, since the alternative is a
+ * a transform must never touch, which the sweep leaves standing and the report names, since the alternative is a
  * clean-looking run over guidance withdrawn by the declaration.
  */
 export type AmbientRetraction = HostRetraction | { readonly kind: 'damaged'; readonly path: string };
@@ -45,12 +47,12 @@ export type HostRetraction =
  * so an install-managed or hand-authored file is never claimed.
  *
  * Retraction follows the declaration alone. A `flag` origin names the run's target without declaring any harness
- * unwanted, and a harness missed by `detection` has no directory holding stale files; either origin yields an empty
- * result.
+ * unwanted, and a harness missed by `detection` does not have a directory holding stale files; either origin
+ * yields an empty result.
  *
  * The candidate set is every known harness minus the targeted ones, unfiltered by directory existence: Each scan
  * returns nothing for an absent directory, and a harness holding nothing is left out of the result, so the report
- * never announces one that had no residue.
+ * never announces one that did not have any residue.
  */
 export async function planDroppedHarnessRetractions(options: {
   readonly targets: ResolvedHarnessTargets;
@@ -76,7 +78,8 @@ export async function planDroppedHarnessRetractions(options: {
         ...(await listOwnedDeclaredSkills(skillsDir)).map(({ dir }) => path.join(skillsDir, dir)),
       ],
       subagentFiles: (await listOwnedSubagents(subagentsDir)).map(({ file }) => path.join(subagentsDir, file)),
-      // A dropped harness keeps no source, so nothing under the root survives and the listing collapses to the root.
+      // A dropped harness does not keep any source, so nothing under the root survives and the listing collapses to
+      // the root.
       supportPaths: await listUndeclaredSourceSupport(path.join(skillsDir, SOURCE_SUPPORT_DIR), {
         surviving: [],
         emptied: [],
@@ -137,7 +140,7 @@ function hasResidue(retraction: DroppedHarnessRetraction): boolean {
  * placement: `install` renders the harness-home region, so sync empties the content that it owns and keeps the markers,
  * while the project-local host is sync's own and goes entirely, taking the file with it once nothing else remains.
  * A damaged region is reported rather than touched, since the span matched there by the pattern includes text that
- * the region does not own; a host with no region at all is nothing to report.
+ * the region does not own; a host without a region at all is nothing to report.
  */
 async function planAmbientRetraction(
   harnessId: HarnessId,
@@ -161,7 +164,7 @@ async function planAmbientRetraction(
 /**
  * Decides what retraction does to one dropped harness's `prompts.yml`. The codeassembly region is removed rather than
  * re-indexed: Retraction withdraws sync's ownership of the file, whereas re-indexing would keep a region alive to
- * list whatever hand-authored skills remain in the dir. A file with no region was never sync's and is left alone.
+ * list whatever hand-authored skills remain in the dir. A file without a region was never sync's and is left alone.
  */
 async function planPromptsRetraction(promptsPath: string): Promise<HostRetraction | undefined> {
   const content = await readFileOrEmpty(promptsPath);

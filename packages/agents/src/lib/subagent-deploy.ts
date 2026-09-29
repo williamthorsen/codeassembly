@@ -37,8 +37,8 @@ export interface SubagentDeployContext extends TemplateVariables {
   /** The deployed rulebooks that a `{rulebook:<slug>}` token may address, keyed by slug. */
   readonly rulebooks: RulebookInvocationCatalog;
   /**
-   * Guidance bound to each hook that the subagent's body may declare; absent under `install`, which resolves no
-   * binding.
+   * Guidance bound to each hook that the subagent's body may declare; absent under `install`, which doesn't
+   * resolve a binding.
    */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
 }
@@ -47,9 +47,9 @@ const subagentMarker = makeArtifactMarker('subagent');
 
 /**
  * Materializes a resolved subagent to `destPath`, applying the harness transform (frontmatter merge, tool-name rewrite,
- * path/template rewrite) and stamping the `codeassembly-subagent:<slug>` ownership marker. No provenance marker is
- * injected: Declared subagents have only the ownership marker, which `sync` retracts against. The write is
- * byte-stable, so re-deploying unchanged content makes no filesystem change.
+ * path/template rewrite) and stamping the `codeassembly-subagent:<slug>` ownership marker. Doesn't inject a provenance
+ * marker: Declared subagents have only the ownership marker, which `sync` retracts against. The write is byte-stable,
+ * so re-deploying unchanged content doesn't change the filesystem.
  */
 export async function deploySubagent(
   resolved: ResolvedSubagent,

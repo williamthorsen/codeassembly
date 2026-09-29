@@ -4,9 +4,10 @@ import { join } from 'node:path';
 /**
  * Decodes a Claude project-store slug back to the working directory from which it was derived, as far as the filesystem
  * allows. Claude Code builds the slug by collapsing every path separator in the session cwd to `-`, and other
- * punctuation such as `.` with it, so the mapping is lossy and no string substitution inverts it; the decoding is
- * resolved against the filesystem instead. Returns null when no `-`-only decoding names a live directory, which covers
- * a dead store and a real name whose `.` cannot be recovered, and leaves the caller ungrounded.
+ * punctuation such as `.` with it, so the mapping is lossy and a string substitution cannot invert it; the decoding is
+ * resolved against the filesystem instead. Returns null when the search does not find a `-`-only decoding that names a
+ * live directory, which covers a dead store and a real name whose `.` cannot be recovered, and leaves the caller
+ * ungrounded.
  *
  * `isDirectory` is injected so that the search can be exercised against a fixture set without touching the real
  * filesystem.
@@ -53,7 +54,7 @@ async function searchSegments(input: {
 
 /**
  * True when `path` resolves to a directory. Because any `stat` failure yields `false`, a probe error degrades slug
- * resolution to `null`: Grounding is best-effort, and no filesystem error on a probe blocks it.
+ * resolution to `null`: Grounding is best-effort, and a filesystem error on a probe does not block it.
  */
 async function directoryExists(path: string): Promise<boolean> {
   try {

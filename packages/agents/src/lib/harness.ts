@@ -39,8 +39,8 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
     scriptsDirName: 'scripts',
     configFileName: 'config.yml',
     frontmatterFile: 'rovo.yaml',
-    // `Glob` has no exact Rovo Dev counterpart; `expand_folder` is the closest directory-exploration analogue,
-    // accepted as the mapping for prose contexts.
+    // Rovo Dev does not have an exact counterpart to `Glob`; `expand_folder` is the closest directory-exploration
+    // analogue, accepted as the mapping for prose contexts.
     toolNames: {
       AskUserQuestion: 'ask_user_questions',
       Bash: 'bash',
@@ -86,7 +86,7 @@ export function detectHarnesses(homeDir: string = homedir()): ReadonlyArray<Harn
  * home directory for the home domain, the project root for the project domain. The home domain's host is under the
  * harness home; the project domain's is at the project root, because that is where each harness loads its
  * machine-local project guidance from. `baseDir` is required: Unlike the harness-home paths, a project-local host
- * has no meaningful default.
+ * does not have a meaningful default.
  */
 export function resolveAmbientHostPath(harnessId: HarnessId, hostKind: AmbientHostKind, baseDir: string): string {
   const config = HARNESSES[harnessId];

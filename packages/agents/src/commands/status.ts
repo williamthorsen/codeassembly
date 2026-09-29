@@ -76,8 +76,8 @@ function countDaysSince(timestamp: string): number | undefined {
 /**
  * Reports which installation last wrote the home domain, and leads with the last attempt when it failed. A write
  * timestamp alone cannot separate a current deployment from one left behind by an abandoned run, so the failed attempt
- * is what says the deployed guidance is stale rather than merely old. Stays silent when no stamp exists, since a
- * home domain last written by a build predating the stamp has nothing to report rather than something to warn about.
+ * is what says the deployed guidance is stale rather than merely old. Stays silent when it doesn't find a stamp, since
+ * a home domain last written by a build predating the stamp has nothing to report rather than something to warn about.
  */
 async function reportHomeProvenance(baseDir?: string): Promise<void> {
   const provenance = await readHomeProvenance(baseDir);
@@ -95,7 +95,7 @@ async function reportHomeProvenance(baseDir?: string): Promise<void> {
   }
 
   if (lastWrite === undefined) {
-    console.info('The home domain has no recorded write.');
+    console.info("The home domain doesn't have a recorded write.");
     return;
   }
 
@@ -110,7 +110,7 @@ async function reportHomeProvenance(baseDir?: string): Promise<void> {
 
 /**
  * Reports the session-lifecycle hook entries' state in the harness's config file. When `quietWhenUnconfigured` is
- * set (the harness has no installation), prints nothing for an all-absent result rather than noise about a feature
+ * set (the harness isn't installed), prints nothing for an all-absent result rather than noise about a feature
  * not in use.
  */
 async function reportHookEntryStatus(

@@ -30,8 +30,8 @@ export function describeHarnessTargeting(targets: ResolvedHarnessTargets): strin
  * `--harness all` means "do not narrow" rather than "every known harness".
  *
  * Detection reads the home directory rather than `cwd`, because a harness home is created by that harness's own
- * installer while a repository has no reason to hold one. A declaration is honored even when it resolves to an empty
- * set: A run that deploys nowhere on purpose is distinct from one that never declared a target.
+ * installer while a repository doesn't have a reason to hold one. A declaration is honored even when it resolves to an
+ * empty set: A run that deploys nowhere on purpose is distinct from one that never declared a target.
  *
  * `options.cwd` is the domain's base: the project root for a repo sync, the home directory for a global one or for
  * `install`.
@@ -64,8 +64,8 @@ interface ChainFile {
  * across the domain boundary, so a project-local file can withdraw a home-declared harness. `root: true` clears only
  * what its own domain contributed, which keeps a committed project file from discarding the user-global declaration.
  *
- * Returns `undefined` when no file in the chain contains the block, which separates a chain declaring nothing (the
- * caller falls back to detection) from one declaring an empty set (the caller honors it).
+ * Returns `undefined` when the block doesn't appear in any file in the chain, which separates a chain declaring nothing
+ * (the caller falls back to detection) from one declaring an empty set (the caller honors it).
  */
 async function accumulateDeclaredHarnesses(
   chain: ReadonlyArray<ChainFile>,

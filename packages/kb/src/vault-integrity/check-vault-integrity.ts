@@ -5,7 +5,7 @@ import { countNewlines, lookupKey, type ScannedWikilink, scanWikilinks } from '.
 
 /**
  * Checks whole-vault integrity over a type-blind note set: unresolved `[[link]]` targets and basename collisions.
- * Projects no records and reads no frontmatter: A note is just its path and body.
+ * Does not project any records or read any frontmatter: A note is just its path and body.
  *
  * A `[[Target]]` whose basename resolves to zero notes is an error (`wikilinks.unresolved`), reported at its
  * file-absolute line. A basename shared by two or more notes is a single vault-wide warning (`wikilinks.basename`),
@@ -23,7 +23,7 @@ export function checkVaultIntegrity(notes: readonly VaultIntegrityNote[], option
 
 /** What a check run found when it looked up a store named by one of its links. */
 export type ForeignStore =
-  /** The name matches no entry in the merged registry. */
+  /** The name does not match any entry in the merged registry. */
   | { status: 'unknown' }
   /** The store is registered but cannot be read on this machine, so its links are unverifiable rather than broken. */
   | { status: 'unavailable'; reason: string }
@@ -84,7 +84,7 @@ function describeForeignDefect(
     return {
       rule: 'wikilinks.unknown-store',
       severity: 'error',
-      message: `${link} names the store "${store}", which no kb.yaml registry entry declares`,
+      message: `${link} names the store "${store}", which is not declared by any kb.yaml registry entry`,
     };
   }
   if (foreignStore.status === 'unavailable') {

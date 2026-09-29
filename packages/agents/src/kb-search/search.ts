@@ -19,8 +19,8 @@ import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from '.
  * Recalls the notes matching `query` across every in-scope knowledge base, scoping each hit to its KB's configured
  * note set and applying the mechanical filters.
  *
- * Returns no hits and an `emptyScopeDiagnostic` for an empty scope. Skips a note whose file cannot be read, reporting
- * it in `warnings`. Keeps a note that parses but has no frontmatter as a degraded hit.
+ * Returns an empty hit list and an `emptyScopeDiagnostic` for an empty scope. Skips a note whose file cannot be read,
+ * reporting it in `warnings`. Keeps a note that parses but does not have frontmatter as a degraded hit.
  *
  * `home` overrides the directory from which the user-global `kb.yaml` is read, and `recall` replaces the default
  * ripgrep recall; both exist so that a test can run against fixtures without spawning a process.
@@ -94,7 +94,10 @@ export function recordTypeOf(hit: SearchHit): string {
 
 // region | Helpers
 
-/** Returns true when a hit's path is inside its KB's configured note set, or when that KB has no matcher, which admits every hit. */
+/**
+ * Returns true when a hit's path is inside its KB's configured note set, or when that KB does not have a matcher, which
+ * admits every hit.
+ */
 function isNoteHit(hit: RawHit, matchers: Map<string, NoteScopeMatcher>): boolean {
   const matcher = matchers.get(hit.kbPath);
   return matcher === undefined || matcher.isNote(toRelativePath(hit.kbPath, hit.path));
@@ -139,7 +142,7 @@ function formatConfigInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; err
 }
 
 /**
- * Applies the mechanical filters to one note. A note with no parseable frontmatter fails `--diataxis` and `--tag`; the
+ * Applies the mechanical filters to one note. A note without parseable frontmatter fails `--diataxis` and `--tag`; the
  * path-based `--folder` filter still applies to it.
  */
 function passesFilters(input: { note: ParsedNote; path: string; filters: RecallFilters }): boolean {
@@ -168,7 +171,7 @@ function passesFilters(input: { note: ParsedNote; path: string; filters: RecallF
 
 /**
  * Phrases the operator-facing registry-health warnings in deterministic order: the malformed-registry warning first,
- * then one dead-path warning per missing KB. A missing KB that has no registry name can occur only in a race
+ * then one dead-path warning per missing KB. A missing KB without a registry name can occur only in a race
  * between discovery and the existence check.
  */
 function composeWarnings(input: { registryError: string | undefined; missingKbs: ScopedKb[] }): string[] {

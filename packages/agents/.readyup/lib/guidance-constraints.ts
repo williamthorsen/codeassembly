@@ -1,8 +1,8 @@
 /**
  * Detection of the two constraints that the repository-root guidance file must meet by virtue of being
- * harness-neutral: It reaches into no harness-owned directory, and it hosts no rulebook marker.
+ * harness-neutral: It does not reach into any harness-owned directory, and it does not host any rulebook marker.
  *
- * Every function is a pure string transform with no filesystem access.
+ * Every function is a pure string transform without filesystem access.
  */
 
 /** A directory belonging to one harness, in either the home-anchored or the repository-local spelling. */

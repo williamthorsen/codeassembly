@@ -22,7 +22,7 @@ describe(readContentRootManifest, () => {
     await rm(baseDir, { recursive: true, force: true });
   });
 
-  it('reads a root with no manifest as format 1', async () => {
+  it('reads a root without a manifest as format 1', async () => {
     const root = await makeRoot(baseDir, 'bare');
 
     expect(await readContentRootManifest(root)).toEqual({ format: 1 });
@@ -85,13 +85,13 @@ describe(findContentFormatProblem, () => {
     await rm(baseDir, { recursive: true, force: true });
   });
 
-  it('reports no problem for a root with no manifest', async () => {
+  it('does not report a problem for a root without a manifest', async () => {
     const root = await makeRoot(baseDir, 'bare');
 
     expect(await findContentFormatProblem(root)).toBeUndefined();
   });
 
-  it.each([1, 2])('reports no problem for supported format %i', async (format) => {
+  it.each([1, 2])('does not report a problem for supported format %i', async (format) => {
     const root = await makeRoot(baseDir, `supported-${format}`, `format: ${format}\n`);
 
     expect(await findContentFormatProblem(root)).toBeUndefined();
@@ -157,8 +157,8 @@ describe(assertSupportedContentFormats, () => {
     await expect(assertSupportedContentFormats([{ dir: root }])).rejects.toThrow(root);
   });
 
-  // A manifest that will not parse has no declared version to compare, so it raises on its own rather than being
-  // folded into the version mismatch that a reader would then be told to fix by upgrading.
+  // A manifest that will not parse does not have a declared version to compare, so it raises on its own rather than
+  // being folded into the version mismatch that a reader would then be told to fix by upgrading.
   it('raises a malformed manifest separately from an unsupported format', async () => {
     const malformed = await makeRoot(baseDir, 'malformed', 'format: [1\n');
     const unsupported = await makeRoot(baseDir, 'unsupported', 'format: 3\n');

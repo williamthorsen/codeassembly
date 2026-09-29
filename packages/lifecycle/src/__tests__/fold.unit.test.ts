@@ -209,7 +209,7 @@ describe('deriveLaneStatus', () => {
     expect(status).toEqual({ open: true, closedReason: undefined, lastEventTs: BASE_TS });
   });
 
-  it('stays open with no events at all', () => {
+  it('stays open for a lane without any events', () => {
     const emptyLane = createLaneState({ repo: 'owner/name', branch: '984' });
 
     const status = deriveLaneStatus(emptyLane, { nowMs: BASE_MS, closeAfterMs: 3_600_000 });
@@ -232,7 +232,7 @@ describe('resolveLaneCwd', () => {
     expect(resolveLaneCwd(lane)).toBe('/work/newer');
   });
 
-  it('returns undefined for a lane with no events', () => {
+  it('returns undefined for a lane without events', () => {
     expect(resolveLaneCwd(createLaneState({ repo: 'owner/name', branch: '984' }))).toBeUndefined();
   });
 });
@@ -251,7 +251,7 @@ describe('resolveLaneRecency', () => {
     expect(resolveLaneRecency(lane)).toBe('2026-07-19T06:00:00.000Z');
   });
 
-  it('returns undefined for a lane with no events', () => {
+  it('returns undefined for a lane without events', () => {
     expect(resolveLaneRecency(createLaneState({ repo: 'owner/name', branch: '984' }))).toBeUndefined();
   });
 });

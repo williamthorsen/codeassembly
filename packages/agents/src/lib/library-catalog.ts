@@ -14,7 +14,7 @@ const NON_SUPPORT_ENTRIES: ReadonlySet<string> = new Set(['_harnesses', '_partia
 
 /**
  * Enumerates a content root's deployable artifacts as a per-type slug map (`{ rulebook, skill, subagent }`), computed
- * from the filesystem so that a newly added artifact joins with no edit. The root is whichever directory the caller
+ * from the filesystem so that a newly added artifact joins without an edit. The root is whichever directory the caller
  * passes -- the built-in library, or a declared source for a source-scoped collection. Collections are never
  * enumerated -- they are traversal-only nodes and "every collection" would be self-referential. The slugs are
  * filesystem basenames (skill = subdirectory name, rulebook/subagent = filename without `.md`), the form that
@@ -69,7 +69,8 @@ export async function listSkillDirectories(skillsDir: string): Promise<Array<str
 /**
  * Lists the entries directly under `skillsDir` that install unconditionally alongside skills, sorted. Support content
  * is everything left once the reserved entries, test directories, dotfiles, and skill directories are removed --
- * `skills/_data/` being the case that motivates it, since it contains no `SKILL.md` and appears in no catalog walk.
+ * `skills/_data/` being the case that motivates it, since it does not contain a `SKILL.md` and does not appear in any
+ * catalog walk.
  *
  * A `_`-prefixed name is support content rather than hidden, which is why the visibility rule that the catalog walk
  * applies is absent here; `__tests__` shares that prefix without sharing that standing, and is excluded by name.

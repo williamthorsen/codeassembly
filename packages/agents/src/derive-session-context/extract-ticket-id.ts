@@ -15,7 +15,7 @@ const PR_IDENTIFIER_PATTERN = /^PR-[0-9]+$/;
 /**
  * Returns the ticket ID and display ref for `branchName`, given the resolved `project.ticket_ref_prefix`. The two
  * differ only under a `#` prefix, a GitHub display convention that never appears in a returned ID. Both are null when
- * no ID can be derived.
+ * an ID cannot be derived from `branchName`.
  */
 export function extractTicketId(input: { branchName: string; ticketRefPrefix?: string }): TicketIdResult {
   const ref = parseTicketRef(input.branchName);

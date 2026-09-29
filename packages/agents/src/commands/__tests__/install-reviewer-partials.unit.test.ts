@@ -10,16 +10,16 @@ import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { homeAnchor } from '../../lib/path-rewriter.ts';
 import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
 
-/** The rulebook injected by `orchestrated-coder`; no source under test addresses another. */
+/** The rulebook injected by `orchestrated-coder`; the sources under test don't address any other. */
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
   ['commit-conventions', { skillName: 'consult-commit-conventions', skill: true }],
 ]);
 
 /**
  * Round-trip tests verifying the reviewer and coder subagents render against the real `content/` tree with their
- * shared partials fully inlined: no leftover include directives, and the key prose blocks present. They reproduce
- * `sync`'s subagent-deploy transform (expand includes, then `renderSubagentForHarness`), so they assert the exact
- * body written by `sync`.
+ * shared partials fully inlined: without any leftover include directives, and with the key prose blocks present. They
+ * reproduce `sync`'s subagent-deploy transform (expand includes, then `renderSubagentForHarness`), so they assert the
+ * exact body written by `sync`.
  */
 describe('reviewer and coder partials render correctly', () => {
   const contentDir = resolveContentDir();
@@ -56,7 +56,7 @@ describe('reviewer and coder partials render correctly', () => {
   ] as const;
 
   for (const reviewer of returnBlockReviewers) {
-    it(`expands all partials in ${reviewer} (no leftover directives)`, async () => {
+    it(`expands all partials in ${reviewer} (without any leftover directives)`, async () => {
       const content = await readDeployed(reviewer);
       expect(content).not.toContain('<!-- include:');
       expect(content).not.toContain('<!-- /include -->');

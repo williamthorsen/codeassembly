@@ -31,7 +31,7 @@ describe(run, () => {
     vi.mocked(check).mockClear();
   });
 
-  it('exits 0 with a clean-run line when there are no findings', async () => {
+  it('exits 0 with a clean-run line when the check does not report any findings', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
 
     const result = await run({ argv: ['check'], cwd: store });
@@ -49,13 +49,13 @@ describe(run, () => {
     expect(result.stdout).toContain('wikilinks.unresolved');
   });
 
-  it('exits 0 without the clean-run check when no notes match the targets', async () => {
+  it('exits 0 without the clean-run check when the targets do not match any notes', async () => {
     const store = await makeStore({ 'Loose.md': VALID });
 
     const result = await run({ argv: ['check'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toBe('no notes matched content/**/*.md (0 checked)\n');
+    expect(result.stdout).toBe('content/**/*.md did not match any notes (0 checked)\n');
     expect(result.stdout).not.toContain('✓');
   });
 
@@ -68,7 +68,7 @@ describe(run, () => {
     expect(result.stderr).toContain('unknown flag: --nope');
   });
 
-  it('exits 2 when no .kb/ directory is found and no --kb is given', async () => {
+  it('exits 2 when discovery does not find a .kb/ directory and --kb is not given', async () => {
     const empty = await makeTempDir('kb-cli-empty-');
 
     const result = await run({ argv: ['check'], cwd: empty });
@@ -146,7 +146,7 @@ describe(run, () => {
     expect(payload).toMatchObject({ store: { name: 'coding', path: store } });
   });
 
-  it('reports a discovered store with no registry entry as unnamed', async () => {
+  it('reports a discovered store without a registry entry as unnamed', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
     const home = await makeTempDir('kb-cli-home-');
 
@@ -235,7 +235,7 @@ describe('kb check targeting', () => {
     expect(result.exitCode).toBe(0);
   });
 
-  it('exits 2 naming a path that matches no note', async () => {
+  it('exits 2 naming a path that does not match any note', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
 
     const result = await run({ argv: ['check', 'content/Ghost.md'], cwd: store });
@@ -267,7 +267,7 @@ describe('kb check targeting', () => {
     const result = await run({ argv: ['check', 'content/assets'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('no notes matched the given paths');
+    expect(result.stdout).toContain('the given paths did not match any notes');
     expect(result.stdout).not.toContain('content/**/*.md');
   });
 
@@ -378,13 +378,13 @@ describe('kb check vault-scoped findings', () => {
     expect(result.stdout).toContain('taxonomy.undeclared');
   });
 
-  it('reports a vault-scoped finding after the zero-match line when no notes were checked', async () => {
+  it('reports a vault-scoped finding after the zero-match line when the run did not check any notes', async () => {
     const store = await makeStore({ 'Loose.md': VALID });
     stubVaultFinding();
 
     const result = await run({ argv: ['check'], cwd: store });
 
-    expect(result.stdout).toContain('no notes matched content/**/*.md (0 checked)');
+    expect(result.stdout).toContain('content/**/*.md did not match any notes (0 checked)');
     expect(result.stdout).toContain('taxonomy.undeclared');
     expect(result.stdout).toContain('in 0 notes');
   });
@@ -414,7 +414,7 @@ describe('kb check vault-scoped findings', () => {
     expect(result.stdout).toContain('"engineering"');
   });
 
-  it('reports no finding for a store that declares no taxonomy', async () => {
+  it('does not report any finding for a store that does not declare a taxonomy', async () => {
     const store = await makeStore({ 'content/assertions/engineering/Note.md': VALID });
 
     const result = await run({ argv: ['check'], cwd: store });
@@ -458,7 +458,7 @@ function stubVaultFinding(): void {
           scope: 'vault',
           rule: 'taxonomy.undeclared',
           severity: 'warning',
-          message: 'folder "engineering" contains notes but no domain declares it',
+          message: 'folder "engineering" contains notes but is not declared as a domain',
         },
       ],
     };

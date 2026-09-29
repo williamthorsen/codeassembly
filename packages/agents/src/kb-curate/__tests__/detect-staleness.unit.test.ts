@@ -45,7 +45,7 @@ describe(detectStaleness, () => {
     }
   });
 
-  it('produces no finding when last-verified is within the threshold', () => {
+  it("doesn't produce any finding when last-verified is within the threshold", () => {
     const findings = detectStaleness({
       note: note('last-verified: 2026-05-20\n'),
       now: NOW,
@@ -87,7 +87,7 @@ describe(detectStaleness, () => {
 });
 
 describe(vaultUsesVerification, () => {
-  it('returns false when no note has a last-verified value', () => {
+  it('returns false when every note lacks a last-verified value', () => {
     expect(vaultUsesVerification([note(''), note('')], NOW)).toBe(false);
   });
 

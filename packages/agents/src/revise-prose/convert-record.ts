@@ -11,7 +11,8 @@ import type { LegacyRecord, ProseRecord, RecordedRejection, RuleCoverage, SweepV
 
 /**
  * The rule version that a converted rejection takes when its unit's recorded version is not current. Because a
- * declared sweep version is a positive integer, no current version equals it and the rejection reads as stale.
+ * declared sweep version is a positive integer, this version does not equal any current version and the rejection
+ * reads as stale.
  */
 export const LEGACY_STALE_VERSION = '0';
 
@@ -20,9 +21,9 @@ export const LEGACY_STALE_VERSION = '0';
  *
  * A unit entry at its current version becomes one coverage entry per versioned rule of that unit, whose `detected`
  * reports whether the unit's sweeps ran that rule's detector. A unit entry at another version, or under a unit that
- * the run does not name, becomes no coverage. A rejection whose unit is current takes its rule's version; one whose
- * unit is not current, or is not named, takes {@link LEGACY_STALE_VERSION}. A rejection under a named unit's rule that
- * has no version is dropped, since the per-rule record keeps nothing for such a rule.
+ * the run does not name, does not become any coverage entry. A rejection whose unit is current takes its rule's
+ * version; one whose unit is not current, or is not named, takes {@link LEGACY_STALE_VERSION}. A rejection under a
+ * named unit's rule without a version is dropped, since the per-rule record keeps nothing for such a rule.
  */
 export function convertLegacyRecord(legacy: LegacyRecord, versions: SweepVersions): ProseRecord {
   const rules: Record<string, RuleCoverage> = {};

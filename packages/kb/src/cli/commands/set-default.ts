@@ -31,9 +31,9 @@ Exit codes:
 
 /**
  * Runs `kb set-default`: sets, clears, or interactively selects the user-global `default_kb`. Resolution reads the
- * user-global registry only (no project overlay), so the chosen default resolves in every project context. The picker
- * is injected via `selectKb`, keeping the dispatcher free of terminal I/O; its absence means stdin is non-interactive,
- * making the no-argument form a usage error rather than a hang.
+ * user-global registry only, without any project overlay, so the chosen default resolves in every project context.
+ * The picker is injected via `selectKb`, keeping the dispatcher free of terminal I/O; its absence means stdin is
+ * non-interactive, making the no-argument form a usage error rather than a hang.
  */
 export async function runSetDefault(input: {
   argv: readonly string[];
@@ -150,7 +150,7 @@ export function parseSetDefaultArgs(argv: readonly string[]): SetDefaultOptions 
 
 /** Builds the "no registered KBs" usage error, directing the user to scaffold one first. */
 function buildNoStoresMessage(): string {
-  return 'kb set-default: no knowledge bases registered; run `kb create` first\n';
+  return 'kb set-default: the user-global registry does not contain any knowledge bases; run `kb create` first\n';
 }
 
 /** Builds the "name is not registered" usage error, listing the registered names. */

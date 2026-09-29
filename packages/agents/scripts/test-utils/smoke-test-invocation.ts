@@ -5,7 +5,7 @@
  * reclaims short-lived temp directories without explicit cleanup.
  */
 export interface SmokeTestInvocation {
-  /** Argv to pass to the bundled `.mjs`. Defaults to no args. */
+  /** Argv to pass to the bundled `.mjs`. Defaults to an empty argv. */
   args?: readonly string[];
   /** UTF-8 body to pipe on stdin. Defaults to leaving stdin closed (EOF immediately). */
   stdin?: string;

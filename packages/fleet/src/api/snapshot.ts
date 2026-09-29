@@ -37,8 +37,8 @@ export interface LaneSnapshot {
 }
 
 /**
- * A lane's worktree state on the wire. It has no probe timestamp: A per-poll field would change the snapshot JSON on
- * every pass and defeat the publish diff gate. The poll interval bounds staleness.
+ * A lane's worktree state on the wire. It does not include a probe timestamp: A per-poll field would change the
+ * snapshot JSON on every pass and defeat the publish diff gate. The poll interval bounds staleness.
  */
 export interface LaneGitSnapshot {
   /** The checked-out branch; `null` when detached or unreadable. */
@@ -78,7 +78,7 @@ export interface TicketSnapshot {
   labels: string[];
 }
 
-/** Looks a lane's forge facts up by repo and branch; `undefined` when the lane has no fetched facts. */
+/** Looks a lane's forge facts up by repo and branch; `undefined` when the lane does not have any fetched facts. */
 export type ForgeFactsLookup = (repo: string, branch: string) => ForgeLaneFacts | undefined;
 
 export interface SessionSnapshot {

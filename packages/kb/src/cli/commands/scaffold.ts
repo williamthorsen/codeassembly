@@ -26,7 +26,8 @@ the notes that the store already contains. Use "kb create" to make a new store.
 
 Options:
   --force       Replace an existing canonical file with a fresh seed. A
-                directory has no content to replace and is left as it is.
+                directory does not have any content to replace and is left as
+                it is.
   --kb <name>   Use the named store from the kb.yaml registry. Without it, the
                 nearest ancestor .kb/ directory is used.
   -h, --help    Show this help.
@@ -40,7 +41,7 @@ Exit codes:
 /**
  * Runs `kb scaffold`: parses options, resolves the store, and writes the canonical files that it lacks.
  *
- * A store that the registry marks `readonly` is refused. A resolved path containing no `.kb/` is refused too: The
+ * A store that the registry marks `readonly` is refused. A resolved path without a `.kb/` is refused too: The
  * command back-fills a store rather than creating one, and a registry entry names a path without proving a store is
  * there.
  */

@@ -83,7 +83,7 @@ export type DeclarationSource = z.infer<typeof SourceSchema>;
 
 /**
  * Parses and validates one `codeassembly.yaml` file's contents into a typed declaration. An empty or comment-only
- * file yields a declaration with `root: false` and no type blocks. Throws a readable error, naming `sourceLabel`
+ * file yields a declaration with `root: false` and without type blocks. Throws a readable error, naming `sourceLabel`
  * when provided, for malformed YAML, an unknown top-level key, a non-mapping top level, an invalid entry, or a
  * home-domain key in a project-domain file.
  *
@@ -116,7 +116,7 @@ export function parseCodeAssemblyFile(
   if (domain === 'project' && result.data['home-writer'] !== undefined) {
     throw new Error(
       `Invalid codeassembly.yaml${where}: \`home-writer\` names the machine's home-domain writer and is read only ` +
-        'from ~/.agents/codeassembly.yaml (or its .local override), so it has no effect here.',
+        'from ~/.agents/codeassembly.yaml (or its .local override), so it does not take effect here.',
     );
   }
 
@@ -127,7 +127,7 @@ export function parseCodeAssemblyFile(
 
 /**
  * Builds the `guidance-hooks` schema: hook name to that hook's `{ use, drop }` block. Keys are held to the grammar
- * enforced by the directive, so a name that no body could declare is rejected where it is written rather than going
+ * enforced by the directive, so a name that a body could not declare is rejected where it is written rather than going
  * quietly unfilled.
  */
 function guidanceHookBindingsSchema() {

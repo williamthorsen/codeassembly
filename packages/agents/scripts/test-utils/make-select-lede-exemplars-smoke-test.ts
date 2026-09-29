@@ -20,7 +20,7 @@ const FIXTURE_DECISIONS = [
  * two `feat` exemplars from it. Selection scans the events directory itself, so the whole path runs here
  * without putting ripgrep on the build's critical path.
  *
- * The invocation passes no `--data-dir`, so the run resolves the work-type taxonomy the way an installed
+ * The invocation does not pass `--data-dir`, so the run resolves the work-type taxonomy the way an installed
  * helper does, through the `_data` directory of the `skills` sibling.
  */
 export function makeSelectLedeExemplarsSmokeTest(): SmokeTestInvocation {

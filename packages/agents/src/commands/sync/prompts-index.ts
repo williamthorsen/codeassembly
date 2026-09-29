@@ -11,9 +11,9 @@ import type { SyncDomain } from './sync-domain.ts';
 /**
  * Reconciles the Rovo Dev `prompts.yml` index so that it lists the user-invocable skills currently in the harness
  * skills dir. The deployed skills are projected into a codeassembly-owned region merged into the shared file,
- * preserving any foreign entries; when no skills remain, the region is stripped, and the file deleted when nothing
- * foreign is left. A no-op for non-Rovo Dev harnesses and for a file with no codeassembly region. Both domains share
- * this one path, so the home file is merged rather than whole-file overwritten.
+ * preserving any foreign entries; when the dir does not contain any skills, the region is stripped, and the file
+ * deleted when nothing foreign is left. A no-op for non-Rovo Dev harnesses and for a file without a codeassembly
+ * region. Both domains share this one path, so the home file is merged rather than whole-file overwritten.
  */
 export async function refreshPromptsYml(harnessIds: ReadonlyArray<HarnessId>, domain: SyncDomain): Promise<void> {
   for (const harnessId of harnessIds) {

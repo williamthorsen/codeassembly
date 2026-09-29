@@ -2,7 +2,7 @@
 
 ## Repository visibility
 
-This repository is public. Anything committed here is world-readable, so no credential, personal detail, or workplace-internal fact belongs in it. The `private: true` markers on the package manifests say only that a package is not published to a registry; they say nothing about who can read the source.
+This repository is public. Anything committed here is world-readable, so it must not contain any credential, personal detail, or workplace-internal fact. The `private: true` markers on the package manifests say only that a package is not published to a registry; they say nothing about who can read the source.
 
 ## Packages
 
@@ -28,11 +28,11 @@ Content appearing identically in two or more skill or subagent files belongs in 
 ## Gotchas
 
 - `pnpm run bootstrap` builds every package, then deploys current guidance into the worktree's harness directories. The MCP server and the CLI bins do not run until it has. `pnpm run agents:sync` does the deploy half alone.
-- The helper bundles under `packages/agents/content/` are tracked build output, so a helper edit is committed together with its rebuilt bundle. `nmr -F codeassembly build` regenerates them, and `nmr check:strict` fails on a bundle that is stale or that no bundling target produces.
+- The helper bundles under `packages/agents/content/` are tracked build output, so a helper edit is committed together with its rebuilt bundle. `nmr -F codeassembly build` regenerates them, and `nmr check:strict` fails on a bundle that is stale or not produced by any bundling target.
 - Deleting `dist/` does not force a rebuild. Because the `nmr-compile` cache is in `node_modules/.cache/nmr-compile/` and is keyed on inputs alone, the rebuild skips and leaves `dist/` empty. Clear the cache too. Tracked upstream at williamthorsen/node-monorepo-tools#470.
-- A package has a `vitest.config.ts` only when it configures something of its own; every other package resolves the repo-root config by walking up. nmr's Vitest factory supplies the `source` resolve conditions and the git-isolation setup file, so no config declares either. It leaves `resolve.tsconfigPaths` to the consumer; every config here declares it.
-- Because the root `tsconfig.json` names `"types": ["node"]`, every package declares `@types/node` as `catalog:`. TypeScript 6 includes no ambient `@types` package automatically, and naming one here excludes the rest: An `@types/*` supplying globals has no effect until that list includes it.
+- A package has a `vitest.config.ts` only when it configures something of its own; every other package resolves the repo-root config by walking up. nmr's Vitest factory supplies the `source` resolve conditions and the git-isolation setup file, so the configs here don't declare either. It leaves `resolve.tsconfigPaths` to the consumer; every config here declares it.
+- Because the root `tsconfig.json` names `"types": ["node"]`, every package declares `@types/node` as `catalog:`. TypeScript 6 doesn't include any ambient `@types` package automatically, and naming one here excludes the rest: An `@types/*` supplying globals doesn't take effect until that list includes it.
 - Every package's `eslint.config.ts` extends the repo-root `eslint.config.ts`, which contains the `import-x/resolver-next` settings that `eslint-plugin-import-x` reads. A config importing `@williamthorsen/eslint-config-typescript` directly still runs `import-x/extensions` at `error`, but with nothing to resolve against, the rule accepts a `.js` specifier naming a `.ts` file.
 - The `run-index.json` schema is specified in `packages/agents/content/skills/_data/artifact-conventions.md` and implemented as Zod schemas in `packages/run-core/src/schemas/`. Nothing ties the two mechanically; change them together.
-- Use exact dependency versions in `package.json`, with no `^` or `~` range indicators. A dependency shared by two or more manifests is pinned once in `pnpm-workspace.yaml`'s `catalog:` block, with every consumer declaring `catalog:`. Taking on a cataloged dependency means declaring `catalog:`, never re-pinning the literal.
-- Prettier here formats shell scripts and Dockerfiles, so `nmr fmt` covers them and the repo runs no separate `shfmt` step.
+- Use exact dependency versions in `package.json`, without `^` or `~` range indicators. A dependency shared by two or more manifests is pinned once in `pnpm-workspace.yaml`'s `catalog:` block, with every consumer declaring `catalog:`. Taking on a cataloged dependency means declaring `catalog:`, never re-pinning the literal.
+- Prettier here formats shell scripts and Dockerfiles, so `nmr fmt` covers them and the repo doesn't run a separate `shfmt` step.

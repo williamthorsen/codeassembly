@@ -94,7 +94,7 @@ describe(renderSkillDirectory, () => {
     expect(content).toContain('Also see /consult-nmr-scripts.');
   });
 
-  it('throws when a skill body names a rulebook that deploys no skill to invoke', async () => {
+  it('throws when a skill body names a rulebook that does not deploy a skill to invoke', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\nSee {rulebook:nmr-cheatsheet}.\n' });
 
     await expect(
@@ -148,7 +148,7 @@ describe(renderSkillDirectory, () => {
     );
   });
 
-  it('throws a source-labelled error for an anchor naming no heading in the same file', async () => {
+  it('throws a source-labelled error for an anchor that does not name any heading in the same file', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\nSee [the events](#lifecycle-events).\n' });
 
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
@@ -166,12 +166,12 @@ describe(renderSkillDirectory, () => {
   });
 
   it('rejects an anchor to the rendered slug of a heading containing a tool placeholder', async () => {
-    // The heading slugs differently on each harness, so no single fragment addresses it. Checking ahead of the
+    // The heading slugs differently on each harness, so a single fragment cannot address it. Checking ahead of the
     // rewrite makes that unauthorable rather than live on one harness and dead on the other.
     await writeSkill({ 'SKILL.md': '# Demo\n\n## {tool:Read} return parsing\n\n[x](#read-return-parsing)\n' });
 
     await expect(renderSkillDirectory(skillDir, 'demo', contentDir, buildContext())).rejects.toThrow(
-      /#read-return-parsing -- names no heading/,
+      /#read-return-parsing -- does not name any heading/,
     );
   });
 
@@ -211,7 +211,8 @@ describe(renderSkillDirectory, () => {
   });
 
   it('rejects a hook declared by both the host and an included partial', async () => {
-    // Expansion runs first, so the partial's declaration is the host's own: two slots of one name, no fill order.
+    // Expansion runs first, so the partial's declaration is the host's own: two slots of one name, without a fill
+    // order.
     await writeSkill({
       'SKILL.md': '# Demo\n\n<!-- guidance-hook: preferences -->\n\n<!-- include: _partials/hook.md / -->\n',
       '_partials/hook.md': '<!-- guidance-hook: preferences -->\n',
@@ -272,7 +273,7 @@ describe(renderSkillDirectory, () => {
     expect(content).toContain('Bound guidance.');
   });
 
-  it('strips a hook named by no binding, even when other hooks are bound', async () => {
+  it('strips a hook not named by any binding, even when other hooks are bound', async () => {
     await writeSkill({ 'SKILL.md': '# Demo\n\n<!-- guidance-hook: glossary -->\n' });
 
     const fills = new Map([['impl', [{ slug: 'layout', body: 'Bound guidance.\n' }]]]);
@@ -347,7 +348,7 @@ describe(renderSupportEntry, () => {
   });
 
   it('rejects a rulebook token even when the caller supplies a catalog', async () => {
-    // `install` deploys a support entry having resolved no declaration, so honoring the token here would pass a gate
+    // `install` deploys a support entry without resolving any declaration, so honoring the token here would pass a gate
     // that the deploy then fails.
     const srcPath = path.join(skillsDir, 'table.md');
     await writeFile(srcPath, '# Table\n\nSee {rulebook:nmr-scripts}.\n', 'utf8');

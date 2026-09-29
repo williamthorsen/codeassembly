@@ -40,7 +40,7 @@ describe('install (home provenance)', () => {
     expect(await readHomeProvenance(tempDir)).toMatchObject({ command: 'install' });
   });
 
-  it('stamps a run that detects no harness but still writes shared guidance', async () => {
+  it("stamps a run that doesn't detect any harness but still writes shared guidance", async () => {
     await rm(path.join(tempDir, '.claude'), { recursive: true, force: true });
 
     await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);

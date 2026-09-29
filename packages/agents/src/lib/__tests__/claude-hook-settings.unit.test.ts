@@ -86,7 +86,11 @@ describe(ensureClaudeHookEntries, () => {
 
   it.each([
     { name: 'keeps the trailing newline when the file ends in one', text: '{\n  "model": "opus"\n}\n', ends: true },
-    { name: 'adds no trailing newline when the file ends without one', text: '{\n  "model": "opus"\n}', ends: false },
+    {
+      name: 'does not add a trailing newline when the file ends without one',
+      text: '{\n  "model": "opus"\n}',
+      ends: false,
+    },
   ])('$name', async ({ text, ends }) => {
     const file = await writeSettings(text);
 
@@ -152,7 +156,7 @@ describe(ensureClaudeHookEntries, () => {
     expect(await readFile(target, 'utf8')).toContain(SENTINEL);
   });
 
-  it('creates no file when a supplied entry does not include the sentinel', async () => {
+  it('does not create a file when a supplied entry does not include the sentinel', async () => {
     const file = path.join(scratch.dir, 'settings.json');
     const unmarked: ClaudeHookEntry = { event: 'PreToolUse', group: { hooks: [{ command: 'echo hi' }] } };
 
@@ -173,14 +177,14 @@ describe(removeClaudeHookEntries, () => {
     expect(await readFile(file, 'utf8')).toBe(original);
   });
 
-  it('creates no file when the settings file does not exist', async () => {
+  it('does not create a file when the settings file does not exist', async () => {
     const file = path.join(scratch.dir, 'absent.json');
 
     expect(await removeClaudeHookEntries(file, SENTINEL)).toEqual({ changed: false, removedCount: 0 });
     expect(existsSync(file)).toBe(false);
   });
 
-  it('does not rewrite a file containing no owned entry', async () => {
+  it('does not rewrite a file without an owned entry', async () => {
     const file = await writeSettings('{\n  "model": "opus"\n}\n');
     const firstMtime = statSync(file).mtimeMs;
 

@@ -2,8 +2,8 @@
  * Batch planning: partitioning the scanned file set into units that fit in one agent context.
  *
  * A batch is whole files rather than prose spans, because a subagent reads a file whole. It covers the scanned set
- * rather than the candidate-bearing subset, because a unit may have no detector at all and its violations are in
- * files nominated by no detector.
+ * rather than the candidate-bearing subset, because a unit may not have any detector at all, and its violations are
+ * then in files not nominated by any detector.
  */
 import type { Batch, Candidate, ScannedFile } from './types.ts';
 
@@ -16,15 +16,15 @@ export const DEFAULT_BATCH_BUDGET = 96 * 1_024;
 /**
  * Partitions `files` into batches under `budget`, deterministically and in the order the sweep resolved them.
  *
- * Puts the recurring batches first. Groups files linked by a shared sentence into a component that no batch boundary
- * crosses, so that one subagent adjudicates every copy of a sentence and no two subagents edit the same file. Packs
- * components under the budget like any other batch, and makes a single component that outgrows it into one oversized
- * batch, splitting it being what the grouping exists to prevent.
+ * Puts the recurring batches first. Groups files linked by a shared sentence into a component that a batch boundary
+ * never crosses, so that one subagent adjudicates every copy of a sentence and two subagents never edit the same file.
+ * Packs components under the budget like any other batch, and makes a single component that outgrows it into one
+ * oversized batch, splitting it being what the grouping exists to prevent.
  *
  * Packs the remaining files by whole directory. A batch boundary falls on a directory boundary except when one
  * directory alone exceeds the budget.
  *
- * Throws when `budget` is not a positive integer, a batch of no bytes being unsatisfiable rather than empty.
+ * Throws when `budget` is not a positive integer, a zero-byte batch being unsatisfiable rather than empty.
  */
 export function planBatches(input: {
   files: readonly ScannedFile[];

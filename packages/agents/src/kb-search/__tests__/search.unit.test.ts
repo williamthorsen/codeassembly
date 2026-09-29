@@ -43,7 +43,7 @@ describe(searchNotes, () => {
     expect(result.recalledCount).toBe(3);
   });
 
-  it('returns no hits but a positive recalledCount when a filter excludes every match', async () => {
+  it('returns an empty hit list but a positive recalledCount when a filter excludes every match', async () => {
     const result = await searchNotes({
       query: 'backpressure',
       allKbs: false,

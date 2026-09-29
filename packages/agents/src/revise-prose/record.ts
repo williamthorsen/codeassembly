@@ -3,10 +3,10 @@
  *
  * The record answers two questions on a later run: which paths a rule has already been swept over at its current
  * sweep version and whether its detector ran, and which sites an adjudicator has already rejected. A rejected site need
- * not be one that a detector reports, so the second answer applies to a rule whose sites no candidate nominates.
- * Because a raised sweep version marks that rule's rejections stale rather than deleting them, a rule's revision
- * re-opens its rejections for review instead of discarding the judgment behind them. A sweep at the new version is that
- * review, and recording it retires the stale rejections under its roots.
+ * not be one that a detector reports, so the second answer applies to a rule whose sites are not nominated by any
+ * candidate. Because a raised sweep version marks that rule's rejections stale rather than deleting them, a rule's
+ * revision re-opens its rejections for review instead of discarding the judgment behind them. A sweep at the new
+ * version is that review, and recording it retires the stale rejections under its roots.
  *
  * A rejection resolves to a site by containment, so that a phrase is what a reader locates the site by rather than a
  * string that the detector must reproduce. Retiring one entry for another is the stricter test, two spans that merely
@@ -74,7 +74,7 @@ const ProseRecordSchema = z.object({
   rejections: z.array(RejectionSchema).default([]),
 });
 
-/** A record written before rules were versioned. A unit written without `rules` parses as having run no detector. */
+/** A record written before rules were versioned. A unit written without `rules` parses as not having run a detector. */
 const LegacyRecordSchema = z.object({
   units: z.record(
     z.string(),
@@ -99,7 +99,9 @@ const LegacyRecordSchema = z.object({
     .default([]),
 });
 
-/** One rejection as a run reports it: no version, which the helper derives from the fold's entry for its rule. */
+/**
+ * One rejection as a run reports it, without a version, which the helper derives from the fold's entry for its rule.
+ */
 const FoldRejectionSchema = z.object({
   rule: RuleNameSchema,
   file: z.string().min(1),
@@ -319,16 +321,16 @@ export function parseRunFold(json: string): RunFold {
 
 /**
  * Selects the rejections inherited by a run: those recorded against a file that it read, under a rule that the run
- * versions, at that rule's current version. A stale one is withheld, so the sweeper receives its site with no prior
+ * versions, at that rule's current version. A stale one is withheld, so the sweeper receives its site without a prior
  * verdict attached and adjudicates it afresh, which is what makes a raised version a review rather than a deletion.
  *
- * A rejection whose rule the run does not version is withheld on the same ground: Because no version stands to hold it
- * against, nothing could ever re-open it.
+ * A rejection whose rule the run does not version is withheld on the same ground: Because the run doesn't have a
+ * version of that rule to hold it against, nothing could ever re-open it.
  *
  * The projection hands over the rule, the file, and the phrase alone, dropping the rule version and the `ground`. A
- * standing rejection tells the sweeper to leave the site alone, and that instruction needs no reason. The `ground`
- * would reach a sweeper only on the run that re-opens the site, and that is the one run that has to adjudicate it
- * without a prior reason in hand.
+ * standing rejection tells the sweeper to leave the site alone, and that instruction doesn't need a reason. The
+ * `ground` would reach a sweeper only on the run that re-opens the site, and that is the one run that has to adjudicate
+ * it without a prior reason in hand.
  */
 export function selectPriorRejections(
   record: ProseRecord,
@@ -376,7 +378,7 @@ export function stringifyRecord(record: ProseRecord): string {
 
 // region | Helpers
 
-/** Joins the parts of a key on a delimiter that no rule, path, or phrase can contain. */
+/** Joins the parts of a key on a delimiter that cannot appear in any rule, path, or phrase. */
 function composeKey(...parts: readonly string[]): string {
   return parts.join('\u{0}');
 }

@@ -22,7 +22,7 @@ const PACKAGE_ROOT = new URL('../', import.meta.url).pathname;
  *
  * The terminator set omits the backtick, which keeps prose out: Because a mention inside inline code is followed by
  * one, `bare \`mktemp -d\` fails under the sandbox` reads as the warning that it is rather than as a call. The
- * lookbehind keeps paths out the same way: `chmod +x bin/mktemp` names no call.
+ * lookbehind keeps paths out the same way: `chmod +x bin/mktemp` doesn't name a call.
  */
 const UNTEMPLATED_MKTEMP_SOURCE = String.raw`(?<![\w./-])mktemp(?:[ \t]+(?:-[dqu]+|--(?:directory|dry-run|quiet)|-[dqu]*t[ \t]*[^\s|)<>&;\x60]+))*[ \t]*(?:$|[|)<>&;#]|\d+[<>])`;
 
@@ -37,7 +37,7 @@ const BAD_EXAMPLE_LABEL = /^\s*#\s*Bad\b/;
 
 const SCANNED_EXTENSIONS: ReadonlySet<string> = new Set(['.md', '.sh']);
 
-/** Directories holding no authored source: build output, dependencies, and test fixtures. */
+/** Directories without authored source: build output, dependencies, and test fixtures. */
 const SKIPPED_DIRECTORIES: ReadonlySet<string> = new Set(['dist', 'fixtures', 'node_modules']);
 
 describe('scratch-directory conventions', () => {
@@ -163,8 +163,8 @@ async function listPackageViolations(source: string): Promise<ReadonlyArray<stri
 /**
  * Returns a file's text with each labelled negative example removed. The label exempts the lines from itself to the
  * next blank one, so a fence pairing a `# Bad` block with a `# Good` one keeps the second under the scan. Only a
- * fenced block is eligible: At the top level of a Markdown file the same text is an `h1`, and a shell file takes no
- * exemption at all, because it has no fence to scope the label to.
+ * fenced block is eligible: At the top level of a Markdown file the same text is an `h1`, and a shell file doesn't
+ * take any exemption at all, because it doesn't have a fence to scope the label to.
  */
 function listScannableText(content: string, file: string): string {
   if (!file.endsWith('.md')) return content;

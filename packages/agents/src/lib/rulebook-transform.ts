@@ -37,8 +37,7 @@ const RULEBOOK_SOURCE_DIR = 'guidance/rulebooks';
 /**
  * Content-root children that a rulebook link target may address, because each deploys to a same-named directory
  * under every harness home. `subagents/` is excluded: A subagent definition is dispatched rather than read, so
- * there is no link worth authoring into one. `_partials/`, `collections/`, and `guidance/` never deploy as files at
- * all.
+ * a link into one is not worth authoring. `_partials/`, `collections/`, and `guidance/` never deploy as files at all.
  */
 const LINKABLE_ROOTS: ReadonlyArray<string> = ['scripts', 'skills'];
 
@@ -100,7 +99,7 @@ function assertLinkTargetsAreDeliverable(body: string, slug: string): void {
 }
 
 /**
- * Throws when any `{rulebook:<slug>}` token in `body` names a rulebook that deploys no skill to invoke. Every
+ * Throws when any `{rulebook:<slug>}` token in `body` names a rulebook that does not deploy a skill to invoke. Every
  * offending token is reported together, matching how link targets are reported, so that an author fixing a rulebook
  * sees the whole list rather than one token per run.
  */

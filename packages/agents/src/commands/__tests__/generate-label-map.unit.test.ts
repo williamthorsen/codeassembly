@@ -96,7 +96,7 @@ describe(generateLabelMap, () => {
     expect(parsed.scopes).toEqual({});
   });
 
-  it('returns empty scopes when packages/ has no subdirectories', async () => {
+  it("returns empty scopes when packages/ doesn't have any subdirectories", async () => {
     await mkdir(path.join(tempDir, 'packages'), { recursive: true });
     await writeFile(path.join(tempDir, 'packages', 'README.md'), 'hello', 'utf8');
 

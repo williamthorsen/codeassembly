@@ -45,7 +45,7 @@ describe(clearDefaultKb, () => {
     expect(text).not.toContain('default_kb');
   });
 
-  it('is a no-op when no default is set', async () => {
+  it('is a no-op when the registry does not set a default', async () => {
     const registryPath = await makeRegistryPath();
     await seedRegistry(registryPath, 'kbs:\n  coding:\n    path: /abs/coding\n');
 

@@ -16,7 +16,7 @@ const ROVO_SIGILS: InvocationSigils = { skillSigil: '!', subagentSigil: '' };
 // The host to which a rejected token is attributed, in the content-root-relative form that both transforms pass.
 const HOST = 'skills/wrap-up/SKILL.md';
 
-// A support entry renders with no catalog, because `install` deploys one having resolved no declaration.
+// A support entry renders without a catalog, because `install` deploys one without having resolved a declaration.
 const SUPPORT_HOST = 'skills/_data/artifact-conventions.md';
 
 // `shell-conventions` declares a `skill-name` override, so its deployed name is not `consult-<slug>`.
@@ -27,7 +27,7 @@ const RULEBOOKS: RulebookInvocationCatalog = new Map([
 ]);
 
 describe(extractInvocationEdges, () => {
-  it('returns empty groups when no tokens are present', () => {
+  it('returns empty groups when the content does not contain any tokens', () => {
     expect(extractInvocationEdges('No tokens here.')).toEqual({ rulebooks: [], skills: [], subagents: [] });
   });
 
@@ -124,16 +124,16 @@ describe(resolveRulebookToken, () => {
 
   it.each([
     {
-      name: 'when no catalog is supplied, rejects as honored only if a declaration supplies the set',
+      name: 'when the caller does not supply a catalog, rejects as honored only if a declaration supplies the set',
       slug: 'nmr-scripts',
       rulebooks: undefined,
       reason: /a support entry under skills\/ renders without one/,
     },
     {
-      name: 'when the slug names no deployed rulebook, rejects as absent from the deployed set',
+      name: 'when the slug does not name a deployed rulebook, rejects as absent from the deployed set',
       slug: 'never-declared',
       rulebooks: RULEBOOKS,
-      reason: /no rulebook in the deployed set/,
+      reason: /does not name any rulebook in the deployed set/,
     },
     {
       name: 'when the target is ambient-only, rejects and names dependencies: as the alternative',
@@ -150,7 +150,7 @@ describe(resolveRulebookToken, () => {
 });
 
 describe(rewriteInvocationTokens, () => {
-  it('returns content unchanged when no tokens are present', () => {
+  it('returns content unchanged when the content does not contain any tokens', () => {
     const content = 'Plain prose mentioning a skill but using no token.';
     expect(rewriteInvocationTokens(content, CLAUDE_SIGILS, HOST)).toBe(content);
   });
@@ -196,8 +196,8 @@ describe(rewriteInvocationTokens, () => {
   });
 
   it.each([
-    { name: 'when no catalog is supplied', rulebooks: undefined, slug: 'nmr-scripts' },
-    { name: 'when the slug names no deployed rulebook', rulebooks: RULEBOOKS, slug: 'never-declared' },
+    { name: 'when the caller does not supply a catalog', rulebooks: undefined, slug: 'nmr-scripts' },
+    { name: 'when the slug does not name a deployed rulebook', rulebooks: RULEBOOKS, slug: 'never-declared' },
     { name: 'when the target is ambient-only', rulebooks: RULEBOOKS, slug: 'nmr-cheatsheet' },
   ])('throws naming the offending token and its host $name', ({ rulebooks, slug }) => {
     expect(() => rewriteInvocationTokens(`See {rulebook:${slug}}.`, CLAUDE_SIGILS, HOST, rulebooks)).toThrow(

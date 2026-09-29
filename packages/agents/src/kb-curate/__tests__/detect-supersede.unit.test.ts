@@ -27,7 +27,7 @@ function rules(notes: EnumeratedNote[]): string[] {
 }
 
 describe(detectSupersede, () => {
-  it('produces no finding for a clean symmetric supersession', () => {
+  it("doesn't produce any finding for a clean symmetric supersession", () => {
     const old = note('Old', { supersededBy: 'New.md' });
     const fresh = note('New', { supersedes: 'Old.md' });
 

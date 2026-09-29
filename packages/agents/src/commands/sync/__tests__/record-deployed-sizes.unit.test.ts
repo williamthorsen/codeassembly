@@ -36,18 +36,18 @@ describe(resolveReviewBaselines, () => {
     ]);
   });
 
-  it('drops a marker that the record holds no snapshot for on either side', () => {
+  it('drops a marker for which the record does not contain a snapshot on either side', () => {
     expect(resolveReviewBaselines([markerLine('2026-09-02T00:00:00.000Z')])).toEqual([]);
   });
 
-  it('returns no review for a record carrying no marker', () => {
+  it('does not return any review for a record without a marker', () => {
     expect(resolveReviewBaselines([snapshotLine('2026-09-01T00:00:00.000Z', 12_288)])).toEqual([]);
   });
 });
 
 // region | Helpers
 
-/** Aggregates stating zero throughout, which no assertion here reads. */
+/** Aggregates stating zero throughout, which the assertions in this file do not read. */
 function buildAggregates(): SizeAggregates {
   return {
     alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },

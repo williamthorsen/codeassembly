@@ -21,7 +21,7 @@ describe('harness', () => {
   });
 
   describe(detectHarnesses, () => {
-    it('should return empty array when no harness directories exist', () => {
+    it('should return empty array when the directory does not contain any harness directory', () => {
       const result = detectHarnesses(tempDir);
       expect(result).toEqual([]);
     });

@@ -76,7 +76,10 @@ export function createSkillLinkAnchor(context: LinkAnchorContext): ResolveLinkAn
 
 // region | Helpers
 
-/** Reads the first path segment of a POSIX-style relative path, which is the whole path when it contains no separator. */
+/**
+ * Reads the first path segment of a POSIX-style relative path, which is the whole path when it does not contain a
+ * separator.
+ */
 function readFirstSegment(relPath: string): string {
   const slashIndex = relPath.indexOf('/');
   return slashIndex === -1 ? relPath : relPath.slice(0, slashIndex);

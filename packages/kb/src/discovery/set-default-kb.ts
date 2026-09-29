@@ -8,9 +8,9 @@ import { loadRegistryDocument } from './registry-document.ts';
 
 /**
  * Removes the top-level `default_kb` pointer from a `kb.yaml` registry, preserving existing comments and formatting. A
- * no-op when no default is set (or the file is absent): The file is left untouched rather than rewritten, so clearing is
- * idempotent and never reformats. Validates an existing registry against its schema first, so that a corrupt file
- * throws rather than being rewritten.
+ * no-op when the registry does not set a default (or the file is absent): The file is left untouched rather than
+ * rewritten, so clearing is idempotent and never reformats. Validates an existing registry against its schema first, so
+ * that a corrupt file throws rather than being rewritten.
  */
 export async function clearDefaultKb(input: { registryPath: string }): Promise<void> {
   const doc = await loadRegistryDocument(input.registryPath);
@@ -32,7 +32,8 @@ export async function clearDefaultKb(input: { registryPath: string }): Promise<v
  * Sets the top-level `default_kb` pointer in a `kb.yaml` registry to `name`, creating the file and its parent directory
  * when absent and preserving existing comments and formatting. Validates the registry against its schema before mutating
  * (so that an already-corrupt file throws rather than being rewritten) and asserts `name` is registered under `kbs` in
- * the file (a `default_kb` naming no registered KB would fail every subsequent load), then re-validates the result.
+ * the file (a `default_kb` that does not match any registered KB would fail every subsequent load), then re-validates
+ * the result.
  */
 export async function setDefaultKb(input: { registryPath: string; name: string }): Promise<void> {
   const doc = await loadRegistryDocument(input.registryPath);

@@ -58,7 +58,7 @@ async function runCli(...args: Array<string>): Promise<CliResult> {
 }
 
 describe('CLI generate routing', () => {
-  it('exits 1 and prints generate usage when no subcommand is given', async () => {
+  it('exits 1 and prints generate usage when invoked without a subcommand', async () => {
     const result = await runCli('generate');
 
     expect(result.exitCode).toBe(1);
@@ -93,7 +93,7 @@ describe('CLI rulebook routing', () => {
     expect(result.stdout).toContain('sync');
   });
 
-  it('dispatches sync, reporting a no-op when no codeassembly.yaml exists', async () => {
+  it('dispatches sync, reporting a no-op when the project does not contain codeassembly.yaml', async () => {
     const result = await runCliIn(projectRoot, 'sync');
 
     expect(result.exitCode).toBe(0);

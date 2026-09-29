@@ -73,7 +73,7 @@ const SUBCOMMAND_NAMES = [
 ];
 
 describe('subcommand dispatch', () => {
-  it('if no subcommand is passed, refuses with a usage error listing every subcommand', () => {
+  it('if the invocation omits a subcommand, refuses with a usage error listing every subcommand', () => {
     expect(() => parseArgs([])).toThrow(
       `a subcommand is required; usage: describe-change <subcommand> [flags], where <subcommand> is one of ${SUBCOMMAND_NAMES.join(', ')}`,
     );
@@ -83,7 +83,7 @@ describe('subcommand dispatch', () => {
     expect(() => parseArgs(['--base', 'main'])).toThrow(/^unknown subcommand --base; usage: /);
   });
 
-  it('if no subcommand is passed, exits non-zero and lists every subcommand on stderr', async () => {
+  it('if the invocation omits a subcommand, exits non-zero and lists every subcommand on stderr', async () => {
     const result = await runCli([]);
 
     expect(result.exitCode).toBe(1);
@@ -144,7 +144,7 @@ describe('render-titles', () => {
     });
   });
 
-  it('yields an empty record for an invocation with no flags', () => {
+  it('yields an empty record for an invocation without flags', () => {
     expect(parseArgs(['render-titles'])).toEqual({ record: {}, subcommand: 'render-titles' });
   });
 
@@ -193,7 +193,7 @@ describe('render-titles', () => {
     });
   });
 
-  it('reports the four keys with empty values for an invocation with no flags', async () => {
+  it('reports the four keys with empty values for an invocation without flags', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({ argv: ['render-titles'], cwd, dataDir: DATA_DIR, home });
@@ -242,7 +242,7 @@ describe('render-titles', () => {
     expect(output).toMatchObject({ commit_title: 'agents|feat!: Add foo' });
   });
 
-  it('normalizes the wildcard scope to no scope', async () => {
+  it('clears the wildcard scope', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({
@@ -259,7 +259,7 @@ describe('render-titles', () => {
     const { cwd, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     await expect(runDescribe({ argv: ['render-titles'], cwd, dataDir: DATA_DIR, home })).rejects.toThrow(
-      /commit\.title_format: Template .* places \{scope\} and \{type\} with no literal between them/,
+      /commit\.title_format: Template .* places \{scope\} and \{type\} without a literal between them/,
     );
   });
 
@@ -278,7 +278,7 @@ describe('render-titles', () => {
     expect(warnings).toEqual([expect.stringContaining('git could not resolve the repository root')]);
   });
 
-  it('warns and skips verification when no taxonomy is readable', async () => {
+  it('warns and skips verification when the data directory does not contain a readable taxonomy', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
 
@@ -290,7 +290,7 @@ describe('render-titles', () => {
     });
 
     expect(output).toMatchObject({ ticket_title: 'Add foo' });
-    expect(warnings).toEqual([expect.stringContaining('no readable work-types.json')]);
+    expect(warnings).toEqual([expect.stringContaining('work-types.json is missing or unreadable')]);
   });
 });
 
@@ -303,7 +303,7 @@ describe('parse-title', () => {
     });
   });
 
-  it('rejects a surface that no template is configured for', () => {
+  it('rejects a surface that does not have a title template', () => {
     expect(() => parseArgs(['parse-title', 'branch', 'Add foo'])).toThrow(/parse-title must name one of/);
   });
 
@@ -313,7 +313,7 @@ describe('parse-title', () => {
     );
   });
 
-  it('rejects an invocation with no subject', () => {
+  it('rejects an invocation without a subject', () => {
     expect(() => parseArgs(['parse-title', 'commit'])).toThrow(/takes the surface and the subject string/);
   });
 
@@ -363,7 +363,7 @@ describe('parse-title', () => {
     ).rejects.toThrow(/commit\.title_format is empty/);
   });
 
-  it('refuses when no taxonomy is readable', async () => {
+  it('refuses when the data directory does not contain a readable taxonomy', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
 
@@ -437,7 +437,7 @@ describe('consolidate-branch', () => {
     expect(output).toMatchObject({ violations: [{ policy: 'forbidden', type: 'refactor' }] });
   });
 
-  it('yields a consolidated record whose fields are all null for a range with no commits', async () => {
+  it('yields a consolidated record whose fields are all null for a range without commits', async () => {
     const { cwd, home } = await makeCommittedRepo([]);
 
     const { output } = await runDescribe({ argv: CONSOLIDATE_BASE, cwd, dataDir: DATA_DIR, home });
@@ -491,7 +491,7 @@ describe('consolidate-branch', () => {
     expect(condensed.entries.map(omitCommit)).toStrictEqual(original.entries.map(omitCommit));
   });
 
-  it('refuses when no taxonomy is readable', async () => {
+  it('refuses when the data directory does not contain a readable taxonomy', async () => {
     const { cwd, home } = await makeCommittedRepo(['agents|feat: Add the parser']);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
 
@@ -615,7 +615,7 @@ describe('consolidate-entries', () => {
     ).rejects.toThrow(/is not valid YAML/);
   });
 
-  it('if no taxonomy is readable, refuses the invocation', async () => {
+  it('if the data directory does not contain a readable taxonomy, refuses the invocation', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const entriesFile = await writeEntries(ENTRIES_YAML);
     const dataDir = join(cwd, 'absent-data');
@@ -634,7 +634,7 @@ describe('resolve-scopes', () => {
     });
   });
 
-  it('reads an invocation with no path', () => {
+  it('reads an invocation without a path', () => {
     expect(parseArgs(['resolve-scopes'])).toEqual({ paths: [], subcommand: 'resolve-scopes' });
   });
 
@@ -659,7 +659,7 @@ describe('resolve-scopes', () => {
     expect(warnings).toStrictEqual([]);
   });
 
-  it('resolves a pattern-matched directory holding no manifest to root', async () => {
+  it('resolves a pattern-matched directory without a manifest to root', async () => {
     const { cwd, home } = await makeWorkspaceRepo();
 
     const argv = ['resolve-scopes', '--path', 'packages/scripts/build.ts'];
@@ -678,7 +678,7 @@ describe('resolve-scopes', () => {
     expect(output).toStrictEqual({ path_scopes: { 'packages/kb/src/index.ts': 'kb' }, scopes: ['kb'] });
   });
 
-  it('resolves every path to root when the repository declares no workspaces', async () => {
+  it('resolves every path to root when the repository does not declare any workspaces', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const argv = ['resolve-scopes', '--path', 'packages/kb/src/index.ts'];
@@ -687,7 +687,7 @@ describe('resolve-scopes', () => {
     expect(output).toStrictEqual({ path_scopes: { 'packages/kb/src/index.ts': 'root' }, scopes: ['root'] });
   });
 
-  it('resolves a declared directory in a repository that declares no workspaces', async () => {
+  it('resolves a declared directory in a repository that does not declare any workspaces', async () => {
     const scopes = 'project:\n  scopes:\n    - path: apps/devopticon\n    - path: tools/ios-shell\n      name: ios';
     const { cwd, home } = await makeRepo(`${HOUSE_TEMPLATES}\n${scopes}`);
     await mkdir(join(cwd, 'apps', 'devopticon'), { recursive: true });
@@ -761,7 +761,7 @@ describe('resolve-scopes', () => {
     expect(warnings).toStrictEqual([]);
   });
 
-  it('reports no scopes when given no path', async () => {
+  it('reports an empty scope list when the invocation omits a path', async () => {
     const { cwd, home } = await makeWorkspaceRepo();
 
     const { output } = await runDescribe({ argv: ['resolve-scopes'], cwd, dataDir: DATA_DIR, home });
@@ -769,7 +769,7 @@ describe('resolve-scopes', () => {
     expect(output).toStrictEqual({ path_scopes: {}, scopes: [] });
   });
 
-  it('warns and anchors at the invoking directory when git resolves no repository root', async () => {
+  it('warns and anchors at the invoking directory when git cannot resolve a repository root', async () => {
     const cwd = await mkdtemp(join(tmpdir(), 'describe-change-bare-'));
     const home = await mkdtemp(join(tmpdir(), 'describe-change-home-'));
 
@@ -789,7 +789,7 @@ describe('resolve-ticket-type', () => {
     });
   });
 
-  it('reads an invocation with no ticket label', () => {
+  it('reads an invocation without a ticket label', () => {
     expect(parseArgs(['resolve-ticket-type'])).toEqual({ subcommand: 'resolve-ticket-type', ticketLabels: [] });
   });
 
@@ -820,7 +820,7 @@ describe('resolve-ticket-type', () => {
     expect(output).toStrictEqual({ ticket_type: 'feat' });
   });
 
-  it('yields a null ticket type when the repository configures no label map', async () => {
+  it('yields a null ticket type when the repository does not configure a label map', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const argv = ['resolve-ticket-type', '--ticket-label', 'feature'];
@@ -1002,7 +1002,7 @@ describe('resolve-labels', () => {
     expect(warnings).toStrictEqual([]);
   });
 
-  it('labels the record alone when the body contains no block, as the effective record labels it', async () => {
+  it('labels the record alone when the body does not contain a block, as the effective record labels it', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     await writeLabelMap(cwd, LABEL_MAP);
     const bodyFile = await writeBody('## What\n\nAdds the parser.\n');
@@ -1023,7 +1023,7 @@ describe('resolve-labels', () => {
 
     expect(output).toStrictEqual({ labels: ['feature'] });
     expect(warnings).toStrictEqual([
-      'the body’s change-record block is malformed, so no entry adds a label: `title` is missing',
+      'the body’s change-record block is malformed, so the entries do not add any label: `title` is missing',
     ]);
   });
 
@@ -1037,10 +1037,10 @@ describe('resolve-labels', () => {
 
     expect(output).toStrictEqual({ labels: ['feature'] });
     expect(warnings).toHaveLength(1);
-    expect(warnings[0]).toMatch(/^the body’s change entries are malformed, so no entry adds a label: /);
+    expect(warnings[0]).toMatch(/^the body’s change entries are malformed, so the entries do not add any label: /);
   });
 
-  it('yields no label when the repository configures no label map', async () => {
+  it('yields an empty label list when the repository does not configure a label map', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const bodyFile = await writeBody('## What\n');
 
@@ -1084,7 +1084,7 @@ describe('resolve-effective-record', () => {
     });
   });
 
-  it('reads an invocation with no flags', () => {
+  it('reads an invocation without flags', () => {
     expect(parseArgs(['resolve-effective-record'])).toEqual({
       overrides: {},
       record: {},
@@ -1092,7 +1092,7 @@ describe('resolve-effective-record', () => {
     });
   });
 
-  it('sets no override for an override flag whose value is blank', () => {
+  it('does not set an override for an override flag whose value is blank', () => {
     expect(parseArgs(['resolve-effective-record', '--override-scope', ' ', '--override-type', ''])).toEqual({
       overrides: {},
       record: {},
@@ -1161,7 +1161,7 @@ describe('resolve-effective-record', () => {
   });
 
   it.each([
-    { argv: ['--scope', 'agents'], defects: [{ kind: 'missing-type' }], name: 'names no type' },
+    { argv: ['--scope', 'agents'], defects: [{ kind: 'missing-type' }], name: 'does not name a type' },
     {
       argv: ['--type', 'feature'],
       defects: [{ kind: 'undeclared-type', type: 'feature' }],
@@ -1196,7 +1196,7 @@ describe('resolve-effective-record', () => {
     expect(output).toMatchObject({ defects: [], effective_record: { type: 'feat' } });
   });
 
-  it('refuses when no taxonomy is readable', async () => {
+  it('refuses when the data directory does not contain a readable taxonomy', async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
 
     await expect(
@@ -1481,7 +1481,7 @@ describe('resolve-merge', () => {
     expect(output).toHaveProperty('merge_block', expect.stringMatching(/^```change-record\npr_number: 470\n/));
   });
 
-  it('when the body contains no block, resolves from the commits and says so', async () => {
+  it('when the body does not contain a block, resolves from the commits and says so', async () => {
     const { cwd, headCommit, home } = await makePullRequestRepo(['agents|feat: Add the parser']);
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
 
@@ -1557,7 +1557,7 @@ describe('resolve-merge', () => {
     ).rejects.toThrow(/--pr-body-file .*absent\.md cannot be read/);
   });
 
-  it('refuses when no taxonomy is readable', async () => {
+  it('refuses when the data directory does not contain a readable taxonomy', async () => {
     const { cwd, headCommit, home } = await makePullRequestRepo([]);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');
@@ -1609,7 +1609,7 @@ describe('check-merge-body', () => {
     expect(output).toStrictEqual({ entry_count: 1 });
   });
 
-  it('passes a body containing no block when no entry is expected', async () => {
+  it('passes a body without a block when the expected entry count is zero', async () => {
     const { output } = await runCheck(await writeBody('Adds the parser.\n'), 0);
 
     expect(output).toStrictEqual({ entry_count: 0 });
@@ -1621,16 +1621,18 @@ describe('check-merge-body', () => {
     await expect(runCheck(bodyFile, 2)).rejects.toThrow('the merge body records 1 change entries; expected 2');
   });
 
-  it('refuses a body containing no block when entries are expected', async () => {
+  it('refuses a body without a block when entries are expected', async () => {
     await expect(runCheck(await writeBody('Adds the parser.\n'), 1)).rejects.toThrow(
       'the merge body records 0 change entries; expected 1',
     );
   });
 
-  it('refuses a body containing a block when no entry is expected', async () => {
+  it('refuses a body containing a block when the expected entry count is zero', async () => {
     const bodyFile = await writeBody(`Adds the parser.\n\n${MERGE_BLOCK}\n`);
 
-    await expect(runCheck(bodyFile, 0)).rejects.toThrow(/contains a change-record block, but no entry was expected/);
+    await expect(runCheck(bodyFile, 0)).rejects.toThrow(
+      /contains a change-record block, but the expected entry count is 0/,
+    );
   });
 
   it('refuses a body whose block is malformed, naming the defect', async () => {

@@ -21,7 +21,7 @@ describe(resolveRulebook, () => {
     await rm(contentDir, { recursive: true, force: true });
   });
 
-  it('names the origin and the path when the resolved source contains no rulebook file', async () => {
+  it('names the origin and the path when the resolved source does not contain a rulebook file', async () => {
     await expect(resolveRulebook('ghost', buildAlwaysResolvingResolver(ABSENT_DIR))).rejects.toThrow(
       /Declared rulebook "ghost" was not found in the library/,
     );

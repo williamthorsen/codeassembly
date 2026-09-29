@@ -13,7 +13,7 @@ describe(makeArtifactMarker, () => {
       expect(marker.extractSlug(marker.injectMarker(FILE, 'people-report'))).toBe('people-report');
     });
 
-    it('returns undefined when no marker is present', () => {
+    it('returns undefined when the file does not contain a marker', () => {
       expect(marker.extractSlug(FILE)).toBeUndefined();
     });
 
@@ -43,7 +43,7 @@ describe(makeArtifactMarker, () => {
       expect(marker.injectMarker(once, 'people-report')).toBe(once);
     });
 
-    it('throws a clear error when the content has no frontmatter block', () => {
+    it('throws a clear error when the content does not have a frontmatter block', () => {
       expect(() => marker.injectMarker('# No frontmatter\n', 'people-report')).toThrow(/frontmatter/i);
     });
   });

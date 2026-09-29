@@ -12,9 +12,9 @@ import { DirectiveExpansionError, listIncludeTargets } from './directive-expande
 import { isTestDirectory, isUnderTestDirectory, readDirEntriesRecursively } from './fs-helpers.ts';
 
 /**
- * Builds the include graph of one content root. A file whose own directives do not resolve contributes no include
- * edge and is reported through `hasUnresolvedIncludes` rather than throwing, so one malformed directive leaves the
- * rest of the root queryable.
+ * Builds the include graph of one content root. A file whose own directives do not resolve does not contribute an
+ * include edge and is reported through `hasUnresolvedIncludes` rather than throwing, so one malformed directive
+ * leaves the rest of the root queryable.
  */
 export async function buildIncludeGraph(contentRoot: string): Promise<IncludeGraph> {
   const root = path.resolve(contentRoot);
@@ -86,15 +86,15 @@ export interface IncludeGraph {
   countReach(file: string): number;
   /** Reports whether the file, or anything that it transitively includes, has a directive that does not resolve. */
   hasUnresolvedIncludes(file: string): boolean;
-  /** Lists the file and its transitive includes. A file outside the root reports itself and no include. */
+  /** Lists the file and its transitive includes. A file outside the root reports only itself. */
   listClosure(file: string): IncludeClosure;
 }
 
 // region | Helpers
 
 /**
- * Directory names whose Markdown files deploy no file of their own: a partial renders only inside its includers, and
- * a collection declares its members and has no body to deploy.
+ * Directory names whose Markdown files do not deploy a file of their own: a partial renders only inside its includers,
+ * and a collection declares its members and does not have a body to deploy.
  */
 const NON_DEPLOYING_TREES: ReadonlySet<string> = new Set(['_partials', 'collections']);
 
@@ -111,7 +111,8 @@ function isDocument(relativePath: string, isIncluded: boolean): boolean {
 
 /**
  * Lists every Markdown file under the root at any depth, as absolute paths. Test content is walked too: Its
- * directives decide whether a file targeted there resolves, even though it counts toward no document's reach.
+ * directives decide whether a file targeted there resolves, even though it does not count toward any document's
+ * reach.
  */
 async function listMarkdownFiles(root: string): Promise<Array<string>> {
   return (await readDirEntriesRecursively(root))

@@ -33,7 +33,7 @@ export function countNewlines(text: string, upTo: number): number {
 
 /**
  * Strips `|alias` and `#anchor` from a wikilink inner string and returns the target. Returns `null` for intra-doc
- * links like `[[#heading]]`, which have no target.
+ * links like `[[#heading]]`, which do not have a target.
  */
 export function extractTarget(inner: string): string | null {
   const beforeAlias = inner.split('|', 1)[0] ?? '';
@@ -107,8 +107,8 @@ export function* scanWikilinks(body: string): Generator<ScannedWikilink> {
 
 /**
  * Separates a leading `store:` qualifier from a wikilink target: `fde:Note title` names the note `Note title` in the
- * store `fde`. A qualifier is recognized only when the text before the first colon is non-empty and contains no
- * whitespace and no `/`, and something follows the colon. Every other target stays store-local: A title such as
+ * store `fde`. A qualifier is recognized only when the text before the first colon is non-empty and does not contain
+ * any whitespace or `/`, and something follows the colon. Every other target stays store-local: A title such as
  * `Release notes: v2` resolves within this store.
  *
  * Call it on the output of {@link extractTarget}, which has already stripped any alias and anchor.
@@ -172,8 +172,8 @@ function maskFencedCode(body: string): string {
 /**
  * Replaces inline backtick spans (e.g., TOML `[[plugins]]` mentioned in prose) with same-length whitespace so that
  * wikilink-shaped text inside inline code is not flagged. Matches single or multi-backtick runs whose content
- * contains no backticks or newlines (the common case); complex spans with embedded backticks fall through and are
- * still parsed for wikilinks.
+ * does not contain any backticks or newlines (the common case); complex spans with embedded backticks fall through
+ * and are still parsed for wikilinks.
  */
 function maskInlineCode(body: string): string {
   return body.replace(/`+[^`\n]+?`+/g, (match) => ' '.repeat(match.length));

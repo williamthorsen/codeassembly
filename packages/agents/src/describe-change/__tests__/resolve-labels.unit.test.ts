@@ -68,13 +68,13 @@ describe(resolveLabels, () => {
     ]);
   });
 
-  it('labels the record alone when the change has no entries', () => {
+  it('labels the record alone when the change does not have any entries', () => {
     expect(
       resolveLabels({ entries: [], labelMap: MAP, record: { breaking: true, scope: 'agents', type: 'feat' } }),
     ).toStrictEqual(['feature', 'breaking', 'scope:agents']);
   });
 
-  it('adds the label of a record type that no entry names, as an override sets it', () => {
+  it('adds the label of a record type not named by any entry, as an override sets it', () => {
     const entries = [buildEntry({ scopes: ['agents'], type: 'feat' })];
 
     expect(resolveLabels({ entries, labelMap: MAP, record: { type: 'docs' } })).toStrictEqual([
@@ -90,7 +90,7 @@ describe(resolveLabels, () => {
     expect(resolveLabels({ entries, labelMap: MAP, record: { scope: '*', type: 'constructor' } })).toStrictEqual([]);
   });
 
-  it('yields no label, breaking included, when the map configures none', () => {
+  it('does not yield any label, breaking included, when the map does not configure any', () => {
     const entries = [buildEntry({ breaking: true, scopes: ['agents'], type: 'feat' })];
 
     expect(resolveLabels({ entries, labelMap: { scopes: {}, types: {} }, record: { breaking: true } })).toStrictEqual(

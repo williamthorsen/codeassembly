@@ -24,7 +24,7 @@ export interface DeclaredSources {
   readonly missingSources: ReadonlyArray<DeclaredSource>;
   /**
    * The roots from which a command reads undeclared content, highest precedence first: every source whose directory
-   * exists, then the built-in library. A root with no `name` is the library.
+   * exists, then the built-in library. A root without a `name` is the library.
    */
   readonly roots: ReadonlyArray<ContentRootRef>;
 }
@@ -58,12 +58,12 @@ export function describeMissingSource(source: DeclaredSource): ReportLine {
 
 /**
  * Resolves a declaration's hand-declared and package sources into one precedence-ordered list, validating every root
- * that the run will read before any file is written. An absent declaration resolves to no sources, which leaves a
- * command with no declaration reading the library alone.
+ * that the run will read before any file is written. An absent declaration resolves to an empty list of sources,
+ * which leaves a command without a declaration reading the library alone.
  *
  * The checks run in a fixed order, and the order is load-bearing: an unreadable source directory must report as
  * unreadable rather than as a failed content-manifest read. Every caller shares this one entry point rather than the
- * individual checks, so no two commands can come to disagree about that order.
+ * individual checks, so two commands cannot come to disagree about that order.
  */
 export async function resolveDeclaredSources(options: {
   baseDir: string;
@@ -89,10 +89,11 @@ export async function resolveDeclaredSources(options: {
   assertDistinctSourceNames(sources);
   // Every root that the run reads declares the content format against which it was authored, the library included.
   // Checked after the source checks above, so an unreadable directory reports as unreadable rather than as a failed
-  // manifest read; a source whose directory is missing contains no manifest and stays the warning that it is.
+  // manifest read; a source whose directory is missing does not contain a manifest and stays the warning that it is.
   await assertSupportedContentFormats([...sources, { dir: contentDir }]);
 
-  // A missing source contributes no root: There is nothing to read from it, and the warning above already names it.
+  // A missing source does not contribute a root: There is nothing to read from it, and the warning above already
+  // names it.
   const missingDirs = new Set(missingSources.map((source) => source.dir));
   const roots: ReadonlyArray<ContentRootRef> = [
     ...sources.filter((source) => !missingDirs.has(source.dir)),

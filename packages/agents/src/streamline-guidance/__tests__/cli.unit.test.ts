@@ -4,9 +4,9 @@ import { runCommand } from '../cli.ts';
 
 describe(runCommand, () => {
   it.each([
-    { argv: [], condition: 'no command is given' },
+    { argv: [], condition: 'the command is omitted' },
     { argv: ['sweep', 'AGENTS.md'], condition: 'the command is unknown' },
-    { argv: ['resolve'], condition: 'resolve names no path' },
+    { argv: ['resolve'], condition: 'resolve does not name any path' },
     { argv: ['resolve', '--level', 'AGENTS.md'], condition: 'resolve is given a flag' },
     { argv: ['check', 'AGENTS.md'], condition: 'check is given an argument' },
     { argv: ['mark', 'AGENTS.md'], condition: 'mark is given an argument' },

@@ -56,7 +56,7 @@ describe(resolveTargetHarnesses, () => {
     });
   });
 
-  it('reports no harnesses when none is installed and none is declared', async () => {
+  it('does not report any harnesses when none is installed and none is declared', async () => {
     expect(await resolveTargetHarnesses({ harness: 'all', cwd, homeDir })).toEqual({
       harnessIds: [],
       origin: 'detection',

@@ -202,7 +202,7 @@ async function resolveKbForPath(input: {
         failure: {
           ok: false,
           error: 'no-kb-resolvable',
-          message: `no .kb/ discovered for note at ${input.notePath}`,
+          message: `did not discover any .kb/ for note at ${input.notePath}`,
         },
       };
     case 'readonly-kb':
@@ -252,7 +252,7 @@ function loadFailureToResult(outcome: Exclude<Awaited<ReturnType<typeof loadNote
     return {
       ok: false,
       error: 'note-not-found',
-      message: `no file at ${outcome.path}`,
+      message: `file not found at ${outcome.path}`,
       details: { missingPath: outcome.path },
     };
   }
@@ -426,7 +426,7 @@ async function runSupersedeWith(input: {
  * failure on one target becomes that record's result and the rest of the batch still runs. An unexpected throw
  * propagates to `main`.
  *
- * Because the operation adds no duplicate reference, the batch needs no cross-file rollback.
+ * Because the operation doesn't add a duplicate reference, the batch doesn't need any cross-file rollback.
  */
 async function runAddAddressedBy(input: {
   args: Extract<ParsedArgs, { operation: 'add-addressed-by' }>;

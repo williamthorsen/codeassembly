@@ -22,7 +22,7 @@ describe(parseNoteContent, () => {
     });
   });
 
-  it('when a note has no opening fence, returns null frontmatter and the whole content as body', async () => {
+  it('when a note lacks an opening fence, returns null frontmatter and the whole content as body', async () => {
     const content = await readFixture('no-frontmatter.md');
     const note = parseNoteContent({ content });
 

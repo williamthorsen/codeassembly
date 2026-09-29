@@ -1,6 +1,6 @@
 // Absence follows lifecycle's convention here: An unknown or not-applicable value is `undefined`, and the wire layer
-// writes it as `null` at snapshot derivation. A branch with no pull request is simply absent from `branchPrs` rather
-// than a present-but-null entry; `noUncheckedIndexedAccess` reports that as `undefined` on lookup.
+// writes it as `null` at snapshot derivation. A branch without a pull request is simply absent from `branchPrs`
+// rather than a present-but-null entry; `noUncheckedIndexedAccess` reports that as `undefined` on lookup.
 
 /** Whether a pull request is open, merged, or closed unmerged. */
 export type PrState = 'open' | 'merged' | 'closed';
@@ -16,13 +16,13 @@ export interface PrFacts {
   url: string;
   state: PrState;
   isDraft: boolean;
-  /** The rolled-up CI verdict, or `undefined` when the pull request reports no checks. */
+  /** The rolled-up CI verdict, or `undefined` when the pull request doesn't report any checks. */
   checks: CheckState | undefined;
-  /** The review decision, or `undefined` when review is not required and no decision has been made. */
+  /** The review decision, or `undefined` when review is not required and the pull request doesn't have a decision. */
   review: ReviewState | undefined;
 }
 
-/** The minimal forge-portable ticket core: enough to attribute and label a lane, with no forge-specific fields. */
+/** The minimal forge-portable ticket core: enough to attribute and label a lane, without any forge-specific fields. */
 export interface TicketFacts {
   title: string;
   /** The forge's own state vocabulary, lowercased: `open`/`closed` on GitHub, potentially richer elsewhere. */
@@ -40,7 +40,10 @@ export interface RepoStateRequest {
   ticketIds: readonly string[];
 }
 
-/** The facts one repo fetch resolves: pull requests keyed by branch, tickets keyed by id. An absent key has no facts. */
+/**
+ * The facts one repo fetch resolves: pull requests keyed by branch, tickets keyed by id. An absent key doesn't have
+ * any facts.
+ */
 export interface RepoState {
   branchPrs: Record<string, PrFacts>;
   tickets: Record<string, TicketFacts>;

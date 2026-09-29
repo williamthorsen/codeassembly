@@ -15,7 +15,7 @@ const HOME_UNRESOLVABLE_DEFAULT = join(FIXTURES, 'home-unresolvable-default');
 const HOME_WITH_FEEDBACK = join(FIXTURES, 'home-with-feedback');
 const HOME_READONLY_FEEDBACK = join(FIXTURES, 'home-readonly-feedback');
 const HOME_UNRESOLVABLE_FEEDBACK = join(FIXTURES, 'home-unresolvable-feedback');
-// A home directory with no `.agents/kb.yaml`, so the user-global registry is empty.
+// A home directory without a `.agents/kb.yaml`, so the user-global registry is empty.
 const HOME_EMPTY = FIXTURES;
 
 describe(resolveCaptureTarget, () => {
@@ -25,7 +25,7 @@ describe(resolveCaptureTarget, () => {
     expect(result).toEqual({ ok: true, store: { name: 'named-vault-a', path: VAULT_A } });
   });
 
-  it('returns not-registered when the explicit name matches no entry', async () => {
+  it('returns not-registered when the explicit name does not match any entry', async () => {
     const result = await resolveCaptureTarget({ explicitName: 'no-such-store', home: HOME_WITH_DEFAULT });
 
     expect(result).toEqual({ ok: false, reason: 'not-registered', requestedName: 'no-such-store' });
@@ -55,7 +55,7 @@ describe(resolveCaptureTarget, () => {
     expect(result).toEqual({ ok: false, reason: 'readonly-store', name: 'readonly-default', path: VAULT_READONLY });
   });
 
-  it('returns no-default when @default is given but no default_kb is configured', async () => {
+  it('returns no-default when @default is given but the registry does not configure default_kb', async () => {
     const result = await resolveCaptureTarget({ explicitName: '@default', home: HOME_EMPTY });
 
     expect(result).toEqual({ ok: false, reason: 'no-default' });
@@ -122,7 +122,7 @@ describe(resolveCaptureTarget, () => {
     });
   });
 
-  it('returns missing-store with no stores and no default when the registry is empty', async () => {
+  it('returns missing-store with an empty store list and without a default when the registry is empty', async () => {
     const result = await resolveCaptureTarget({ explicitName: null, home: HOME_EMPTY });
 
     expect(result).toEqual({ ok: false, reason: 'missing-store', registeredStores: [] });

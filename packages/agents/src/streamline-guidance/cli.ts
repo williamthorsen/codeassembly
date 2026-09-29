@@ -3,8 +3,8 @@
 /**
  * CLI entry for the streamline-guidance helper.
  *
- * Each command writes its JSON result on stdout, and the helper edits no guidance: The agent applies every cut through
- * its own editing tool.
+ * Each command writes its JSON result on stdout, and the helper does not edit any guidance: The agent applies every
+ * cut through its own editing tool.
  */
 import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -241,7 +241,7 @@ function rejectArguments(command: string): HelperFailure {
   return {
     ok: false,
     error: 'invalid-args',
-    message: `${command} takes no arguments; it reads its input on standard input`,
+    message: `${command} does not take any arguments; it reads its input on standard input`,
   };
 }
 

@@ -12,7 +12,7 @@ import { isEnoent } from '../../type-guards.ts';
 export interface SelectionResult {
   /** Notes matched by at least one pattern, in enumeration order, deduplicated. */
   selected: EnumeratedNote[];
-  /** Patterns that matched no validatable note and are backed by no real on-disk path: likely typos. */
+  /** Patterns that did not match any validatable note and are not backed by any real on-disk path: likely typos. */
   unmatched: string[];
 }
 
@@ -22,9 +22,9 @@ export interface SelectionResult {
  *
  * Each pattern is matched as a `picomatch` glob against the notes' store-relative paths, so the store's
  * `targets`/`exclude` filtering is inherited and a quoted glob behaves the same as a shell-expanded one. A bare
- * directory expands to its subtree. A pattern matching no note is reported in `unmatched` unless a real on-disk path
- * backs it (a non-validatable file such as a README, an excluded subtree, or an empty directory), in which case it is
- * dropped silently, which distinguishes a typo from a legitimately out-of-scope target.
+ * directory expands to its subtree. A pattern that does not match any note is reported in `unmatched` unless a real
+ * on-disk path backs it (a non-validatable file such as a README, an excluded subtree, or an empty directory), in
+ * which case it is dropped silently, which distinguishes a typo from a legitimately out-of-scope target.
  */
 export async function selectNotes(input: {
   notes: readonly EnumeratedNote[];
@@ -77,10 +77,10 @@ function normalizePattern(pattern: string): string {
 }
 
 /**
- * Resolves a pattern that matched no note. A metachar-free pattern that is a directory on disk is retried as a subtree
- * (its matches are added to `selectedPaths`). Returns `true` when the pattern resolves to something real (subtree
- * matches, an empty directory, a non-note file, or a glob whose literal prefix exists) and `false` only when nothing
- * on disk backs it, marking it unmatched.
+ * Resolves a pattern that did not match any note. A metachar-free pattern that is a directory on disk is retried as a
+ * subtree (its matches are added to `selectedPaths`). Returns `true` when the pattern resolves to something real
+ * (subtree matches, an empty directory, a non-note file, or a glob whose literal prefix exists) and `false` only when
+ * nothing on disk backs it, marking it unmatched.
  */
 async function resolveEmptyPattern(input: {
   notes: readonly EnumeratedNote[];
@@ -94,7 +94,7 @@ async function resolveEmptyPattern(input: {
     const target = await tryStat(join(storeRoot, pattern));
     if (target?.isDirectory()) {
       for (const path of matchPaths(notes, `${pattern}/**`)) selectedPaths.add(path);
-      return true; // A real directory resolves; an empty one simply contributes no matches.
+      return true; // A real directory resolves; an empty one simply does not contribute any matches.
     }
     return target !== null; // A real non-note file is dropped silently; a missing path is unmatched.
   }

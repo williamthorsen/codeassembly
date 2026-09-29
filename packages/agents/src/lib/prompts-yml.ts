@@ -60,9 +60,9 @@ export async function collectPromptEntries(skillsDir: string): Promise<ReadonlyA
 
 /**
  * Renders the prompt entries as the generated-region note above the indented `- name/description/content_file` list
- * items (no `prompts:` header), single-quoting descriptions with internal quotes doubled. This is the body that the
- * region renderer wraps in sentinels. No entries yields an empty string rather than a note-only body: The caller reads
- * emptiness as "strip the region", and a note alone would leave it standing over nothing.
+ * items (without a `prompts:` header), single-quoting descriptions with internal quotes doubled. This is the body that
+ * the region renderer wraps in sentinels. An empty entry list yields an empty string rather than a note-only body: The
+ * caller reads emptiness as "strip the region", and a note alone would leave it standing over nothing.
  */
 export function renderPromptEntries(entries: ReadonlyArray<PromptEntry>): string {
   const yamlLines: Array<string> = [];

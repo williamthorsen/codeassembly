@@ -31,9 +31,9 @@ describe(readDeclaredScopes, () => {
   });
 
   it.each([
-    ['there is no preferences file', undefined],
-    ['the file has no `project` section', 'commit:\n  title_format: x\n'],
-    ['the `project` section has no `scopes` key', 'project:\n  slug: demo\n'],
+    ['the root does not contain a preferences file', undefined],
+    ['the file does not have a `project` section', 'commit:\n  title_format: x\n'],
+    ['the `project` section does not have a `scopes` key', 'project:\n  slug: demo\n'],
   ])('reads nothing and warns nothing when %s', async (_case, content) => {
     const root = await writeRoot([], content);
 
@@ -82,8 +82,8 @@ describe(readDeclaredScopes, () => {
       scopeDirs: [{ dir: join(root, 'apps/devopticon'), name: 'devopticon' }],
       warnings: [
         `${file}: project.scopes[0] is not a mapping; skipping it`,
-        `${file}: project.scopes[1] has no string \`path\`; skipping it`,
-        `${file}: project.scopes[2] has no string \`path\`; skipping it`,
+        `${file}: project.scopes[1] does not have a string \`path\`; skipping it`,
+        `${file}: project.scopes[2] does not have a string \`path\`; skipping it`,
         `${file}: project.scopes[3] has a \`name\` that is not a non-empty string; skipping it`,
         `${file}: project.scopes[4] has an absolute path /etc; skipping it`,
         `${file}: project.scopes[5] has a path ../elsewhere outside the repository; skipping it`,

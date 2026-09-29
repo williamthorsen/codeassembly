@@ -59,7 +59,7 @@ describe(injectDeclaredRulebooks, () => {
     );
   });
 
-  it('returns content declaring no rulebooks byte-identically, leaving its frontmatter unserialized', () => {
+  it('returns content byte-identically when it does not declare any rulebooks, leaving its frontmatter unserialized', () => {
     // A re-serialization would rewrite the long description and the flow sequence.
     const source = dedent`
       ---
@@ -140,7 +140,7 @@ describe(injectDeclaredRulebooks, () => {
     const source = '---\nname: demo-agent\nrulebooks:\n  - nmr-cheatsheet\n  - never-declared\n---\n\nBody.\n';
 
     expect(() => injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toThrow(
-      /subagents\/demo-agent\.md declares 2 unusable rulebook injection\(s\):[\s\S]*nmr-cheatsheet -- it names an ambient-only rulebook[\s\S]*never-declared -- it names no rulebook in the deployed set/,
+      /subagents\/demo-agent\.md declares 2 unusable rulebook injection\(s\):[\s\S]*nmr-cheatsheet -- it names an ambient-only rulebook[\s\S]*never-declared -- it does not name any rulebook in the deployed set/,
     );
   });
 });

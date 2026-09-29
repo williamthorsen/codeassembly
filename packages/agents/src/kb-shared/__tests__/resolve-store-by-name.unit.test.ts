@@ -18,7 +18,7 @@ describe(resolveStoreByName, () => {
     expect(result).toEqual({ ok: true, store: { name: 'named-vault-a', path: VAULT_A } });
   });
 
-  it('fails with not-registered when no entry matches the name', async () => {
+  it('fails with not-registered when the name does not match any registry entry', async () => {
     const result = await resolveStoreByName({ name: 'no-such-store', home: HOME_WITH_DEFAULT });
 
     expect(result).toEqual({ ok: false, reason: 'not-registered', requestedName: 'no-such-store' });

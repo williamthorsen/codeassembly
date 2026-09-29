@@ -105,7 +105,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['--diataxis', 'howto'])).toThrow(/--title is required/);
   });
 
-  it('throws when a value-bearing flag has no value', () => {
+  it('throws when a value-bearing flag is given without a value', () => {
     expect(() => parseArgs(['--diataxis'])).toThrow(/--diataxis requires a value/);
   });
 
@@ -183,7 +183,7 @@ describe(runAdd, () => {
     }
   });
 
-  it('returns missing-destination when no .kb/ and no --kb are available', async () => {
+  it('returns missing-destination when discovery does not find a .kb/ and --kb is not given', async () => {
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Floating'],
       stdin: bodyStream(''),
@@ -226,7 +226,7 @@ describe(runAdd, () => {
     }
   });
 
-  it('returns no-default when --kb @default is given but no default_kb is configured', async () => {
+  it('returns no-default when --kb @default is given but the registry does not configure a default_kb', async () => {
     const kbPath = await makeKb();
     const homeDir = await mkdtemp(join(tmpdir(), 'kb-add-no-default-'));
     await mkdir(join(homeDir, '.agents'), { recursive: true });
@@ -492,7 +492,7 @@ describe(runAdd, () => {
     expect(taxonomy).toContain('provisional:\n  languages: Languages\n');
   });
 
-  it('writes without a taxonomy and reports no placement when the store has not adopted one', async () => {
+  it('writes without a taxonomy and does not report a placement when the store has not adopted one', async () => {
     const kbPath = await makeKb();
 
     const result = await runAdd({
@@ -539,7 +539,7 @@ describe(runAdd, () => {
     }
   });
 
-  it('surveys a store that declares no taxonomy', async () => {
+  it('surveys a store that does not declare a taxonomy', async () => {
     const kbPath = await makeKb();
     await mkdir(join(kbPath, 'content', 'assertions', 'languages'), { recursive: true });
     await writeFile(join(kbPath, 'content', 'assertions', 'languages', 'Types.md'), NOTE, 'utf8');

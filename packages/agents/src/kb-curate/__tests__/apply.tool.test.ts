@@ -68,6 +68,6 @@ describe(applyFixes, () => {
     const rewrite = fixes.find((fix) => fix.operation === 'rewrite-wikilink');
     expect(rewrite).toMatchObject({ ok: false });
     const onDisk = await readFile(linkerPath, 'utf8');
-    expect(onDisk).toContain('Entirely different body.'); // untouched, with no frontmatter-stripped write
+    expect(onDisk).toContain('Entirely different body.'); // untouched, without a frontmatter-stripped write
   });
 });

@@ -15,8 +15,9 @@ import type { ChangeRecord, Taxonomy } from './types.ts';
  * misparses a plain title that contains a pipe and a declared type: Under `[[{scope}|]{type}: ]{title}`, `Rename kb|docs: the shared
  * layer` parses as scope `Rename kb`, type `docs`, title `the shared layer`.
  *
- * A template naming `{type}` requires one: A subject that names a scope but no declared type is unmatched. A template
- * naming no `{ticket_ref}` has release-kit's three ticket-prefix forms stripped from the subject first.
+ * A template naming `{type}` requires one: A subject that names a scope but not a declared type is unmatched. A
+ * template that does not name `{ticket_ref}` has release-kit's three ticket-prefix forms stripped from the subject
+ * first.
  */
 export function parse(nodes: readonly TemplateNode[], subject: string, taxonomy: Taxonomy): ChangeRecord | undefined {
   const options: PatternOptions = {
@@ -54,7 +55,7 @@ export function parse(nodes: readonly TemplateNode[], subject: string, taxonomy:
   return namesType && record.type === undefined ? undefined : normalizeChangeRecord(record);
 }
 
-/** The ticket-reference forms stripped from a subject whose template names no `{ticket_ref}`. */
+/** The ticket-reference forms stripped from a subject whose template does not name `{ticket_ref}`. */
 export const TICKET_PREFIX_PATTERNS: readonly RegExp[] = [/^##\s+/, /^#\d+([.-]\d+)?\s+/, /^[A-Z]+-\d+\s+/];
 
 // region | Helpers
@@ -90,7 +91,7 @@ function buildTokenPattern(node: TokenNode, options: PatternOptions): string {
     case 'title':
       return '(?<title>.+?)';
     case 'type':
-      // When the template names no `{breaking}`, the marker follows the type, exactly as `render` writes it.
+      // When the template does not name `{breaking}`, the marker follows the type, exactly as `render` writes it.
       return options.namesBreaking
         ? `(?<type>${options.typeAlternation})`
         : `(?<type>${options.typeAlternation})(?<breaking>${escapeForPattern(BREAKING_MARKER)})?`;

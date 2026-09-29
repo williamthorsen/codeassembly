@@ -7,7 +7,7 @@ describe(splitRepo, () => {
     expect(splitRepo('williamthorsen/codeassembly')).toEqual(['williamthorsen', 'codeassembly']);
   });
 
-  it('substitutes the placeholder for the name when the repo names no owner', () => {
+  it('substitutes the placeholder for the name when the repo does not name an owner', () => {
     expect(splitRepo('bare-name')).toEqual(['bare-name', REPO_SEGMENT_PLACEHOLDER]);
   });
 
@@ -15,7 +15,7 @@ describe(splitRepo, () => {
     expect(splitRepo(undefined)).toEqual([REPO_SEGMENT_PLACEHOLDER, REPO_SEGMENT_PLACEHOLDER]);
   });
 
-  it('drops everything past the name, which the two path segments have no room for', () => {
+  it('drops everything past the name, for which the two path segments do not have room', () => {
     expect(splitRepo('owner/name/extra')).toEqual(['owner', 'name']);
   });
 });

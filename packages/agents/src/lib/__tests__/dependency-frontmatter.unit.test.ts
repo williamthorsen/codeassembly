@@ -29,13 +29,13 @@ describe(readDependencies, () => {
     expect(readDependencies(content)).toEqual({ skill: ['people-report', 'classify-complexity'] });
   });
 
-  it('returns no dependencies for an absent block, absent frontmatter, or a null value', () => {
+  it('does not return any dependencies for an absent block, absent frontmatter, or a null value', () => {
     expect(readDependencies(withFrontmatter('name: recommended'))).toEqual({});
     expect(readDependencies('# No frontmatter\n')).toEqual({});
     expect(readDependencies(withFrontmatter('dependencies:'))).toEqual({});
   });
 
-  it('tolerates a null sub-key, reading it as no edges of that type', () => {
+  it('tolerates a null sub-key, reading it as an empty list of edges of that type', () => {
     const content = withFrontmatter('dependencies:\n  skills:\n  subagents:\n    - canary');
 
     expect(readDependencies(content)).toEqual({ subagent: ['canary'] });
@@ -111,7 +111,7 @@ describe(readInjectedRulebooks, () => {
     expect(readInjectedRulebooks(content)).toEqual(['review-criteria', 'shell-conventions']);
   });
 
-  it('returns no rulebooks for an absent key, absent frontmatter, or a null value', () => {
+  it('does not return any rulebooks for an absent key, absent frontmatter, or a null value', () => {
     expect(readInjectedRulebooks(withFrontmatter('name: canary'))).toEqual([]);
     expect(readInjectedRulebooks('# No frontmatter\n')).toEqual([]);
     expect(readInjectedRulebooks(withFrontmatter('rulebooks:'))).toEqual([]);
@@ -142,7 +142,7 @@ describe(readInjectedSkills, () => {
     expect(readInjectedSkills(content)).toEqual(['anti-patterns', 'commit']);
   });
 
-  it('returns no skills for an absent key, absent frontmatter, or a null value', () => {
+  it('does not return any skills for an absent key, absent frontmatter, or a null value', () => {
     expect(readInjectedSkills(withFrontmatter('name: canary'))).toEqual([]);
     expect(readInjectedSkills('# No frontmatter\n')).toEqual([]);
     expect(readInjectedSkills(withFrontmatter('skills:'))).toEqual([]);

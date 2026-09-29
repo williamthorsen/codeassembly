@@ -111,7 +111,7 @@ describe(selectExemplars, () => {
     expect(selection.exemplars).toStrictEqual([]);
   });
 
-  it('reads every record, rated or not, when no floor is named', async () => {
+  it('reads every record, rated or not, when the request does not name a floor', async () => {
     const mixed: readonly DecisionSpec[] = [
       { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' },
       { id: 'B', type: 'feat', capturedAt: '2026-02-01T00:00:00Z', quality: 'good' },
@@ -140,13 +140,13 @@ describe(selectExemplars, () => {
     expect(selection.exemplars).toHaveLength(1);
   });
 
-  it('returns an empty list for a corpus with no decisions', async () => {
+  it('returns an empty list for a corpus without any decisions', async () => {
     const selection = await select({ decisions: [], type: 'feat', count: 5 });
 
     expect(selection).toStrictEqual({ exemplars: [], widening: 'none', warnings: [] });
   });
 
-  it('returns an empty list for a store with no events directory', async () => {
+  it('returns an empty list for a store without an events directory', async () => {
     const fixture = await createCorpusFixture();
     const workTypes = await loadTaxonomy(fixture);
 
@@ -194,7 +194,7 @@ describe(selectExemplars, () => {
     });
   });
 
-  it('selects a record that names no scope, and reports no scope for it', async () => {
+  it('selects a record that does not name a scope, and reports it without a scope', async () => {
     const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', scope: null, pr: '1124' }];
 
     const selection = await select({ decisions, type: 'feat', count: 1 });
@@ -263,7 +263,7 @@ describe(selectExemplars, () => {
     expect(withPair.widening).toBe(withoutPair.widening);
   });
 
-  it('reports a record whose body contains no agent lede when the pair is asked for', async () => {
+  it('reports a record whose body does not contain an agent lede when the pair is asked for', async () => {
     const files = {
       'Z.md':
         '---\nrecordType: event\nid: Z\ncaptured-at: 2026-09-01T00:00:00Z\ncwd: /repo\nsummary: Decision\n' +
@@ -273,7 +273,9 @@ describe(selectExemplars, () => {
 
     const selection = await select({ decisions: [], files, type: 'feat', count: 1, withPair: true });
 
-    expect(selection.warnings).toStrictEqual(['Z.md: contains no agent lede, so its decision pair cannot be read']);
+    expect(selection.warnings).toStrictEqual([
+      'Z.md: does not contain an agent lede, so its decision pair cannot be read',
+    ]);
     expect(selection.exemplars[0]).not.toHaveProperty('agentLede');
   });
 
@@ -290,8 +292,8 @@ describe(selectExemplars, () => {
 
   it.each([
     ['a broken YAML block', '---\ntags: [lede-decision\ncwd: /repo\n---\n\n## Agent lede\n\nText.\n'],
-    ['no frontmatter block at all', '## Agent lede\n\nText.\n'],
-  ])('reports a record with %s, which names no tag to place it by', async (_label, content) => {
+    ['a missing frontmatter block', '## Agent lede\n\nText.\n'],
+  ])('reports a record with %s, which does not name a tag to place it by', async (_label, content) => {
     const selection = await select({ decisions: CORPUS, files: { 'Z.md': content }, type: 'feat', count: 2 });
 
     expect(selection.warnings).toHaveLength(1);
@@ -343,13 +345,13 @@ describe('selectExemplars, on a tier request', () => {
   it('widens straight past the tier when it cannot fill the count', async () => {
     const selection = await selectByTier({ decisions: CORPUS, tier: 'internal', count: 3 });
 
-    // Because one record is internal, the other two are made up from other tiers with no middle step.
+    // Because one record is internal, the other two are made up from other tiers without a middle step.
     expect(selection.widening).toBe('any');
     expect(selection.exemplars.map((exemplar) => exemplar.type)).toContain('refactor');
     expect(selection.exemplars).toHaveLength(3);
   });
 
-  it('widens to another tier when the requested tier has no record', async () => {
+  it('widens to another tier when the corpus does not contain a record of the requested tier', async () => {
     const selection = await selectByTier({
       decisions: [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' }],
       tier: 'process',
@@ -376,7 +378,7 @@ async function loadTaxonomy(fixture: CorpusFixture): Promise<ReadonlyMap<string,
 function requireType(workTypes: ReadonlyMap<string, WorkType>, type: string): WorkType {
   const resolved = workTypes.get(type);
   if (resolved === undefined) {
-    throw new Error(`the fixture taxonomy declares no work type "${type}"`);
+    throw new Error(`the fixture taxonomy does not declare a work type "${type}"`);
   }
   return resolved;
 }

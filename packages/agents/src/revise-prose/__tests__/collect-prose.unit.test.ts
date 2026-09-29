@@ -21,11 +21,11 @@ describe(extractFileProse, () => {
     expect(joinText(spans)).toContain('Resolves the source it names.');
   });
 
-  it('yields no spans for an extension that no extractor reads', () => {
+  it('does not yield any spans for an extension that the extractors do not read', () => {
     expect(extractFileProse({ file: 'data.csv', content: 'Resolves the source it names.\n' })).toStrictEqual([]);
   });
 
-  it('yields no spans for YAML that the parser cannot read', () => {
+  it('does not yield any spans for YAML that the parser cannot read', () => {
     expect(
       extractFileProse({ file: 'broken.yaml', content: 'aliases:\n  git: [vcs, version-control\n' }),
     ).toStrictEqual([]);
@@ -79,7 +79,7 @@ describe(extractProse, () => {
       expect(spans).toContainEqual({ file: 'fixture.md', line: 2, text: 'Reports the branch a worktree checks out.' });
     });
 
-    it('yields no frontmatter key and no single-token frontmatter value', () => {
+    it('does not yield a frontmatter key or a single-token frontmatter value', () => {
       const text = joinText(extract(MARKDOWN, 'markdown'));
 
       expect(text).not.toContain('name: fixture');
@@ -149,7 +149,7 @@ describe(extractProse, () => {
       expect(text).toContain('Print the ID of the ticket a branch name encodes.');
     });
 
-    it('yields no identifier and no single-token literal', () => {
+    it('does not yield an identifier or a single-token literal', () => {
       const text = joinText(extract(SCRIPT, 'script'));
 
       expect(text).not.toContain('buildHelpText');
@@ -217,7 +217,7 @@ describe(extractProse, () => {
       ]);
     });
 
-    it('yields no mapping key and no single-token value', () => {
+    it('does not yield a mapping key or a single-token value', () => {
       const text = joinText(extract(YAML_DOC, 'yaml'));
 
       expect(text).not.toContain('description');
@@ -252,7 +252,7 @@ describe(extractProse, () => {
       expect(joinText(extract(duplicated, 'yaml'))).toContain('Reports the branch a worktree checks out.');
     });
 
-    it('refuses a document that the parser cannot read, so no sweep counts it clean', () => {
+    it('refuses a document that the parser cannot read, so a sweep does not count it clean', () => {
       expect(() => extract('aliases:\n  git: [vcs, version-control\n', 'yaml')).toThrow(UnparsableYamlError);
     });
   });

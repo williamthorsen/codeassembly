@@ -76,7 +76,7 @@ describe(deleteMemories, () => {
     expect(result.results[0]?.note).toContain('already absent');
   });
 
-  it('deletes an orphan memory that has no MEMORY.md line', async () => {
+  it('deletes an orphan memory that does not have a MEMORY.md line', async () => {
     const memory = await makeMemoryDir();
     await writeFile(join(memory, 'feedback-orphan.md'), 'orphan', 'utf8');
     await writeFile(
@@ -88,11 +88,11 @@ describe(deleteMemories, () => {
     const result = await deleteMemories({ paths: [join(memory, 'feedback-orphan.md')] });
 
     expect(result.results[0]).toMatchObject({ deleted: true, indexUpdated: false });
-    expect(result.results[0]?.note).toContain('no MEMORY.md line matched');
+    expect(result.results[0]?.note).toContain('did not match any MEMORY.md line');
     expect(await exists(join(memory, 'feedback-orphan.md'))).toBe(false);
   });
 
-  it('deletes the file even when the store has no MEMORY.md', async () => {
+  it('deletes the file even when the store does not have a MEMORY.md', async () => {
     const memory = await makeMemoryDir();
     await writeFile(join(memory, 'feedback-a.md'), 'a', 'utf8');
 

@@ -113,7 +113,7 @@ describe(stripGuidanceHooks, () => {
     expect(stripGuidanceHooks(body, SOURCE_LABEL)).toBe('# Demo\n\n\nProse.\n');
   });
 
-  it('leaves a body declaring no hook byte-identical', () => {
+  it('leaves a body that does not declare a hook byte-identical', () => {
     const body = '# Demo\n\n<!-- include: _partials/frag.md / -->\n\nSee `<!-- guidance-hook: x -->` for the shape.\n';
 
     expect(stripGuidanceHooks(body, SOURCE_LABEL)).toBe(body);
@@ -184,7 +184,7 @@ describe(fillGuidanceHooks, () => {
     expect(result.content).toContain('<!-- rulebook:layout -->\n<!-- rulebook-version: 3 -->\n## Layout');
   });
 
-  it('names no version for a bound rulebook that declares none', () => {
+  it('does not name a version for a bound rulebook that does not declare one', () => {
     const result = fillGuidanceHooks('<!-- guidance-hook: impl -->\n', bind({ impl: [layout] }), 'a.md');
 
     expect(result.content).not.toContain('rulebook-version');

@@ -27,7 +27,7 @@ export interface KbEvent {
   recordType: 'event';
   id: string;
   capturedAt: string;
-  /** Harness-dependent provenance: absent when the harness that captured the event exposes no session id. */
+  /** Harness-dependent provenance: absent when the harness that captured the event does not expose a session id. */
   session?: string;
   cwd: string;
   summary: string;
@@ -120,7 +120,7 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
 /**
  * Projects an event back to a frontmatter field map (declared fields first, then preserved `extra`) plus its body. An
  * empty `session` is omitted like an absent one, mirroring {@link parseEvent}: The two forms of "no session" have one
- * representation on both parse and render, so no record can reacquire the empty field on a write.
+ * representation on both parse and render, so a record cannot reacquire the empty field on a write.
  */
 export function renderEvent(record: KbEvent): { fields: Record<string, unknown>; body: string } {
   const fields: Record<string, unknown> = {

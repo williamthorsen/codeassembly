@@ -106,8 +106,8 @@ export function dropUnresolvableSeeds(seeds: DirectArtifacts, unresolvable: Unre
 
 /**
  * Reports each bound rulebook whose own body declares a guidance hook. Bound guidance is spliced as rendered, so a hook
- * inside it has no pass left that could fill it. Checked here, against the unrendered body, because the rulebook
- * renderer strips the directive and the evidence is gone by the time a fill is built.
+ * inside it does not have a pass left that could fill it. Checked here, against the unrendered body, because the
+ * rulebook renderer strips the directive and the evidence is gone by the time a fill is built.
  */
 export function findBoundRulebookHookDefects(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
@@ -322,9 +322,9 @@ export function findSkillNameCollisionDefects(resolved: ReadonlyArray<ResolvedRu
 }
 
 /**
- * Reports each guidance-hook binding naming a rulebook that resolves from no declared source or the library, naming
- * both the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an anonymous
- * missing reference: The hook name is the half that says where to go and fix it.
+ * Reports each guidance-hook binding naming a rulebook that does not resolve from any declared source or the library,
+ * naming both the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an
+ * anonymous missing reference: The hook name is the half that says where to go and fix it.
  */
 export async function findUnresolvableBindingDefects(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
@@ -351,10 +351,10 @@ export async function findUnresolvableBindingDefects(
 }
 
 /**
- * Reports each artifact that a declaration's own `use:` list names and that resolves from no declared source or the
- * library, naming the chain files that declare it alongside the slug. The closure catches the same slug, but only
- * as an anonymous missing reference: The declaring file is the half that says where to go and fix it, and a path
- * derived from the domain cannot supply it, since either tier of the chain could have named the slug.
+ * Reports each artifact that a declaration's own `use:` list names and that does not resolve from any declared
+ * source or the library, naming the chain files that declare it alongside the slug. The closure catches the same
+ * slug, but only as an anonymous missing reference: The declaring file is the half that says where to go and fix it,
+ * and a path derived from the domain cannot supply it, since either tier of the chain could have named the slug.
  */
 export async function findUnresolvableDeclaredArtifactDefects(
   declaration: ResolvedDeclaration,

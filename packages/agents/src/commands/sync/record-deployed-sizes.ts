@@ -42,7 +42,7 @@ export type SizeReportOutcome =
  * and it is the tree that the append gate judges in the home domain, whose content comes from that package.
  *
  * Every failure is caught and reported as the `failed` outcome rather than thrown. The pass runs after the last
- * write, where a throw would report a completed deployment as a failure, and no size condition may fail a sync.
+ * write, where a throw would report a completed deployment as a failure, and a size condition must never fail a sync.
  */
 export async function recordDeployedSizes(input: {
   plan: DeployedPathSources;
@@ -96,7 +96,7 @@ export async function recordDeployedSizes(input: {
  *
  * The first snapshot recorded after the marker is preferred, because it states the size that the review left the
  * document at; measuring from the snapshot before the marker would count the review's own reduction as headroom and
- * hide a regrowth of that size. A marker with no later snapshot falls back to the one standing at or before it,
+ * hide a regrowth of that size. A marker without a later snapshot falls back to the one standing at or before it,
  * which is the state a freshly-marked document is in until the next deployment records it.
  *
  * @internal - Exported to allow testing.

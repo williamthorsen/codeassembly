@@ -52,7 +52,7 @@ describe(consolidateChangeEntries, () => {
     expect(consolidateChangeEntries(entries, TAXONOMY)).toStrictEqual({ scope: 'img-promoter', type: 'feat' });
   });
 
-  it('ranks an entry that names no scope, so a change touching nothing scoped still resolves a type', () => {
+  it('ranks an entry that does not name any scope, so a change touching nothing scoped still resolves a type', () => {
     const entries = [buildEntry({ scopes: [], type: 'refactor' })];
 
     expect(consolidateChangeEntries(entries, TAXONOMY)).toStrictEqual({ type: 'refactor' });
@@ -197,7 +197,7 @@ describe(readChangeEntries, () => {
     });
   });
 
-  it('reads an empty list as no entries', () => {
+  it('reads an empty list as an empty entry list', () => {
     expect(readChangeEntries([])).toStrictEqual({ entries: [] });
   });
 

@@ -11,7 +11,7 @@ const VAULT_B = join(FIXTURES, 'vault-b');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
 const MALFORMED_REGISTRY = join(FIXTURES, 'registry.malformed');
 const HOME_WITH_DEFAULT = join(FIXTURES, 'home-with-default');
-// A home directory with no `.agents/kb.yaml`, so the user-global registry is empty.
+// A home directory without a `.agents/kb.yaml`, so the user-global registry is empty.
 const HOME_EMPTY = FIXTURES;
 
 describe(resolveScope, () => {
@@ -35,13 +35,13 @@ describe(resolveScope, () => {
     ]);
   });
 
-  it('returns only the discovered KB when no registry is configured', async () => {
+  it('returns only the discovered KB when neither the project nor the home directory configures a registry', async () => {
     const { kbs } = await resolveScope({ startDir: NOTES_VAULT, allKbs: false, home: HOME_EMPTY });
 
     expect(kbs).toEqual([{ name: null, path: NOTES_VAULT, via: 'discovery' }]);
   });
 
-  it('reads the user-global registry when no project registry exists', async () => {
+  it('reads the user-global registry when the project does not have a registry', async () => {
     const { kbs } = await resolveScope({ startDir: NOTES_VAULT, allKbs: false, home: HOME_WITH_DEFAULT });
 
     expect(kbs).toEqual([

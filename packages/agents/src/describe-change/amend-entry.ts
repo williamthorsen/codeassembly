@@ -19,7 +19,7 @@ export function amendEntry(input: {
 }): AmendedEntry {
   const reading = readChangeRecordBlock(input.body);
   if (reading.kind === 'absent') {
-    throw new Error('the body contains no change-record block');
+    throw new Error("the body doesn't contain a change-record block");
   }
   if (reading.kind === 'malformed') {
     throw new Error(`the body’s change-record block is malformed: ${reading.defect}`);
@@ -71,7 +71,7 @@ export interface EntryAmendment {
 function describeDefect(defect: RecordDefect): string {
   switch (defect.kind) {
     case 'missing-type':
-      return 'it names no type';
+      return "it doesn't name a type";
     case 'policy-violation':
       return `the type ${defect.type} forbids the breaking marker`;
     case 'undeclared-type':

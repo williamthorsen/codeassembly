@@ -123,7 +123,7 @@ describe(expandIncludes, () => {
       expect(result).toBe(['Authors close open directives with `<!-- /include -->` on its own line.', ''].join('\n'));
     });
 
-    it('returns content unchanged when no directives are present', async () => {
+    it('returns content unchanged when it does not contain any directives', async () => {
       const host = await writeSource('host.md', '# Title\n\nBody.\n');
 
       const result = await expandIncludes(host, contentDir);
@@ -145,7 +145,7 @@ describe(expandIncludes, () => {
   });
 
   describe('directive shapes', () => {
-    it('expands an open/close pair with empty slot when partial has no children placeholder', async () => {
+    it('expands an open/close pair with empty slot when partial does not have a children placeholder', async () => {
       const host = await writeSource('host.md', ['<!-- include: partial.md -->', '<!-- /include -->', ''].join('\n'));
       await writeSource('partial.md', 'no slot here\n');
 
@@ -175,7 +175,7 @@ describe(expandIncludes, () => {
       expect(result).toBe(['Before', 'After', ''].join('\n'));
     });
 
-    it('substitutes <!-- children --> with empty when open/close pair has no slot content', async () => {
+    it('substitutes <!-- children --> with empty when open/close pair does not contain any slot content', async () => {
       const host = await writeSource('host.md', ['<!-- include: partial.md -->', '<!-- /include -->', ''].join('\n'));
       await writeSource('partial.md', ['Before', '<!-- children -->', 'After', ''].join('\n'));
 
@@ -345,7 +345,7 @@ describe(expandIncludes, () => {
       });
     });
 
-    it('throws orphan-close when a close directive has no matching open', async () => {
+    it('throws orphan-close when a close directive does not have a matching open', async () => {
       const host = await writeSource('host.md', ['<!-- /include -->', ''].join('\n'));
 
       await expect(expandIncludes(host, contentDir)).rejects.toMatchObject({
@@ -364,7 +364,7 @@ describe(expandIncludes, () => {
       });
     });
 
-    it('throws slot-without-children when the caller provides slot content but the partial has no placeholder', async () => {
+    it('throws slot-without-children when the caller provides slot content but the partial does not have a placeholder', async () => {
       const host = await writeSource(
         'host.md',
         ['<!-- include: partial.md -->', 'slot content', '<!-- /include -->', ''].join('\n'),
@@ -387,7 +387,7 @@ describe(expandIncludes, () => {
       });
     });
 
-    it('throws unrecognized-parameter when no whitespace follows the colon', async () => {
+    it('throws unrecognized-parameter when the colon is not followed by whitespace', async () => {
       const host = await writeSource('host.md', ['<!-- include:target.md unknown -->', ''].join('\n'));
       await writeSource('target.md', 'X\n');
 

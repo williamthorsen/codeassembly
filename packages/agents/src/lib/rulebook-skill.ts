@@ -27,7 +27,7 @@ export function extractRulebookSkillSlug(content: string): string | undefined {
  * line-folding). Re-running `sync` with unchanged content leaves the file untouched.
  *
  * `user-invocable` is always `true`: On-demand rulebook skills are meant to be invocable, and rulebook frontmatter
- * declares no per-rulebook opt-out.
+ * does not declare a per-rulebook opt-out.
  */
 export function renderSkillFile(file: RulebookSkillFile): string {
   const { body, description, skillName, slug, version } = file;

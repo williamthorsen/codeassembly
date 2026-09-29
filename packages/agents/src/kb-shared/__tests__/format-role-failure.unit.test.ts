@@ -4,8 +4,8 @@ import { formatRoleFailure } from '../format-role-failure.ts';
 
 describe(formatRoleFailure, () => {
   it.each([
-    ['no-default', 'no-default-store', '--store @default was given but no default_kb is configured in kb.yaml'],
-    ['no-feedback', 'no-feedback-store', '--store @feedback was given but no feedback_kb is configured in kb.yaml'],
+    ['no-default', 'no-default-store', '--store @default was given but kb.yaml does not configure default_kb'],
+    ['no-feedback', 'no-feedback-store', '--store @feedback was given but kb.yaml does not configure feedback_kb'],
   ] as const)('names the unset key for %s', (reason, error, message) => {
     expect(formatRoleFailure({ ok: false, reason })).toEqual({ error, message });
   });

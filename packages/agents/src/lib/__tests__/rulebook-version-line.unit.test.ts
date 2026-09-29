@@ -7,7 +7,7 @@ describe(renderRulebookVersionLines, () => {
     expect(renderRulebookVersionLines('11')).toEqual(['<!-- rulebook-version: 11 -->']);
   });
 
-  it('renders no line for a rulebook declaring no version', () => {
+  it('does not render a line for a rulebook that does not declare a version', () => {
     expect(renderRulebookVersionLines(undefined)).toEqual([]);
   });
 

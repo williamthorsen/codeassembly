@@ -18,7 +18,7 @@ const HOME_READONLY_DEFAULT = join(FIXTURES, 'home-readonly-default');
 const HOME_READONLY_NAMED = join(FIXTURES, 'home-readonly-named');
 const HOME_SINGLE_DEFAULT = join(FIXTURES, 'home-single-default');
 const HOME_UNRESOLVABLE_DEFAULT = join(FIXTURES, 'home-unresolvable-default');
-// A home directory with no `.agents/kb.yaml`, so the user-global registry is empty.
+// A home directory without a `.agents/kb.yaml`, so the user-global registry is empty.
 const HOME_EMPTY = FIXTURES;
 
 describe(resolveWritableKb, () => {
@@ -92,7 +92,7 @@ describe(resolveWritableKb, () => {
     });
   });
 
-  it('returns no-default when @default is given but no default_kb is configured', async () => {
+  it('returns no-default when @default is given but the registry does not configure default_kb', async () => {
     const result = await resolveWritableKb({ startDir: '/', explicitKb: '@default', home: HOME_EMPTY });
 
     expect(result).toEqual({ ok: false, reason: 'no-default' });
@@ -168,7 +168,7 @@ describe(resolveWritableKb, () => {
     expect(result).toEqual({ ok: false, reason: 'no-kb-resolvable', requestedKb: 'nonexistent' });
   });
 
-  it('refuses with missing-destination, naming the registered KBs and the default, when no .kb/ and no --kb', async () => {
+  it('refuses with missing-destination, naming the registered KBs and the default, without a .kb/ or --kb', async () => {
     const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_WITH_DEFAULT });
 
     expect(result).toEqual({
@@ -179,7 +179,7 @@ describe(resolveWritableKb, () => {
     });
   });
 
-  it('refuses with missing-destination and an empty list when no .kb/, no --kb, and the registry is empty', async () => {
+  it('refuses with missing-destination and an empty list without a .kb/ or --kb and with an empty registry', async () => {
     const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_EMPTY });
 
     expect(result).toEqual({ ok: false, reason: 'missing-destination', registeredKbs: [] });
@@ -195,7 +195,7 @@ describe(resolveWritableKb, () => {
   });
 
   it('degrades a malformed user-global registry to an empty config rather than throwing', async () => {
-    // HOME_MALFORMED contains a syntactically invalid `.agents/kb.yaml`, and `/` has no `.kb/` marker.
+    // HOME_MALFORMED contains a syntactically invalid `.agents/kb.yaml`, and `/` does not contain a `.kb/` marker.
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
       const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });

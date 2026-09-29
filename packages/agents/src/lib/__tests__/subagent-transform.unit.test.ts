@@ -10,7 +10,7 @@ import { rewriteToolNames, ToolNameRewriteError } from '../tool-name-rewriter.ts
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
-/** An empty catalog: No source under test contains a `{rulebook:<slug>}` token, so nothing addresses one. */
+/** An empty catalog: The sources under test do not contain any `{rulebook:<slug>}` token, so nothing addresses one. */
 const NO_RULEBOOKS: RulebookInvocationCatalog = new Map();
 
 // Because `shell-conventions` declares a `skill-name` override, its deployed name is not `consult-<slug>`.
@@ -155,7 +155,7 @@ describe(renderSubagentForHarness, () => {
     expect(output).not.toContain('{rulebook:');
   });
 
-  it('throws when a subagent body names a rulebook that deploys no skill to invoke', () => {
+  it('throws when a subagent body names a rulebook that does not deploy a skill to invoke', () => {
     const source = dedent`
       ---
       name: demo-agent
@@ -282,7 +282,7 @@ describe(renderSubagentForHarness, () => {
     ).toThrow(/subagents\/demo-agent\.md:\d+ name="preferences" .* reason=duplicate-hook/);
   });
 
-  it('throws a source-labelled error for an anchor naming no heading in the same body', () => {
+  it('throws a source-labelled error for an anchor that does not name any heading in the same body', () => {
     const source = `${SOURCE}See [the findings](#finding-scheme).\n`;
 
     expect(() =>

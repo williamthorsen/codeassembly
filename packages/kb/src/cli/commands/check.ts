@@ -20,15 +20,16 @@ export interface CommandOutput {
 export const CHECK_HELP = `Usage: kb check [paths...] [options]
 
 Validate notes in a knowledge base against its tag aliases and cross-note
-link and path rules. With no path arguments, every note is checked.
+link and path rules. Without path arguments, every note is checked.
 Cross-note rules always resolve against the whole store; a [[store:Target]]
 link resolves against the store named by its prefix in the kb.yaml registry.
 
 Targeting (mutually exclusive):
   [paths...]    Check only the notes matching the given glob patterns, files,
                 or directories. Quote globs so that kb expands them itself. A
-                directory checks every note beneath it. A path that matches no
-                note is a usage error unless it names a real non-note.
+                directory checks every note beneath it. A path that does not
+                match any note is a usage error unless it names a real
+                non-note.
   --vs <ref>    Check only the notes changed between the working tree and the
                 merge-base of <ref> and HEAD: follows renames, includes
                 uncommitted edits, excludes deletions.
@@ -214,7 +215,7 @@ async function resolveSelection(input: {
 
   const selection = await selectNotes({ notes: result.notes, patterns, storeRoot: store.path });
   if (selection.unmatched.length > 0) {
-    return { ok: false, message: `no notes matched: ${selection.unmatched.join(', ')}` };
+    return { ok: false, message: `these paths did not match any note: ${selection.unmatched.join(', ')}` };
   }
 
   const selectedPaths = new Set(selection.selected.map((entry) => entry.path));

@@ -83,7 +83,7 @@ async function loadReleaseKitParser(): Promise<ParseCommitMessage> {
   const modulePath = resolveReleaseKitModule();
   const loaded: unknown = await import(/* @vite-ignore */ pathToFileURL(modulePath).href);
   if (typeof loaded !== 'object' || loaded === null || !('parseCommitMessage' in loaded)) {
-    throw new Error(`No parseCommitMessage export at ${modulePath}.`);
+    throw new Error(`The module at ${modulePath} does not export parseCommitMessage.`);
   }
   const exported = loaded.parseCommitMessage;
   if (typeof exported !== 'function') {
@@ -110,7 +110,7 @@ function resolveReleaseKitModule(): string {
       return candidate;
     }
   }
-  throw new Error('No installed @williamthorsen/release-kit found above this suite.');
+  throw new Error('@williamthorsen/release-kit is not installed in any directory above this suite.');
 }
 
 /** Yields the starting directory and every ancestor of it, up to the filesystem root. */

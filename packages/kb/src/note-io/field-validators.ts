@@ -1,4 +1,4 @@
-// Leaf validators over raw field values from a parsed note's frontmatter map. They depend on no record type.
+// Leaf validators over raw field values from a parsed note's frontmatter map. They do not depend on any record type.
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
 const TIMESTAMP = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;

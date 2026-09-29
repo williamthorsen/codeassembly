@@ -288,7 +288,7 @@ async function consolidatePullRequestCommits(input: {
   if (input.template === '') {
     return {
       kind: 'unavailable',
-      reason: 'commit.title_format is empty, so no commit and no title prefix can be read through it',
+      reason: 'commit.title_format is empty, so the commits and the title prefix cannot be read through it',
     };
   }
   try {
@@ -459,7 +459,10 @@ async function readEntriesFile(input: { cwd: string; filePath: string }): Promis
   return read.entries;
 }
 
-/** Reads the override flags that `render-block` and `resolve-effective-record` share. A blank value sets no override. */
+/**
+ * Reads the override flags that `render-block` and `resolve-effective-record` share. A blank value does not set an
+ * override.
+ */
 function readOverrideFlags(flags: readonly MatchedFlag[]): RecordOverrides {
   const values = valueFlagMap(flags);
   const scope = values['override-scope']?.trim();
@@ -537,7 +540,7 @@ function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
 
 /**
  * Reads the `render-titles` invocation into a record. Every flag is optional, and a flag left off resolves its token to
- * empty, so an invocation with no flags renders each template against an empty record.
+ * empty, so an invocation without flags renders each template against an empty record.
  */
 function readRenderTitlesArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
@@ -721,7 +724,8 @@ async function runAmendEntry(
 
 /**
  * Reads a composed merge body back as release-kit reads the merge commit, refusing a body whose block is malformed, or
- * whose entry count differs from the one expected. An expected count of zero requires the body to contain no block.
+ * whose entry count differs from the one expected. An expected count of zero requires that the body not contain a
+ * block.
  */
 async function runCheckMergeBody(
   args: { bodyFile: string; entryCount: number },
@@ -739,7 +743,7 @@ async function runCheckMergeBody(
     throw new Error(`the merge body's change-record block is malformed: ${reading.defect}`);
   }
   if (reading.kind === 'read' && args.entryCount === 0) {
-    throw new Error('the merge body contains a change-record block, but no entry was expected');
+    throw new Error('the merge body contains a change-record block, but the expected entry count is 0');
   }
   const found = reading.kind === 'absent' ? 0 : reading.block.entries.length;
   if (found !== args.entryCount) {
@@ -791,8 +795,8 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
 
 /**
  * Consolidates a change's entries into the record that represents the change. Only the taxonomy is loaded, which ranks
- * the types, so the run reads no title template and no repository. An empty list determines nothing, as a branch with
- * no commit entry does.
+ * the types, so the run does not read a title template or the repository. An empty list determines nothing, as a branch
+ * without a commit entry does.
  */
 async function runConsolidateEntries(entriesFile: string, input: DescribeInput): Promise<DescribeResult> {
   const taxonomy = await loadTaxonomy(input.dataDir);
@@ -825,7 +829,7 @@ async function runParseTitle(surface: Surface, subject: string, input: DescribeI
 
 /**
  * Renders the block from the invocation, reading the entries from their file when one is named. The run consolidates
- * nothing and reads no taxonomy, so a defective template does not stop it; the record is what the flags pass.
+ * nothing and does not read the taxonomy, so a defective template does not stop it; the record is what the flags pass.
  */
 async function runRenderBlock(
   args: { block: ChangeRecordBlock; entriesFile?: string },
@@ -837,11 +841,14 @@ async function runRenderBlock(
   return { output: { block: renderChangeRecordBlock(block) }, warnings: [] };
 }
 
-/** Renders every surface's title from the record, warning rather than refusing when no taxonomy verifies the templates. */
+/**
+ * Renders every surface's title from the record, warning rather than refusing when a taxonomy is not readable to verify
+ * the templates.
+ */
 async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplates(input);
   if (taxonomy === null) {
-    warnings.push(`no readable work-types.json under ${input.dataDir}; templates are not verified`);
+    warnings.push(`work-types.json is missing or unreadable under ${input.dataDir}; templates are not verified`);
   }
   return {
     output: {
@@ -856,7 +863,7 @@ async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Prom
 
 /**
  * Applies the overrides to the record and reports the effective record with its defects. Only the taxonomy is loaded,
- * which the defects are checked against, so the run reads no title template and no repository.
+ * which the defects are checked against, so the run does not read a title template or the repository.
  */
 async function runResolveEffectiveRecord(
   args: { overrides: RecordOverrides; record: ChangeRecord },
@@ -888,8 +895,8 @@ async function runResolveEffectiveRecord(
 /**
  * Resolves a change's labels through the repository's label map, from the entries in the body file's last
  * `change-record` block and from the effective record that the flags pass. A block that is absent, malformed, or
- * without entries contributes no entry, and a defective one is reported as a warning. The body file is read relative to
- * the invoking directory, and the label map from the repository root.
+ * without entries does not contribute any entry, and a defective one is reported as a warning. The body file is read
+ * relative to the invoking directory, and the label map from the repository root.
  */
 async function runResolveLabels(
   args: { bodyFile: string; record: ChangeRecord },
@@ -907,9 +914,13 @@ async function runResolveLabels(
 
   const reading = readChangeRecordBlock(body);
   if (reading.kind === 'malformed') {
-    warnings.push(`the body’s change-record block is malformed, so no entry adds a label: ${reading.defect}`);
+    warnings.push(
+      `the body’s change-record block is malformed, so the entries do not add any label: ${reading.defect}`,
+    );
   } else if (reading.kind === 'read' && reading.entriesDefect !== undefined) {
-    warnings.push(`the body’s change entries are malformed, so no entry adds a label: ${reading.entriesDefect}`);
+    warnings.push(
+      `the body’s change entries are malformed, so the entries do not add any label: ${reading.entriesDefect}`,
+    );
   }
   const entries = reading.kind === 'read' ? (reading.block.entries ?? []) : [];
   const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));

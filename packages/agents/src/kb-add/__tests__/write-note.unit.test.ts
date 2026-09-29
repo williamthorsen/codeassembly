@@ -68,7 +68,7 @@ describe(writeNote, () => {
     kbPath = await mkdtemp(join(tmpdir(), 'kb-add-write-'));
   });
 
-  it('writes a note directly under content/assertions when no folder is given', async () => {
+  it('writes a note directly under content/assertions when a folder is not given', async () => {
     const outcome = await writeNote({
       kbPath,
       folder: null,

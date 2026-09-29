@@ -33,8 +33,8 @@ export interface ResolvedClosure {
  * the invocation tokens in a rulebook's, skill's, or subagent's body -- and following them across every type. The
  * result is deduped (a diamond dependency appears once) and acyclic -- a cycle throws an error naming the offending
  * path. A collection is a traversal-only node: Its members are followed, but the collection itself is dropped from
- * the deployable result. A referenced artifact that resolves from no source or the library throws an error naming
- * its type and slug, the artifact that named it, and every location searched.
+ * the deployable result. A referenced artifact that does not resolve from any source or the library throws an error
+ * naming its type and slug, the artifact that named it, and every location searched.
  */
 export async function resolveClosure(direct: DirectArtifacts, resolver: SourceResolver): Promise<ResolvedClosure> {
   const reached: Record<ArtifactType, Set<string>> = {
@@ -132,10 +132,10 @@ export async function resolveSeedClosures(
 // region | Helpers
 
 /**
- * Throws when an optional invocation token in `body` names an artifact that resolves from no source or the library.
- * An optional target never becomes an edge, so the closure walk never visits it and nothing else would catch a slug
- * that a rename or a deletion left behind. The error names the artifact containing the token and every location
- * searched, matching what a required edge raises.
+ * Throws when an optional invocation token in `body` names an artifact that does not resolve from any source or the
+ * library. An optional target never becomes an edge, so the closure walk never visits it and nothing else would catch
+ * a slug that a rename or a deletion left behind. The error names the artifact containing the token and every
+ * location searched, matching what a required edge raises.
  */
 async function assertOptionalTargetsResolve(body: string, referrer: string, resolver: SourceResolver): Promise<void> {
   const targets = extractOptionalInvocationTargets(body);
@@ -155,15 +155,15 @@ async function assertOptionalTargetsResolve(body: string, referrer: string, reso
 
 /**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
- * every location searched when the artifact resolves from no source or the library, plus the artifact that named it
- * when `trail` contains one. A seed's trail is empty, and naming where a seed came from is its caller's job. Every
- * type resolves from any source.
+ * every location searched when the artifact does not resolve from any source or the library, plus the artifact that
+ * named it when `trail` contains one. A seed's trail is empty, and naming where a seed came from is its caller's job.
+ * Every type resolves from any source.
  *
  * A collection's edges come from `members:`; every other type's come from `dependencies:`, unioned with the invocation
  * tokens in its include-expanded body and, for a subagent, its top-level `skills:` and `rulebooks:` injection lists.
- * Because a token is unioned from every body that renders one, a rulebook named only inline deploys, and no unioned
- * edge needs a duplicate `dependencies:` declaration. An optional token contributes no edge: Its target is resolved
- * for existence and then dropped, so neither it nor its own dependencies enter the closure.
+ * Because a token is unioned from every body that renders one, a rulebook named only inline deploys, and a unioned
+ * edge does not need a duplicate `dependencies:` declaration. An optional token does not contribute an edge: Its
+ * target is resolved for existence and then dropped, so neither it nor its own dependencies enter the closure.
  */
 async function readArtifactEdges(
   type: ArtifactType,

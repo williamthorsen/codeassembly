@@ -2,7 +2,7 @@ import { lookupKey, type ScannedWikilink, scanWikilinks, type VaultIndex } from 
 
 /** The result of sweeping one note's body for stale path-qualified wikilinks. */
 export interface RewriteResult {
-  /** The rewritten body, identical to the input when no link changed. */
+  /** The rewritten body, identical to the input when the sweep didn't rewrite any link. */
   body: string;
   changed: boolean;
   /** One entry per link rewritten, naming the stale and canonical targets. */
@@ -51,7 +51,7 @@ function rewriteLink(input: {
   if (link.store !== undefined) {
     return null;
   }
-  // Only repair stale path prefixes: A bare basename (no `/`) that resolves uniquely is a valid link that the
+  // Only repair stale path prefixes: A bare basename (without a `/`) that resolves uniquely is a valid link that the
   // `wikilinks` rule never flags.
   if (!link.target.includes('/')) {
     return null;

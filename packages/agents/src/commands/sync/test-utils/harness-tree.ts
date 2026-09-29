@@ -20,12 +20,12 @@ export async function writeDeclaredSkill(skillsDir: string, slug: string): Promi
   return writeSkillFile(skillsDir, slug, `<!-- codeassembly-skill:${slug} -->`);
 }
 
-/** Writes a skill dir whose `SKILL.md` contains no ownership marker, standing in for hand-authored content. */
+/** Writes a skill dir whose `SKILL.md` doesn't contain any ownership marker, standing in for hand-authored content. */
 export async function writeForeignSkill(skillsDir: string, dir: string): Promise<string> {
   return writeSkillFile(skillsDir, dir, '');
 }
 
-/** Writes a subagent file containing no ownership marker, standing in for hand-authored content. */
+/** Writes a subagent file without an ownership marker, standing in for hand-authored content. */
 export async function writeForeignSubagent(subagentsDir: string, slug: string): Promise<string> {
   return writeSubagentFile(subagentsDir, slug, '');
 }

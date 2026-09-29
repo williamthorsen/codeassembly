@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { applyOverrides } from '../apply-overrides.ts';
 
 describe(applyOverrides, () => {
-  it('leaves the record unchanged when no override is set', () => {
+  it('leaves the record unchanged for empty overrides', () => {
     const record = { breaking: true, scope: 'agents', title: 'Add the parser', type: 'feat' };
 
     expect(applyOverrides(record, {})).toStrictEqual(record);

@@ -11,7 +11,7 @@ describe(isErrorCode, () => {
     expect(isErrorCode({ code: 'ENOENT' }, 'EACCES')).toBe(false);
   });
 
-  it('returns false when the value has no code property', () => {
+  it('returns false when the value does not have a code property', () => {
     expect(isErrorCode(new Error('boom'), 'EACCES')).toBe(false);
   });
 

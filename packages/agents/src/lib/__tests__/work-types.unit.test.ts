@@ -34,13 +34,13 @@ describe(loadTaxonomy, () => {
     expect(taxonomy.tiers).toStrictEqual(['public', 'process']);
   });
 
-  it('yields no tiers when the taxonomy declares none', async () => {
+  it("yields an empty tier list when the taxonomy doesn't declare any tiers", async () => {
     const taxonomy = await readTaxonomy(TAXONOMY);
 
     expect(taxonomy.tiers).toStrictEqual([]);
   });
 
-  it('yields no tiers when the declared value is not a list', async () => {
+  it('yields an empty tier list when the declared value is not a list', async () => {
     const taxonomy = await readTaxonomy({ ...TAXONOMY, tiers: 'public' });
 
     expect(taxonomy.tiers).toStrictEqual([]);
@@ -66,19 +66,19 @@ describe(loadTaxonomy, () => {
     expect(taxonomy.types.map((entry) => entry.aliases)).toStrictEqual([['feature'], ['bugfix'], []]);
   });
 
-  it('skips an entry declaring no tier rather than dropping the whole taxonomy', async () => {
+  it('skips an entry without a declared tier rather than dropping the whole taxonomy', async () => {
     const taxonomy = await readTaxonomy({ types: [{ key: 'untiered' }, { key: 'feat', tier: 'public' }] });
 
     expect(taxonomy.types.map((entry) => entry.key)).toStrictEqual(['feat']);
   });
 
-  it('yields null when the directory contains no taxonomy', async () => {
+  it("yields null when the directory doesn't contain a taxonomy", async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'work-types-'));
 
     await expect(loadTaxonomy(dataDir)).resolves.toBeNull();
   });
 
-  it('yields null for a taxonomy declaring no types list', async () => {
+  it('yields null for a taxonomy without a types list', async () => {
     await expect(loadTaxonomy(await writeTaxonomy({ tiers: ['public'] }))).resolves.toBeNull();
   });
 });
@@ -119,7 +119,7 @@ describe(loadWorkTypes, () => {
     expect(index.get('internal')).toStrictEqual({ key: 'internal', tier: 'internal' });
   });
 
-  it('skips an entry declaring no tier rather than dropping the whole taxonomy', async () => {
+  it('skips an entry without a declared tier rather than dropping the whole taxonomy', async () => {
     const index = await loadWorkTypeIndex({
       types: [{ key: 'untiered' }, { key: 'feat', tier: 'public', aliases: [] }],
     });
@@ -128,7 +128,7 @@ describe(loadWorkTypes, () => {
     expect(index.get('feat')).toStrictEqual({ key: 'feat', tier: 'public' });
   });
 
-  it('yields null when the directory contains no taxonomy', async () => {
+  it("yields null when the directory doesn't contain a taxonomy", async () => {
     const dataDir = await mkdtemp(join(tmpdir(), 'work-types-'));
 
     await expect(loadWorkTypes(dataDir)).resolves.toBeNull();
@@ -141,7 +141,7 @@ describe(loadWorkTypes, () => {
     await expect(loadWorkTypes(dataDir)).resolves.toBeNull();
   });
 
-  it('yields null for a taxonomy declaring no types list', async () => {
+  it('yields null for a taxonomy without a types list', async () => {
     const index = await loadWorkTypes(await writeTaxonomy({ tiers: ['public'] }));
 
     expect(index).toBeNull();
@@ -149,7 +149,7 @@ describe(loadWorkTypes, () => {
 });
 
 describe(resolveWorkType, () => {
-  it('resolves a canonical key, reporting no marker', async () => {
+  it('resolves a canonical key without reporting a marker', async () => {
     const index = await loadWorkTypeIndex(TAXONOMY);
 
     expect(resolveWorkType('feat', index)).toStrictEqual({

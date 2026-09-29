@@ -36,7 +36,7 @@ describe(createSourceResolver, () => {
     await writeFile(filePath, `---\nname: ${slug}\n---\n`, 'utf8');
   }
 
-  it('resolves a slug from the library when no source provides it', async () => {
+  it('resolves a slug from the library when the declared sources do not provide it', async () => {
     await writeArtifact(libraryDir, 'rulebook', 'alpha');
     const resolver = createSourceResolver([{ name: 'org', dir: path.join(root, 'org') }], libraryDir);
 
@@ -128,7 +128,7 @@ describe(describeSearchedLocations, () => {
     );
   });
 
-  it('lists only the library for a resolver with no declared sources', () => {
+  it('lists only the library for a resolver without declared sources', () => {
     const resolver = libraryResolver('/library');
 
     expect(describeSearchedLocations(resolver, 'skill', 'people-report')).toBe(
@@ -138,7 +138,7 @@ describe(describeSearchedLocations, () => {
 });
 
 describe(libraryResolver, () => {
-  it('has no declared sources', () => {
+  it('does not have any declared sources', () => {
     const resolver = libraryResolver('/library');
 
     expect(resolver.sources).toEqual([]);

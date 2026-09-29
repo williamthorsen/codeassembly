@@ -175,7 +175,7 @@ The visualization must guide the user's eye to what matters without being noisy.
 
 ### Calm by default
 
-When everything is healthy, the office should feel like a busy but orderly workplace. Agents work at their stations, the orchestrator makes rounds, thought bubbles cycle quietly. No flashing, no urgency.
+When everything is healthy, the office should feel like a busy but orderly workplace. Agents work at their stations, the orchestrator makes rounds, thought bubbles cycle quietly. The scene doesn't flash or signal urgency.
 
 ### The visualization reveals problems
 

@@ -118,7 +118,7 @@ describe(create, () => {
     expect(await pathExists(join(targetDir, 'content'))).toBe(false);
   });
 
-  it('sets the new store as the default when the registry has no default and no other KBs', async () => {
+  it('sets the new store as the default when the registry does not have a default or any other KBs', async () => {
     const targetDir = await makeTempDir('kb-create-store-');
     const registryPath = await makeRegistryPath();
 

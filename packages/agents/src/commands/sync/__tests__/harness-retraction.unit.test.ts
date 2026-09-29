@@ -77,7 +77,7 @@ describe(planDroppedHarnessRetractions, () => {
     ).toEqual([]);
   });
 
-  it('omits a harness that has no residue', async () => {
+  it('omits a harness that does not have any residue', async () => {
     await scaffoldHarnessTree('rovo', baseDir);
 
     expect(
@@ -143,7 +143,7 @@ describe(planDroppedHarnessRetractions, () => {
     expect(retraction?.ambientHost).toEqual({ kind: 'damaged', path: path.join(harnessHome, 'AGENTS.md') });
   });
 
-  // The harness would otherwise drop out of the plan, and no report would name the damaged host at all.
+  // The harness would otherwise drop out of the plan, and the run would not report the damaged host anywhere.
   it('keeps a harness whose only residue is a damaged ambient host', async () => {
     await scaffoldHarnessTree('rovo', baseDir);
     await writeFile(path.join(baseDir, 'AGENTS.local.md'), `${DAMAGED_REGION}\n`, 'utf8');
@@ -176,7 +176,7 @@ describe(planDroppedHarnessRetractions, () => {
     });
   });
 
-  it('leaves a prompts.yml containing no codeassembly region alone', async () => {
+  it('leaves alone a prompts.yml that does not contain a codeassembly region', async () => {
     const { harnessHome, skillsDir } = await scaffoldHarnessTree('rovo', baseDir);
     await writeDeclaredSkill(skillsDir, 'create-commit');
     await writeFile(path.join(harnessHome, 'prompts.yml'), 'prompts:\n  - name: foreign\n', 'utf8');

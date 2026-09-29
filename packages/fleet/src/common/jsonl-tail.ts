@@ -6,7 +6,8 @@ const NEWLINE_BYTE = 0x0a;
 
 /**
  * Outcome of one tail read. `appended` contains the complete non-blank lines past the requested offset and the offset
- * to resume from; a torn trailing line (no newline yet) stays unconsumed, so the next read picks it up whole.
+ * to resume from; a torn trailing line (one without a newline yet) stays unconsumed, so the next read picks it up
+ * whole.
  */
 export type TailResult =
   { kind: 'appended'; lines: string[]; offset: number } | { kind: 'missing' } | { kind: 'truncated'; size: number };

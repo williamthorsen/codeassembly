@@ -47,7 +47,7 @@ describe(loadPreferences, () => {
     expect(templates.commit).toBe('');
   });
 
-  it('reads a key present with no value as empty', async () => {
+  it('reads a key present without a value as empty', async () => {
     const home = await makePreferences('home', "commit:\n  title_format: '{type}: {title}'\n");
     const projectRoot = await makePreferences('project', 'commit:\n  title_format:\n');
 

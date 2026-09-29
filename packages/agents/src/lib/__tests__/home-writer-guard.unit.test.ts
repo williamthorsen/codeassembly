@@ -34,13 +34,13 @@ describe(assertDesignatedWriter, () => {
     return filePath;
   }
 
-  it('passes when no home tier sets the setting', async () => {
+  it('passes when the home tiers do not set the setting', async () => {
     await writeDeclaration('skills:\n  use:\n    - commit\n');
 
     await expect(assertDesignatedWriter({ command: 'install', homeDir, packageRoot })).resolves.toBeUndefined();
   });
 
-  it('passes when no home declaration exists at all', async () => {
+  it('passes when the home directory does not contain a declaration at all', async () => {
     await expect(assertDesignatedWriter({ command: 'install', homeDir, packageRoot })).resolves.toBeUndefined();
   });
 

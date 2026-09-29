@@ -29,9 +29,10 @@ interface DesignatedWriter {
  * repository and worktree has a binary that could otherwise overwrite the shared home state with its own library's
  * contents.
  *
- * Passes when no home tier sets `home-writer`, so a machine that never configures one behaves as it always has, and
- * when the running package root lies at or under the designated path, which lets the setting name either the worktree
- * root or the package directory within it. A malformed setting fails the run rather than being silently ignored.
+ * Passes when every home tier leaves `home-writer` unset, so a machine that never configures one behaves as it always
+ * has, and when the running package root lies at or under the designated path, which lets the setting name either the
+ * worktree root or the package directory within it. A malformed setting fails the run rather than being silently
+ * ignored.
  */
 export async function assertDesignatedWriter(options: DesignatedWriterOptions): Promise<void> {
   const homeDir = options.homeDir ?? homedir();
@@ -84,7 +85,8 @@ async function matchesDesignatedWriter(packageRoot: string, designatedPath: stri
 
 /**
  * Reads the effective `home-writer` setting from the home domain's declaration chain, the local tier overriding the
- * base one, or `undefined` when no tier sets it. Throws on a value that names no path that a comparison could use.
+ * base one, or `undefined` when every tier leaves it unset. Throws on a value that does not name a path that a
+ * comparison could use.
  */
 async function readDesignatedWriter(homeDir: string): Promise<DesignatedWriter | undefined> {
   const chain = await resolveScopeChain('codeassembly.yaml', { cwd: homeDir });

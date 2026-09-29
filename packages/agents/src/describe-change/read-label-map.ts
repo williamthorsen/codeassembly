@@ -6,7 +6,8 @@ import { isMissingFile, isRecord } from '../lib/type-guards.ts';
 /**
  * Reads a repository's label map into its `types` and `scopes` sections, each mapping a work type or scope to the label
  * that names it. A map that is absent or unparseable, and a section that it does not declare, read as empty: A
- * repository that configures no map has no label to resolve, which is a missing signal rather than a failure.
+ * repository that does not configure a map does not have any label to resolve, which is a missing signal rather than a
+ * failure.
  */
 export async function readLabelMap(path: string): Promise<LabelMap> {
   let content: string;
@@ -50,8 +51,8 @@ export function resolveLabeledRecord(map: LabelMap, labels: readonly string[]): 
 /**
  * Resolves the one key that a section's labels name, by inverting the section and intersecting it with the labels.
  *
- * Yields nothing when the labels name no key and when they name more than one. Two type labels on one ticket say
- * that nobody has decided which it is, and picking either would record a decision that no one made.
+ * Yields nothing when the labels do not name any key and when they name more than one. Two type labels on one ticket
+ * say that nobody has decided which it is, and picking either would record a decision that no one made.
  */
 export function resolveLabelKey(section: LabelSection, labels: readonly string[]): string | undefined {
   const matched = new Set<string>();

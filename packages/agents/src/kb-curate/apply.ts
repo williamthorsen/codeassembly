@@ -104,7 +104,7 @@ async function rewriteStalePathLinks(input: { notes: readonly EnumeratedNote[] }
 /**
  * Rebuilds a note's full content with a rewritten body. Because `content` is the current on-disk content and the body
  * is its suffix after the frontmatter block, replacing the final occurrence preserves the on-disk frontmatter
- * verbatim. Returns `null` when `oldBody` is absent from `content`, leaving no safe splice point.
+ * verbatim. Returns `null` when `oldBody` is absent from `content`, since `content` then lacks a safe splice point.
  */
 function replaceBody(content: string, oldBody: string, newBody: string): string | null {
   const bodyStart = content.lastIndexOf(oldBody);

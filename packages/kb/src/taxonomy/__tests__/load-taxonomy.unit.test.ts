@@ -5,7 +5,7 @@ import { makeKbRoot } from '../../test-utils/kb-root.ts';
 import { loadTaxonomy } from '../load-taxonomy.ts';
 
 describe(loadTaxonomy, () => {
-  it('returns an empty taxonomy when no taxonomy.yaml exists', async () => {
+  it('returns an empty taxonomy when the KB root does not contain a taxonomy.yaml', async () => {
     const kbRoot = await makeKbRoot();
 
     expect(await loadTaxonomy({ kbRoot })).toEqual(new Map());

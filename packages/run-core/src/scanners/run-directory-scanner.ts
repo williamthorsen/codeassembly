@@ -59,7 +59,7 @@ async function scanTicketsDir(ticketsPath: string, slug: string): Promise<RunDir
   return entries;
 }
 
-/** Scans a project that has no `tickets/` directory, treating each of the project's subdirectories as a ticket. */
+/** Scans a project without a `tickets/` directory, treating each of the project's subdirectories as a ticket. */
 async function scanDirectEntries(
   projectEntries: string[],
   projectPath: string,

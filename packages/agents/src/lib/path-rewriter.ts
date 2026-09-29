@@ -120,7 +120,7 @@ export function rewriteTemplateVariables(content: string, variables: TemplateVar
 /**
  * Applies Markdown path rewriting and template variable expansion to a single `.md` file.
  * `fileRelPath` is the file's path relative to the tree root that `pathPrefix` names.
- * For flat guidance files (one directory, no nesting) the caller typically passes the file's
+ * For flat guidance files (one directory, not nested) the caller typically passes the file's
  * basename.
  */
 export async function rewritePathsInFile(

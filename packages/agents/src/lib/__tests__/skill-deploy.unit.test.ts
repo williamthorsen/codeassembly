@@ -226,7 +226,7 @@ describe(resolveDeclaredSkill, () => {
     expect(resolved.contentRoot).toBe(sourceDir);
   });
 
-  it('leaves the target harnesses undefined when no `supported-harnesses:` field is present', async () => {
+  it('leaves the target harnesses undefined when the frontmatter does not contain a `supported-harnesses:` field', async () => {
     await writeLibrarySkill('people-report');
 
     const resolved = await resolveDeclaredSkill('people-report', libraryResolver(contentDir));

@@ -42,7 +42,7 @@ describe(resolveDeclaration, () => {
     await writeFile(path.join(cwd, '.agents', 'rulebooks.yaml'), content, 'utf8');
   }
 
-  it('returns undefined when no codeassembly.yaml exists in any tier', async () => {
+  it('returns undefined when codeassembly.yaml does not exist in any tier', async () => {
     expect(await resolveDeclaration({ cwd })).toBeUndefined();
   });
 

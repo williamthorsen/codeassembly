@@ -13,8 +13,9 @@ import { BREAKING_LABEL, type LabelMap, type LabelSection } from './read-label-m
  * of a process-tier entry, which `consolidate` sets aside: A label names every workspace that the branch changed. The
  * record's scope is labeled as given, since it is either already consolidated or an explicit override.
  *
- * A type or scope that the map does not name, and a scope of `*`, contribute no label. A map that configures no label
- * at all yields none, `breaking` included, since a repository without a label map has no labels to apply.
+ * A type or scope that the map does not name, and a scope of `*`, do not contribute a label. A map that does not
+ * configure any label at all yields none, `breaking` included, since a repository without a label map does not have
+ * any labels to apply.
  */
 export function resolveLabels(input: {
   entries: readonly ChangeEntry[];

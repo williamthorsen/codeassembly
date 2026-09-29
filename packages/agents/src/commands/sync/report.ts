@@ -69,7 +69,7 @@ export function renderDryRunReport(outcome: SyncOutcome): ReadonlyArray<ReportLi
   for (const promptsPath of plan.promptsYmlPaths) {
     lines.push({
       level: 'info',
-      text: `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when no skills remain)`,
+      text: `  reconcile prompts.yml ${promptsPath} (write the codeassembly region, or strip it when the harness doesn't have any skills left)`,
     });
   }
   lines.push(...describeDamagedDroppedHosts(plan));
@@ -205,7 +205,7 @@ function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> 
   );
 }
 
-/** The sentence naming a host whose ambient region no transform may touch. */
+/** The sentence naming a host whose ambient region is too damaged for any transform to touch. */
 function describeDamagedRegion(hostPath: string): string {
   return `${hostPath} has a damaged ambient region.`;
 }
@@ -245,7 +245,7 @@ function describeDroppedHarness(retraction: DroppedHarnessRetraction, verbs: Ret
     ...retraction.subagentFiles.map((subagentFile) => `${verbs.remove} subagent ${subagentFile}`),
     ...retraction.supportPaths.map((supportPath) => `${verbs.remove} source support ${supportPath}`),
   ];
-  // A damaged host is reported as a warning of its own, so it contributes no line to the actions block.
+  // A damaged host is reported as a warning of its own, so it doesn't contribute a line to the actions block.
   if (retraction.ambientHost !== undefined && retraction.ambientHost.kind !== 'damaged') {
     lines.push(describeHostRetraction(retraction.ambientHost, 'ambient', verbs));
   }
@@ -318,7 +318,7 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
       return {
         level: 'info',
         text:
-          `💡 Guidance hook "${advisory.hook}" is bound, but no deployed skill or subagent declares it, so the ` +
+          `💡 Guidance hook "${advisory.hook}" is bound, but it isn't declared by any deployed skill or subagent, so the ` +
           'binding delivers nothing. Check the hook name, or declare a skill or subagent that declares it.',
       };
     case 'declared-unbound':
@@ -338,7 +338,7 @@ function describeHostRetraction(retraction: HostRetraction, region: string, verb
     : `${verbs.strip} the ${region} region from ${retraction.path}`;
 }
 
-/** The advice for a scope that has no declaration to act on, naming the remedy that the global tier has. */
+/** The advice for a scope without a declaration to act on, naming the remedy that the global tier has. */
 function describeMissingDeclaration(outcome: MissingDeclaration): string {
   return outcome.scope === 'global'
     ? `No ${outcome.declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`
@@ -450,8 +450,8 @@ function describeRetirement(retirement: Retirement, performed: boolean): ReportL
 
 /**
  * The block naming every document that has grown since the streamlining review that last read it, ranked by growth.
- * A document counts from its own review, so each row states the date that its growth is measured from. No grown
- * document means no block and no heading.
+ * A document counts from its own review, so each row states the date that its growth is measured from. Without any
+ * grown document, the function returns neither the block nor its heading.
  */
 function describeReviewDrift(drift: ReviewDrift): ReadonlyArray<ReportLine> {
   if (drift.rows.length === 0) {
@@ -485,9 +485,9 @@ function describeSizeChangeLine(change: SizeChange, deltaWidth: number, name: st
  * The size block that closes a live run's report: what changed, what has just grown past the ceiling, the three
  * aggregates, and the command that ranks every deployed document.
  *
- * The aggregates carry no overlap disclaimer here. The block labels the three totals separately and prints no
- * combined total, so nothing implies that they sum, and the closing line points at the command that carries the
- * explanation.
+ * The aggregates don't carry an overlap disclaimer here. The block labels the three totals separately and doesn't
+ * print a combined total, so nothing implies that they sum, and the closing line points at the command that carries
+ * the explanation.
  */
 function describeSizes(sizes: SizeReportOutcome | undefined): ReadonlyArray<ReportLine> {
   if (sizes === undefined) {
@@ -501,7 +501,7 @@ function describeSizes(sizes: SizeReportOutcome | undefined): ReadonlyArray<Repo
 
 /**
  * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
- * because their source ships nothing, and which ones retraction removes because no source claims them.
+ * because their source ships nothing, and which ones retraction removes because they aren't claimed by any source.
  */
 function describeSourceSupport(
   plans: ReadonlyArray<SourceSupportPlan>,
@@ -523,7 +523,7 @@ function describeStaleAmbientHost(status: 'malformed' | 'missing' | 'no-region',
     case 'missing':
       return `${guidanceFile} does not exist. Run \`codeassembly install\`, then re-run \`sync --global\`.`;
     case 'no-region':
-      return `${guidanceFile} has no ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
+      return `${guidanceFile} doesn't have an ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
     case 'malformed':
       return `${guidanceFile} has a damaged ambient region: an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
   }

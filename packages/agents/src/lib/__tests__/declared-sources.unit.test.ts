@@ -18,7 +18,7 @@ describe(resolveDeclaredSources, () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it('resolves the library as the only root when no declaration exists', async () => {
+  it('resolves the library as the only root when the declaration is absent', async () => {
     expect(
       await resolveDeclaredSources({ baseDir: root, contentDir: libraryDir(root), declaration: undefined }),
     ).toEqual({ sources: [], missingSources: [], roots: [{ dir: libraryDir(root) }] });
@@ -151,7 +151,7 @@ describe(resolveDeclaredSources, () => {
   });
 
   // An unreadable directory and an unsupported format are both present; the source check must be the one that reports,
-  // because a directory that cannot be read has no format to compare against.
+  // because a directory that cannot be read does not yield a format to compare against.
   it('reports an unreadable source ahead of an unsupported format elsewhere', async () => {
     const future = await makeSourceDir(root, 'future');
     await writeFile(path.join(future, 'codeassembly-content.yaml'), 'format: 99\n', 'utf8');
@@ -173,7 +173,7 @@ describe(resolveDeclaredSources, () => {
     ).rejects.toThrow(/Invalid declared source/);
   });
 
-  it('rejects a library declaring an unsupported content format when no declaration exists', async () => {
+  it('rejects a library declaring an unsupported content format when the declaration is absent', async () => {
     await writeFile(path.join(libraryDir(root), 'codeassembly-content.yaml'), 'format: 99\n', 'utf8');
 
     await expect(

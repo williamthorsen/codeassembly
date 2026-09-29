@@ -9,17 +9,17 @@
       "esbuildVersion": "0.28.2",
       "inputs": [
         {
-          "hash": "b1a8ee3a",
+          "hash": "3867f601",
           "kind": "module",
           "path": "kits/default.ts"
         },
         {
-          "hash": "d2909715",
+          "hash": "527a5c1c",
           "kind": "module",
           "path": "lib/guidance-constraints.ts"
         },
         {
-          "hash": "b5ca6646",
+          "hash": "5ee7b7a4",
           "kind": "module",
           "path": "lib/guidance-import.ts"
         },
@@ -29,7 +29,7 @@
           "path": "lib/guidance-size.ts"
         },
         {
-          "hash": "dcba268a",
+          "hash": "acb8761f",
           "kind": "module",
           "path": "lib/guidance-staleness.ts"
         }
@@ -38,8 +38,8 @@
       "path": "kits/default.js",
       "readyupVersion": "0.38.0",
       "source": "kits/default.ts",
-      "sourceHash": "b1a8ee3a",
-      "targetHash": "6e23b89b"
+      "sourceHash": "3867f601",
+      "targetHash": "904741f2"
     }
   ]
 }

@@ -6,8 +6,8 @@ import { removeMemoryIndexEntry } from './reconcile-memory-index.ts';
 import type { DeleteOutcome, DeleteSuccess } from './types.ts';
 
 /**
- * Deletes a batch of memory files and reconciles each affected `MEMORY.md`. An already-absent file and a store with no
- * matching `MEMORY.md` line are non-fatal and reported per path; any other I/O error propagates as a system failure.
+ * Deletes a batch of memory files and reconciles each affected `MEMORY.md`. An already-absent file and a store without
+ * a matching `MEMORY.md` line are non-fatal and reported per path; any other I/O error propagates as a system failure.
  */
 export async function deleteMemories(input: { paths: readonly string[] }): Promise<DeleteSuccess> {
   const deleted = await deleteFiles(input.paths);
@@ -97,13 +97,13 @@ function groupByIndex(paths: readonly string[]): Map<string, string[]> {
 /** Builds the per-path note describing any non-fatal condition, or `undefined` when the delete was clean. */
 function noteFor(fileGone: boolean, indexHit: boolean): string | undefined {
   if (!fileGone && !indexHit) {
-    return 'file already absent and no MEMORY.md line matched';
+    return 'file already absent and did not match any MEMORY.md line';
   }
   if (!fileGone) {
     return 'file already absent';
   }
   if (!indexHit) {
-    return 'no MEMORY.md line matched';
+    return 'did not match any MEMORY.md line';
   }
   return undefined;
 }

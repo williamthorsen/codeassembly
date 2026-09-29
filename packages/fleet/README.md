@@ -1,6 +1,6 @@
 # Fleet
 
-Fleet is the server of the fleet-visibility stack. It watches the lifecycle-events root, folds each session's append-only event log into per-lane state via `codeassembly-lifecycle`, and serves the result as a lanes snapshot and an SSE stream of full-fleet frames. Foreman, the stack's client app, consumes Fleet's route types as an end-to-end typed client via `hono/client`: no hand-synced contracts file.
+Fleet is the server of the fleet-visibility stack. It watches the lifecycle-events root, folds each session's append-only event log into per-lane state via `codeassembly-lifecycle`, and serves the result as a lanes snapshot and an SSE stream of full-fleet frames. Foreman, the stack's client app, consumes Fleet's route types as an end-to-end typed client via `hono/client`, without a hand-synced contracts file.
 
 A missing or empty events root serves an empty fleet. The folded state is a rebuildable in-server cache: Restarting the server re-folds from disk, and nothing here is a writer concern.
 
@@ -19,14 +19,14 @@ pnpm run dev    # restart on source changes
 pnpm run start
 ```
 
-The server runs from TypeScript source; there is no build step.
+The server runs from TypeScript source; the package does not have a build step.
 
 ## Routes
 
 - `GET /api/lanes`: the current full-fleet snapshot.
 - `GET /api/stream`: SSE stream pushing a full-fleet snapshot frame whenever fleet state changes.
 
-Each lane has a `forge` field (pull-request state, CI status, review decision, and ticket metadata polled from the configured forge) that is `null` before the lane's first poll or when `FLEET_FORGE=none`. A lane whose branch has a pull request but no parsed ticket id gains synthetic `PR-<number>` attribution; this enrichment is merged at snapshot derivation and never written to the event store.
+Each lane has a `forge` field (pull-request state, CI status, review decision, and ticket metadata polled from the configured forge) that is `null` before the lane's first poll or when `FLEET_FORGE=none`. A lane whose branch has a pull request but not a parsed ticket id gains synthetic `PR-<number>` attribution; this enrichment is merged at snapshot derivation and never written to the event store.
 
 Workspace packages import the route map and wire types from `codeassembly-fleet`:
 

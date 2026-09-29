@@ -5,8 +5,8 @@
  * repository root, so the literal text of an import says nothing about where it points. A check that matches
  * the literal instead of resolving it passes on the very wiring that it exists to reject.
  *
- * Claude Code also reads no import out of a fenced code block or a code span, which is how a document shows an
- * import without declaring one.
+ * Claude Code also doesn't read any import out of a fenced code block or a code span, which is how a document shows
+ * an import without declaring one.
  */
 
 import { homedir } from 'node:os';

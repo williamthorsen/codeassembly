@@ -85,7 +85,7 @@ describe(parseArgs, () => {
     expect(parsed).toEqual({ operation: 'bump-updated', path: 'foo.md' });
   });
 
-  it('throws when no operation flag is supplied', () => {
+  it('throws when the arguments do not include an operation flag', () => {
     expect(() => parseArgs(['foo.md'])).toThrow(/one operation flag is required/);
   });
 
@@ -109,7 +109,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['foo.md', '--bogus'])).toThrow(/unknown flag/);
   });
 
-  it('throws when --retag has no value at all (end of argv)', () => {
+  it('throws when --retag ends argv without a value', () => {
     expect(() => parseArgs(['foo.md', '--retag'])).toThrow(/--retag requires a value/);
   });
 
@@ -129,7 +129,7 @@ describe(parseArgs, () => {
     expect(parsed).toEqual({ operation: 'retag', path: 'foo.md', tags: [] });
   });
 
-  it('throws when --supersede-with has no value', () => {
+  it('throws when --supersede-with ends argv without a value', () => {
     expect(() => parseArgs(['foo.md', '--supersede-with'])).toThrow(/--supersede-with requires a value/);
   });
 
@@ -175,11 +175,11 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['foo.md', '--add-addressed-by', ',,'])).toThrow(/at least one reference/);
   });
 
-  it('throws when --add-addressed-by has no value at all', () => {
+  it('throws when --add-addressed-by ends argv without a value', () => {
     expect(() => parseArgs(['foo.md', '--add-addressed-by'])).toThrow(/--add-addressed-by requires a value/);
   });
 
-  it('throws when --add-addressed-by is supplied with no positional path', () => {
+  it('throws when --add-addressed-by is supplied without a positional path', () => {
     expect(() => parseArgs(['--add-addressed-by', '[[fix]]'])).toThrow(/missing required <path>/);
   });
 

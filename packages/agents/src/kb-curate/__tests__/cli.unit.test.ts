@@ -70,13 +70,17 @@ describe(runCurate, () => {
     vi.mocked(check).mockClear();
   });
 
-  it('returns no-kb-resolvable when no KB can be found and none is requested', async () => {
+  it("returns no-kb-resolvable when the lookup doesn't find any KB and argv doesn't request one", async () => {
     const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
     const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
 
     const result = await runCurate({ argv: [], startDir, now: NOW, home });
 
-    expect(result).toEqual({ ok: false, error: 'no-kb-resolvable', message: expect.stringContaining('no .kb/') });
+    expect(result).toEqual({
+      ok: false,
+      error: 'no-kb-resolvable',
+      message: expect.stringContaining('discovery did not find any .kb/'),
+    });
   });
 
   it('returns no-kb-resolvable when --kb names an unregistered KB', async () => {

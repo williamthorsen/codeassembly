@@ -15,7 +15,7 @@ describe(extractSection, () => {
     expect(extractSection({ text, heading: 'Body' })).toBe('Lead.\n\n### Detail\n\nMore.');
   });
 
-  it('captures the final section when no heading follows it', () => {
+  it('captures the final section when the document does not contain another heading after it', () => {
     const text = '# Title\n\n## Body\n\nThe lede.\n';
 
     expect(extractSection({ text, heading: 'Body' })).toBe('The lede.');
@@ -29,7 +29,7 @@ describe(extractSection, () => {
     expect(extractSection({ text: '## Why\n\nThe motivation.\n', heading: 'What' })).toBeNull();
   });
 
-  it('yields null for a heading whose section contains no text', () => {
+  it('yields null for a heading whose section does not contain any text', () => {
     expect(extractSection({ text: '## What\n\n## Why\n\nThe motivation.\n', heading: 'What' })).toBeNull();
   });
 });

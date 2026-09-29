@@ -37,7 +37,7 @@ function minimalV2(): Record<string, unknown> {
   };
 }
 
-/** Builds an artifact entry with every required field and no optional one. */
+/** Builds an artifact entry that sets every required field and omits every optional one. */
 function fullArtifact(): Record<string, unknown> {
   return {
     filename: 'architecture.md',

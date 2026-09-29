@@ -71,7 +71,7 @@ describe(recallNotes, () => {
     ]);
   });
 
-  it('propagates a null kbName for a discovered KB with no registry entry', async () => {
+  it('propagates a null kbName for a discovered KB without a registry entry', async () => {
     const scope: ScopedKb[] = [{ name: null, path: NOTES_VAULT, via: 'discovery' }];
     const runner = vi
       .fn<ProcessRunner>()
@@ -82,7 +82,7 @@ describe(recallNotes, () => {
     expect(hits[0]?.kbName).toBeNull();
   });
 
-  it('returns no hits when ripgrep exits 1 to report that nothing matched', async () => {
+  it("doesn't return any hits when ripgrep exits 1 to report that nothing matched", async () => {
     const runner = vi.fn<ProcessRunner>().mockRejectedValue(buildProcessError(1));
 
     const { hits } = await recallNotes({ query: 'zzzznomatch', scopedKbs: notesVaultScope, runner });
@@ -123,7 +123,7 @@ describe(recallNotes, () => {
     );
   });
 
-  it('runs no search at all for a blank query', async () => {
+  it("doesn't run a search at all for a blank query", async () => {
     const runner = vi.fn<ProcessRunner>();
 
     const { hits } = await recallNotes({ query: ' '.repeat(3), scopedKbs: notesVaultScope, runner });

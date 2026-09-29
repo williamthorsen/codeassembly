@@ -1,11 +1,11 @@
 /**
  * Matches `{rulebook:<slug>}`, `{skill:<slug>}`, and `{subagent:<slug>}` invocation tokens, each in a required form and
  * an optional one marked `?` before the colon. The slug is kebab-case and letter-led (`[a-z][a-z0-9-]*`). The pattern
- * only captures well-formed tokens; a slug naming no library artifact is caught downstream by the resolver's
- * missing-artifact check, so the grammar does not police existence.
+ * only captures well-formed tokens; a slug that does not name any library artifact is caught downstream by the
+ * resolver's missing-artifact check, so the grammar does not police existence.
  *
- * Because `{rulebook?:<slug>}` matches although no body may contain one, `rewriteInvocationTokens` rejects it by name.
- * A pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
+ * Because `{rulebook?:<slug>}` matches although a body must not contain one, `rewriteInvocationTokens` rejects it by
+ * name. A pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
  *
  * The constant is global and shared: `String.replace` resets `lastIndex` and `String.matchAll` clones the regex, so
  * neither call leaks match state to the other.
@@ -30,7 +30,7 @@ export interface RulebookInvocationTarget {
 /**
  * The rulebooks that a body may address by token, keyed by slug. Supplied by every host that resolves a declaration
  * and so knows the deployed set -- a rulebook, skill, or subagent body under `sync` or `validate`. A support entry
- * under `skills/` renders without one, because `install` ships it having resolved no declaration, which makes a
+ * under `skills/` renders without one, because `install` ships it without resolving any declaration, which makes a
  * `{rulebook:<slug>}` token there fail rather than pass through.
  */
 export type RulebookInvocationCatalog = ReadonlyMap<string, RulebookInvocationTarget>;
@@ -66,8 +66,8 @@ export interface InvocationEdges {
 }
 
 /**
- * The targets that an optional token names, grouped by kind. Rulebooks have no group: `{rulebook?:<slug>}` renders
- * nowhere, so `rewriteInvocationTokens` rejects it before it can name a target.
+ * The targets that an optional token names, grouped by kind. Rulebooks do not have a group: `{rulebook?:<slug>}`
+ * renders nowhere, so `rewriteInvocationTokens` rejects it before it can name a target.
  */
 export interface OptionalInvocationTargets {
   readonly skills: ReadonlyArray<string>;
@@ -158,13 +158,13 @@ export function resolveRulebookToken(
   }
   const target = rulebooks.get(slug);
   if (target === undefined) {
-    return { kind: 'rejected', reason: 'names no rulebook in the deployed set' };
+    return { kind: 'rejected', reason: 'does not name any rulebook in the deployed set' };
   }
   if (!target.skill) {
     return {
       kind: 'rejected',
       reason:
-        'names an ambient-only rulebook, which deploys no skill to invoke; express the relationship with ' +
+        'names an ambient-only rulebook, which does not deploy a skill to invoke; express the relationship with ' +
         '`dependencies:` instead',
     };
   }
@@ -177,10 +177,10 @@ export function resolveRulebookToken(
  * invocation reads. A `{rulebook:<slug>}` token renders the skill sigil and the target's deployed skill name, resolved
  * through `rulebooks` -- so a rulebook is addressed by the name under which it actually deploys, not by its slug.
  *
- * Throws when a rulebook token cannot render: the optional form, no catalog (the host resolved no declaration), an
- * unknown slug, or an ambient-only target. `sourceLabel` names the host in that error, showing an author which file to
- * fix. Skill and subagent tokens have no such failure path -- their sigils are fixed properties of the typed harness
- * config. Non-token text passes through unchanged.
+ * Throws when a rulebook token cannot render: the optional form, a missing catalog (the host did not resolve a
+ * declaration), an unknown slug, or an ambient-only target. `sourceLabel` names the host in that error, showing an
+ * author which file to fix. Skill and subagent tokens do not have such a failure path -- their sigils are fixed
+ * properties of the typed harness config. Non-token text passes through unchanged.
  */
 export function rewriteInvocationTokens(
   content: string,

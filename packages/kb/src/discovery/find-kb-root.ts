@@ -11,7 +11,7 @@ import type { KbRoot } from '../types.ts';
 export async function findKbRoot(input: { startDir: string }): Promise<KbRoot | null> {
   for (const current of ancestorDirs(input.startDir)) {
     const kbDir = resolveKbDir(current);
-    // An unreadable ancestor should be skipped, not abort the upward walk, so any stat failure means "no KB here".
+    // An unreadable ancestor should be skipped, not abort the upward walk, so any stat failure counts as a missing KB.
     if (await directoryExists(kbDir, { treatErrorsAsAbsent: true })) {
       return { path: current, kbDir };
     }

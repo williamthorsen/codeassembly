@@ -93,9 +93,9 @@ describe(amendEntry, () => {
   });
 
   describe('refuses', () => {
-    it('a body containing no block', () => {
+    it('a body without a block', () => {
       expect(() => amendEntry({ amendment: { type: 'feat' }, body: PREFIX, index: 0, taxonomy: TAXONOMY })).toThrow(
-        'the body contains no change-record block',
+        "the body doesn't contain a change-record block",
       );
     });
 

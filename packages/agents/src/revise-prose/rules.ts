@@ -1,9 +1,9 @@
 /**
  * The rule registry: which detector reports each rule's sites.
  *
- * A rule lives here because it has a detector. A unit, whose coverage the record tracks, need not have one, and no
- * unit appears in this file. The helper reads no rule document, so what a rule *says* is the skill's to hold; what a
- * rule *finds* is here.
+ * A rule lives here because it has a detector. A unit, whose coverage the record tracks, need not have one, and this
+ * file doesn't contain any unit. The helper doesn't read any rule document, so what a rule *says* is the skill's
+ * to hold; what a rule *finds* is here.
  */
 import { detectEmDashes } from './detect-em-dash.ts';
 import { detectNegativeQuantifiers } from './detect-negative-quantifier.ts';

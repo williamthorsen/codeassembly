@@ -18,7 +18,7 @@ export function parseToolResult(result: Awaited<ReturnType<Client['callTool']>>)
   const raw: unknown = result;
   const record = toRecord(raw, 'tool result');
   const contentArray = record.content;
-  if (!Array.isArray(contentArray)) throw new Error('Result has no content array');
+  if (!Array.isArray(contentArray)) throw new Error('Result does not contain a content array');
   const first: unknown = contentArray[0];
   if (first === undefined) throw new Error('Result content is empty');
   const firstRecord = toRecord(first, 'content item');

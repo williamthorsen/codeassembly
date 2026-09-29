@@ -18,7 +18,7 @@ describe('resolveContentDir error path', () => {
     vi.restoreAllMocks();
   });
 
-  it('should throw when no candidate content directory exists', async () => {
+  it('should throw when the filesystem does not contain any candidate content directory', async () => {
     mockedExistsSync.mockReturnValue(false);
 
     const { resolveContentDir } = await import('../content-resolver.ts');

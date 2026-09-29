@@ -190,7 +190,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
   const amend = raw.amend ?? null;
   if (amend !== null && !isSafeEventId(amend)) {
-    throw new Error(`--amend id "${amend}" must be a bare filename stem (no path separators)`);
+    throw new Error(`--amend id "${amend}" must be a bare filename stem, without a path separator`);
   }
 
   return {
@@ -229,7 +229,7 @@ async function amendEvent(input: {
     read = await readNote(eventPath);
   } catch (error) {
     if (isEnoent(error)) {
-      return { ok: false, error: 'amend-not-found', message: `no event to amend at ${eventPath}` };
+      return { ok: false, error: 'amend-not-found', message: `could not find an event to amend at ${eventPath}` };
     }
     throw error;
   }

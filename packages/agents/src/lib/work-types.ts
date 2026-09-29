@@ -22,7 +22,7 @@ export interface ResolvedWorkType {
 /**
  * Loads the taxonomy from `work-types.json` under `dataDir` in the ordered form that the change-grammar engine takes:
  * the declared tiers, and every type in listing order with its aliases and breaking policy. Yields `null` when the
- * file is absent, unparseable, or declares no `types` list.
+ * file is absent, unparseable, or doesn't declare a `types` list.
  *
  * `loadWorkTypes` reads the same file into a lookup indexed by key and alias, which discards the listing order. The
  * order ranks one type over another, so a caller consolidating entries reads this form instead.
@@ -53,7 +53,7 @@ export async function loadTaxonomy(dataDir: string): Promise<Taxonomy | null> {
 /**
  * Loads the work-type taxonomy from `work-types.json` under `dataDir`, indexed by canonical key and by every declared
  * alias, so that `feature` and `feat` resolve to one entry. Yields `null` when the file is absent, unparseable, or
- * declares no `types` list.
+ * doesn't declare a `types` list.
  */
 export async function loadWorkTypes(dataDir: string): Promise<ReadonlyMap<string, WorkType> | null> {
   const parsed = await readTaxonomyFile(dataDir);
@@ -85,7 +85,7 @@ export async function loadWorkTypes(dataDir: string): Promise<ReadonlyMap<string
 /**
  * Resolves a work type as spelled in a commit or pull-request title, reporting both the entry that it names and
  * whether it included the breaking marker. The taxonomy declares bare keys and models the marker separately under
- * `markers`, so `feat!` names the `feat` entry. Yields `null` for a type declared by no entry, marker or not.
+ * `markers`, so `feat!` names the `feat` entry. Yields `null` for a type not declared by any entry, marker or not.
  */
 export function resolveWorkType(type: string, workTypes: ReadonlyMap<string, WorkType>): ResolvedWorkType | null {
   const breaking = type.endsWith('!');
@@ -110,7 +110,7 @@ function readAliases(value: unknown): string[] {
 
 /**
  * Reads and parses `work-types.json` under `dataDir`, yielding `null` when the file is absent, unparseable, or
- * declares no `types` list.
+ * doesn't declare a `types` list.
  */
 async function readTaxonomyFile(dataDir: string): Promise<{ tiers: unknown; types: unknown[] } | null> {
   let content: string;

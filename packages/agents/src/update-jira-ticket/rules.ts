@@ -97,7 +97,7 @@ export function confluenceConstructRule(tokens: readonly Token[], source: string
         rule: 'confluence-construct',
         snippet: token.raw,
         line: lineOf(source, token.offset),
-        fix: `Remove the <${token.rawName}> construct. Confluence storage-format elements have no Jira analogue.`,
+        fix: `Remove the <${token.rawName}> construct. Confluence storage-format elements do not have a Jira analogue.`,
       });
     }
   }

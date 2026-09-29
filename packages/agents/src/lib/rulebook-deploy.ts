@@ -22,7 +22,10 @@ export interface ResolvedRulebook {
   readonly skillName: string;
   readonly body: string;
   readonly ambient: boolean;
-  /** Whether the rulebook declares that a guidance-hook binding is how it is reached. No delivery pass reads it. */
+  /**
+   * Whether the rulebook declares that a guidance-hook binding is how it is reached. The delivery passes do not read
+   * it.
+   */
   readonly hook: boolean;
   readonly skill: boolean;
   readonly description: string | undefined;

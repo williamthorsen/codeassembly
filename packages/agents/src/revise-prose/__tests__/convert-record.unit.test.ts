@@ -32,7 +32,7 @@ describe(convertLegacyRecord, () => {
     expect(converted.rules['em-dash']?.detected).toBe(false);
   });
 
-  it('converts a unit recorded at an older version to no coverage', () => {
+  it('converts a unit recorded at an older version to empty coverage', () => {
     const converted = convertLegacyRecord(
       legacyRecord({ units: { writing: unitCoverage({ version: '7' }) } }),
       VERSIONS,
@@ -41,13 +41,13 @@ describe(convertLegacyRecord, () => {
     expect(converted.rules).toStrictEqual({});
   });
 
-  it('converts a unit that the run does not name to no coverage', () => {
+  it('converts a unit that the run does not name to empty coverage', () => {
     const converted = convertLegacyRecord(legacyRecord({ units: { unbound: unitCoverage() } }), VERSIONS);
 
     expect(converted.rules).toStrictEqual({});
   });
 
-  it('records nothing for a rule of a current unit that declares no sweep version', () => {
+  it('records nothing for a rule of a current unit that does not declare a sweep version', () => {
     const versions: SweepVersions = { units: VERSIONS.units, rules: new Map() };
 
     const converted = convertLegacyRecord(legacyRecord({ units: { writing: unitCoverage() } }), versions);
@@ -90,7 +90,7 @@ describe(convertLegacyRecord, () => {
     expect(converted.rejections).toMatchObject([{ rule: 'unbound-rule', 'rule-version': LEGACY_STALE_VERSION }]);
   });
 
-  it('drops a rejection under a rule of a named unit that declares no sweep version', () => {
+  it('drops a rejection under a rule of a named unit that does not declare a sweep version', () => {
     const converted = convertLegacyRecord(
       legacyRecord({ rejections: [legacyRejection({ rule: 'capitalization-after-colon' })] }),
       VERSIONS,

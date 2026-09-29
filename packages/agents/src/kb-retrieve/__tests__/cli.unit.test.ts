@@ -45,7 +45,7 @@ describe(parseArgs, () => {
     expect(parsed.filters.folder).toBe('sub');
   });
 
-  it('throws when a value-bearing flag has no value', () => {
+  it('throws when a value-bearing flag is given without a value', () => {
     expect(() => parseArgs(['query', '--diataxis'])).toThrow(/--diataxis requires a value/);
   });
 
@@ -69,11 +69,11 @@ describe(parseArgs, () => {
     expect(parseArgs(['query', '--kb=codeassembly']).storeName).toBe('codeassembly');
   });
 
-  it('leaves storeName null when no store flag is given', () => {
+  it('leaves storeName null when argv does not include a store flag', () => {
     expect(parseArgs(['query']).storeName).toBeNull();
   });
 
-  it('throws when --store has no value', () => {
+  it('throws when --store is given without a value', () => {
     expect(() => parseArgs(['query', '--store'])).toThrow(/--store requires a value/);
   });
 
@@ -117,7 +117,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toMatch(/kb-retrieve-events/);
   });
 
-  it('returns a note with no recordType as a degraded candidate via the transitional tolerance', async () => {
+  it('returns a note without a recordType as a degraded candidate via the transitional tolerance', async () => {
     const result = await runRetrieve({
       argv: ['untypedquux'],
       startDir: NOTES_VAULT,
@@ -128,7 +128,7 @@ describe(runRetrieve, () => {
 
     expect(result.candidates).toHaveLength(1);
     expect(result.candidates[0]?.title).toBe('A legacy note without a record type');
-    expect(result.candidates[0]?.diagnostic).toMatch(/no recordType/);
+    expect(result.candidates[0]?.diagnostic).toMatch(/does not declare a recordType/);
   });
 
   it('applies the --diataxis filter to the candidate table', async () => {
@@ -151,7 +151,7 @@ describe(runRetrieve, () => {
     expect(result.candidates).toHaveLength(2);
   });
 
-  it('reports a diagnostic and no candidates when nothing matches', async () => {
+  it('reports a diagnostic and an empty candidate list when nothing matches', async () => {
     const result = await runRetrieve({
       argv: ['zzzznomatch'],
       startDir: NOTES_VAULT,
@@ -162,7 +162,7 @@ describe(runRetrieve, () => {
 
     expect(result.candidates).toEqual([]);
     expect(result.warnings).toEqual([]);
-    expect(result.diagnostic).toBe('no notes matched the query');
+    expect(result.diagnostic).toBe('the query did not match any notes');
   });
 
   it('distinguishes filtered-out matches from a no-hit query in the diagnostic', async () => {
@@ -179,7 +179,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBe('all matches were filtered out');
   });
 
-  it('reports a diagnostic when no knowledge base is configured or discovered', async () => {
+  it('reports a diagnostic when a registry does not configure a knowledge base and discovery does not find one', async () => {
     const result = await runRetrieve({
       argv: ['anything'],
       startDir: '/',
@@ -193,7 +193,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBe('no knowledge base configured or discovered');
   });
 
-  it('reports an unregistered-store diagnostic when --store names no registry entry', async () => {
+  it('reports an unregistered-store diagnostic when --store does not name a registry entry', async () => {
     const result = await runRetrieve({
       argv: ['anything', '--store', 'no-such-store'],
       startDir: NOTES_VAULT,
@@ -262,7 +262,7 @@ describe(runRetrieve, () => {
     expect(result.candidates).toEqual([]);
     expect(result.scopedKbs).toEqual([]);
     expect(result.warnings).toEqual([`registry KB "ghost-vault" path does not exist: ${ghostPath}`]);
-    expect(result.diagnostic).toBe('no notes matched the query');
+    expect(result.diagnostic).toBe('the query did not match any notes');
   });
 
   it('returns candidates while warning about a dead-path entry alongside a live KB', async () => {
@@ -280,7 +280,7 @@ describe(runRetrieve, () => {
     expect(result.diagnostic).toBeUndefined();
   });
 
-  it('keeps warnings empty when no registry is configured and a discovered KB is searched', async () => {
+  it('keeps warnings empty when a registry is not configured and a discovered KB is searched', async () => {
     const result = await runRetrieve({
       argv: ['backpressure'],
       startDir: NOTES_VAULT,
@@ -363,9 +363,9 @@ describe(runRetrieve, () => {
     expect(result.warnings).toEqual([]);
   });
 
-  it('scopes to content/ under the default config when no config.yaml is present', async () => {
-    // Because default-scope-vault has no `.kb/config.yaml`, the default `content/**/*.md` applies: The root README is
-    // skipped.
+  it('scopes to content/ under the default config when the KB does not contain a config.yaml', async () => {
+    // Because default-scope-vault does not contain a `.kb/config.yaml`, the default `content/**/*.md` applies:
+    // The root README is skipped.
     const result = await runRetrieve({
       argv: ['wibblefrazz'],
       startDir: DEFAULT_SCOPE_VAULT,

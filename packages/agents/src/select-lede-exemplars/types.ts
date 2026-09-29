@@ -2,7 +2,7 @@
 // stdout payload that contains both.
 //
 // The payload is a discriminated union on `ok`. An exhausted corpus is a success with a diagnostic rather than a
-// failure: A drafter degrades to no exemplars, and is never blocked by their absence.
+// failure: A drafter proceeds without exemplars, and is never blocked by their absence.
 
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
 import type { WorkType } from '../lib/work-types.ts';
@@ -21,9 +21,15 @@ export interface LedeExemplar {
   lede: string;
   /** The agent's own lede. Present only when the request asked for the decision pair. */
   agentLede?: string;
-  /** The lede that the author merged. Absent when they left the agent's alone, and when no pair was asked for. */
+  /**
+   * The lede that the author merged. Absent when they left the agent's alone, and when the request did not ask for the
+   * pair.
+   */
   mergedLede?: string;
-  /** The author's critique of the agent's lede. Absent when none was given, and when no pair was asked for. */
+  /**
+   * The author's critique of the agent's lede. Absent when none was given, and when the request did not ask for the
+   * pair.
+   */
   comment?: string;
   /** Canonical work-type key, so that a record filed under an alias and one filed under the key read alike. */
   type: string;
@@ -72,7 +78,9 @@ export interface SelectSuccess {
   /** Registry name of the corpus that was read. */
   store: string;
   warnings: string[];
-  /** Set when the corpus yielded no exemplars, so that a caller can tell an empty corpus from an empty request. */
+  /**
+   * Set when the corpus did not yield any exemplars, so that a caller can tell an empty corpus from an empty request.
+   */
   diagnostic?: string;
 }
 

@@ -56,7 +56,7 @@ describe(resolveLabelKey, () => {
   it.each([
     { section: 'types', labels: ['scope:agents'] },
     { section: 'scopes', labels: ['feature'] },
-  ] as const)('yields nothing when the labels name no $section key', ({ section, labels }) => {
+  ] as const)('yields nothing when the labels do not name any $section key', ({ section, labels }) => {
     expect(resolveLabelKey(MAP[section], labels)).toBeUndefined();
   });
 
@@ -89,7 +89,7 @@ describe(resolveLabeledRecord, () => {
     expect(resolveLabeledRecord(MAP, ['feature'])).toStrictEqual({ breaking: false, type: 'feat' });
   });
 
-  it('reads the breaking label as breaking when no type resolves', () => {
+  it('reads the breaking label as breaking when the labels do not resolve any type', () => {
     expect(resolveLabeledRecord(MAP, ['breaking', 'scope:kb'])).toStrictEqual({ breaking: true, scope: 'kb' });
   });
 

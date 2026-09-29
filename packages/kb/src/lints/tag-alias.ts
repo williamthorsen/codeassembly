@@ -11,7 +11,7 @@ export interface TagAliasNote {
 /**
  * Warns when a note's `tags` list contains a known alias, naming the canonical form, in list order (`tag-alias`,
  * warning). Unknown tags (neither canonical nor alias) are new vocabulary and are not flagged; a `tags` value that is
- * absent or not a list yields no findings. Each finding points at the note, not a specific tag line.
+ * absent or not a list does not yield any findings. Each finding points at the note, not a specific tag line.
  */
 export function tagAliasFindings(note: TagAliasNote, aliases: AliasMap): Finding[] {
   const tags = asStringList(note.fields.tags);

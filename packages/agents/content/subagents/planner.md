@@ -67,7 +67,7 @@ Write the machine-readable plan to `{plan-json-path}`:
     {
       "id": 1,
       "title": "Short descriptive title",
-      "description": "Self-contained task description suitable for orchestrate-dev. Includes context, references to existing patterns, concrete file paths, and expected behavior. Detailed enough for an agent with no knowledge of the larger story.",
+      "description": "Self-contained task description suitable for orchestrate-dev. Includes context, references to existing patterns, concrete file paths, and expected behavior. Detailed enough for an agent without any knowledge of the larger story.",
       "files": ["path/to/file.ts", "path/to/other.ts"],
       "acceptanceCriteria": ["Specific, verifiable criterion"],
       "dependsOn": []

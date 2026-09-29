@@ -47,7 +47,7 @@ describe(runCheck, () => {
     expect(report?.history.map((commit) => commit.subject)).toStrictEqual(['Add the formatting rule']);
   });
 
-  it('reports the test string literals that a phrase contains, and no literal outside a test', async () => {
+  it('reports the test string literals that a phrase contains, and omits the literals outside a test', async () => {
     await commitFile(
       'src/__tests__/guide.unit.test.ts',
       "import { expect } from 'vitest';\n\nexpect(body).toContain('**Number every option**');\nexpect(body).toContain('absent from the phrase');\n",

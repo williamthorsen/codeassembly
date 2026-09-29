@@ -12,7 +12,7 @@ const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
 /** A top-level YAML key, the shape that tells a frontmatter block from a pair of thematic breaks. */
 const FRONTMATTER_KEY_REGEX = /^[A-Za-z_][A-Za-z0-9_-]*\s*:(\s|$)/;
 
-/** The ATX heading grammar from which this module derives anchors. No content file uses the setext form. */
+/** The ATX heading grammar from which this module derives anchors. The content files do not use the setext form. */
 const HEADING_REGEX = /^(#{1,6})\s+(.+?)\s*$/gm;
 
 /** A heading's anchor slug, its ATX level, and the index in the body where its line begins. */
@@ -29,12 +29,12 @@ interface FenceScan {
 }
 
 /**
- * Throws when an anchor-only link target in `body` names no heading, or more than one, in the same body. Every
- * offending target is reported together, so an author fixing an artifact sees the whole list rather than one per run,
- * and a target repeated across the body is reported once.
+ * Throws when an anchor-only link target in `body` does not name any heading, or names more than one, in the same
+ * body. Every offending target is reported together, so an author fixing an artifact sees the whole list rather than
+ * one per run, and a target repeated across the body is reported once.
  *
- * A fence that nothing closes throws too. Everything below it reads as code. No anchor there can be checked, and a
- * silent pass over an unchecked remainder is indistinguishable from a clean one.
+ * A fence that nothing closes throws too. Everything below it reads as code. The scan cannot check any anchor there,
+ * and a silent pass over an unchecked remainder is indistinguishable from a clean one.
  *
  * Callers check `body` before any rewriting, and after include expansion where includes are expanded. Rewriting leaves
  * anchor-only targets untouched, so the verdict holds on every harness, including for a heading carrying a
@@ -66,7 +66,7 @@ export function assertAnchorsResolve(body: string, sourceLabel: string): void {
 
     const matches = headings.get(target.slice(1)) ?? 0;
     if (matches === 0) {
-      rejections.push(`  ${target} -- names no heading`);
+      rejections.push(`  ${target} -- does not name any heading`);
     } else if (matches > 1) {
       rejections.push(`  ${target} -- names ${matches} headings`);
     }
@@ -120,8 +120,9 @@ export function findUnterminatedFence(content: string): string | undefined {
 
 /**
  * Blanks the block-level regions that illustrate rather than declare: a leading frontmatter block and every fenced
- * code block. A fence shows sample output, so a heading inside one offers no anchor and a link inside one requests
- * none. Blanking frontmatter keeps a Markdown link in a `description:` from being scanned as a body link.
+ * code block. A fence shows sample output, so a heading inside one does not offer an anchor and a link inside one
+ * does not request one. Blanking frontmatter keeps a Markdown link in a `description:` from being scanned as a body
+ * link.
  *
  * Inline code spans survive here and are blanked on the link-scanning side alone. A span inside a heading is part of
  * that heading's text, and dropping it would change the slug: `### The \`respond-to-review\` path` anchors as

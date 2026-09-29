@@ -14,9 +14,9 @@ import { isRecord } from '../lib/type-guards.ts';
  * Oldest first makes one order hold across the whole result: A commit's trailers are read in the order they were
  * written. A reverse-chronological walk would run backwards across commits and forwards inside one.
  *
- * A merge commit contributes nothing. Its subject matches no template and its author cannot rewrite it, so reporting
- * it as unmatched would train a reader to skim the list that exists to be read. The commits brought in by a merge
- * stay in the range on their own.
+ * A merge commit contributes nothing. Its subject does not match any template and its author cannot rewrite it, so
+ * reporting it as unmatched would train a reader to skim the list that exists to be read. The commits brought in by a
+ * merge stay in the range on their own.
  *
  * Git parses the trailers itself through `%(trailers:key=Change,valueonly)`. A folded trailer and a trailer block
  * separated from the body by a blank line both read correctly without a scanner of this module's own.
@@ -54,13 +54,16 @@ export async function readCommits(input: { baseRef: string; cwd: string; headRef
   return commits;
 }
 
-/** Thrown when the head of a range names no commit in the local repository, as an unfetched pull-request head does. */
+/**
+ * Thrown when the head of a range does not name a commit in the local repository, as an unfetched pull-request head
+ * does.
+ */
 export class MissingCommitError extends Error {
   override readonly name = 'MissingCommitError';
   readonly ref: string;
 
   constructor(ref: string) {
-    super(`${ref} names no commit in the local repository`);
+    super(`${ref} does not name a commit in the local repository`);
     this.ref = ref;
   }
 }
@@ -81,7 +84,7 @@ const FIELD = '\u{1F}';
 
 /**
  * Output cap for the log invocation, sized well past a long branch. The 1 MiB default throws `ENOBUFS`, which a caller
- * cannot tell from a branch containing no commits.
+ * cannot tell from a branch without commits.
  */
 const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
 

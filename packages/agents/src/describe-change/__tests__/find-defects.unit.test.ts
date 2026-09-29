@@ -21,7 +21,7 @@ describe(findDefects, () => {
     expect(findDefects({ breaking: true, scope: 'agents', type: 'feat' }, TAXONOMY)).toStrictEqual([]);
   });
 
-  it('reports a record that names no type', () => {
+  it('reports a record that does not name a type', () => {
     expect(findDefects({ scope: 'agents' }, TAXONOMY)).toStrictEqual([{ kind: 'missing-type' }]);
   });
 

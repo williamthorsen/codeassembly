@@ -5,7 +5,10 @@ import { detectDrift } from './manifest.ts';
 import type { ReportLine } from './report-line.ts';
 import type { ManifestEntry } from './types.ts';
 
-/** Fate of an owned manifest entry during removal: delete it, keep it (user-modified, no force), or note it is already gone from disk. */
+/**
+ * Fate of an owned manifest entry during removal: delete it, keep it (user-modified, without force), or note it is
+ * already gone from disk.
+ */
 export type OwnedEntryVerdict = 'remove' | 'retain' | 'absent';
 
 /** Options controlling orphan pruning, mirroring the install flags that govern it. */
@@ -27,10 +30,10 @@ export interface PruneResult {
 }
 
 /**
- * Decides an owned manifest entry's fate during removal. A symlink (no user-modifiable content) or an
- * unmodified-or-forced file is removed; a user-modified file without `force` is retained; an entry already
- * gone from disk is absent. Checking `linked` before drift detection lets a dangling symlink -- which
- * `detectDrift` reports as `missing` -- be removed rather than treated as already gone.
+ * Decides an owned manifest entry's fate during removal. A symlink (without user-modifiable content) or
+ * an unmodified-or-forced file is removed; a user-modified file without `force` is retained; an entry
+ * already gone from disk is absent. Checking `linked` before drift detection lets a dangling symlink --
+ * which `detectDrift` reports as `missing` -- be removed rather than treated as already gone.
  */
 export async function classifyOwnedEntry(
   entry: ManifestEntry,
@@ -76,7 +79,7 @@ export function describePruneResult(result: PruneResult, options: { dryRun: bool
  * Removes installed files recorded in `previousEntries` whose source no longer exists -- those whose
  * `relativePath` is absent from `currentEntries` -- resolving paths against the install root `home`. Each
  * orphan's fate follows `classifyOwnedEntry`; a retained (user-modified, unforced) orphan stays tracked in
- * the manifest. In `dryRun`, the pass still classifies each orphan but removes no file.
+ * the manifest. In `dryRun`, the pass still classifies each orphan but does not remove any file.
  */
 export async function pruneOrphanedEntries(
   previousEntries: ReadonlyArray<ManifestEntry>,

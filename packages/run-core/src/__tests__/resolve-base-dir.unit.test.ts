@@ -12,7 +12,7 @@ describe('resolveBaseDir', () => {
     return mkdtemp(join(tmpdir(), prefix));
   }
 
-  it('returns {home}/.ai when no preferences files exist and no baseDir is passed', async () => {
+  it('returns {home}/.ai when the preferences files do not exist and the caller does not pass a baseDir', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
     const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
@@ -137,7 +137,7 @@ describe('resolveBaseDir', () => {
     }
   });
 
-  it('handles a preferences file with no artifacts key: falls back', async () => {
+  it('handles a preferences file without an artifacts key: falls back', async () => {
     const projectRoot = await createTmpDir();
     const fakeHome = await createTmpDir('run-core-test-home-');
     const agentsDir = join(projectRoot, '.agents');

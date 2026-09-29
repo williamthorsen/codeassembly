@@ -43,7 +43,7 @@ async function readLabelScopes(): Promise<string[]> {
     .map(([, scope]) => scope ?? '')
     .toArray();
   if (scopes.length === 0) {
-    throw new Error(`${fileURLToPath(RELEASE_KIT_CONFIG)} declares no scope: label`);
+    throw new Error(`${fileURLToPath(RELEASE_KIT_CONFIG)} does not declare any scope: label`);
   }
   return scopes.toSorted();
 }

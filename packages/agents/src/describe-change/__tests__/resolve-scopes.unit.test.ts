@@ -19,13 +19,13 @@ describe(discoverWorkspaceDirs, () => {
     expect(discoverWorkspaceDirs(root)).toEqual([join(root, 'packages/agents')]);
   });
 
-  it('discovers nothing when the root declares no pnpm workspace', async () => {
+  it('discovers nothing when the root does not declare a pnpm workspace', async () => {
     const root = await mkdtemp(join(tmpdir(), 'resolve-scopes-'));
 
     expect(discoverWorkspaceDirs(root)).toEqual([]);
   });
 
-  it('discovers nothing when the declared patterns match no directory', async () => {
+  it('discovers nothing when the declared patterns do not match any directory', async () => {
     const root = await writeWorkspaceRoot(["  - 'libs/*'"]);
 
     expect(discoverWorkspaceDirs(root)).toEqual([]);
@@ -118,7 +118,7 @@ describe(resolveScopes, () => {
     expect(resolution.pathScopes).toEqual({ '../elsewhere/x.ts': 'root', '..': 'root' });
   });
 
-  it('resolves every path to root when there are no scope directories', () => {
+  it('resolves every path to root when the list of scope directories is empty', () => {
     const resolution = resolveScopes({
       paths: ['packages/kb/src/index.ts', 'AGENTS.md'],
       projectRoot,
@@ -167,7 +167,7 @@ describe(resolveScopes, () => {
     expect(resolution.scopes).toEqual(['agents', 'kb', 'root']);
   });
 
-  it('reports no scopes when given no paths', () => {
+  it('reports an empty set of scopes for an empty list of paths', () => {
     expect(resolveScopes({ paths: [], projectRoot, scopeDirs })).toEqual({ pathScopes: {}, scopes: [] });
   });
 });

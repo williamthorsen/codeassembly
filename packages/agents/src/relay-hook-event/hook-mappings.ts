@@ -5,8 +5,8 @@ import type { HookMapping } from './types.ts';
  * Every hook served by the relay, keyed by harness and then by the harness's own name for the hook.
  *
  * Only the four session and turn boundaries are relayed. The tool-level hooks (`PreToolUse`/`PostToolUse`,
- * `on_tool_start`/`on_tool_end`) would fill the log with detail that no watching surface renders, and Claude's
- * `Notification` overlaps the waiting signal that `Stop` already provides.
+ * `on_tool_start`/`on_tool_end`) would fill the log with detail that isn't rendered by any watching surface, and
+ * Claude's `Notification` overlaps the waiting signal that `Stop` already provides.
  *
  * Neither harness relays the prompt text: A turn boundary is a status signal, and the event log serves surfaces that
  * show what a session is doing rather than what was said to it.

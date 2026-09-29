@@ -237,7 +237,7 @@ describe('buildSnapshot', () => {
     expect(JSON.parse(JSON.stringify(snapshot))).toEqual(snapshot);
   });
 
-  it('leaves forge null for a lane with no fetched facts', () => {
+  it('leaves forge null for a lane without fetched facts', () => {
     const lane = composeLane('101', { 'sess-a': [composeEvent('turn.started')] });
 
     const snapshot = buildSnapshot([lane], DERIVE_INPUT);
@@ -245,7 +245,7 @@ describe('buildSnapshot', () => {
     expect(snapshot.lanes[0]?.forge).toBeNull();
   });
 
-  it('assigns synthetic PR-<n> attribution to a lane with a pull request but no parsed ticket', () => {
+  it('assigns synthetic PR-<n> attribution to a lane with a pull request but without a parsed ticket', () => {
     const lane = composeLane('no-ticket-here', { 'sess-a': [composeEvent('turn.started')] });
     const forge = composeForge({
       'acme/app/no-ticket-here': {

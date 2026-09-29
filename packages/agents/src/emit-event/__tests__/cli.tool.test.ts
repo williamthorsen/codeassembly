@@ -153,7 +153,7 @@ describe(runEmit, () => {
     expect(envelope?.session).toBe('relayed-session');
   });
 
-  it('files the event under the repo placeholder when no remote resolves', async () => {
+  it("files the event under the repo placeholder when the repository doesn't have a remote", async () => {
     const cwd = await makeRepo({ branch: 'main' });
 
     const result = await runEmit({
@@ -191,7 +191,7 @@ describe(runEmit, () => {
     expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/HEAD is detached/));
   });
 
-  it('files the event under the session placeholder when the harness exposes no session id', async () => {
+  it("files the event under the session placeholder when the harness doesn't expose a session id", async () => {
     const cwd = await makeRepo({ branch: 'main', remote: REMOTE_URL });
 
     const result = await runEmit({ argv: ['--type', 'skill.started', '--home', home], cwd, env: {}, now: NOW });

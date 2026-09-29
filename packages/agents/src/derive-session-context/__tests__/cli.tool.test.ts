@@ -14,13 +14,13 @@ const execFileAsync = promisify(execFile);
 const NOW = new Date('2026-05-26T02:07:41Z');
 
 /**
- * A branch that is not the default one, so a stored URL is allowed on it. Its name encodes no
- * ticket, the case that the default-branch invariant must leave alone.
+ * A branch that is not the default one, so a stored URL is allowed on it. Its name does not
+ * encode a ticket, the case that the default-branch invariant must leave alone.
  */
 const WORKING_BRANCH = 'add-cache';
 
 describe(parseArgs, () => {
-  it('returns null fields and no mutations when no args are supplied', () => {
+  it('returns null fields and an empty mutation list for an empty argv', () => {
     expect(parseArgs([])).toEqual({ branch: null, cwd: null, home: null, mutations: [] });
   });
 
@@ -73,19 +73,19 @@ describe(parseArgs, () => {
     ]);
   });
 
-  it('throws when --branch has no value', () => {
+  it('throws when --branch is missing its value', () => {
     expect(() => parseArgs(['--branch'])).toThrow(/--branch requires a value/);
   });
 
-  it('throws when --home has no value', () => {
+  it('throws when --home is missing its value', () => {
     expect(() => parseArgs(['--home'])).toThrow(/--home requires a value/);
   });
 
-  it('throws when --set-ticket-url has no value', () => {
+  it('throws when --set-ticket-url is missing its value', () => {
     expect(() => parseArgs(['--set-ticket-url'])).toThrow(/--set-ticket-url requires a value/);
   });
 
-  it('throws when --set-pr-url has no value', () => {
+  it('throws when --set-pr-url is missing its value', () => {
     expect(() => parseArgs(['--set-pr-url'])).toThrow(/--set-pr-url requires a value/);
   });
 
@@ -136,9 +136,9 @@ describe(deriveSessionContext, () => {
     };
     await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
 
-    // No preferences file; without the fast path this would still succeed but produce a
-    // different `project_slug` (basename of workDir). The idempotency check is that the
-    // seeded value survives.
+    // The test does not write a preferences file; without the fast path this would still succeed
+    // but produce a different `project_slug` (basename of workDir). The idempotency check is that
+    // the seeded value survives.
     const result = await deriveSessionContext({
       cwd: workDir,
       branch: 'main',
@@ -481,7 +481,7 @@ describe(deriveSessionContext, () => {
     expect(manifest.pr_url).toBe('https://github.com/owner/repo/pull/950');
   });
 
-  it('leaves pr_url null on a PR-<n> branch when no git remote is configured', async () => {
+  it('leaves pr_url null on a PR-<n> branch when the repo does not have any git remote', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     await initGitRepo(workDir);
     const manifest = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });

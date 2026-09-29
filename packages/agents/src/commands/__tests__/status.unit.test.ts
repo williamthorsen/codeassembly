@@ -65,7 +65,7 @@ describe('statusCommand', () => {
     expect(info).toContain('day(s) old');
   });
 
-  it('reports a machine with a failed attempt and no recorded write', async () => {
+  it('reports a machine with a failed attempt and without a recorded write', async () => {
     await recordFailedHomeAttempt('install', { summary: 'rejected' }, tempDir);
 
     using silent = silenceConsole(['info', 'warn']);
@@ -74,7 +74,7 @@ describe('statusCommand', () => {
     const warned = silent.warn.mock.calls.map((call) => call.join(' ')).join('\n');
     expect(warned).toContain('The last home-domain write attempt failed');
     const info = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(info).toContain('The home domain has no recorded write.');
+    expect(info).toContain("The home domain doesn't have a recorded write.");
   });
 
   it('stays silent about provenance when nothing has written the home domain', async () => {
@@ -146,7 +146,7 @@ describe('statusCommand', () => {
     expect(output).toContain('Hooks: Not configured');
   });
 
-  it('should report not installed for a harness with no manifest', async () => {
+  it('should report not installed for a harness without a manifest', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });
 

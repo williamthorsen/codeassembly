@@ -1,16 +1,16 @@
 /**
  * Reduced-object-relative detection.
  *
- * The construction has no reliable surface form, so the anchor is adjacency rather than a verb pattern: a head noun
- * followed directly by the start of a new noun phrase, with no relativizer, preposition, conjunction, auxiliary, or
- * punctuation licensing the join. Three of the four shapes announce that new phrase with a closed-class word; the
- * bare-noun shape announces nothing, and is anchored on a plural subject instead.
+ * The construction doesn't have a reliable surface form, so the anchor is adjacency rather than a verb pattern: a head
+ * noun followed directly by the start of a new noun phrase, without any relativizer, preposition, conjunction,
+ * auxiliary, or punctuation licensing the join. Three of the four shapes announce that new phrase with a closed-class
+ * word; the bare-noun shape announces nothing, and is anchored on a plural subject instead.
  *
  * Detection is over-inclusive: Precision is the agent's, which adjudicates each candidate with the sentence in view.
  * A candidate is rejected here only where a reading cannot change the answer, and each test carries the reason for
  * its own rejection.
  *
- * An inline code span reads as one placeholder token, which heads no phrase, opens no subject, and closes no
+ * An inline code span reads as one placeholder token, which doesn't head a phrase, open a subject, or close a
  * clause. Because it holds its slot all the same, a site that a code span interrupts stays reachable.
  */
 import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
@@ -45,8 +45,8 @@ const ADJUNCT_HEADS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Verbs whose bare form carries no verbal morphology, so nothing but a lexicon recognizes one. Every entry is a
- * word that no reading takes as a noun: A homograph such as `name` or `report` would read a head noun as a verb.
+ * Verbs whose bare form doesn't carry any verbal morphology, so nothing but a lexicon recognizes one. Every entry is
+ * a word that cannot be read as a noun: A homograph such as `name` or `report` would read a head noun as a verb.
  */
 const BARE_VERBS: ReadonlySet<string> = new Set([
   'accept',
@@ -142,7 +142,7 @@ const BARE_VERBS: ReadonlySet<string> = new Set([
 const BE_FORMS: ReadonlySet<string> = new Set(['am', 'are', 'be', 'been', 'being', 'is', 'was', 'were']);
 
 /**
- * Verbs that take no object. One of these closing a subject reads as the sentence's own verb rather than a
+ * Verbs that don't take an object. One of these closing a subject reads as the sentence's own verb rather than a
  * relative's, which is what keeps a main clause out. The set is read from both directions: {@link isFiniteVerb}
  * rejects a member outright, and the two clause-closing tests admit one back when a stranded preposition gives it a
  * prepositional-phrase gap, so `the set the entries belong to` reports, whereas `the entries belong to the set`
@@ -170,9 +170,9 @@ const INTRANSITIVE_VERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Past-tense forms that no suffix marks as a verb, so nothing but a lexicon recognizes one. Admission follows the
- * rule that {@link BARE_VERBS} states, which keeps `cost`, `put`, `set`, and `spread` out. A past participle needs no
- * entry, since {@link resolveAuxiliaryChain} admits whatever an auxiliary carries.
+ * Past-tense forms that don't have a verbal suffix, so nothing but a lexicon recognizes one. Admission follows the
+ * rule that {@link BARE_VERBS} states, which keeps `cost`, `put`, `set`, and `spread` out. A past participle doesn't
+ * need an entry, since {@link resolveAuxiliaryChain} admits whatever an auxiliary carries.
  */
 const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
   'began',
@@ -222,8 +222,8 @@ const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
 /**
  * How far past an auxiliary its lexical verb may sit, counted in tokens. Three is what `may not have read` needs,
  * since a skipped negator and a skipped auxiliary each consume one. The measure runs from the auxiliary rather than
- * from the subject, since a subject window bounds the subject alone and the one-token pronoun window leaves an
- * auxiliary chain no room under it.
+ * from the subject, since a subject window bounds the subject alone and the one-token pronoun window doesn't leave an
+ * auxiliary chain any room under it.
  */
 const CARRIED_VERB_WINDOW = 3;
 
@@ -269,11 +269,11 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Adverbial pairs opened by a quantifier. Each is a phrase rather than a noun phrase, so it opens no subject. The set
- * holds whole pairs because the second word alone decides nothing: `longer` and `later` are adjectives in `two longer
- * digests` and `many later drafts`, and every `-ly` adverb has an adjectival twin in `early`, `likely`, and `timely`.
- * Admission follows the rule that {@link BARE_VERBS} states, applied to the pair: An entry is a pair that no reading
- * takes as a noun phrase, which keeps `most likely` out, its `likely` heading one freely.
+ * Adverbial pairs opened by a quantifier. Each is a phrase rather than a noun phrase, so it doesn't open a subject.
+ * The set holds whole pairs because the second word alone decides nothing: `longer` and `later` are adjectives in `two
+ * longer digests` and `many later drafts`, and every `-ly` adverb has an adjectival twin in `early`, `likely`, and
+ * `timely`. Admission follows the rule that {@link BARE_VERBS} states, applied to the pair: An entry is a pair that
+ * cannot be read as a noun phrase, which keeps `most likely` out, its `likely` heading one freely.
  */
 const DEGREE_ADVERBIALS: ReadonlySet<string> = new Set([
   'more reliably',
@@ -325,8 +325,8 @@ const FOCUS_ADVERBS: ReadonlySet<string> = new Set([
 
 /**
  * Quantifiers that fuse with a following `one`. Each has a single-word counterpart in {@link FUSED_HEADS}, which is
- * what admits it here: `no one` reads as `nobody` and takes no relativizer. A partitive such as `another one` or
- * `each one` has no such counterpart and stays in scope, since a relativizer restores to it.
+ * what admits it here: `no one` reads as `nobody` and doesn't take a relativizer. A partitive such as `another one`
+ * or `each one` doesn't have such a counterpart and stays in scope, since a relativizer restores to it.
  */
 const FUSING_QUANTIFIERS: ReadonlySet<string> = new Set(['any', 'every', 'no', 'some']);
 
@@ -358,7 +358,7 @@ const FUSED_HEADS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Words ending in `ly` that no reading takes as an adverb, which the morphological test in {@link isMannerAdverb}
+ * Words ending in `ly` that cannot be read as an adverb, which the morphological test in {@link isMannerAdverb}
  * would otherwise skip. An entry is needed only for a word of five characters or more that neither verb lexicon
  * holds, since that function applies a length floor and consults both lexicons: `rely` is short enough for the floor
  * to reject, and `apply` and `imply` are covered by {@link BARE_VERBS}, so none of the three needs an entry here.
@@ -376,7 +376,8 @@ const LY_FINAL_NON_ADVERBS: ReadonlySet<string> = new Set([
 
 /**
  * Auxiliaries that also serve as a clause's transitive main verb, which is what `the version the consumer has` turns
- * on. A `be` form is absent: A copula takes no object, so a clause that it closes has no gap to find.
+ * on. A `be` form is absent: A copula doesn't take an object, so a clause that it closes doesn't have a
+ * gap to find.
  */
 const MAIN_VERB_AUXILIARIES: ReadonlySet<string> = new Set(['did', 'do', 'does', 'had', 'has', 'have']);
 
@@ -400,11 +401,11 @@ const NUMERALS: ReadonlySet<string> = new Set([
 const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
 
 /**
- * Modifiers that no reading takes as the head of a phrase they open. Each stands directly before the noun that it
+ * Modifiers that cannot be read as the head of a phrase they open. Each stands directly before the noun that it
  * modifies, so {@link findHeadIndex} would otherwise read the modifier as the head and the noun as a bare subject,
  * turning `the same rules apply` into a relative clause. Admission follows the rule that {@link BARE_VERBS} states,
  * narrowed to this position: A word that heads a phrase elsewhere, `former` and `latter` among them, is admitted
- * only when no reading takes it as a noun with a noun following it.
+ * only when it cannot be read as a noun with a noun following it.
  */
 const NON_HEAD_MODIFIERS: ReadonlySet<string> = new Set(['other', 'own', 'same', 'single']);
 
@@ -483,12 +484,12 @@ const PREPOSITIONS: ReadonlySet<string> = new Set([
 const PRO_FORM_HEADS: ReadonlySet<string> = new Set(['one', 'ones']);
 
 /**
- * Object pronouns. One is no verb and no head, and one after a preposition fills that preposition's object slot,
+ * Object pronouns. One is not a verb or a head, and one after a preposition fills that preposition's object slot,
  * which is what keeps `the entries belong to them` from reading as a stranded preposition.
  */
 const OBJECT_PRONOUNS: ReadonlySet<string> = new Set(['her', 'him', 'me', 'them', 'us']);
 
-/** Quantifiers that stand alone as a subject, taking no noun of their own. */
+/** Quantifiers that stand alone as a subject, without a noun of their own. */
 const QUANTIFIER_PRONOUNS: ReadonlySet<string> = new Set([
   'anybody',
   'anyone',
@@ -599,11 +600,11 @@ const SUBORDINATORS: ReadonlySet<string> = new Set([
 
 /**
  * Wh-words that put the phrase that they open into a clause of their own. Each already binds whatever gap follows
- * it, so a head inside that phrase has no relativizer to restore.
+ * it, so a head inside that phrase doesn't have a relativizer to restore.
  */
 const WH_MARKERS: ReadonlySet<string> = new Set(['how', 'however', 'whose']);
 
-/** Words ending in `s` that no reading takes as a verb, which the morphological test would otherwise admit. */
+/** Words ending in `s` that cannot be read as a verb, which the morphological test would otherwise admit. */
 const S_FINAL_NON_VERBS: ReadonlySet<string> = new Set([
   'always',
   'hers',
@@ -706,7 +707,7 @@ function detectInSpan(span: ProseSpan): ObjectRelativeCandidate[] {
 
 /**
  * Classifies what a token opens an embedded subject with, or reports undefined if it opens none. Five kinds are
- * read off closed classes; the bare kind has no marker, so a plural noun stands in for one. A demonstrative is
+ * read off closed classes; the bare kind doesn't have a marker, so a plural noun stands in for one. A demonstrative is
  * tested ahead of the determiner to which it also belongs, since it alone of the determiners stands as a subject by
  * itself.
  */
@@ -752,7 +753,7 @@ function opensDegreeAdverbial(tokens: readonly Token[], index: number): boolean 
 /**
  * Returns the index of the head noun to which a subject at `subjectIndex` attaches, or undefined if nothing there can
  * be one. A focus adverb may intervene; a licensing word, clause punctuation, a fused head, an adjunct head, or a
- * modifier that no reading takes as a noun cannot, and neither can a wh-word, which heads no noun phrase. A pro-form
+ * modifier without a noun reading cannot, and neither can a wh-word, which doesn't head a noun phrase. A pro-form
  * head is admitted ahead of those tests, since the numeral reading of `one` and the verbal reading of `ones` would
  * each reject it.
  */
@@ -779,7 +780,7 @@ function findHeadIndex(tokens: readonly Token[], subjectIndex: number): number |
 
 /**
  * Reports whether a wh-word opens the phrase that the token at `headIndex` heads. A fronted wh-phrase binds the gap
- * after it, so no relativizer is restorable and the rule governs nothing there: `how big the problem is`, `whose
+ * after it, so a relativizer cannot be restored and the rule governs nothing there: `how big the problem is`, `whose
  * call it is`, and `how many files the parser reads` are questions rather than heads with gaps.
  *
  * The walk crosses a quantifier or a numeral, which stays inside the wh-phrase, and stops at a determiner, which
@@ -800,7 +801,7 @@ function isWhMarkedHead(tokens: readonly Token[], headIndex: number): boolean {
 
 /**
  * Reports whether a pro-form head at `headIndex` fuses with the quantifier before it, as `no one` does. A fused
- * reading is its own relative pronoun and takes no relativizer, so the rule leaves it alone.
+ * reading is its own relative pronoun and doesn't take a relativizer, so the rule leaves it alone.
  */
 function isFusedProForm(tokens: readonly Token[], headIndex: number): boolean {
   if (headIndex === 0 || tokens[headIndex]?.afterBreak === true) return false;
@@ -822,8 +823,8 @@ function isDeterminedHead(tokens: readonly Token[], headIndex: number): boolean 
 
 /**
  * Reports whether a specifier opens the phrase a head at `headIndex` closes, allowing one modifier between the two.
- * A bare-noun subject carries no marker of its own, so this is what keeps a plain `Noun Nouns Verb` main clause from
- * reading as a relative clause.
+ * A bare-noun subject doesn't carry a marker of its own, so this is what keeps a plain `Noun Nouns Verb` main clause
+ * from reading as a relative clause.
  */
 function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolean {
   for (let index = headIndex - 1; index >= 0 && index >= headIndex - 2; index -= 1) {
@@ -839,7 +840,7 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * Returns the index of the finite verb closing a subject that opens at `subjectIndex`, or undefined if none falls
  * within that kind's window. The scan stops at anything that ends the noun phrase: a coordinator, a relativizer, and
  * every preposition but `of`, which a partitive such as `two of them` needs. A bare subject is additionally held to
- * plural agreement, which is the only reading its own form supports. A chain carrying no lexical verb closes the
+ * plural agreement, which is the only reading its own form supports. A chain without a lexical verb closes the
  * subject on its last auxiliary when that is a {@link MAIN_VERB_AUXILIARIES} member, since a main-verb reading is
  * what remains: `the file the producer does not have` closes on `have`. A chain ending in a `be` form closes on that
  * form instead, when {@link closesOnCopula} holds, so `the version the consumer has been` closes on `been`.
@@ -966,7 +967,7 @@ function resolveAuxiliaryStep(input: {
 
 /**
  * Resolves what a token reached by the scan rather than through an auxiliary does to the search. A bare subject that
- * a verb disagrees with in number ends the search, since no other reading of that subject is available; everything
+ * a verb disagrees with in number ends the search, since that subject doesn't have any other reading; everything
  * else the tests reject leaves the scan running.
  */
 function resolveScannedStep(input: {
@@ -1028,8 +1029,8 @@ function isMannerAdverb(word: string): boolean {
 
 /**
  * Returns the index of the verb carried by a chain when that verb closes a relative clause, or undefined if the
- * clause has no gap for the head noun to fill. A passive has promoted its own object, so it closes one only when
- * something else leaves a gap open; an intransitive verb closes one only when it strands a preposition.
+ * clause doesn't have a gap for the head noun to fill. A passive has promoted its own object, so it closes one only
+ * when something else leaves a gap open; an intransitive verb closes one only when it strands a preposition.
  */
 function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): number | undefined {
   const { carriedIndex, isPassive } = chain;
@@ -1040,8 +1041,8 @@ function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): nu
 
 /**
  * Reports whether a token carried by an auxiliary can close a relative clause. The carried path admits whatever is
- * not a function word, since a past participle carries no marker held by any lexicon here; an intransitive verb is
- * the one exception, and closes a clause only when it strands a preposition.
+ * not a function word, since a past participle doesn't carry a marker held by any lexicon here; an intransitive verb
+ * is the one exception, and closes a clause only when it strands a preposition.
  */
 function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
   return !INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') || hasStrandedPreposition(tokens, index);
@@ -1062,7 +1063,8 @@ function closesScannedClause(tokens: readonly Token[], index: number, kind: Subj
  * rather than closing a clause. That noun is what the scan took for a bare subject, so the reading is the rulebook's
  * own passive-participle repair misread: Admitting it reports a repaired site back as a defect. The test is held to
  * the bare shape, since a longer subject means the `by` is doing other work, as in `the clauses the author struck by
- * name`. An irregular participle needs a lexicon and has none here, no site in the corpus having called for one.
+ * name`. An irregular participle needs a lexicon and has none here, since the corpus has not had a site calling for
+ * one.
  */
 function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean {
   const word = tokens[index]?.word ?? '';
@@ -1073,8 +1075,9 @@ function isAgentiveParticiple(tokens: readonly Token[], index: number): boolean 
 
 /**
  * Reports whether a copula at `index` closes a relative clause, which is what a predicate-nominal gap turns on. A
- * copula takes no object, so only its position says whether the head fills its complement slot: One at the end of
- * its clause has an unfilled one, as in `the throwing mock it is`, and a trailing negator does not fill it either.
+ * copula doesn't take an object, so only its position says whether the head fills its complement slot: One at the
+ * end of its clause has an unfilled one, as in `the throwing mock it is`, and a trailing negator does not fill it
+ * either.
  */
 function closesOnCopula(tokens: readonly Token[], index: number): boolean {
   if (isClauseFinal(tokens, index)) return true;

@@ -37,7 +37,7 @@ export async function sizesCommand(
 export function renderSizesReport(snapshot: SizeSnapshot | undefined, global: boolean): ReadonlyArray<ReportLine> {
   if (snapshot === undefined) {
     const command = global ? 'codeassembly sync --global' : 'codeassembly sync';
-    return [{ level: 'info', text: `No deployment has been recorded here. Run \`${command}\` to record one.` }];
+    return [{ level: 'info', text: `A deployment hasn't been recorded here. Run \`${command}\` to record one.` }];
   }
   return renderSnapshot(snapshot);
 }

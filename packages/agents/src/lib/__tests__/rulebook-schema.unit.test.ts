@@ -9,7 +9,7 @@ const DELIVERY_MESSAGE = "delivery must be 'ambient', 'hook', or 'skill', or a n
 const VERSION_TYPE_MESSAGE = "version must be quoted (e.g. version: '1.10'); unquoted, 1.10 is read as the number 1.1";
 
 /** The rejection required for a version that cannot occupy its deployed line, distinct from the quoting message. */
-const VERSION_SHAPE_MESSAGE = "version must be a non-blank single line containing no '-->'";
+const VERSION_SHAPE_MESSAGE = "version must be a non-blank single line that does not contain '-->'";
 
 /** Wraps frontmatter and a body into a rulebook source file. */
 function rulebookFile(frontmatter: string, body = '# Shell conventions\n\nUse strict mode.'): string {
@@ -59,7 +59,7 @@ describe(parseRulebookFile, () => {
     expect(rulebook.delivery).toEqual(['ambient', 'hook', 'skill']);
   });
 
-  it('throws when a delivery list is empty, which would name no delivery mode', () => {
+  it('throws when a delivery list is empty, which would not name any delivery mode', () => {
     expect(() => parseRulebookFile(rulebookFile('slug: x\ndelivery: []'))).toThrow(DELIVERY_MESSAGE);
   });
 

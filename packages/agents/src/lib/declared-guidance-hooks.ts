@@ -9,8 +9,8 @@ import type { ResolvedSubagent } from './subagent-deploy.ts';
 import type { HarnessId } from './types.ts';
 
 /**
- * Collects every guidance hook declared by the run's deployed bodies. A hook missing from the set is one that no body
- * declares, which makes a binding naming it recognizable as unreached.
+ * Collects every guidance hook declared by the run's deployed bodies. A hook missing from the set is one not declared
+ * by any deployed body, which makes a binding naming it recognizable as unreached.
  *
  * A skill declares through any Markdown file reached by its deploy walk, not the entry body alone, because every one
  * of them is filled: `renderSkillDirectory` recurses to each depth and renders each `.md` through the fill. The walk
@@ -20,8 +20,8 @@ import type { HarnessId } from './types.ts';
  * Because bodies are include-expanded first, a directive that a partial declares counts for every body inlining it,
  * the same reason `resolveRulebook` expands before its own hook checks.
  *
- * Skills are narrowed to those targeting a harness to which this run deploys, since one deployed nowhere reaches no
- * agent. Subagents deploy to every targeted harness and need no such filter.
+ * Skills are narrowed to those targeting a harness to which this run deploys, since one deployed nowhere does not
+ * reach any agent. Subagents deploy to every targeted harness and do not need such a filter.
  */
 export async function listDeclaredGuidanceHooks(
   resolvedSkills: ReadonlyArray<ResolvedSkill>,

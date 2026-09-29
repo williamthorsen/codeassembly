@@ -27,7 +27,7 @@ function createHeader(overrides: Partial<RunHeader> = {}): RunHeader {
 }
 
 describe('foldEvents', () => {
-  it('returns initial state with no events', () => {
+  it('returns initial state for an empty event list', () => {
     const header = createHeader();
     const result = foldEvents(header, []);
 
@@ -357,7 +357,7 @@ describe('foldEvents', () => {
     });
   });
 
-  it('drops reviewer_dispatched when no prior review phase_started', () => {
+  it('drops reviewer_dispatched when a review phase_started does not precede it', () => {
     const header = createHeader();
     const events: RunEvent[] = [{ t: '2026-01-01T00:03:01Z', event: 'reviewer_dispatched', reviewer: 'code-reviewer' }];
 
@@ -375,7 +375,8 @@ describe('foldEvents', () => {
 
     const result = foldEvents(header, events);
 
-    // parallelReview should remain in its initial state from phase_started (no coderFixCycleRan without coder_fix_started)
+    // parallelReview should remain in its initial state from phase_started (the fold doesn't set coderFixCycleRan
+    // without coder_fix_started)
     expect(result.phases.parallelReview).toMatchObject({
       status: 'in_progress',
       coderFixCycleRan: false,

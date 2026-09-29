@@ -31,7 +31,7 @@ describe(check, () => {
     expect(result.config.targets).toEqual(['content/**/*.md']);
   });
 
-  it('performs no frontmatter validation, even for an incomplete note', async () => {
+  it("doesn't validate frontmatter, even for an incomplete note", async () => {
     const root = await makeStore({
       'content/Incomplete.md': '---\ntitle: Bad\nrecordType: assertion\ncreated: 2026-05-01\ntags: [x]\n---\n\nBody.\n',
     });
@@ -158,12 +158,12 @@ describe(`${check.name} resolving store-qualified links`, () => {
     const result = await check({ kbRoot: source, home });
 
     // The whole list, not a filtered one: A per-link finding here would claim the store is unregistered, which a
-    // run that read no registry cannot know.
+    // run that didn't read the registry cannot know.
     expect(result.findings.map((finding) => finding.rule)).toEqual(['wikilinks.registry-unloadable']);
     expect(result.findings[0]?.scope).toBe('vault');
   });
 
-  it('reads no registry, and reports none, for a store whose links qualify no store', async () => {
+  it("doesn't read the registry, and reports nothing, for a store whose links don't qualify any store", async () => {
     const source = await makeStore({ 'content/Journal.md': VALID });
     const home = await makeTempDir('kb-home-');
     await seedRegistry(getRegistryPathFor(home), 'kbs: [not-a-map\n');

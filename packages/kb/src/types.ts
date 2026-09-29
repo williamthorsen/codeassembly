@@ -68,9 +68,9 @@ export interface ParsedNote {
   path: string;
   /** The full original note content. */
   content: string;
-  /** Typed frontmatter, or `null` when no frontmatter block is present or it failed to parse. */
+  /** Typed frontmatter, or `null` when the note does not contain a frontmatter block or the block failed to parse. */
   frontmatter: Frontmatter | null;
-  /** Raw frontmatter slice and diagnostics, or `null` when no `---` block is present. */
+  /** Raw frontmatter slice and diagnostics, or `null` when the note does not contain a `---` block. */
   frontmatterRaw: FrontmatterRaw | null;
   /** The note body (everything after the closing `---`). */
   body: string;
@@ -87,7 +87,7 @@ export interface Finding {
   /**
    * What the finding describes, defaulting to `note` when absent. A note-scoped finding is dropped when a run's
    * selection excludes its note; a vault-scoped one describes the store itself, so it survives every selection,
-   * including one matching no notes at all.
+   * including one that does not match any notes at all.
    */
   scope?: 'note' | 'vault';
   /** 1-based source line number, when known. */

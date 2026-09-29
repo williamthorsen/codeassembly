@@ -4,7 +4,7 @@
 //
 // Staleness is attempt-based, not age-based: A lane is stale exactly when the most recent poll of its repo failed, and
 // its last-known facts keep being served until a poll succeeds. Rounds never overlap: A tick fired while one is in
-// flight is skipped rather than queued. With no adapter (`FLEET_FORGE=none`) the loop is inert.
+// flight is skipped rather than queued. Without an adapter (`FLEET_FORGE=none`) the loop is inert.
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import type { LaneState } from 'codeassembly-lifecycle';
@@ -34,8 +34,8 @@ export interface ForgePoller {
 
 /**
  * Starts the forge poller. With `adapter` undefined the loop is inert (`tick` is a no-op and `getFacts` stays empty),
- * so a disabled forge does no work. `onUpdate` fires after every completed round; the caller's diff gate suppresses
- * no-op broadcasts. `now` and `intervalMs` are injected so that tests drive time.
+ * so a disabled forge doesn't do any work. `onUpdate` fires after every completed round; the caller's diff gate
+ * suppresses no-op broadcasts. `now` and `intervalMs` are injected so that tests drive time.
  */
 export function startForgePoller(input: {
   adapter: ForgeAdapter | undefined;

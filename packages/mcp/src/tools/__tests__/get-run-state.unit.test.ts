@@ -32,7 +32,7 @@ describe('getRunState', () => {
     return dir;
   }
 
-  it('returns in_progress status after init with no events', async () => {
+  it('returns in_progress status after init without any events', async () => {
     const runDir = await createRunDir([]);
     const state = await getRunState({ runDir });
 

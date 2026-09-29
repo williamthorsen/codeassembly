@@ -190,7 +190,7 @@ describe(runDecision, () => {
     expect(content).not.toContain('## Merged lede');
   });
 
-  it('records a flag-sourced identity with no scope even though the change summary names one', async () => {
+  it('records a flag-sourced identity without a scope even though the change summary names one', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
     const argv = ['--quality', 'good', ...withoutFlag(flagsFor(fixture), 'scope'), '--breaking'];
@@ -241,7 +241,7 @@ describe(runDecision, () => {
     expect(expectCommit(result).store).toBe(OTHER_STORE_NAME);
   });
 
-  it('refuses a decision when the store that it serves is registered under no name', async () => {
+  it('refuses a decision when kb.yaml does not register the store that it serves', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore(OTHER_STORE_NAME);
     const argv = ['--quality', 'good', ...flagsFor(fixture)];
@@ -334,9 +334,9 @@ function requiredFlags(): string[] {
 }
 
 /**
- * Builds runner input over a fixture, defaulting the environment so that no test reads the developer's own. `home`
- * falls back to the fixture root, which contains no `.agents/kb.yaml`, so a store resolves to `not-registered`
- * deterministically.
+ * Builds runner input over a fixture, defaulting the environment so that tests do not read the developer's own.
+ * `home` falls back to the fixture root, which does not contain a `.agents/kb.yaml`, so a store resolves to
+ * `not-registered` deterministically.
  */
 function runInput(input: {
   argv: string[];

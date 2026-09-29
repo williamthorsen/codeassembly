@@ -5,7 +5,7 @@ import { ALIASES_FILE, CONFIG_FILE, resolveKbDir, TAXONOMY_FILE } from '../layou
 import type { KbRoot } from '../types.ts';
 import { makeTempDir } from './make-temp-dir.ts';
 
-/** Wraps a filesystem path as a `KbRoot`, performing no I/O. */
+/** Wraps a filesystem path as a `KbRoot`, without performing any I/O. */
 export function kbRootAt(path: string): KbRoot {
   return { path, kbDir: resolveKbDir(path) };
 }

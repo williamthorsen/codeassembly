@@ -79,7 +79,7 @@ describe('parseOverlayOverrides', () => {
 });
 
 describe('mergeFrontmatter', () => {
-  it('should return source unchanged when no overrides match the agent', () => {
+  it('should return source unchanged when the agent does not match any override', () => {
     const source = ['---', 'name: unknown-agent', 'description: An unknown agent', '---', '', '# Body', ''].join('\n');
 
     const overlay = ['_defaults: {}'].join('\n');

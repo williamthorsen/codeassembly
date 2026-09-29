@@ -125,7 +125,7 @@ describe(rewriteMarkdownPaths, () => {
     expect(rewriteMarkdownPaths('', 'commit/SKILL.md', skillsAnchor)).toBe('');
   });
 
-  it('returns content with no links unchanged', () => {
+  it('returns content without links unchanged', () => {
     const content = '# Heading\n\nSome text without links.\n';
     expect(rewriteMarkdownPaths(content, 'commit/SKILL.md', skillsAnchor)).toBe(content);
   });
@@ -153,7 +153,7 @@ describe(rewriteTemplateVariables, () => {
     );
   });
 
-  it('returns content unchanged when no template variables are present', () => {
+  it('returns content unchanged when it does not contain any template variables', () => {
     const content = '# No variables here\n\nJust plain text.';
     expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(content);
   });
@@ -178,7 +178,7 @@ describe(rewriteTemplateVariables, () => {
     );
   });
 
-  it('replaces {harness_id} with the harness identifier, leaving no placeholder', () => {
+  it('replaces {harness_id} with the harness identifier, without leaving a placeholder', () => {
     const content = 'node {harness_home_dir}/skills/capture-event/capture-event.mjs --harness {harness_id}';
     expect(rewriteTemplateVariables(content, CLAUDE_VARIABLES)).toBe(
       'node ~/.claude/skills/capture-event/capture-event.mjs --harness claude',
@@ -318,7 +318,7 @@ describe(rewritePathsInDirectory, () => {
     expect(result).toBe('Run [describe-change](~/.claude/scripts/describe-change.mjs) first.');
   });
 
-  it('does not write files when no changes are needed', async () => {
+  it('does not write files when the content does not need any changes', async () => {
     const skillDir = path.join(skillsDestDir, 'test-skill');
     await mkdir(skillDir, { recursive: true });
     await writeFile(path.join(skillDir, 'SKILL.md'), '# No links here\n', 'utf8');

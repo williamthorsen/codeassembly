@@ -31,8 +31,8 @@ type RecordOutcome =
 
 /**
  * Selects author-approved ledes matching a request from a store's event records, widening to make up a shortfall: A
- * type request widens to the type's tier-mates and then to any type, and a tier request, having no type to widen away
- * from, widens straight to any tier.
+ * type request widens to the type's tier-mates and then to any type, and a tier request, which does not have a type to
+ * widen away from, widens straight to any tier.
  *
  * The scan runs over `content/events/` in descending filename order. Filenames are ULID stems, so that order is
  * newest-first without reading a byte, and the scan stops as soon as the request's own matches have filled the count:
@@ -125,8 +125,8 @@ function classifyWidening(input: { candidate: Candidate; request: ExemplarReques
 }
 
 /**
- * Reports whether a candidate is admitted by a floor. A request naming no floor admits every candidate, rated or not;
- * a floor admits only a rating that meets it, so an unrated record is left out whenever one is named.
+ * Reports whether a candidate is admitted by a floor. A request that does not name a floor admits every candidate,
+ * rated or not; a floor admits only a rating that meets it, so an unrated record is left out whenever one is named.
  */
 function clearsFloor(input: { candidate: Candidate; floor: LedeQuality | undefined }): boolean {
   if (input.floor === undefined) {
@@ -146,10 +146,10 @@ function compareDescending(left: string, right: string): number {
 }
 
 /**
- * Reads one event file as an exemplar candidate. A record that parses and has no `lede-decision` tag belongs to
- * another capture path and is passed over in silence. Everything else that cannot be read as an exemplar is reported
- * so that the run goes on without it, unparseable frontmatter included: A record whose tags cannot be read might be a
- * decision.
+ * Reads one event file as an exemplar candidate. A record that parses and does not have a `lede-decision` tag belongs
+ * to another capture path and is passed over in silence. Everything else that cannot be read as an exemplar is
+ * reported so that the run goes on without it, unparseable frontmatter included: A record whose tags cannot be read
+ * might be a decision.
  */
 async function readDecision(input: {
   filePath: string;
@@ -199,7 +199,8 @@ async function readDecision(input: {
   }
 
   // Because an unrated record is the ordinary case for one captured before ratings existed, only a value
-  // outside the scale is worth reporting. Either way the candidate stays selectable by a request that names no floor.
+  // outside the scale is worth reporting. Either way the candidate stays selectable by a request that does not name a
+  // floor.
   const rawQuality = extractString(extra, 'quality');
   const quality = isLedeQuality(rawQuality) ? rawQuality : null;
   const warnings =
@@ -210,7 +211,7 @@ async function readDecision(input: {
   // A decision written by `capture-lede-decision` always includes an agent lede. A body without one was edited by hand.
   const pair = input.withPair ? extractDecisionPair(parsed.record.body) : null;
   if (input.withPair && pair === null) {
-    warnings.push(`${basename}: contains no agent lede, so its decision pair cannot be read`);
+    warnings.push(`${basename}: does not contain an agent lede, so its decision pair cannot be read`);
   }
 
   return {

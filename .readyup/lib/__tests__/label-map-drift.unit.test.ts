@@ -13,7 +13,7 @@ describe(deriveExpectedScopeKeys, () => {
     expect(deriveExpectedScopeKeys(['agents', 'fleet'])).toEqual(['agents', 'fleet', 'root']);
   });
 
-  it('returns an empty set when no packages exist', () => {
+  it('returns an empty set when the package list is empty', () => {
     expect(deriveExpectedScopeKeys([])).toEqual([]);
   });
 
@@ -23,7 +23,7 @@ describe(deriveExpectedScopeKeys, () => {
 });
 
 describe(diffScopeKeys, () => {
-  it('reports no drift when the sets match', () => {
+  it('reports an empty diff when the sets match', () => {
     expect(diffScopeKeys(['agents', 'root'], ['agents', 'root'])).toEqual({ missing: [], extra: [] });
   });
 
@@ -86,7 +86,7 @@ describe(parseReleaseKitVersion, () => {
     expect(parseReleaseKitVersion(url)).toBe('8.0.1');
   });
 
-  it('returns undefined when the URL pins no release-kit version', () => {
+  it('returns undefined when the URL does not pin a release-kit version', () => {
     expect(parseReleaseKitVersion('https://example.com/schema.json')).toBeUndefined();
   });
 });

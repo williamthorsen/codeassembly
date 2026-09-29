@@ -35,7 +35,7 @@ describe(parseArgs, () => {
     expect(() => parseArgs(['q', '--folder', 'sub'])).toThrow(/unknown flag/);
   });
 
-  it('throws when --tag has no value', () => {
+  it('throws when --tag is given without a value', () => {
     expect(() => parseArgs(['q', '--tag'])).toThrow(/--tag requires a value/);
   });
 
@@ -48,7 +48,7 @@ describe(parseArgs, () => {
     expect(parseArgs(['q']).minImpact).toBeNull();
   });
 
-  it('throws when --min-impact has no value', () => {
+  it('throws when --min-impact is given without a value', () => {
     expect(() => parseArgs(['q', '--min-impact'])).toThrow(/--min-impact requires a value/);
   });
 
@@ -96,10 +96,10 @@ describe(runRetrieveEvents, () => {
     });
 
     expect(result.candidates).toEqual([]);
-    expect(result.diagnostic).toBe('no notes matched the query');
+    expect(result.diagnostic).toBe('the query did not match any notes');
   });
 
-  it('reports an unregistered-store diagnostic when --store names no registry entry', async () => {
+  it('reports an unregistered-store diagnostic when --store does not name a registry entry', async () => {
     const result = await runRetrieveEvents({
       argv: ['phantomwidget', '--store', 'no-such-store'],
       startDir: NOTES_VAULT,

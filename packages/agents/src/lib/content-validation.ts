@@ -96,11 +96,11 @@ export async function findUnderdeclaredFormatDefects(root: string): Promise<Read
  * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
  * first. Runs the checks that a consumer's `sync` runs before writing (dependency closure, artifact resolution,
  * delivery collisions, and a per-harness render) over a whole content root instead of over one consumer's declared
- * closure, plus one pass for which `sync` has no counterpart: the retired frontmatter key, which reaches a consumer
- * intact rather than failing there.
+ * closure, plus one pass for which `sync` does not have a counterpart: the retired frontmatter key, which reaches a
+ * consumer intact rather than failing there.
  *
  * Nothing here reads a `codeassembly.yaml`. The root is resolved as if it were a declared source with the built-in
- * library behind it, which is the shape in which a consumer deploys it, so a producing package with no consuming
+ * library behind it, which is the shape in which a consumer deploys it, so a producing package without a consuming
  * project anywhere on its path validates exactly as it will be consumed. A dependency edge into a library artifact
  * therefore resolves rather than dangling.
  *
@@ -202,7 +202,7 @@ function findCollisionDefects(artifacts: ResolvedArtifacts): ReadonlyArray<Conte
 
   for (const { skillName, slugs } of findSkillNameCollisions(artifacts.rulebooks)) {
     // Attributed to a rulebook owned by the root. A collision entirely between library rulebooks is the library's to
-    // fix and names no file that the root contains, so it is left to the library's own gate.
+    // fix and does not name any file that the root contains, so it is left to the library's own gate.
     const owned = slugs.find((slug) => ownedRulebooks.some((book) => book.slug === slug));
     if (owned !== undefined) {
       defects.push({
@@ -431,7 +431,7 @@ async function renderSupportEntries(
  *
  * Library artifacts are resolved but never reported on, for the reason `renderForHarness` gives: They are reached so
  * that the root's own artifacts see the catalog that a consumer would, not because they are under examination. A
- * failure here means the installed library is damaged, which no edit to the root can repair.
+ * failure here means the installed library is damaged, which an edit to the root cannot repair.
  */
 async function resolveArtifacts(closure: ResolvedClosure, resolver: SourceResolver): Promise<ResolvedArtifacts> {
   const defects: Array<ContentDefect> = [];
