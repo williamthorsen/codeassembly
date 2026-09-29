@@ -255,7 +255,7 @@ Plan refined:
 As you present the next-steps menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed. If the review identified significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise, either orchestration or implementation may apply depending on whether the work's consequences fit a single review pass. Use this as recommendation context. Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed. If the review identified significant scope changes or unresolved questions that led to a dramatic revision, the plan may warrant another refinement round; otherwise apply the recommendation rules, with a revision that grew the plan as evidence for rule 2. Use this as recommendation context. Include both `{revision_output_path}` (as the plan path) and `{ticket_source}` in each skill-invoking option line.
 </HARD-GATE>
 
 ## Edge cases
