@@ -46,6 +46,9 @@ const OPTION_FORMAT: Spec = {
     // The gate's test, stated on the markers. Without it the gate is a judgment call again, which a skill step that
     // says to ask overrides.
     'Render the menu only when the two strongest options are both ■■□',
+    // The distinction that the marker test lacks. Without it a close call under a governing test marks two candidates
+    // ■■□, and the gate renders a menu for a fact, as it did for an entry's `feat`-versus-`fix` typing on #1803.
+    'not doubt about a fact',
     // The closed gated class's closing line. Without it the class reads as examples of a broader "consequential"
     // category, which the agent interprets generously.
     "Everything else is the agent's call by default",

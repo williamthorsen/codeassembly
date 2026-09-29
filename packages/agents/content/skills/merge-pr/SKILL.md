@@ -94,7 +94,7 @@ Pass each PR label from step 2 as a separate `--pr-label` flag. Pass `--ticket-r
 
 If this step's first run exits non-zero, or the helper is not found, emit `skill.completed` (payload `{"outcome":"stopped: merge not resolved"}`) per [Lifecycle events](#lifecycle-events) and stop with its message. Do not compose a title or body without it. Step 8's re-read stops the same way, since the failure there does not come from any answer.
 
-A re-run driven by an answer at step 6's gate does not stop the skill, and neither does a refused `amend-entry`. Report the helper's message and return to the question that produced the answer: The refusal is in the answer, and the resolution already in hand is still good. A type spelled with `!` is that case, which step 6 maps rather than passes through.
+A re-run driven by a decision or an answer at step 6's gate does not stop the skill, and neither does a refused `amend-entry`. Report the helper's message and return to the decision or the question that produced the value: The refusal is in the value, and the resolution already in hand is still good. A type spelled with `!` is that case, which step 6 maps rather than passes through.
 
 The helper prints one JSON object. Read it from the command's output, with python3 (or jq) when a parser helps:
 
@@ -153,7 +153,7 @@ If the lede is thin, compose fresh content through the drafter that `summarize-c
 
 Resolve the tier by looking up the report's `effective_record.type` in [work-types.json](../_data/work-types.json).
 
-If `defects` contains an entry defect, settle every entry defect here as step 6 does, since an amended entry can change the effective record. Then, if `defects` shows that the effective record does not declare a type (`missing-type`, or an `undeclared-type` that does not name an `entry`), ask step 6's type question here rather than composing against a guess, then re-run step 3 with the answer added to the override set and resolve the tier from the new report.
+If `defects` contains an entry defect, settle every entry defect here as step 6 does, since an amended entry can change the effective record. Then, if `defects` shows that the effective record does not declare a type (`missing-type`, or an `undeclared-type` that does not name an `entry`), decide the type here as step 6 does rather than composing against a guess, then re-run step 3 with that type added to the override set and resolve the tier from the new report.
 
 Dispatch the `{subagent:entry-drafter}` subagent via the {tool:Task} tool with this block:
 
@@ -183,11 +183,11 @@ Do not audit the draft here: The user reads the published body at the approval g
 
 ### 6. Approval gate
 
-Settle every item in `defects` before showing the proposal, one question at a time. Settle the entry defects first, in entry order: Amending an entry can change the effective record, and with it the record's own defects.
+Settle every item in `defects` before showing the proposal. Settle the entry defects first, in entry order: Amending an entry can change the effective record, and with it the record's own defects. Decide each type and each marker by the test below and the type's `breakingPolicy`, never by asking which to choose: This session holds the diff, the sources, and the test, and the gate's title shows the result before the merge.
 
-**An entry defect** (one that names an `entry`) is settled by amending that entry in the PR body, because an override changes only the effective record, and the merge block would still publish the entry as it stands. Ask one question per entry defect. Quote the entry's `text` from `sources.block.entries`, and name its type for an `undeclared-type`, or the type and the policy that it breaks for a `policy-violation`. Offer the types that the test below assigns to the entry's own text, the marker that the policy asks for when the defect is a `policy-violation`, and an "other (specify)" option. State in the prompt that the answer rewrites that entry in the PR body.
+**An entry defect** (one that names an `entry`) is settled by amending that entry in the PR body, because an override changes only the effective record, and the merge block would still publish the entry as it stands. Decide each amendment: For an `undeclared-type`, the type that the test below assigns to the entry's own text; for a `policy-violation`, the same test's type, with the marker kept when that type's `breakingPolicy` permits it and dropped otherwise. The amendments rewrite the PR body, which is remote shared state, so ask once to authorize all of them: Quote each entry's `text` from `sources.block.entries`, name its defect, and state the decided type or marker with its reason in one line. A no is a redirect, not a request for a menu: Take the type or marker that the developer names in place of the decided one.
 
-On an answer, re-read the PR body into a fresh scratch file as step 3 writes one, named `gh-body-pr{number}-amend-{timestamp}.md`: from the platform on GitHub, and on Bitbucket from a fresh read of the description through step 2's platform dispatch. The question is human-paced, so the copy that step 3 read can be older than the PR, and writing it back would discard an edit made while the question was pending. Then amend the entry in that file, opening with the assignment and the guard. Pass `--type` for a type answer and `--breaking` or `--no-breaking` for a marker answer:
+On approval, re-read the PR body into a fresh scratch file as step 3 writes one, named `gh-body-pr{number}-amend-{timestamp}.md`: from the platform on GitHub, and on Bitbucket from a fresh read of the description through step 2's platform dispatch. The approval is human-paced, so the copy that step 3 read can be older than the PR, and writing it back would discard an edit made while the ask was pending. Then amend each entry in that file, opening each call with the assignment and the guard. Pass `--type` when the amendment changes the type, and `--breaking` or `--no-breaking` when it changes the marker:
 
 ```bash
 body_path="{absolute path from the re-read}"
@@ -198,29 +198,31 @@ node {harness_home_dir}/scripts/describe-change.mjs amend-entry \
   [--type "{type}"] [--breaking | --no-breaking]
 ```
 
-The helper rewrites the file in place and refuses an answer that would leave the entry defective. [`amend-entry`](../_data/title-templates.md#amend-entry) states its refusals. Then write the amended body to the PR:
+The helper rewrites the file in place and refuses an amendment that would leave the entry defective. [`amend-entry`](../_data/title-templates.md#amend-entry) states its refusals. Then write the amended body to the PR:
 
 - **`"github"`**: `gh pr edit {number} --body-file "$body_path"`, in a call that opens with the same assignment and guard.
 - **`"bitbucket"`**: [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) does not document a description-write action. Emit `skill.completed` (payload `{"outcome":"stopped: no Bitbucket write path"}`) per [Lifecycle events](#lifecycle-events), then stop, showing the amended `change-record` block from the body file and saying that the author pastes it over the description's block in the Bitbucket UI, then runs the merge again.
 
 Then re-run step 3 with the same override set and the same `--head`. Its fresh read of the body confirms that the amendment reached the PR.
 
-**A defect of the effective record** is settled by an override:
+**A defect of the effective record** is settled by an override, which changes nothing outside this run, so decide it without an ask and state the decision in one line with its reason:
 
-- **`missing-type` or `undeclared-type`**: Ask for the type. Present a numbered list of the distinct types that the report's `sources` name (in the block's `entries` and `overrides`, and in `commits`, `labels`, and `pr_title`), plus the type that the test below assigns to the diff when the sources do not name it, and an "other (specify)" option.
-- **`policy-violation`**: Name the type and the policy that it breaks. Offer `--no-override-breaking` (which removes the forbidden marker), the types from the list above, and an "other (specify)" option.
+- **`missing-type` or `undeclared-type`**: Add `--override-type` with the type that the test below assigns to the diff.
+- **`policy-violation`**: Add `--override-type` with the test's type when it differs from the record's, and `--no-override-breaking` when that type's `breakingPolicy` forbids the marker.
 
-Mark each type option by applying this test to the diff, not by how many sources name the type:
+Decide each type by applying this test to the change, whether the diff or an entry's own text, not by how many sources name the type:
 
 <!-- include: ../../_partials/work-type-choice.md / -->
 
-Apply the test to the diff whether or not `defects` holds an item. Commits, labels, and a PR title that agree can agree on one wrong type, which does not raise a defect, and the merge title would then publish that type. When the test's type differs from the effective record's, raise that as a question here; when they agree, ask nothing and report nothing, here or at the gate.
+Apply the test to the diff whether or not `defects` holds an item. Commits, labels, and a PR title that agree can agree on one wrong type, which does not raise a defect, and the merge title would then publish that type. When the test's type differs from the effective record's, add `--override-type` with the test's type to the override set and state the decision in one line with its reason; when they agree, report nothing, here or at the gate.
 
-Take an answer spelled with the marker as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`, and for an entry, `--type feat` with `--breaking`. The helper refuses a type spelled with `!`, so it would refuse an answer passed through unchanged, and the defect would stay unsettled.
+A type that the developer named, through `--type` or in an answer at the gate, stands: Never replace it with the test's type, here or in a record defect above: The gate shows the type so that the developer can correct it, and replacing the correction leaves the developer unable to merge under it. When the test disagrees with it, state the disagreement in one line at the gate and change nothing.
+
+Take a type spelled with the marker, whether decided here or named by the developer, as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`, and for an entry, `--type feat` with `--breaking`. The helper refuses a type spelled with `!`, so it would refuse such a type passed through unchanged, and the defect would stay unsettled.
 
 When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
-Re-run step 3 after each answer, with an override answer added to the override set, until `defects` is empty. Never offer the merge while `defects` contains an item. If an answer moves the effective record to another tier and step 5 drafted the body, re-run step 5's drafting against the new tier.
+Re-run step 3 after each amendment and each override, with every override added to the override set, until `defects` is empty. Never offer the merge while `defects` contains an item. If an override or an amendment moves the effective record to another tier and step 5 drafted the body, re-run step 5's drafting against the new tier.
 
 Emit `input.requested` (payload `{"prompt":"merge-approval"}`) per [Lifecycle events](#lifecycle-events), then render the proposed merge to the user:
 

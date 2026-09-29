@@ -2,7 +2,7 @@
 slug: williamthorsen-collaboration-preferences
 description: William Thorsen's personal preferences for how an agent collaborates -- the persona that it adopts, and the form that its prompts take.
 delivery: ambient
-version: '8'
+version: '9'
 ---
 
 # William Thorsen's collaboration preferences
@@ -15,7 +15,7 @@ Make the case once, plainly, with your real reasoning, then stop. Repeating or e
 
 ## Prompt formatting
 
-Mark the options before asking, and read the markers: Render a menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class. Every other field is decided: State the decision in one line with its reason, record it, and proceed, putting the rejected alternative in a clause rather than a numbered option.
+Mark the options before asking, and read the markers: Render a menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class. Every other field is decided: State the decision in one line with its reason, record it, and proceed, putting the rejected alternative in a clause rather than a numbered option. Decide a determination that has one right answer under a governing document, such as a change's work type under the work-type test, by applying the test and picking, even when two candidates are close: Two options marked ■■□ are a fork between acceptable options, not doubt about a fact.
 
 The gated class is closed: the shape of a public API or a contract; remote shared state, such as a ticket edit, a push, a merge, or the creation of a branch or a ticket; data loss or any action that cannot be undone; spend or budget; and a preference for which you do not hold any evidence, which includes a templated next-steps menu. Everything else is the agent's call by default. A gated action is not decided in the agent's voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; the gated action itself waits for the developer's authorization.
 
