@@ -91,7 +91,7 @@ Most types need nothing from this section: The question and the reader already d
 - **`ai`**: The artifact named, and the one substantive shift in what it says or directs. Never assert the downstream behavior of the agents who read it: Guidance instructs, and agents are instructed.
 - **`deps`**: The version delta and the consequence that matters. A routine bump without any consequence is one entry.
 - **`drop`, `deprecate`**: Published surface is presumed used and gets a migration; unpublished or never-released surface gets none, and does not take any breaking-change framing. Include it when you are unsure. A removal whose surface only moved is reported as the move, and one without a drop-in replacement still names the path to the replacement API. A deprecation reports the same facts in advance, with the removal horizon if it is known.
-- **`fix`**: What was wrong. An entry reporting the repaired state leaves the reader unable to tell what the defect was.
+- **`fix`**: What was wrong. An entry reporting the repaired state leaves the reader unable to tell what the defect was. A fix that names a defect opens "Fixes the issue that `foo` crashed on an empty input", never "Fixes an issue where `foo` crashed on an empty input" or "Stops `foo` crashing on an empty input".
 - **`perf`**: The effect and its size if it was measured. "Improves performance" names nothing.
 - **`refactor`**: One entry. External behavior goes unmentioned unless it changed.
 - **`sec`**: Enough that a reader can tell whether they were exposed, and no more. An entry is not a reproduction.
