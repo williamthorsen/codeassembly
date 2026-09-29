@@ -94,7 +94,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-writing-preferences',
-    { bodyHash: 'ec46bcbf1419ecd669076c129f6386fe7571a785eddc8fd7191320d320ac6c43', version: '9' },
+    { bodyHash: '67deb6c8ed1f640fbcab63aebff029162352984784ebe798247d60104cd4f4ca', version: '10' },
   ],
 ]);
 
@@ -129,7 +129,7 @@ const RULE_PINS = new Map<string, RulePin>([
   ['second-person', { sectionHash: '5b5fa597c03587feb40ba41386593007c04370bd01eb4e042bccf8e1b9e46427', version: '1' }],
   ['sentence-case', { sectionHash: 'e19ffdafdd6eb84f47e229d07871a70ab55114981c8052b365f4bd33330d9b18', version: '1' }],
   ['so', { sectionHash: '2ed8a0d1f531d1d33778f9006214931528d13f0ccd79ad004a87d05e0ba97bf3', version: '1' }],
-  ['where', { sectionHash: '95f7aa780c5110a9392d5377ad6078978a37dbfcd6ff631e7a884550c86aa67c', version: '1' }],
+  ['where', { sectionHash: 'de807a9bf2e30c9b97415507a2a0b67a216674032755cb6cf3e23e8d2019e397', version: '2' }],
 ]);
 
 const DRIFT_MESSAGE =
