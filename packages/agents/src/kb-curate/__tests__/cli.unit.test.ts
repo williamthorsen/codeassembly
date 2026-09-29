@@ -76,7 +76,11 @@ describe(runCurate, () => {
 
     const result = await runCurate({ argv: [], startDir, now: NOW, home });
 
-    expect(result).toEqual({ ok: false, error: 'no-kb-resolvable', message: expect.stringContaining('no .kb/') });
+    expect(result).toEqual({
+      ok: false,
+      error: 'no-kb-resolvable',
+      message: expect.stringContaining('discovery did not find any .kb/'),
+    });
   });
 
   it('returns no-kb-resolvable when --kb names an unregistered KB', async () => {

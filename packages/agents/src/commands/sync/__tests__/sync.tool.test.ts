@@ -2606,7 +2606,7 @@ describe(syncGlobalCommand, () => {
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
     const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir, contentDir), { level: 'warn' });
-    expect(output).toContain('no ambient region');
+    expect(output).toContain("doesn't have an ambient region");
 
     expect(await readFile(regionless, 'utf8')).toBe('# Guidance without a region\n');
   });

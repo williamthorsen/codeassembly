@@ -128,7 +128,7 @@ describe(runRetrieve, () => {
 
     expect(result.candidates).toHaveLength(1);
     expect(result.candidates[0]?.title).toBe('A legacy note without a record type');
-    expect(result.candidates[0]?.diagnostic).toMatch(/no recordType/);
+    expect(result.candidates[0]?.diagnostic).toMatch(/does not declare a recordType/);
   });
 
   it('applies the --diataxis filter to the candidate table', async () => {
