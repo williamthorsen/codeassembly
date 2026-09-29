@@ -216,6 +216,8 @@ Decide each type by applying this test to the change, whether the diff or an ent
 
 Apply the test to the diff whether or not `defects` holds an item. Commits, labels, and a PR title that agree can agree on one wrong type, which does not raise a defect, and the merge title would then publish that type. When the test's type differs from the effective record's, add `--override-type` with the test's type to the override set and state the decision in one line with its reason; when they agree, report nothing, here or at the gate.
 
+A type that the developer named, through `--type` or in an answer at the gate, stands: Never replace it with the test's type, here or in a record defect above: The gate shows the type so that the developer can correct it, and replacing the correction leaves the developer unable to merge under it. When the test disagrees with it, state the disagreement in one line at the gate and change nothing.
+
 Take a type spelled with the marker, whether decided here or named by the developer, as the pair that the flags imply: `feat!` is `--override-type feat` with `--override-breaking`, and for an entry, `--type feat` with `--breaking`. The helper refuses a type spelled with `!`, so it would refuse such a type passed through unchanged, and the defect would stay unsettled.
 
 When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)

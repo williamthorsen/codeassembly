@@ -38,4 +38,10 @@ describe('merge-pr contract', () => {
 
     expect(text).toContain('ask once to authorize all of them');
   });
+
+  it("keeps a type that the developer named over the test's type", async () => {
+    const text = (await EXPANDED).toLowerCase();
+
+    expect(text).toContain('a type that the developer named, through `--type` or in an answer at the gate, stands');
+  });
 });
