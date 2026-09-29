@@ -8,7 +8,7 @@ const FENCE = '---';
 export interface ReadNote {
   fields: Record<string, unknown>;
   body: string;
-  /** 1-based file line where the body begins (line 1 when there is no frontmatter block). */
+  /** 1-based file line where the body begins (line 1 when the file does not contain a frontmatter block). */
   bodyStartLine: number;
   error?: string;
 }
