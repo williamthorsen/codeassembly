@@ -2,14 +2,14 @@
 slug: williamthorsen-ticketing-preferences
 description: William Thorsen's preferences for how work is split across tickets and how the relationships between them are recorded.
 delivery: hook
-version: '3'
+version: '4'
 ---
 
 # William Thorsen's ticketing preferences
 
 ## Splitting work across tickets
 
-When work deserves more than one pull request, give each pull request its own ticket. When the split yields more than two tickets, the originating ticket becomes an umbrella rather than describing work of its own.
+When work deserves more than one pull request, give each pull request its own ticket. When splitting a ticket into two, keep the first piece in the originating ticket. When splitting into more, make the originating ticket an umbrella.
 
 A piece earns a ticket when it ships and can be verified on its own, not when it looks large enough to deserve one. When the count is a judgment, cut finer: Merging two tickets that turned out to be one costs an edit and a close, while splitting one that turned out to be four costs a rewrite of the original, new children, a re-cut plan, and whatever was committed against the superseded contract.
 
