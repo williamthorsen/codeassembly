@@ -58,12 +58,13 @@ Reject a site outright on any of these grounds:
 - **Outside the rule.** For `reduced-object-relative`, the gap does not fill an argument position. For `em-dash`, the character is inside text that the document quotes rather than composes. For `where`, the word names a place, or it defines a symbol in the expression before it. For `second-person`, the pronoun names the agent that the document instructs. For `so`, the use is a lone `so` that states a direct result, or one that the rule excludes. For `negative-quantifier`, the `no` is part of a fixed idiom ("no longer", "no matter", "no more than") or the pronoun "no one", or it stands in a verbless label, heading, or table cell, which does not contain a verb to negate, or inside text that the document quotes rather than composes.
 - **A marked exhibit.** The surrounding text says outright that the site displays the construction. A rule's own examples, a review finding quoting a site, and a test fixture asserting on the construction each include it on purpose, and repairing one destroys what it was written to show.
 
-Four grounds put a site in the questionable list rather than the applied one:
+Five grounds put a site in the questionable list rather than the applied one:
 
 - **A plausible exhibit.** The site reads as an exhibit, and the surrounding text does not say so.
 - **A repair that changes meaning.** The plain wording would resolve an ambiguity that the original left open, or the head noun is ambiguous and the repair picks one reading.
 - **A file that is mostly rejections.** More than half of one file's candidates without `stale: true` were rejected, which usually means the file is a rule, a fixture, or a corpus rather than ordinary prose. Report that file's remaining repairs here. A stale candidate counts toward neither the rejected candidates nor the total, because an earlier sweep has already judged its site.
 - **An elided code span that decides the reading.** The source line does not settle whether the site breaks the rule.
+- **Asserted text.** A file outside your batch quotes the site, as a test expectation or a doc quoting a printed string does. The repair may be clear; it is questionable because the quoting file would need the same edit. For each printed string that you would repair, search the repository for the phrase with {tool:Grep} before applying the repair.
 
 ## What you may not do
 
