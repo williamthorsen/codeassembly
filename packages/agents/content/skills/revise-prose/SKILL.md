@@ -112,8 +112,8 @@ rules: {rule-id}, {rule-id}
 
 ### 5. Close the run
 
-1. **Present the questionables** in one table grouped by ground, per [Summary format](#summary-format). The user accepts or rejects each.
-2. **Apply the accepted repairs** with the {tool:Edit} tool, phrase to phrase from each entry's `phrase` and `repair`. Stop at the first edit that does not match, so that the user sees what diverged.
+1. **Adjudicate the questionables.** Decide each entry yourself before asking the user about any of them. Read the context that decides it: the code around the site; the tests and docs that quote the phrase, found by searching the repository for it with {tool:Grep}; other batches' `applied` entries that repair the same wording; and the docs that the site links to. Then accept or reject the repair, and record the reason. Pass a site to the user only if deciding it requires information that the repository does not contain, or if the repair is in the gated class, such as a change to printed output that a consumer outside the repository may parse. Once every other entry is decided, present the passed sites together in the residue table per [Summary format](#summary-format), each with your recommendation and its reason.
+2. **Apply the accepted repairs**, yours and the user's, with the {tool:Edit} tool, phrase to phrase from each entry's `phrase` and `repair`. If a test expectation or a doc quotes the repaired text, update each quoting file to the repaired text as part of the same repair. Stop at the first edit that does not match, so that the user sees what diverged.
 3. **Compose the fold** and pipe it to the helper's `record` command, which is the record's only write path:
 
    ```bash
@@ -124,12 +124,12 @@ rules: {rule-id}, {rule-id}
 
    `sweptAt` is today's ISO calendar date. `roots` lists the invocation's narrowing paths, or `["."]` for a whole-repository sweep. `units` names every unit from step 1 at its current version. `rules` names every rule that step 2 passed with a version, `plain-speech` included, with its unit and its sweep version; the helper records for each whether it holds the rule's detector.
 
-   `rejections` contains every subagent rejection plus every questionable that the user rejected, each containing `rule`, `file`, `phrase` as the text reads after this run's edits, and `ground`. Leave out a rejection under a rule that `rules` does not name, which is a rule without a sweep version: Nothing records such a rule, and the helper refuses the fold.
+   `rejections` contains every subagent rejection plus every questionable rejected in step 5.1, by you or by the user, each containing `rule`, `file`, `phrase` as the text reads after this run's edits, and `ground`. A rejected questionable's `ground` is the reason recorded for its rejection. Leave out a rejection under a rule that `rules` does not name, which is a rule without a sweep version: Nothing records such a rule, and the helper refuses the fold.
 
    **Fold every rejection under a rule that `rules` names, whether or not the helper has its detector.** Because a rejection resolves to a site by its rule, its file, and its phrase, a rejection under a rule for which the helper does not have a detector is recorded and re-suppressed like any other. Report the phrase as it reads in the source and long enough to locate the site by eye: The helper masks inline code spans and matches by containment, and therefore a span wider than the one reported by the detector still resolves to it. On the next sweep, step 4 writes the recorded sites to the rejections file of each batch that covers them.
 
-4. **Commit the closing repairs and the record together**, per `{skill:create-commit}`.
-5. **Run the project's quality gate** as `{skill:development-workflows}` resolves it. A test that asserts on a repaired string fails there; repair the test expectation and commit that separately.
+4. **Commit the closing repairs, the quoting files that they updated, and the record together**, per `{skill:create-commit}`.
+5. **Run the project's quality gate** as `{skill:development-workflows}` resolves it. A test that asserts on a string repaired by a subagent fails there; repair the test expectation and commit that separately.
 6. **Emit the summary** per [Summary format](#summary-format).
 
 <!-- include: ../../_partials/plain-speech.md / -->
@@ -162,16 +162,24 @@ Give the excluded-files clause only if `filesSkipped` reports a non-zero count, 
 
 Give the line naming the rules without a detector only if the helper's `rules.undetected` lists any, naming each. If a marker misspells a detector rule's id, the misspelled id appears only on this line: The subagent still sweeps the rule wherever a batch applies it, and the helper does not run a detector for it.
 
-Present the questionables as one table grouped by ground, before the per-batch tables:
+Present every questionable in the adjudicated table, grouped by ground, before the per-batch tables. A site passed to the user has the verdict that the user's answer gave it.
 
 ```
-| # | Ground             | File                | Line | Phrase                             | Repair                                  |
-| - | ------------------ | ------------------- | ---- | ---------------------------------- | --------------------------------------- |
-| 1 | plausible exhibit  | docs/rules.md       | 61   | the source it names                | the source that it names                |
-| 2 | changes meaning    | src/parse.ts        | 22   | the findings arrive as warnings    | the function reports warnings           |
+| # | Ground            | File          | Line | Phrase                          | Repair                        | Verdict | Reason                                               |
+| - | ----------------- | ------------- | ---- | ------------------------------- | ----------------------------- | ------- | ---------------------------------------------------- |
+| 1 | plausible exhibit | docs/rules.md | 61   | the source it names             | the source that it names      | reject  | the list above it introduces each line as an exhibit |
+| 2 | changes meaning   | src/parse.ts  | 22   | the findings arrive as warnings | the function reports warnings | apply   | `parse` emits the warnings, per its tests            |
 ```
 
-Ask for the numbers to apply, and treat every unnamed row as rejected.
+Step 5.1 presents the sites passed to the user in the residue table, which has the same columns with a recommendation, `apply` or `reject`, in place of the verdict:
+
+```
+| # | Ground        | File       | Line | Phrase               | Repair                        | Recommendation | Reason                                         |
+| - | ------------- | ---------- | ---- | -------------------- | ----------------------------- | -------------- | ---------------------------------------------- |
+| 1 | asserted text | src/cli.ts | 40   | no config file found | the config file isn't present | reject         | release notes document the message for scripts |
+```
+
+Ask for the numbers of the rows to decide against their recommendation; every unnamed row takes its recommendation.
 
 Because there is nothing yet to adjudicate under `--dry-run`, the run reports the candidates instead: one table per file, ordered as the helper reported them, with the rule, the line, and the phrase. If the total is large, the user reads `byFile` and `byShape` to narrow the next run.
 
