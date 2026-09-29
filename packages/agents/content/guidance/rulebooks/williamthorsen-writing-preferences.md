@@ -2,7 +2,7 @@
 slug: williamthorsen-writing-preferences
 description: William Thorsen's personal writing preferences for agent-authored prose.
 delivery: [ambient, hook]
-version: '9'
+version: '10'
 ---
 
 # William Thorsen's writing preferences
@@ -65,9 +65,10 @@ A degree adverb ("so many") and a `so` that stands for a clause ("do so", "if so
 
 ## `where`
 
-<!-- rule: where 1 -->
+<!-- rule: where 2 -->
 
 Use `where` for a place, or after an expression to state what a symbol, variable, placeholder, or value in it stands for; for any other relation, use the word that most clearly expresses it.
 
 - **Definition:** "`{NN+1}`, where `{NN}` is the run-summary sequence number"
 - **Condition (a violation):** "the entry where `role` is `coder`" becomes "the entry whose `role` is `coder`"
+- **Event (a violation):** "Fixes an issue where the report cut a subject" becomes "Fixes the issue that the report cut a subject"
