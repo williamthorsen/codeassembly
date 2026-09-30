@@ -186,6 +186,20 @@ describe('ambient-host skips', () => {
   });
 });
 
+describe('references', () => {
+  const REFERENCE = { name: 'next-docs', summary: 'Read it.', target: '/home/me/app/docs', displayPath: '~/app/docs' };
+
+  it('names each reference and its displayed path on a dry run', () => {
+    expect(textOf(renderDryRunReport(reconciled({ references: [REFERENCE] })))).toContain(
+      '  point reference "next-docs" at ~/app/docs',
+    );
+  });
+
+  it('prints no reference line when none is declared', () => {
+    expect(textOf(renderDryRunReport(reconciled()))).not.toContain('point reference');
+  });
+});
+
 describe('retirements', () => {
   it('reports a retired rulebook tree on both paths, as pending in a dry run and as done in a live one', () => {
     const outcome = reconciled({ retirements: [{ kind: 'neutral-rulebooks', dir: '/project/.agents/rulebooks' }] });

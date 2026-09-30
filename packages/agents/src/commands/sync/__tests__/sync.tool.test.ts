@@ -1087,6 +1087,18 @@ describe(syncCommand, () => {
       expect(await readFile(localHostPath(), 'utf8')).toBe(first);
     });
 
+    it('names the resolved path in the dry-run report without writing', async () => {
+      const packageDir = await installDocsPackage();
+      await declareRaw(REFERENCE_DECLARATION);
+
+      const outcome = await syncCommand(makeOptions({ dryRun: true }), projectRoot, contentDir, homeDir);
+
+      expect(renderReportText(outcome, { dryRun: true })).toContain(
+        `point reference "fixture-docs" at ${path.join(packageDir, 'dist', 'docs')}`,
+      );
+      expect(existsSync(localHostPath())).toBe(false);
+    });
+
     it.each([false, true])(
       'fails on a reference that does not resolve before any write (dry run: %s), keeping the written region',
       async (dryRun) => {
