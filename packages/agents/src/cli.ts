@@ -3,7 +3,11 @@
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
-import { describeInvalidOutputStyle, resolveOutputStyle } from '@williamthorsen/toolbelt.terminal/candidate';
+import {
+  describeInvalidOutputStyle,
+  type OutputStyleResolution,
+  resolveOutputStyle,
+} from '@williamthorsen/toolbelt.terminal/candidate';
 
 import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
@@ -99,11 +103,8 @@ async function main(): Promise<void> {
  * terminal state, and exits with a usage error when either source names no style.
  */
 function configureStreamStyles(): void {
-  const argv = process.argv.slice(2);
-  const resolve = (isTty: boolean) =>
-    resolveOutputStyle({ argv, env: process.env, envVar: OUTPUT_STYLE_ENV_VAR, flag: '--output-style', isTty });
-  const stdout = resolve(process.stdout.isTTY);
-  const stderr = resolve(process.stderr.isTTY);
+  const stdout = resolveStreamStyle(process.stdout.isTTY);
+  const stderr = resolveStreamStyle(process.stderr.isTTY);
   configureOutputStyle({ stderr: stderr.style, stdout: stdout.style });
   if (stdout.invalid !== undefined) {
     console.error(`Error: ${describeInvalidOutputStyle(stdout.invalid)}`);
@@ -322,6 +323,17 @@ function reportSyncFailure(error: unknown): void {
     console.error(`Error: ${describeError(error)}`);
   }
   console.error(`\n${SYNC_FAILURE_EFFECT}`);
+}
+
+/** Resolves the glyph style of a stream whose terminal state is `isTty`, from the invocation and the environment. */
+function resolveStreamStyle(isTty: boolean): OutputStyleResolution {
+  return resolveOutputStyle({
+    argv: process.argv.slice(2),
+    env: process.env,
+    envVar: OUTPUT_STYLE_ENV_VAR,
+    flag: '--output-style',
+    isTty,
+  });
 }
 
 /** Dispatches a `generate` target, printing that command's usage and exiting non-zero when the target is unknown. */
