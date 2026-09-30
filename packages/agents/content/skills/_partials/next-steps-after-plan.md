@@ -70,7 +70,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
    When rule 2 matches, the rendered option must name the size and the pieces on a `➕` line. Being unable to write the line means rule 2 did not match.
 
-3. **Implement**: All other cases (default), whatever the number of modules or packages that the plan touches. `implement-plan`'s closing menu re-decides the review depth from the realized diff, and Orchestrated review is among its options, so a plan sent here is not committed to a single review pass.
+3. **Implement**: All other cases (default), whatever the number of modules or packages that the plan touches. `implement-plan`'s closing menu re-decides the review depth from the realized diff, and it offers a split when the diff proves too large for one review pass, so a plan sent here is not committed to a single pull request.
 
    When the work is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md): a typo fix, an unused-import removal, a single-file mechanical rename), add a `➕` line noting that the follow-up review can be skipped at `implement-plan`'s closing menu. That menu decides the review from the diff that the implementation actually produced, so a plan-time triviality read is a hint to it rather than a commitment.
 
