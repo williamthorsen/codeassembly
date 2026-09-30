@@ -94,7 +94,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-writing-preferences',
-    { bodyHash: '67deb6c8ed1f640fbcab63aebff029162352984784ebe798247d60104cd4f4ca', version: '10' },
+    { bodyHash: '1eaeb3b9351dc69211da6cfed74dbd89345466eaf94bdf35acf8375170903219', version: '11' },
   ],
 ]);
 
@@ -108,6 +108,7 @@ const PINS = new Map<string, RulebookPin>([
  * rulebook: `plain-speech-calibration.unit.test.ts` pins the calibration's whole text instead.
  */
 const RULE_PINS = new Map<string, RulePin>([
+  ['apostrophes', { sectionHash: '8da94cdfe74162b635312b726ab52976f9afde10f63b8c4bf8e41187c5f9e7f5', version: '1' }],
   [
     'capitalization-after-colon',
     { sectionHash: '58ec61bdaea1ae6d2b092c93749893447830b2e09796e127cfcac17164a297d4', version: '1' },
