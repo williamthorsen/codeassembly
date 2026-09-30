@@ -2,11 +2,12 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
+import { defineGlyphSet, type Glyph, type OutputStyle } from '@williamthorsen/toolbelt.terminal/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
-import { printLine } from '../lib/emit-report.ts';
+import { printLine, readOutputStyle } from '../lib/emit-report.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
@@ -15,33 +16,39 @@ import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { SUPPORTED_HARNESSES_KEY } from '../lib/skill-deploy.ts';
 import { isRecord } from '../lib/type-guards.ts';
 
-/** A single artifact's normalized listing fields, before its type and emoji are attached. */
+/** A single artifact's normalized listing fields, before its type is attached. */
 interface ArtifactEntry {
   readonly slug: string;
   readonly delivery: string;
   readonly description: string;
 }
 
-/** A listing row: an artifact entry tagged with its display type and emoji. */
+/** A listing row: an artifact entry tagged with its type. */
 export interface LibraryRow extends ArtifactEntry {
   readonly type: ArtifactType;
-  readonly emoji: string;
 }
 
-/** Pairs an artifact type with its display emoji and the enumerator that lists it from a content directory. */
+/** Pairs an artifact type with the enumerator that lists it from a content directory. */
 interface ArtifactDescriptor {
   readonly type: ArtifactType;
-  readonly emoji: string;
   list(contentDir: string): Promise<Array<ArtifactEntry>>;
 }
 
 /** The types enumerated by `library list`, in display order. */
 const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
-  { type: 'rulebook', emoji: '📕', list: listRulebooks },
-  { type: 'skill', emoji: '🪄', list: listSkills },
-  { type: 'subagent', emoji: '🤖', list: listSubagents },
-  { type: 'collection', emoji: '📦', list: listCollections },
+  { type: 'rulebook', list: listRulebooks },
+  { type: 'skill', list: listSkills },
+  { type: 'subagent', list: listSubagents },
+  { type: 'collection', list: listCollections },
 ];
+
+/** The glyph leading each type's cell; plain output has none, leaving the label alone. */
+const TYPE_GLYPHS = defineGlyphSet<ArtifactType>({
+  collection: { plain: '', rich: '📦' },
+  rulebook: { plain: '', rich: '📕' },
+  skill: { plain: '', rich: '🪄' },
+  subagent: { plain: '', rich: '🤖' },
+});
 
 /** Rank used to group rows by type before the within-type slug sort. */
 const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
@@ -52,8 +59,6 @@ const NO_DELIVERY_MODE = '—';
 const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
 
 const COLUMN_GAP = 2;
-/** Display cells occupied by a type emoji. All chosen emoji are East-Asian wide (two cells). */
-const EMOJI_DISPLAY_WIDTH = 2;
 /** Floor for the description column so that a narrow terminal still wraps rather than collapses it. */
 const MIN_DESCRIPTION_WIDTH = 20;
 
@@ -65,11 +70,11 @@ export async function libraryListCommand(contentDir: string = resolveContentDir(
   for (const descriptor of ARTIFACT_DESCRIPTORS) {
     const entries = await descriptor.list(contentDir);
     for (const entry of entries) {
-      rows.push({ ...entry, type: descriptor.type, emoji: descriptor.emoji });
+      rows.push({ ...entry, type: descriptor.type });
     }
   }
 
-  console.info(renderLibraryTable(rows, resolveTerminalWidth()));
+  console.info(renderLibraryTable(rows, resolveTerminalWidth(), readOutputStyle('stdout')));
 }
 
 /** Prints usage information for the `library` command. */
@@ -81,14 +86,18 @@ Subcommands:
 }
 
 /**
- * Renders rows as an aligned table, sorted by type then slug: type (emoji + label), slug, delivery, then a
- * hanging-indent-wrapped description. `width` bounds the description column; the others size to their
- * content. Pure and deterministic for a given (rows, width).
+ * Renders rows as an aligned table, sorted by type then slug: type (the type's glyph in `style`, then its label), slug,
+ * delivery, then a hanging-indent-wrapped description. `width` bounds the description column; the others size to
+ * their content. Pure and deterministic for a given (rows, width, style).
  */
-export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: number): string {
+export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: number, style: OutputStyle): string {
   const sorted = rows.toSorted(compareRows);
+  const glyphs = TYPE_GLYPHS[style];
 
-  const typeColWidth = Math.max(HEADERS.type.length, ...sorted.map((row) => EMOJI_DISPLAY_WIDTH + 1 + row.type.length));
+  const typeColWidth = Math.max(
+    HEADERS.type.length,
+    ...sorted.map((row) => measureTypeCell(glyphs[row.type], row.type)),
+  );
   const slugColWidth = Math.max(HEADERS.slug.length, ...sorted.map((row) => row.slug.length));
   const deliveryColWidth = Math.max(HEADERS.delivery.length, ...sorted.map((row) => row.delivery.length));
   const prefixWidth = typeColWidth + COLUMN_GAP + slugColWidth + COLUMN_GAP + deliveryColWidth + COLUMN_GAP;
@@ -108,7 +117,7 @@ export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: numbe
 
   for (const row of sorted) {
     const prefix =
-      padType(row.emoji, row.type, typeColWidth) +
+      padType(glyphs[row.type], row.type, typeColWidth) +
       gap +
       row.slug.padEnd(slugColWidth) +
       gap +
@@ -232,10 +241,15 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
   return entries;
 }
 
-/** Builds a type cell (`{emoji} {label}`) padded with trailing spaces to `colWidth` display cells. */
-function padType(emoji: string, label: string, colWidth: number): string {
-  const padding = Math.max(0, colWidth - (EMOJI_DISPLAY_WIDTH + 1 + label.length));
-  return `${emoji} ${label}${' '.repeat(padding)}`;
+/** Measures a type cell in display cells: the glyph and a separating space when the glyph is visible, then the label. */
+function measureTypeCell(glyph: Glyph, label: string): number {
+  return (glyph.width === 0 ? 0 : glyph.width + 1) + label.length;
+}
+
+/** Builds a type cell (`{glyph} {label}`, or the label alone for an empty glyph) padded to `colWidth` display cells. */
+function padType(glyph: Glyph, label: string, colWidth: number): string {
+  const cell = glyph.width === 0 ? label : `${glyph.text} ${label}`;
+  return cell + ' '.repeat(Math.max(0, colWidth - measureTypeCell(glyph, label)));
 }
 
 /**
