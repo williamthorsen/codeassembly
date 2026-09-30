@@ -11,6 +11,7 @@ catalog:
   '@vitejs/plugin-react': '6.1.1'
   '@williamthorsen/nmr': '0.39.0'
   '@williamthorsen/toolbelt.errors': '0.8.1'
+  '@williamthorsen/toolbelt.terminal': '0.2.0'
   '@williamthorsen/toolbelt.testing': '0.6.1'
   '@williamthorsen/toolbelt.vitest': '0.10.1'
   esbuild: '0.28.2'
