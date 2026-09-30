@@ -37,12 +37,20 @@ interface CliResult {
 
 /** Runs the CLI under the running Node in an optional working directory, capturing stdout, stderr, and exit code. */
 async function runCliIn(cwd: string | undefined, ...args: Array<string>): Promise<CliResult> {
+  return runCliWithEnv(cwd, {}, ...args);
+}
+
+/** Runs the CLI as `runCliIn` does, with `env` layered over the inherited environment. */
+async function runCliWithEnv(
+  cwd: string | undefined,
+  env: Readonly<Record<string, string>>,
+  ...args: Array<string>
+): Promise<CliResult> {
   try {
-    const { stdout, stderr } = await execFileAsync(
-      process.execPath,
-      [CLI_PATH, ...args],
-      cwd === undefined ? {} : { cwd },
-    );
+    const { stdout, stderr } = await execFileAsync(process.execPath, [CLI_PATH, ...args], {
+      env: { ...process.env, ...env },
+      ...(cwd !== undefined && { cwd }),
+    });
     return { stdout, stderr, exitCode: 0 };
   } catch (error: unknown) {
     if (isExecError(error)) {
@@ -228,5 +236,60 @@ describe('CLI sync failure reporting', () => {
     expect(result.stderr).toContain('Nothing was written');
     expect(result.stderr).toContain('previously deployed guidance remains in effect');
     expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(false);
+  });
+
+  // The CLI's stderr is a pipe here, so detection alone resolves the plain style.
+  it('prints the defect header in plain style to a stream that is not a terminal', async () => {
+    const result = await runCliWithEnv(projectRoot, { CODEASSEMBLY_OUTPUT_STYLE: '' }, 'sync', '--harness', 'claude');
+
+    expect(result.stderr).toContain('FAIL sync found 2 defect(s)');
+    expect(result.stderr).not.toContain('❌');
+  });
+
+  it('prints the defect header in rich style when --output-style forces it', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--harness', 'claude', '--output-style', 'rich');
+
+    expect(result.stderr).toContain('❌ sync found 2 defect(s)');
+  });
+
+  it('prints the defect header in rich style when CODEASSEMBLY_OUTPUT_STYLE forces it', async () => {
+    const result = await runCliWithEnv(
+      projectRoot,
+      { CODEASSEMBLY_OUTPUT_STYLE: 'rich' },
+      'sync',
+      '--harness',
+      'claude',
+    );
+
+    expect(result.stderr).toContain('❌ sync found 2 defect(s)');
+  });
+
+  it('lets --output-style outrank CODEASSEMBLY_OUTPUT_STYLE', async () => {
+    const result = await runCliWithEnv(
+      projectRoot,
+      { CODEASSEMBLY_OUTPUT_STYLE: 'rich' },
+      'sync',
+      '--harness',
+      'claude',
+      '--output-style=plain',
+    );
+
+    expect(result.stderr).toContain('FAIL sync found 2 defect(s)');
+  });
+});
+
+describe('CLI output-style flag', () => {
+  it('rejects a value that names no style, naming the accepted ones', async () => {
+    const result = await runCli('status', '--output-style', 'fancy');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('--output-style must be one of: auto, plain, rich (got "fancy")');
+  });
+
+  it('documents --output-style and CODEASSEMBLY_OUTPUT_STYLE in --help', async () => {
+    const result = await runCli('--help');
+
+    expect(result.stdout).toContain('--output-style <auto|plain|rich>');
+    expect(result.stdout).toContain('CODEASSEMBLY_OUTPUT_STYLE');
   });
 });

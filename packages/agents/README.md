@@ -43,7 +43,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
-Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, and `--help`. `--content <dir>` applies to `validate` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
+Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, `--output-style <auto\|plain\|rich>`, and `--help`. `--output-style` prints status glyphs as emoji (`rich`) or as words (`plain`); `auto`, the default, prints plain to a stream that is not a terminal or in CI, and `CODEASSEMBLY_OUTPUT_STYLE` sets it when the flag is absent. `--content <dir>` applies to `validate` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
 
 ## Session-lifecycle hooks
 
