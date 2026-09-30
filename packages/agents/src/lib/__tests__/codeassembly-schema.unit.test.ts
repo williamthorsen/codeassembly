@@ -25,8 +25,8 @@ describe(parseCodeAssemblyFile, () => {
   });
 
   it('treats an empty or comment-only file as nothing declared', () => {
-    expect(parseCodeAssemblyFile('')).toEqual({ root: false, sources: [] });
-    expect(parseCodeAssemblyFile('# just a comment\n')).toEqual({ root: false, sources: [] });
+    expect(parseCodeAssemblyFile('')).toEqual({ root: false, sources: [], references: [] });
+    expect(parseCodeAssemblyFile('# just a comment\n')).toEqual({ root: false, sources: [], references: [] });
   });
 
   it('tolerates unknown keys on a structured entry', () => {
@@ -162,6 +162,53 @@ describe(parseCodeAssemblyFile, () => {
 
   it('throws when sources is not a list', () => {
     expect(() => parseCodeAssemblyFile('sources:\n  name: org\n  path: ../shared\n')).toThrow();
+  });
+
+  it('defaults references to an empty list when the key is absent or null', () => {
+    expect(parseCodeAssemblyFile('root: false\n').references).toEqual([]);
+    expect(parseCodeAssemblyFile('references:\n').references).toEqual([]);
+  });
+
+  it('parses a references list, with resolve-from optional', () => {
+    const declaration = parseCodeAssemblyFile(
+      'references:\n' +
+        '  - name: nextjs-docs\n    package: next\n    path: dist/docs\n    summary: Read the guide.\n' +
+        '  - name: web-docs\n    package: next\n    path: dist/docs\n    summary: Read it.\n    resolve-from: apps/web\n',
+    );
+
+    expect(declaration.references).toEqual([
+      { name: 'nextjs-docs', package: 'next', path: 'dist/docs', summary: 'Read the guide.' },
+      { name: 'web-docs', package: 'next', path: 'dist/docs', summary: 'Read it.', 'resolve-from': 'apps/web' },
+    ]);
+  });
+
+  it.each(['package', 'path', 'summary'])(
+    'throws when a reference is missing %s, naming the file and path',
+    (field) => {
+      const fields = { name: 'docs', package: 'next', path: 'dist/docs', summary: 'Read it.' };
+      const yaml = Object.entries(fields)
+        .filter(([key]) => key !== field)
+        .map(([key, value], index) => `${index === 0 ? '  - ' : '    '}${key}: ${value}`)
+        .join('\n');
+
+      expect(() => parseCodeAssemblyFile(`references:\n${yaml}\n`, '/p/.agents/codeassembly.yaml')).toThrow(
+        `Invalid codeassembly.yaml in /p/.agents/codeassembly.yaml: references.0.${field}`,
+      );
+    },
+  );
+
+  it('throws when a reference name is not kebab-case', () => {
+    expect(() =>
+      parseCodeAssemblyFile('references:\n  - name: Next_Docs\n    package: next\n    path: docs\n    summary: x\n'),
+    ).toThrow('references.0.name: reference name must be lowercase kebab-case');
+  });
+
+  it('throws when a reference resolve-from is an empty string', () => {
+    expect(() =>
+      parseCodeAssemblyFile(
+        'references:\n  - name: docs\n    package: next\n    path: docs\n    summary: x\n    resolve-from: ""\n',
+      ),
+    ).toThrow(/resolve-from/);
   });
 
   it('parses a harnesses declaration with bare and structured entries', () => {

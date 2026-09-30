@@ -25,6 +25,21 @@ const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_
 export const SourceSchema = z.object({ name: z.string().min(1), path: z.string().min(1) }).loose();
 
 /**
+ * A declared reference: a path inside an installed dependency that `sync` points the agent at, with the pointer's text
+ * authored by the consumer. `resolve-from` names the directory from which the package is resolved, relative to the
+ * directory that contains the declaring file's `.agents/`. Unknown keys pass through, as on `SourceSchema`.
+ */
+export const ReferenceSchema = z
+  .object({
+    name: z.string().regex(/^[a-z0-9-]+$/, 'reference name must be lowercase kebab-case'),
+    package: z.string().min(1),
+    path: z.string().min(1),
+    summary: z.string().min(1),
+    'resolve-from': z.string().min(1).optional(),
+  })
+  .loose();
+
+/**
  * Schema for a single grouped `codeassembly.yaml` declaration. The top level is closed (an unrecognized key triggers
  * an error); entries are open (unknown keys pass through). Each block resolves to `{ use, drop }` lists; an absent or
  * null block is omitted. `packages` and `harnesses` reuse that same block shape, so `use`, `drop`, and `root` apply
@@ -45,6 +60,7 @@ const CodeAssemblySchema = z
     'home-writer': z.string().optional(),
     harnesses: optionalHarnessDeclaration(),
     sources: optionalSourceList(),
+    references: optionalReferenceList(),
     packages: optionalTypeDeclaration(),
     rulebooks: optionalTypeDeclaration(),
     skills: optionalTypeDeclaration(),
@@ -80,6 +96,9 @@ export type DeclarationEntry = z.infer<typeof EntrySchema>;
 
 /** A declared content source as authored: a `{ name, path }` pair with any unknown keys preserved. */
 export type DeclarationSource = z.infer<typeof SourceSchema>;
+
+/** A declared reference as authored, with any unknown keys preserved. */
+export type DeclarationReference = z.infer<typeof ReferenceSchema>;
 
 /**
  * Parses and validates one `codeassembly.yaml` file's contents into a typed declaration. An empty or comment-only
@@ -170,6 +189,11 @@ function typeDeclarationSchema() {
 /** Resolves an absent type key, or one whose value is `null`, to `undefined` rather than a validation error. */
 function optionalTypeDeclaration(): z.ZodType<TypeDeclaration | undefined> {
   return z.preprocess((value) => value ?? undefined, typeDeclarationSchema().optional());
+}
+
+/** Resolves an absent `references` key, or one whose value is `null`, to an empty list. */
+function optionalReferenceList(): z.ZodType<Array<DeclarationReference>> {
+  return z.preprocess((value) => value ?? undefined, z.array(ReferenceSchema).default([]));
 }
 
 /** Resolves an absent `sources` key, or one whose value is `null` (all entries commented out), to an empty list. */

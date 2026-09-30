@@ -56,6 +56,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -70,6 +71,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -84,6 +86,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -98,6 +101,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -112,6 +116,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -128,6 +133,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -145,6 +151,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -160,6 +167,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -175,6 +183,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -189,6 +198,7 @@ describe(resolveDeclaration, () => {
       packages: ['@williamthorsen/nmr', 'readyup'],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -204,6 +214,7 @@ describe(resolveDeclaration, () => {
       packages: ['readyup'],
       declinedPackages: ['@williamthorsen/nmr'],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -253,6 +264,7 @@ describe(resolveDeclaration, () => {
       packages: ['@acme/new'],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -267,6 +279,7 @@ describe(resolveDeclaration, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
     });
   });
@@ -385,6 +398,57 @@ describe(resolveDeclaration, () => {
       expect(declaration?.sources).toEqual([{ name: 'local', dir: '/local' }]);
     });
   });
+
+  describe('references', () => {
+    /** Builds one `references` entry as YAML, with `resolve-from` when given. */
+    function buildReference(name: string, summary: string, resolveFrom?: string): string {
+      const entry = `  - name: ${name}\n    package: next\n    path: dist/docs\n    summary: ${summary}\n`;
+      return resolveFrom === undefined ? entry : `${entry}    resolve-from: ${resolveFrom}\n`;
+    }
+
+    it('resolves resolve-from against the directory containing .agents/, defaulting to that directory', async () => {
+      await writeProject(
+        `references:\n${buildReference('root-docs', 'Root.')}${buildReference('web-docs', 'Web.', 'apps/web')}`,
+      );
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.references).toEqual([
+        {
+          name: 'web-docs',
+          package: 'next',
+          path: 'dist/docs',
+          summary: 'Web.',
+          resolveFrom: path.join(cwd, 'apps/web'),
+          declaredIn: projectPath(),
+        },
+        {
+          name: 'root-docs',
+          package: 'next',
+          path: 'dist/docs',
+          summary: 'Root.',
+          resolveFrom: cwd,
+          declaredIn: projectPath(),
+        },
+      ]);
+    });
+
+    it('resolves a repeated name to the higher tier’s fields and declaring file, ahead of the rest', async () => {
+      await writeProject(`references:\n${buildReference('docs', 'Old.')}${buildReference('other', 'Other.')}`);
+      await writeLocal(`references:\n${buildReference('docs', 'New.')}`);
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.references.map(({ name, summary, declaredIn }) => ({ name, summary, declaredIn }))).toEqual([
+        { name: 'docs', summary: 'New.', declaredIn: localPath() },
+        { name: 'other', summary: 'Other.', declaredIn: projectPath() },
+      ]);
+    });
+
+    it('discards lower-tier references when a higher tier declares root: true', async () => {
+      await writeProject(`references:\n${buildReference('docs', 'Old.')}`);
+      await writeLocal(`root: true\nreferences:\n${buildReference('local-docs', 'Local.')}`);
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.references.map((reference) => reference.name)).toEqual(['local-docs']);
+    });
+  });
+
   describe('guidance-hooks', () => {
     it('accumulates each hook independently, deduplicating within a hook', async () => {
       await writeProject(

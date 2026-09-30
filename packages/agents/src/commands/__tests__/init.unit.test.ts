@@ -70,6 +70,7 @@ describe(initCommand, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
       declaredIn: { rulebook: new Map(), skill: new Map(), subagent: new Map(), collection: new Map() },
     });
@@ -154,6 +155,7 @@ describe(initGlobalCommand, () => {
       packages: [],
       declinedPackages: [],
       sources: [],
+      references: [],
       guidanceHooks: new Map(),
       declaredIn: {
         rulebook: new Map(),
