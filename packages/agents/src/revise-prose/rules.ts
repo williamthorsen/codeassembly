@@ -5,6 +5,7 @@
  * file doesn't contain any unit. The helper doesn't read any rule document, so what a rule *says* is the skill's
  * to hold; what a rule *finds* is here.
  */
+import { detectDroppedApostrophes } from './detect-apostrophes.ts';
 import { detectEmDashes } from './detect-em-dash.ts';
 import { detectNegativeQuantifiers } from './detect-negative-quantifier.ts';
 import { detectObjectRelatives } from './detect-object-relative.ts';
@@ -15,6 +16,7 @@ import type { Candidate, ProseSpan, RuleId } from './types.ts';
 
 /** Every rule detected by the helper, mapped to the detector that reports its sites. */
 export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[]) => Candidate[]>> = {
+  apostrophes: detectDroppedApostrophes,
   'em-dash': detectEmDashes,
   'negative-quantifier': detectNegativeQuantifiers,
   'reduced-object-relative': detectObjectRelatives,
@@ -25,6 +27,7 @@ export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[
 
 /** Every rule detected by the helper, for the messages that name the known set. A test holds it to the registry. */
 export const RULE_IDS: ReadonlyArray<RuleId> = [
+  'apostrophes',
   'em-dash',
   'negative-quantifier',
   'reduced-object-relative',

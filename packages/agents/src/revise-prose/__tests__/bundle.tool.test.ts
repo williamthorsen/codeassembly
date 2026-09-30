@@ -41,6 +41,7 @@ describe('the deployed bundle', () => {
     const result = sweepResult([]);
 
     expect(result.summary.byRule).toStrictEqual({
+      apostrophes: 0,
       'em-dash': 0,
       'negative-quantifier': 0,
       'reduced-object-relative': 1,
@@ -55,6 +56,7 @@ describe('the deployed bundle', () => {
     const result = sweepResult(['--unit', 'writing=2', '--rule', 'em-dash=writing']);
 
     expect(result.summary.byRule).toStrictEqual({
+      apostrophes: 0,
       'em-dash': 1,
       'negative-quantifier': 0,
       'reduced-object-relative': 0,

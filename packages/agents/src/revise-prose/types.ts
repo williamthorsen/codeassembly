@@ -6,6 +6,7 @@
 
 /** A detected site, discriminated on the rule whose detector reported it. */
 export type Candidate =
+  | ApostrophesCandidate
   | EmDashCandidate
   | NegativeQuantifierCandidate
   | ObjectRelativeCandidate
@@ -31,6 +32,10 @@ export interface CandidateBase {
   sentence: string;
   /** Present when a rejection recorded at an older version of its rule matched, which re-opens it for review. */
   stale?: boolean;
+}
+
+export interface ApostrophesCandidate extends CandidateBase {
+  rule: 'apostrophes';
 }
 
 export interface EmDashCandidate extends CandidateBase {
@@ -78,7 +83,8 @@ export interface WhereCandidate extends CandidateBase {
 }
 
 /** A rule for which the sweep has a detector. A rule without one is named by a plain string, as a unit is. */
-export type RuleId = 'em-dash' | 'negative-quantifier' | 'reduced-object-relative' | 'second-person' | 'so' | 'where';
+export type RuleId =
+  'apostrophes' | 'em-dash' | 'negative-quantifier' | 'reduced-object-relative' | 'second-person' | 'so' | 'where';
 
 /** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
 export interface Batch {

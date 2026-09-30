@@ -428,6 +428,7 @@ function summarize(input: {
   // Keyed in the order the rulebook ranks the shapes.
   const byShape: Record<SubjectShape, number> = { quantified: 0, definite: 0, bare: 0, pronoun: 0 };
   const byRule: Record<RuleId, number> = {
+    apostrophes: 0,
     'em-dash': 0,
     'negative-quantifier': 0,
     'reduced-object-relative': 0,
