@@ -139,7 +139,7 @@ const WORD_CHARACTER = String.raw`[\p{L}\p{N}'\u{2019}]`;
 /** `own` after a word that does not possess anything, and before something other than the verb's object. */
 const DROPPED_POSSESSIVE = String.raw`(?<!${WORD_CHARACTER})(?!(?:${NON_POSSESSOR_WORDS.join('|')})\s)[\p{L}\p{N}]+\s+own(?!${WORD_CHARACTER})(?!\s+(?:${OBJECT_OPENERS.join('|')})(?!${WORD_CHARACTER}))`;
 
-const DROPPED_CONTRACTION = String.raw`(?<!${WORD_CHARACTER})(?:${CONTRACTIONS.join('|')})(?!${WORD_CHARACTER})`;
+const DROPPED_CONTRACTION = `(?<!${WORD_CHARACTER})(?:${CONTRACTIONS.join('|')})(?!${WORD_CHARACTER})`;
 
 const DROPPED_APOSTROPHE = new RegExp(`${DROPPED_POSSESSIVE}|${DROPPED_CONTRACTION}`, 'giu');
 
