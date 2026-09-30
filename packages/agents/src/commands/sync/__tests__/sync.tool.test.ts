@@ -171,7 +171,7 @@ describe(syncCommand, () => {
     expect(localHost).toContain('<!-- rulebook:alpha -->');
   });
 
-  it('delivers into each targeted harness own local host', async () => {
+  it("delivers into each targeted harness's own local host", async () => {
     await writeLibraryRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
     await installBothHarnesses();

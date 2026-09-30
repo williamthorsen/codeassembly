@@ -177,7 +177,7 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
-  it('renders a root subagent against the root own overlay, not the library one', async () => {
+  it("renders a root subagent against the root's own overlay, not the library one", async () => {
     const library = path.join(root, 'library');
     await writeFileAt(library, 'subagents/_data/claude.yaml', '_defaults:\n  description: Fine.\n');
     const producer = path.join(root, 'producer');
