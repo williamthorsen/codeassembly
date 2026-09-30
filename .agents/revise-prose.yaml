@@ -2957,7 +2957,7 @@ rejections:
     ground: 'not prose: the test asserts on this literal CLI output, and the CLI source that emits it is outside the batch'
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/agents/src/commands/__tests__/install-reviewer-partials.unit.test.ts
+    file: packages/agents/content/__tests__/reviewer-partials.unit.test.ts
     phrase: '**No self-disqualifying findings**'
     ground: 'not prose: a literal that the test asserts appears in deployed content'
   - rule: negative-quantifier
@@ -3182,7 +3182,7 @@ rejections:
     ground: 'not prose: YAML frontmatter fixture'
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/agents/src/lib/__tests__/shared-guidance-policy.unit.test.ts
+    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
     phrase: No outbound Markdown links.
     ground: a status label without a finite verb, left as a verbless label
   - rule: negative-quantifier
@@ -3757,7 +3757,7 @@ rejections:
     ground: 'not prose: fixture content that simulates a captured event body'
   - rule: plain-speech
     rule-version: '6'
-    file: packages/agents/src/lib/__tests__/shared-guidance-policy.unit.test.ts
+    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
     phrase: conventions travel through the skill chain
     ground: the repair would resolve an ambiguity that the original leaves open; rejected by the author
   - rule: plain-speech
@@ -5832,7 +5832,7 @@ rejections:
     ground: 'not the construction: a fused head (`what`) is its own relative pronoun and admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/commands/__tests__/install-reviewer-partials.unit.test.ts
+    file: packages/agents/content/__tests__/reviewer-partials.unit.test.ts
     phrase: with their shared partials fully inlined
     ground: 'not the construction: an absolute `with` phrase whose head is a past participle, not a relative clause'
   - rule: reduced-object-relative
@@ -6302,7 +6302,7 @@ rejections:
     ground: 'not the construction: object plus predicative complement'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/lib/__tests__/library-invocation-edges.unit.test.ts
+    file: packages/agents/content/__tests__/library-invocation-edges.unit.test.ts
     phrase: wherever it lives
     ground: 'outside the rule: a fused relative adverb heading an adjunct'
   - rule: reduced-object-relative
@@ -6317,7 +6317,7 @@ rejections:
     ground: 'not the construction: object plus predicative complement'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/lib/__tests__/work-types-schema.unit.test.ts
+    file: packages/agents/content/__tests__/work-types-data.unit.test.ts
     phrase: express a fixed-length sequence of keyed
     ground: 'not the construction: one clause, with `keyed` a participial modifier'
   - rule: reduced-object-relative
@@ -7937,12 +7937,12 @@ rejections:
     ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
   - rule: second-person
     rule-version: '1'
-    file: packages/agents/src/commands/__tests__/install-reviewer-partials.unit.test.ts
+    file: packages/agents/content/__tests__/reviewer-partials.unit.test.ts
     phrase: Then emit your structured return block.
     ground: "not prose: an assertion literal quoting the deployed subagent body under test, and the pronoun there addresses the subagent's own executor"
   - rule: second-person
     rule-version: '1'
-    file: packages/agents/src/commands/__tests__/install-reviewer-partials.unit.test.ts
+    file: packages/agents/content/__tests__/reviewer-partials.unit.test.ts
     phrase: your NEXT tool use MUST be a `Write` of the review scaffold
     ground: "not prose: an assertion literal quoting the deployed subagent body under test, and the pronoun there addresses the subagent's own executor"
   - rule: second-person
@@ -8519,7 +8519,7 @@ rejections:
     ground: a lone `so` that states a direct result
   - rule: so
     rule-version: '1'
-    file: packages/agents/src/lib/__tests__/work-types-schema.unit.test.ts
+    file: packages/agents/content/__tests__/work-types-data.unit.test.ts
     phrase: so the second `validate()` call is paid for only on the failure path
     ground: a lone `so` that states a direct result
   - rule: so
@@ -9673,12 +9673,12 @@ rejections:
     ground: 'outside the rule: the word names a place, the directory beside the rulebooks'
   - rule: where
     rule-version: '1'
-    file: packages/agents/src/lib/__tests__/shared-guidance-policy.unit.test.ts
+    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
     phrase: where `rewriteMarkdownPaths` resolves a link
     ground: 'outside the rule: the word names a place, the deployed guidance file'
   - rule: where
     rule-version: '1'
-    file: packages/agents/src/lib/__tests__/shared-guidance-policy.unit.test.ts
+    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
     phrase: without depending on where the file is written
     ground: 'outside the rule: the word names a place'
   - rule: where
