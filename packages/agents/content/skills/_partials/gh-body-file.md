@@ -1,6 +1,6 @@
 ## gh body file
 
-Pass a Markdown body to a CLI through a file, never through the shell. This governs every invocation taking a body file: `git commit`, `gh issue create`, `gh issue edit`, `gh issue comment`, `gh pr create`, `gh pr edit`, `gh pr comment`, `gh pr merge`, `acli jira workitem create`, and `acli jira workitem comment create`. A body passed as a double-quoted argument instead has its backticks and `$(…)` expanded, so the shell runs what the message only meant to quote.
+Pass composed content to a CLI through a file, never through the shell. This governs every command that takes composed content, such as a Markdown body, a commit message, or a JSON or YAML payload; `git commit`, `gh pr create`, `gh issue comment`, and `acli jira workitem create` are examples. The shell damages composed content in two ways. A double-quoted argument has its backticks and `$(…)` expanded, and the shell runs what the message only meant to quote. A single-quoted argument cannot hold an apostrophe, and an agent drops the character rather than escape it, which leaves text that still parses and reads wrong.
 
 **Resolve the scratch directory; never reference it.** Create one with `mktemp -d "${TMPDIR:-/tmp}/gh-body.XXXXXX"` in a Bash call and use the absolute path that call prints; bare `mktemp -d` picks a path denied by the agent sandbox. Because the {tool:Write} tool does not perform shell expansion, a path containing `$TMPDIR` handed to it creates a directory named `$TMPDIR`.
 
