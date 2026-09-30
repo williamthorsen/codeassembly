@@ -127,6 +127,9 @@ const IMPLEMENT_PLAN_MENU: Spec = {
     // The ordering that keeps a failed seam from leaving tickets behind. Without it tickets exist for a seam that
     // does not pass its gates.
     'Before any ticket is created, verify each seam',
+    // The post-handoff limit on the rewrite. Without it the split replaces the narrative sections that record what
+    // was proposed when the work began, which the shared ticket doctrine freezes once work is handed off.
+    'keeps its `## Problem`, `## Context`, and `## Proposed solution` as written',
   ],
 };
 

@@ -144,6 +144,8 @@ The selected option's marker follows how cleanly its rule matched: ■■■ whe
 
 <!-- include: ../_partials/split-ticket-compose.md / -->
 
+**Keep the originating ticket's record.** The work was handed to implementation before this menu, so the originating ticket's new body keeps its `## Problem`, `## Context`, and `## Proposed solution` as written, whatever the number of pieces, and changes its acceptance criteria alone. With two pieces, they become the first piece's criteria, followed by a line naming the ticket that takes the rest.
+
 The confirmation also lists each piece's commit range and boundary SHA, each branch to be created, and, with two pieces, the reset of the current branch to the seam. When the developer changes a boundary at the confirmation, recompose and confirm again.
 
 **Verify the seams.** Before any ticket is created, verify each seam: For each boundary from the last seam back to the first, run `git reset --hard` on the current branch to the boundary, reinstall dependencies when the boundary's lockfile differs from the installed one, and run the plan's `## Verification` gates. Then reset to the original `HEAD`, reinstalling when needed. When a gate fails, reset to the original `HEAD`, report the seam that failed with the gate's output, and stop; nothing has been created.
