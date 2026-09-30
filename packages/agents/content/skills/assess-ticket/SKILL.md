@@ -29,7 +29,7 @@ Run the investigation for the requested mode (or all modes in order when mode is
 
 Determine whether the ticket's factual assumptions still match the codebase.
 
-1. Extract file paths, module names, API references, and structural assumptions from the ticket body.
+1. Extract file paths, module names, API references, and structural assumptions from the ticket body. A measured count in the body is not an assumption: A figure that has changed since the ticket was written is not drift.
 2. Check whether referenced files and paths still exist.
 3. If the ticket has a last-updated date, examine commits since that date in affected areas: `git log --oneline --no-merges --after="{date}" -- {paths}`
 4. If the ticket does not have a last-updated date, compare the ticket's assumptions against the current state of the affected files.
