@@ -394,6 +394,9 @@ function describePlannedWrites(plan: SyncPlan): ReadonlyArray<ReportLine> {
       lines.push(line);
     }
   }
+  for (const reference of plan.references) {
+    lines.push({ level: 'info', text: `  point reference "${reference.name}" at ${reference.displayPath}` });
+  }
   for (const rulebook of plan.resolved) {
     if (rulebook.skill) {
       for (const { skillsDir } of plan.harnessSkillTargets) {

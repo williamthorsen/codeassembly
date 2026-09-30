@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
 import { createRequire } from 'node:module';
 import path from 'node:path';
 
@@ -79,6 +79,33 @@ export async function findUndeclaredGuidancePackages(
 }
 
 /**
+ * Reports whether a declared package name is a filesystem path rather than a package name. Node's resolver returns the
+ * anchor directory itself for a relative specifier, so `./guidance` would resolve to `<baseDir>/guidance` and
+ * `../sibling` would escape `baseDir` entirely.
+ */
+export function isFilesystemPath(name: string): boolean {
+  return name.startsWith('.') || path.isAbsolute(name);
+}
+
+/**
+ * Locates the installed directory of `name` by probing, in Node's search order from `baseDir`, for a candidate that
+ * contains a `package.json`, or lists every searched candidate when none does. Checks existence only, so a package whose
+ * manifest does not parse is still located.
+ */
+export async function locateInstalledPackage(
+  name: string,
+  baseDir: string,
+): Promise<{ dir: string } | { searched: ReadonlyArray<string> }> {
+  const candidates = listCandidateDirs(name, baseDir);
+  for (const dir of candidates) {
+    if (await pathExists(path.join(dir, 'package.json'))) {
+      return { dir };
+    }
+  }
+  return { searched: candidates };
+}
+
+/**
  * Resolves each declared package name to the content directory that it ships, in declaration order, for use as a
  * content source. Resolution walks the `node_modules` chain that Node itself would search from `baseDir`, so it holds
  * under pnpm's symlinked layout and under `workspace:*` links, which lets a producing repo consume its own guidance
@@ -108,12 +135,11 @@ export async function resolvePackageSources(
 // region | Helpers
 
 /**
- * Throws when `name` is a filesystem path rather than a package name. Node's resolver returns the anchor directory
- * itself for a relative specifier, so `./guidance` would otherwise resolve to `<baseDir>/guidance` and `../sibling`
- * would escape `baseDir` entirely: a second, undocumented path-source route beside `sources`.
+ * Throws when `name` is a filesystem path rather than a package name, which would otherwise make `packages` a second,
+ * undocumented path-source route beside `sources`.
  */
 function assertPackageName(name: string): void {
-  if (name.startsWith('.') || path.isAbsolute(name)) {
+  if (isFilesystemPath(name)) {
     throw new Error(
       `Declared package "${name}" is a filesystem path, not a package name. Point at a directory with a \`sources\` entry instead.`,
     );
@@ -163,6 +189,19 @@ function parsePackageManifest(name: string, raw: string): unknown {
     return JSON.parse(raw);
   } catch (error: unknown) {
     throw chainError(`Package "${name}" has an unreadable package.json`, error);
+  }
+}
+
+/** Reports whether `filePath` exists. Rethrows any failure other than absence, as `readFileIfPresent` does. */
+async function pathExists(filePath: string): Promise<boolean> {
+  try {
+    await stat(filePath);
+    return true;
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return false;
+    }
+    throw error;
   }
 }
 

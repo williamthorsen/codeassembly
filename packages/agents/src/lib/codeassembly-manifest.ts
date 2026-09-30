@@ -4,6 +4,7 @@ import path from 'node:path';
 import type { ArtifactType } from './artifact-types.ts';
 import {
   type DeclarationDomain,
+  type DeclarationReference,
   type DeclarationSource,
   type GuidanceHookBindings,
   parseCodeAssemblyFile,
@@ -11,6 +12,17 @@ import {
 } from './codeassembly-schema.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 import { resolveSourcePath } from './source-path.ts';
+
+/** A declared reference after combining the scope chain, its `resolve-from` resolved to an absolute directory. */
+export interface DeclaredReference {
+  readonly name: string;
+  readonly package: string;
+  readonly path: string;
+  readonly summary: string;
+  readonly resolveFrom: string;
+  /** The chain file whose entry won, named by a defect that the reference raises. */
+  readonly declaredIn: string;
+}
 
 /** The effective slugs that a project declares per artifact type, after combining the scope chain. */
 export interface ResolvedDeclaration {
@@ -31,6 +43,8 @@ export interface ResolvedDeclaration {
    * mentioned".
    */
   readonly declinedPackages: ReadonlyArray<string>;
+  /** The declared references in precedence order (highest first), left unresolved against `node_modules`. */
+  readonly references: ReadonlyArray<DeclaredReference>;
   /**
    * Each bound hook name mapped to the rulebooks bound to it, in declaration order. A hook dropped by every binding is
    * absent rather than empty, so its presence means something is bound.
@@ -75,6 +89,7 @@ export async function resolveDeclaration(options: {
   const declinedPackages = new Set<string>();
   // Sources key on `name` so that a repeated name remaps its path; the value is the resolved absolute dir.
   const sources = new Map<string, string>();
+  const references = new Map<string, DeclaredReference>();
   // Each hook name accumulates its own binding set, so a tier binding to one hook leaves the others untouched.
   const guidanceHooks = new Map<string, Map<string, Array<string>>>();
   for (const filePath of chain) {
@@ -88,6 +103,7 @@ export async function resolveDeclaration(options: {
       packages.clear();
       declinedPackages.clear();
       sources.clear();
+      references.clear();
       guidanceHooks.clear();
     }
     accumulateType(rulebooks, declaration.rulebooks, filePath);
@@ -96,6 +112,7 @@ export async function resolveDeclaration(options: {
     accumulateType(collections, declaration.collections, filePath);
     accumulatePackages(packages, declinedPackages, declaration.packages);
     accumulateSources(sources, declaration.sources, path.dirname(filePath));
+    accumulateReferences(references, declaration.references, filePath);
     accumulateGuidanceHooks(guidanceHooks, declaration['guidance-hooks'], filePath);
   }
 
@@ -109,6 +126,7 @@ export async function resolveDeclaration(options: {
     packages: [...packages].toReversed(),
     declinedPackages: [...declinedPackages],
     sources: [...sources].toReversed().map(([name, dir]) => ({ name, dir })),
+    references: references.values().toArray().toReversed(),
     guidanceHooks: buildGuidanceHookMap(guidanceHooks),
     declaredIn: { rulebook: rulebooks, skill: skills, subagent: subagents, collection: collections },
   };
@@ -151,6 +169,30 @@ function accumulatePackages(adopted: Set<string>, declined: Set<string>, block: 
   for (const entry of declines) {
     adopted.delete(entry.name);
     declined.add(entry.name);
+  }
+}
+
+/**
+ * Accumulates each declared reference by `name`, resolving `resolve-from` against the directory that contains the
+ * declaring file's `.agents/`. As for sources, a repeated name moves to the end, so a later declaration wins both the
+ * fields and the position.
+ */
+function accumulateReferences(
+  references: Map<string, DeclaredReference>,
+  declared: ReadonlyArray<DeclarationReference>,
+  filePath: string,
+): void {
+  const baseDir = path.dirname(path.dirname(filePath));
+  for (const reference of declared) {
+    references.delete(reference.name);
+    references.set(reference.name, {
+      name: reference.name,
+      package: reference.package,
+      path: reference.path,
+      summary: reference.summary,
+      resolveFrom: resolveSourcePath(reference['resolve-from'] ?? '.', baseDir),
+      declaredIn: filePath,
+    });
   }
 }
 

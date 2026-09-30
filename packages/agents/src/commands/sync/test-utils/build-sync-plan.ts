@@ -7,6 +7,7 @@ export function buildSyncPlan(overrides: Partial<SyncPlan> = {}): SyncPlan {
     droppedHarnesses: [],
     resolutionReport: [],
     ambientHosts: [],
+    references: [],
     unignoredHosts: [],
     retirements: [],
     resolved: [],

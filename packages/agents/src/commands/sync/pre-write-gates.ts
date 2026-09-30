@@ -19,7 +19,7 @@ import { renderSkillDirectory } from '../../lib/skill-transform.ts';
 import { renderSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import { isMissingFile } from '../../lib/type-guards.ts';
 import type { HarnessId } from '../../lib/types.ts';
-import type { ProbedAmbientHost } from './ambient-hosts.ts';
+import type { PlannedReference, ProbedAmbientHost } from './ambient-hosts.ts';
 import { skillMarker, subagentMarker } from './owned-artifacts.ts';
 import type {
   HarnessSkillTarget,
@@ -167,10 +167,14 @@ export function findDamagedAmbientHostDefects(
   probed: ReadonlyArray<ProbedAmbientHost>,
   domain: SyncDomain,
   resolved: ReadonlyArray<ResolvedRulebook>,
+  references: ReadonlyArray<PlannedReference>,
 ): ReadonlyArray<ContentDefect> {
   // Ask whether anything would be delivered, which is a property of the declaration alone. Rendering could answer it
   // too, but rendering can now fail on a bad link, and this guard is about region damage rather than link validity.
-  if (domain.ambient !== 'project-local' || resolved.every((rulebook) => !rulebook.ambient)) {
+  if (
+    domain.ambient !== 'project-local' ||
+    (resolved.every((rulebook) => !rulebook.ambient) && references.length === 0)
+  ) {
     return [];
   }
   const defects: Array<ContentDefect> = [];

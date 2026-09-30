@@ -9,6 +9,7 @@ import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../../lib/content-resolver.ts';
 import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../../lib/content-sources.ts';
 import { listDeclaredGuidanceHooks } from '../../lib/declared-guidance-hooks.ts';
+import { resolveDeclaredReferences } from '../../lib/declared-references.ts';
 import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
@@ -21,7 +22,13 @@ import { resolveDeclaredSkill, type ResolvedSkill } from '../../lib/skill-deploy
 import { resolveDeclaredSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import { resolveTargetHarnesses } from '../../lib/target-harnesses.ts';
 import type { InstallOptions } from '../../lib/types.ts';
-import { deliverAmbient, findUnignoredHosts, planAmbientHosts, probeAmbientHosts } from './ambient-hosts.ts';
+import {
+  buildPlannedReferences,
+  deliverAmbient,
+  findUnignoredHosts,
+  planAmbientHosts,
+  probeAmbientHosts,
+} from './ambient-hosts.ts';
 import { reconcileDeclaredSkills, reconcileDeclaredSubagents, reconcileRulebookSkills } from './artifact-delivery.ts';
 import { planDroppedHarnessRetractions, retractDroppedHarnesses } from './harness-retraction.ts';
 import { buildGuidanceHookFills, findGuidanceHookAdvisories } from './hook-bindings.ts';
@@ -354,10 +361,15 @@ async function reconcileDomain(
   // delivery pass writes, rather than deploying a path that resolves to nothing.
   defects.add(findRulebookRenderDefects(harnessIds, resolved, resolveRulebookContext));
 
+  // A reference that does not resolve would deploy a pointer to nothing, so it fails the run like any other defect.
+  const referenceResolution = await resolveDeclaredReferences(declaration.references);
+  defects.add(referenceResolution.defects);
+  const references = buildPlannedReferences(referenceResolution.resolved, domain, homeDir);
+
   // Reject a sync-owned ambient host whose region is half-written before anything is written, dry-run included.
   // Appending beside a stray marker is the one path in this command that can destroy hand-authored content.
   const ambientHosts = await probeAmbientHosts(harnessIds, domain);
-  defects.add(findDamagedAmbientHostDefects(ambientHosts, domain, resolved));
+  defects.add(findDamagedAmbientHostDefects(ambientHosts, domain, resolved, references));
 
   // Every gate above has reported. Raised here, ahead of `retireRetiredOutputs`, which is the first call in this
   // phase that writes, so a failing run leaves the previously deployed guidance exactly as it found it.
@@ -372,7 +384,7 @@ async function reconcileDomain(
 
   // Derived before the paths diverge, so that a dry run cannot describe an ambient host differently from the run that
   // it previews.
-  const ambientHostPlans = planAmbientHosts(ambientHosts, domain, resolved, resolveRulebookContext);
+  const ambientHostPlans = planAmbientHosts(ambientHosts, domain, resolved, references, resolveRulebookContext);
 
   // Advisory only, and gathered for both paths: A dry run that would create the host warns about it too.
   const unignoredHosts =
@@ -393,6 +405,7 @@ async function reconcileDomain(
     }),
     resolutionReport,
     ambientHosts: ambientHostPlans,
+    references,
     unignoredHosts,
     retirements,
     resolved,
