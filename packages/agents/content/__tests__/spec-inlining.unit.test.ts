@@ -108,9 +108,39 @@ const IMPLEMENT_PLAN_MENU: Spec = {
     // The marker rule. Without it the selected option is pinned to ■■□ whatever the diff turned out to be, so
     // the marker varies with nothing and the reader has to investigate every menu to find the real forks.
     "The selected option's marker follows how cleanly its rule matched",
-    // The fallthrough carve-out. Without it rule 3's default selection can claim ■■■, which is the
-    // over-correction that the unpinning invites.
+    // The fallthrough's own marker rule. Without it the fallthrough is either capped at ■■□, demoting a Review
+    // branch that nothing else came close to, or free to claim ■■■ unearned.
     "Rule 3 is the cascade's fallthrough rather than a positive match",
+    'its marker follows how squarely rules 1 and 2 failed',
+    '| 2   | ✂️    | Split the branch         |',
+    // Rule 2's test. Without both halves the rule matches on size alone, which is the Orchestrated review
+    // recommendation that this option replaced, or on any seam, which cuts diffs that one pass would carry.
+    'Recommend only when the realized diff is too large for one `review-branch` pass, and its commits contain a seam',
+    // The demotion of the structural triggers. Without it a multi-package diff is split on structure alone.
+    'none of them matches rule 2 on its own',
+    // The pushed-commit condition. Without it the split's reset removes a commit that the remote already has, and
+    // only a force-push reconciles the two.
+    'removing a pushed commit would take a force-push',
+    // The obligation that makes the seam visible on the menu. Without it the seam stays a hunch that the developer
+    // has to ask about.
+    'Being unable to write the line means rule 2 did not match',
+    // The ordering that keeps a failed seam from leaving tickets behind. Without it tickets exist for a seam that
+    // does not pass its gates.
+    'Before any ticket is created, verify each seam',
+  ],
+};
+
+// The ticket-side split steps, included by every menu that offers a split. The heading is the one paragraph label
+// that each expanded body states once.
+const SPLIT_TICKET: Spec = {
+  name: 'split-ticket',
+  heading: '**Confirm once.**',
+  rules: [
+    // The consent gate on the split. Without it selection creates tickets whose bodies the developer has not seen.
+    'the bodies get one confirmation before anything is created',
+    // The ticketing preference for two pieces. Without it the originating ticket becomes an umbrella over two
+    // children, which the preference reserves for three or more.
+    'With two pieces, rewrite it to the first piece',
   ],
 };
 
@@ -156,8 +186,6 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // the fallthrough is either capped at ■■□, demoting a trivial plan's Implement, or free to claim ■■■ unearned.
     "The selected option's marker follows how cleanly its rule matched",
     'its marker follows how squarely rules 1 and 2 failed',
-    // The consent gate on the split. Without it selection creates tickets whose bodies the developer has not seen.
-    'the bodies get one confirmation before anything is created',
   ],
 };
 
@@ -209,14 +237,17 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
 
 const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: ReadonlyArray<Spec> }> = [
   { slug: 'collaborate', specs: [OPTION_FORMAT] },
-  { slug: 'design-and-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, DESIGN_AND_PLAN_REMOTE_ISSUE] },
-  { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU] },
+  {
+    slug: 'design-and-plan',
+    specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, DESIGN_AND_PLAN_REMOTE_ISSUE, SPLIT_TICKET],
+  },
+  { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU, SPLIT_TICKET] },
   { slug: 'merge-pr', specs: [OPTION_FORMAT] },
-  { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
+  { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
   { slug: 'plan-orchestrable-steps', specs: [OPTION_FORMAT] },
-  { slug: 'refine-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
+  { slug: 'refine-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
   { slug: 'review-branch', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_REVIEW] },
-  { slug: 'save-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN] },
+  { slug: 'save-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
   { slug: 'update-jira-ticket', specs: [OPTION_FORMAT] },
   { slug: 'update-project-guidance', specs: [OPTION_FORMAT] },
 ];
