@@ -46,6 +46,7 @@
   "dependencies": {
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/toolbelt.errors": "catalog:",
+    "@williamthorsen/toolbelt.terminal": "catalog:",
     "codeassembly-lifecycle": "workspace:*",
     "ulid": "3.0.2",
     "yaml": "catalog:",

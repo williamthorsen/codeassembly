@@ -3,6 +3,7 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 
 import { parseCodeAssemblyFile } from './codeassembly-schema.ts';
+import { printLine } from './emit-report.ts';
 import { resolveScopeChain } from './scope-chain.ts';
 import type { HomeWriteCommand } from './types.ts';
 
@@ -42,10 +43,13 @@ export async function assertDesignatedWriter(options: DesignatedWriterOptions): 
   }
 
   if (options.shouldOverrideWriter === true) {
-    console.warn(
-      `⚠️ Writing the home domain from ${options.packageRoot}, which --override-writer allows despite ` +
+    printLine({
+      glyph: 'warning',
+      level: 'warn',
+      text:
+        `Writing the home domain from ${options.packageRoot}, which --override-writer allows despite ` +
         `\`home-writer\` designating ${designated.writerPath}.`,
-    );
+    });
     return;
   }
 

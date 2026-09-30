@@ -56,7 +56,7 @@ describe(resolveEpisode, () => {
   it('cuts the change-record block that a merge body contains below its lede', async () => {
     const block = renderMergeChangeRecordBlock({
       entries: [{ breaking: false, scopes: ['agents'], text: 'Adds the link', type: 'feat' }],
-      prNumber: 1124,
+      prNumber: 1_124,
       ticketRef: '#1100',
     });
     const fixture = await createLedeFixture({ mergedLede: `${FIXTURE_AGENT_LEDE}\n\n${block}\n` });

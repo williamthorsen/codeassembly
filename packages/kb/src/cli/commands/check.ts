@@ -1,4 +1,5 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
+import type { OutputStyle } from '@williamthorsen/toolbelt.terminal/candidate';
 
 import { check, type CheckResult } from '../../check/check.ts';
 import type { EnumeratedNote } from '../../check/enumerate.ts';
@@ -52,9 +53,15 @@ Exit codes:
  *
  * The command writes nothing to the store, so it ignores the registry's `readonly` flag. `check` throws a
  * `KbLoaderError` for a structural defect in a store file that it loads, and the command maps that error to exit 2;
- * any other error from `check` propagates to the caller as a real crash.
+ * any other error from `check` propagates to the caller as a real crash. `style` sets the human report's glyphs, and
+ * defaults to plain.
  */
-export async function runCheck(input: { argv: readonly string[]; cwd: string; home?: string }): Promise<CommandOutput> {
+export async function runCheck(input: {
+  argv: readonly string[];
+  cwd: string;
+  home?: string;
+  style?: OutputStyle;
+}): Promise<CommandOutput> {
   let options: CheckOptions;
   try {
     options = parseCheckArgs(input.argv);
@@ -99,7 +106,13 @@ export async function runCheck(input: { argv: readonly string[]; cwd: string; ho
   // The whole-vault zero-match line names the store's targets, read from the config that `check` already resolved.
   const stdout = options.json
     ? formatJson({ store, summary, findings: selection.findings })
-    : formatHuman({ summary, findings: selection.findings, targets: result.config.targets, scope: selection.scope });
+    : formatHuman({
+        summary,
+        findings: selection.findings,
+        targets: result.config.targets,
+        scope: selection.scope,
+        style: input.style ?? 'plain',
+      });
 
   return { exitCode: summary.errors > 0 ? 1 : 0, stdout, stderr: '' };
 }

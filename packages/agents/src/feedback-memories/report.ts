@@ -1,3 +1,5 @@
+import { STATUS_GLYPHS } from '@williamthorsen/toolbelt.terminal/candidate';
+
 import type { FeedbackMemorySummary, ProjectSummary, SkippedMemory } from './types.ts';
 
 const EMOJI = '📦';
@@ -67,7 +69,7 @@ function skippedFooter(skipped: readonly SkippedMemory[], verbose: boolean): str
   if (skipped.length === 0) {
     return '';
   }
-  const heading = `⚠️  ${skipped.length} ${pluralize(skipped.length, 'file', 'files')} skipped (unreadable)`;
+  const heading = `${STATUS_GLYPHS.plain.warning.text} ${skipped.length} ${pluralize(skipped.length, 'file', 'files')} skipped (unreadable)`;
   if (!verbose) {
     return heading;
   }

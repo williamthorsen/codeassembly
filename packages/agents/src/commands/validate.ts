@@ -6,6 +6,7 @@ import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 
 import { formatContentDefects } from '../lib/content-defects.ts';
 import { validateContentRoot } from '../lib/content-validation.ts';
+import { emitReport, printLine } from '../lib/emit-report.ts';
 import { ALL_HARNESS_IDS } from '../lib/harness.ts';
 import { findContentPath } from '../lib/package-sources.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
@@ -30,11 +31,15 @@ export async function validateCommand(options: ValidateOptions, cwd: string = pr
   const defects = await validateContentRoot(root, harnessIds);
 
   if (defects.length === 0) {
-    console.info('✅ No defects found.');
+    printLine({ glyph: 'passed', level: 'info', text: 'No defects found.' });
     return true;
   }
 
-  console.error(`\n❌ ${defects.length} defect(s) found:\n`);
+  emitReport([
+    { level: 'error', text: '' },
+    { glyph: 'failed', level: 'error', text: `${defects.length} defect(s) found:` },
+    { level: 'error', text: '' },
+  ]);
   console.error(formatContentDefects(defects));
   return false;
 }

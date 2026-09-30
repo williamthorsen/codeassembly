@@ -13,6 +13,7 @@ import {
   ensureClaudeHookEntries,
   removeClaudeHookEntries,
 } from '../lib/claude-hook-settings.ts';
+import { printLine } from '../lib/emit-report.ts';
 import { ALL_HARNESS_IDS, resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import {
   buildClaudeHookEntries,
@@ -81,13 +82,18 @@ export async function ensureHarnessHookEntries(harnessId: HarnessId, baseDir?: s
       ? await ensureClaudeHookEntries(paths.configFile, buildClaudeHookEntries(), HOOK_SENTINEL)
       : await ensureRovoHookEntries(paths.configFile, buildRovoHookEntries(paths.scriptsDir), isSentinelOwned);
 
-  console.info(
+  printLine(
     result.changed
-      ? `  ✅ Wired session-lifecycle hooks in ${paths.configFile}`
-      : `  Session-lifecycle hooks already wired in ${paths.configFile}`,
+      ? { glyph: 'passed', indent: 2, level: 'info', text: `Wired session-lifecycle hooks in ${paths.configFile}` }
+      : { indent: 2, level: 'info', text: `Session-lifecycle hooks already wired in ${paths.configFile}` },
   );
   if (result.changed && harnessId === 'rovo') {
-    console.info('  ⚠️ Rovo Dev reads its config at startup: Restart any running session to pick up the hooks.');
+    printLine({
+      glyph: 'warning',
+      indent: 2,
+      level: 'info',
+      text: 'Rovo Dev reads its config at startup: Restart any running session to pick up the hooks.',
+    });
   }
 }
 
@@ -100,9 +106,19 @@ export async function removeHarnessHookEntries(harnessId: HarnessId, baseDir?: s
       : await removeRovoHookEntries(paths.configFile, isSentinelOwned);
 
   if (result.changed) {
-    console.info(`  ✅ Removed ${result.removedCount} session-lifecycle hook entries from ${paths.configFile}`);
+    printLine({
+      glyph: 'passed',
+      indent: 2,
+      level: 'info',
+      text: `Removed ${result.removedCount} session-lifecycle hook entries from ${paths.configFile}`,
+    });
     if (harnessId === 'rovo') {
-      console.info('  ⚠️ Rovo Dev reads its config at startup: Restart any running session to drop the hooks.');
+      printLine({
+        glyph: 'warning',
+        indent: 2,
+        level: 'info',
+        text: 'Rovo Dev reads its config at startup: Restart any running session to drop the hooks.',
+      });
     }
   }
 }

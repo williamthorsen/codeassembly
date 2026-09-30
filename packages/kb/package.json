@@ -106,6 +106,7 @@
   },
   "dependencies": {
     "@williamthorsen/toolbelt.errors": "catalog:",
+    "@williamthorsen/toolbelt.terminal": "catalog:",
     "picomatch": "4.0.7",
     "yaml": "catalog:",
     "zod": "catalog:"

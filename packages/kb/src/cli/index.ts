@@ -25,6 +25,8 @@ async function main(): Promise<void> {
     output = await run({
       argv: process.argv.slice(2),
       cwd: process.cwd(),
+      env: process.env,
+      isTty: process.stdout.isTTY,
       ...(selectKb !== undefined && { selectKb }),
     });
   } catch (error) {

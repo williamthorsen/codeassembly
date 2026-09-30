@@ -126,8 +126,8 @@ describe(describePruneResult, () => {
     };
 
     expect(describePruneResult(result, { dryRun: false })).toEqual([
-      { level: 'warn', text: '  ⚠️ Keeping modified stale item: scripts/edited.sh' },
-      { level: 'info', text: '  🗑️ Removed stale item: skills/gone/SKILL.md' },
+      { glyph: 'warning', indent: 2, level: 'warn', text: 'Keeping modified stale item: scripts/edited.sh' },
+      { glyph: 'removed', indent: 2, level: 'info', text: 'Removed stale item: skills/gone/SKILL.md' },
     ]);
   });
 
@@ -138,7 +138,7 @@ describe(describePruneResult, () => {
     };
 
     expect(describePruneResult(result, { dryRun: true })).toEqual([
-      { level: 'info', text: '  [dry-run] Would remove stale item: skills/gone/SKILL.md' },
+      { indent: 2, level: 'info', text: '[dry-run] Would remove stale item: skills/gone/SKILL.md' },
     ]);
   });
 

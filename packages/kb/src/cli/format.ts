@@ -1,3 +1,5 @@
+import { type OutputStyle, STATUS_GLYPHS } from '@williamthorsen/toolbelt.terminal/candidate';
+
 import type { Finding } from '../types.ts';
 
 /** A resolved store's identity, shown in both human and JSON output. */
@@ -22,10 +24,10 @@ export type CheckScope = 'vault' | 'patterns' | 'vs';
 
 /**
  * Renders the default human output. Findings are grouped by file, in the order in which each file first appears, each
- * line reading `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints
- * `✓ no findings (N notes checked)`; a run that checked nothing prints a zero-match line worded for its `scope` (naming
- * the config targets for a whole-vault run, and a scope-appropriate line for a targeted one) without the `✓`, since
- * the run did not perform any check.
+ * line reading `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints the `passed`
+ * status glyph in `style`, then `no findings (N notes checked)`; a run that checked nothing prints a zero-match line
+ * worded for its `scope` (naming the config targets for a whole-vault run, and a scope-appropriate line for a targeted
+ * one) without the glyph, since the run did not perform any check.
  *
  * A run that does not check any notes can still include vault-scoped findings, which describe the store rather than
  * any note. The zero-match line then heads the report instead of replacing it: It explains why the run did not check
@@ -36,14 +38,15 @@ export function formatHuman(input: {
   findings: readonly Finding[];
   targets: readonly string[];
   scope: CheckScope;
+  style: OutputStyle;
 }): string {
-  const { summary, findings, targets, scope } = input;
+  const { summary, findings, targets, scope, style } = input;
 
   if (summary.notes === 0 && findings.length === 0) {
     return `${zeroMatchLine(scope, targets)}\n`;
   }
   if (findings.length === 0) {
-    return `✓ no findings (${summary.notes} notes checked)\n`;
+    return `${STATUS_GLYPHS[style].passed.text} no findings (${summary.notes} notes checked)\n`;
   }
 
   const lines: string[] = [];

@@ -3,6 +3,11 @@
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
+import {
+  describeInvalidOutputStyle,
+  type OutputStyleResolution,
+  resolveOutputStyle,
+} from '@williamthorsen/toolbelt.terminal/candidate';
 
 import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
@@ -17,7 +22,7 @@ import { isSyncValidationError } from './commands/sync/sync-validation-error.ts'
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
 import { formatContentDefects } from './lib/content-defects.ts';
-import { emitReport } from './lib/emit-report.ts';
+import { configureOutputStyle, emitReport, printLine } from './lib/emit-report.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';
 
@@ -28,12 +33,15 @@ const VALID_HARNESS_IDS: ReadonlySet<string> = new Set(HARNESS_ARG_VALUES);
 
 const HARNESS_ARG_LIST = HARNESS_ARG_VALUES.join(', ');
 
+const OUTPUT_STYLE_ENV_VAR = 'CODEASSEMBLY_OUTPUT_STYLE';
+
 const SYNC_FAILURE_EFFECT = 'Nothing was written; the previously deployed guidance remains in effect.';
 
 /**
  * Main CLI entry point.
  */
 async function main(): Promise<void> {
+  configureStreamStyles();
   const { command, subcommand, options, content, help, global, warnOnly } = parseArgs(process.argv);
 
   if (help || !command) {
@@ -89,6 +97,20 @@ async function main(): Promise<void> {
 }
 
 // region | Helpers
+
+/**
+ * Resolves each stream's glyph style from `--output-style`, then `CODEASSEMBLY_OUTPUT_STYLE`, then the stream's own
+ * terminal state, and exits with a usage error when either source names no style.
+ */
+function configureStreamStyles(): void {
+  const stdout = resolveStreamStyle(process.stdout.isTTY);
+  const stderr = resolveStreamStyle(process.stderr.isTTY);
+  configureOutputStyle({ stderr: stderr.style, stdout: stdout.style });
+  if (stdout.invalid !== undefined) {
+    console.error(`Error: ${describeInvalidOutputStyle(stdout.invalid)}`);
+    process.exit(1);
+  }
+}
 
 function isValidHarness(value: string): value is HarnessId | 'all' {
   return VALID_HARNESS_IDS.has(value);
@@ -158,6 +180,10 @@ function parseArgs(argv: ReadonlyArray<string>): {
         i = result.nextIndex;
         break;
       }
+      case 'output-style':
+        // `configureStreamStyles` has already validated the value; only the spaced form consumes the next argument.
+        if (!arg.includes('=')) i = parseValueArg(args, i, '--output-style', 'auto, plain, rich').nextIndex;
+        break;
       case 'harness': {
         const result = parseHarnessArg(args, i);
         harness = result.harness;
@@ -195,12 +221,14 @@ type FlagName =
   | 'harness'
   | 'help'
   | 'link'
+  | 'output-style'
   | 'override-writer'
   | 'print'
   | 'skip-hooks'
   | 'warn-only';
 
 function parseFlag(arg: string): FlagName | null {
+  if (arg.startsWith('--output-style=')) return 'output-style';
   const flags: Record<string, FlagName> = {
     '--help': 'help',
     '-h': 'help',
@@ -214,6 +242,7 @@ function parseFlag(arg: string): FlagName | null {
     '--warn-only': 'warn-only',
     '--content': 'content',
     '--harness': 'harness',
+    '--output-style': 'output-style',
   };
   return flags[arg] ?? null;
 }
@@ -272,6 +301,7 @@ Options:
   --skip-hooks       Leave harness configs untouched during install (install only)
   --print            Print the hook entries instead of writing them (configure-hooks only)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init, and reads the home deployment's record under sizes
+  --output-style <auto|plain|rich>  Print status glyphs as emoji (rich) or words (plain); auto (default) prints plain off a terminal, in CI, or under TERM=linux. Overrides CODEASSEMBLY_OUTPUT_STYLE
   --override-writer  Write the home domain from an installation not designated by \`home-writer\` (install and sync --global only)
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
   --help, -h         Show this help message`);
@@ -283,12 +313,27 @@ Options:
  */
 function reportSyncFailure(error: unknown): void {
   if (isSyncValidationError(error)) {
-    console.error(`\n❌ sync found ${error.defects.length} defect(s):\n`);
+    emitReport([
+      { level: 'error', text: '' },
+      { glyph: 'failed', level: 'error', text: `sync found ${error.defects.length} defect(s):` },
+      { level: 'error', text: '' },
+    ]);
     console.error(formatContentDefects(error.defects));
   } else {
     console.error(`Error: ${describeError(error)}`);
   }
   console.error(`\n${SYNC_FAILURE_EFFECT}`);
+}
+
+/** Resolves the glyph style of a stream whose terminal state is `isTty`, from the invocation and the environment. */
+function resolveStreamStyle(isTty: boolean): OutputStyleResolution {
+  return resolveOutputStyle({
+    argv: process.argv.slice(2),
+    env: process.env,
+    envVar: OUTPUT_STYLE_ENV_VAR,
+    flag: '--output-style',
+    isTty,
+  });
 }
 
 /** Dispatches a `generate` target, printing that command's usage and exiting non-zero when the target is unknown. */
@@ -323,7 +368,11 @@ async function runSync(options: InstallOptions, global: boolean, warnOnly: boole
     emitReport(options.dryRun ? renderDryRunReport(outcome) : renderSyncReport(outcome));
   } catch (error: unknown) {
     if (warnOnly) {
-      console.warn(`⚠️ sync failed: ${describeError(error)}\n   ${SYNC_FAILURE_EFFECT}`);
+      printLine({
+        glyph: 'warning',
+        level: 'warn',
+        text: `sync failed: ${describeError(error)}\n${SYNC_FAILURE_EFFECT}`,
+      });
       return;
     }
     reportSyncFailure(error);

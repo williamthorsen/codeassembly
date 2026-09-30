@@ -113,7 +113,7 @@ describe(renderLibraryTable, () => {
       makeRow({ type: 'rulebook', slug: 'romeo' }),
     ];
 
-    const output = renderLibraryTable(rows, 100);
+    const output = renderLibraryTable(rows, 100, 'plain');
     const order = ['romeo', 'alpha', 'zulu', 'bravo'].map((slug) => output.indexOf(slug));
 
     expect(order).toEqual(order.toSorted((a, b) => a - b));
@@ -122,12 +122,12 @@ describe(renderLibraryTable, () => {
 
   it('renders a header and one line per row with the synthesized delivery value', () => {
     const rows: Array<LibraryRow> = [
-      makeRow({ type: 'rulebook', emoji: '📕', slug: 'shell-conventions', delivery: 'ambient, skill' }),
-      makeRow({ type: 'skill', emoji: '🪄', slug: 'add-test-ids', delivery: 'skill' }),
-      makeRow({ type: 'subagent', emoji: '🤖', slug: 'planner', delivery: 'install' }),
+      makeRow({ type: 'rulebook', slug: 'shell-conventions', delivery: 'ambient, skill' }),
+      makeRow({ type: 'skill', slug: 'add-test-ids', delivery: 'skill' }),
+      makeRow({ type: 'subagent', slug: 'planner', delivery: 'install' }),
     ];
 
-    const lines = renderLibraryTable(rows, 100).split('\n');
+    const lines = renderLibraryTable(rows, 100, 'rich').split('\n');
 
     expect(lines[0]).toContain('type');
     expect(lines[0]).toContain('slug');
@@ -139,10 +139,27 @@ describe(renderLibraryTable, () => {
     expect(lines[3]).toContain('🤖 subagent');
   });
 
+  it('aligns every column in each style, with a plain type cell holding the label alone', () => {
+    const rows: Array<LibraryRow> = [
+      makeRow({ type: 'rulebook', slug: 'shell-conventions', delivery: 'ambient' }),
+      makeRow({ type: 'skill', slug: 'add-test-ids', delivery: 'skill' }),
+    ];
+
+    expect(renderLibraryTable(rows, 100, 'rich').split('\n')).toEqual([
+      'type         slug               delivery  description',
+      '📕 rulebook  shell-conventions  ambient   A description.',
+      '🪄 skill     add-test-ids       skill     A description.',
+    ]);
+    expect(renderLibraryTable(rows, 100, 'plain').split('\n')).toEqual([
+      'type      slug               delivery  description',
+      'rulebook  shell-conventions  ambient   A description.',
+      'skill     add-test-ids       skill     A description.',
+    ]);
+  });
+
   it('wraps a long description with a hanging indent aligned under the description column', () => {
     const row = makeRow({
       type: 'skill',
-      emoji: '🪄',
       slug: 'demo',
       delivery: 'skill',
       description: 'one two three four five six seven eight nine ten',
@@ -151,7 +168,7 @@ describe(renderLibraryTable, () => {
     // Column widths for this single row: type = 8 (`🪄 skill`), slug = 4 (`demo`), delivery = 8 (`delivery`
     // header). With gaps of 2 the description starts at column 8 + 2 + 4 + 2 + 8 + 2 = 26; width 46 leaves a
     // 20-cell description column.
-    const lines = renderLibraryTable([row], 46).split('\n');
+    const lines = renderLibraryTable([row], 46, 'rich').split('\n');
     const continuations = lines.slice(1).filter((line) => /^ +\S/.test(line));
 
     expect(lines[1]).toMatch(/one two three four$/);
@@ -171,7 +188,7 @@ async function captureList(contentDir: string): Promise<{ output: string; warnin
 
 /** Builds a `LibraryRow` with sensible defaults, overriding only the fields that a test cares about. */
 function makeRow(overrides: Partial<LibraryRow>): LibraryRow {
-  return { type: 'skill', emoji: '🪄', slug: 'slug', delivery: 'skill', description: 'A description.', ...overrides };
+  return { type: 'skill', slug: 'slug', delivery: 'skill', description: 'A description.', ...overrides };
 }
 
 /** Scaffolds a content tree exercising inclusion, exclusion, fallback, and invalid-frontmatter handling. */

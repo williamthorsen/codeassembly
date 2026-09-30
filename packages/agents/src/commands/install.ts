@@ -11,7 +11,7 @@ import { resolveContentDir } from '../lib/content-resolver.ts';
 import type { ContentRootRef } from '../lib/content-root-manifest.ts';
 import { describeContentRoot, describeMissingSource, resolveDeclaredSources } from '../lib/declared-sources.ts';
 import { expandIncludes } from '../lib/directive-expander.ts';
-import { emitReport } from '../lib/emit-report.ts';
+import { emitReport, printLine } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
 import { HARNESSES, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
@@ -188,7 +188,12 @@ async function deployHomeDomain(
         try {
           await ensureHarnessHookEntries(harnessId, baseDir);
         } catch (error) {
-          console.warn(`  ⚠️ Skipping hook wiring: ${describeError(error)} (fix the config, then run configure-hooks)`);
+          printLine({
+            glyph: 'warning',
+            indent: 2,
+            level: 'warn',
+            text: `Skipping hook wiring: ${describeError(error)} (fix the config, then run configure-hooks)`,
+          });
         }
       }
     }
@@ -216,7 +221,12 @@ async function deployHomeDomain(
       installedAt: new Date().toISOString(),
       entries,
     };
-    console.info(`  ✅ Installed ${entries.length} items for ${harnessId}`);
+    printLine({
+      glyph: 'passed',
+      indent: 2,
+      level: 'info',
+      text: `Installed ${entries.length} items for ${harnessId}`,
+    });
   }
 
   if (!options.dryRun) {
@@ -260,7 +270,12 @@ async function installSupportDirectories(
     if (!isEnoent(error)) {
       throw error;
     }
-    console.warn(`  ⚠️ Warning: No skills directory found at ${skillsSrcDir}, skipping skill support installation`);
+    printLine({
+      glyph: 'warning',
+      indent: 2,
+      level: 'warn',
+      text: `No skills directory found at ${skillsSrcDir}, skipping skill support installation`,
+    });
     return [];
   }
 
@@ -340,7 +355,7 @@ async function installSkillEntry(
   if (existingEntry && !options.force) {
     const drift = await detectDrift(existingEntry, harnessHome);
     if (drift === 'modified') {
-      console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
+      printLine({ glyph: 'warning', indent: 2, level: 'warn', text: `Skipping modified item: ${relativePath}` });
       return existingEntry;
     }
   }
@@ -401,7 +416,12 @@ async function installScripts(
   const { claims, foundDirectory, warnings } = await collectScriptClaims(roots);
   emitReport(warnings);
   if (!foundDirectory) {
-    console.warn("  ⚠️ Warning: The content roots don't contain a scripts directory, skipping script installation");
+    printLine({
+      glyph: 'warning',
+      indent: 2,
+      level: 'warn',
+      text: "The content roots don't contain a scripts directory, skipping script installation",
+    });
     return [];
   }
 
@@ -422,7 +442,7 @@ async function installScripts(
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, harnessHome);
       if (drift === 'modified') {
-        console.warn(`  ⚠️ Skipping modified item: ${relativePath}`);
+        printLine({ glyph: 'warning', indent: 2, level: 'warn', text: `Skipping modified item: ${relativePath}` });
         entries.push(existingEntry);
         continue;
       }
@@ -462,18 +482,23 @@ async function installHarnessGuidance(
   const shippingRoots = await findTemplateRoots(roots, harnessId);
   const owner = shippingRoots.at(0);
   if (owner === undefined) {
-    console.warn(
-      `  ⚠️ Warning: The content roots don't contain a ${harnessId} guidance directory, skipping harness guidance installation`,
-    );
+    printLine({
+      glyph: 'warning',
+      indent: 2,
+      level: 'warn',
+      text: `The content roots don't contain a ${harnessId} guidance directory, skipping harness guidance installation`,
+    });
     return [];
   }
   const shadowed = shippingRoots.slice(1);
   if (shadowed.length > 0) {
     emitReport([
       {
+        glyph: 'warning',
+        indent: 2,
         level: 'warn',
         text:
-          `  ⚠️ The ${harnessId} guidance template is shipped by more than one content root: installing it from ` +
+          `The ${harnessId} guidance template is shipped by more than one content root: installing it from ` +
           `${describeContentRoot(owner.root)} and ignoring ${shadowed.map((shipping) => describeContentRoot(shipping.root)).join(', ')}.`,
       },
     ]);
@@ -508,7 +533,12 @@ async function installHarnessGuidance(
     if (existingEntry && !options.force) {
       const drift = await detectDrift(existingEntry, harnessPaths.harnessHome);
       if (drift === 'modified') {
-        console.warn(`  ⚠️ Skipping modified item: ${harnessConfig.homeDir}/${entry}`);
+        printLine({
+          glyph: 'warning',
+          indent: 2,
+          level: 'warn',
+          text: `Skipping modified item: ${harnessConfig.homeDir}/${entry}`,
+        });
         entries.push(existingEntry);
         continue;
       }
@@ -605,9 +635,11 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
       const claimant = claimants.get(entry);
       if (claimant !== undefined) {
         warnings.push({
+          glyph: 'warning',
+          indent: 2,
           level: 'warn',
           text:
-            `  ⚠️ Script ${entry} is shipped by more than one content root: installing it from ` +
+            `Script ${entry} is shipped by more than one content root: installing it from ` +
             `${describeContentRoot(claimant)} and ignoring ${describeContentRoot(root)}.`,
         });
         continue;

@@ -107,7 +107,7 @@ describe(reportSummary, () => {
     );
 
     expect(output).toContain('1 feedback memory across 1 project');
-    expect(output).toContain('2 files skipped (unreadable)');
+    expect(output).toContain('WARN 2 files skipped (unreadable)');
     expect(output).not.toContain('/app/memory/feedback-bad.md');
   });
 
