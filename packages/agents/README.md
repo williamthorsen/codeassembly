@@ -184,6 +184,8 @@ A declared subagent is deployed into each targeted harness's project-local subag
 
 Two further top-level keys name where artifacts come from rather than which to adopt: `sources` (see [Sources](#sources)) and `packages` (see [Packages](#packages)). `packages` takes the same `use`/`drop` shape as a type block, so the semantics above carry over to it unchanged.
 
+A further key, `references`, names a dependency's bundled documentation to point at rather than artifacts to deploy; see [References](#references).
+
 A third, `harnesses`, names where they go: see [Harness targeting](#harness-targeting). A fourth, `guidance-hooks`, configures the artifacts the rest adopt rather than naming any: see [Guidance hooks](#guidance-hooks).
 
 #### Harness targeting
@@ -437,6 +439,31 @@ Because it doesn't read any `codeassembly.yaml`, a package that produces guidanc
 Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that don't contain a `SKILL.md`. Link-target existence and cross-file anchors are not checked: A target resolves against the deployed tree, which unions this content with the library's and with every other declared source's.
 
 One shape cannot consume its own guidance: A single-package repo whose package is the repo root doesn't have a `workspace:*` self-link to resolve through. Such a repo declares a `sources:` entry pointing at the directory instead.
+
+### References
+
+A dependency can ship documentation written for agents without shipping CodeAssembly content. A top-level `references:` list points the agent at it, by package name and a path inside the package:
+
+```yaml
+references:
+  - name: nextjs-docs
+    package: next
+    path: dist/docs
+    summary: Read the guide for the installed Next.js version before writing App Router code.
+  - name: web-docs
+    package: some-web-only-package
+    path: docs/agents.md
+    summary: Read this before changing the web app's data layer.
+    resolve-from: apps/web
+```
+
+Each entry has a kebab-case `name`, the `package` to resolve, a `path` inside it (a file or a directory), and a `summary`, all required. `sync` writes one block per reference into the ambient region of every targeted harness, after the rulebook blocks: the `summary` as written, then `Location:` with the resolved path. Nothing is read from the target or copied into the repository, so the pointer follows whichever version is installed. A reference does not resolve a slug or shadow anything, so the precedence of `sources` and `packages` does not apply to it.
+
+**Precedence.** Entries are keyed by `name`: A higher tier that repeats a name replaces the lower tier's entry, and `root: true` clears the list.
+
+**Resolution.** The package resolves as Node resolves it, walking the `node_modules` chain upward from the directory that contains `.agents/`, or from `resolve-from` when the entry sets it. `resolve-from` is relative to that same directory; a workspace uses it to name the member whose `package.json` depends on the package when the root does not. The written path is the `node_modules` path, not its realpath, so it stays valid across an upgrade that keeps the path. Under `sync --global`, a path inside the home directory is written with `~` in place of that directory. `sync --dry-run` names each reference's resolved path.
+
+**Failure.** A reference whose `resolve-from` is not a directory, whose package is not installed, or whose `path` is absolute, leaves the package, or does not exist fails the run before any file is written, dry run included. The report names the declaring `codeassembly.yaml`, and the region written by an earlier run stays as it was.
 
 ### Content-format version
 
