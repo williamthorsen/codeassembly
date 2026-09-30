@@ -30,6 +30,7 @@ describe('sync of real library canaries', () => {
     await rm(homeDir, { recursive: true, force: true });
   });
 
+  /** Builds install options for a project sync pinned to the Claude harness, with the given overrides applied. */
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
@@ -41,8 +42,10 @@ describe('sync of real library canaries', () => {
     await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `${type}:\n${useBlock}`, 'utf8');
   }
 
+  /** The path at which a project sync deploys the skill with the given slug. */
   const skillPath = (slug: string): string => path.join(projectRoot, '.claude', 'skills', slug, 'SKILL.md');
 
+  /** The path at which a project sync deploys the subagent with the given slug. */
   const subagentPath = (slug: string): string => path.join(projectRoot, '.claude', 'agents', `${slug}.md`);
 
   it('deploys and retracts the shell-conventions rulebook as its consult skill', async () => {
