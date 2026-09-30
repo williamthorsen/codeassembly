@@ -7,7 +7,7 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
-import { HARNESSES } from '../../lib/harness.ts';
+import { ALL_HARNESS_IDS, HARNESSES } from '../../lib/harness.ts';
 import { computeContentHash, getManifestPath, readManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
@@ -211,6 +211,20 @@ describe('guidance installation', () => {
   });
 
   describe('harness-specific guidance', () => {
+    it('installs each harness the guidance file supplied by its own content directory', async () => {
+      for (const harnessId of ALL_HARNESS_IDS) {
+        await mkdir(path.join(tempDir, HARNESSES[harnessId].homeDir), { recursive: true });
+      }
+
+      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
+
+      for (const harnessId of ALL_HARNESS_IDS) {
+        const { homeDir, guidanceFileName } = HARNESSES[harnessId];
+        const guidancePath = path.join(tempDir, homeDir, guidanceFileName);
+        expect(existsSync(guidancePath), `missing ${homeDir}/${guidanceFileName}`).toBe(true);
+      }
+    });
+
     it('installs CLAUDE.md to ~/.claude/ for claude harness with includes expanded', async () => {
       const claudeHome = await setupClaudeHome();
 

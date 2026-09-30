@@ -5,11 +5,11 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../../lib/content-resolver.ts';
-import { ALL_HARNESS_IDS, HARNESSES } from '../../lib/harness.ts';
-import { isEnoent } from '../../lib/type-guards.ts';
-import type { InstallOptions } from '../../lib/types.ts';
-import { installCommand } from '../install.ts';
+import { installCommand } from '../../src/commands/install.ts';
+import { resolveContentDir } from '../../src/lib/content-resolver.ts';
+import { ALL_HARNESS_IDS, HARNESSES } from '../../src/lib/harness.ts';
+import { isEnoent } from '../../src/lib/type-guards.ts';
+import type { InstallOptions } from '../../src/lib/types.ts';
 
 // Installs the real content library, not a fixture, to catch failures that only show up with real
 // content, such as an unreplaced `{...}` token or a link that wasn't rewritten.
@@ -17,6 +17,7 @@ import { installCommand } from '../install.ts';
 // Installing the whole catalog runs longer under parallel-worker load than the tier's own budget
 // allows. The ceiling here matches the budget of the tiers above `unit`.
 describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
+  const contentDir = resolveContentDir();
   let tempDir: string;
 
   beforeEach(async () => {
@@ -40,11 +41,10 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
 
   it('installs the full library cleanly with the expected skill count and without any unresolved tokens or links', async () => {
     // A throw here means the real catalog failed to expand/rewrite/write end-to-end.
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, contentDir);
 
     // Install delivers support entries alone, so each installed harness's skill count matches the source enumeration
     // of directories without a `SKILL.md`.
-    const contentDir = resolveContentDir();
     const supportEntries = await listInstalledSupportEntries(path.join(contentDir, 'skills'));
     for (const harnessId of ALL_HARNESS_IDS) {
       const { homeDir } = HARNESSES[harnessId];
@@ -68,7 +68,7 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
   // throwing when that directory is absent, a content directory left behind by a harness rename is otherwise silent;
   // the orphan prune that follows deletes whatever the previous install put there.
   it('installs each harness the guidance file supplied by its own content directory', async () => {
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, contentDir);
 
     for (const harnessId of ALL_HARNESS_IDS) {
       const { homeDir, guidanceFileName } = HARNESSES[harnessId];
@@ -78,14 +78,14 @@ describe('install (real library, full catalog)', { timeout: 30_000 }, () => {
   });
 
   it('does not bypass path rewriting in link mode', async () => {
-    await installCommand(makeOptions({ link: true }), tempDir);
+    await installCommand(makeOptions({ link: true }), tempDir, contentDir);
 
     const linkViolations = await collectBareRelativeLinks(tempDir);
     expect(linkViolations, formatViolations(linkViolations)).toEqual([]);
   });
 
   it('does not install any subagent into any harness', async () => {
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, contentDir);
 
     for (const harnessId of ALL_HARNESS_IDS) {
       const { homeDir, subagentsDirName } = HARNESSES[harnessId];
