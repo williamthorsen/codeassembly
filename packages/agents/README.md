@@ -184,9 +184,9 @@ A declared subagent is deployed into each targeted harness's project-local subag
 
 Two further top-level keys name where artifacts come from rather than which to adopt: `sources` (see [Sources](#sources)) and `packages` (see [Packages](#packages)). `packages` takes the same `use`/`drop` shape as a type block, so the semantics above carry over to it unchanged.
 
-A further key, `references`, names a dependency's bundled documentation to point at rather than artifacts to deploy; see [References](#references).
-
 A third, `harnesses`, names where they go: see [Harness targeting](#harness-targeting). A fourth, `guidance-hooks`, configures the artifacts the rest adopt rather than naming any: see [Guidance hooks](#guidance-hooks).
+
+A fifth, `references`, names a dependency's bundled documentation to point at rather than artifacts to deploy; see [References](#references).
 
 #### Harness targeting
 
