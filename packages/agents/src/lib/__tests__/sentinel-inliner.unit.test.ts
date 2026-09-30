@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractInstalledSlugs, injectRulebook, removeRulebook } from '../sentinel-inliner.ts';
+import { extractInstalledSlugs, injectRulebook, injectSentinelBlock, removeRulebook } from '../sentinel-inliner.ts';
 
 describe(extractInstalledSlugs, () => {
   it('returns slugs that have a complete marker pair, in document order', () => {
@@ -94,6 +94,30 @@ describe(injectRulebook, () => {
 
     expect(withBoth).toContain('<!-- rulebook:alpha -->\nA body\n<!-- /rulebook:alpha -->');
     expect(extractInstalledSlugs(withBoth)).toEqual(['alpha', 'beta']);
+  });
+});
+
+describe(injectSentinelBlock, () => {
+  it('writes a reference block delimited by reference markers, keeping the inner text as written', () => {
+    expect(injectSentinelBlock('', 'reference', 'docs', 'Line one.\n\nLocation: `/x`')).toBe(
+      '<!-- reference:docs -->\nLine one.\n\nLocation: `/x`\n<!-- /reference:docs -->\n',
+    );
+  });
+
+  it('keeps a reference block and a rulebook block of the same name distinct', () => {
+    const withBoth = injectSentinelBlock(injectRulebook('', 'docs', 'Rules.'), 'reference', 'docs', 'Pointer.');
+
+    const replaced = injectSentinelBlock(withBoth, 'reference', 'docs', 'New pointer.');
+
+    expect(replaced).toContain('<!-- rulebook:docs -->\nRules.\n<!-- /rulebook:docs -->');
+    expect(replaced).toContain('<!-- reference:docs -->\nNew pointer.\n<!-- /reference:docs -->');
+    expect(extractInstalledSlugs(replaced)).toEqual(['docs']);
+  });
+
+  it('leaves a reference block in place when removing a rulebook of the same name', () => {
+    const withBoth = injectSentinelBlock(injectRulebook('', 'docs', 'Rules.'), 'reference', 'docs', 'Pointer.');
+
+    expect(removeRulebook(withBoth, 'docs')).toBe('<!-- reference:docs -->\nPointer.\n<!-- /reference:docs -->\n');
   });
 });
 

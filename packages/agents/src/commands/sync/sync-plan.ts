@@ -4,7 +4,7 @@ import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import type { ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import type { ResolvedHarnessTargets } from '../../lib/target-harnesses.ts';
-import type { PlannedAmbientHost } from './ambient-hosts.ts';
+import type { PlannedAmbientHost, PlannedReference } from './ambient-hosts.ts';
 import type { DroppedHarnessRetraction } from './harness-retraction.ts';
 import type { GuidanceHookAdvisory } from './hook-bindings.ts';
 import type { Retirement } from './legacy-retirement.ts';
@@ -54,6 +54,8 @@ export interface SyncPlan {
   readonly droppedHarnesses: ReadonlyArray<DroppedHarnessRetraction>;
   readonly resolutionReport: ReadonlyArray<ResolutionEntry>;
   readonly ambientHosts: ReadonlyArray<PlannedAmbientHost>;
+  /** The declared references delivered into every ambient host, in precedence order. */
+  readonly references: ReadonlyArray<PlannedReference>;
   /**
    * Hosts written by the run that git does not ignore, reported so that machine-local guidance does not become a
    * commit candidate.
