@@ -1,0 +1,5 @@
+Selecting Split is the developer's consent to the split at the seam that its `➕` line names. Nothing is created before that selection, and the bodies get one confirmation before anything is created.
+
+**Compose.** Compose a ticket body per piece (problem, context, acceptance criteria) from the piece's work and the ticket's criteria. Compose the originating ticket's new body as well: With two pieces, rewrite it to the first piece, so that the originating ticket and one new ticket carry the split; with three or more, make it an umbrella that keeps its problem and context, lists the children, and has "Every child is closed" as its acceptance criterion. When no ticket governs the work, every piece is a new ticket and there is nothing to rewrite.
+
+**Confirm once.** Show every body, every relationship, and everything that the steps below create or change in one block, and confirm once. This single confirmation stands in for the per-ticket confirmation that `{skill:create-ticket}` would otherwise raise for each piece.
