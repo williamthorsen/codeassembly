@@ -188,7 +188,7 @@ describe(parseCodeAssemblyFile, () => {
       const fields = { name: 'docs', package: 'next', path: 'dist/docs', summary: 'Read it.' };
       const yaml = Object.entries(fields)
         .filter(([key]) => key !== field)
-        .map(([key, value], index) => `${index === 0 ? '  - ' : '    '}${key}: ${value}`)
+        .map(([key, value], index) => `${index === 0 ? '  - ' : ' '.repeat(4)}${key}: ${value}`)
         .join('\n');
 
       expect(() => parseCodeAssemblyFile(`references:\n${yaml}\n`, '/p/.agents/codeassembly.yaml')).toThrow(

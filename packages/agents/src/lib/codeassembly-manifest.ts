@@ -126,7 +126,7 @@ export async function resolveDeclaration(options: {
     packages: [...packages].toReversed(),
     declinedPackages: [...declinedPackages],
     sources: [...sources].toReversed().map(([name, dir]) => ({ name, dir })),
-    references: [...references.values()].toReversed(),
+    references: references.values().toArray().toReversed(),
     guidanceHooks: buildGuidanceHookMap(guidanceHooks),
     declaredIn: { rulebook: rulebooks, skill: skills, subagent: subagents, collection: collections },
   };
