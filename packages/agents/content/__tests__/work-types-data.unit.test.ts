@@ -162,6 +162,20 @@ describe('the live taxonomy under the defect check', () => {
 
 // region | Helpers
 
+/** Returns each value that appears more than once in `values`, preserving first-seen order. */
+function findDuplicates(values: string[]): string[] {
+  const seen = new Set<string>();
+  const duplicates = new Set<string>();
+  for (const value of values) {
+    if (seen.has(value)) {
+      duplicates.add(value);
+    } else {
+      seen.add(value);
+    }
+  }
+  return [...duplicates];
+}
+
 /**
  * Reads and parses a JSON file, re-throwing read or parse errors with the file path and a label.
  * The caller-supplied `T` types the returned value at the call site without a type assertion;
@@ -198,20 +212,6 @@ function registerSchemaIdempotent(schemaToRegister: JsonSchemaDraft202012Object,
       throw error;
     }
   }
-}
-
-/** Returns each value that appears more than once in `values`, preserving first-seen order. */
-function findDuplicates(values: string[]): string[] {
-  const seen = new Set<string>();
-  const duplicates = new Set<string>();
-  for (const value of values) {
-    if (seen.has(value)) {
-      duplicates.add(value);
-    } else {
-      seen.add(value);
-    }
-  }
-  return [...duplicates];
 }
 
 // endregion | Helpers
