@@ -2,13 +2,13 @@ import path from 'node:path';
 
 import { beforeAll, describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../../lib/content-resolver.ts';
-import { expandIncludes } from '../../lib/directive-expander.ts';
-import { HARNESSES } from '../../lib/harness.ts';
-import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
-import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
-import { homeAnchor } from '../../lib/path-rewriter.ts';
-import { renderSubagentForHarness } from '../../lib/subagent-transform.ts';
+import { resolveContentDir } from '../../src/lib/content-resolver.ts';
+import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { HARNESSES } from '../../src/lib/harness.ts';
+import { loadHarnessOverlay } from '../../src/lib/harness-overlay.ts';
+import type { RulebookInvocationCatalog } from '../../src/lib/invocation-tokens.ts';
+import { homeAnchor } from '../../src/lib/path-rewriter.ts';
+import { renderSubagentForHarness } from '../../src/lib/subagent-transform.ts';
 
 /** The rulebook injected by `orchestrated-coder`; the sources under test don't address any other. */
 const RULEBOOKS: RulebookInvocationCatalog = new Map([

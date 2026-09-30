@@ -3,8 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../content-resolver.ts';
-import { expandIncludes } from '../directive-expander.ts';
+import { resolveContentDir } from '../../src/lib/content-resolver.ts';
+import { expandIncludes } from '../../src/lib/directive-expander.ts';
 
 interface LinkViolation {
   file: string;

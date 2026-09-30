@@ -3,10 +3,10 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../content-resolver.ts';
-import { libraryResolver } from '../content-sources.ts';
-import { resolveClosure } from '../dependency-resolver.ts';
-import { enumerateCatalogSlugs } from '../library-catalog.ts';
+import { resolveContentDir } from '../../src/lib/content-resolver.ts';
+import { libraryResolver } from '../../src/lib/content-sources.ts';
+import { resolveClosure } from '../../src/lib/dependency-resolver.ts';
+import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
 
 // Asserts that the content library's invocation edges resolve: Declaring a skill pulls the skills and subagents that
 // it invokes into its closure, whether the invocation is an inline body token or a non-inline dispatch declared in
