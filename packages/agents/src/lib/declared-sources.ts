@@ -51,8 +51,9 @@ export function describeMissingSource(source: DeclaredSource): ReportLine {
         'package, otherwise report the omission upstream or drop the package from `packages`.'
       : "Create the directory, or correct the source's `path` in the declaration that names it.";
   return {
+    glyph: 'warning',
     level: 'warn',
-    text: `⚠️ Declared source "${source.name}" (${source.dir}) does not exist. ${remedy}`,
+    text: `Declared source "${source.name}" (${source.dir}) does not exist. ${remedy}`,
   };
 }
 

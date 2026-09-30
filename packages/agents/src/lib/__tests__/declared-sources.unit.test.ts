@@ -187,6 +187,7 @@ describe(describeMissingSource, () => {
     const source: DeclaredSource = { name: 'team', dir: '/nowhere/team', declaredAs: 'path' };
 
     expect(describeMissingSource(source)).toEqual({
+      glyph: 'warning',
       level: 'warn',
       text: expect.stringContaining("correct the source's `path`"),
     });

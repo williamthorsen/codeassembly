@@ -61,15 +61,19 @@ export function describePruneResult(result: PruneResult, options: { dryRun: bool
       case 'absent':
         return [];
       case 'retain':
-        return [{ level: 'warn', text: `  ⚠️ Keeping modified stale item: ${orphan.entry.relativePath}` }];
-      case 'remove':
         return [
           {
-            level: 'info',
-            text: options.dryRun
-              ? `  [dry-run] Would remove stale item: ${orphan.entry.relativePath}`
-              : `  🗑️ Removed stale item: ${orphan.entry.relativePath}`,
+            glyph: 'warning',
+            indent: 2,
+            level: 'warn',
+            text: `Keeping modified stale item: ${orphan.entry.relativePath}`,
           },
+        ];
+      case 'remove':
+        return [
+          options.dryRun
+            ? { indent: 2, level: 'info', text: `[dry-run] Would remove stale item: ${orphan.entry.relativePath}` }
+            : { glyph: 'removed', indent: 2, level: 'info', text: `Removed stale item: ${orphan.entry.relativePath}` },
         ];
     }
   });

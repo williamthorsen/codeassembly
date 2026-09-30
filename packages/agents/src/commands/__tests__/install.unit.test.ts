@@ -165,7 +165,7 @@ describe(installCommand, () => {
     expect(await readFile(guidancePath, 'utf8')).toBe(managed);
   });
 
-  it('prefixes skip warnings with ⚠️ and the success summary with ✅', async () => {
+  it('prefixes skip warnings with the warning glyph and the success summary with the passed glyph', async () => {
     const claudeHome = await setupClaudeHome();
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
@@ -177,8 +177,8 @@ describe(installCommand, () => {
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
     const infoLines = silent.info.mock.calls.map((call) => String(call[0]));
 
-    expect(warnLines.some((line) => line.includes('⚠️ Skipping modified'))).toBe(true);
-    expect(infoLines.some((line) => line.includes('✅ Installed '))).toBe(true);
+    expect(warnLines.some((line) => line.includes('WARN Skipping modified'))).toBe(true);
+    expect(infoLines.some((line) => line.includes('PASS Installed '))).toBe(true);
   });
 
   it('warns when the content does not ship a skills directory, rather than reporting a clean install', async () => {

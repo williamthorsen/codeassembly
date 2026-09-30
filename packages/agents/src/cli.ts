@@ -17,7 +17,7 @@ import { isSyncValidationError } from './commands/sync/sync-validation-error.ts'
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
 import { formatContentDefects } from './lib/content-defects.ts';
-import { emitReport } from './lib/emit-report.ts';
+import { emitReport, printLine } from './lib/emit-report.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';
 import type { HarnessId, InstallOptions } from './lib/types.ts';
 
@@ -283,7 +283,11 @@ Options:
  */
 function reportSyncFailure(error: unknown): void {
   if (isSyncValidationError(error)) {
-    console.error(`\n❌ sync found ${error.defects.length} defect(s):\n`);
+    emitReport([
+      { level: 'error', text: '' },
+      { glyph: 'failed', level: 'error', text: `sync found ${error.defects.length} defect(s):` },
+      { level: 'error', text: '' },
+    ]);
     console.error(formatContentDefects(error.defects));
   } else {
     console.error(`Error: ${describeError(error)}`);
@@ -323,7 +327,11 @@ async function runSync(options: InstallOptions, global: boolean, warnOnly: boole
     emitReport(options.dryRun ? renderDryRunReport(outcome) : renderSyncReport(outcome));
   } catch (error: unknown) {
     if (warnOnly) {
-      console.warn(`⚠️ sync failed: ${describeError(error)}\n   ${SYNC_FAILURE_EFFECT}`);
+      printLine({
+        glyph: 'warning',
+        level: 'warn',
+        text: `sync failed: ${describeError(error)}\n${SYNC_FAILURE_EFFECT}`,
+      });
       return;
     }
     reportSyncFailure(error);

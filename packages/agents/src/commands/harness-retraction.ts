@@ -90,7 +90,9 @@ async function unwireHooks(
   try {
     await removeHarnessHookEntries(harnessId, baseDir);
   } catch (error) {
-    return [{ level: 'warn', text: `  ⚠️ Skipping hook-entry removal: ${describeError(error)}` }];
+    return [
+      { glyph: 'warning', indent: 2, level: 'warn', text: `Skipping hook-entry removal: ${describeError(error)}` },
+    ];
   }
   return [];
 }

@@ -10,11 +10,11 @@ export interface OutputStyles {
 }
 
 // Plain until the CLI entry point resolves the styles, so output written without a configured style carries no emoji.
-let configuredStyles: OutputStyles = { stderr: 'plain', stdout: 'plain' };
+const configured: { styles: OutputStyles } = { styles: { stderr: 'plain', stdout: 'plain' } };
 
 /** Sets the glyph style of each stream for every line emitted afterwards. */
 export function configureOutputStyle(styles: OutputStyles): void {
-  configuredStyles = styles;
+  configured.styles = styles;
 }
 
 /** Writes each report line to the stream that its level names. */
@@ -27,10 +27,10 @@ export function emitReport(lines: ReadonlyArray<ReportLine>): void {
 /** Writes one report line to the stream that its level names, rendered in that stream's style. */
 export function printLine(line: ReportLine): void {
   if (line.level === 'info') {
-    console.info(renderReportLine(line, configuredStyles.stdout));
+    console.info(renderReportLine(line, configured.styles.stdout));
     return;
   }
-  const text = renderReportLine(line, configuredStyles.stderr);
+  const text = renderReportLine(line, configured.styles.stderr);
   if (line.level === 'error') {
     console.error(text);
     return;
@@ -40,7 +40,7 @@ export function printLine(line: ReportLine): void {
 
 /** Returns the glyph style configured for a stream. */
 export function readOutputStyle(stream: keyof OutputStyles): OutputStyle {
-  return configuredStyles[stream];
+  return configured.styles[stream];
 }
 
 /**

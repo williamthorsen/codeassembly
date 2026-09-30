@@ -1,5 +1,6 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { printLine } from '../lib/emit-report.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { readHomeProvenance } from '../lib/home-provenance.ts';
 import { detectDrift, getManifestPath, readManifest } from '../lib/manifest.ts';
@@ -88,10 +89,13 @@ async function reportHomeProvenance(baseDir?: string): Promise<void> {
   const { lastAttempt, lastWrite } = provenance;
   if (lastAttempt?.outcome === 'failed') {
     const defects = lastAttempt.defectCount === undefined ? '' : ` with ${lastAttempt.defectCount} defect(s),`;
-    console.warn(
-      `⚠️ The last home-domain write attempt failed: \`${lastAttempt.command}\` on ${lastAttempt.attemptedAt},` +
+    printLine({
+      glyph: 'warning',
+      level: 'warn',
+      text:
+        `The last home-domain write attempt failed: \`${lastAttempt.command}\` on ${lastAttempt.attemptedAt},` +
         `${defects} writing nothing.`,
-    );
+    });
   }
 
   if (lastWrite === undefined) {
@@ -123,7 +127,12 @@ async function reportHookEntryStatus(
     statuses = await checkHarnessHookEntries(harnessId, baseDir);
   } catch (error) {
     // An unparseable config is itself a status worth reporting; it must not abort the rest of the report.
-    console.warn(`  ⚠️ Hooks: Could not read the config: ${describeError(error)}`);
+    printLine({
+      glyph: 'warning',
+      indent: 2,
+      level: 'warn',
+      text: `Hooks: Could not read the config: ${describeError(error)}`,
+    });
     return;
   }
   const presentCount = statuses.filter((entry) => entry.status === 'present').length;

@@ -6,6 +6,7 @@ import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
+import { printLine } from '../lib/emit-report.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
@@ -274,7 +275,7 @@ function readNameAndDescription(content: string): { name?: string; description?:
 /** Warns to stderr that an artifact was skipped because its frontmatter could not be parsed. */
 function warnSkipped(type: ArtifactType, file: string, error: unknown): void {
   const reason = describeError(error);
-  console.warn(`  ⚠️ Skipping ${type} ${file}: ${reason}`);
+  printLine({ glyph: 'warning', indent: 2, level: 'warn', text: `Skipping ${type} ${file}: ${reason}` });
 }
 
 /** Greedily wraps `text` into lines no wider than `width`; a word longer than `width` overflows on its own line. */

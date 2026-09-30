@@ -1,5 +1,6 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { printLine } from '../lib/emit-report.ts';
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { removeItem } from '../lib/installer.ts';
@@ -44,7 +45,12 @@ export async function uninstallCommand(
     try {
       await removeHarnessHookEntries(harnessId, baseDir);
     } catch (error) {
-      console.warn(`  ⚠️ Skipping hook-entry removal: ${describeError(error)}`);
+      printLine({
+        glyph: 'warning',
+        indent: 2,
+        level: 'warn',
+        text: `Skipping hook-entry removal: ${describeError(error)}`,
+      });
     }
 
     const harnessManifest = manifest.harnesses[harnessId];
@@ -94,7 +100,7 @@ async function removeTrackedEntries(
     const verdict = await classifyOwnedEntry(entry, home, force);
 
     if (verdict === 'retain') {
-      console.warn(`  ⚠️ Skipping modified file: ${entry.relativePath}`);
+      printLine({ glyph: 'warning', indent: 2, level: 'warn', text: `Skipping modified file: ${entry.relativePath}` });
       skippedEntries.push(entry);
       continue;
     }
@@ -105,7 +111,12 @@ async function removeTrackedEntries(
     removedCount++;
   }
 
-  console.info(`  ✅ Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`);
+  printLine({
+    glyph: 'passed',
+    indent: 2,
+    level: 'info',
+    text: `Removed ${removedCount} items, skipped ${skippedEntries.length} modified items`,
+  });
   return skippedEntries;
 }
 

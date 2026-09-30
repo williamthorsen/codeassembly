@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { GROWTH_CEILING_BYTES, type SizeReport } from '../../../deployed-sizes/build-size-report.ts';
 import type { SizeAggregates } from '../../../deployed-sizes/types.ts';
+import type { ReportLine } from '../../../lib/report-line.ts';
 import type { SizeReportOutcome } from '../record-deployed-sizes.ts';
 import { renderDryRunReport, renderSyncReport } from '../report.ts';
 import type { SyncOutcome, SyncPlan } from '../sync-plan.ts';
@@ -53,8 +54,10 @@ function withSizes(report: Partial<SizeReport>): SyncOutcome {
 }
 
 /** The text of every line produced by one renderer, joined as the terminal would show it. */
-function textOf(lines: ReadonlyArray<{ text: string }>): string {
-  return lines.map((line) => line.text).join('\n');
+function textOf(lines: ReadonlyArray<ReportLine>): string {
+  return lines
+    .map((line) => ' '.repeat(line.indent ?? 0) + (line.glyph === undefined ? '' : `[${line.glyph}] `) + line.text)
+    .join('\n');
 }
 
 describe('dropped-harness retraction', () => {
@@ -110,7 +113,7 @@ describe('dropped-harness retraction', () => {
       ambientHost: { kind: 'damaged', path: '/project/AGENTS.local.md' },
     } as const;
     const warning =
-      '⚠️ Skipping ambient retraction: /project/AGENTS.local.md has a damaged ambient region. ' +
+      '[warning] Skipping ambient retraction: /project/AGENTS.local.md has a damaged ambient region. ' +
       'Repair the codeassembly-ambient markers and re-run, or the withdrawn guidance keeps loading.';
 
     expect(textOf(renderSyncReport(reconciled({ droppedHarnesses: [damaged] })))).toContain(warning);
@@ -505,8 +508,8 @@ describe('deployed sizes', () => {
       }),
     );
 
-    expect(lines.filter((line) => line.level === 'warn').map((line) => line.text)).toEqual([
-      '⚠️ a.md has passed the 5.0 KiB growth ceiling (5.0 KiB).',
+    expect(lines.filter((line) => line.level === 'warn')).toEqual([
+      { glyph: 'warning', level: 'warn', text: 'a.md has passed the 5.0 KiB growth ceiling (5.0 KiB).' },
     ]);
   });
 
@@ -584,7 +587,7 @@ describe('deployed sizes', () => {
     };
     const output = textOf(renderSyncReport(outcome));
 
-    expect(output).toContain("⚠️ The deployment's sizes were not recorded: EACCES: permission denied");
+    expect(output).toContain("[warning] The deployment's sizes were not recorded: EACCES: permission denied");
     expect(output).not.toContain('Deployed sizes:');
   });
 

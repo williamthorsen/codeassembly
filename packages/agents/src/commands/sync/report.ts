@@ -104,7 +104,7 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   for (const { hostPath, plan: hostPlan } of plan.ambientHosts) {
     const reason = hostPlan.kind === 'skip' ? describeAmbientSkip(hostPlan.reason, hostPath) : undefined;
     if (reason !== undefined) {
-      lines.push({ level: 'warn', text: `⚠️ Skipping ambient delivery: ${reason}` });
+      lines.push({ glyph: 'warning', level: 'warn', text: `Skipping ambient delivery: ${reason}` });
     }
   }
   lines.push(...describeDamagedDroppedHosts(plan));
@@ -115,10 +115,10 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
 
   const shadows = plan.resolutionReport.filter((entry) => entry.shadowsLibrary);
   if (shadows.length > 0) {
-    lines.push({ level: 'warn', text: renderShadowWarning(shadows) });
+    lines.push({ glyph: 'warning', level: 'warn', text: renderShadowWarning(shadows) });
   }
   if (plan.undeclaredPackages.length > 0) {
-    lines.push({ level: 'info', text: renderPackageAdvice(plan.undeclaredPackages) });
+    lines.push(...renderPackageAdvice(plan.undeclaredPackages));
   }
   // The size block closes the report: the bulkiest part, placed after the advisories, which name things to act on.
   lines.push(...plan.guidanceHookAdvisories.map(describeGuidanceHookAdvisory), ...describeSizes(outcome.sizes));
@@ -195,9 +195,10 @@ function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> 
     retraction.ambientHost?.kind === 'damaged'
       ? [
           {
+            glyph: 'warning',
             level: 'warn',
             text:
-              `⚠️ Skipping ambient retraction: ${describeDamagedRegion(retraction.ambientHost.path)} Repair the ` +
+              `Skipping ambient retraction: ${describeDamagedRegion(retraction.ambientHost.path)} Repair the ` +
               'codeassembly-ambient markers and re-run, or the withdrawn guidance keeps loading.',
           },
         ]
@@ -292,8 +293,9 @@ function describeGrowthWarning(warning: GrowthWarning): ReportLine {
   const remedy = warning.mayStreamline ? ' Run the `streamline-guidance` skill on its source to reduce it.' : '';
   const ceiling = formatBytes(GROWTH_CEILING_BYTES);
   return {
+    glyph: 'warning',
     level: 'warn',
-    text: `⚠️ ${warning.key} has passed the ${ceiling} growth ceiling (${formatBytes(warning.bytes)}).${remedy}`,
+    text: `${warning.key} has passed the ${ceiling} growth ceiling (${formatBytes(warning.bytes)}).${remedy}`,
   };
 }
 
@@ -309,23 +311,26 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
   switch (advisory.kind) {
     case 'bound-undeclared':
       return {
+        glyph: 'warning',
         level: 'warn',
         text:
-          `⚠️ Guidance hook "${advisory.hook}" binds rulebook "${advisory.slug}", whose delivery does not name ` +
+          `Guidance hook "${advisory.hook}" binds rulebook "${advisory.slug}", whose delivery does not name ` +
           "`hook`. Add `hook` to the rulebook's delivery, or drop the binding.",
       };
     case 'bound-unreached':
       return {
+        glyph: 'hint',
         level: 'info',
         text:
-          `💡 Guidance hook "${advisory.hook}" is bound, but it isn't declared by any deployed skill or subagent, so the ` +
+          `Guidance hook "${advisory.hook}" is bound, but it isn't declared by any deployed skill or subagent, so the ` +
           'binding delivers nothing. Check the hook name, or declare a skill or subagent that declares it.',
       };
     case 'declared-unbound':
       return {
+        glyph: 'hint',
         level: 'info',
         text:
-          `💡 Rulebook "${advisory.slug}" offers guidance-hook delivery that nothing binds. To use it, name the ` +
+          `Rulebook "${advisory.slug}" offers guidance-hook delivery that nothing binds. To use it, name the ` +
           'rulebook under a hook in the `guidance-hooks:` block of .agents/codeassembly.yaml.',
       };
   }
@@ -497,7 +502,7 @@ function describeSizes(sizes: SizeReportOutcome | undefined): ReadonlyArray<Repo
     return [];
   }
   if (sizes.kind === 'failed') {
-    return [{ level: 'warn', text: `⚠️ The deployment's sizes were not recorded: ${sizes.message}` }];
+    return [{ glyph: 'warning', level: 'warn', text: `The deployment's sizes were not recorded: ${sizes.message}` }];
   }
   return renderSizeReport(sizes.report);
 }
@@ -535,24 +540,32 @@ function describeStaleAmbientHost(status: 'malformed' | 'missing' | 'no-region',
 /** The advisory naming a host that a run writes and that git does not ignore. */
 function describeUnignoredHost(hostPath: string): ReportLine {
   return {
+    glyph: 'warning',
     level: 'warn',
     text:
-      `⚠️ ${hostPath} is not git-ignored. It contains machine-local guidance, so add it to .gitignore to keep it ` +
+      `${hostPath} is not git-ignored. It contains machine-local guidance, so add it to .gitignore to keep it ` +
       'out of version control.',
   };
 }
 
 /**
  * Renders the advice naming each dependency that ships content that the project has not declared, as the `packages:`
- * block that adopts them. Emitted as the block rather than as prose so that it can be pasted rather than transcribed.
+ * block that adopts them. Emitted as the block rather than as prose so that it can be pasted rather than transcribed,
+ * on a line of its own so that the glyph's gutter does not indent it.
  */
-function renderPackageAdvice(names: ReadonlyArray<string>): string {
+function renderPackageAdvice(names: ReadonlyArray<string>): ReadonlyArray<ReportLine> {
   const subject = names.length === 1 ? 'dependency ships' : 'dependencies ship';
   const entries = names.map((name) => `    - '${name}'`).join('\n');
-  return (
-    `💡 ${names.length} ${subject} CodeAssembly guidance that this project has not declared. ` +
-    `To adopt, add to .agents/codeassembly.yaml:\n\npackages:\n  use:\n${entries}\n`
-  );
+  return [
+    {
+      glyph: 'hint',
+      level: 'info',
+      text:
+        `${names.length} ${subject} CodeAssembly guidance that this project has not declared. ` +
+        'To adopt, add to .agents/codeassembly.yaml:',
+    },
+    { level: 'info', text: `\npackages:\n  use:\n${entries}\n` },
+  ];
 }
 
 /**
@@ -580,7 +593,7 @@ function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
     .join(', ');
   const plural = shadows.length === 1 ? '' : 's';
   const verb = shadows.length === 1 ? 's' : '';
-  return `⚠️ ${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
+  return `${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
 }
 
 /** Renders one measured deployment's size block, in the order stated by `describeSizes`. */
