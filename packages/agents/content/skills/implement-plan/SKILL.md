@@ -83,50 +83,78 @@ None of this suppresses the closing report. Reporting what was built, which acce
 
 ### Options
 
-| #   | Emoji | Option                   | Description                                            |
-| --- | ----- | ------------------------ | ------------------------------------------------------ |
-| 1   | 🔍    | Review branch            | Run a single end-of-work review pass over the branch   |
-| 2   | 🎶    | Orchestrated review      | Run the full orchestrated review cycle over the branch |
-| 3   | 🚢    | Create PR without review | Open the PR straight from the implementation           |
+| #   | Emoji | Option                   | Description                                               |
+| --- | ----- | ------------------------ | --------------------------------------------------------- |
+| 1   | 🚢    | Create PR without review | Open the PR straight from the implementation              |
+| 2   | ✂️    | Split the branch         | Cut the branch at a seam into pieces that each ship alone |
+| 3   | 🔍    | Review branch            | Run a single end-of-work review pass over the branch      |
 
 ### Output format
 
-Present all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default; add a `➕` or `➖` line only when the realized diff presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., "the shared schema changed, so consumers outside this package are affected"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include the ticket path in each skill-invoking option line; omit it when a ticket did not govern the run.
+Present all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default; add a `➕` or `➖` line only when the realized diff presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., "the only behavioral change is a guard in one function, so a review pass has one site to read"). Generic option properties ("structured review pass," "longer wall time") are noise and must be omitted. Include the ticket path in each skill-invoking option line; omit it when a ticket did not govern the run.
 
-Options that invoke a review include context-clearing guidance:
+**One `➕` line is mandatory rather than omitted.** When Split the branch is the selected option, it must include a `➕` line naming the diff's size, in commits and files changed, and each piece with its commit range as `<first short SHA>..<last short SHA>`, adding the task numbers when the commits map to tasks (rule 2). Selecting it without the line is a defect: If the line cannot be written, the rule did not match and the cascade continues.
 
-- **Review branch** and **Orchestrated review**: Prepend "Clear context and use..."; a reviewer that watched the code being written inherits the author's blind spots, and orchestration dispatches fresh subagents regardless.
+Options that invoke a skill include context-clearing guidance:
+
 - **Create PR without review**: No "Clear context" prefix; the PR description is composed from this session's work. `create-pr` requires the branch to be in sync with its remote and stops when it is not, so note on the option that it needs the branch pushed first.
+- **Split the branch**: No "Clear context" prefix, and no pasted invocation line; the split runs in this session, which knows the commits and the plan. See [Splitting the branch](#splitting-the-branch).
+- **Review branch**: Prepend "Clear context and use..."; a reviewer that watched the code being written inherits the author's blind spots.
 
 Example (rendered for the default case, in which the recommendation rules below select Review branch):
 
 ```
 Next steps:
-1. 🔍 ■■□ Review branch:
+1. 🚢 ■□□ Create PR without review:
+   - Push the branch first, then use the `create-pr` skill
+2. ✂️ ■□□ Split the branch:
+   - Selection runs the split in this session
+3. 🔍 ■■□ Review branch:
    - Clear context and use the `review-branch` skill with ticket: {ticket_source}
-2. 🎶 ■□□ Orchestrated review:
-   - Clear context and use the `orchestrate-review` skill with ticket: {ticket_source}
-3. 🚢 ■□□ Create PR without review:
-   - Use the `create-pr` skill
 ```
 
 Skill names for each option:
 
-- 🔍 **Review branch** -> `review-branch`
-- 🎶 **Orchestrated review** -> `orchestrate-review`
 - 🚢 **Create PR without review** -> `create-pr`
+- ✂️ **Split the branch** -> `{skill:create-ticket}`, once per new piece, in this session
+- 🔍 **Review branch** -> `review-branch`
 
 ### Recommendation rules
 
 Select the recommended option by checking these rules in order and stopping at the first match. Judge the diff that you actually produced, not the work predicted by the plan's author: A plan-time estimate of how much review the work would need was made before anyone knew what the code would look like, and that estimate is corrected at this menu.
 
 1. **Create PR without review**: The realized diff is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md)): a mechanical rename, a typo fix, a single-file change without a behavioral surface.
-2. **Orchestrated review**: The realized diff turned out cross-cutting ([complexity level 4](../_data/complexity-classification.md)): It spans packages or module boundaries, changes a shared contract, or has consequences that ripple past the change sites. Parallel aspect reviewers reach a surface that a single pass would cover only thinly.
-3. **Review branch**: All other cases (default).
+2. **Split the branch**: Recommend only when the realized diff is too large for one `review-branch` pass, and its commits contain a seam: a prefix of commits that ships on its own and that you expect to pass the plan's verification gates at its last commit. Both halves are required: Too large without a seam is not a match, and a seam in a diff that one pass would carry is not one either. Pieces whose commits interleave are not a seam, because separating them would take a rebase.
+
+   Structural properties (the diff spans packages or module boundaries, changes a shared contract, or has consequences that ripple past the change sites) make a diff _more likely_ to be too large. They are evidence to weigh, and none of them matches rule 2 on its own.
+
+   With two pieces, rule 2 also fails when any commit after the seam is already on the branch's remote: The split resets the current branch to the seam, and removing a pushed commit would take a force-push.
+
+   When rule 2 matches, the rendered option must name the size and the pieces on a `➕` line. Being unable to write the line means rule 2 did not match.
+
+3. **Review branch**: All other cases (default), whatever the size of the diff.
 
 #### Marker strengths
 
-The selected option's marker follows how cleanly its rule matched: ■■■ when the rule's test is met squarely and the alternatives are worse on the criteria that decided it, ■■□ when the fit is good but an alternative stays defensible, ■□□ when little separates the options. Rule 3 is the cascade's fallthrough rather than a positive match, so an option selected there rarely earns more than ■■□. The other two options take ■□□ by default, and □□□ when one has a clear drawback in the current context.
+The selected option's marker follows how cleanly its rule matched: ■■■ when the rule's test is met squarely and the alternatives are worse on the criteria that decided it, ■■□ when the fit is good but an alternative stays defensible, ■□□ when little separates the options. Rule 3 is the cascade's fallthrough rather than a positive match, so its marker follows how squarely rules 1 and 2 failed: ■■■ when neither came close, ■■□ when one stayed defensible. The other two options take ■□□ by default, and □□□ when one has a clear drawback in the current context.
+
+#### Splitting the branch
+
+**Pre-check.** Record the original `HEAD` SHA. Confirm that `git status --porcelain` prints nothing; ignored files, such as installed dependencies, are left alone. With two pieces, confirm that no commit after the seam is on a local remote-tracking ref, without fetching; a branch without an upstream counts as not pushed. When a check fails, report it and stop.
+
+<!-- include: ../_partials/split-ticket-compose.md / -->
+
+The confirmation also lists each piece's commit range and boundary SHA, each branch to be created, and, with two pieces, the reset of the current branch to the seam. When the developer changes a boundary at the confirmation, recompose and confirm again.
+
+**Verify the seams.** Before any ticket is created, verify each seam: For each boundary from the last seam back to the first, run `git reset --hard` on the current branch to the boundary, reinstall dependencies when the boundary's lockfile differs from the installed one, and run the plan's `## Verification` gates. Then reset to the original `HEAD`, reinstalling when needed. When a gate fails, reset to the original `HEAD`, report the seam that failed with the gate's output, and stop; nothing has been created.
+
+<!-- include: ../_partials/split-ticket-create.md / -->
+
+**Create the branches.** Create one branch per new ticket at its piece's boundary commit, named per [branch format](../_data/branch-format.md) from the new ticket's reference and a kebab-case description of its title. With two pieces, the second piece's branch is created at the original `HEAD`, and the current branch is then reset to the seam, so that it holds the first piece under the rewritten originating ticket. With three or more, every piece gets a new branch, and the current branch stays at the original `HEAD` as the umbrella's branch, which is never opened as a pull request. When no ticket governs the work, the current branch still keeps the first piece with two pieces; the report names that piece's new ticket, which the branch name does not encode.
+
+Never push, force-push, or delete a remote branch, never create a worktree, and never check out a new branch. The resets above are the only history operations, and the recorded SHA and the new branches keep every commit reachable.
+
+**Report.** Report each ticket reference, each branch with its base, and each piece's next step. With two pieces, the first piece continues in this session at Review branch. A piece reviewed in its own worktree runs `review-branch --diff-base=<previous piece's branch>`, which reviews that piece alone because its predecessor's branch is a prefix of its own; the first piece of three or more uses the default diff base. Tell each later piece's session to rebase onto the default branch before its first push, once its predecessor has merged.
 
 <!-- include: ../_partials/option-format.md / -->
 
