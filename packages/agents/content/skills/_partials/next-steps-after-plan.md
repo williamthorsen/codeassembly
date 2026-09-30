@@ -70,7 +70,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
    When rule 2 matches, the rendered option must name the size and the pieces on a `➕` line. Being unable to write the line means rule 2 did not match.
 
-3. **Implement**: All other cases (default), whatever the number of modules or packages that the plan touches. `implement-plan`'s closing menu re-decides the review depth from the realized diff, and Orchestrated review is among its options, so a plan sent here is not committed to a single review pass.
+3. **Implement**: All other cases (default), whatever the number of modules or packages that the plan touches. `implement-plan`'s closing menu re-decides the review depth from the realized diff, and it offers a split when the diff proves too large for one review pass, so a plan sent here is not committed to a single pull request.
 
    When the work is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md): a typo fix, an unused-import removal, a single-file mechanical rename), add a `➕` line noting that the follow-up review can be skipped at `implement-plan`'s closing menu. That menu decides the review from the diff that the implementation actually produced, so a plan-time triviality read is a hint to it rather than a commitment.
 
@@ -82,13 +82,14 @@ Each skill supplies its own recommendation context (e.g., whether the plan was d
 
 #### Splitting the ticket
 
-Selecting option 2 is the developer's consent to the split at the seam that its `➕` line names. Nothing is created before that selection, and the bodies get one confirmation before anything is created:
+<!-- include: split-ticket-compose.md / -->
 
-1. Compose a ticket body per piece (problem, context, acceptance criteria) from the plan's tasks and the ticket's criteria. Compose the originating ticket's new body as well: With two pieces, rewrite it to the first piece, so that the originating ticket and one new ticket carry the split; with three or more, make it an umbrella that keeps its problem and context, lists the children, and has "Every child is closed" as its acceptance criterion. When the plan has no source ticket, every piece is a new ticket and there is nothing to rewrite.
-2. Show every body and every relationship in one block and confirm once. This single confirmation stands in for the per-ticket confirmation that `{skill:create-ticket}` would otherwise raise for each piece.
-3. Cut a plan per piece from the approved plan, so that each piece's session starts at Implement.
-4. Create the pieces in order with `{skill:create-ticket}`, each with its own plan in context, so that the skill saves the plan beside the ticket artifact and posts it on the ticket. With three or more pieces, pass `--parent` naming the originating ticket. For a piece that depends on an earlier piece landing first, pass `--blocked-by` naming that piece's reference, which exists by then.
-5. Write the originating ticket's new body per the platform-specific write in [ticket source resolution](../_data/ticket-source-resolution.md#platform-specific-write). With two pieces, also save the first piece's plan in the originating ticket's directory per `{skill:save-artifact}`. Its timestamp is later than the approved plan's, so `implement-plan` resolves it rather than the unsplit plan.
-6. Report the ticket references and the plan paths.
+**Cut the plans.** Cut a plan per piece from the approved plan, so that each piece's session starts at Implement. Keep each piece's plan in context when its ticket is created, so that `{skill:create-ticket}` saves the plan beside the ticket artifact and posts it on the ticket.
+
+<!-- include: split-ticket-create.md / -->
+
+**Save the first piece's plan.** With two pieces, save the first piece's plan in the originating ticket's directory per `{skill:save-artifact}`. Its timestamp is later than the approved plan's, so `implement-plan` resolves it rather than the unsplit plan.
+
+**Report.** Report the ticket references and the plan paths.
 
 See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) is about work that comes up alongside the plan; rule 2 is about the plan's own work, and its seam test comes from the ticketing preferences: A piece earns a ticket when it ships and can be verified on its own.
