@@ -1,20 +1,15 @@
 import path from 'node:path';
 
-import baseConfig from '@williamthorsen/eslint-config-typescript';
+import baseConfig, { commonIgnores, toolIgnores } from '@williamthorsen/eslint-config-typescript';
 import { defineConfig, globalIgnores } from 'eslint/config';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 
 const config = defineConfig([
   ...baseConfig,
   globalIgnores([
-    '**/*.sh',
-    '**/.claude/**',
-    '**/.readyup/**/*.js',
-    '**/.rovo/**',
-    '**.playwright-mcp/**',
-    '**/coverage/**',
-    '**/dist/**',
-    '**/local/**',
+    ...commonIgnores,
+    ...toolIgnores,
+    '**/.playwright-mcp/**',
     // Throwaway spikes live outside the workspace and are exempt from lint.
     'spikes/**',
     // Ignore test fixtures that ESLint's parsers cannot read, marked by a `.malformed` infix.
@@ -45,7 +40,7 @@ const config = defineConfig([
     },
   },
   {
-    files: ['**/*.ts', '**/*.mts', '**/*.tsx', '**/*.md/*.ts'],
+    files: ['**/*.ts', '**/*.mts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {
         // Anchor the project service (enabled by the base config) at the repo root.
