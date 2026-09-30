@@ -44,8 +44,8 @@ const CLI_PATH = fileURLToPath(new URL('../cli.ts', import.meta.url));
 /** The `consolidate-branch` invocation that reads the range from the fixture repository's `base` tag. */
 const CONSOLIDATE_BASE = ['consolidate-branch', '--base', 'base'];
 
-/** The taxonomy read by the installed helper, so the suite verifies against the types that the repository actually declares. */
-const DATA_DIR = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
+/** A taxonomy declaring only the types that the suite names, in the order that its ranking cases read. */
+const DATA_DIR = fileURLToPath(new URL('fixtures/data', import.meta.url));
 
 /** A commit template that the engine cannot round-trip, since nothing separates the scope from the type. */
 const DEFECTIVE_TEMPLATES = "commit:\n  title_format: '{scope}{type}: {title}'";

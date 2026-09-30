@@ -9,7 +9,6 @@ import { compileTemplate } from '../../change-grammar/compile-template.ts';
 import { render } from '../../change-grammar/render.ts';
 import type { Taxonomy } from '../../change-grammar/types.ts';
 import { verify } from '../../change-grammar/verify.ts';
-import { loadTaxonomy } from '../../lib/work-types.ts';
 import { loadPreferences } from '../load-preferences.ts';
 import { SURFACES } from '../types.ts';
 
@@ -20,8 +19,14 @@ import { SURFACES } from '../types.ts';
 /** The repository root, five levels above this suite. */
 const REPO_ROOT = fileURLToPath(new URL('../../../../../', import.meta.url));
 
-/** The taxonomy read by the installed helper. */
-const DATA_DIR = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
+/** A taxonomy declaring one type of each breaking policy, independent of the library's own. */
+const TAXONOMY: Taxonomy = {
+  tiers: ['public', 'process'],
+  types: [
+    { breakingPolicy: 'optional', key: 'feat', tier: 'public' },
+    { breakingPolicy: 'forbidden', key: 'docs', tier: 'process' },
+  ],
+};
 
 describe('this repository’s title templates', () => {
   it('names a template for every surface', async () => {
@@ -53,12 +58,11 @@ describe('this repository’s title templates', () => {
     );
   });
 
-  it('round-trips every configured template against the installed taxonomy', async () => {
+  it('round-trips every configured template', async () => {
     const templates = await loadRepositoryTemplates();
-    const taxonomy = await readTaxonomy();
 
     const defects = SURFACES.flatMap((surface) =>
-      verify(templates[surface], taxonomy).map((defect) => `${surface}: ${defect}`),
+      verify(templates[surface], TAXONOMY).map((defect) => `${surface}: ${defect}`),
     );
 
     expect(defects).toEqual([]);
@@ -75,15 +79,6 @@ async function loadRepositoryTemplates(): Promise<Record<(typeof SURFACES)[numbe
   const home = await mkdtemp(join(tmpdir(), 'repository-templates-home-'));
   const { templates } = await loadPreferences({ home, projectRoot: REPO_ROOT });
   return templates;
-}
-
-/** Reads the installed taxonomy, failing the test when it does not load. */
-async function readTaxonomy(): Promise<Taxonomy> {
-  const taxonomy = await loadTaxonomy(DATA_DIR);
-  if (taxonomy === null) {
-    throw new Error(`expected a readable work-types.json under ${DATA_DIR}`);
-  }
-  return taxonomy;
 }
 
 // endregion | Helpers
