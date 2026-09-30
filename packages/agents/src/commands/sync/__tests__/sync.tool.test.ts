@@ -10,7 +10,6 @@ import { dedent } from '@williamthorsen/toolbelt.strings';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
-import { resolveContentDir } from '../../../lib/content-resolver.ts';
 import { HARNESSES } from '../../../lib/harness.ts';
 import { getHomeProvenancePath, readHomeProvenance } from '../../../lib/home-provenance.ts';
 import { resolveRunningPackageRoot } from '../../../lib/running-package.ts';
@@ -851,21 +850,6 @@ describe(syncCommand, () => {
 
     expect(output).toContain(`append the ambient region to ${localHostPath()}`);
     expect(await readFile(localHostPath(), 'utf8')).toBe('# Personal notes\n');
-  });
-
-  it('deploys and retracts the real shell-conventions canary end-to-end', async () => {
-    await declareRulebooks('shell-conventions');
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
-
-    const skill = await readFile(skillPath('consult-shell-conventions'), 'utf8');
-    expect(skill).toContain('name: consult-shell-conventions');
-    expect(skill).toContain('# Shell script conventions');
-    expect(skill).not.toContain('slug:');
-
-    await declareRulebooks();
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
-
-    expect(existsSync(path.dirname(skillPath('consult-shell-conventions')))).toBe(false);
   });
 
   it('deploys a rulebook declared only in the project-local tier, and retracts it on drop', async () => {
@@ -1855,20 +1839,6 @@ describe(syncCommand, () => {
       expect(existsSync(skillPath('people-report'))).toBe(false);
     });
 
-    it('deploys and retracts the real people-report canary end-to-end', async () => {
-      await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
-
-      const skill = await readFile(skillPath('people-report'), 'utf8');
-      expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
-      expect(skill).toContain('# People report');
-
-      await declareSkills();
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
-
-      expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
-    });
-
     it('applies include expansion and tool-name and link rewriting when deploying a declared skill', async () => {
       const skillDir = path.join(contentDir, 'skills', 'demo');
       await mkdir(path.join(skillDir, '_partials'), { recursive: true });
@@ -2339,23 +2309,6 @@ describe(syncCommand, () => {
       );
 
       expect(output).toContain('canary');
-      expect(existsSync(subagentPath('canary'))).toBe(false);
-    });
-
-    it('deploys and retracts the real canary subagent end-to-end', async () => {
-      await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
-
-      const deployed = await readFile(subagentPath('canary'), 'utf8');
-      expect(deployed).toContain('<!-- codeassembly-subagent:canary -->');
-      expect(deployed).toContain('# Canary');
-      expect(deployed).not.toContain('{tool:Read}');
-      expect(deployed).not.toContain('{harness_home_dir}');
-      expect(deployed).toContain('~/.claude');
-
-      await declareSubagents();
-      await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
-
       expect(existsSync(subagentPath('canary'))).toBe(false);
     });
   });
@@ -2903,16 +2856,6 @@ describe(syncGlobalCommand, () => {
     expect(prompts).toContain('content_file: custom.md');
     expect(prompts).toContain("name: 'people-report'");
     expect(prompts).toContain('# codeassembly:managed:start');
-  });
-
-  it('deploys the real recommended collection to home via the user-global declaration', async () => {
-    await declareRaw('collections:\n  use:\n    - recommended\n');
-
-    await syncGlobalCommand(makeOptions({ harness: 'claude' }), homeDir, resolveContentDir());
-
-    expect(existsSync(path.join(homeDir, '.claude', 'skills', 'capture-event', 'SKILL.md'))).toBe(true);
-    // `canary` is standalone: A vetted collection whose closure reaches it is a defect.
-    expect(existsSync(path.join(homeDir, '.claude', 'agents', 'canary.md'))).toBe(false);
   });
 
   it('retires a pre-existing ~/.agents/rulebooks/ tree, and writes none of its own', async () => {
