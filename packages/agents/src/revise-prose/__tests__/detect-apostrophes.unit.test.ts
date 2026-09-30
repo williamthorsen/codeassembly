@@ -64,6 +64,16 @@ describe(detectDroppedApostrophes, () => {
     'thats',
     'whats',
     'theres',
+    'couldve',
+    'hed',
+    'heres',
+    'itll',
+    'ive',
+    'shouldve',
+    'thatll',
+    'wheres',
+    'whos',
+    'wouldve',
   ])('reports the contraction %s', (word) => {
     expect(detect(`The check says ${word} matter.`)).toHaveLength(1);
   });
