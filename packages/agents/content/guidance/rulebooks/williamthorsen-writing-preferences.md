@@ -2,10 +2,16 @@
 slug: williamthorsen-writing-preferences
 description: William Thorsen's personal writing preferences for agent-authored prose.
 delivery: [ambient, hook]
-version: '10'
+version: '11'
 ---
 
 # William Thorsen's writing preferences
+
+## Apostrophes
+
+<!-- rule: apostrophes 1 -->
+
+Keep every apostrophe that a possessive or a contraction takes. Writing `the rule own example` for `the rule's own example`, or `dont` for `don't`, corrupts the text. When a command's quoting cannot hold a character, pass the content through a file written with the Write tool or through a quoted heredoc (`<<'EOF'`), and never drop or replace the character.
 
 ## Capitalization after a colon
 

@@ -81,6 +81,7 @@ describe(runDetect, () => {
         expect(summary, `summary lost the legacy field "${field}"`).toHaveProperty(field);
       }
       expect(summary.byRule).toStrictEqual({
+        apostrophes: 0,
         'em-dash': 0,
         'negative-quantifier': 0,
         'reduced-object-relative': 1,
@@ -122,6 +123,7 @@ describe(runDetect, () => {
       const { summary } = expectSuccess(await sweep(bothRules()));
 
       expect(summary.byRule).toStrictEqual({
+        apostrophes: 0,
         'em-dash': 1,
         'negative-quantifier': 0,
         'reduced-object-relative': 1,
