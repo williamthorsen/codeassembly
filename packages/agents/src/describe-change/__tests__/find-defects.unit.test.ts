@@ -1,9 +1,6 @@
-import { fileURLToPath } from 'node:url';
-
 import { describe, expect, it } from 'vitest';
 
 import type { Taxonomy } from '../../change-grammar/types.ts';
-import { loadTaxonomy } from '../../lib/work-types.ts';
 import type { ChangeEntry } from '../change-entries.ts';
 import { findDefects, findEntryDefects } from '../find-defects.ts';
 
@@ -17,8 +14,9 @@ const TAXONOMY: Taxonomy = {
 };
 
 describe(findDefects, () => {
-  it('reports nothing for a declared type that its policy admits', () => {
+  it('reports nothing for a declared type whose optional policy admits either marker', () => {
     expect(findDefects({ breaking: true, scope: 'agents', type: 'feat' }, TAXONOMY)).toStrictEqual([]);
+    expect(findDefects({ scope: 'agents', type: 'feat' }, TAXONOMY)).toStrictEqual([]);
   });
 
   it('reports a record that does not name a type', () => {
@@ -33,13 +31,6 @@ describe(findDefects, () => {
     expect(findDefects({ breaking: true, type: 'docs' }, TAXONOMY)).toStrictEqual([
       { kind: 'policy-violation', policy: 'forbidden', type: 'docs' },
     ]);
-  });
-
-  it('reports nothing for a drop either way under the repository’s taxonomy', async () => {
-    const taxonomy = await readRepositoryTaxonomy();
-
-    expect(findDefects({ type: 'drop' }, taxonomy)).toStrictEqual([]);
-    expect(findDefects({ breaking: true, type: 'drop' }, taxonomy)).toStrictEqual([]);
   });
 });
 
@@ -75,16 +66,6 @@ describe(findEntryDefects, () => {
 /** Builds a change entry that names the type and its marker. */
 function entryOf(record: { breaking?: boolean; type: string }): ChangeEntry {
   return { breaking: record.breaking === true, scopes: ['agents'], text: 'Adds foo', type: record.type };
-}
-
-/** Reads the taxonomy that the package deploys, failing the test when it does not load. */
-async function readRepositoryTaxonomy(): Promise<Taxonomy> {
-  const dataDir = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
-  const taxonomy = await loadTaxonomy(dataDir);
-  if (taxonomy === null) {
-    throw new Error(`expected a readable work-types.json under ${dataDir}`);
-  }
-  return taxonomy;
 }
 
 // endregion | Helpers

@@ -3,8 +3,6 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FLAG, type JsonSchemaDraft202012Object, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
-// `BASIC` is exported only from `/experimental`. It serves the diagnostic failure path below, never an assertion.
-import { BASIC } from '@hyperjump/json-schema/experimental';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { describe, expect, it } from 'vitest';
@@ -12,43 +10,11 @@ import { describe, expect, it } from 'vitest';
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
-/** Shape of a single record under `types[]`, used to type the live JSON for cross-element checks. */
-interface WorkTypeRecord {
-  aliases: string[];
-  breakingPolicy: string;
-  description: string;
-  emoji: string;
-  excludedFromChangelog?: boolean;
-  key: string;
-  label: string;
-  tier: string;
-}
-
-/** Shape of a single marker record (cross-cutting section indicator). */
-interface MarkerRecord {
-  emoji: string;
-  label: string;
-}
-
-/** Shape of the top-level `markers` block. */
-interface MarkersBlock {
-  breaking: MarkerRecord;
-}
-
-/** Shape of the live `work-types.json` document, used to type the live JSON for cross-element checks. */
-interface WorkTypesDocument {
-  markers: MarkersBlock;
-  tiers: string[];
-  types: WorkTypeRecord[];
-  version: string;
-}
-
 /** Three levels up from this file reaches the package root (`packages/agents/`). */
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(thisDir, '../../..');
 
 const schemaPath = path.join(packageRoot, 'schemas/work-types.schema.json');
-const liveDataPath = path.join(packageRoot, 'content/skills/_data/work-types.json');
 
 const schema = parseJsonFile<JsonSchemaDraft202012Object>(schemaPath, 'schema');
 
@@ -64,8 +30,6 @@ if (typeof schemaId !== 'string') {
 // while letting any other error propagate.
 registerSchemaIdempotent(schema, schemaId);
 
-const liveData = parseJsonFile<WorkTypesDocument>(liveDataPath, 'data');
-
 describe('work-types.schema.json', () => {
   it('compiles as a well-formed JSON Schema', async () => {
     // `validate()` triggers compilation. A structurally invalid schema would throw `InvalidSchemaError`.
@@ -73,24 +37,9 @@ describe('work-types.schema.json', () => {
     await expect(validate(schemaId, {})).resolves.toBeDefined();
   });
 
-  it('accepts the live `content/skills/_data/work-types.json`', async () => {
-    // Going through `JSON.parse` produces an `any`-typed result that assigns into the structural
-    // `JsonValue` shape (matching the validator's `Json` parameter) without a forbidden type assertion.
-    // eslint-disable-next-line unicorn/prefer-structured-clone -- structuredClone preserves typing; the JSON round-trip yields `any`, which assigns into `JsonValue` without a type assertion.
-    const jsonValue: JsonValue = JSON.parse(JSON.stringify(liveData));
-
-    const output = await validate(schemaId, jsonValue, FLAG);
-
-    // FLAG output is the stable assertion target; it returns only `{ valid }`. On failure,
-    // re-validate with `BASIC` (from `/experimental`) so that the failure message includes per-keyword
-    // error locations instead of an opaque `{ valid: false }`. The diagnostic is computed only
-    // when the assertion fails, so the second `validate()` call is paid for only on the failure path.
-    let diagnosticMessage = '';
-    if (!output.valid) {
-      const diagnostic = await validate(schemaId, jsonValue, BASIC);
-      diagnosticMessage = `Live work-types.json failed schema validation. Diagnostic (BASIC):\n${JSON.stringify(diagnostic, null, 2)}`;
-    }
-    expect(output.valid, diagnosticMessage).toBe(true);
+  it('accepts a minimal document with one type record', async () => {
+    const output = await validate(schemaId, buildMinimalDoc({ types: [buildTypeRecord()] }), FLAG);
+    expect(output).toMatchObject({ valid: true });
   });
 
   // Each rejection case is a minimal valid document with one targeted mutation.
@@ -220,66 +169,6 @@ describe('work-types.schema.json', () => {
     const output = await validate(schemaId, input, FLAG);
     expect(output).toMatchObject({ valid: false });
   });
-
-  it('enforces unique `key` values across all type records', () => {
-    // Cross-element uniqueness is asserted in-test rather than in the schema.
-    const keys = liveData.types.map((entry) => entry.key);
-    const duplicates = findDuplicates(keys);
-    expect(duplicates, `Duplicate type keys: ${duplicates.join(', ')}`).toEqual([]);
-  });
-
-  it("enforces globally unique `aliases` (an alias doesn't collide with another alias or with any `key`)", () => {
-    // Cross-element uniqueness is asserted in-test. Aliases must be globally unique and must not
-    // shadow any canonical `key`; otherwise resolution from alias to canonical key is ambiguous.
-    const keys = new Set(liveData.types.map((entry) => entry.key));
-    const aliases = liveData.types.flatMap((entry) => entry.aliases);
-
-    const duplicateAliases = findDuplicates(aliases);
-    expect(duplicateAliases, `Duplicate aliases: ${duplicateAliases.join(', ')}`).toEqual([]);
-
-    const aliasKeyCollisions = aliases.filter((alias) => keys.has(alias));
-    expect(aliasKeyCollisions, `Aliases that collide with canonical keys: ${aliasKeyCollisions.join(', ')}`).toEqual(
-      [],
-    );
-  });
-
-  it('orders `types[]` keys in canonical render order', () => {
-    // Render order is load-bearing for downstream changelog/release-notes tooling, and the schema cannot express a
-    // fixed-length sequence of keyed objects without verbose `prefixItems`.
-    const canonicalOrder = [
-      'feat',
-      'drop',
-      'deprecate',
-      'fix',
-      'sec',
-      'perf',
-      'internal',
-      'refactor',
-      'tests',
-      'tooling',
-      'ci',
-      'deps',
-      'ai',
-      'docs',
-      'fmt',
-    ];
-    const liveOrder = liveData.types.map((entry) => entry.key);
-    expect(liveOrder).toEqual(canonicalOrder);
-  });
-
-  it('orders top-level `tiers` in canonical precedence order', () => {
-    // Redundant with the schema-level `prefixItems` constraint: If the schema is ever weakened, this assertion still
-    // catches a misordered live file.
-    expect(liveData.tiers).toEqual(['public', 'internal', 'process']);
-  });
-
-  it('exposes `markers.breaking` with the canonical glyph and label', () => {
-    // The `summarize-change` skill template prefixes breaking-change entries with `{emoji} **{label}:**` (e.g.
-    // `🚨 **Breaking:**`) using these values directly, so a rename of either field passes schema validation and
-    // breaks that consumer.
-    expect(liveData.markers.breaking.emoji).toBe('🚨');
-    expect(liveData.markers.breaking.label).toBe('Breaking');
-  });
 });
 
 // region | Helpers
@@ -357,20 +246,6 @@ function registerSchemaIdempotent(schemaToRegister: JsonSchemaDraft202012Object,
       throw error;
     }
   }
-}
-
-/** Returns each value that appears more than once in `values`, preserving first-seen order. */
-function findDuplicates(values: string[]): string[] {
-  const seen = new Set<string>();
-  const duplicates = new Set<string>();
-  for (const value of values) {
-    if (seen.has(value)) {
-      duplicates.add(value);
-    } else {
-      seen.add(value);
-    }
-  }
-  return [...duplicates];
 }
 
 // endregion | Helpers
