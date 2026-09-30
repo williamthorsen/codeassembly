@@ -37,7 +37,52 @@ describe(run, () => {
     const result = await run({ argv: ['check'], cwd: store });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toBe('✓ no findings (1 notes checked)\n');
+    expect(result.stdout).toBe('PASS no findings (1 notes checked)\n');
+  });
+
+  it('prints the clean-run glyph in rich style when --output-style forces it, before or after the command', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+
+    const before = await run({ argv: ['--output-style', 'rich', 'check'], cwd: store });
+    const after = await run({ argv: ['check', '--output-style=rich'], cwd: store });
+
+    expect(before.stdout).toBe('✅ no findings (1 notes checked)\n');
+    expect(after.stdout).toBe('✅ no findings (1 notes checked)\n');
+  });
+
+  it('prints rich to a terminal outside CI, and plain to one in CI', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+
+    const terminal = await run({ argv: ['check'], cwd: store, env: {}, isTty: true });
+    const ci = await run({ argv: ['check'], cwd: store, env: { CI: 'true' }, isTty: true });
+
+    expect(terminal.stdout).toBe('✅ no findings (1 notes checked)\n');
+    expect(ci.stdout).toBe('PASS no findings (1 notes checked)\n');
+  });
+
+  it('takes the style from KB_OUTPUT_STYLE, which --output-style outranks', async () => {
+    const store = await makeStore({ 'content/Clean.md': VALID });
+    const env = { KB_OUTPUT_STYLE: 'rich' };
+
+    const fromEnv = await run({ argv: ['check'], cwd: store, env });
+    const fromFlag = await run({ argv: ['check', '--output-style', 'plain'], cwd: store, env });
+
+    expect(fromEnv.stdout).toBe('✅ no findings (1 notes checked)\n');
+    expect(fromFlag.stdout).toBe('PASS no findings (1 notes checked)\n');
+  });
+
+  it('exits 2 for an --output-style value that names no style', async () => {
+    const result = await run({ argv: ['check', '--output-style', 'fancy'], cwd: process.cwd() });
+
+    expect(result.exitCode).toBe(2);
+    expect(result.stderr).toBe('kb: --output-style must be one of: auto, plain, rich (got "fancy")\n');
+  });
+
+  it('documents --output-style and KB_OUTPUT_STYLE in top-level help', async () => {
+    const result = await run({ argv: ['--help'], cwd: process.cwd() });
+
+    expect(result.stdout).toContain('--output-style <auto|plain|rich>');
+    expect(result.stdout).toContain('KB_OUTPUT_STYLE');
   });
 
   it('exits 1 when an error-severity finding is present', async () => {
@@ -56,7 +101,7 @@ describe(run, () => {
 
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toBe('content/**/*.md did not match any notes (0 checked)\n');
-    expect(result.stdout).not.toContain('✓');
+    expect(result.stdout).not.toContain('PASS');
   });
 
   it('exits 2 for an unknown flag', async () => {
@@ -165,7 +210,7 @@ describe(run, () => {
     const result = await run({ argv: ['check', '--kb', 'local'], cwd: project, home });
 
     expect(result.exitCode).toBe(0);
-    expect(result.stdout).toContain('✓ no findings');
+    expect(result.stdout).toContain('PASS no findings');
   });
 
   it('groups findings by file with severity, rule, and line in human output', async () => {
@@ -419,7 +464,7 @@ describe('kb check vault-scoped findings', () => {
 
     const result = await run({ argv: ['check'], cwd: store });
 
-    expect(result.stdout).toBe('✓ no findings (1 notes checked)\n');
+    expect(result.stdout).toBe('PASS no findings (1 notes checked)\n');
   });
 
   it('includes the scope in the JSON report', async () => {
