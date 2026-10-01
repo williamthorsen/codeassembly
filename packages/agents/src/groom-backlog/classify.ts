@@ -22,13 +22,8 @@ export const BASELINE_VERDICTS = {
 } as const;
 
 /**
- * Returns the reply's class. The first matching class wins:
- *
- * - An in-progress ticket escalates whatever its assessment, so that work under way is never closed without a human.
- * - A high-confidence `close-complete` closes automatically only on evidence: a verified reference, or a `complete`
- *   progress verdict with evidence bullets.
- * - A high-confidence half-met reply closes automatically as superseded.
- * - A `keep` whose verdicts are all baseline is kept without a comment.
+ * Returns the first class in `CLASSES` whose condition the reply meets. An in-progress ticket escalates whatever its
+ * assessment, so that work under way is never closed without a human decision.
  */
 export function classify(reply: AssessorReply, inProgress: InProgress | null): PolicyClass {
   if (inProgress !== null) return 'escalate-in-progress';
