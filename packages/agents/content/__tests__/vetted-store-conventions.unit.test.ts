@@ -1,14 +1,12 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { resolveClosure } from 'codeassembly/api';
 import { describe, expect, it } from 'vitest';
 
 import * as sentinels from '../../src/kb-shared/kb-role-sentinels.ts';
-import { ARTIFACT_TYPES } from '../../src/lib/artifact-types.ts';
-import { resolveContentDir } from '../../src/lib/content-resolver.ts';
-import { libraryResolver } from '../../src/lib/content-sources.ts';
-import { resolveClosure } from '../../src/lib/dependency-resolver.ts';
-import { readDirEntries } from '../../src/lib/fs-helpers.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
+import { readDirEntries } from '../test-utils/read-dir-entries.ts';
 
 // The vetted collection claims its members name nothing specific to one author's environment, and a knowledge-store
 // name is the form in which that claim fails most quietly: A reader copies the invocation, and the capture is refused
@@ -47,7 +45,7 @@ interface Violation {
 }
 
 describe('vetted store conventions', () => {
-  const contentDir = resolveContentDir();
+  const contentDir = CONTENT_ROOT;
 
   it(`does not name a concrete store in a --store or --kb argument position across ${VETTED_COLLECTION}'s closure`, async () => {
     const violations = await findViolations(contentDir);
@@ -58,8 +56,8 @@ describe('vetted store conventions', () => {
   // An empty closure does not yield any violation and reads as a pass, so this pins the scanned set to the closure's
   // members.
   it('scans a Markdown file for every artifact in the closure', async () => {
-    const closure = await resolveClosure({ collection: [VETTED_COLLECTION] }, libraryResolver(contentDir));
-    const members = [...closure.rulebooks, ...closure.skills, ...closure.subagents];
+    const closure = await resolveClosure(contentDir, { collection: [VETTED_COLLECTION] });
+    const members = [...closure.rulebook, ...closure.skill, ...closure.subagent];
     const scannedFiles = await listClosureFiles(contentDir);
 
     expect(members.length).toBeGreaterThan(0);
@@ -166,13 +164,13 @@ function isPermittedStoreValue(value: string): boolean {
  * line-based report would dump one, and a bundle is fixed upstream in `src/` regardless.
  */
 async function listClosureFiles(contentDir: string): Promise<ReadonlyArray<string>> {
-  const closure = await resolveClosure({ collection: [VETTED_COLLECTION] }, libraryResolver(contentDir));
+  const closure = await resolveClosure(contentDir, { collection: [VETTED_COLLECTION] });
   const flatFiles = [
-    ...closure.rulebooks.map((slug) => path.join(ARTIFACT_TYPES.rulebook.contentPath, `${slug}.md`)),
-    ...closure.subagents.map((slug) => path.join(ARTIFACT_TYPES.subagent.contentPath, `${slug}.md`)),
+    ...closure.rulebook.map((slug) => path.join(path.join('guidance', 'rulebooks'), `${slug}.md`)),
+    ...closure.subagent.map((slug) => path.join('subagents', `${slug}.md`)),
   ];
   const skillFiles = await Promise.all(
-    closure.skills.map((slug) => listMarkdownFilesUnder(contentDir, path.join(ARTIFACT_TYPES.skill.contentPath, slug))),
+    closure.skill.map((slug) => listMarkdownFilesUnder(contentDir, path.join('skills', slug))),
   );
   return [...flatFiles, ...skillFiles.flat()].toSorted();
 }

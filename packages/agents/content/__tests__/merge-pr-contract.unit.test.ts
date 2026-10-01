@@ -1,13 +1,10 @@
-import path from 'node:path';
-
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // `merge-pr` settles every type defect and every disagreement with the work-type test before the merge is offered.
 // A step that asks which type to take overrides the `option-format` gate inlined into the same body, so the guard
 // has to be on the step's wording.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /**
  * Phrases that a restored type question contains. Lowercased, so that a sentence's opening capital still matches.
@@ -19,7 +16,7 @@ const TYPE_ASK_PHRASES: ReadonlyArray<string> = [
   'raise that as a question here',
 ];
 
-const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'skills', 'merge-pr', 'SKILL.md'), CONTENT_ROOT);
+const EXPANDED = readContentFile('skills/merge-pr/SKILL.md');
 
 describe('merge-pr contract', () => {
   it('decides each type rather than asking the developer', async () => {

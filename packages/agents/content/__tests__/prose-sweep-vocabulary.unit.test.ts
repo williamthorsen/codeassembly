@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { RULE_IDS } from '../../src/revise-prose/rules.ts';
 import type { ReportedBatch } from '../../src/revise-prose/types.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts';
 
@@ -13,7 +14,6 @@ import { listRuleMarkers, listRuleSections } from '../test-utils/rule-markers.ts
 // composes from that report each stay within it: A rejection under a rule that the skill leaves out of the fold's
 // versioned rules makes the `record` command refuse the whole fold, and a rule stated without a marker leaves the
 // subagent without an id under which to report its sites.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 const CALIBRATION = '_partials/plain-speech-calibration.md';
 const SKILL = 'skills/revise-prose/SKILL.md';

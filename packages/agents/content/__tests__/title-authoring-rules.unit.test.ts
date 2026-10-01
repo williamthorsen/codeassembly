@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // One file states the rules of an authored title, and every other site points at it. A site that restates a rule
@@ -12,7 +13,6 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // Each probe keys on a string distinctive enough that only a restatement matches it. That catches the copy-and-adapt
 // path that the duplication actually took and misses a paraphrase written from scratch, which is the weaker half of
 // the guard and the reason the pointers themselves do not contain any rule text to copy.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state a title-authoring rule; every other site reaches it through a pointer. */
 const HOME = 'skills/_data/title-voice.md';

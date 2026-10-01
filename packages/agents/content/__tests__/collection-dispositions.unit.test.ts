@@ -1,15 +1,9 @@
-import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { type ArtifactType, type Catalog, listCatalog, readArtifact, resolveClosure } from 'codeassembly/api';
 import { describe, expect, it } from 'vitest';
 
-import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES } from '../../src/lib/artifact-types.ts';
-import { resolveContentDir } from '../../src/lib/content-resolver.ts';
-import { libraryResolver } from '../../src/lib/content-sources.ts';
-import { type ArtifactDependencies, readMembers } from '../../src/lib/dependency-frontmatter.ts';
-import { resolveClosure, type ResolvedClosure } from '../../src/lib/dependency-resolver.ts';
-import { listVisibleMarkdownFiles } from '../../src/lib/fs-helpers.ts';
-import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 
 // Declaring a collection is a claim about its members, so an artifact in none of them is deploying under a claim that
 // nobody made. These two checks are what make the claim real rather than nominal: Coverage catches the artifact that
@@ -18,6 +12,17 @@ import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
 
 /** An artifact addressed as `<type>:<slug>`, the form used by the resolver's own errors. */
 type ArtifactId = string;
+
+/** Slugs per artifact type, the shape of a collection's `members:` and of a closure. */
+type ArtifactDependencies = Partial<Catalog>;
+
+/** Maps each plural `members:` key to the artifact type that it lists. */
+const TYPE_BY_MEMBERS_KEY: Readonly<Record<string, ArtifactType>> = {
+  collections: 'collection',
+  rulebooks: 'rulebook',
+  skills: 'skill',
+  subagents: 'subagent',
+};
 
 const FIXTURES_DIR = path.join(import.meta.dirname, 'fixtures', 'collection-dispositions');
 
@@ -63,11 +68,11 @@ const VETTED_COLLECTIONS: ReadonlyArray<string> = VETTED_CLOSURES.map(({ collect
 const DISPOSITIONS: ReadonlySet<string> = new Set([...VETTED_COLLECTIONS, STANDALONE_DISPOSITION, TRIAGE_DISPOSITION]);
 
 describe('collection dispositions', () => {
-  const contentDir = resolveContentDir();
+  const contentDir = CONTENT_ROOT;
 
   it('gives every library artifact a disposition', async () => {
     const [catalog, collections] = await Promise.all([
-      enumerateCatalogSlugs(contentDir),
+      listDeployableCatalog(contentDir),
       readExplicitCollections(contentDir),
     ]);
 
@@ -76,7 +81,7 @@ describe('collection dispositions', () => {
 
   it.each(VETTED_CLOSURES)('keeps $collection closed over its own disposition', async ({ collection, reaches }) => {
     const collections = await readExplicitCollections(contentDir);
-    const closure = await resolveClosure({ collection: [collection] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(contentDir, { collection: [collection] });
 
     const defects = findClosureDefects(
       collection,
@@ -93,7 +98,7 @@ describe('collection dispositions', () => {
   // there, and the vetted-closure rules do not constrain it.
   it('keeps every standalone artifact out of the collections’ combined closure', async () => {
     const collections = await readExplicitCollections(contentDir);
-    const closure = await resolveClosure({ collection: collections.keys().toArray() }, libraryResolver(contentDir));
+    const closure = await resolveClosure(contentDir, { collection: collections.keys().toArray() });
 
     const defects = findClosureDefects(
       'every collection',
@@ -125,7 +130,7 @@ describe('collection dispositions', () => {
       if (collection === optIn) {
         continue;
       }
-      const closure = await resolveClosure({ collection: [collection] }, libraryResolver(contentDir));
+      const closure = await resolveClosure(contentDir, { collection: [collection] });
       defects.push(...findOptInLeaks(optIn, members, collection, listClosureIds(closure)));
     }
 
@@ -143,7 +148,7 @@ describe('collection dispositions', () => {
     it('reports an artifact not claimed by any collection', async () => {
       const fixtureDir = path.join(FIXTURES_DIR, 'uncovered');
       const [catalog, collections] = await Promise.all([
-        enumerateCatalogSlugs(fixtureDir),
+        listDeployableCatalog(fixtureDir),
         readExplicitCollections(fixtureDir),
       ]);
 
@@ -210,7 +215,7 @@ describe('collection dispositions', () => {
     it('reports a vetted member reaching an artifact of lesser standing', async () => {
       const fixtureDir = path.join(FIXTURES_DIR, 'leaky-closure');
       const collections = await readExplicitCollections(fixtureDir);
-      const closure = await resolveClosure({ collection: ['recommended'] }, libraryResolver(fixtureDir));
+      const closure = await resolveClosure(fixtureDir, { collection: ['recommended'] });
 
       const defects = findClosureDefects(
         'recommended',
@@ -399,16 +404,51 @@ function findOptInLeaks(
 
 /** Flattens a per-type slug map into artifact ids. */
 function listArtifactIds(edges: ArtifactDependencies): Array<ArtifactId> {
-  return ARTIFACT_TYPE_VALUES.flatMap((type) => (edges[type] ?? []).map((slug) => `${type}:${slug}`));
+  return Object.entries(edges).flatMap(([type, slugs]) => slugs.map((slug) => `${type}:${slug}`));
 }
 
-/** Flattens a resolved closure into artifact ids. */
-function listClosureIds(closure: ResolvedClosure): Array<ArtifactId> {
-  return [
-    ...closure.rulebooks.map((slug) => `rulebook:${slug}`),
-    ...closure.skills.map((slug) => `skill:${slug}`),
-    ...closure.subagents.map((slug) => `subagent:${slug}`),
-  ];
+/** Flattens a resolved closure into the ids of the artifacts that it deploys, leaving out the collections traversed. */
+function listClosureIds({ rulebook, skill, subagent }: Catalog): Array<ArtifactId> {
+  return listArtifactIds({ rulebook, skill, subagent });
+}
+
+/**
+ * Lists a root's deployable artifacts, leaving its collections out: A collection is a claim about artifacts rather
+ * than an artifact that needs a disposition.
+ */
+async function listDeployableCatalog(contentDir: string): Promise<ArtifactDependencies> {
+  const { rulebook, skill, subagent } = await listCatalog(contentDir);
+  return { rulebook, skill, subagent };
+}
+
+/** Parses a collection's `members:` mapping into slugs per type, throwing on a key or entry that does not fit. */
+function parseMembers(members: Record<string, unknown>, slug: string): ArtifactDependencies {
+  const edges: Partial<Record<ArtifactType, ReadonlyArray<string>>> = {};
+  for (const [key, value] of Object.entries(members)) {
+    const type = TYPE_BY_MEMBERS_KEY[key];
+    if (type === undefined) {
+      throw new Error(`Collection ${slug} lists an unknown member type "${key}"`);
+    }
+    if (value === null) {
+      continue;
+    }
+    if (!Array.isArray(value)) {
+      throw new TypeError(`Collection ${slug}: "${key}" must be a list of slugs`);
+    }
+    edges[type] = value.map((entry: unknown) => readEntrySlug(entry, slug));
+  }
+  return edges;
+}
+
+/** Reads one member entry, a bare slug or a `{ name }` object. */
+function readEntrySlug(entry: unknown, collection: string): string {
+  if (typeof entry === 'string') {
+    return entry;
+  }
+  if (typeof entry === 'object' && entry !== null && 'name' in entry && typeof entry.name === 'string') {
+    return entry.name;
+  }
+  throw new Error(`Collection ${collection} lists a member that is neither a slug nor a { name } entry`);
 }
 
 /**
@@ -417,14 +457,16 @@ function listClosureIds(closure: ResolvedClosure): Array<ArtifactId> {
  * collections at once.
  */
 async function readExplicitCollections(contentDir: string): Promise<ReadonlyMap<string, ArtifactDependencies>> {
-  const collectionsDir = path.join(contentDir, ARTIFACT_TYPES.collection.contentPath);
   const found = new Map<string, ArtifactDependencies>();
-  const files = (await listVisibleMarkdownFiles(collectionsDir)).toSorted();
-  for (const file of files) {
-    const slug = path.basename(file, '.md');
-    const members = readMembers(await readFile(path.join(collectionsDir, file), 'utf8'), `collection ${slug}`);
-    if (members.kind === 'explicit') {
-      found.set(slug, members.edges);
+  const slugs = (await listCatalog(contentDir)).collection.toSorted();
+  for (const slug of slugs) {
+    const { members } = (await readArtifact(contentDir, 'collection', slug)).frontmatter;
+    if (members === undefined || members === null) {
+      found.set(slug, {});
+    } else if (typeof members === 'object' && !Array.isArray(members)) {
+      found.set(slug, parseMembers({ ...members }, slug));
+    } else if (members !== '@library') {
+      throw new Error(`Collection ${slug} declares members that are neither '@library' nor a mapping`);
     }
   }
   return found;

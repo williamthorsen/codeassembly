@@ -15,6 +15,7 @@ import {
   rewriteTemplateVariables,
   type TemplateVariables,
 } from './path-rewriter.ts';
+import type { HarnessId } from './types.ts';
 
 /** The per-harness inputs on which a rulebook body render depends, resolved once per harness by the caller. */
 export interface RulebookRenderContext extends TemplateVariables {
@@ -27,6 +28,16 @@ export interface RulebookRenderContext extends TemplateVariables {
   /** The deployed rulebooks that a `{rulebook:<slug>}` token may address, keyed by slug. */
   readonly rulebooks: RulebookInvocationCatalog;
 }
+
+/**
+ * Builds one harness's rulebook render context for a rulebook owned by `supportNamespace` (`undefined` = the built-in
+ * library). Threaded rather than rebuilt per call site so that every render of a rulebook body for one harness uses the
+ * same anchor.
+ */
+export type ResolveRulebookContext = (
+  harnessId: HarnessId,
+  supportNamespace: string | undefined,
+) => RulebookRenderContext;
 
 /**
  * Content-root-relative directory in which a rulebook source lives. Anchoring the rewrite here lets a rulebook

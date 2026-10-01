@@ -9,7 +9,7 @@ import { describeSearchedLocations, type SourceResolver } from './content-source
 import { parseFrontmatter } from './frontmatter-merger.ts';
 import { ALL_HARNESS_IDS, isHarnessId } from './harness.ts';
 import { writeRenderedTree } from './rendered-tree.ts';
-import { renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
+import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
 import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
@@ -67,24 +67,31 @@ export async function resolveDeclaredSkill(slug: string, resolver: SourceResolve
 }
 
 /**
- * Materializes a resolved skill into `destDir/` for one harness: Every `.md` file is include-expanded and
- * tool-name/link/template-rewritten through the shared skill transform, non-`.md` files are mirrored verbatim, and the
- * declared-skill ownership marker is stamped into the deployed root `SKILL.md`.
- * The write is byte-stable: Unchanged files are left untouched, and destination files that the source no longer
- * contains (along with any directory left empty by their removal) are pruned, so re-deploying an unchanged skill
- * doesn't change the filesystem.
+ * Materializes a resolved skill into `destDir/` for one harness, writing the entries that `renderDeployedSkill`
+ * produces. The write is byte-stable: Unchanged files are left untouched, and destination files that the source no
+ * longer contains (along with any directory left empty by their removal) are pruned, so re-deploying an unchanged
+ * skill doesn't change the filesystem.
  */
 export async function deploySkill(skill: ResolvedSkill, destDir: string, context: SkillDeployContext): Promise<void> {
+  await writeRenderedTree(destDir, await renderDeployedSkill(skill, context));
+}
+
+/**
+ * Renders a resolved skill's directory for one harness as `deploySkill` writes it: Every `.md` file is
+ * include-expanded and tool-name/link/template-rewritten through the shared skill transform, non-`.md` files are
+ * returned as assets, and the root `SKILL.md` has the build-only `supported-harnesses:` directive stripped and the
+ * declared-skill ownership marker stamped.
+ */
+export async function renderDeployedSkill(
+  skill: ResolvedSkill,
+  context: SkillDeployContext,
+): Promise<ReadonlyArray<RenderedSkillEntry>> {
   const entries = await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, context);
-  // Strip the build-only `supported-harnesses:` directive from the deployed root SKILL.md: It steers deployment, not
-  // the harness, which would otherwise receive a frontmatter key that it ignores.
-  await writeRenderedTree(
-    destDir,
-    entries.map((entry) =>
-      entry.kind === 'markdown' && entry.relPath === 'SKILL.md'
-        ? { ...entry, content: skillMarker.injectMarker(stripHarnessesDirective(entry.content), skill.slug) }
-        : entry,
-    ),
+  // The directive steers deployment, not the harness, which would otherwise receive a frontmatter key that it ignores.
+  return entries.map((entry) =>
+    entry.kind === 'markdown' && entry.relPath === 'SKILL.md'
+      ? { ...entry, content: skillMarker.injectMarker(stripHarnessesDirective(entry.content), skill.slug) }
+      : entry,
   );
 }
 

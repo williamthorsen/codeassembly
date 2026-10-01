@@ -5,7 +5,7 @@ import { writeIfChanged } from '../../lib/fs-helpers.ts';
 import { createContentRootLinkAnchor, createSkillLinkAnchor } from '../../lib/link-anchor.ts';
 import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { renderSkillFile } from '../../lib/rulebook-skill.ts';
-import { renderRulebookBody } from '../../lib/rulebook-transform.ts';
+import { renderRulebookBody, type ResolveRulebookContext } from '../../lib/rulebook-transform.ts';
 import { deploySkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { deploySubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
@@ -14,7 +14,6 @@ import type {
   HarnessSubagentTarget,
   ResolveAnchorContext,
   ResolveOverlay,
-  ResolveRulebookContext,
 } from './render-contexts.ts';
 
 /**

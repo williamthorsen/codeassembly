@@ -56,9 +56,17 @@ export async function deploySubagent(
   destPath: string,
   context: SubagentDeployContext,
 ): Promise<void> {
-  const rendered = await renderSubagent(resolved, context);
+  const rendered = await renderDeployedSubagent(resolved, context);
   await mkdir(path.dirname(destPath), { recursive: true });
-  await writeIfChanged(destPath, subagentMarker.injectMarker(rendered, resolved.slug));
+  await writeIfChanged(destPath, rendered);
+}
+
+/** Renders a resolved subagent for one harness as `deploySubagent` writes it, ownership marker included. */
+export async function renderDeployedSubagent(
+  resolved: ResolvedSubagent,
+  context: SubagentDeployContext,
+): Promise<string> {
+  return subagentMarker.injectMarker(await renderSubagent(resolved, context), resolved.slug);
 }
 
 /**

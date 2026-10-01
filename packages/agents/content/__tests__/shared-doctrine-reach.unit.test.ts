@@ -3,17 +3,17 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers.ts';
 
 // `guidance/shared/AGENTS.md` installs unconditionally, so every interactive session receives all of it. Because a
 // subagent runs on its own system prompt and does not load any guidance file, a section that its role's work needs
 // reaches it only by being inlined. Both hosts source the text from one partial, and these assertions are what keep a
 // copy from creeping back into either.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 // One section per entry in SECTIONS runs the restatement check, and each pass reads every authored Markdown file in
 // the tree. Reading them once here holds the whole suite to a single pass.
@@ -148,7 +148,7 @@ describe('shared-doctrine reach', () => {
     it('renders $section', async () => {
       const expected = SECTIONS[section];
       if (expected === undefined) throw new Error(`The shared sections do not include ${section}`);
-      const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+      const expanded = await readContentFile(relativePath);
 
       for (const phrase of expected.phrases) {
         expect(expanded).toContain(phrase);
@@ -161,7 +161,7 @@ describe('shared-doctrine reach', () => {
   // only to subagents would silently strip doctrine from every interactive session; nothing else catches it.
   describe.each(HARNESS_GUIDANCE)('%s', (relativePath) => {
     it('renders every shared section once, in source order', async () => {
-      const lines = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).split('\n');
+      const lines = (await readContentFile(relativePath)).split('\n');
 
       const positions = SHARED_GUIDANCE_SECTIONS.map(({ heading }) => {
         expect(
@@ -175,7 +175,7 @@ describe('shared-doctrine reach', () => {
     });
 
     it('renders every shared section body', async () => {
-      const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+      const expanded = await readContentFile(relativePath);
 
       for (const { heading, phrase } of SHARED_GUIDANCE_SECTIONS) {
         expect(expanded, `${heading} lost its body`).toContain(phrase);
@@ -188,7 +188,7 @@ describe('shared-doctrine reach', () => {
 
 /** Returns a subagent's include-expanded body, what the deploy pipeline goes on to rewrite and write out. */
 async function expandSubagent(slug: string): Promise<string> {
-  return expandIncludes(path.join(CONTENT_ROOT, 'subagents', `${slug}.md`), CONTENT_ROOT);
+  return readContentFile(`subagents/${slug}.md`);
 }
 
 /** Returns `file -> phrase` for every content file but the partial that states one of the phrases. */

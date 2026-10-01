@@ -12,6 +12,7 @@ import { listDeclaredGuidanceHooks } from '../../lib/declared-guidance-hooks.ts'
 import { resolveDeclaredReferences } from '../../lib/declared-references.ts';
 import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
+import { buildGuidanceHookFills } from '../../lib/guidance-hook-fills.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
 import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
@@ -31,7 +32,7 @@ import {
 } from './ambient-hosts.ts';
 import { reconcileDeclaredSkills, reconcileDeclaredSubagents, reconcileRulebookSkills } from './artifact-delivery.ts';
 import { planDroppedHarnessRetractions, retractDroppedHarnesses } from './harness-retraction.ts';
-import { buildGuidanceHookFills, findGuidanceHookAdvisories } from './hook-bindings.ts';
+import { findGuidanceHookAdvisories } from './hook-bindings.ts';
 import { retireAmbientHost, type Retirement, retireRetiredOutputs } from './legacy-retirement.ts';
 import { findDeclaredSkillOrphans, findRulebookSkillOrphans, findSubagentOrphans } from './owned-artifacts.ts';
 import {

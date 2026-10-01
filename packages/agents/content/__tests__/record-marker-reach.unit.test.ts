@@ -3,13 +3,13 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // The `pull-request` and `merge` artifacts carry the record marker, which puts the prohibition in the file that an
 // agent has open rather than only in the standing guidance that it may not have loaded. The other artifacts do not
 // carry one: `capture-lede-decision` reads those two bodies, and a rewrite of either corrupts the lede corpus
 // silently.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The marker's source of truth; every other statement of it must match this one byte for byte. */
 const PARTIAL = '_partials/record-marker.md';
@@ -42,7 +42,7 @@ describe('record-marker reach', () => {
   describe.each(CARRIERS)('%s', (relativePath) => {
     it('carries the marker, and every copy of it matches the partial', async () => {
       const marker = await readMarker();
-      const expanded = await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+      const expanded = await readContentFile(relativePath);
       const lines = expanded.split('\n').filter((line) => line.includes(MARKER_KEY));
 
       expect(lines.length, `${relativePath} does not state a record marker`).toBeGreaterThanOrEqual(1);

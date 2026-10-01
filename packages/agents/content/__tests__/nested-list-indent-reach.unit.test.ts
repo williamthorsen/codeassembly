@@ -3,14 +3,14 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // Bitbucket Cloud reads a 2-space nested item as a sibling and reports nothing, so the rule binds only when it is
 // already in context as a body is composed. Each carrier inlines it rather than linking to it, for the reason given
 // by the `_partials` README: A runtime link is an optional read, and the model fills from its prior instead.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the rule; every carrier reaches it through an include. */
 const PARTIAL = 'skills/_partials/nested-list-indent.md';
@@ -84,7 +84,7 @@ describe('nested-list-indent reach', () => {
 
 /** Returns a carrier's include-expanded body, what the install pipeline goes on to rewrite and write out. */
 async function expandCarrier(relativePath: string): Promise<string> {
-  return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+  return readContentFile(relativePath);
 }
 
 // endregion | Helpers
