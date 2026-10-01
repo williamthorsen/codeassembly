@@ -16,9 +16,11 @@ import {
   readContentRootManifest,
 } from './content-root-manifest.ts';
 import { findInjectionPlacementDefects } from './content-rules/injection-placement.ts';
+import { findLinkResolutionDefects } from './content-rules/link-resolution.ts';
 import { findNonBreakingSpaceDefects } from './content-rules/non-breaking-space.ts';
 import type { ResolvedArtifacts, RuleContext } from './content-rules/rule-context.ts';
 import { findScriptInvocationDefects } from './content-rules/script-invocation.ts';
+import { findSharedGuidanceLinkDefects } from './content-rules/shared-guidance-links.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, type ResolvedClosure, resolveSeedClosures } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
@@ -152,8 +154,10 @@ export async function validateContentRoot(
     ...(await findRetiredOverlayKeyDefects(root, harnessIds)),
     ...foldHarnessDefects(rendered, harnessIds),
     ...(await findInjectionPlacementDefects(context)),
+    ...(await findLinkResolutionDefects(context)),
     ...(await findNonBreakingSpaceDefects(context)),
     ...(await findScriptInvocationDefects(context)),
+    ...(await findSharedGuidanceLinkDefects(context)),
   ];
 }
 

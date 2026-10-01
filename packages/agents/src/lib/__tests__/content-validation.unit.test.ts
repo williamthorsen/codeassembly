@@ -92,11 +92,9 @@ describe(validateContentRoot, () => {
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
 
-    expect(filesOf(defects)).toEqual([
-      'collections/starter.md',
-      'guidance/rulebooks/house-style.md',
-      'subagents/helper.md',
-    ]);
+    expect(new Set(filesOf(defects))).toEqual(
+      new Set(['collections/starter.md', 'guidance/rulebooks/house-style.md', 'subagents/helper.md']),
+    );
   });
 
   it('reports a body-local defect once, however many harnesses render it', async () => {
@@ -271,8 +269,10 @@ describe(validateContentRoot, () => {
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
 
-    expect(defects).toHaveLength(1);
-    expect(defects[0]).toMatchObject({ file: 'guidance/rulebooks/house-style.md', kind: 'render' });
+    // The target is also missing, which the link rule reports beside the render defect.
+    expect(defects.filter((defect) => defect.kind === 'render')).toEqual([
+      expect.objectContaining({ file: 'guidance/rulebooks/house-style.md' }),
+    ]);
   });
 
   it('reports a content rule defect alongside the render defects', async () => {
