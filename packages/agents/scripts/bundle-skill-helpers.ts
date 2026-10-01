@@ -102,6 +102,10 @@ export const targets: BundleTarget[] = [
     outFile: 'content/skills/emit-event/emit-event.mjs',
   },
   {
+    entry: 'src/groom-backlog/cli.ts',
+    outFile: 'content/skills/groom-backlog/groom-backlog.mjs',
+  },
+  {
     entry: 'src/revise-prose/cli.ts',
     outFile: 'content/skills/revise-prose/revise-prose.mjs',
   },

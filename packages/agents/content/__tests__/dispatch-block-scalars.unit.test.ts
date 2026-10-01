@@ -35,6 +35,8 @@ const DECLARED_KEYS: ReadonlySet<string> = new Set([
   'rejections',
   'root',
   'rules',
+  'sha',
+  'ticket',
   'ticket-source',
   'tier',
   'type',
