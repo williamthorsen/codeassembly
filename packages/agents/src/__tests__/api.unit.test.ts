@@ -55,8 +55,8 @@ describe('content API', () => {
       const artifact = await readArtifact(root, 'skill', 'alpha');
 
       expect(artifact.frontmatter).toEqual({ name: 'alpha', description: 'alpha fixture skill' });
-      expect(artifact.body).toMatch(/^---\nname: alpha\n/);
-      expect(artifact.body).toContain('Shared text.');
+      expect(artifact.content).toMatch(/^---\nname: alpha\n/);
+      expect(artifact.content).toContain('Shared text.');
     });
   });
 
@@ -76,6 +76,17 @@ describe('content API', () => {
         subagent: [],
       });
     });
+    it('reports the collections traversed on the way, seeds included', async () => {
+      await writeSkill(root, 'alpha');
+      await writeFileAt(root, 'collections/inner.md', '---\nname: inner\nmembers:\n  skills:\n    - alpha\n---\n');
+      await writeFileAt(root, 'collections/outer.md', '---\nname: outer\nmembers:\n  collections:\n    - inner\n---\n');
+
+      const closure = await resolveClosure(root, { collection: ['outer'] });
+
+      expect(closure.collection.toSorted()).toEqual(['inner', 'outer']);
+      expect(closure.skill).toEqual(['alpha']);
+    });
+
     it('resolves an edge into the built-in library behind the root', async () => {
       await writeFileAt(
         root,
@@ -94,7 +105,7 @@ describe('content API', () => {
       const tree = await renderContentRoot(root, { harness: 'claude' });
 
       expect(tree['skills/alpha/SKILL.md']?.frontmatter).toEqual({ name: 'alpha', description: 'alpha fixture skill' });
-      expect(tree['skills/alpha/SKILL.md']?.body).toContain('<!-- codeassembly-skill:alpha -->');
+      expect(tree['skills/alpha/SKILL.md']?.content).toContain('<!-- codeassembly-skill:alpha -->');
     });
 
     it('fills a declared guidance hook from its bindings', async () => {
@@ -103,7 +114,7 @@ describe('content API', () => {
 
       const tree = await renderContentRoot(root, { harness: 'rovo', guidanceHooks: { style: ['house-style'] } });
 
-      expect(tree['skills/alpha/SKILL.md']?.body).toContain('Use plain words.');
+      expect(tree['skills/alpha/SKILL.md']?.content).toContain('Use plain words.');
     });
 
     it('throws one error naming every file that failed', async () => {

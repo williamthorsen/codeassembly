@@ -14,7 +14,7 @@ describe('reviewer and coder partials render correctly', () => {
     if (entry === undefined) {
       throw new Error(`The Claude render does not contain the ${name} subagent`);
     }
-    return entry.body;
+    return entry.content;
   }
 
   const returnBlockReviewers = [

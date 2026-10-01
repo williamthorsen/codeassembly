@@ -37,6 +37,18 @@ export interface ResolvedClosure {
  * naming its type and slug, the artifact that named it, and every location searched.
  */
 export async function resolveClosure(direct: DirectArtifacts, resolver: SourceResolver): Promise<ResolvedClosure> {
+  const { rulebooks, skills, subagents } = await resolveClosureWithCollections(direct, resolver);
+  return { rulebooks, skills, subagents };
+}
+
+/**
+ * Expands the directly-declared artifacts into their transitive closure as `resolveClosure` does, and also reports
+ * every collection traversed on the way, seeds included.
+ */
+export async function resolveClosureWithCollections(
+  direct: DirectArtifacts,
+  resolver: SourceResolver,
+): Promise<ResolvedClosure & { readonly collections: ReadonlyArray<string> }> {
   const reached: Record<ArtifactType, Set<string>> = {
     rulebook: new Set(),
     skill: new Set(),
@@ -76,6 +88,7 @@ export async function resolveClosure(direct: DirectArtifacts, resolver: SourceRe
   }
 
   return {
+    collections: [...reached.collection],
     rulebooks: [...reached.rulebook],
     skills: [...reached.skill],
     subagents: [...reached.subagent],

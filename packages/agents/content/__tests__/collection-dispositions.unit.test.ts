@@ -407,9 +407,9 @@ function listArtifactIds(edges: ArtifactDependencies): Array<ArtifactId> {
   return Object.entries(edges).flatMap(([type, slugs]) => slugs.map((slug) => `${type}:${slug}`));
 }
 
-/** Flattens a resolved closure into artifact ids. */
-function listClosureIds(closure: Catalog): Array<ArtifactId> {
-  return listArtifactIds(closure);
+/** Flattens a resolved closure into the ids of the artifacts that it deploys, leaving out the collections traversed. */
+function listClosureIds({ rulebook, skill, subagent }: Catalog): Array<ArtifactId> {
+  return listArtifactIds({ rulebook, skill, subagent });
 }
 
 /**

@@ -318,9 +318,9 @@ async function listSkillSlugsFilling(hook: string): Promise<ReadonlyArray<string
   const skills = new Set((await listCatalog(CONTENT_ROOT)).skill);
   const tree = await renderLibrary('claude', BINDINGS);
   const slugs = new Set<string>();
-  for (const [deployedPath, { body }] of Object.entries(tree)) {
+  for (const [deployedPath, { content }] of Object.entries(tree)) {
     const slug = /^skills\/([^/]+)\//.exec(deployedPath)?.[1];
-    if (slug !== undefined && skills.has(slug) && body.includes(openHookMarker(hook))) {
+    if (slug !== undefined && skills.has(slug) && content.includes(openHookMarker(hook))) {
       slugs.add(slug);
     }
   }
@@ -342,7 +342,7 @@ async function readBoundBody(relativePath: string): Promise<string> {
   if (entry === undefined) {
     throw new Error(`The bound Claude render does not contain ${deployedPath}`);
   }
-  return entry.body;
+  return entry.content;
 }
 
 /** Returns the declaring-body entry for a subagent named by its slug. */

@@ -19,11 +19,11 @@ export async function resolveEveryRulebook(contentRoot: string): Promise<Readonl
 
   const rulebooks = await Promise.all(
     slugs.map(async (slug): Promise<ResolvedRulebook> => {
-      const { body, frontmatter } = await readArtifact(contentRoot, 'rulebook', slug);
+      const { content, frontmatter } = await readArtifact(contentRoot, 'rulebook', slug);
       const { version } = frontmatter;
       return {
         slug,
-        body: `${splitFrontmatter(body).body.trim()}\n`,
+        body: `${splitFrontmatter(content).body.trim()}\n`,
         version: typeof version === 'string' ? version : undefined,
       };
     }),

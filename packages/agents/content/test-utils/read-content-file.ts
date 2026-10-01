@@ -11,7 +11,7 @@ import { renderLibrary } from './rendered-library.ts';
 export async function readContentFile(relativePath: string): Promise<string> {
   const artifact = identifyArtifact(relativePath);
   if (artifact !== undefined) {
-    return (await readArtifact(CONTENT_ROOT, artifact.type, artifact.slug)).body;
+    return (await readArtifact(CONTENT_ROOT, artifact.type, artifact.slug)).content;
   }
 
   const [harness, deployedPath] = locateDeployedFile(relativePath);
@@ -19,7 +19,7 @@ export async function readContentFile(relativePath: string): Promise<string> {
   if (entry === undefined) {
     throw new Error(`The ${harness} render of the library does not contain ${deployedPath} (from ${relativePath})`);
   }
-  return entry.body;
+  return entry.content;
 }
 
 // region | Helpers

@@ -8,7 +8,7 @@ import type { ContentDefectKind as InternalContentDefectKind } from './lib/conte
 import { resolveContentDir } from './lib/content-resolver.ts';
 import { createSourceResolver } from './lib/content-sources.ts';
 import { validateContentRoot as validateRoot } from './lib/content-validation.ts';
-import { resolveClosure as resolveRootClosure } from './lib/dependency-resolver.ts';
+import { resolveClosureWithCollections } from './lib/dependency-resolver.ts';
 import { expandIncludes } from './lib/directive-expander.ts';
 import { parseFrontmatter } from './lib/frontmatter-merger.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';
@@ -23,7 +23,7 @@ export interface ArtifactRead {
   /** The artifact's frontmatter fields, or an empty record when it does not have a frontmatter block. */
   readonly frontmatter: Readonly<Record<string, unknown>>;
   /** The artifact's whole file with its includes expanded, frontmatter block included. */
-  readonly body: string;
+  readonly content: string;
 }
 
 /** A content root's artifact slugs per type. */
@@ -60,7 +60,7 @@ export interface RenderOptions {
 /** One deployed file as a consumer reads it. */
 export interface RenderedEntry {
   /** The file's whole text as deployed, frontmatter block and deployment markers included. */
-  readonly body: string;
+  readonly content: string;
   /** The parsed frontmatter of a Markdown file that has a frontmatter block; `undefined` for every other file. */
   readonly frontmatter: Readonly<Record<string, unknown>> | undefined;
 }
@@ -77,12 +77,12 @@ export async function listCatalog(root: string): Promise<Catalog> {
 }
 
 /**
- * Reads one artifact from `root`: its parsed frontmatter and its source with includes expanded. The body is the
+ * Reads one artifact from `root`: its parsed frontmatter and its source with includes expanded. The content is the
  * source before any per-harness rewrite. Throws when the artifact's file is missing or an include cannot be expanded.
  */
 export async function readArtifact(root: string, type: ArtifactType, slug: string): Promise<ArtifactRead> {
-  const body = await expandIncludes(path.join(root, artifactFrontmatterPath(type, slug)), root);
-  return { frontmatter: parseFrontmatterRecord(body) ?? {}, body };
+  const content = await expandIncludes(path.join(root, artifactFrontmatterPath(type, slug)), root);
+  return { frontmatter: parseFrontmatterRecord(content) ?? {}, content };
 }
 
 /**
@@ -110,7 +110,7 @@ export async function renderContentRoot(root: string, options: RenderOptions): P
   return Object.fromEntries(
     files.map(({ content, path: filePath }) => [
       filePath,
-      { body: content, frontmatter: filePath.endsWith('.md') ? parseFrontmatterRecord(content) : undefined },
+      { content, frontmatter: filePath.endsWith('.md') ? parseFrontmatterRecord(content) : undefined },
     ]),
   );
 }
@@ -118,13 +118,18 @@ export async function renderContentRoot(root: string, options: RenderOptions): P
 /**
  * Resolves the dependency closure of `seeds` against `root` with the built-in library behind it, following
  * `dependencies:`, a collection's `members:`, a subagent's `skills:`, and the invocation tokens in each body. The
- * closure includes the library artifacts that an edge reaches. Collections are traversal-only, so the result's
- * `collection` list is always empty. Throws on an edge that resolves in neither, or on a cycle.
+ * closure includes the library artifacts that an edge reaches, and the collections traversed on the way, seeds
+ * included. Throws on an edge that resolves in neither, or on a cycle.
  */
 export async function resolveClosure(root: string, seeds: Partial<Catalog>): Promise<Catalog> {
   const resolver = createSourceResolver([{ name: path.basename(root), dir: root }], resolveContentDir());
-  const closure = await resolveRootClosure(seeds, resolver);
-  return { rulebook: closure.rulebooks, skill: closure.skills, subagent: closure.subagents, collection: [] };
+  const closure = await resolveClosureWithCollections(seeds, resolver);
+  return {
+    collection: closure.collections,
+    rulebook: closure.rulebooks,
+    skill: closure.skills,
+    subagent: closure.subagents,
+  };
 }
 
 /**

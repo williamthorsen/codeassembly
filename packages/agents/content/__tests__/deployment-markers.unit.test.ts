@@ -112,7 +112,7 @@ function readRendered(tree: RenderedTree, deployedPath: string): string {
   if (entry === undefined) {
     throw new Error(`The marker root's render does not contain ${deployedPath}`);
   }
-  return entry.body;
+  return entry.content;
 }
 
 /**

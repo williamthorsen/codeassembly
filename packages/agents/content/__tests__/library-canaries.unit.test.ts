@@ -89,7 +89,7 @@ describe('library render', { timeout: 30_000 }, () => {
 function listMarkdownEntries(tree: RenderedTree): ReadonlyArray<[string, string]> {
   return Object.entries(tree)
     .filter(([deployedPath]) => deployedPath.endsWith('.md'))
-    .map(([deployedPath, { body }]) => [deployedPath, body]);
+    .map(([deployedPath, { content }]) => [deployedPath, content]);
 }
 
 /** Returns a rendered file's text, throwing when the render does not contain it. */
@@ -98,7 +98,7 @@ function readEntry(tree: RenderedTree, deployedPath: string): string {
   if (entry === undefined) {
     throw new Error(`The library render does not contain ${deployedPath}`);
   }
-  return entry.body;
+  return entry.content;
 }
 
 // endregion | Helpers
