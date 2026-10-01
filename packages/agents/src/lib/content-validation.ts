@@ -21,6 +21,7 @@ import { findNonBreakingSpaceDefects } from './content-rules/non-breaking-space.
 import type { ResolvedArtifacts, RuleContext } from './content-rules/rule-context.ts';
 import { findScriptInvocationDefects } from './content-rules/script-invocation.ts';
 import { findSharedGuidanceLinkDefects } from './content-rules/shared-guidance-links.ts';
+import { findSharedGuidanceReferenceDefects } from './content-rules/shared-guidance-references.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, type ResolvedClosure, resolveSeedClosures } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
@@ -158,6 +159,7 @@ export async function validateContentRoot(
     ...(await findNonBreakingSpaceDefects(context)),
     ...(await findScriptInvocationDefects(context)),
     ...(await findSharedGuidanceLinkDefects(context)),
+    ...(await findSharedGuidanceReferenceDefects(context)),
   ];
 }
 
