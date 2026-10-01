@@ -96,6 +96,39 @@ describe(findSupportEntryTokenDefects, () => {
     });
   });
 
+  describe('host declarations for a library support entry', () => {
+    beforeEach(async () => {
+      await writeFileAt(
+        library,
+        'skills/_data/shared.md',
+        '# Shared\n\n## The section\n\nDo the work through {skill:target}.\n',
+      );
+    });
+
+    it('reports a root host that links the library section carrying a required token and declares none of it', async () => {
+      await writeSkill('host', '# Host\n\nFollow [the section](../_data/shared.md#the-section).\n');
+
+      const defects = await findSupportEntryTokenDefects(buildRuleContext(root, library));
+
+      expect(defects).toHaveLength(1);
+      expect(defects[0]).toMatchObject({ file: 'skills/host/SKILL.md', kind: 'dependency' });
+      expect(defects[0]?.detail).toContain('skill:target');
+    });
+
+    it('accepts a root host that declares the target', async () => {
+      await writeSkill('host', '# Host\n\nFollow [the section](../_data/shared.md#the-section).\n', ['target']);
+
+      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
+    });
+
+    it('reads the root entry rather than the library one when both exist at the path', async () => {
+      await writeFileAt(root, 'skills/_data/shared.md', '# Shared\n\n## The section\n\nDo the work by hand.\n');
+      await writeSkill('host', '# Host\n\nFollow [the section](../_data/shared.md#the-section).\n');
+
+      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
+    });
+  });
+
   /** Writes a skill under the fixture root, optionally declaring skill dependencies. */
   async function writeSkill(slug: string, body: string, dependencies: ReadonlyArray<string> = []): Promise<void> {
     const declared =

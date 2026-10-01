@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -25,8 +26,11 @@ interface Host {
   readonly file: string;
 }
 
-/** For each support-entry file, the artifacts named by its required tokens, keyed by every enclosing heading slug. */
-type TokenCarriers = ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<ArtifactId>>>;
+/** Finds the section map of the support entry that a link names, or `undefined` when the link names none. */
+type CarrierLookup = (file: string) => Promise<SectionCarriers | undefined>;
+
+/** For one support entry, the artifacts named by its required tokens, keyed by every enclosing heading slug. */
+type SectionCarriers = ReadonlyMap<string, ReadonlySet<ArtifactId>>;
 
 /**
  * Reports the two ways in which a support entry's invocation token can ship a pointer to nothing. The closure walk
@@ -35,7 +39,8 @@ type TokenCarriers = ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<Artifac
  * - A `{skill:…}` or `{subagent:…}` token, required or optional, that resolves from neither the root nor the library,
  *   reported against the entry.
  * - A skill or subagent whose include-expanded body links into a support-entry section carrying a required token, and
- *   whose closure does not reach the token's target, reported against the host. A support entry ships
+ *   whose closure does not reach the token's target, reported against the host. The entry may be the root's or, at
+ *   the same root-relative path, the library's, since a link resolves against both. A support entry ships
  *   unconditionally, so the host's `dependencies:` declaration is what brings the target along. A token counts in its
  *   own section and every section enclosing it, since a link to an ancestor heading reaches it too. An optional token
  *   does not carry any requirement: Compelling a declaration would deploy the target that the marker exists to leave out.
@@ -44,12 +49,13 @@ type TokenCarriers = ReadonlyMap<string, ReadonlyMap<string, ReadonlySet<Artifac
  */
 export async function findSupportEntryTokenDefects({
   root,
+  libraryDir,
   resolver,
 }: RuleContext): Promise<ReadonlyArray<ContentDefect>> {
   const defects: Array<ContentDefect> = [];
   const supportFiles = await listSupportEntryFiles(root);
 
-  const carriers = new Map<string, ReadonlyMap<string, ReadonlySet<ArtifactId>>>();
+  const carriers = new Map<string, SectionCarriers>();
   for (const file of supportFiles) {
     const relativePath = toRootRelative(root, file);
     let body: string;
@@ -63,7 +69,8 @@ export async function findSupportEntryTokenDefects({
     carriers.set(file, mapTokenCarriers(body));
   }
 
-  defects.push(...(await findUndeclaredTargets(root, resolver, carriers)));
+  const lookup = createCarrierLookup(root, libraryDir, carriers);
+  defects.push(...(await findUndeclaredTargets(root, resolver, lookup)));
   return defects;
 }
 
@@ -76,7 +83,7 @@ export async function findSupportEntryTokenDefects({
 async function collectRequiredTargets(
   host: Host,
   root: string,
-  carriers: TokenCarriers,
+  lookup: CarrierLookup,
 ): Promise<ReadonlyMap<ArtifactId, string>> {
   const required = new Map<ArtifactId, string>();
   const body = normalizeForAnchorScan(await expandIncludes(host.file, root));
@@ -89,7 +96,7 @@ async function collectRequiredTargets(
     if (pathPart === undefined || section === undefined) {
       continue;
     }
-    const carried = carriers.get(path.resolve(path.dirname(host.file), pathPart))?.get(section) ?? [];
+    const carried = (await lookup(path.resolve(path.dirname(host.file), pathPart)))?.get(section) ?? [];
     for (const id of carried) {
       if (!required.has(id)) {
         required.set(id, target);
@@ -100,13 +107,50 @@ async function collectRequiredTargets(
 }
 
 /**
+ * Creates the lookup that resolves a linked file to its section map: the root's own support entry, or else, when the
+ * root does not contain the file, the library's support entry at the same root-relative path. A library entry is read
+ * on first use and cached.
+ */
+function createCarrierLookup(
+  root: string,
+  libraryDir: string,
+  rootCarriers: ReadonlyMap<string, SectionCarriers>,
+): CarrierLookup {
+  const libraryCarriers = new Map<string, SectionCarriers | undefined>();
+  let librarySupportFiles: ReadonlySet<string> | undefined;
+
+  return async (file) => {
+    const relativePath = path.relative(root, file);
+    const outsideRoot = relativePath.startsWith('..') || path.isAbsolute(relativePath);
+    if (rootCarriers.has(file) || outsideRoot || existsSync(file)) {
+      return rootCarriers.get(file);
+    }
+
+    const libraryFile = path.join(libraryDir, relativePath);
+    if (!libraryCarriers.has(libraryFile)) {
+      librarySupportFiles ??= new Set(await listSupportEntryFiles(libraryDir));
+      let sections: SectionCarriers | undefined;
+      if (librarySupportFiles.has(libraryFile)) {
+        try {
+          sections = mapTokenCarriers(await readFile(libraryFile, 'utf8'));
+        } catch {
+          // Leave an unreadable library entry without sections; an edit to the root cannot repair it.
+        }
+      }
+      libraryCarriers.set(libraryFile, sections);
+    }
+    return libraryCarriers.get(libraryFile);
+  };
+}
+
+/**
  * Reports each host whose closure fails to reach an artifact named by a required token in a support-entry section that
  * the host links, one defect per host and missing target.
  */
 async function findUndeclaredTargets(
   root: string,
   resolver: SourceResolver,
-  carriers: TokenCarriers,
+  lookup: CarrierLookup,
 ): Promise<ReadonlyArray<ContentDefect>> {
   const defects: Array<ContentDefect> = [];
   const hosts = await listHosts(root);
@@ -114,7 +158,7 @@ async function findUndeclaredTargets(
     const file = artifactFrontmatterPath(host.type, host.slug);
     let required: ReadonlyMap<ArtifactId, string>;
     try {
-      required = await collectRequiredTargets(host, root, carriers);
+      required = await collectRequiredTargets(host, root, lookup);
     } catch (error: unknown) {
       defects.push({ file, kind: 'dependency', detail: describeError(error) });
       continue;
@@ -237,7 +281,7 @@ async function listSupportEntryFiles(root: string): Promise<ReadonlyArray<string
 }
 
 /** Maps each heading slug in a support entry to the artifacts named by the required tokens that its section encloses. */
-function mapTokenCarriers(body: string): ReadonlyMap<string, ReadonlySet<ArtifactId>> {
+function mapTokenCarriers(body: string): SectionCarriers {
   const normalized = normalizeForAnchorScan(body);
   const headings = collectHeadingPositions(normalized);
   const sections = new Map<string, Set<ArtifactId>>();
