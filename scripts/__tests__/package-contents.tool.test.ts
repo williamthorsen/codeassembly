@@ -10,7 +10,12 @@ import { describe, expect, it } from 'vitest';
  * matches by prefix, so an exact file path names itself and a directory names everything under it.
  */
 const requiredPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
-  codeassembly: ['dist/esm/cli.js', 'dist/content/skills/'],
+  codeassembly: ['dist/esm/cli.js'],
+};
+
+/** Paths that a named package must not include, matched by prefix as `requiredPaths` is. */
+const excludedPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
+  codeassembly: ['dist/content/'],
 };
 
 describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, name }) => {
@@ -29,6 +34,10 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, 
 
   it.each(requiredPaths[name] ?? [])('includes %s', (required) => {
     expect(packed.filter((entry) => entry.startsWith(required))).not.toHaveLength(0);
+  });
+
+  it.each(excludedPaths[name] ?? [])('excludes %s', (excluded) => {
+    expect(packed.filter((entry) => entry.startsWith(excluded))).toEqual([]);
   });
 
   it('excludes the TypeScript sources', () => {
