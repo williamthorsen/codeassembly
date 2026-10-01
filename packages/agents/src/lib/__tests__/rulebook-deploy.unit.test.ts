@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createSourceResolver, libraryResolver, type SourceResolver } from '../content-sources.ts';
+import { createSourceResolver, type SourceResolver } from '../content-sources.ts';
 import { resolveRulebook } from '../rulebook-deploy.ts';
 
 const ABSENT_DIR = path.join(tmpdir(), 'rulebook-deploy-absent-source');
@@ -23,7 +23,7 @@ describe(resolveRulebook, () => {
 
   it('names the origin and the path when the resolved source does not contain a rulebook file', async () => {
     await expect(resolveRulebook('ghost', buildAlwaysResolvingResolver(ABSENT_DIR))).rejects.toThrow(
-      /Declared rulebook "ghost" was not found in the library/,
+      /Declared rulebook "ghost" was not found in source "codeassembly" at .*ghost\.md/,
     );
   });
 
@@ -38,31 +38,37 @@ describe(resolveRulebook, () => {
     await writeRulebookPartial(contentDir, 'doctrine.md', 'Every comment pays rent.');
     await writeRulebook(contentDir, 'comment-rules', '<!-- include: _partials/doctrine.md / -->');
 
-    const resolved = await resolveRulebook('comment-rules', libraryResolver(contentDir));
+    const resolved = await resolveRulebook(
+      'comment-rules',
+      createSourceResolver([{ name: 'codeassembly', dir: contentDir }]),
+    );
 
     expect(resolved.body).toContain('Every comment pays rent.');
   });
 
-  it("resolves an include against the rulebook's own source rather than the library behind it", async () => {
+  it("resolves an include against the rulebook's own source rather than a lower-precedence source", async () => {
     const sourceDir = path.join(contentDir, 'org');
-    const libraryDir = path.join(contentDir, 'library');
+    const lowerDir = path.join(contentDir, 'lower');
     await writeRulebookPartial(sourceDir, 'doctrine.md', 'The org rule.');
     await writeRulebook(sourceDir, 'comment-rules', '<!-- include: _partials/doctrine.md / -->');
-    await writeRulebookPartial(libraryDir, 'doctrine.md', 'The library rule.');
+    await writeRulebookPartial(lowerDir, 'doctrine.md', 'The lower rule.');
 
-    const resolver = createSourceResolver([{ name: 'org', dir: sourceDir }], libraryDir);
+    const resolver = createSourceResolver([
+      { name: 'org', dir: sourceDir },
+      { name: 'lower', dir: lowerDir },
+    ]);
     const resolved = await resolveRulebook('comment-rules', resolver);
 
     expect(resolved.body).toContain('The org rule.');
-    expect(resolved.body).not.toContain('The library rule.');
+    expect(resolved.body).not.toContain('The lower rule.');
   });
 
   it('reports the file and line when an include target is missing', async () => {
     await writeRulebook(contentDir, 'comment-rules', '<!-- include: _partials/ghost.md / -->');
 
-    await expect(resolveRulebook('comment-rules', libraryResolver(contentDir))).rejects.toThrow(
-      /Include directive target not found: .*comment-rules\.md:\d+/,
-    );
+    await expect(
+      resolveRulebook('comment-rules', createSourceResolver([{ name: 'codeassembly', dir: contentDir }])),
+    ).rejects.toThrow(/Include directive target not found: .*comment-rules\.md:\d+/);
   });
 });
 
@@ -75,9 +81,8 @@ describe(resolveRulebook, () => {
  */
 function buildAlwaysResolvingResolver(dir: string): SourceResolver {
   return {
-    libraryDir: dir,
-    sources: [],
-    resolve: () => Promise.resolve({ dir, source: undefined }),
+    sources: [{ name: 'codeassembly', dir }],
+    resolve: () => Promise.resolve({ dir, source: 'codeassembly' }),
   };
 }
 

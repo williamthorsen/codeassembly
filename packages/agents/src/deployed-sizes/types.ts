@@ -69,8 +69,8 @@ export interface SizeSnapshot {
  * bytes against the snapshot standing at or before `recordedAt`, which is the baseline that the review set.
  *
  * A document is named by its path relative to the content root that holds it, and carries no source name: A source's
- * name comes from the consumer's declaration rather than from the content root, so the same content root is the
- * library in one record and a named source in another.
+ * name comes from the consumer's declaration rather than from the content root, so the same content root can take
+ * one name in one record and another name in the next.
  */
 export interface ReviewMarker {
   readonly schemaVersion: number;

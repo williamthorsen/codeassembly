@@ -7,7 +7,11 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { InstallOptions } from '../../../lib/types.ts';
 import { initGlobalCommand } from '../../init.ts';
+import { writeFixtureDeclaration } from '../../test-utils/declare-fixture-source.ts';
 import { syncGlobalCommand } from '../sync.ts';
+
+/** The package's real content library, declared as the home domain's source. */
+const LIBRARY_CONTENT_DIR = path.resolve(import.meta.dirname, '..', '..', '..', '..', 'content');
 
 // Runs `init --global` then `sync --global` against the real content library to catch failures that
 // only show up with real content.
@@ -35,6 +39,9 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
     const declaration = await readFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), 'utf8');
     expect(declaration).toContain('- recommended');
     expect(declaration).toContain('- triage');
+    // The machine-local tier names the real library as the home domain's source, leaving the seeded declaration as
+    // `init --global` wrote it.
+    await writeFixtureDeclaration(path.join(homeDir, '.agents', 'codeassembly.local.yaml'), LIBRARY_CONTENT_DIR);
 
     // A throw here means the real catalog failed to resolve, transform, or write end-to-end.
     await syncGlobalCommand(makeOptions(), homeDir);
@@ -62,7 +69,7 @@ describe('sync --global (real library, all collection)', { timeout: 30_000 }, ()
     const deployedSubagents = await readdir(agentsDir);
     expect(deployedSubagents.length).toBeGreaterThan(0);
 
-    // Because each is resolved from the library, each is merged against the library's own overlay: The source-scoped
+    // Because each is resolved from the library source, each is merged against the library's own overlay: The source-scoped
     // merge covers the home domain, and applies the same `_defaults` there that it applies in a project.
     for (const fileName of deployedSubagents) {
       const deployed = await readFile(path.join(agentsDir, fileName), 'utf8');

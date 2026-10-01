@@ -6,6 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { InstallOptions } from '../../../lib/types.ts';
+import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import type { GuidanceHookAdvisory } from '../hook-bindings.ts';
 import { syncCommand } from '../sync.ts';
 
@@ -37,7 +38,7 @@ describe('syncCommand with guidance-hook bindings', () => {
     await writeLibrarySkill(contentDir, 'implement-plan', 'Write the code.\n\n<!-- guidance-hook: impl -->\n');
     await writeLibrarySubagent(contentDir, 'coder', 'Write the code.\n\n<!-- guidance-hook: impl -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nGroup source by role.\n');
-    await declare(projectRoot, [
+    await declare(projectRoot, contentDir, [
       'skills:',
       '  use:',
       '    - implement-plan',
@@ -50,7 +51,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
 
     for (const deployed of [
       await readFile(path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md'), 'utf8'),
@@ -67,7 +68,7 @@ describe('syncCommand with guidance-hook bindings', () => {
   it('names the bound rulebook version directly below the open marker', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n', 'hook', '4');
-    await declare(projectRoot, [
+    await declare(projectRoot, contentDir, [
       'skills:',
       '  use:',
       '    - implement-plan',
@@ -77,7 +78,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
 
     const deployed = await readFile(path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md'), 'utf8');
     expect(deployed).toContain('<!-- rulebook:layout-preferences -->\n<!-- rulebook-version: 4 -->');
@@ -86,7 +87,7 @@ describe('syncCommand with guidance-hook bindings', () => {
   it('deploys a bound rulebook by its own delivery mode without a separate declaration', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n', 'skill');
-    await declare(projectRoot, [
+    await declare(projectRoot, contentDir, [
       'skills:',
       '  use:',
       '    - implement-plan',
@@ -96,7 +97,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
 
     const consultSkill = path.join(projectRoot, '.claude', 'skills', 'consult-layout-preferences', 'SKILL.md');
     expect(existsSync(consultSkill)).toBe(true);
@@ -105,7 +106,7 @@ describe('syncCommand with guidance-hook bindings', () => {
   it('leaves a hook not named by any binding contributing nothing at all', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', 'Prose.\n\n<!-- guidance-hook: glossary -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n');
-    await declare(projectRoot, [
+    await declare(projectRoot, contentDir, [
       'skills:',
       '  use:',
       '    - implement-plan',
@@ -115,7 +116,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
 
     const deployed = await readFile(path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md'), 'utf8');
     expect(deployed).not.toContain('guidance-hook');
@@ -124,7 +125,7 @@ describe('syncCommand with guidance-hook bindings', () => {
 
   it('fails when a binding names a rulebook that does not exist, naming the slug and the hook', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
-    await declare(projectRoot, [
+    await declare(projectRoot, contentDir, [
       'skills:',
       '  use:',
       '    - implement-plan',
@@ -134,7 +135,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - ghost-preferences',
     ]);
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
       /Guidance hook "impl" binds rulebook "ghost-preferences"/,
     );
     expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
@@ -143,7 +144,7 @@ describe('syncCommand with guidance-hook bindings', () => {
   it('fails when a bound rulebook declares a guidance hook of its own', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\n<!-- guidance-hook: nested -->\n');
-    await declare(projectRoot, [
+    await declare(projectRoot, contentDir, [
       'skills:',
       '  use:',
       '    - implement-plan',
@@ -153,7 +154,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
       /Rulebook "layout-preferences", bound to guidance hook "impl", declares a guidance hook of its own \(nested\)/,
     );
   });
@@ -161,7 +162,7 @@ describe('syncCommand with guidance-hook bindings', () => {
   it('writes byte-identical output when a filled skill is synced twice', async () => {
     await writeLibrarySkill(contentDir, 'implement-plan', 'Prose.\n\n<!-- guidance-hook: impl -->\n');
     await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout preferences\n\nRules.\n');
-    await declare(projectRoot, [
+    await declare(projectRoot, contentDir, [
       'skills:',
       '  use:',
       '    - implement-plan',
@@ -172,9 +173,9 @@ describe('syncCommand with guidance-hook bindings', () => {
     ]);
     const deployedPath = path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
     const first = await readFile(deployedPath, 'utf8');
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
 
     expect(await readFile(deployedPath, 'utf8')).toBe(first);
   });
@@ -183,9 +184,9 @@ describe('syncCommand with guidance-hook bindings', () => {
     it('reports a bound rulebook whose delivery never claims the hook route', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'skill');
-      await declareBinding(projectRoot, 'layout-preferences');
+      await declareBinding(projectRoot, contentDir, 'layout-preferences');
 
-      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, homeDir);
 
       expect(advisories).toEqual([{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }]);
     });
@@ -195,9 +196,9 @@ describe('syncCommand with guidance-hook bindings', () => {
     it('reports nothing when a bound rulebook delivers ambient as well as hook', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[ambient, hook]');
-      await declareBinding(projectRoot, 'layout-preferences');
+      await declareBinding(projectRoot, contentDir, 'layout-preferences');
 
-      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, homeDir);
 
       expect(advisories).toEqual([]);
     });
@@ -205,9 +206,9 @@ describe('syncCommand with guidance-hook bindings', () => {
     it('reports a binding whose hook is not declared by any deployed skill or subagent', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', 'Prose carrying no directive.\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
-      await declareBinding(projectRoot, 'layout-preferences');
+      await declareBinding(projectRoot, contentDir, 'layout-preferences');
 
-      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, homeDir);
 
       expect(advisories).toEqual([{ kind: 'bound-unreached', hook: 'impl' }]);
     });
@@ -215,18 +216,18 @@ describe('syncCommand with guidance-hook bindings', () => {
     it('reports a bound rulebook that is ambient and does not claim the hook route', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', 'ambient');
-      await declareBinding(projectRoot, 'layout-preferences');
+      await declareBinding(projectRoot, contentDir, 'layout-preferences');
 
-      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, homeDir);
 
       expect(advisories).toEqual([{ kind: 'bound-undeclared', slug: 'layout-preferences', hook: 'impl' }]);
     });
 
     it('reports a rulebook that claims the hook route but is not named by any binding', async () => {
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
-      await declare(projectRoot, ['rulebooks:', '  use:', '    - layout-preferences']);
+      await declare(projectRoot, contentDir, ['rulebooks:', '  use:', '    - layout-preferences']);
 
-      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, homeDir);
 
       expect(advisories).toEqual([{ kind: 'declared-unbound', slug: 'layout-preferences' }]);
     });
@@ -234,9 +235,9 @@ describe('syncCommand with guidance-hook bindings', () => {
     it('reports nothing when a binding and the rulebook that it names agree', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');
       await writeLibraryRulebook(contentDir, 'layout-preferences', '# Layout\n\nRules.\n', '[hook, skill]');
-      await declareBinding(projectRoot, 'layout-preferences');
+      await declareBinding(projectRoot, contentDir, 'layout-preferences');
 
-      const advisories = await syncAdvisories(projectRoot, contentDir, homeDir);
+      const advisories = await syncAdvisories(projectRoot, homeDir);
 
       expect(advisories).toEqual([]);
     });
@@ -245,14 +246,14 @@ describe('syncCommand with guidance-hook bindings', () => {
 
 // region | Helpers
 
-/** Writes the project-scope codeassembly.yaml from the given lines. */
-async function declare(projectRoot: string, lines: ReadonlyArray<string>): Promise<void> {
-  await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `${lines.join('\n')}\n`, 'utf8');
+/** Writes the project-scope codeassembly.yaml from the given lines, with `contentDir` as its source. */
+async function declare(projectRoot: string, contentDir: string, lines: ReadonlyArray<string>): Promise<void> {
+  await declareFixtureSource(projectRoot, contentDir, `${lines.join('\n')}\n`);
 }
 
 /** Declares the `implement-plan` skill with `slug` bound to the `impl` hook, the shape shared by the advisory cases. */
-async function declareBinding(projectRoot: string, slug: string): Promise<void> {
-  await declare(projectRoot, [
+async function declareBinding(projectRoot: string, contentDir: string, slug: string): Promise<void> {
+  await declare(projectRoot, contentDir, [
     'skills:',
     '  use:',
     '    - implement-plan',
@@ -269,12 +270,8 @@ function makeOptions(): InstallOptions {
 }
 
 /** Runs a sync and returns the guidance-hook advisories in its plan. */
-async function syncAdvisories(
-  projectRoot: string,
-  contentDir: string,
-  homeDir: string,
-): Promise<ReadonlyArray<GuidanceHookAdvisory>> {
-  const outcome = await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+async function syncAdvisories(projectRoot: string, homeDir: string): Promise<ReadonlyArray<GuidanceHookAdvisory>> {
+  const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
   if (outcome.kind !== 'reconciled') {
     throw new Error(
       `Expected a reconciled sync, but the sync did not find a declaration at ${outcome.declarationPath}.`,

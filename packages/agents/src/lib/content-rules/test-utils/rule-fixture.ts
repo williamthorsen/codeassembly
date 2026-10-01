@@ -5,13 +5,9 @@ import path from 'node:path';
 import { createSourceResolver } from '../../content-sources.ts';
 import type { RuleContext } from '../rule-context.ts';
 
-/** Builds the context that `validateContentRoot` hands a rule, resolving `root` ahead of `libraryDir` as it does. */
-export function buildRuleContext(root: string, libraryDir: string = root): RuleContext {
-  return {
-    root,
-    libraryDir,
-    resolver: createSourceResolver([{ name: root, dir: root }], libraryDir),
-  };
+/** Builds the context that `validateContentRoot` hands a rule, resolving against `root` alone as it does. */
+export function buildRuleContext(root: string): RuleContext {
+  return { root, resolver: createSourceResolver([{ name: path.basename(root), dir: root }]) };
 }
 
 /**

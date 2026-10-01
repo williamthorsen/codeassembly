@@ -87,14 +87,24 @@ describe('content API', () => {
       expect(closure.skill).toEqual(['alpha']);
     });
 
-    it('resolves an edge into the built-in library behind the root', async () => {
+    it('throws naming the edge to an artifact that the root does not contain', async () => {
       await writeFileAt(
         root,
         'skills/alpha/SKILL.md',
         '---\nname: alpha\ndescription: Alpha.\ndependencies:\n  rulebooks:\n    - shell-conventions\n---\n',
       );
 
-      expect((await resolveClosure(root, { skill: ['alpha'] })).rulebook).toContain('shell-conventions');
+      await expect(resolveClosure(root, { skill: ['alpha'] })).rejects.toThrow(
+        /rulebook "shell-conventions", named by skill:alpha, was not found/,
+      );
+    });
+
+    it('throws naming a body token that names an artifact the root does not contain', async () => {
+      await writeSkill(root, 'alpha', 'Delegate to {subagent:canary}.\n');
+
+      await expect(resolveClosure(root, { skill: ['alpha'] })).rejects.toThrow(
+        /subagent "canary", named by skill:alpha, was not found/,
+      );
     });
   });
 
@@ -117,6 +127,28 @@ describe('content API', () => {
       expect(tree['skills/alpha/SKILL.md']?.content).toContain('Use plain words.');
     });
 
+    it("places the root's support entries under its own namespace and anchors links there", async () => {
+      await writeSkill(root, 'alpha', 'See [the reference](../_data/reference.md).\n');
+      await writeFileAt(root, 'skills/_data/reference.md', '# Reference\n');
+      const namespace = path.basename(root);
+
+      const tree = await renderContentRoot(root, { harness: 'claude' });
+
+      expect(tree[`skills/_sources/${namespace}/_data/reference.md`]?.content).toBe('# Reference\n');
+      expect(tree['skills/_data/reference.md']).toBeUndefined();
+      expect(tree['skills/alpha/SKILL.md']?.content).toContain(
+        `(~/.claude/skills/_sources/${namespace}/_data/reference.md)`,
+      );
+    });
+
+    it('throws naming the edge to an artifact that the root does not contain', async () => {
+      await writeSkill(root, 'alpha', 'Delegate to {subagent:canary}.\n');
+
+      await expect(renderContentRoot(root, { harness: 'claude' })).rejects.toThrow(
+        /subagent "canary", named by skill:alpha, was not found/,
+      );
+    });
+
     it('throws one error naming every file that failed', async () => {
       await writeSkill(root, 'alpha', 'Run {tool:Nope}.\n');
       await writeSkill(root, 'beta', 'See [nothing](#nowhere).\n');
@@ -136,6 +168,24 @@ describe('content API', () => {
 
       expect(defects).toEqual([
         expect.objectContaining({ file: path.join('skills', 'alpha', 'SKILL.md'), kind: 'render' }),
+      ]);
+    });
+
+    it('returns a dependency defect naming the edge to an artifact that the root does not contain', async () => {
+      await writeFileAt(
+        root,
+        'skills/alpha/SKILL.md',
+        '---\nname: alpha\ndescription: Alpha.\ndependencies:\n  rulebooks:\n    - shell-conventions\n---\n',
+      );
+
+      const defects = await validateContentRoot(root, HARNESS_IDS);
+
+      expect(defects).toEqual([
+        expect.objectContaining({
+          file: path.join('skills', 'alpha', 'SKILL.md'),
+          kind: 'dependency',
+          detail: expect.stringMatching(/rulebook "shell-conventions", named by skill:alpha, was not found/),
+        }),
       ]);
     });
 

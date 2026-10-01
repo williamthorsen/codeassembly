@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ContentDefect } from '../../../lib/content-defects.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
+import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 import { isSyncValidationError } from '../sync-validation-error.ts';
 
@@ -37,9 +38,9 @@ describe('syncCommand pre-write validation', () => {
     await writeLibraryRulebook(contentDir, 'alpha', 'version: 1');
     await writeLibraryRulebook(contentDir, 'beta', 'version: 2');
     await writeLibraryRulebook(contentDir, 'gamma', 'version: 3');
-    await declareRulebooks(projectRoot, 'alpha', 'beta', 'gamma');
+    await declareRulebooks(projectRoot, contentDir, 'alpha', 'beta', 'gamma');
 
-    const defects = await collectDefects(projectRoot, contentDir, homeDir);
+    const defects = await collectDefects(projectRoot, homeDir);
 
     expect(defects.map((defect) => defect.file)).toEqual([
       'guidance/rulebooks/alpha.md',
@@ -52,9 +53,9 @@ describe('syncCommand pre-write validation', () => {
 
   it('writes nothing when validation fails', async () => {
     await writeLibraryRulebook(contentDir, 'alpha', 'version: 1');
-    await declareRulebooks(projectRoot, 'alpha');
+    await declareRulebooks(projectRoot, contentDir, 'alpha');
 
-    await collectDefects(projectRoot, contentDir, homeDir);
+    await collectDefects(projectRoot, homeDir);
 
     expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
     expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(false);
@@ -65,10 +66,11 @@ describe('syncCommand pre-write validation', () => {
     await writeLibrarySkill(contentDir, 'people-report');
     await declareRaw(
       projectRoot,
+      contentDir,
       'rulebooks:\n  use:\n    - alpha\nskills:\n  use:\n    - people-report\n    - ghost\n',
     );
 
-    const defects = await collectDefects(projectRoot, contentDir, homeDir);
+    const defects = await collectDefects(projectRoot, homeDir);
 
     expect(defects.map((defect) => defect.file).toSorted()).toEqual([
       'guidance/rulebooks/alpha.md',
@@ -77,18 +79,18 @@ describe('syncCommand pre-write validation', () => {
   });
 
   it('reports a declared artifact that resolves from nowhere just once', async () => {
-    await declareRulebooks(projectRoot, 'ghost');
+    await declareRulebooks(projectRoot, contentDir, 'ghost');
 
-    const defects = await collectDefects(projectRoot, contentDir, homeDir);
+    const defects = await collectDefects(projectRoot, homeDir);
 
     expect(defects).toHaveLength(1);
     expect(defects[0]?.detail).toMatch(/declares rulebook "ghost", which was not found/);
   });
 
   it('reports a bound rulebook that resolves from nowhere just once', async () => {
-    await declareRaw(projectRoot, 'guidance-hooks:\n  demo-hook:\n    use:\n      - ghost\n');
+    await declareRaw(projectRoot, contentDir, 'guidance-hooks:\n  demo-hook:\n    use:\n      - ghost\n');
 
-    const defects = await collectDefects(projectRoot, contentDir, homeDir);
+    const defects = await collectDefects(projectRoot, homeDir);
 
     expect(defects).toHaveLength(1);
     expect(defects[0]?.detail).toMatch(/Guidance hook "demo-hook" binds rulebook "ghost"/);
@@ -96,9 +98,9 @@ describe('syncCommand pre-write validation', () => {
 
   it('leaves a valid declaration untouched by the collecting gates', async () => {
     await writeLibraryRulebook(contentDir, 'alpha', "version: '1'");
-    await declareRulebooks(projectRoot, 'alpha');
+    await declareRulebooks(projectRoot, contentDir, 'alpha');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
 
     expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(true);
   });
@@ -107,13 +109,9 @@ describe('syncCommand pre-write validation', () => {
 // region | Helpers
 
 /** Runs a sync expected to fail validation and returns the aggregate's defects. */
-async function collectDefects(
-  projectRoot: string,
-  contentDir: string,
-  homeDir: string,
-): Promise<ReadonlyArray<ContentDefect>> {
+async function collectDefects(projectRoot: string, homeDir: string): Promise<ReadonlyArray<ContentDefect>> {
   try {
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
   } catch (error: unknown) {
     if (isSyncValidationError(error)) {
       return error.defects;
@@ -123,14 +121,18 @@ async function collectDefects(
   throw new Error('Expected sync to fail validation, but it succeeded.');
 }
 
-/** Writes the project-scope declaration verbatim. */
-async function declareRaw(projectRoot: string, body: string): Promise<void> {
-  await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), body, 'utf8');
+/** Writes the project-scope declaration from `body`, with `contentDir` as its source. */
+async function declareRaw(projectRoot: string, contentDir: string, body: string): Promise<void> {
+  await declareFixtureSource(projectRoot, contentDir, body);
 }
 
 /** Declares the given rulebook slugs in the project-scope codeassembly.yaml. */
-async function declareRulebooks(projectRoot: string, ...slugs: ReadonlyArray<string>): Promise<void> {
-  await declareRaw(projectRoot, `rulebooks:\n  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`);
+async function declareRulebooks(
+  projectRoot: string,
+  contentDir: string,
+  ...slugs: ReadonlyArray<string>
+): Promise<void> {
+  await declareRaw(projectRoot, contentDir, `rulebooks:\n  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`);
 }
 
 /** Builds sync options targeting only the Claude harness. */

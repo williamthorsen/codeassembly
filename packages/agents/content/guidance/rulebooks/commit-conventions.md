@@ -2,7 +2,7 @@
 slug: commit-conventions
 description: Commit title and body conventions, the work-type taxonomy, and branch naming. Consult before writing a commit message or naming a branch.
 delivery: skill
-version: '10'
+version: '11'
 ---
 
 # Git commit conventions

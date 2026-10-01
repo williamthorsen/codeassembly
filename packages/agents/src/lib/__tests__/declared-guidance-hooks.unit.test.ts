@@ -104,7 +104,7 @@ async function writeSkill(
   const srcDir = path.join(contentDir, 'skills', slug);
   await mkdir(srcDir, { recursive: true });
   await writeFile(path.join(srcDir, 'SKILL.md'), body, 'utf8');
-  const skill = { slug, srcDir, contentRoot: contentDir, source: undefined };
+  const skill = { slug, srcDir, contentRoot: contentDir, source: 'codeassembly' };
   return targetHarnesses === undefined ? skill : { ...skill, targetHarnesses };
 }
 
@@ -120,7 +120,7 @@ async function writeSubagent(contentDir: string, slug: string, body: string): Pr
   const srcPath = path.join(contentDir, 'subagents', `${slug}.md`);
   await mkdir(path.dirname(srcPath), { recursive: true });
   await writeFile(srcPath, body, 'utf8');
-  return { slug, srcPath, contentRoot: contentDir, source: undefined };
+  return { slug, srcPath, contentRoot: contentDir, source: 'codeassembly' };
 }
 
 // endregion | Helpers

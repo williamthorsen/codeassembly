@@ -22,7 +22,7 @@ const SKILL_REFERENCE_PATTERNS: ReadonlyArray<RegExp> = [
 
 /**
  * Reports each skill named in prose by a file under `guidance/shared/` that does not deploy to every harness: one that
- * resolves from neither the root nor the library, or one whose `supported-harnesses:` narrows it. A name under which a
+ * the root does not contain, or one whose `supported-harnesses:` narrows it. A name under which a
  * `delivery: skill` rulebook deploys passes, since rulebook frontmatter does not narrow harnesses.
  *
  * Shared guidance is inlined into every harness guidance file, a route that does not rewrite any invocation token, so
@@ -31,7 +31,6 @@ const SKILL_REFERENCE_PATTERNS: ReadonlyArray<RegExp> = [
  */
 export async function findSharedGuidanceReferenceDefects({
   root,
-  libraryDir,
   resolver,
 }: RuleContext): Promise<ReadonlyArray<ContentDefect>> {
   const defects: Array<ContentDefect> = [];
@@ -50,7 +49,7 @@ export async function findSharedGuidanceReferenceDefects({
 
     for (const [index, line] of body.split('\n').entries()) {
       for (const slug of collectSkillReferences(line)) {
-        rulebookSkillNames ??= await listRulebookSkillNames([root, libraryDir], resolver);
+        rulebookSkillNames ??= await listRulebookSkillNames(root, resolver);
         if (rulebookSkillNames.has(slug)) {
           continue;
         }
@@ -87,7 +86,7 @@ export function collectSkillReferences(content: string): ReadonlySet<string> {
 /** Describes why `slug` fails to deploy to every harness, or returns `undefined` when it does. */
 async function findSkillProblem(slug: string, resolver: SourceResolver): Promise<string | undefined> {
   if ((await resolver.resolve('skill', slug)) === undefined) {
-    return 'which resolves from neither the content root nor the library';
+    return 'which the content root does not contain';
   }
   try {
     const skill = await resolveDeclaredSkill(slug, resolver);
@@ -100,22 +99,11 @@ async function findSkillProblem(slug: string, resolver: SourceResolver): Promise
 }
 
 /**
- * Lists the names under which the `delivery: skill` rulebooks of the given roots deploy, each slug resolved through
- * `resolver` so that a root rulebook shadows the library's. A rulebook that fails to resolve contributes nothing; the
- * resolution pass reports one that the root owns.
+ * Lists the names under which the root's `delivery: skill` rulebooks deploy. A rulebook that fails to resolve
+ * contributes nothing; the resolution pass reports it.
  */
-async function listRulebookSkillNames(
-  roots: ReadonlyArray<string>,
-  resolver: SourceResolver,
-): Promise<ReadonlySet<string>> {
-  const slugs = new Set<string>();
-  for (const root of roots) {
-    const { rulebook = [] } = await enumerateCatalogSlugs(root);
-    for (const slug of rulebook) {
-      slugs.add(slug);
-    }
-  }
-
+async function listRulebookSkillNames(root: string, resolver: SourceResolver): Promise<ReadonlySet<string>> {
+  const { rulebook: slugs = [] } = await enumerateCatalogSlugs(root);
   const names = new Set<string>();
   for (const slug of slugs) {
     try {

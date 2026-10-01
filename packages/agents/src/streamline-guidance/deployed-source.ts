@@ -12,18 +12,18 @@ export type SourceLookup = { found: string } | { reason: 'ambiguous-source' | 's
 
 /**
  * Finds the absolute path of a deployed copy's source inside the repository. An `install` copy names its source on a
- * `Source:` line; a `sync` copy names only its slug in an ownership marker, and `findDeployedSource` resolves that slug
- * under each content root.
+ * `Source:` line, as a path within a source directory; a `sync` copy names only its slug in an ownership marker, and
+ * `findDeployedSource` resolves that slug under each content root.
  */
 export function findDeployedSource(
   content: string,
   input: { root: string; contentRoots: readonly string[] },
 ): SourceLookup {
-  const sourceUrl = SOURCE_LINE_REGEX.exec(content)?.[1];
-  if (sourceUrl !== undefined) {
-    const relative = decodeUrlPath(BLOB_PATH_REGEX.exec(sourceUrl)?.[1]);
-    const candidate = relative === undefined ? undefined : path.join(input.root, relative);
-    return candidate !== undefined && existsSync(candidate)
+  const sourceLine = SOURCE_LINE_REGEX.exec(content);
+  if (sourceLine !== null) {
+    const [, relative = '', sourceDir = ''] = sourceLine;
+    const candidate = path.resolve(sourceDir, relative);
+    return isWithin(input.root, candidate) && existsSync(candidate)
       ? { found: candidate }
       : { reason: 'source-not-in-repository' };
   }
@@ -56,17 +56,17 @@ export function isDeployedCopy(absolutePath: string, content: string): boolean {
 
 // region | Helpers
 
-/** Matches the repository-relative path in a GitHub blob URL, whose captured group is that path. */
-const BLOB_PATH_REGEX = /\/blob\/[^/]+\/(.+)$/;
-
 /** Matches the ownership marker that `sync` writes, whose captured groups are the artifact kind and its slug. */
 const OWNERSHIP_MARKER_REGEX = /^[ \t]*<!-- codeassembly-(rulebook|skill|subagent):([a-z][a-z0-9-]*) -->[ \t]*$/m;
 
 /** Matches the headline that `install` writes as a Markdown comment, or as a YAML comment inside frontmatter. */
 const PROVENANCE_HEADLINE_REGEX = /^[ \t]*(?:<!--|#)[ \t]*GENERATED FILE\b/m;
 
-/** Matches the `Source:` line below the provenance headline, whose captured group is the source's URL. */
-const SOURCE_LINE_REGEX = /^[ \t]*(?:<!--|#)[ \t]*Source:[ \t]*(\S+?)[ \t]*(?:-->)?[ \t]*$/m;
+/**
+ * Matches the `Source:` line below the provenance headline, whose captured groups are the file's path within its source
+ * and the source's directory.
+ */
+const SOURCE_LINE_REGEX = /^[ \t]*(?:<!--|#)[ \t]*Source:[ \t]*(\S+) in source "[^"]*" \((.+)\)[ \t]*(?:-->)?[ \t]*$/m;
 
 /** Returns the path of an artifact's source file relative to its content root. */
 function composeSourcePath(kind: string, slug: string): string {
@@ -80,16 +80,10 @@ function composeSourcePath(kind: string, slug: string): string {
   }
 }
 
-/** Decodes a URL path's percent-escapes, returning undefined for an absent path or a malformed escape. */
-function decodeUrlPath(encoded: string | undefined): string | undefined {
-  if (encoded === undefined) {
-    return undefined;
-  }
-  try {
-    return decodeURIComponent(encoded);
-  } catch {
-    return undefined;
-  }
+/** Reports whether `candidate` is `root` or lies beneath it. */
+function isWithin(root: string, candidate: string): boolean {
+  const relative = path.relative(root, candidate);
+  return !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
 // endregion | Helpers

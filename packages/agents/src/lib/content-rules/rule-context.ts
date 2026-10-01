@@ -2,14 +2,9 @@ import path from 'node:path';
 
 import type { SourceResolver } from '../content-sources.ts';
 
-/**
- * What a content rule reads: the root under examination, the library behind it, and the resolver searching both in
- * that order. A rule reports on files under `root` alone, and consults the library only to resolve what a root file
- * names.
- */
+/** What a content rule reads: the root under examination, and the resolver searching it. */
 export interface RuleContext {
   readonly root: string;
-  readonly libraryDir: string;
   readonly resolver: SourceResolver;
 }
 

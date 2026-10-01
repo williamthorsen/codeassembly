@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '24'
+version: '25'
 ---
 
 # CodeAssembly content specification
@@ -49,11 +49,11 @@ A skill or subagent token has an optional form, marked `?` before the colon: `{s
 
 `{rulebook?:<slug>}` fails the run: A rulebook token renders the skill name under which its target deploys, and an undeployed target supplies that name nowhere. `dependencies:` does not have an optional counterpart, because a frontmatter entry exists to pull an artifact in; a body that names one without pulling it in is the only case that the marker addresses. A content root declares content format 2 if any body that it contains, a `_partials` file included, uses an optional token. _(Enforced by `validate`.)_
 
-A support entry under `skills/` does not contribute an edge: It is linked to rather than inlined, so `sync` never reads it. Each skill or subagent that links into the section containing a required `{skill:<slug>}` or `{subagent:<slug>}` token declares its target under `dependencies:`. An optional token there is exempt, since asserting the target may be absent is the opposite of guaranteeing its presence. The requirement depends on the fragment: A bare link to the file does not have a requirement, and a link to an enclosing heading has the requirements of its subsections. _(Enforced by `validate`, which also reports a support-entry token naming an artifact that resolves from neither the content root nor the library, optional or required.)_
+A support entry under `skills/` does not contribute an edge: It is linked to rather than inlined, so `sync` never reads it. Each skill or subagent that links into the section containing a required `{skill:<slug>}` or `{subagent:<slug>}` token declares its target under `dependencies:`. An optional token there is exempt, since asserting the target may be absent is the opposite of guaranteeing its presence. The requirement depends on the fragment: A bare link to the file does not have a requirement, and a link to an enclosing heading has the requirements of its subsections. _(Enforced by `validate`, which also reports a support-entry token naming an artifact that the content root does not contain, optional or required.)_
 
-Rulebooks, skills, and subagents all support tokens; collections do not have a body to render. `{rulebook:<slug>}` has one restriction that the others do not: It renders only if a declaration supplies the deployed rulebook set, which is true for every body that `sync` and `validate` render but not for a support entry under `skills/`, since `install` deploys one without resolving a declaration. A rulebook token in a support entry fails the run, as does one naming a rulebook that does not deploy a skill -- an `ambient`-only target is already in the reader's context, so there is nothing to invoke. Express that relationship with `dependencies:` instead.
+Rulebooks, skills, and subagents all support tokens; collections do not have a body to render. `{rulebook:<slug>}` has one restriction that the others do not: It renders only if a declaration supplies the deployed rulebook set, which is true for every body that `sync` and `validate` render but not for a support entry under `skills/`, since a source's support entries deliver to every consumer of the source, whichever rulebooks that consumer declares. A rulebook token in a support entry fails the run, as does one naming a rulebook that does not deploy a skill -- an `ambient`-only target is already in the reader's context, so there is nothing to invoke. Express that relationship with `dependencies:` instead.
 
-That boundary decides what a shared partial may contain. A partial inlined by both a skill body and a support entry cannot contain a `{rulebook:<slug>}` token: It renders in the skill but breaks the support entry's install. The pairing is live -- `skills/_data/recommendation-gradient.md` inlines `skills/_partials/option-format.md`, which skill bodies inline too.
+That boundary decides what a shared partial may contain. A partial inlined by both a skill body and a support entry cannot contain a `{rulebook:<slug>}` token: It renders in the skill but breaks the support entry's delivery. The pairing is live -- `skills/_data/recommendation-gradient.md` inlines `skills/_partials/option-format.md`, which skill bodies inline too.
 
 Only `{rulebook:<slug>}` is checked for deployability. A `{skill:<slug>}` or `{subagent:<slug>}` token renders on every harness to which the body deploys, including one to which its target does not deploy: A token naming a skill that narrows itself with `supported-harnesses:` still renders an invocation elsewhere. Name such a skill only where the surrounding text already scopes it to that harness. _(Convention; not enforced.)_
 
@@ -61,7 +61,7 @@ Reserve a `dependencies:` entry for a non-inline edge; use a token for any invoc
 
 ## Links in rulebook bodies
 
-A rulebook addresses a file by linking to it, not by naming it in prose. Author the target relative to the rulebook's own place in the content tree, which is `guidance/rulebooks/<slug>.md`, and `sync` emits the absolute path that each target harness can follow. A target of `../../skills/_data/concision.md` resolves on Claude to `~/.claude/skills/_data/concision.md` and on Rovo to `~/.rovo/skills/_data/concision.md`. Which root the path takes depends on the tree into which the target is deployed: One naming a skill delivered by the same run is anchored where that run wrote it, so `../../skills/consult-<slug>/SKILL.md` resolves on Claude under the project root from bare `sync`, and to `~/.claude/skills/consult-<slug>/SKILL.md` from `sync --global`. Every other target keeps the harness home in both domains, which is why the `_data/` example above reads the same either way. `{harness_home_dir}` and `{harness_id}` expand per harness, including where one opens a link target.
+A rulebook addresses a file by linking to it, not by naming it in prose. Author the target relative to the rulebook's own place in the content tree, which is `guidance/rulebooks/<slug>.md`, and `sync` emits the absolute path that each target harness can follow. A target of `../../skills/_data/concision.md`, in a rulebook from the source named `codeassembly`, resolves from `sync --global` on Claude to `~/.claude/skills/_sources/codeassembly/_data/concision.md` and on Rovo to `~/.rovo/skills/_sources/codeassembly/_data/concision.md`. Which root the path takes depends on the tree into which the target is deployed, which is the deploying domain in both cases: One naming a skill delivered by the same run is anchored where that run wrote it, so `../../skills/consult-<slug>/SKILL.md` resolves on Claude under the project root from bare `sync`, and to `~/.claude/skills/consult-<slug>/SKILL.md` from `sync --global`. Every other target resolves into the owning source's support namespace, `skills/_sources/<name>/`, under the project root from bare `sync` and under the harness home from `sync --global`. `{harness_home_dir}` and `{harness_id}` expand per harness, including where one opens a link target.
 
 A rulebook may link only into `skills/` and `scripts/`, the two trees whose source layout matches where they deploy under every harness home. Any other target fails the run, with an error naming the rulebook, the target as authored, and why it was rejected. `subagents/` is rejected because a subagent is dispatched rather than read, so a link into one is not worth authoring. `_partials/` and `collections/` never deploy as files. A link into one would name nothing.
 
@@ -69,7 +69,7 @@ A rulebook inlines partials, which is how it receives shared doctrine, and that 
 
 A link to a sibling rulebook is rejected too, and its error names the `{rulebook:<slug>}` token that addresses it instead. A rulebook is invoked rather than read: The skill that it deploys is discovered by name, so an invocation resolves wherever it was deployed, while a path would be right in one domain and broken in the other. _(Validated on parse.)_
 
-A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `validate`, which looks for the file in the content root and then in the library, and resolves a fragment on such a target to exactly one heading in the file into which it points. _(Enforced by `validate`.)_
+A target that is rooted correctly but names a file that has moved or been deleted is caught separately, by `validate`, which looks for the file in the content root, and resolves a fragment on such a target to exactly one heading in the file into which it points. _(Enforced by `validate`.)_
 
 One limitation is worth knowing before writing a rulebook that documents linking: Rewriting runs over the whole body, so a Markdown link inside a code fence or an inline code span is rewritten along with the rest. A rulebook cannot show a relative link verbatim as an example, and must describe the target instead. Because invocation tokens are rewritten the same way, an example token keeps the `<slug>` placeholder rather than naming a real artifact.
 
@@ -87,7 +87,7 @@ A heading containing a token cannot be anchored: It renders to a different slug 
 
 ## Collections
 
-A collection's only payload is a `members:` block -- the constituents that it pulls into the deployed closure. List them per type (the same shape that `dependencies:` uses), or use the computed token `'@library'` for every rulebook, skill, and subagent in the content root to which the collection belongs -- i.e., the built-in library, or the owning source for a source collection:
+A collection's only payload is a `members:` block -- the constituents that it pulls into the deployed closure. List them per type (the same shape that `dependencies:` uses), or use the computed token `'@library'` for every rulebook, skill, and subagent in the content root to which the collection belongs, the source from which it resolved:
 
 ```yaml
 members:

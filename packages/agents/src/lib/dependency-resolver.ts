@@ -33,7 +33,7 @@ export interface ResolvedClosure {
  * the invocation tokens in a rulebook's, skill's, or subagent's body -- and following them across every type. The
  * result is deduped (a diamond dependency appears once) and acyclic -- a cycle throws an error naming the offending
  * path. A collection is a traversal-only node: Its members are followed, but the collection itself is dropped from
- * the deployable result. A referenced artifact that does not resolve from any source or the library throws an error
+ * the deployable result. A referenced artifact that does not resolve from any source throws an error
  * naming its type and slug, the artifact that named it, and every location searched.
  */
 export async function resolveClosure(direct: DirectArtifacts, resolver: SourceResolver): Promise<ResolvedClosure> {
@@ -168,7 +168,7 @@ async function assertOptionalTargetsResolve(body: string, referrer: string, reso
 
 /**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
- * every location searched when the artifact does not resolve from any source or the library, plus the artifact that
+ * every location searched when the artifact does not resolve from any source, plus the artifact that
  * named it when `trail` contains one. A seed's trail is empty, and naming where a seed came from is its caller's job.
  * Every type resolves from any source.
  *
@@ -199,9 +199,8 @@ async function readArtifactEdges(
   const label = `${type} ${slug}`;
   if (type === 'collection') {
     const members = readMembers(content, label);
-    // `'@library'` enumerates the content root from which the collection resolved, so a source collection expands
-    // its own source rather than the built-in library. Because a library collection's `resolved.dir` is
-    // `libraryDir`, this is exact.
+    // `'@library'` enumerates the content root from which the collection resolved, so a collection expands its own
+    // source rather than every declared source.
     return members.kind === 'library' ? await enumerateCatalogSlugs(resolved.dir) : members.edges;
   }
 

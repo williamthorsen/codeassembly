@@ -9,14 +9,11 @@ import { type ContentRootRender, renderContentRoot } from '../render-content-roo
 
 describe(renderContentRoot, () => {
   let root: string;
-  let library: string;
 
   beforeEach(async () => {
     const base = path.join(tmpdir(), `agents-test-render-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     root = path.join(base, 'root');
-    library = path.join(base, 'library');
     await mkdir(root, { recursive: true });
-    await mkdir(library, { recursive: true });
   });
 
   afterEach(async () => {
@@ -30,12 +27,12 @@ describe(renderContentRoot, () => {
     await writeFileAt(root, 'skills/_data/reference.md', '# Reference\n');
     await writeRulebook(root, 'house-style', 'skill');
 
-    const claude = indexByPath(await renderContentRoot(root, 'claude', library));
-    const rovo = indexByPath(await renderContentRoot(root, 'rovo', library));
+    const claude = indexByPath(await renderContentRoot(root, 'claude'));
+    const rovo = indexByPath(await renderContentRoot(root, 'rovo'));
 
     expect(claude.keys().toArray().toSorted()).toEqual([
       'agents/helper.md',
-      'skills/_data/reference.md',
+      'skills/_sources/root/_data/reference.md',
       'skills/alpha/SKILL.md',
       'skills/alpha/notes.txt',
       'skills/consult-house-style/SKILL.md',
@@ -50,12 +47,13 @@ describe(renderContentRoot, () => {
     await writeFileAt(root, 'skills/_data/reference.md', '# Reference\n');
     await writeRulebook(root, 'house-style', 'skill');
 
-    const files = indexByPath(await renderContentRoot(root, 'claude', library));
+    const files = indexByPath(await renderContentRoot(root, 'claude'));
 
     expect(files.get('skills/alpha/SKILL.md')).toContain('<!-- codeassembly-skill:alpha -->');
     expect(files.get('agents/helper.md')).toContain('<!-- codeassembly-subagent:helper -->');
     expect(files.get('skills/consult-house-style/SKILL.md')).toContain('<!-- codeassembly-rulebook:house-style -->');
-    expect(files.get('skills/_data/reference.md')).toMatch(/^<!-- GENERATED FILE/);
+    // `sync` delivers a source's support entries without a provenance marker.
+    expect(files.get('skills/_sources/root/_data/reference.md')).toBe('# Reference\n');
   });
 
   it('strips the supported-harnesses directive and leaves a skill out of a harness that it does not target', async () => {
@@ -65,8 +63,8 @@ describe(renderContentRoot, () => {
       '---\nname: alpha\ndescription: Alpha.\nsupported-harnesses:\n  - rovo\n---\n\n# Alpha\n',
     );
 
-    const claude = indexByPath(await renderContentRoot(root, 'claude', library));
-    const rovo = indexByPath(await renderContentRoot(root, 'rovo', library));
+    const claude = indexByPath(await renderContentRoot(root, 'claude'));
+    const rovo = indexByPath(await renderContentRoot(root, 'rovo'));
 
     expect(claude.has('skills/alpha/SKILL.md')).toBe(false);
     expect(rovo.get('skills/alpha/SKILL.md')).not.toContain('supported-harnesses');
@@ -80,7 +78,7 @@ describe(renderContentRoot, () => {
     );
     await writeRulebook(root, 'house-style', 'ambient', 'Use plain words.');
 
-    const files = indexByPath(await renderContentRoot(root, 'claude', library));
+    const files = indexByPath(await renderContentRoot(root, 'claude'));
     const guidance = files.get('CLAUDE.md') ?? '';
 
     expect(guidance).toContain('Read CLAUDE.md.');
@@ -98,28 +96,37 @@ describe(renderContentRoot, () => {
     );
     await writeRulebook(root, 'house-style', 'hook', 'Use plain words.');
 
-    const bound = indexByPath(await renderContentRoot(root, 'claude', library, new Map([['style', ['house-style']]])));
-    const unbound = indexByPath(await renderContentRoot(root, 'claude', library));
+    const bound = indexByPath(await renderContentRoot(root, 'claude', new Map([['style', ['house-style']]])));
+    const unbound = indexByPath(await renderContentRoot(root, 'claude'));
 
     expect(bound.get('skills/alpha/SKILL.md')).toContain('<!-- codeassembly-guidance-hook:style:start -->');
     expect(bound.get('skills/alpha/SKILL.md')).toContain('Use plain words.');
     expect(unbound.get('skills/alpha/SKILL.md')).not.toContain('guidance-hook');
   });
 
-  it('fills a hook with a bound rulebook from the library behind the root', async () => {
+  it('reports a binding to a rulebook that the root does not contain as a defect', async () => {
     await writeFileAt(
       root,
       'skills/alpha/SKILL.md',
       '---\nname: alpha\ndescription: Alpha.\n---\n\n# Alpha\n\n<!-- guidance-hook: style -->\n',
     );
-    await writeRulebook(library, 'library-style', 'hook', 'Prefer short sentences.');
 
-    const files = indexByPath(
-      await renderContentRoot(root, 'claude', library, new Map([['style', ['library-style']]])),
+    const render = await renderContentRoot(root, 'claude', new Map([['style', ['absent-style']]]));
+
+    expect(render.defects).toEqual([expect.objectContaining({ detail: expect.stringContaining('absent-style') })]);
+  });
+
+  it("anchors a skill's link to a support entry in the root's support namespace", async () => {
+    await writeFileAt(
+      root,
+      'skills/alpha/SKILL.md',
+      '---\nname: alpha\ndescription: Alpha.\n---\n\n# Alpha\n\nSee [the reference](../_data/reference.md).\n',
     );
+    await writeFileAt(root, 'skills/_data/reference.md', '# Reference\n');
 
-    expect(files.get('skills/alpha/SKILL.md')).toContain('Prefer short sentences.');
-    expect(files.has('skills/consult-library-style/SKILL.md')).toBe(false);
+    const files = indexByPath(await renderContentRoot(root, 'claude'));
+
+    expect(files.get('skills/alpha/SKILL.md')).toContain('(~/.claude/skills/_sources/root/_data/reference.md)');
   });
 
   it('records a failing file against its path and renders the rest', async () => {
@@ -130,7 +137,7 @@ describe(renderContentRoot, () => {
     );
     await writeFileAt(root, 'subagents/helper.md', '---\nname: helper\ndescription: Helper.\n---\n\n# Helper\n');
 
-    const render = await renderContentRoot(root, 'claude', library);
+    const render = await renderContentRoot(root, 'claude');
 
     expect(render.failures.map(({ file }) => file)).toEqual([path.join('skills', 'alpha', 'SKILL.md')]);
     expect(indexByPath(render).has('agents/helper.md')).toBe(true);
@@ -143,7 +150,7 @@ describe(renderContentRoot, () => {
       '---\nname: alpha\ndescription: Alpha.\ndependencies:\n  skills:\n    - missing\n---\n\n# Alpha\n',
     );
 
-    const render = await renderContentRoot(root, 'claude', library);
+    const render = await renderContentRoot(root, 'claude');
 
     expect(render.defects).toEqual([expect.objectContaining({ kind: 'dependency' })]);
   });

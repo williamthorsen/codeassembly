@@ -26,9 +26,9 @@ export interface TemplateVariables {
  * Maps a resolved link target to the absolute path at which it deploys. The argument is normalized and fragment-free,
  * so an implementation decides only which tree the target is deployed into, never how the target itself was resolved.
  *
- * Deployment location is not a property of the rewriting file: The same relative target can name a tree that `install`
- * populates in the harness home and one that `sync` populates in a project. The caller that knows which of the two
- * supplies this.
+ * Deployment location is not a property of the rewriting file: The same relative target can name a tree that a
+ * home-domain deploy populates in the harness home and one that `sync` populates in a project. The caller that knows
+ * which of the two supplies this.
  */
 export type ResolveLinkAnchor = (normalizedTarget: string) => string;
 

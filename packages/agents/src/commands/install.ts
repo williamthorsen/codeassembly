@@ -1,4 +1,4 @@
-import { chmod, mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { chmod, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
@@ -6,9 +6,13 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
-import { resolveContentDir } from '../lib/content-resolver.ts';
 import type { ContentRootRef } from '../lib/content-root-manifest.ts';
-import { describeContentRoot, describeMissingSource, resolveDeclaredSources } from '../lib/declared-sources.ts';
+import {
+  describeContentRoot,
+  describeMissingSource,
+  NoContentSourceError,
+  resolveDeclaredSources,
+} from '../lib/declared-sources.ts';
 import { emitReport, printLine } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import {
@@ -16,18 +20,14 @@ import {
   renderGuidanceTemplateFile,
   resolveGuidanceTemplateDir,
 } from '../lib/guidance-template.ts';
-import { HARNESSES, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
+import { HARNESSES, resolveHarnessPaths } from '../lib/harness.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
-import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
-import { listSupportEntries } from '../lib/library-catalog.ts';
+import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
-import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
-import { homeAnchor, type TemplateVariables } from '../lib/path-rewriter.ts';
 import type { ReportLine } from '../lib/report-line.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
-import { type RenderedSkillEntry, renderSupportEntry } from '../lib/skill-transform.ts';
 import { describeHarnessTargeting, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import type {
@@ -57,11 +57,7 @@ interface TemplateRoot {
 /**
  * Executes the install command, installing skills and subagents for the specified harnesses.
  */
-export async function installCommand(
-  options: InstallOptions,
-  baseDir?: string,
-  contentDirOverride?: string,
-): Promise<void> {
+export async function installCommand(options: InstallOptions, baseDir?: string): Promise<void> {
   // Runs first, and before the dry-run gate: A preview must refuse wherever the real run would. The attempt is
   // recorded only past this point, so an installation refused by the guard leaves the home domain's record untouched.
   await assertDesignatedWriter({
@@ -72,9 +68,10 @@ export async function installCommand(
   });
 
   try {
-    await deployHomeDomain(options, baseDir, contentDirOverride);
+    await deployHomeDomain(options, baseDir);
   } catch (error: unknown) {
-    if (!options.dryRun) {
+    // A declaration without a usable source is refused before anything about the run is known, so it is not an attempt.
+    if (!options.dryRun && !(error instanceof NoContentSourceError)) {
       await recordFailedHomeAttempt('install', { summary: describeError(error) }, baseDir);
     }
     throw error;
@@ -82,20 +79,15 @@ export async function installCommand(
 }
 
 /** Deploys the home domain, past the designated-writer guard that `installCommand` applies. */
-async function deployHomeDomain(
-  options: InstallOptions,
-  baseDir: string | undefined,
-  contentDirOverride: string | undefined,
-): Promise<void> {
+async function deployHomeDomain(options: InstallOptions, baseDir: string | undefined): Promise<void> {
   const homeDir = baseDir ?? homedir();
-  const contentDir = contentDirOverride ?? resolveContentDir();
-  // Resolve the home declaration's sources, which refuses an unusable source or a content root whose declared format
-  // this tool cannot honor before anything is written, dry-run included. `roots` is the search order followed by every
-  // pass below that reads undeclared content: each declared source in precedence order, then the built-in library.
+  // Resolve the home declaration's sources, which refuses a missing or unusable source, or a content root whose
+  // declared format this tool cannot honor, before anything is written, dry-run included. `roots` is the search order
+  // followed by every pass below that reads undeclared content: each declared source in precedence order.
   const { missingSources, roots } = await resolveDeclaredSources({
     baseDir: homeDir,
-    contentDir,
     declaration: await resolveDeclaration({ cwd: homeDir, domain: 'home' }),
+    domain: 'home',
   });
   emitReport(missingSources.map(describeMissingSource));
 
@@ -145,25 +137,6 @@ async function deployHomeDomain(
     const entries: Array<ManifestEntry> = [];
 
     const harnessConfig = HARNESSES[harnessId];
-    const templateVariables: TemplateVariables = {
-      guidanceFileName: harnessConfig.guidanceFileName,
-      harnessId: harnessConfig.id,
-      homeDir: harnessConfig.homeDir,
-    };
-
-    const skillsPrefix = resolveSkillsPathPrefix(harnessConfig);
-    const supportEntries = await installSupportDirectories(
-      contentDir,
-      paths.skillsDir,
-      paths.harnessHome,
-      existingByPath,
-      options,
-      skillsPrefix,
-      templateVariables,
-      harnessConfig.skillSigil,
-      harnessConfig.subagentSigil,
-    );
-    entries.push(...supportEntries);
 
     const scriptEntries = await installScripts(
       roots,
@@ -198,15 +171,15 @@ async function deployHomeDomain(
     const guidanceEntries = await installHarnessGuidance(roots, paths, harnessId, existingByPath, options);
     entries.push(...guidanceEntries);
 
-    // Reconcile against the previous manifest: Remove files whose source was deleted. Runs before the dry-run
-    // gate so that `--dry-run` previews removals. User-modified orphans are kept (unless `--force`) and stay tracked.
+    // Reconcile against the previous manifest: Remove files whose source was deleted, and the support entries that an
+    // earlier install deployed to the flat skills slot. Runs before the dry-run gate so that `--dry-run` previews
+    // removals. User-modified orphans are kept (unless `--force`) and stay tracked.
     const pruned = await pruneOrphanedEntries(existingEntries, entries, paths.harnessHome, options);
     entries.push(...pruned.retained);
     emitReport(describePruneResult(pruned, options));
 
     if (options.dryRun) {
       console.info(`  [dry-run] Would install ${entries.length} items:`);
-      console.info(`    ${supportEntries.length} skill support items`);
       console.info(`    ${scriptEntries.length} script items`);
       console.info(`    ${guidanceEntries.length} guidance items`);
       continue;
@@ -234,165 +207,6 @@ async function deployHomeDomain(
     await writeManifest(manifestPath, updatedManifest);
     console.info('\nManifest updated.');
     await recordHomeProvenance('install', baseDir);
-  }
-}
-
-/**
- * Installs skill support directories (e.g. `_data`) into the target skills directory. Skills themselves (any
- * `content/skills/<slug>/` holding a `SKILL.md`) deploy per-declaration via `sync`, not here, so this pass installs
- * only the non-skill support entries; `_partials` (an install-time include target) and dotfiles are excluded.
- *
- * If a previously installed item has been modified by the user, it is skipped unless `--force` is set.
- */
-async function installSupportDirectories(
-  contentDir: string,
-  skillsDestDir: string,
-  harnessHome: string,
-  existingByPath: ReadonlyMap<string, ManifestEntry>,
-  options: InstallOptions,
-  skillsPrefix: string,
-  variables: TemplateVariables,
-  skillSigil: string,
-  subagentSigil: string,
-): Promise<ReadonlyArray<ManifestEntry>> {
-  const skillsSrcDir = path.join(contentDir, 'skills');
-  const entries: Array<ManifestEntry> = [];
-
-  // Because `listSupportEntries` reports an absent directory as empty, the absence is probed separately: Content
-  // that doesn't ship `skills/` has lost the support files that every skill reads at runtime, and a silent success
-  // would hide that.
-  try {
-    await stat(skillsSrcDir);
-  } catch (error: unknown) {
-    if (!isEnoent(error)) {
-      throw error;
-    }
-    printLine({
-      glyph: 'warning',
-      indent: 2,
-      level: 'warn',
-      text: `No skills directory found at ${skillsSrcDir}, skipping skill support installation`,
-    });
-    return [];
-  }
-
-  // Install non-skill support directories (e.g. `_data`, which skills reference at runtime by absolute path). What
-  // counts as one is `listSupportEntries`, shared with `validate` so that the pass that checks these and the pass
-  // that deploys them cannot come to disagree about which entries they are.
-  const supportEntries = await listSupportEntries(skillsSrcDir);
-  for (const entry of supportEntries) {
-    const result = await installSkillEntry(
-      path.join(skillsSrcDir, entry),
-      path.join(skillsDestDir, entry),
-      `skills/${entry}`,
-      `skills/${entry}`,
-      harnessHome,
-      existingByPath,
-      options,
-      skillsPrefix,
-      variables,
-      contentDir,
-      skillSigil,
-      subagentSigil,
-    );
-    if (result !== undefined) {
-      entries.push(result);
-    }
-  }
-
-  return entries;
-}
-
-/**
- * Installs a single skill entry (directory or file) from source to destination.
- * Skills are always copied and rewritten (never symlinked), because they require path transformation at install time.
- */
-async function installSkillEntry(
-  srcPath: string,
-  destPath: string,
-  relativePath: string,
-  sourceRelativeRoot: string,
-  harnessHome: string,
-  existingByPath: ReadonlyMap<string, ManifestEntry>,
-  options: InstallOptions,
-  skillsPrefix: string,
-  variables: TemplateVariables,
-  contentDir: string,
-  skillSigil: string,
-  subagentSigil: string,
-  label = '',
-): Promise<ManifestEntry | undefined> {
-  // Eagerly render the entry before the dry-run gate, so that missing include targets, cycles, out-of-tree references,
-  // dead anchors, and unmapped tool placeholders surface even when the dry run doesn't write any files.
-  // `renderSupportEntry` is the same render that `validate` runs, which is what keeps the two passes agreeing on what
-  // a support entry is.
-  const rendered = await renderSupportEntry(srcPath, path.basename(destPath), contentDir, {
-    anchor: homeAnchor(skillsPrefix),
-    guidanceFileName: variables.guidanceFileName,
-    homeDir: variables.homeDir,
-    harnessId: variables.harnessId,
-    skillSigil,
-    subagentSigil,
-  });
-
-  // A support directory holding only dotfiles or `_partials/` renders to zero entries: nothing to install. Skip it
-  // entirely, without creating a destination, markers, or a manifest entry. The orphan-prune pass clears any
-  // previously installed copy.
-  if (rendered.kind === 'directory' && rendered.entries.length === 0) {
-    console.info(`    [skip] ${relativePath}${label ? ` ${label}` : ''} (no installable entries)`);
-    return undefined;
-  }
-
-  if (options.dryRun) {
-    console.info(`    [copy] ${relativePath}${label ? ` ${label}` : ''}`);
-    return { relativePath, contentHash: 'dry-run', linked: false };
-  }
-
-  const existingEntry = existingByPath.get(relativePath);
-  if (existingEntry && !options.force) {
-    const drift = await detectDrift(existingEntry, harnessHome);
-    if (drift === 'modified') {
-      printLine({ glyph: 'warning', indent: 2, level: 'warn', text: `Skipping modified item: ${relativePath}` });
-      return existingEntry;
-    }
-  }
-
-  if (rendered.kind === 'directory') {
-    // Clean-write directories that CodeAssembly previously installed: Remove the prior copy so that files deleted
-    // from the source skill don't survive in the destination. Gated on prior ownership (a manifest entry exists) to
-    // keep a first-time install from wiping a coincidentally same-named directory that the user already had.
-    if (existingEntry) {
-      await removeItem(destPath);
-    }
-    await writeRenderedSkillDir(destPath, rendered.entries);
-    await injectMarkersInDirectory(destPath, (fileRelPath) => buildSourceUrl(`${sourceRelativeRoot}/${fileRelPath}`));
-  } else if (rendered.kind === 'markdown') {
-    // Single-file `.md` skill entries: Write the expanded content directly, so that what was validated is what
-    // reaches disk.
-    await mkdir(path.dirname(destPath), { recursive: true });
-    await writeFile(destPath, rendered.content, 'utf8');
-    await injectMarkerInFile(destPath, buildSourceUrl(sourceRelativeRoot));
-  } else {
-    // Single-file non-`.md` skill entries: plain copy, no expansion.
-    await copyItem(srcPath, destPath);
-  }
-
-  return {
-    relativePath,
-    contentHash: rendered.kind === 'directory' ? `sha256:dir:${relativePath}` : await computeContentHash(destPath),
-    linked: false,
-  };
-}
-
-/**
- * Writes a rendered skill directory to `destDir`: Markdown entries are written from their transformed content, asset
- * entries are copied verbatim from source. Each entry's parent directory is created as needed.
- */
-async function writeRenderedSkillDir(destDir: string, entries: ReadonlyArray<RenderedSkillEntry>): Promise<void> {
-  for (const entry of entries) {
-    const destPath = path.join(destDir, entry.relPath);
-    await mkdir(path.dirname(destPath), { recursive: true });
-    await (entry.kind === 'markdown' ? writeFile(destPath, entry.content, 'utf8') : copyItem(entry.srcPath, destPath));
   }
 }
 

@@ -5,24 +5,21 @@ import { buildRuleContext, createTempRoot, removeTempRoot, writeFileAt } from '.
 
 describe(findSupportEntryTokenDefects, () => {
   let root: string;
-  let library: string;
 
   beforeEach(async () => {
     root = await createTempRoot('support-entry-tokens');
-    library = await createTempRoot('support-entry-tokens-library');
     await writeSkill('target', '# Target\n');
   });
 
   afterEach(async () => {
     await removeTempRoot(root);
-    await removeTempRoot(library);
   });
 
   describe('token resolution', () => {
     it('reports a required token naming an artifact that resolves nowhere, against the entry', async () => {
       await writeFileAt(root, 'skills/_data/entry.md', '# Entry\n\nDelegate to {subagent:no-such-agent}.\n');
 
-      const defects = await findSupportEntryTokenDefects(buildRuleContext(root, library));
+      const defects = await findSupportEntryTokenDefects(buildRuleContext(root));
 
       expect(defects).toHaveLength(1);
       expect(defects[0]).toMatchObject({ file: 'skills/_data/entry.md', kind: 'dependency' });
@@ -32,16 +29,16 @@ describe(findSupportEntryTokenDefects, () => {
     it('reports an optional token naming an artifact that resolves nowhere', async () => {
       await writeFileAt(root, 'skills/notes.md', '# Notes\n\nOptionally run {skill?:no-such-skill}.\n');
 
-      const defects = await findSupportEntryTokenDefects(buildRuleContext(root, library));
+      const defects = await findSupportEntryTokenDefects(buildRuleContext(root));
 
       expect(defects.map((defect) => defect.detail)).toEqual([expect.stringContaining('{skill?:no-such-skill}')]);
     });
 
-    it('passes a token whose target only the library supplies', async () => {
-      await writeFileAt(library, 'subagents/lib-agent.md', '---\nname: lib-agent\ndescription: Fixture.\n---\n');
+    it('passes a token whose target the root supplies', async () => {
+      await writeFileAt(root, 'subagents/lib-agent.md', '---\nname: lib-agent\ndescription: Fixture.\n---\n');
       await writeFileAt(root, 'skills/_data/entry.md', '# Entry\n\nDelegate to {subagent:lib-agent}.\n');
 
-      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
+      expect(await findSupportEntryTokenDefects(buildRuleContext(root))).toEqual([]);
     });
   });
 
@@ -57,7 +54,7 @@ describe(findSupportEntryTokenDefects, () => {
     it('reports a host that links the section carrying a required token and declares none of it', async () => {
       await writeSkill('host', '# Host\n\nFollow [the section](../_data/entry.md#the-section).\n');
 
-      const defects = await findSupportEntryTokenDefects(buildRuleContext(root, library));
+      const defects = await findSupportEntryTokenDefects(buildRuleContext(root));
 
       expect(defects).toHaveLength(1);
       expect(defects[0]).toMatchObject({ file: 'skills/host/SKILL.md', kind: 'dependency' });
@@ -67,7 +64,7 @@ describe(findSupportEntryTokenDefects, () => {
     it('reports a host that links an ancestor of the section carrying the token', async () => {
       await writeSkill('host', '# Host\n\nFollow [the entry](../_data/entry.md#entry).\n');
 
-      const defects = await findSupportEntryTokenDefects(buildRuleContext(root, library));
+      const defects = await findSupportEntryTokenDefects(buildRuleContext(root));
 
       expect(defects.map((defect) => defect.file)).toEqual(['skills/host/SKILL.md']);
     });
@@ -75,13 +72,13 @@ describe(findSupportEntryTokenDefects, () => {
     it('accepts a host that declares the target', async () => {
       await writeSkill('host', '# Host\n\nFollow [the section](../_data/entry.md#the-section).\n', ['target']);
 
-      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
+      expect(await findSupportEntryTokenDefects(buildRuleContext(root))).toEqual([]);
     });
 
     it('does not carry a requirement for a bare link to the file', async () => {
       await writeSkill('host', '# Host\n\nRead [the entry](../_data/entry.md).\n');
 
-      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
+      expect(await findSupportEntryTokenDefects(buildRuleContext(root))).toEqual([]);
     });
 
     it('does not carry a requirement for an optional token', async () => {
@@ -92,40 +89,7 @@ describe(findSupportEntryTokenDefects, () => {
       );
       await writeSkill('host', '# Host\n\nFollow [the section](../_data/entry.md#the-section).\n');
 
-      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
-    });
-  });
-
-  describe('host declarations for a library support entry', () => {
-    beforeEach(async () => {
-      await writeFileAt(
-        library,
-        'skills/_data/shared.md',
-        '# Shared\n\n## The section\n\nDo the work through {skill:target}.\n',
-      );
-    });
-
-    it('reports a root host that links the library section carrying a required token and declares none of it', async () => {
-      await writeSkill('host', '# Host\n\nFollow [the section](../_data/shared.md#the-section).\n');
-
-      const defects = await findSupportEntryTokenDefects(buildRuleContext(root, library));
-
-      expect(defects).toHaveLength(1);
-      expect(defects[0]).toMatchObject({ file: 'skills/host/SKILL.md', kind: 'dependency' });
-      expect(defects[0]?.detail).toContain('skill:target');
-    });
-
-    it('accepts a root host that declares the target', async () => {
-      await writeSkill('host', '# Host\n\nFollow [the section](../_data/shared.md#the-section).\n', ['target']);
-
-      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
-    });
-
-    it('reads the root entry rather than the library one when both exist at the path', async () => {
-      await writeFileAt(root, 'skills/_data/shared.md', '# Shared\n\n## The section\n\nDo the work by hand.\n');
-      await writeSkill('host', '# Host\n\nFollow [the section](../_data/shared.md#the-section).\n');
-
-      expect(await findSupportEntryTokenDefects(buildRuleContext(root, library))).toEqual([]);
+      expect(await findSupportEntryTokenDefects(buildRuleContext(root))).toEqual([]);
     });
   });
 

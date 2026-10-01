@@ -31,11 +31,11 @@ rulebooks:
 # subagents:
 #   use: []
 
-# sources declares extra content directories to resolve artifacts from, each a { name, path } pair searched
-# before the built-in library. A relative path resolves against this .agents/ directory (~ and absolute paths are
-# also allowed); a later-declared source shadows an earlier one, and any source shadows the library. Commit only
-# repo-relative paths here; keep machine-specific paths in codeassembly.local.yaml. Sources resolve every artifact
-# type: rulebooks, skills, subagents, and collections.
+# sources declares the content directories from which artifacts resolve, each a { name, path } pair. sync resolves
+# from these and from the packages declared under packages: alone, and stops when neither declares a usable source.
+# A relative path resolves against this .agents/ directory (~ and absolute paths are also allowed); a later-declared
+# source shadows an earlier one. Commit only repo-relative paths here; keep machine-specific paths in
+# codeassembly.local.yaml. Sources resolve every artifact type: rulebooks, skills, subagents, and collections.
 # sources:
 #   - name: org-guidance
 #     path: ../shared-guidance
@@ -56,9 +56,18 @@ const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt
 # harnesses:
 #   use: [claude]
 #
+# sources declares the content directories from which artifacts resolve, each a { name, path } pair. install and
+# sync --global resolve from these alone, and stop until one is declared. Clone the CodeAssembly repository, then
+# uncomment the entry below and point its path at the clone's packages/agents/content (~ and absolute paths are
+# allowed; a relative path resolves against this .agents/ directory). A path that differs between machines belongs in
+# codeassembly.local.yaml instead. A later-declared source shadows an earlier one.
+# sources:
+#   - name: codeassembly
+#     path: ~/repos/codeassembly/packages/agents/content
+#
 # Each collection makes a claim about its members: \`recommended\` is vetted and generally applicable, and \`triage\`
-# holds what nobody has examined yet. Add any other collection shipped by the library or a source, or declare \`all\`
-# in their place to take the whole catalog, including the artifacts that every collection deliberately omits.
+# holds what nobody has examined yet. Add any other collection shipped by a declared source, or declare \`all\` in
+# their place to take the whole catalog, including the artifacts that every collection deliberately omits.
 collections:
   use:
     - recommended
@@ -77,8 +86,9 @@ export async function initCommand(options: InstallOptions, projectRoot: string =
 }
 
 /**
- * Scaffolds the user-global `~/.agents/codeassembly.yaml` seeded with the `recommended` and `triage` collections, so
- * `sync --global` deploys them into the home harness dirs.
+ * Scaffolds the user-global `~/.agents/codeassembly.yaml` seeded with the `recommended` and `triage` collections and a
+ * commented `sources:` entry, which the user uncomments and points at a clone of the content before `install` and
+ * `sync --global` deploy anything.
  */
 export async function initGlobalCommand(options: InstallOptions, homeDir: string = homedir()): Promise<void> {
   await scaffoldDeclaration(path.join(homeDir, '.agents', 'codeassembly.yaml'), GLOBAL_DECLARATION_TEMPLATE, options);

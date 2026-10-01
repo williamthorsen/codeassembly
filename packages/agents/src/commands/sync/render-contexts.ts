@@ -24,15 +24,18 @@ export function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedR
  * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` names the skill
  * directories that the rulebook-delivery pass writes, which are delivered to every targeted harness;
  * `resolvedSkills` is filtered per harness instead, because a declared skill may target only some.
+ * `supportEntriesBySource` maps each declared source's name to the support entries that it ships.
  */
 export function createAnchorContextResolver(
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
   rulebookSkillDirs: ReadonlyArray<string>,
   domainBase: string,
+  supportEntriesBySource: ReadonlyMap<string, ReadonlySet<string>>,
 ): ResolveAnchorContext {
   return (harnessId, supportNamespace) => {
     const config = HARNESSES[harnessId];
     return {
+      supportEntries: supportEntriesBySource.get(supportNamespace) ?? new Set(),
       supportNamespace,
       deployedSkillDirs: new Set([
         ...resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
@@ -101,11 +104,11 @@ export interface HarnessSubagentTarget {
 }
 
 /**
- * Resolves the anchor inputs for one harness and one owning source (`undefined` = the built-in library). The owner is
- * a per-artifact input rather than a per-harness one, because only it distinguishes a link into a source's own support
- * tree from the same target written by a library artifact.
+ * Resolves the anchor inputs for one harness and one owning source. The owner is a per-artifact input rather than a
+ * per-harness one, because only it distinguishes a link into one source's support tree from the same target written
+ * by an artifact of another source.
  */
-export type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string | undefined) => LinkAnchorContext;
+export type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: string) => LinkAnchorContext;
 
 /**
  * Reads the frontmatter overlay that one harness applies to subagents resolved from `contentRoot`. Source-scoped

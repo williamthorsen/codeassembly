@@ -11,6 +11,7 @@ import { readRecordLines, selectLatestSnapshot } from '../../../deployed-sizes/r
 import { resolveRecordPath } from '../../../deployed-sizes/resolve-record-path.ts';
 import { resolveHarnessPaths } from '../../../lib/harness.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
+import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import type { DeployedPathSources, ResolveSourceRoot } from '../collect-deployed-paths.ts';
 import { recordDeployedSizes } from '../record-deployed-sizes.ts';
 import { syncCommand } from '../sync.ts';
@@ -18,6 +19,9 @@ import type { SyncDomain } from '../sync-domain.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
 const execFileAsync = promisify(execFile);
+
+/** The source from which every planned artifact in these tests resolves. */
+const SOURCE_NAME = 'codeassembly';
 
 describe(recordDeployedSizes, () => {
   let scratch: string;
@@ -73,7 +77,7 @@ describe(recordDeployedSizes, () => {
       plan: {
         ...planWithSkill('plan', skillsDir),
         resolvedSkills: [
-          { slug: 'plan', srcDir: path.join(contentRoot, 'skills', 'plan'), contentRoot, source: undefined },
+          { slug: 'plan', srcDir: path.join(contentRoot, 'skills', 'plan'), contentRoot, source: SOURCE_NAME },
         ],
       },
       domain: homeDomain(homeDir),
@@ -84,7 +88,7 @@ describe(recordDeployedSizes, () => {
 
     const snapshot = selectLatestSnapshot(await readRecordLines(resolveRecordPath({ home: homeDir, domain: 'home' })));
     expect(snapshot?.expansions).toEqual({
-      'partial:library/_partials/shared.md': { bytes: Buffer.byteLength(partial, 'utf8'), reach: 1 },
+      [`partial:${SOURCE_NAME}/_partials/shared.md`]: { bytes: Buffer.byteLength(partial, 'utf8'), reach: 1 },
     });
   });
 
@@ -294,11 +298,7 @@ describe('sync --dry-run', () => {
       '---\nslug: style\ndelivery: ambient\n---\n\n# Style\n',
       'utf8',
     );
-    await writeFile(
-      path.join(projectRoot, '.agents', 'codeassembly.yaml'),
-      'rulebooks:\n  use:\n    - style\n',
-      'utf8',
-    );
+    await declareFixtureSource(projectRoot, contentDir, 'rulebooks:\n  use:\n    - style\n');
   });
 
   afterEach(async () => {
@@ -306,26 +306,26 @@ describe('sync --dry-run', () => {
   });
 
   it('measures nothing and appends nothing', async () => {
-    await syncCommand(options({ dryRun: true }), projectRoot, contentDir, homeDir);
+    await syncCommand(options({ dryRun: true }), projectRoot, homeDir);
 
     expect(existsSync(recordRoot(homeDir))).toBe(false);
   });
 
   it('does not report a size line', async () => {
-    const outcome = await syncCommand(options({ dryRun: true }), projectRoot, contentDir, homeDir);
+    const outcome = await syncCommand(options({ dryRun: true }), projectRoot, homeDir);
 
     expect(renderReportText(outcome, { dryRun: true })).not.toContain('Deployed sizes:');
   });
 
   it('leaves the report and the exit path of a live sync unchanged', async () => {
-    const outcome = await syncCommand(options(), projectRoot, contentDir, homeDir);
+    const outcome = await syncCommand(options(), projectRoot, homeDir);
 
     expect(outcome.kind).toBe('reconciled');
     expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(true);
   });
 
   it('closes a live sync with the size block and the command that ranks every document', async () => {
-    const outcome = await syncCommand(options(), projectRoot, contentDir, homeDir);
+    const outcome = await syncCommand(options(), projectRoot, homeDir);
     const report = renderReportText(outcome);
 
     expect(report).toContain('Deployed sizes:');
@@ -427,14 +427,14 @@ function planWithSkill(slug: string, skillsDir: string): DeployedPathSources {
     harnessSkillTargets: [{ harnessId: 'claude', skillsDir }],
     harnessSubagentTargets: [],
     resolved: [],
-    resolvedSkills: [{ slug, srcDir: path.join(skillsDir, slug), contentRoot: skillsDir, source: undefined }],
+    resolvedSkills: [{ slug, srcDir: path.join(skillsDir, slug), contentRoot: skillsDir, source: SOURCE_NAME }],
     resolvedSubagents: [],
     sourceSupportPlans: [],
     targets: { harnessIds: ['claude'] },
   };
 }
 
-/** Every artifact resolves from the library, whose directory these tests never assert against. */
+/** Maps every source to no directory, since these tests never assert against a source root. */
 const resolveSourceRoot: ResolveSourceRoot = () => undefined;
 
 /** The repo domain, rooted at a project directory. */

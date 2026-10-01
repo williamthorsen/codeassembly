@@ -61,7 +61,7 @@ export interface ContentRootManifest {
 /** A content root checked by the format gate: its directory, and the source name to attribute a failure to. */
 export interface ContentRootRef {
   readonly dir: string;
-  readonly name?: string | undefined;
+  readonly name: string;
 }
 
 /**
@@ -154,10 +154,9 @@ export async function readContentRootManifest(dir: string): Promise<ContentRootM
 
 // region | Helpers
 
-/** Renders one root's problem as `"name" (dir): detail`, dropping the name that a library root has none of. */
+/** Renders one root's problem as `"name" (dir): detail`. */
 function describeProblem(root: ContentRootRef, problem: ContentFormatProblem): string {
-  const where = root.name === undefined ? root.dir : `"${root.name}" (${root.dir})`;
-  return `${where}: ${problem.detail}`;
+  return `"${root.name}" (${root.dir}): ${problem.detail}`;
 }
 
 /** Joins one kind's problems into the clause in which its error message reports them. */

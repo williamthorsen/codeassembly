@@ -30,14 +30,10 @@ export interface RulebookRenderContext extends TemplateVariables {
 }
 
 /**
- * Builds one harness's rulebook render context for a rulebook owned by `supportNamespace` (`undefined` = the built-in
- * library). Threaded rather than rebuilt per call site so that every render of a rulebook body for one harness uses the
- * same anchor.
+ * Builds one harness's rulebook render context for a rulebook owned by `supportNamespace`. Threaded rather than
+ * rebuilt per call site so that every render of a rulebook body for one harness uses the same anchor.
  */
-export type ResolveRulebookContext = (
-  harnessId: HarnessId,
-  supportNamespace: string | undefined,
-) => RulebookRenderContext;
+export type ResolveRulebookContext = (harnessId: HarnessId, supportNamespace: string) => RulebookRenderContext;
 
 /**
  * Content-root-relative directory in which a rulebook source lives. Anchoring the rewrite here lets a rulebook
@@ -87,9 +83,9 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
  * escaping the content root, or one rooted outside `LINKABLE_ROOTS`. Every offending target is reported together, so
  * that an author fixing a rulebook sees the whole list rather than one target per run.
  *
- * Existence is not checked here. A target resolves against the deployed tree, which unions library
- * content with each declared source's content. Testing it against the one content root that this rulebook came from
- * would reject a project or machine-local rulebook's link to library content.
+ * Existence is not checked here. A target resolves against the deployed tree, which unions the content of every
+ * declared source. Testing it against the one content root that this rulebook came from would reject a project or
+ * machine-local rulebook's link to another source's content.
  */
 function assertLinkTargetsAreDeliverable(body: string, slug: string): void {
   const rejections: Array<string> = [];

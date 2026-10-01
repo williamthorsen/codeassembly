@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-/** The kinds of artifact that the library holds. */
+/** The kinds of artifact that a content source holds. */
 export type ArtifactType = 'rulebook' | 'skill' | 'subagent' | 'collection';
 
 /** Per-type metadata: its own `type`, the plural `key` used as a YAML/declaration key, and its library `contentPath`. */

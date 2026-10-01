@@ -174,7 +174,7 @@ function deployed(key: string, authoredRelPath: string): DeployedPath {
     authored: {
       file: path.join(CONTENT_ROOT, ...authoredRelPath.split('/')),
       contentRoot: CONTENT_ROOT,
-      sourceName: undefined,
+      sourceName: 'codeassembly',
     },
   };
 }

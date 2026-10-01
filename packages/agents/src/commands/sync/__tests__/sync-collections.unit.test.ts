@@ -6,6 +6,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { InstallOptions } from '../../../lib/types.ts';
+import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 
 describe('syncCommand with a declared collection', () => {
@@ -36,9 +37,9 @@ describe('syncCommand with a declared collection', () => {
     await writeLibrarySkill(contentDir, 'people-report');
     await writeLibrarySubagent(contentDir, 'canary');
     await writeCollection(contentDir, 'recommended', { skills: ['people-report'], subagents: ['canary'] });
-    await declareCollections(projectRoot, 'recommended');
+    await declareCollections(projectRoot, contentDir, 'recommended');
 
-    await syncCommand(makeOptions(), projectRoot, contentDir, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir);
 
     const skill = await readFile(path.join(projectRoot, '.claude', 'skills', 'people-report', 'SKILL.md'), 'utf8');
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
@@ -48,9 +49,9 @@ describe('syncCommand with a declared collection', () => {
 
   it('throws when the collection references a missing artifact, writing nothing', async () => {
     await writeCollection(contentDir, 'recommended', { skills: ['ghost'] });
-    await declareCollections(projectRoot, 'recommended');
+    await declareCollections(projectRoot, contentDir, 'recommended');
 
-    await expect(syncCommand(makeOptions(), projectRoot, contentDir, homeDir)).rejects.toThrow(/ghost.*not found/);
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/ghost.*not found/);
     expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
   });
 });
@@ -60,10 +61,14 @@ function makeOptions(): InstallOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false };
 }
 
-/** Declares the given collection slugs in the project-scope codeassembly.yaml. */
-async function declareCollections(projectRoot: string, ...slugs: ReadonlyArray<string>): Promise<void> {
+/** Declares the given collection slugs in the project-scope codeassembly.yaml, with `contentDir` as its source. */
+async function declareCollections(
+  projectRoot: string,
+  contentDir: string,
+  ...slugs: ReadonlyArray<string>
+): Promise<void> {
   const useBlock = `  use:\n${slugs.map((slug) => `    - ${slug}`).join('\n')}\n`;
-  await writeFile(path.join(projectRoot, '.agents', 'codeassembly.yaml'), `collections:\n${useBlock}`, 'utf8');
+  await declareFixtureSource(projectRoot, contentDir, `collections:\n${useBlock}`);
 }
 
 /** Writes a members-based collection `<slug>.md` into the temp content library. */

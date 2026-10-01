@@ -5,7 +5,6 @@ import { parse as parseYaml } from 'yaml';
 
 import { artifactFrontmatterPath, type ArtifactType as InternalArtifactType } from './lib/artifact-types.ts';
 import type { ContentDefectKind as InternalContentDefectKind } from './lib/content-defects.ts';
-import { resolveContentDir } from './lib/content-resolver.ts';
 import { createSourceResolver } from './lib/content-sources.ts';
 import { validateContentRoot as validateRoot } from './lib/content-validation.ts';
 import { resolveClosureWithCollections } from './lib/dependency-resolver.ts';
@@ -52,7 +51,7 @@ export interface RenderOptions {
   readonly harness: HarnessId;
   /**
    * Maps each guidance hook to the rulebook slugs bound to it, as a declaration's `guidance-hooks:` does. A bound
-   * rulebook may come from the root or from the built-in library. Without bindings, every hook is stripped.
+   * rulebook must be one that the root contains. Without bindings, every hook is stripped.
    */
   readonly guidanceHooks?: Readonly<Record<string, ReadonlyArray<string>>>;
 }
@@ -88,14 +87,14 @@ export async function readArtifact(root: string, type: ArtifactType, slug: strin
 /**
  * Renders everything that `root` ships for one harness, as a consumer declaring all of it receives it: skills with
  * their support files, rulebook-delivered skills, subagents, `skills/` support entries, and the harness guidance file
- * with the root's ambient rulebooks in its ambient region, deployment markers included. Dependency edges into the
- * built-in library resolve, but only the root's own artifacts are rendered.
+ * with the root's ambient rulebooks in its ambient region, deployment markers included. The root resolves alone, so a
+ * dependency edge to an artifact that it does not contain fails.
  *
  * Throws one error naming every file that failed to resolve or render.
  */
 export async function renderContentRoot(root: string, options: RenderOptions): Promise<RenderedTree> {
   const bindings = options.guidanceHooks === undefined ? undefined : new Map(Object.entries(options.guidanceHooks));
-  const { defects, failures, files } = await renderRoot(root, options.harness, resolveContentDir(), bindings);
+  const { defects, failures, files } = await renderRoot(root, options.harness, bindings);
 
   const problems = [
     ...defects.map(({ detail, file }) => `${file}: ${detail}`),
@@ -116,13 +115,13 @@ export async function renderContentRoot(root: string, options: RenderOptions): P
 }
 
 /**
- * Resolves the dependency closure of `seeds` against `root` with the built-in library behind it, following
- * `dependencies:`, a collection's `members:`, a subagent's `skills:`, and the invocation tokens in each body. The
- * closure includes the library artifacts that an edge reaches, and the collections traversed on the way, seeds
- * included. Throws on an edge that resolves in neither, or on a cycle.
+ * Resolves the dependency closure of `seeds` against `root` alone, following `dependencies:`, a collection's
+ * `members:`, a subagent's `skills:`, and the invocation tokens in each body. The closure includes the collections
+ * traversed on the way, seeds included. Throws on an edge to an artifact that the root does not contain, or on a
+ * cycle.
  */
 export async function resolveClosure(root: string, seeds: Partial<Catalog>): Promise<Catalog> {
-  const resolver = createSourceResolver([{ name: path.basename(root), dir: root }], resolveContentDir());
+  const resolver = createSourceResolver([{ name: path.basename(root), dir: root }]);
   const closure = await resolveClosureWithCollections(seeds, resolver);
   return {
     collection: closure.collections,
@@ -134,7 +133,7 @@ export async function resolveClosure(root: string, seeds: Partial<Catalog>): Pro
 
 /**
  * Validates `root` for each of `harnesses`, returning every defect that `codeassembly validate` reports, or an empty
- * list when there are none. The root resolves with the built-in library behind it.
+ * list when there are none. The root resolves alone.
  */
 export async function validateContentRoot(
   root: string,

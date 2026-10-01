@@ -1,3 +1,6 @@
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+
 import { type ArtifactType, HARNESS_IDS, type HarnessId, readArtifact } from 'codeassembly/api';
 
 import { CONTENT_ROOT } from './content-root.ts';
@@ -49,13 +52,20 @@ function isHarnessId(value: string): value is HarnessId {
   return HARNESS_ID_SET.has(value);
 }
 
-/** Maps a non-artifact content path to the harness whose render contains it and its path in that render. */
+/**
+ * Maps a non-artifact content path to the harness whose render contains it and its path in that render. A support
+ * entry, anything under `skills/` outside a skill directory, renders into the content root's support namespace.
+ */
 function locateDeployedFile(relativePath: string): [HarnessId, string] {
   const match = /^guidance\/_harnesses\/([^/]+)\/(.+)$/.exec(relativePath);
   const harness = match?.[1];
   const fileName = match?.[2];
   if (harness !== undefined && fileName !== undefined && isHarnessId(harness)) {
     return [harness, fileName];
+  }
+  const entry = /^skills\/([^/]+)/.exec(relativePath)?.[1];
+  if (entry !== undefined && !existsSync(path.join(CONTENT_ROOT, 'skills', entry, 'SKILL.md'))) {
+    return ['claude', `skills/_sources/${path.basename(CONTENT_ROOT)}/${relativePath.slice('skills/'.length)}`];
   }
   return ['claude', relativePath];
 }

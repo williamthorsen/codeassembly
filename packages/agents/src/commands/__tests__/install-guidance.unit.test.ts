@@ -1,5 +1,5 @@
 import { existsSync, lstatSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -13,6 +13,7 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 import { uninstallCommand } from '../uninstall.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -26,6 +27,7 @@ describe('guidance installation', () => {
     contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
     await buildContentTree(contentDir);
+    await declareFixtureSource(tempDir, contentDir);
   });
 
   afterEach(async () => {
@@ -86,12 +88,12 @@ describe('guidance installation', () => {
   }
 
   describe('retired shared guidance', () => {
-    it('deploys nothing to ~/.agents/', async () => {
+    it('deploys nothing to ~/.agents/ beside the declaration', async () => {
       await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
-      expect(existsSync(path.join(tempDir, '.agents'))).toBe(false);
+      expect(await readdir(path.join(tempDir, '.agents'))).toEqual(['codeassembly.yaml']);
       expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
     });
 
@@ -99,7 +101,7 @@ describe('guidance installation', () => {
       await setupClaudeHome();
       const retiredPath = await seedRetiredSharedGuidance();
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       expect(existsSync(retiredPath)).toBe(false);
       expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
@@ -108,7 +110,7 @@ describe('guidance installation', () => {
     it("removes a tracked copy when the harness home directories don't exist", async () => {
       const retiredPath = await seedRetiredSharedGuidance();
 
-      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'all' }), tempDir);
 
       expect(existsSync(retiredPath)).toBe(false);
       expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
@@ -118,7 +120,7 @@ describe('guidance installation', () => {
       await setupClaudeHome();
       const retiredPath = await seedRetiredSharedGuidance({ linked: true });
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       expect(existsSync(retiredPath)).toBe(false);
     });
@@ -128,7 +130,7 @@ describe('guidance installation', () => {
       const handWritten = '# Retired\n\nMy own notes.\n';
       const retiredPath = await seedRetiredSharedGuidance({ contentOnDisk: handWritten });
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       expect(await readFile(retiredPath, 'utf8')).toBe(handWritten);
       expect((await readManifest(getManifestPath(tempDir))).shared).toBeUndefined();
@@ -140,7 +142,7 @@ describe('guidance installation', () => {
       await mkdir(path.dirname(foreignPath), { recursive: true });
       await writeFile(foreignPath, '# Not ours\n', 'utf8');
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       expect(await readFile(foreignPath, 'utf8')).toBe('# Not ours\n');
     });
@@ -150,7 +152,7 @@ describe('guidance installation', () => {
       const retiredPath = await seedRetiredSharedGuidance();
 
       using silent = silenceConsole(['info']);
-      await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+      await installCommand(makeOptions({ dryRun: true }), tempDir);
 
       const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
       expect(output).toContain('Would remove stale item: AGENTS.md');
@@ -216,7 +218,7 @@ describe('guidance installation', () => {
         await mkdir(path.join(tempDir, HARNESSES[harnessId].homeDir), { recursive: true });
       }
 
-      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'all' }), tempDir);
 
       for (const harnessId of ALL_HARNESS_IDS) {
         const { homeDir, guidanceFileName } = HARNESSES[harnessId];
@@ -228,7 +230,7 @@ describe('guidance installation', () => {
     it('installs CLAUDE.md to ~/.claude/ for claude harness with includes expanded', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       expect(existsSync(claudeMd)).toBe(true);
@@ -240,7 +242,7 @@ describe('guidance installation', () => {
     it('installs AGENTS.md and standalone guidance to the rovo home', async () => {
       const rovoHome = await setupRovoHome();
 
-      await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
 
       const rovoAgentsMd = path.join(rovoHome, 'AGENTS.md');
       expect(existsSync(rovoAgentsMd)).toBe(true);
@@ -257,7 +259,7 @@ describe('guidance installation', () => {
     it('inlines shared and harness-specific content into rovo AGENTS.md in source order', async () => {
       const rovoHome = await setupRovoHome();
 
-      await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
 
       const content = await readFile(path.join(rovoHome, 'AGENTS.md'), 'utf8');
       const sharedIndex = content.indexOf('# Fixture shared guidance');
@@ -270,7 +272,7 @@ describe('guidance installation', () => {
       const claudeHome = await setupClaudeHome();
       const rovoHome = await setupRovoHome();
 
-      await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'all' }), tempDir);
 
       for (const guidancePath of [path.join(claudeHome, 'CLAUDE.md'), path.join(rovoHome, 'AGENTS.md')]) {
         const content = await readFile(guidancePath, 'utf8');
@@ -282,7 +284,7 @@ describe('guidance installation', () => {
     it('tracks harness guidance in harness manifest entries', async () => {
       await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
       const manifest = await readManifest(getManifestPath(tempDir));
       const entry = manifest.harnesses.claude?.entries.find((e) => e.relativePath === 'CLAUDE.md');
@@ -292,7 +294,7 @@ describe('guidance installation', () => {
     it('copies harness guidance (never symlinks) even in link mode', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude', link: true }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'claude', link: true }), tempDir);
 
       // Harness guidance must be copied so that install-time path rewriting takes effect; a symlink would expose
       // unrewritten source content to agents.
@@ -323,7 +325,7 @@ describe('guidance installation', () => {
 
     it('splices sync-written region content into a re-rendered guidance file', async () => {
       const claudeHome = await setupClaudeHome();
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       await fillAmbientRegion(claudeMd);
 
@@ -341,7 +343,7 @@ describe('guidance installation', () => {
           },
         },
       });
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       const content = await readFile(claudeMd, 'utf8');
       expect(content).toContain('Fixture claude preamble v2.');
@@ -353,7 +355,7 @@ describe('guidance installation', () => {
     // be prepended a second time on re-injection.
     it('carries a note in the region body through a re-render exactly once', async () => {
       const claudeHome = await setupClaudeHome();
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       await fillAmbientRegion(claudeMd);
 
@@ -370,7 +372,7 @@ describe('guidance installation', () => {
           },
         },
       });
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       const content = await readFile(claudeMd, 'utf8');
       const noteCount = content.split(AMBIENT_NOTE).length - 1;
@@ -380,7 +382,7 @@ describe('guidance installation', () => {
 
     it('does not report sync-written region content as drift', async () => {
       const claudeHome = await setupClaudeHome();
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       await fillAmbientRegion(claudeMd);
 
@@ -393,19 +395,19 @@ describe('guidance installation', () => {
 
     it('still reports a hand edit outside the region as drift', async () => {
       const claudeHome = await setupClaudeHome();
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       const modified = (await readFile(claudeMd, 'utf8')) + '\n<!-- user modification -->\n';
       await writeFile(claudeMd, modified, 'utf8');
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       expect(await readFile(claudeMd, 'utf8')).toBe(modified);
     });
 
     it('hashes a guidance file independently of its region content', async () => {
       const claudeHome = await setupClaudeHome();
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
 
       const emptyRegionHash = await computeContentHash(claudeMd);
@@ -419,7 +421,7 @@ describe('guidance installation', () => {
     it('removes harness-specific guidance files', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(true);
 
       await uninstallCommand({ harness: 'claude', force: false }, tempDir);
@@ -432,7 +434,7 @@ describe('guidance installation', () => {
     it('reports harness guidance state', async () => {
       await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       using silent = silenceConsole(['info']);
       await statusCommand({ harness: 'claude' }, tempDir);
@@ -467,12 +469,14 @@ describe('guidance installation', () => {
     it('propagates a missing-target error from a harness source even in dry-run mode', async () => {
       const fakeContentDir = path.join(tempDir, 'fake-content');
       await buildFakeContentTree(fakeContentDir, { brokenClaudeBody: '<!-- include: ./does-not-exist.md / -->\n' });
+      await declareFixtureSource(tempDir, fakeContentDir);
 
       const claudeHome = await setupClaudeHome();
 
-      await expect(
-        installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, fakeContentDir),
-      ).rejects.toMatchObject({ name: 'DirectiveExpansionError', reason: 'not-found' });
+      await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir)).rejects.toMatchObject({
+        name: 'DirectiveExpansionError',
+        reason: 'not-found',
+      });
 
       // Dry-run mode shouldn't write any harness guidance file, regardless of the failure.
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
@@ -481,10 +485,11 @@ describe('guidance installation', () => {
     it('propagates an out-of-tree error during a real install', async () => {
       const fakeContentDir = path.join(tempDir, 'fake-content');
       await buildFakeContentTree(fakeContentDir, { brokenClaudeBody: '<!-- include: ../../../../escape.md / -->\n' });
+      await declareFixtureSource(tempDir, fakeContentDir);
 
       await setupClaudeHome();
 
-      await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeContentDir)).rejects.toMatchObject({
+      await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir)).rejects.toMatchObject({
         name: 'DirectiveExpansionError',
         reason: 'out-of-tree',
       });
@@ -497,11 +502,12 @@ describe('guidance installation', () => {
     it("fails a dry run on a harness guidance file whose anchor doesn't name any heading, writing nothing", async () => {
       const badContentDir = path.join(tempDir, 'bad-content');
       await buildContentTree(badContentDir, { harnessGuidance: { claude: { 'CLAUDE.md': DEAD_ANCHOR_BODY } } });
+      await declareFixtureSource(tempDir, badContentDir);
       const claudeHome = await setupClaudeHome();
 
-      await expect(
-        installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, badContentDir),
-      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md contains 1 unresolvable anchor link target/);
+      await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir)).rejects.toThrow(
+        /guidance\/_harnesses\/claude\/CLAUDE\.md contains 1 unresolvable anchor link target/,
+      );
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
 
@@ -510,11 +516,12 @@ describe('guidance installation', () => {
     it('fails a dry run on shared guidance inlined into a harness file, writing nothing', async () => {
       const badContentDir = path.join(tempDir, 'bad-content');
       await buildContentTree(badContentDir, { sharedGuidance: { 'AGENTS.md': DEAD_ANCHOR_BODY } });
+      await declareFixtureSource(tempDir, badContentDir);
       const claudeHome = await setupClaudeHome();
 
-      await expect(
-        installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, badContentDir),
-      ).rejects.toThrow(/guidance\/_harnesses\/claude\/CLAUDE\.md contains 1 unresolvable anchor link target/);
+      await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir)).rejects.toThrow(
+        /guidance\/_harnesses\/claude\/CLAUDE\.md contains 1 unresolvable anchor link target/,
+      );
       expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
     });
   });

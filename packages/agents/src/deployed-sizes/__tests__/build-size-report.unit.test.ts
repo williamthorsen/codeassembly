@@ -15,8 +15,8 @@ const VENDORED_SOURCE = path.join(REPO_ROOT, 'node_modules', 'acme-guidance', 'c
 const OUTSIDE_SOURCE = path.join('/', 'elsewhere', 'content');
 
 /** Two expansion keys, which the attribution cases vary the bytes of. */
-const INNER = 'partial:library/_partials/inner.md';
-const SHARED = 'partial:library/_partials/shared.md';
+const INNER = 'partial:codeassembly/_partials/inner.md';
+const SHARED = 'partial:codeassembly/_partials/shared.md';
 
 /** A document at the ceiling, and one comfortably below it, so that a crossing is stated rather than computed. */
 const AT_CEILING = GROWTH_CEILING_BYTES;
@@ -117,7 +117,7 @@ describe(buildSizeReport, () => {
     const authored = {
       file: path.join(IN_REPO_SOURCE, 'skills', 'plan', 'SKILL.md'),
       contentRoot: IN_REPO_SOURCE,
-      sourceName: undefined,
+      sourceName: 'codeassembly',
     };
     const report = buildSizeReport({
       measured: measurement({ [key]: { bytes: 3_000, kind: 'document' } }),

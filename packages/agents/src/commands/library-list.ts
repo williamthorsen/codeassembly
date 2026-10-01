@@ -1,13 +1,16 @@
 import { readFile } from 'node:fs/promises';
+import { homedir } from 'node:os';
 import path from 'node:path';
+import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { defineGlyphSet, type Glyph, type OutputStyle } from '@williamthorsen/toolbelt.terminal/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
-import { resolveContentDir } from '../lib/content-resolver.ts';
-import { printLine, readOutputStyle } from '../lib/emit-report.ts';
+import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
+import { describeMissingSource, resolveDeclaredSources } from '../lib/declared-sources.ts';
+import { emitReport, printLine, readOutputStyle } from '../lib/emit-report.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
@@ -23,9 +26,15 @@ interface ArtifactEntry {
   readonly description: string;
 }
 
-/** A listing row: an artifact entry tagged with its type. */
+/**
+ * A listing row: an artifact entry tagged with its type, the source that ships it, that source's rank in precedence
+ * order (0 = highest), and whether a higher-precedence source ships the same `(type, slug)`.
+ */
 export interface LibraryRow extends ArtifactEntry {
   readonly type: ArtifactType;
+  readonly source: string;
+  readonly precedence: number;
+  readonly isShadowed: boolean;
 }
 
 /** Pairs an artifact type with the enumerator that lists it from a content directory. */
@@ -56,21 +65,46 @@ const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill:
 /** Delivery cell for an artifact type that doesn't declare a delivery mode. */
 const NO_DELIVERY_MODE = '—';
 
-const HEADERS = { type: 'type', slug: 'slug', delivery: 'delivery', description: 'description' } as const;
+const HEADERS = {
+  type: 'type',
+  slug: 'slug',
+  source: 'source',
+  delivery: 'delivery',
+  description: 'description',
+} as const;
 
 const COLUMN_GAP = 2;
 /** Floor for the description column so that a narrow terminal still wraps rather than collapses it. */
 const MIN_DESCRIPTION_WIDTH = 20;
 
 /**
- * Enumerates the content library's rulebooks, skills, and subagents and prints them as an aligned table.
+ * Enumerates the artifacts of every source declared by the chain that `sync` reads from `cwd`, or by the home chain
+ * when `global` is set, and prints them as an aligned table. Throws when the chain does not declare a usable source.
  */
-export async function libraryListCommand(contentDir: string = resolveContentDir()): Promise<void> {
+export async function libraryListCommand(
+  options: { global: boolean },
+  cwd: string = process.cwd(),
+  homeDir: string = homedir(),
+): Promise<void> {
+  const baseDir = options.global ? homeDir : cwd;
+  const domain = options.global ? 'home' : 'project';
+  const { missingSources, roots } = await resolveDeclaredSources({
+    baseDir,
+    declaration: await resolveDeclaration({ cwd: baseDir, domain }),
+    domain,
+  });
+  emitReport(missingSources.map(describeMissingSource));
+
   const rows: Array<LibraryRow> = [];
-  for (const descriptor of ARTIFACT_DESCRIPTORS) {
-    const entries = await descriptor.list(contentDir);
-    for (const entry of entries) {
-      rows.push({ ...entry, type: descriptor.type });
+  const seen = new Set<string>();
+  for (const [precedence, root] of roots.entries()) {
+    for (const descriptor of ARTIFACT_DESCRIPTORS) {
+      const entries = await descriptor.list(root.dir);
+      for (const entry of entries) {
+        const key = `${descriptor.type}:${entry.slug}`;
+        rows.push({ ...entry, type: descriptor.type, source: root.name, precedence, isShadowed: seen.has(key) });
+        seen.add(key);
+      }
     }
   }
 
@@ -79,16 +113,20 @@ export async function libraryListCommand(contentDir: string = resolveContentDir(
 
 /** Prints usage information for the `library` command. */
 export function printLibraryUsage(): void {
-  console.info(`Usage: codeassembly library <subcommand>
+  console.info(`Usage: codeassembly library <subcommand> [options]
 
 Subcommands:
-  list   List available library artifacts (rulebooks, skills, subagents, collections)`);
+  list   List the artifacts (rulebooks, skills, subagents, collections) of every declared source
+
+Options:
+  --global   List the sources declared by the home chain (~/.agents/codeassembly.yaml) instead of the project's`);
 }
 
 /**
- * Renders rows as an aligned table, sorted by type then slug: type (the type's glyph in `style`, then its label), slug,
- * delivery, then a hanging-indent-wrapped description. `width` bounds the description column; the others size to
- * their content. Pure and deterministic for a given (rows, width, style).
+ * Renders rows as an aligned table, sorted by type, then slug, then source precedence: type (the type's glyph in
+ * `style`, then its label), slug, source (followed by `(shadowed)` on a shadowed row), delivery, then a
+ * hanging-indent-wrapped description. `width` bounds the description column; the others size to their content. Pure
+ * and deterministic for a given (rows, width, style).
  */
 export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: number, style: OutputStyle): string {
   const sorted = rows.toSorted(compareRows);
@@ -99,8 +137,10 @@ export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: numbe
     ...sorted.map((row) => measureTypeCell(glyphs[row.type], row.type)),
   );
   const slugColWidth = Math.max(HEADERS.slug.length, ...sorted.map((row) => row.slug.length));
+  const sourceColWidth = Math.max(HEADERS.source.length, ...sorted.map((row) => formatSourceCell(row).length));
   const deliveryColWidth = Math.max(HEADERS.delivery.length, ...sorted.map((row) => row.delivery.length));
-  const prefixWidth = typeColWidth + COLUMN_GAP + slugColWidth + COLUMN_GAP + deliveryColWidth + COLUMN_GAP;
+  const prefixWidth =
+    typeColWidth + COLUMN_GAP + slugColWidth + COLUMN_GAP + sourceColWidth + COLUMN_GAP + deliveryColWidth + COLUMN_GAP;
   const descriptionWidth = Math.max(MIN_DESCRIPTION_WIDTH, width - prefixWidth);
 
   const gap = ' '.repeat(COLUMN_GAP);
@@ -111,6 +151,8 @@ export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: numbe
     gap +
     HEADERS.slug.padEnd(slugColWidth) +
     gap +
+    HEADERS.source.padEnd(sourceColWidth) +
+    gap +
     HEADERS.delivery.padEnd(deliveryColWidth) +
     gap;
   const lines: Array<string> = [(headerPrefix + HEADERS.description).trimEnd()];
@@ -120,6 +162,8 @@ export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: numbe
       padType(glyphs[row.type], row.type, typeColWidth) +
       gap +
       row.slug.padEnd(slugColWidth) +
+      gap +
+      formatSourceCell(row).padEnd(sourceColWidth) +
       gap +
       row.delivery.padEnd(deliveryColWidth) +
       gap;
@@ -145,12 +189,17 @@ function buildEntryOrSkip(type: ArtifactType, source: string, build: () => Artif
   }
 }
 
-/** Orders rows by artifact type, then by slug. */
+/** Orders rows by artifact type, then by slug, then by source precedence. */
 function compareRows(a: LibraryRow, b: LibraryRow): number {
   if (a.type !== b.type) {
     return TYPE_ORDER[a.type] - TYPE_ORDER[b.type];
   }
-  return a.slug.localeCompare(b.slug);
+  return a.slug.localeCompare(b.slug) || a.precedence - b.precedence;
+}
+
+/** Builds a row's source cell: the source name, followed by `(shadowed)` when a higher-precedence source ships it. */
+function formatSourceCell(row: LibraryRow): string {
+  return row.isShadowed ? `${row.source} (shadowed)` : row.source;
 }
 
 /** Lists collection artifacts from `content/collections`, reading each markdown file's name and description. */

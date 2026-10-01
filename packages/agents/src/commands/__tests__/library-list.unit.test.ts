@@ -5,91 +5,175 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { NoContentSourceError } from '../../lib/declared-sources.ts';
 import { libraryListCommand, type LibraryRow, printLibraryUsage, renderLibraryTable } from '../library-list.ts';
+import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../test-utils/declare-fixture-source.ts';
 
 describe(libraryListCommand, () => {
+  let baseDir: string;
   let contentDir: string;
+  let homeDir: string;
+  let projectDir: string;
 
   beforeEach(async () => {
-    contentDir = path.join(tmpdir(), `agents-test-library-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    baseDir = path.join(tmpdir(), `agents-test-library-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    contentDir = path.join(baseDir, 'content');
+    homeDir = path.join(baseDir, 'home');
+    projectDir = path.join(baseDir, 'project');
+    await mkdir(homeDir, { recursive: true });
+    await mkdir(projectDir, { recursive: true });
     await writeLibraryFixture(contentDir);
   });
 
   afterEach(async () => {
-    await rm(contentDir, { recursive: true, force: true });
+    await rm(baseDir, { recursive: true, force: true });
   });
 
-  it('lists rulebooks, skills, and subagents with their slugs and delivery values', async () => {
-    const { output } = await captureList(contentDir);
+  describe('a project declaring the fixture source', () => {
+    beforeEach(async () => {
+      await declareFixtureSource(projectDir, contentDir);
+    });
+
+    it('lists rulebooks, skills, and subagents with their slugs, source, and delivery values', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+
+      expect(output).toContain('sample-rulebook');
+      expect(output.split('\n', 1)[0]).toContain('source');
+      expect(output.split('\n').find((line) => line.includes('sample-rulebook'))).toContain(FIXTURE_SOURCE_NAME);
+      expect(output).toContain('ambient, skill');
+      expect(output).toContain('bravo-skill');
+      expect(output).toContain('yankee-agent');
+    });
+
+    it('orders rulebooks before skills before subagents before collections', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+
+      expect(output.indexOf('sample-rulebook')).toBeLessThan(output.indexOf('bravo-skill'));
+      expect(output.indexOf('bravo-skill')).toBeLessThan(output.indexOf('yankee-agent'));
+      expect(output.indexOf('yankee-agent')).toBeLessThan(output.indexOf('sample-collection'));
+    });
+
+    it('lists a collection with an em-dash delivery, since a collection does not have a deploy mode', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const lines = output.split('\n');
+
+      expect(lines.find((line) => line.includes('sample-collection'))).toContain('—');
+    });
+
+    it('excludes underscore-prefixed support entries, dotfiles, and skill dirs without a SKILL.md', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+
+      expect(output).not.toContain('hidden-rulebook');
+      expect(output).not.toContain('empty-dir');
+      expect(output).not.toContain('reserved');
+    });
+
+    it('falls back to the file name when a subagent does not declare a name', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+
+      expect(output).toContain('xray');
+    });
+
+    it('lists a skill with an em-dash delivery, since a skill does not have a delivery mode', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const lines = output.split('\n');
+
+      expect(lines.find((line) => line.includes('bravo-skill'))).toContain('—');
+    });
+
+    it("shows a harness-restricted skill's target harness in the delivery column", async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const lines = output.split('\n');
+
+      expect(lines.find((line) => line.includes('charlie-skill'))).toContain('rovo');
+    });
+
+    it('lists a subagent with an em-dash delivery, since a subagent does not have a delivery mode', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const lines = output.split('\n');
+
+      expect(lines.find((line) => line.includes('yankee-agent'))).toContain('—');
+    });
+
+    it('skips an artifact with invalid frontmatter and keeps listing the rest', async () => {
+      const { output, warnings } = await captureList({ global: false }, projectDir, homeDir);
+
+      expect(warnings.some((warning) => warning.includes('bad.md'))).toBe(true);
+      expect(output).toContain('sample-rulebook');
+    });
+
+    it('skips a subagent with malformed YAML frontmatter rather than aborting the listing', async () => {
+      const { output, warnings } = await captureList({ global: false }, projectDir, homeDir);
+
+      expect(warnings.some((warning) => warning.includes('broken.md'))).toBe(true);
+      expect(output).toContain('yankee-agent');
+    });
+  });
+
+  describe('two declared sources shipping one slug', () => {
+    let teamDir: string;
+
+    beforeEach(async () => {
+      teamDir = path.join(baseDir, 'team');
+      await writeSkillAt(teamDir, 'bravo', 'bravo-skill', 'Team bravo.');
+      await writeSkillAt(teamDir, 'alpha', 'alpha-skill', 'Team alpha.');
+      await declareFixtureSource(projectDir, contentDir, `sources:\n  - name: team\n    path: ${teamDir}\n`);
+    });
+
+    it('lists both rows, marking the lower-precedence one as shadowed', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const bravoLines = output.split('\n').filter((line) => line.includes('bravo-skill'));
+
+      expect(bravoLines).toHaveLength(2);
+      expect(bravoLines[0]).toMatch(/bravo-skill\s+team\s/);
+      expect(bravoLines[0]).not.toContain('(shadowed)');
+      expect(bravoLines[1]).toContain(`${FIXTURE_SOURCE_NAME} (shadowed)`);
+    });
+
+    it('orders rows by type, then slug, then source precedence', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const order = [
+        'sample-rulebook',
+        'alpha-skill',
+        'Team bravo.',
+        ' Bravo.',
+        'charlie-skill',
+        'yankee-agent',
+        'sample-collection',
+      ].map((marker) => output.indexOf(marker));
+
+      expect(order.every((index) => index >= 0)).toBe(true);
+      expect(order).toEqual(order.toSorted((a, b) => a - b));
+    });
+
+    it('does not mark a slug that only one source ships as shadowed', async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const lines = output.split('\n');
+
+      expect(lines.find((line) => line.includes('alpha-skill'))).not.toContain('(shadowed)');
+      expect(lines.find((line) => line.includes('charlie-skill'))).not.toContain('(shadowed)');
+    });
+  });
+
+  it('reads the home chain when global is set', async () => {
+    await declareFixtureSource(homeDir, contentDir);
+
+    const { output } = await captureList({ global: true }, projectDir, homeDir);
 
     expect(output).toContain('sample-rulebook');
-    expect(output).toContain('ambient, skill');
-    expect(output).toContain('bravo-skill');
-    expect(output).toContain('yankee-agent');
+    expect(output.split('\n').find((line) => line.includes('sample-rulebook'))).toContain(FIXTURE_SOURCE_NAME);
   });
 
-  it('orders rulebooks before skills before subagents before collections', async () => {
-    const { output } = await captureList(contentDir);
+  it('ignores the project chain when global is set', async () => {
+    await declareFixtureSource(projectDir, contentDir);
 
-    expect(output.indexOf('sample-rulebook')).toBeLessThan(output.indexOf('bravo-skill'));
-    expect(output.indexOf('bravo-skill')).toBeLessThan(output.indexOf('yankee-agent'));
-    expect(output.indexOf('yankee-agent')).toBeLessThan(output.indexOf('sample-collection'));
+    await expect(captureList({ global: true }, projectDir, homeDir)).rejects.toBeInstanceOf(NoContentSourceError);
   });
 
-  it('lists a collection with an em-dash delivery, since a collection does not have a deploy mode', async () => {
-    const { output } = await captureList(contentDir);
-    const lines = output.split('\n');
+  it('throws NoContentSourceError when the project does not declare any source', async () => {
+    await declareFixtureSource(homeDir, contentDir);
 
-    expect(lines.find((line) => line.includes('sample-collection'))).toContain('—');
-  });
-
-  it('excludes underscore-prefixed support entries, dotfiles, and skill dirs without a SKILL.md', async () => {
-    const { output } = await captureList(contentDir);
-
-    expect(output).not.toContain('hidden-rulebook');
-    expect(output).not.toContain('empty-dir');
-    expect(output).not.toContain('reserved');
-  });
-
-  it('falls back to the file name when a subagent does not declare a name', async () => {
-    const { output } = await captureList(contentDir);
-
-    expect(output).toContain('xray');
-  });
-
-  it('lists a skill with an em-dash delivery, since a skill does not have a delivery mode', async () => {
-    const { output } = await captureList(contentDir);
-    const lines = output.split('\n');
-
-    expect(lines.find((line) => line.includes('bravo-skill'))).toContain('—');
-  });
-
-  it("shows a harness-restricted skill's target harness in the delivery column", async () => {
-    const { output } = await captureList(contentDir);
-    const lines = output.split('\n');
-
-    expect(lines.find((line) => line.includes('charlie-skill'))).toContain('rovo');
-  });
-
-  it('lists a subagent with an em-dash delivery, since a subagent does not have a delivery mode', async () => {
-    const { output } = await captureList(contentDir);
-    const lines = output.split('\n');
-
-    expect(lines.find((line) => line.includes('yankee-agent'))).toContain('—');
-  });
-
-  it('skips an artifact with invalid frontmatter and keeps listing the rest', async () => {
-    const { output, warnings } = await captureList(contentDir);
-
-    expect(warnings.some((warning) => warning.includes('bad.md'))).toBe(true);
-    expect(output).toContain('sample-rulebook');
-  });
-
-  it('skips a subagent with malformed YAML frontmatter rather than aborting the listing', async () => {
-    const { output, warnings } = await captureList(contentDir);
-
-    expect(warnings.some((warning) => warning.includes('broken.md'))).toBe(true);
-    expect(output).toContain('yankee-agent');
+    await expect(captureList({ global: false }, projectDir, homeDir)).rejects.toBeInstanceOf(NoContentSourceError);
   });
 });
 
@@ -131,6 +215,7 @@ describe(renderLibraryTable, () => {
 
     expect(lines[0]).toContain('type');
     expect(lines[0]).toContain('slug');
+    expect(lines[0]).toContain('source');
     expect(lines[0]).toContain('delivery');
     expect(lines[0]).toContain('description');
     expect(lines[1]).toContain('📕 rulebook');
@@ -146,14 +231,14 @@ describe(renderLibraryTable, () => {
     ];
 
     expect(renderLibraryTable(rows, 100, 'rich').split('\n')).toEqual([
-      'type         slug               delivery  description',
-      '📕 rulebook  shell-conventions  ambient   A description.',
-      '🪄 skill     add-test-ids       skill     A description.',
+      'type         slug               source        delivery  description',
+      `📕 rulebook  shell-conventions  ${FIXTURE_SOURCE_NAME}  ambient   A description.`,
+      `🪄 skill     add-test-ids       ${FIXTURE_SOURCE_NAME}  skill     A description.`,
     ]);
     expect(renderLibraryTable(rows, 100, 'plain').split('\n')).toEqual([
-      'type      slug               delivery  description',
-      'rulebook  shell-conventions  ambient   A description.',
-      'skill     add-test-ids       skill     A description.',
+      'type      slug               source        delivery  description',
+      `rulebook  shell-conventions  ${FIXTURE_SOURCE_NAME}  ambient   A description.`,
+      `skill     add-test-ids       ${FIXTURE_SOURCE_NAME}  skill     A description.`,
     ]);
   });
 
@@ -165,21 +250,40 @@ describe(renderLibraryTable, () => {
       description: 'one two three four five six seven eight nine ten',
     });
 
-    // Column widths for this single row: type = 8 (`🪄 skill`), slug = 4 (`demo`), delivery = 8 (`delivery`
-    // header). With gaps of 2 the description starts at column 8 + 2 + 4 + 2 + 8 + 2 = 26; width 46 leaves a
-    // 20-cell description column.
-    const lines = renderLibraryTable([row], 46, 'rich').split('\n');
+    // Column widths for this single row: type = 8 (`🪄 skill`), slug = 4 (`demo`), source = 12 (the fixture source
+    // name), delivery = 8 (`delivery` header). With gaps of 2 the description starts at column
+    // 8 + 2 + 4 + 2 + 12 + 2 + 8 + 2 = 40; width 60 leaves a 20-cell description column.
+    const lines = renderLibraryTable([row], 60, 'rich').split('\n');
     const continuations = lines.slice(1).filter((line) => /^ +\S/.test(line));
 
     expect(lines[1]).toMatch(/one two three four$/);
-    expect(continuations).toEqual([`${' '.repeat(26)}five six seven eight`, `${' '.repeat(26)}nine ten`]);
+    expect(continuations).toEqual([`${' '.repeat(40)}five six seven eight`, `${' '.repeat(40)}nine ten`]);
+  });
+
+  it('sorts rows of one slug by source precedence and marks a shadowed row in the source column', () => {
+    const rows: Array<LibraryRow> = [
+      makeRow({ slug: 'demo', source: 'low', precedence: 2, isShadowed: true, description: 'Low.' }),
+      makeRow({ slug: 'demo', source: 'high', precedence: 0, isShadowed: false, description: 'High.' }),
+      makeRow({ slug: 'demo', source: 'mid', precedence: 1, isShadowed: true, description: 'Mid.' }),
+    ];
+
+    expect(renderLibraryTable(rows, 100, 'plain').split('\n')).toEqual([
+      'type   slug  source          delivery  description',
+      'skill  demo  high            skill     High.',
+      'skill  demo  mid (shadowed)  skill     Mid.',
+      'skill  demo  low (shadowed)  skill     Low.',
+    ]);
   });
 });
 
-/** Runs the command against a fixture content dir, returning its captured stdout table and stderr warnings. */
-async function captureList(contentDir: string): Promise<{ output: string; warnings: Array<string> }> {
+/** Runs the command from `cwd`, returning its captured stdout table and stderr warnings. */
+async function captureList(
+  options: { global: boolean },
+  cwd: string,
+  homeDir: string,
+): Promise<{ output: string; warnings: Array<string> }> {
   using silent = silenceConsole(['info', 'warn']);
-  await libraryListCommand(contentDir);
+  await libraryListCommand(options, cwd, homeDir);
   return {
     output: silent.info.mock.calls.map((call) => String(call[0])).join('\n'),
     warnings: silent.warn.mock.calls.map((call) => String(call[0])),
@@ -188,7 +292,16 @@ async function captureList(contentDir: string): Promise<{ output: string; warnin
 
 /** Builds a `LibraryRow` with sensible defaults, overriding only the fields that a test cares about. */
 function makeRow(overrides: Partial<LibraryRow>): LibraryRow {
-  return { type: 'skill', slug: 'slug', delivery: 'skill', description: 'A description.', ...overrides };
+  return {
+    type: 'skill',
+    slug: 'slug',
+    source: FIXTURE_SOURCE_NAME,
+    precedence: 0,
+    isShadowed: false,
+    delivery: 'skill',
+    description: 'A description.',
+    ...overrides,
+  };
 }
 
 /** Scaffolds a content tree exercising inclusion, exclusion, fallback, and invalid-frontmatter handling. */
@@ -227,6 +340,13 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
     path.join(collections, 'sample.md'),
     frontmatter({ name: 'sample-collection', description: 'Sample collection.' }),
   );
+}
+
+/** Writes a skill `<dir>/skills/<dirName>/SKILL.md` declaring `name` and `description`. */
+async function writeSkillAt(dir: string, dirName: string, name: string, description: string): Promise<void> {
+  const skillDir = path.join(dir, 'skills', dirName);
+  await mkdir(skillDir, { recursive: true });
+  await writeFile(path.join(skillDir, 'SKILL.md'), frontmatter({ name, description }));
 }
 
 /** Renders a minimal markdown file with the given frontmatter keys and a throwaway body. */

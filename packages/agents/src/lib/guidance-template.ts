@@ -2,12 +2,15 @@ import { readdir, stat } from 'node:fs/promises';
 import path from 'node:path';
 
 import { assertAnchorsResolve } from './anchor-resolution.ts';
+import { ARTIFACT_TYPES } from './artifact-types.ts';
 import type { ContentRootRef } from './content-root-manifest.ts';
 import { expandIncludes } from './directive-expander.ts';
 import { stripGuidanceHooks } from './guidance-hooks.ts';
 import { HARNESSES } from './harness.ts';
+import { listSupportEntries } from './library-catalog.ts';
+import { createContentRootLinkAnchor } from './link-anchor.ts';
 import { buildSourceReference, injectProvenanceMarker } from './marker-injector.ts';
-import { homeAnchor, rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
 import { isEnoent } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
@@ -43,7 +46,8 @@ export async function listGuidanceTemplateFiles(rootDir: string, harnessId: Harn
 /**
  * Renders one Markdown file of a harness guidance template as `install` writes it to the harness home: includes
  * expanded against the owning root, guidance-hook declarations stripped, link targets and template variables
- * rewritten for the harness home, and the provenance marker stamped. The ambient region is left as the template
+ * rewritten for the harness home, and the provenance marker stamped. A link target into `skills/` resolves into the
+ * owning root's support namespace, as one in a body that `sync --global` deploys from that root does. The ambient region is left as the template
  * declares it. Throws on a broken include, a malformed hook, or an anchor that names nothing.
  */
 export async function renderGuidanceTemplateFile(
@@ -57,7 +61,15 @@ export async function renderGuidanceTemplateFile(
 
   const expanded = stripGuidanceHooks(await expandIncludes(srcPath, root.dir), sourceLabel);
   assertAnchorsResolve(expanded, sourceLabel);
-  const rewritten = rewriteTemplateVariables(rewriteMarkdownPaths(expanded, fileName, homeAnchor(config.homeDir)), {
+  const anchor = createContentRootLinkAnchor({
+    deployedSkillDirs: new Set(),
+    domainBase: '~',
+    homeDir: config.homeDir,
+    skillsDirName: config.skillsDirName,
+    supportEntries: new Set(await listSupportEntries(path.join(root.dir, ARTIFACT_TYPES.skill.contentPath))),
+    supportNamespace: root.name,
+  });
+  const rewritten = rewriteTemplateVariables(rewriteMarkdownPaths(expanded, fileName, anchor), {
     guidanceFileName: config.guidanceFileName,
     harnessId: config.id,
     homeDir: config.homeDir,

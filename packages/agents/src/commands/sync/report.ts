@@ -113,7 +113,7 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
   }
   lines.push(...plan.missingSources.map(describeMissingSource), { level: 'info', text: describeDeliveries(plan) });
 
-  const shadows = plan.resolutionReport.filter((entry) => entry.shadowsLibrary);
+  const shadows = plan.resolutionReport.filter((entry) => entry.shadowedSources.length > 0);
   if (shadows.length > 0) {
     lines.push({ glyph: 'warning', level: 'warn', text: renderShadowWarning(shadows) });
   }
@@ -301,8 +301,8 @@ function describeGrowthWarning(warning: GrowthWarning): ReportLine {
 
 /**
  * Renders one guidance-hook advisory. `bound-undeclared` names both remedies because the reader may control only
- * one: A rulebook resolved from the library has frontmatter that they cannot edit, leaving the binding as the half
- * that is theirs.
+ * one: A rulebook resolved from another party's source has frontmatter that they cannot edit, leaving the binding as
+ * the half that is theirs.
  *
  * `bound-unreached` is info rather than a warning: A home-tier binding applies to every project, so a project that
  * deploys nothing declaring the hook would see a warning on every sync.
@@ -507,6 +507,11 @@ function describeSizes(sizes: SizeReportOutcome | undefined): ReadonlyArray<Repo
   return renderSizeReport(sizes.report);
 }
 
+/** Renders source names for a report line: `source "a"` or `sources "a", "b"`. */
+function describeSourceNames(names: ReadonlyArray<string>): string {
+  return `source${names.length === 1 ? '' : 's'} ${names.map((name) => `"${name}"`).join(', ')}`;
+}
+
 /**
  * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
  * because their source ships nothing, and which ones retraction removes because they aren't claimed by any source.
@@ -570,7 +575,7 @@ function renderPackageAdvice(names: ReadonlyArray<string>): ReadonlyArray<Report
 
 /**
  * Renders the per-artifact resolution report, sorted by type then slug: each deployed artifact and the source from
- * which it resolved (`← library` or `← source "<name>"`), with `(shadows library)` appended on a shadow. Type and slug
+ * which it resolved (`← source "<name>"`), with `(shadows source "<name>")` appended on a shadow. Type and slug
  * columns are padded for scannability. Pure and deterministic for a given entry set.
  */
 function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string {
@@ -578,22 +583,24 @@ function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string
   const typeWidth = Math.max(...sorted.map((entry) => entry.type.length));
   const slugWidth = Math.max(...sorted.map((entry) => entry.slug.length));
   const lines = sorted.map((entry) => {
-    const origin = entry.source === undefined ? 'library' : `source "${entry.source}"`;
-    const shadow = entry.shadowsLibrary ? ' (shadows library)' : '';
-    return `  ${entry.type.padEnd(typeWidth)}  ${entry.slug.padEnd(slugWidth)}  ← ${origin}${shadow}`;
+    const shadow = entry.shadowedSources.length > 0 ? ` (shadows ${describeSourceNames(entry.shadowedSources)})` : '';
+    return `  ${entry.type.padEnd(typeWidth)}  ${entry.slug.padEnd(slugWidth)}  ← source "${entry.source}"${shadow}`;
   });
   return ['[dry-run] sync would resolve:', ...lines].join('\n');
 }
 
-/** Renders the real-run warning naming each deployed artifact that shadows a same-slug library artifact. */
+/** Renders the real-run warning naming each deployed artifact that shadows a lower-precedence source's artifact. */
 function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
   const details = shadows
     .toSorted(compareResolutionEntries)
-    .map((entry) => `${entry.type} "${entry.slug}" (source "${entry.source}")`)
+    .map(
+      (entry) =>
+        `${entry.type} "${entry.slug}" (source "${entry.source}" over ${describeSourceNames(entry.shadowedSources)})`,
+    )
     .join(', ');
   const plural = shadows.length === 1 ? '' : 's';
   const verb = shadows.length === 1 ? 's' : '';
-  return `${shadows.length} artifact${plural} shadow${verb} a library slug: ${details}`;
+  return `${shadows.length} artifact${plural} shadow${verb} a lower-precedence source: ${details}`;
 }
 
 /** Renders one measured deployment's size block, in the order stated by `describeSizes`. */

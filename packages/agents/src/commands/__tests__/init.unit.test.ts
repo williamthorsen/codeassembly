@@ -1,6 +1,6 @@
 import { existsSync } from 'node:fs';
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -167,6 +167,22 @@ describe(initGlobalCommand, () => {
         ]),
       },
     });
+  });
+
+  it('scaffolds a commented sources entry that names a clone of the content once uncommented', async () => {
+    await initGlobalCommand(makeOptions(), homeDir);
+
+    const content = await readFile(declarationPath(), 'utf8');
+    const uncommented = content.replace(
+      '# sources:\n#   - name: codeassembly\n#     path: ',
+      'sources:\n  - name: codeassembly\n    path: ',
+    );
+    expect(uncommented).not.toBe(content);
+    await writeFile(declarationPath(), uncommented, 'utf8');
+
+    expect((await resolveDeclaration({ cwd: homeDir }))?.sources).toEqual([
+      { name: 'codeassembly', dir: path.join(homedir(), 'repos', 'codeassembly', 'packages', 'agents', 'content') },
+    ]);
   });
 
   it('refuses to overwrite an existing codeassembly.yaml', async () => {

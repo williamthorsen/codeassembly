@@ -29,14 +29,10 @@ const INTERPRETER_PREFIX = /(?:^|[\s`'"])(?:bash|node|sh|source|zsh)[ \t]+$/;
  * Reports every executable invocation of a known helper script, in a Markdown file under the root's `skills/` or
  * `subagents/`, that lacks the `{harness_home_dir}/scripts/` prefix. One defect per site.
  *
- * The known scripts are the files directly under the root's `scripts/` and the library's, which is where a name
- * resolves at a consumer.
+ * The known scripts are the files directly under the root's `scripts/`.
  */
-export async function findScriptInvocationDefects({
-  root,
-  libraryDir,
-}: RuleContext): Promise<ReadonlyArray<ContentDefect>> {
-  const scripts = await listKnownScripts([root, libraryDir]);
+export async function findScriptInvocationDefects({ root }: RuleContext): Promise<ReadonlyArray<ContentDefect>> {
+  const scripts = await listKnownScripts(root);
   if (scripts.length === 0) {
     return [];
   }
@@ -103,20 +99,15 @@ function containsBareInvocation(line: string, script: string): boolean {
 }
 
 /**
- * Lists the distinct script names shipped directly under each root's `scripts/`, sorted. A Markdown file there
- * documents the scripts rather than being one.
+ * Lists the script names shipped directly under the root's `scripts/`, sorted. A Markdown file there documents the
+ * scripts rather than being one.
  */
-async function listKnownScripts(roots: ReadonlyArray<string>): Promise<ReadonlyArray<string>> {
-  const names = new Set<string>();
-  for (const root of roots) {
-    const entries = await readDirEntries(path.join(root, 'scripts'));
-    for (const entry of entries) {
-      if (entry.isFile() && path.extname(entry.name) !== '.md') {
-        names.add(entry.name);
-      }
-    }
-  }
-  return [...names].toSorted();
+async function listKnownScripts(root: string): Promise<ReadonlyArray<string>> {
+  const entries = await readDirEntries(path.join(root, 'scripts'));
+  return entries
+    .filter((entry) => entry.isFile() && path.extname(entry.name) !== '.md')
+    .map((entry) => entry.name)
+    .toSorted();
 }
 
 // endregion | Helpers

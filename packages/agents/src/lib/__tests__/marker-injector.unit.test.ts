@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { buildSourceReference, buildSourceUrl, injectProvenanceMarker, SOURCE_REF } from '../marker-injector.ts';
+import { buildSourceReference, injectProvenanceMarker } from '../marker-injector.ts';
 
 describe(injectProvenanceMarker, () => {
-  const sourceUrl =
-    'https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/example/SKILL.md';
+  const sourceUrl = 'skills/example/SKILL.md in source "codeassembly" (/srcs/codeassembly/content)';
 
   describe('files with YAML frontmatter', () => {
     it('inserts three comment lines immediately after the opening `---`', () => {
@@ -43,8 +42,7 @@ describe(injectProvenanceMarker, () => {
     it('refreshes the marker when the source URL differs', () => {
       const input = ['---', 'name: example', '---', '', 'Body', ''].join('\n');
       const withFirst = injectProvenanceMarker(input, sourceUrl);
-      const newUrl =
-        'https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/renamed/SKILL.md';
+      const newUrl = 'skills/renamed/SKILL.md in source "codeassembly" (/srcs/codeassembly/content)';
       const withSecond = injectProvenanceMarker(withFirst, newUrl);
 
       expect(withSecond).toContain(`# Source: ${newUrl}`);
@@ -81,8 +79,7 @@ describe(injectProvenanceMarker, () => {
     it('refreshes the marker when the source URL differs', () => {
       const input = '# AGENTS\n\nBody.\n';
       const withFirst = injectProvenanceMarker(input, sourceUrl);
-      const newUrl =
-        'https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/guidance/shared/OTHER.md';
+      const newUrl = 'guidance/shared/OTHER.md in source "codeassembly" (/srcs/codeassembly/content)';
       const withSecond = injectProvenanceMarker(withFirst, newUrl);
 
       expect(withSecond).toContain(`<!-- Source: ${newUrl} -->`);
@@ -111,12 +108,6 @@ describe(injectProvenanceMarker, () => {
 });
 
 describe(buildSourceReference, () => {
-  it('renders the library blob URL for a root without a name', () => {
-    expect(buildSourceReference({ dir: '/anywhere/content' }, 'scripts/relay-hook-event.mjs')).toBe(
-      buildSourceUrl('scripts/relay-hook-event.mjs'),
-    );
-  });
-
   it('names the path, the source, and its directory for a declared source', () => {
     expect(
       buildSourceReference(
@@ -124,32 +115,5 @@ describe(buildSourceReference, () => {
         'guidance/_harnesses/claude/CLAUDE.md',
       ),
     ).toBe('guidance/_harnesses/claude/CLAUDE.md in source "org-guidance" (/Users/you/repos/org-guidance/content)');
-  });
-});
-
-describe(buildSourceUrl, () => {
-  it('builds a URL under packages/agents/content/ at the SOURCE_REF branch', () => {
-    expect(buildSourceUrl('skills/collaborate/SKILL.md')).toBe(
-      `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content/skills/collaborate/SKILL.md`,
-    );
-  });
-
-  it('handles nested paths', () => {
-    expect(buildSourceUrl('skills/orchestrate/modules/review-cycle.md')).toBe(
-      `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content/skills/orchestrate/modules/review-cycle.md`,
-    );
-  });
-
-  it('handles guidance and subagent paths', () => {
-    expect(buildSourceUrl('guidance/shared/AGENTS.md')).toBe(
-      `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content/guidance/shared/AGENTS.md`,
-    );
-    expect(buildSourceUrl('subagents/orchestrated-coder.md')).toBe(
-      `https://github.com/williamthorsen/codeassembly/blob/${SOURCE_REF}/packages/agents/content/subagents/orchestrated-coder.md`,
-    );
-  });
-
-  it('pins the source ref to main (until version-pinning is implemented)', () => {
-    expect(SOURCE_REF).toBe('main');
   });
 });

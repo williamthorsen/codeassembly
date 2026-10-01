@@ -20,15 +20,15 @@ export interface MissingDeclaration {
 }
 
 /**
- * One deployed artifact's resolution outcome: its type and slug, the source from which it resolved (`undefined` =
- * library), and whether it masks a same-slug library artifact. Drives both the dry-run resolution report and the
- * real-run shadow warning.
+ * One deployed artifact's resolution outcome: its type and slug, the source from which it resolved, and the
+ * lower-precedence sources that ship the same slug. Drives both the dry-run resolution report and the real-run shadow
+ * warning.
  */
 export interface ResolutionEntry {
   readonly type: ArtifactType;
   readonly slug: string;
-  readonly source: string | undefined;
-  readonly shadowsLibrary: boolean;
+  readonly source: string;
+  readonly shadowedSources: ReadonlyArray<string>;
 }
 
 /**

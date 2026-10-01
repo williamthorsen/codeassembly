@@ -13,15 +13,14 @@ import { renderSubagentForHarness } from './subagent-transform.ts';
 
 /**
  * A declared subagent resolved through the source resolver: its stable slug, the source `.md` file to render from,
- * the content root against which its includes resolve (the library for a library subagent, the declaring source for
- * a source subagent), and the source from which it resolved (the declaring source's name, or `undefined` for the
- * built-in library).
+ * the content root against which its includes resolve (the declaring source's directory), and the declaring source's
+ * name.
  */
 export interface ResolvedSubagent {
   readonly slug: string;
   readonly srcPath: string;
   readonly contentRoot: string;
-  readonly source: string | undefined;
+  readonly source: string;
 }
 
 /** The per-harness inputs on which a declared-subagent deploy depends, resolved once per harness by `sync`. */
@@ -95,10 +94,9 @@ export async function renderSubagent(resolved: ResolvedSubagent, context: Subage
 }
 
 /**
- * Resolves a declared subagent slug through the source resolver (declared sources first, then the library), confirming
- * its `<slug>.md` exists and returning the resolved content root (the source or library directory from which it
- * resolved) so that the deploy pass expands its includes against its own tree. Throws an error naming every location
- * searched when the slug is found in neither a source nor the library.
+ * Resolves a declared subagent slug through the source resolver, confirming its `<slug>.md` exists and returning the
+ * resolved content root (the source directory from which it resolved) so that the deploy pass expands its includes
+ * against its own tree. Throws an error naming every location searched when the slug is not found in any source.
  */
 export async function resolveDeclaredSubagent(slug: string, resolver: SourceResolver): Promise<ResolvedSubagent> {
   const resolved = await resolver.resolve('subagent', slug);
