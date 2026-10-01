@@ -846,6 +846,10 @@ editors:
 
 `src/revise-prose/` contains the sweep that the `revise-prose` skill runs. Its commands, its detectors, and the per-repository record are documented in [docs/revise-prose-helper.md](docs/revise-prose-helper.md).
 
+## Backlog sweep helper
+
+`src/groom-backlog/` contains the helper that the `groom-backlog` skill runs. Its commands, its ledger, its comment marker, and the skill's arguments are documented in [docs/groom-backlog-helper.md](docs/groom-backlog-helper.md).
+
 ## Guidance streamlining helper
 
 `src/streamline-guidance/` contains the helper that the `streamline-guidance` skill runs. Its commands, their output, and the record of declined cuts are documented in [docs/streamline-guidance-helper.md](docs/streamline-guidance-helper.md).
