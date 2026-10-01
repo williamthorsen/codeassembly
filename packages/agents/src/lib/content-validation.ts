@@ -15,6 +15,7 @@ import {
   OPTIONAL_TOKEN_CONTENT_FORMAT,
   readContentRootManifest,
 } from './content-root-manifest.ts';
+import { findInjectionPlacementDefects } from './content-rules/injection-placement.ts';
 import { findNonBreakingSpaceDefects } from './content-rules/non-breaking-space.ts';
 import type { ResolvedArtifacts, RuleContext } from './content-rules/rule-context.ts';
 import { findScriptInvocationDefects } from './content-rules/script-invocation.ts';
@@ -150,6 +151,7 @@ export async function validateContentRoot(
     ...(await findRetiredKeyDefects(artifacts)),
     ...(await findRetiredOverlayKeyDefects(root, harnessIds)),
     ...foldHarnessDefects(rendered, harnessIds),
+    ...(await findInjectionPlacementDefects(context)),
     ...(await findNonBreakingSpaceDefects(context)),
     ...(await findScriptInvocationDefects(context)),
   ];
