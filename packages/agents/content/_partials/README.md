@@ -1,3 +1,5 @@
+<!-- readme-type: content -->
+
 # Partials
 
 Partials are reusable Markdown fragments shared across rulebooks, skills, subagents, and platform guidance. The install pipeline expands include directives at install time, before frontmatter merging, marker injection, and link rewriting. It never writes a partial as a standalone file; instead, it inlines the content into each consumer.
@@ -43,7 +45,7 @@ If a host heading follows a directive and is deeper than the shallowest heading 
 
 The deciding level is what the injection contributes, not a fixed `##`. A partial contributes its headings as authored, and `##` for any guidance hook that it declares, since hooks resolve after includes expand and so are filled inside the host. For example, `subagents/_partials/review-writes-scaffold.md` opens at `###`, and the `###` sections following it are its correct siblings. A hook declared by the host contributes `##` on its own, because a bound rulebook's title is demoted one level to fit.
 
-Slot content is the caller's own text and contributes nothing here: A heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it. Its nesting is already visible where it is written. `content/__tests__/injection-point-placement.unit.test.ts` enforces the rule.
+Slot content is the caller's own text and contributes nothing here: A heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it. Its nesting is already visible where it is written. `codeassembly validate` enforces the rule.
 
 ## Path resolution
 
@@ -57,7 +59,7 @@ Two things that a partial may contain are resolved against the host that inlines
 
 A **relative Markdown link** cannot serve both a skill host and a rulebook host. A skill's links resolve against `<slug>/SKILL.md` in skills-dir space; a rulebook's resolve against `guidance/rulebooks/<slug>.md` in content-root space. One authored target therefore names two different files, and a skill-shaped one resolves outside a rulebook's linkable roots and fails the run. Write the target as `{harness_home_dir}/...` inside inline code when a partial must refer to a file from both.
 
-A partial that `guidance/shared/AGENTS.md` inlines does not contain any relative link at all. That file is inlined into each harness's guidance file at the harness home root, where a source-tree-relative target names nothing, so the template-variable form is the only one that resolves to a file from there. `shared-guidance-policy.unit.test.ts` scans the expanded body and fails a relative target that it finds.
+A partial that `guidance/shared/AGENTS.md` inlines does not contain any relative link at all. That file is inlined into each harness's guidance file at the harness home root, where a source-tree-relative target names nothing, so the template-variable form is the only one that resolves to a file from there. `codeassembly validate` scans the expanded body and reports a relative target that it finds.
 
 A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support entry under `skills/`. The deployed rulebook set is available only to a host that resolves a declaration, and `install` deploys a support entry without resolving one. The token renders in the skill but breaks the support entry's install.
 
@@ -66,7 +68,7 @@ A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support ent
 Installable content is rewritten at install time. Author cross-references in one of three forms, depending on intent:
 
 - **Runtime references**: Paths that the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/work-types.json`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths. `sync` does the same, and bare `sync` adds one exception: A link naming a skill deployed by the same run is anchored under the project root rather than the harness home. `sync --global` deploys into the harness home, so that exception does not apply to it.
-- **Source-tree citations**: Prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/src/__tests__/content-path-conventions.test.ts`.
+- **Source-tree citations**: Prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/content/__tests__/content-path-conventions.unit.test.ts`.
 - **Self-referential prose** about the source tree itself (e.g., this paragraph) is treated as a source-tree citation.
 
 The `content-path-conventions` regression test flags any raw `packages/agents/content/` string in installable Markdown outside the allowlist.

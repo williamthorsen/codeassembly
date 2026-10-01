@@ -21,8 +21,7 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // call establishes the name. An agent-supplied value takes a brace placeholder that the agent substitutes as literal
 // text.
 //
-// Listed explicitly rather than discovered, mirroring the known-scripts list in `script-invocation-conventions`.
-// These are the commands excluded by the machine; a further entry is a one-line change here.
+// Listed explicitly: These are the commands excluded by the machine, and a further entry is a one-line change here.
 const EXCLUDED_COMMANDS: ReadonlyArray<string> = ['codeassembly', 'gh'];
 
 // The shell supplies these, so reading one is not a defect. Because a variable falling out of use is not a defect
