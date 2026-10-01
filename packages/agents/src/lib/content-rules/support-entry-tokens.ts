@@ -135,7 +135,8 @@ async function findUndeclaredTargets(
       continue;
     }
 
-    for (const [id, link] of [...required].toSorted(([a], [b]) => a.localeCompare(b))) {
+    const sorted = [...required].toSorted(([a], [b]) => a.localeCompare(b));
+    for (const [id, link] of sorted) {
       if (!reached.has(id)) {
         defects.push({
           file,
