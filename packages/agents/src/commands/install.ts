@@ -5,28 +5,25 @@ import path from 'node:path';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../lib/ambient-region.ts';
-import { assertAnchorsResolve } from '../lib/anchor-resolution.ts';
 import { resolveDeclaration } from '../lib/codeassembly-manifest.ts';
 import { resolveContentDir } from '../lib/content-resolver.ts';
 import type { ContentRootRef } from '../lib/content-root-manifest.ts';
 import { describeContentRoot, describeMissingSource, resolveDeclaredSources } from '../lib/declared-sources.ts';
-import { expandIncludes } from '../lib/directive-expander.ts';
 import { emitReport, printLine } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
-import { stripGuidanceHooks } from '../lib/guidance-hooks.ts';
+import {
+  listGuidanceTemplateFiles,
+  renderGuidanceTemplateFile,
+  resolveGuidanceTemplateDir,
+} from '../lib/guidance-template.ts';
 import { HARNESSES, resolveHarnessPaths, resolveSkillsPathPrefix } from '../lib/harness.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { listSupportEntries } from '../lib/library-catalog.ts';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
-import {
-  buildSourceReference,
-  buildSourceUrl,
-  injectMarkerInFile,
-  injectMarkersInDirectory,
-} from '../lib/marker-injector.ts';
-import { homeAnchor, rewritePathsInFile, type TemplateVariables } from '../lib/path-rewriter.ts';
+import { buildSourceUrl, injectMarkerInFile, injectMarkersInDirectory } from '../lib/marker-injector.ts';
+import { homeAnchor, type TemplateVariables } from '../lib/path-rewriter.ts';
 import type { ReportLine } from '../lib/report-line.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
@@ -504,7 +501,7 @@ async function installHarnessGuidance(
     ]);
   }
 
-  const guidanceSrcDir = path.join(owner.root.dir, 'guidance', '_harnesses', harnessId);
+  const guidanceSrcDir = resolveGuidanceTemplateDir(owner.root.dir, harnessId);
 
   const entries: Array<ManifestEntry> = [];
 
@@ -512,16 +509,11 @@ async function installHarnessGuidance(
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(harnessPaths.harnessHome, entry);
 
-    // Resolve include directives at source-tree level, strip the guidance-hook declarations that the expansion
-    // carried in, then check the result for anchors that name nothing. All three run before the dry-run gate so that
-    // missing targets, cycles, out-of-tree references, malformed hooks, and dead in-body locators surface even when
-    // the dry run doesn't write any files.
-    let expandedContent: string | undefined;
-    if (entry.endsWith('.md')) {
-      const sourceLabel = `guidance/_harnesses/${harnessId}/${entry}`;
-      expandedContent = stripGuidanceHooks(await expandIncludes(srcPath, owner.root.dir), sourceLabel);
-      assertAnchorsResolve(expandedContent, sourceLabel);
-    }
+    // Render before the dry-run gate so that missing include targets, cycles, out-of-tree references, malformed hooks,
+    // and dead in-body locators surface even when the dry run doesn't write any files.
+    const renderedContent = entry.endsWith('.md')
+      ? await renderGuidanceTemplateFile(owner.root, harnessId, entry)
+      : undefined;
 
     if (options.dryRun) {
       console.info(`    [copy] ${entry} (guidance)`);
@@ -549,30 +541,19 @@ async function installHarnessGuidance(
     const preservedAmbient = entry.endsWith('.md') ? await readAmbientRegionContent(destPath) : undefined;
 
     await unlinkIfSymlink(destPath);
-    await copyItem(srcPath, destPath);
-
-    // For .md files, replace the freshly-copied content with the include-expanded content, then run downstream link
-    // rewriting and template/marker injection on the expanded text.
-    if (entry.endsWith('.md')) {
-      if (expandedContent !== undefined) {
-        await writeFile(destPath, expandedContent, 'utf8');
-      }
-      await rewritePathsInFile(destPath, entry, harnessConfig.homeDir, {
-        guidanceFileName: harnessConfig.guidanceFileName,
-        harnessId: harnessConfig.id,
-        homeDir: harnessConfig.homeDir,
-      });
-      await injectMarkerInFile(destPath, buildSourceReference(owner.root, `guidance/_harnesses/${harnessId}/${entry}`));
-
+    if (renderedContent === undefined) {
+      await copyItem(srcPath, destPath);
+    } else {
       // Splice the preserved region content into the fresh render. The region's location comes from the template;
       // its content belongs to sync and must survive an install. A template that no longer contains the region takes
       // precedence: The content is dropped and the next `sync` re-delivers or warns.
-      if (preservedAmbient !== undefined && preservedAmbient !== '') {
-        const rendered = await readFile(destPath, 'utf8');
-        if (hasAmbientRegion(rendered)) {
-          await writeFile(destPath, injectAmbientRegion(rendered, preservedAmbient), 'utf8');
-        }
-      }
+      const shouldSplice =
+        preservedAmbient !== undefined && preservedAmbient !== '' && hasAmbientRegion(renderedContent);
+      await writeFile(
+        destPath,
+        shouldSplice ? injectAmbientRegion(renderedContent, preservedAmbient) : renderedContent,
+        'utf8',
+      );
     }
 
     entries.push({
@@ -671,26 +652,7 @@ async function findTemplateRoots(
 ): Promise<ReadonlyArray<TemplateRoot>> {
   const shipping: Array<TemplateRoot> = [];
   for (const root of roots) {
-    const templateDir = path.join(root.dir, 'guidance', '_harnesses', harnessId);
-    let dirEntries: ReadonlyArray<string>;
-    try {
-      dirEntries = await readdir(templateDir);
-    } catch (error: unknown) {
-      if (!isEnoent(error)) {
-        throw error;
-      }
-      continue;
-    }
-
-    const fileNames: Array<string> = [];
-    for (const entry of dirEntries) {
-      if (entry.startsWith('.')) {
-        continue;
-      }
-      if ((await stat(path.join(templateDir, entry))).isFile()) {
-        fileNames.push(entry);
-      }
-    }
+    const fileNames = await listGuidanceTemplateFiles(root.dir, harnessId);
     if (fileNames.length > 0) {
       shipping.push({ root, fileNames });
     }

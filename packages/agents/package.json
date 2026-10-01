@@ -23,6 +23,11 @@
   "sideEffects": false,
   "type": "module",
   "exports": {
+    "./api": {
+      "source": "./src/api.ts",
+      "types": "./dist/esm/api.d.ts",
+      "import": "./dist/esm/api.js"
+    },
     "./package.json": "./package.json"
   },
   "bin": {

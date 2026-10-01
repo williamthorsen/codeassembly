@@ -133,6 +133,44 @@ export interface ProbedAmbientHost {
   readonly state: AmbientHostState;
 }
 
+/**
+ * Renders the ambient rulebooks, then the references, as concatenated sentinel blocks beneath the generated-region
+ * note: the wholesale content of one harness's ambient region. The context is one harness's, so the same rulebook yields that harness's
+ * own absolute paths. An empty result stays empty: The note belongs to generated content, and callers read emptiness
+ * as "nothing to deliver here".
+ */
+export function renderAmbientBody(
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  references: ReadonlyArray<PlannedReference>,
+  harnessId: HarnessId,
+  resolveRulebookContext: ResolveRulebookContext,
+): string {
+  let body = '';
+  for (const rulebook of resolved) {
+    if (!rulebook.ambient) {
+      continue;
+    }
+    const context = resolveRulebookContext(harnessId, rulebook.source);
+    body = injectRulebook(
+      body,
+      rulebook.slug,
+      renderRulebookBody(rulebook.body, rulebook.slug, context),
+      rulebook.version,
+    );
+  }
+  for (const reference of references) {
+    body = injectSentinelBlock(
+      body,
+      'reference',
+      reference.name,
+      `${reference.summary.trim()}\n\nLocation: \`${reference.displayPath}\``,
+    );
+  }
+  // Prepend rather than seed the loop: Seeding would pass the note through `injectRulebook`, which separates it from
+  // the first block with a blank line and would leave the note standing as the whole body when nothing is ambient.
+  return body === '' ? '' : `${ambientRegionNote}\n${body}`;
+}
+
 // region | Helpers
 
 /**
@@ -196,44 +234,6 @@ async function probeAmbientHost(hostPath: string): Promise<AmbientHostState> {
     case 'absent':
       return { status: 'no-region', content };
   }
-}
-
-/**
- * Renders the ambient rulebooks, then the references, as concatenated sentinel blocks beneath the generated-region
- * note: the wholesale content of one harness's ambient region. The context is one harness's, so the same rulebook yields that harness's
- * own absolute paths. An empty result stays empty: The note belongs to generated content, and callers read emptiness
- * as "nothing to deliver here".
- */
-function renderAmbientBody(
-  resolved: ReadonlyArray<ResolvedRulebook>,
-  references: ReadonlyArray<PlannedReference>,
-  harnessId: HarnessId,
-  resolveRulebookContext: ResolveRulebookContext,
-): string {
-  let body = '';
-  for (const rulebook of resolved) {
-    if (!rulebook.ambient) {
-      continue;
-    }
-    const context = resolveRulebookContext(harnessId, rulebook.source);
-    body = injectRulebook(
-      body,
-      rulebook.slug,
-      renderRulebookBody(rulebook.body, rulebook.slug, context),
-      rulebook.version,
-    );
-  }
-  for (const reference of references) {
-    body = injectSentinelBlock(
-      body,
-      'reference',
-      reference.name,
-      `${reference.summary.trim()}\n\nLocation: \`${reference.displayPath}\``,
-    );
-  }
-  // Prepend rather than seed the loop: Seeding would pass the note through `injectRulebook`, which separates it from
-  // the first block with a blank line and would leave the note standing as the whole body when nothing is ambient.
-  return body === '' ? '' : `${ambientRegionNote}\n${body}`;
 }
 
 // endregion | Helpers
