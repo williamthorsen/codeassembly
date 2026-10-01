@@ -77,6 +77,7 @@ members:
     - planner
     - prose-reviser
     - savings-analyzer
+    - ticket-assessor
 ---
 
 # Triage

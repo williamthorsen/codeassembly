@@ -35,3 +35,8 @@ plan-reviser: {} # inherits _defaults
 # not having any command to run.
 prose-reviser:
   tools: [expand_code_chunks, expand_folder, find_and_replace_code, grep, open_files]
+
+# Rovo does not read a denylist, so the read-only grant is named here.
+# `create_file` is dropped: The assessor returns text.
+ticket-assessor:
+  tools: [bash, expand_code_chunks, expand_folder, grep, open_files]
