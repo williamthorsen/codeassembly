@@ -54,6 +54,7 @@ const CARRIERS: ReadonlyArray<string> = [
   'skills/create-commit/SKILL.md',
   'skills/create-gh-pr/SKILL.md',
   'skills/create-ticket/SKILL.md',
+  'skills/groom-backlog/SKILL.md',
   'skills/merge-gh-pr/SKILL.md',
   'skills/merge-pr/SKILL.md',
   'skills/wrap-up/SKILL.md',

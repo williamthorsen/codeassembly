@@ -26,6 +26,7 @@ members:
     - emit-event
     - find-orchestration-savings
     - get-ticket-id
+    - groom-backlog
     - implement-plan
     - kb-add
     - kb-curate
