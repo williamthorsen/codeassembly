@@ -12,7 +12,7 @@ import { extractString } from '../kb-shared/note-helpers.ts';
 import { readHomeProvenance, readHomeProvenanceAt } from '../lib/home-provenance.ts';
 import { extractSection } from '../lib/markdown-sections.ts';
 import { isEnoent } from '../lib/type-guards.ts';
-import { loadWorkTypes, resolveWorkType } from '../lib/work-types.ts';
+import { describeTaxonomyLocation, loadWorkTypes, resolveWorkType } from '../lib/work-types.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
 /** Artifact filename suffix holding the lede published by the agent, and the heading under which that lede appears. */
@@ -48,8 +48,8 @@ type DoctrineHashOutcome = { ok: true; hash: string } | { ok: false; unreadableP
  */
 export async function resolveEpisode(input: {
   artifactDir: string;
-  /** Directory holding `work-types.json`; the `_data` sibling of the installed helper. */
-  dataDir: string;
+  /** Directory holding `work-types.json`; when absent, the taxonomy embedded in the bundle is read. */
+  dataDir?: string;
   /** Directory holding the deployed subagent bodies that govern a draft; the harness's `agents` or `subagents` dir. */
   subagentsDir: string;
   pr: string;
@@ -297,17 +297,17 @@ async function readLede(input: {
  * does not name a scope does not record one. The ticket falls back to the change summary on its own, because it is not
  * part of the consolidated record. A scope of `*` from either source does not name a scope.
  *
- * Because the work type is resolved through the installed taxonomy rather than taken as spelled, the identity records
- * the canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
+ * Because the work type is resolved through the taxonomy rather than taken as spelled, the identity records the
+ * canonical key and the tier that the taxonomy in force declares for it. A type spelled with `!` marks the change
  * breaking, as `--breaking` does.
  *
  * A taxonomy that does not load is reported apart from a type that it does not declare. The two conditions look alike
  * at the failed lookup and differ in the caller's recourse: One is repaired by passing a flag, the other only by
- * repairing the install.
+ * repairing the taxonomy.
  */
 async function resolveIdentity(input: {
   artifactDir: string;
-  dataDir: string;
+  dataDir?: string;
   pr: string;
   mergeCommit: string;
   type?: string;
@@ -343,7 +343,7 @@ async function resolveIdentity(input: {
     return {
       ok: false,
       error: 'no-taxonomy',
-      message: `could not read work-types.json under ${input.dataDir}`,
+      message: `could not read work-types.json ${describeTaxonomyLocation(input.dataDir)}`,
     };
   }
 

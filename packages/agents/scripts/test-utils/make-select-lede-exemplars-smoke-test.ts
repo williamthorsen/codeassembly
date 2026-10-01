@@ -20,8 +20,7 @@ const FIXTURE_DECISIONS = [
  * two `feat` exemplars from it. Selection scans the events directory itself, so the whole path runs here
  * without putting ripgrep on the build's critical path.
  *
- * The invocation does not pass `--data-dir`, so the run resolves the work-type taxonomy the way an installed
- * helper does, through the `_data` directory of the `skills` sibling.
+ * The invocation does not pass `--data-dir`, so the run reads the work-type taxonomy embedded in the bundle.
  */
 export function makeSelectLedeExemplarsSmokeTest(): SmokeTestInvocation {
   const storePath = mkdtempSync(path.join(tmpdir(), 'select-lede-exemplars-store-'));

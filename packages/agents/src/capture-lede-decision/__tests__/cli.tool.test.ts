@@ -126,6 +126,15 @@ describe(runDecision, () => {
     expect(expectInspect(result).episode.differ).toBe(true);
   });
 
+  it('resolves the work type through the embedded taxonomy when the invocation omits --data-dir', async () => {
+    const fixture = await createLedeFixture();
+    const argv = ['--inspect', ...withoutFlag(withoutFlag(flagsFor(fixture), 'data-dir'), 'type'), '--type', 'tests'];
+
+    const result = await runDecision(runInput({ argv, fixture }));
+
+    expect(expectInspect(result).episode.identity).toMatchObject({ type: 'tests', tier: 'internal' });
+  });
+
   it('reports the store into which a decision would be recorded', async () => {
     const fixture = await createLedeFixture();
     const store = await makeStore();
@@ -350,7 +359,6 @@ function runInput(input: {
     cwd: input.fixture.root,
     env: {},
     now: NOW,
-    defaultDataDir: input.fixture.dataDir,
     defaultSubagentsDir: input.fixture.subagentsDir,
     home: input.home ?? input.fixture.root,
   };

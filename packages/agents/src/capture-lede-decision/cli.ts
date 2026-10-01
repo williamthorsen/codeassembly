@@ -60,7 +60,7 @@ export interface ParsedArgs {
   artifactDir: string;
   pr: string;
   mergeCommit: string;
-  /** Directory holding `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
+  /** Directory holding `work-types.json`; `null` reads the taxonomy embedded in the bundle. */
   dataDir: string | null;
   /** Directory holding the deployed subagent bodies; `null` falls back to the one beside the installed helper. */
   subagentsDir: string | null;
@@ -86,7 +86,6 @@ async function main(): Promise<void> {
       cwd: process.cwd(),
       env: process.env,
       now: new Date(),
-      defaultDataDir: resolveDefaultDataDir(),
       defaultSubagentsDir: resolveDefaultSubagentsDir(),
     });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
@@ -120,7 +119,6 @@ export async function runDecision(input: {
   cwd: string;
   env: NodeJS.ProcessEnv;
   now: Date;
-  defaultDataDir: string;
   defaultSubagentsDir: string;
   home?: string;
 }): Promise<DecisionResult> {
@@ -133,7 +131,7 @@ export async function runDecision(input: {
 
   const resolved = await resolveEpisode({
     artifactDir: args.artifactDir,
-    dataDir: args.dataDir ?? input.defaultDataDir,
+    ...(args.dataDir !== null && { dataDir: args.dataDir }),
     subagentsDir: args.subagentsDir ?? input.defaultSubagentsDir,
     pr: args.pr,
     mergeCommit: args.mergeCommit,
@@ -323,12 +321,6 @@ function isEntryPoint(): boolean {
     process.stderr.write(`capture-lede-decision: warning: could not determine entry point: ${message}\n`);
     return false;
   }
-}
-
-/** Resolves the `_data` directory shipped beside the installed helper, holding the doctrine and the work-type taxonomy. */
-function resolveDefaultDataDir(): string {
-  const helperDir = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(helperDir, '..', '_data');
 }
 
 /**

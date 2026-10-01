@@ -350,6 +350,23 @@ describe(resolveEpisode, () => {
     expect(expectFailure(outcome).error).toBe('unresolved-identity');
   });
 
+  it('resolves the work type through the embedded taxonomy when no data directory is named', async () => {
+    const fixture = await createLedeFixture();
+    const { dataDir: _dataDir, ...input } = inputFor(fixture, { type: 'tests' });
+
+    const episode = expectEpisode(await resolveEpisode(input));
+
+    expect(episode.identity).toMatchObject({ type: 'tests', tier: 'internal' });
+  });
+
+  it('reads the named data directory in place of the embedded taxonomy', async () => {
+    const fixture = await createLedeFixture();
+
+    const outcome = await resolveEpisode(inputFor(fixture, { type: 'tests' }));
+
+    expect(expectFailure(outcome).error).toBe('unresolved-identity');
+  });
+
   it('reports an unreadable taxonomy apart from an undeclared type, which passing a flag would not repair', async () => {
     const fixture = await createLedeFixture({ omit: 'work-types' });
 
