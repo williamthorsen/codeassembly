@@ -266,6 +266,15 @@ describe(installCommand, () => {
     expect(await readdir(path.join(claudeHome, 'skills', '_data'))).toContain('sample.md');
   });
 
+  it('installs one skills-directory entry per support entry and nothing else', async () => {
+    const claudeHome = await setupClaudeHome();
+    await writeFile(path.join(contentDir, 'skills', 'reference.md'), '# Reference\n', 'utf8');
+
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+
+    expect((await readdir(path.join(claudeHome, 'skills'))).toSorted()).toEqual(['_data', 'reference.md']);
+  });
+
   it('uses the harness-specific source URL in markers for installed harness guidance', async () => {
     const claudeHome = await setupClaudeHome();
 
