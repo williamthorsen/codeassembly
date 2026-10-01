@@ -19,7 +19,7 @@ import { BREAKING_MARKER, normalizeChangeRecord } from '../change-grammar/tokens
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
-import { loadTaxonomy } from '../lib/work-types.ts';
+import { describeTaxonomyLocation, loadTaxonomy } from '../lib/work-types.ts';
 import { amendEntry, type EntryAmendment } from './amend-entry.ts';
 import { type ChangeEntry, consolidateChangeEntries, findEntryComment, readChangeEntries } from './change-entries.ts';
 import {
@@ -151,7 +151,6 @@ async function main(): Promise<void> {
     const { output, warnings } = await runDescribe({
       argv: process.argv.slice(2),
       cwd: process.cwd(),
-      dataDir: resolveDefaultDataDir(),
       home: homedir(),
     });
     for (const warning of warnings) {
@@ -230,7 +229,8 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
 export interface DescribeInput {
   argv: readonly string[];
   cwd: string;
-  dataDir: string;
+  /** Directory containing `work-types.json`; when absent, the run reads the taxonomy embedded in the bundle. */
+  dataDir?: string;
   home: string;
 }
 
@@ -352,7 +352,7 @@ async function loadTemplatesWithTaxonomy(
   const loaded = await loadTemplates(input);
   const { taxonomy } = loaded;
   if (taxonomy === null) {
-    throw new Error(`${reason}; none is readable under ${input.dataDir}`);
+    throw new Error(`${reason}; none is readable ${describeTaxonomyLocation(input.dataDir)}`);
   }
   return { ...loaded, taxonomy };
 }
@@ -684,12 +684,6 @@ function renderTemplate(template: string, record: ChangeRecord): string {
   return template === '' ? '' : render(compileTemplate(template), record);
 }
 
-/** Resolves the `_data` directory shipped beside the installed helper, containing the work-type taxonomy. */
-function resolveDefaultDataDir(): string {
-  const helperDir = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(helperDir, '..', 'skills', '_data');
-}
-
 /**
  * Amends one change entry in the body file's last `change-record` block and writes the body back to the same file. Only
  * the taxonomy is loaded, which the amended entry is checked against and the block's record is ranked by. The body file
@@ -702,7 +696,7 @@ async function runAmendEntry(
   const taxonomy = await loadTaxonomy(input.dataDir);
   if (taxonomy === null) {
     throw new Error(
-      `amend-entry checks the amended type against the taxonomy; none is readable under ${input.dataDir}`,
+      `amend-entry checks the amended type against the taxonomy; none is readable ${describeTaxonomyLocation(input.dataDir)}`,
     );
   }
   const resolved = path.resolve(input.cwd, args.bodyFile);
@@ -801,7 +795,9 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
 async function runConsolidateEntries(entriesFile: string, input: DescribeInput): Promise<DescribeResult> {
   const taxonomy = await loadTaxonomy(input.dataDir);
   if (taxonomy === null) {
-    throw new Error(`consolidate-entries ranks types against the taxonomy; none is readable under ${input.dataDir}`);
+    throw new Error(
+      `consolidate-entries ranks types against the taxonomy; none is readable ${describeTaxonomyLocation(input.dataDir)}`,
+    );
   }
   const entries = await readEntriesFile({ cwd: input.cwd, filePath: entriesFile });
   const consolidated = consolidateChangeEntries(entries, taxonomy);
@@ -848,7 +844,9 @@ async function runRenderBlock(
 async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplates(input);
   if (taxonomy === null) {
-    warnings.push(`work-types.json is missing or unreadable under ${input.dataDir}; templates are not verified`);
+    warnings.push(
+      `work-types.json is missing or unreadable ${describeTaxonomyLocation(input.dataDir)}; templates are not verified`,
+    );
   }
   return {
     output: {
@@ -872,7 +870,7 @@ async function runResolveEffectiveRecord(
   const taxonomy = await loadTaxonomy(input.dataDir);
   if (taxonomy === null) {
     throw new Error(
-      `resolve-effective-record checks types against the taxonomy; none is readable under ${input.dataDir}`,
+      `resolve-effective-record checks types against the taxonomy; none is readable ${describeTaxonomyLocation(input.dataDir)}`,
     );
   }
   const effective = applyOverrides(normalizeChangeRecord(args.record), args.overrides);

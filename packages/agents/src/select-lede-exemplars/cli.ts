@@ -1,7 +1,6 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
-import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
@@ -11,7 +10,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { DEFAULT_KB_SENTINEL, FEEDBACK_KB_SENTINEL } from '../kb-shared/kb-role-sentinels.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
-import { loadWorkTypes, resolveWorkType, type WorkType } from '../lib/work-types.ts';
+import { describeTaxonomyLocation, loadWorkTypes, resolveWorkType, type WorkType } from '../lib/work-types.ts';
 import { selectExemplars } from './select-exemplars.ts';
 import type { ExemplarRequest, SelectErrorCode, SelectResult } from './types.ts';
 
@@ -49,7 +48,7 @@ export interface ParsedArgs {
   minQuality: LedeQuality | null;
   /** The corpus to read; falls back to the one that this helper serves when `--store` names none. */
   store: string;
-  /** Directory containing `work-types.json`; `null` falls back to the helper's own `_data` sibling. */
+  /** Directory containing `work-types.json`; `null` reads the taxonomy embedded in the bundle. */
   dataDir: string | null;
   /** Whether each exemplar also reports the agent lede, the merged lede, and the author's comment. */
   withPair: boolean;
@@ -58,7 +57,7 @@ export interface ParsedArgs {
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
   try {
-    const result = await runSelect({ argv: process.argv.slice(2), defaultDataDir: resolveDefaultDataDir() });
+    const result = await runSelect({ argv: process.argv.slice(2) });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
     const message = describeError(error);
@@ -112,8 +111,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 }
 
 /**
- * Runs the helper end to end: parses args, resolves the request through the installed taxonomy, resolves the
- * corpus by registry name, and selects the exemplars.
+ * Runs the helper end to end: parses args, resolves the request through the taxonomy, resolves the corpus by registry
+ * name, and selects the exemplars.
  *
  * An exhausted corpus returns `ok: true` with an empty list and a diagnostic; only an unusable request or an
  * unreachable corpus returns `ok: false`. System failures (permission denied, unreadable store) propagate to the
@@ -124,11 +123,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  *
  * @internal - Exported to allow testing.
  */
-export async function runSelect(input: {
-  argv: readonly string[];
-  defaultDataDir: string;
-  home?: string;
-}): Promise<SelectResult> {
+export async function runSelect(input: { argv: readonly string[]; home?: string }): Promise<SelectResult> {
   let args: ParsedArgs;
   try {
     args = parseArgs(input.argv);
@@ -136,10 +131,14 @@ export async function runSelect(input: {
     return { ok: false, error: 'invalid-args', message: describeError(error) };
   }
 
-  const dataDir = args.dataDir ?? input.defaultDataDir;
+  const dataDir = args.dataDir ?? undefined;
   const workTypes = await loadWorkTypes(dataDir);
   if (workTypes === null) {
-    return { ok: false, error: 'no-taxonomy', message: `work-types.json is missing or unreadable under ${dataDir}` };
+    return {
+      ok: false,
+      error: 'no-taxonomy',
+      message: `work-types.json is missing or unreadable ${describeTaxonomyLocation(dataDir)}`,
+    };
   }
 
   const resolved = resolveRequest(args.request, workTypes);
@@ -271,12 +270,6 @@ async function resolveCorpus(input: {
     };
   }
   return { ok: true, store: { name: match.name, path: match.path } };
-}
-
-/** Resolves the `_data` directory installed beside the helper, which contains the work-type taxonomy. */
-function resolveDefaultDataDir(): string {
-  const helperDir = path.dirname(fileURLToPath(import.meta.url));
-  return path.resolve(helperDir, '..', 'skills', '_data');
 }
 
 /**

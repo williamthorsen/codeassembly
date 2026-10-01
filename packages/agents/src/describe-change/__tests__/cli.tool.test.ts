@@ -363,6 +363,14 @@ describe('parse-title', () => {
     ).rejects.toThrow(/commit\.title_format is empty/);
   });
 
+  it('resolves the type through the embedded taxonomy when no data directory is named', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    const { output } = await runDescribe({ argv: ['parse-title', 'commit', 'agents|tests: Add foo'], cwd, home });
+
+    expect(output).toMatchObject({ matched: true, scope: 'agents', type: 'tests' });
+  });
+
   it('refuses when the data directory does not contain a readable taxonomy', async () => {
     const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
     const dataDir = await mkdtemp(join(tmpdir(), 'describe-change-data-'));

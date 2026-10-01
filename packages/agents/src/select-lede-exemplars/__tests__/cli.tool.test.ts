@@ -232,13 +232,27 @@ describe(runSelect, () => {
   it('reports a data directory that does not contain a taxonomy', async () => {
     const fixture = await createCorpusFixture({ decisions: CORPUS });
 
-    const result = await runSelect({
-      argv: ['--type', 'feat', '--data-dir', fixture.storePath],
-      defaultDataDir: fixture.dataDir,
-      home: fixture.home,
-    });
+    const result = await runSelect({ argv: ['--type', 'feat', '--data-dir', fixture.storePath], home: fixture.home });
 
     expect(expectFailure(result)).toBe('no-taxonomy');
+  });
+
+  it('resolves a work type through the embedded taxonomy when the invocation omits --data-dir', async () => {
+    const fixture = await createCorpusFixture({ decisions: CORPUS });
+
+    const result = await runSelect({ argv: ['--type', 'tests'], home: fixture.home });
+
+    const success = expectSuccess(result);
+    expect(success.type).toBe('tests');
+    expect(success.tier).toBe('internal');
+  });
+
+  it('reads the taxonomy that --data-dir names in place of the embedded one', async () => {
+    const fixture = await createCorpusFixture({ decisions: CORPUS });
+
+    const result = await run({ argv: ['--type', 'tests'], fixture });
+
+    expect(expectFailure(result)).toBe('unknown-type');
   });
 
   it('reports an invalid invocation without reading the corpus', async () => {
@@ -268,9 +282,9 @@ function expectSuccess(result: SelectResult): SelectSuccess {
   return result;
 }
 
-/** Runs the helper against a fixture corpus, defaulting the taxonomy and registry to the fixture's own. */
+/** Runs the helper against a fixture corpus, reading the fixture's own taxonomy and registry. */
 async function run(input: { argv: readonly string[]; fixture: CorpusFixture }): Promise<SelectResult> {
-  return runSelect({ argv: input.argv, defaultDataDir: input.fixture.dataDir, home: input.fixture.home });
+  return runSelect({ argv: [...input.argv, '--data-dir', input.fixture.dataDir], home: input.fixture.home });
 }
 
 // endregion | Helpers

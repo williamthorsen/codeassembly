@@ -1,11 +1,20 @@
 import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
 import type { Taxonomy } from '../../change-grammar/types.ts';
-import { loadTaxonomy, loadWorkTypes, resolveWorkType, type WorkType } from '../work-types.ts';
+import {
+  describeTaxonomyLocation,
+  loadTaxonomy,
+  loadWorkTypes,
+  resolveWorkType,
+  type WorkType,
+} from '../work-types.ts';
+
+const CONTENT_DATA_DIR = fileURLToPath(new URL('../../../content/skills/_data', import.meta.url));
 
 const TAXONOMY = {
   types: [
@@ -15,7 +24,30 @@ const TAXONOMY = {
   ],
 };
 
+describe(describeTaxonomyLocation, () => {
+  it('names the directory when one is given', () => {
+    expect(describeTaxonomyLocation('/data')).toBe('under /data');
+  });
+
+  it('names the bundle when no directory is given', () => {
+    expect(describeTaxonomyLocation()).toBe('in the bundle');
+  });
+});
+
 describe(loadTaxonomy, () => {
+  it('reads the embedded taxonomy, which matches the content tree, when no directory is named', async () => {
+    const embedded = await loadTaxonomy();
+
+    expect(embedded).not.toBeNull();
+    expect(embedded).toStrictEqual(await loadTaxonomy(CONTENT_DATA_DIR));
+  });
+
+  it('reads the named directory in place of the embedded taxonomy', async () => {
+    const taxonomy = await readTaxonomy(TAXONOMY);
+
+    expect(taxonomy.types).toHaveLength(3);
+  });
+
   it('preserves the listing order, which ranks one type over another', async () => {
     const taxonomy = await readTaxonomy(TAXONOMY);
 
@@ -117,6 +149,13 @@ describe(loadWorkTypes, () => {
     });
 
     expect(index.get('internal')).toStrictEqual({ key: 'internal', tier: 'internal' });
+  });
+
+  it('reads the embedded taxonomy, which matches the content tree, when no directory is named', async () => {
+    const embedded = await loadWorkTypes();
+
+    expect(embedded).not.toBeNull();
+    expect(embedded).toStrictEqual(await loadWorkTypes(CONTENT_DATA_DIR));
   });
 
   it('skips an entry without a declared tier rather than dropping the whole taxonomy', async () => {

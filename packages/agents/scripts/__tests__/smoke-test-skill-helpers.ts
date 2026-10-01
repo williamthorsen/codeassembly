@@ -12,6 +12,7 @@
  * The bundles are built into a temporary copy of the content tree, so a test run leaves the tracked bundles under
  * `content/` as they were committed and the drift check keeps a comparison to make. The copy contains the tree's other
  * files because a helper resolves its data relative to its own location, the way an installed skill directory does.
+ * The copy omits `work-types.json`, which a helper embeds at build time, so a bundle that reads it from disk fails.
  */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
@@ -77,7 +78,7 @@ for (const entry of Object.keys(smokeTests)) {
 
 const bundleRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-helper-smoke-'));
 fs.cpSync(contentRoot, bundleRoot, {
-  filter: (source) => !source.endsWith('.mjs'),
+  filter: (source) => !source.endsWith('.mjs') && path.basename(source) !== 'work-types.json',
   recursive: true,
 });
 await bundleHelpers(targets, bundleRoot);

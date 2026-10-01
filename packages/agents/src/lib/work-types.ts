@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import embeddedTaxonomy from '../../content/skills/_data/work-types.json' with { type: 'json' };
 import type { BreakingPolicy, Taxonomy, WorkTypeEntry } from '../change-grammar/types.ts';
 import { isMissingFile, isRecord } from './type-guards.ts';
 
@@ -20,15 +21,24 @@ export interface ResolvedWorkType {
 }
 
 /**
- * Loads the taxonomy from `work-types.json` under `dataDir` in the ordered form that the change-grammar engine takes:
- * the declared tiers, and every type in listing order with its aliases and breaking policy. Yields `null` when the
- * file is absent, unparseable, or doesn't declare a `types` list.
+ * Names where a taxonomy is read from, as a diagnostic's locative phrase: under `dataDir` when one is named, and in the
+ * bundle otherwise.
+ */
+export function describeTaxonomyLocation(dataDir?: string): string {
+  return dataDir === undefined ? 'in the bundle' : `under ${dataDir}`;
+}
+
+/**
+ * Loads the taxonomy in the ordered form that the change-grammar engine takes: the declared tiers, and every type in
+ * listing order with its aliases and breaking policy. Reads `work-types.json` under `dataDir` when one is named, and
+ * the taxonomy embedded at build time otherwise. Yields `null` when the file is absent, unparseable, or doesn't declare
+ * a `types` list.
  *
  * `loadWorkTypes` reads the same file into a lookup indexed by key and alias, which discards the listing order. The
  * order ranks one type over another, so a caller consolidating entries reads this form instead.
  */
-export async function loadTaxonomy(dataDir: string): Promise<Taxonomy | null> {
-  const parsed = await readTaxonomyFile(dataDir);
+export async function loadTaxonomy(dataDir?: string): Promise<Taxonomy | null> {
+  const parsed = await readTaxonomy(dataDir);
   if (parsed === null) {
     return null;
   }
@@ -51,12 +61,12 @@ export async function loadTaxonomy(dataDir: string): Promise<Taxonomy | null> {
 }
 
 /**
- * Loads the work-type taxonomy from `work-types.json` under `dataDir`, indexed by canonical key and by every declared
- * alias, so that `feature` and `feat` resolve to one entry. Yields `null` when the file is absent, unparseable, or
- * doesn't declare a `types` list.
+ * Loads the work-type taxonomy indexed by canonical key and by every declared alias, so that `feature` and `feat`
+ * resolve to one entry. Reads `work-types.json` under `dataDir` when one is named, and the taxonomy embedded at build
+ * time otherwise. Yields `null` when the file is absent, unparseable, or doesn't declare a `types` list.
  */
-export async function loadWorkTypes(dataDir: string): Promise<ReadonlyMap<string, WorkType> | null> {
-  const parsed = await readTaxonomyFile(dataDir);
+export async function loadWorkTypes(dataDir?: string): Promise<ReadonlyMap<string, WorkType> | null> {
+  const parsed = await readTaxonomy(dataDir);
   if (parsed === null) {
     return null;
   }
@@ -95,6 +105,12 @@ export function resolveWorkType(type: string, workTypes: ReadonlyMap<string, Wor
 
 // region | Helpers
 
+/** A taxonomy document that declares a `types` list, before its entries are checked. */
+interface ParsedTaxonomy {
+  tiers: unknown;
+  types: unknown[];
+}
+
 /** The breaking policies that a taxonomy entry may declare. */
 const BREAKING_POLICIES: ReadonlySet<string> = new Set(['forbidden', 'optional']);
 
@@ -103,16 +119,29 @@ function isBreakingPolicy(value: unknown): value is BreakingPolicy {
   return typeof value === 'string' && BREAKING_POLICIES.has(value);
 }
 
+/**
+ * Validates a parsed taxonomy document, yielding `null` when it is not an object that declares a `types` list. The
+ * entries themselves are checked by each loader.
+ */
+function parseTaxonomy(value: unknown): ParsedTaxonomy | null {
+  if (!isRecord(value) || !Array.isArray(value.types)) {
+    return null;
+  }
+  return { tiers: value.tiers, types: value.types };
+}
+
 /** Reads a declared `aliases` list, dropping any entry that is not a string. */
 function readAliases(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((alias) => typeof alias === 'string') : [];
 }
 
-/**
- * Reads and parses `work-types.json` under `dataDir`, yielding `null` when the file is absent, unparseable, or
- * doesn't declare a `types` list.
- */
-async function readTaxonomyFile(dataDir: string): Promise<{ tiers: unknown; types: unknown[] } | null> {
+/** Reads the taxonomy under `dataDir` when one is named, and the embedded taxonomy otherwise. */
+async function readTaxonomy(dataDir: string | undefined): Promise<ParsedTaxonomy | null> {
+  return dataDir === undefined ? parseTaxonomy(embeddedTaxonomy) : await readTaxonomyFile(dataDir);
+}
+
+/** Reads and parses `work-types.json` under `dataDir`, yielding `null` when the file is absent or unparseable. */
+async function readTaxonomyFile(dataDir: string): Promise<ParsedTaxonomy | null> {
   let content: string;
   try {
     content = await readFile(path.join(dataDir, 'work-types.json'), 'utf8');
@@ -129,10 +158,7 @@ async function readTaxonomyFile(dataDir: string): Promise<{ tiers: unknown; type
   } catch {
     return null;
   }
-  if (!isRecord(parsed) || !Array.isArray(parsed.types)) {
-    return null;
-  }
-  return { tiers: parsed.tiers, types: parsed.types };
+  return parseTaxonomy(parsed);
 }
 
 // endregion | Helpers
