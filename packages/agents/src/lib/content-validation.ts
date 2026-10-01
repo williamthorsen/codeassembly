@@ -17,6 +17,7 @@ import {
 } from './content-root-manifest.ts';
 import { findNonBreakingSpaceDefects } from './content-rules/non-breaking-space.ts';
 import type { ResolvedArtifacts, RuleContext } from './content-rules/rule-context.ts';
+import { findScriptInvocationDefects } from './content-rules/script-invocation.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, type ResolvedClosure, resolveSeedClosures } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
@@ -150,6 +151,7 @@ export async function validateContentRoot(
     ...(await findRetiredOverlayKeyDefects(root, harnessIds)),
     ...foldHarnessDefects(rendered, harnessIds),
     ...(await findNonBreakingSpaceDefects(context)),
+    ...(await findScriptInvocationDefects(context)),
   ];
 }
 
