@@ -88,9 +88,9 @@ node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs collect --run {ru
   --scope {name} --exclude-label {label} --older-than {age} --limit {N}
 ```
 
-Pass only the selectors that the invocation names. The result contains `sha`, `counts`, `resumed` (the tickets that this run already assessed and that have not changed since), `groups`, and `tickets`. Each group contains its `scope` (`null` for the unscoped group), its tickets oldest first with any `inProgress` signal, and its `waves`. Each ticket's input file is at `{scratch}/tickets/{number}.json`.
+Pass only the selectors that the invocation names. The result contains `sha`, `counts`, `resumed` (the tickets that this run already assessed and that have not changed since), `pendingAutomatic` (the resumed tickets whose auto-close class does not have a decision yet, each with its `class`), `groups`, and `tickets`. Each group contains its `scope` (`null` for the unscoped group), its tickets oldest first with any `inProgress` signal, and its `waves`. Each ticket's input file is at `{scratch}/tickets/{number}.json`.
 
-If `counts.total` is 0, go to step 6: A resumed run can still have open escalations.
+If `counts.total` is 0, go to step 5 when `pendingAutomatic` is not empty, and to step 6 otherwise: A resumed run can still have pending closes and open escalations.
 
 ### 3. Ask for the bulk decisions
 
@@ -128,7 +128,7 @@ The result states the ticket's `class`. If the result is `invalid-reply`, dispat
 
 ### 5. Apply the automatic classes
 
-Apply each ingested ticket's class per [Decision policy](#decision-policy), per [Writing to GitHub](#writing-to-github), with `--decided-by policy`:
+Apply the class of each ingested ticket, and of each ticket in `pendingAutomatic` from step 2, per [Decision policy](#decision-policy), per [Writing to GitHub](#writing-to-github), with `--decided-by policy`:
 
 - `auto-close-complete`: `--decision close-complete`.
 - `auto-close-half-met`: `--decision close-superseded`.

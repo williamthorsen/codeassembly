@@ -119,6 +119,31 @@ describe(runCli, () => {
       expect(result.ok && result.tickets).toMatchObject([{ number: 11 }, { number: 12 }]);
     });
 
+    it('reports a resumed auto-close that does not have a decision as pending', async () => {
+      writeLedger(root, [
+        { ...assessment('r', 10, '2026-03-01T00:00:00Z'), class: 'auto-close-complete' },
+        { ...assessment('r', 11, '2026-03-01T00:00:00Z'), class: 'auto-close-half-met' },
+        {
+          run: 'r',
+          kind: 'decision',
+          number: 11,
+          decision: 'close-superseded',
+          actor: 'agent',
+          decidedBy: 'policy',
+          appliedAt: '2026-03-01T00:00:00Z',
+        },
+        { ...assessment('r', 12, '2026-03-01T00:00:00Z'), class: 'silent-keep' },
+      ]);
+
+      const result = await runCli(['collect', '--run', 'r', '--out', 'in'], context);
+
+      expect(result).toMatchObject({
+        ok: true,
+        resumed: [10, 11, 12],
+        pendingAutomatic: [{ number: 10, class: 'auto-close-complete' }],
+      });
+    });
+
     it("does not count the run's own comment as a change", async () => {
       issues[0]?.comments.push({
         author: { login: 'owner' },

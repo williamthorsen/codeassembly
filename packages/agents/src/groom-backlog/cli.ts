@@ -151,7 +151,8 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
 /**
  * Selects the tickets to assess and writes one input file per ticket under `--out`. A ticket already assessed in this
  * run is skipped unless it changed after both that assessment and the latest comment carrying this run's marker, so
- * that the sweep's own comment does not make a ticket look changed.
+ * that the sweep's own comment does not make a ticket look changed. A skipped ticket whose latest assessment has an
+ * auto-close class and no decision after it is reported in `pendingAutomatic`, so that the skill still applies it.
  */
 async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
   const run = readRequired(flags, 'run');
@@ -174,8 +175,15 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   const paths = await resolveLedgerPaths(context.run, context.root);
   const ledger = readLedger(paths.ledgerFile);
   const assessedAt = new Map<number, string>();
+  const undecidedClass = new Map<number, string | undefined>();
   for (const record of ledger.records) {
-    if (record.kind === 'assessment' && record.run === run) assessedAt.set(record.number, record.assessedAt);
+    if (record.run !== run) continue;
+    if (record.kind === 'assessment') {
+      assessedAt.set(record.number, record.assessedAt);
+      undecidedClass.set(record.number, record.class);
+    } else if (record.kind === 'decision') {
+      undecidedClass.delete(record.number);
+    }
   }
 
   const repository = await resolveRepository(context.run, context.root);
@@ -192,6 +200,12 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
     const changed = updated > Date.parse(assessed) && (commented === undefined || updated > Date.parse(commented));
     if (!changed) resumed.push(issue.number);
     return changed;
+  });
+  const pendingAutomatic = resumed.flatMap((number) => {
+    const policyClass = undecidedClass.get(number);
+    return policyClass === 'auto-close-complete' || policyClass === 'auto-close-half-met'
+      ? [{ number, class: policyClass }]
+      : [];
   });
   const ordered = orderForSweep(pending);
   const issues = selectors.limit === undefined ? ordered : ordered.slice(0, selectors.limit);
@@ -234,6 +248,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
     ledgerDefects: ledger.defects,
     counts: { fetched: fetched.length, selected: selected.length, resumed: resumed.length, total: issues.length },
     resumed,
+    pendingAutomatic,
     groups,
     tickets,
   };
