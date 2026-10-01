@@ -68,39 +68,6 @@ const RETIRED_HARNESSES_KEY = 'harnesses';
 const RETIRED_TOOLS_KEY = '_tools';
 
 /**
- * Reports every body that uses a form that the root's declared content format predates. The optional invocation-token
- * form needs format 2, so a root containing one under a lower format deploys its literal text on a tool implementing
- * only that contract, which is the outcome that the format field exists to prevent. The walk reads files rather than
- * resolved bodies: A partial carries a token into every body that inlines it, and a partial resolves only within its
- * own root.
- */
-export async function findUnderdeclaredFormatDefects(root: string): Promise<ReadonlyArray<ContentDefect>> {
-  const { format } = await readContentRootManifest(root);
-  if (format >= OPTIONAL_TOKEN_CONTENT_FORMAT) {
-    return [];
-  }
-
-  const defects: Array<ContentDefect> = [];
-  const files = await listMarkdownFilesRecursively(root);
-  for (const file of files) {
-    const carried = locateInvocationTokens(await readFile(file, 'utf8')).filter((token) => token.optional);
-    if (carried.length === 0) {
-      continue;
-    }
-    const named = carried.map((token) => `{${token.kind}?:${token.slug}}`).join(', ');
-    defects.push({
-      file: path.relative(root, file),
-      kind: 'root',
-      detail:
-        `Contains an optional invocation token (${named}) under declared content format ${format}. ` +
-        `Declare format ${OPTIONAL_TOKEN_CONTENT_FORMAT} in ${CONTENT_MANIFEST_FILENAME}, or write the token in its ` +
-        'required form.',
-    });
-  }
-  return defects;
-}
-
-/**
  * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
  * first. Runs the checks that a consumer's `sync` runs before writing (dependency closure, artifact resolution,
  * delivery collisions, and a per-harness render) over a whole content root instead of over one consumer's declared
@@ -308,6 +275,39 @@ async function findRetiredOverlayKeyDefects(
     } catch (error: unknown) {
       defects.push({ file, kind: 'frontmatter', detail: describeError(error) });
     }
+  }
+  return defects;
+}
+
+/**
+ * Reports every body that uses a form that the root's declared content format predates. The optional invocation-token
+ * form needs format 2, so a root containing one under a lower format deploys its literal text on a tool implementing
+ * only that contract, which is the outcome that the format field exists to prevent. The walk reads files rather than
+ * resolved bodies: A partial carries a token into every body that inlines it, and a partial resolves only within its
+ * own root.
+ */
+async function findUnderdeclaredFormatDefects(root: string): Promise<ReadonlyArray<ContentDefect>> {
+  const { format } = await readContentRootManifest(root);
+  if (format >= OPTIONAL_TOKEN_CONTENT_FORMAT) {
+    return [];
+  }
+
+  const defects: Array<ContentDefect> = [];
+  const files = await listMarkdownFilesRecursively(root);
+  for (const file of files) {
+    const carried = locateInvocationTokens(await readFile(file, 'utf8')).filter((token) => token.optional);
+    if (carried.length === 0) {
+      continue;
+    }
+    const named = carried.map((token) => `{${token.kind}?:${token.slug}}`).join(', ');
+    defects.push({
+      file: path.relative(root, file),
+      kind: 'root',
+      detail:
+        `Contains an optional invocation token (${named}) under declared content format ${format}. ` +
+        `Declare format ${OPTIONAL_TOKEN_CONTENT_FORMAT} in ${CONTENT_MANIFEST_FILENAME}, or write the token in its ` +
+        'required form.',
+    });
   }
   return defects;
 }
