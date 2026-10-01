@@ -5,7 +5,7 @@ import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { createContentRootLinkAnchor, type LinkAnchorContext } from '../../lib/link-anchor.ts';
 import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
 import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
-import type { RulebookRenderContext } from '../../lib/rulebook-transform.ts';
+import type { ResolveRulebookContext, RulebookRenderContext } from '../../lib/rulebook-transform.ts';
 import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import type { SkillDeployContext } from '../../lib/skill-transform.ts';
 import type { SubagentDeployContext } from '../../lib/subagent-deploy.ts';
@@ -113,15 +113,6 @@ export type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: stri
  * none merges against nothing.
  */
 export type ResolveOverlay = (harnessId: HarnessId, contentRoot: string) => Promise<string>;
-
-/**
- * Builds one harness's rulebook render context. Threaded rather than rebuilt per call site so that the pre-write
- * gate, ambient delivery, and skill delivery all render a rulebook body against the same anchor.
- */
-export type ResolveRulebookContext = (
-  harnessId: HarnessId,
-  supportNamespace: string | undefined,
-) => RulebookRenderContext;
 
 /**
  * Resolves one harness's project-local skills dir together with the per-harness inputs that the skill transform

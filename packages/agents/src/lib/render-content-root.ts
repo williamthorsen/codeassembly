@@ -3,8 +3,7 @@ import path from 'node:path';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { renderAmbientBody } from '../commands/sync/ambient-hosts.ts';
-import { buildGuidanceHookFills } from '../commands/sync/hook-bindings.ts';
+import { renderAmbientBody } from './ambient-body.ts';
 import { hasAmbientRegion, injectAmbientRegion } from './ambient-region.ts';
 import { ARTIFACT_TYPES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
 import type { ContentDefect } from './content-defects.ts';
@@ -12,6 +11,7 @@ import type { ContentRootRef } from './content-root-manifest.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, type ResolvedClosure, resolveSeedClosures } from './dependency-resolver.ts';
 import { listVisibleMarkdownFiles } from './fs-helpers.ts';
+import { buildGuidanceHookFills } from './guidance-hook-fills.ts';
 import type { GuidanceHookFills } from './guidance-hooks.ts';
 import {
   listGuidanceTemplateFiles,

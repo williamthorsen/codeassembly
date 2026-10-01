@@ -13,7 +13,7 @@ import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { createContentRootLinkAnchor, createSkillLinkAnchor } from '../../lib/link-anchor.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
-import { renderRulebookBody } from '../../lib/rulebook-transform.ts';
+import { renderRulebookBody, type ResolveRulebookContext } from '../../lib/rulebook-transform.ts';
 import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { renderSkillDirectory } from '../../lib/skill-transform.ts';
 import { renderSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
@@ -26,7 +26,6 @@ import type {
   HarnessSubagentTarget,
   ResolveAnchorContext,
   ResolveOverlay,
-  ResolveRulebookContext,
 } from './render-contexts.ts';
 import type { SyncDomain } from './sync-domain.ts';
 
