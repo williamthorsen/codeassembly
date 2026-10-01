@@ -18,7 +18,7 @@ import {
 import { findInjectionPlacementDefects } from './content-rules/injection-placement.ts';
 import { findLinkResolutionDefects } from './content-rules/link-resolution.ts';
 import { findNonBreakingSpaceDefects } from './content-rules/non-breaking-space.ts';
-import type { ResolvedArtifacts, RuleContext } from './content-rules/rule-context.ts';
+import type { RuleContext } from './content-rules/rule-context.ts';
 import { findScriptInvocationDefects } from './content-rules/script-invocation.ts';
 import { findSharedGuidanceLinkDefects } from './content-rules/shared-guidance-links.ts';
 import { findSharedGuidanceReferenceDefects } from './content-rules/shared-guidance-references.ts';
@@ -138,7 +138,7 @@ export async function validateContentRoot(
   const resolver = createSourceResolver([{ name: root, dir: root }], libraryDir);
   const seeded = await resolveSeedClosures(await collectSeeds(root), resolver);
   const artifacts = await resolveArtifacts(seeded.closure, resolver);
-  const context: RuleContext = { root, libraryDir, resolver, artifacts };
+  const context: RuleContext = { root, libraryDir, resolver };
 
   // A body-local defect raises the same message on every harness, so the fold below collapses it to one line; a
   // harness-specific one (a skill scoped to one harness) surfaces naming the harnesses that it affects.
@@ -166,6 +166,14 @@ export async function validateContentRoot(
 }
 
 // region | Helpers
+
+/** Every artifact reached from a content root's seeds, resolved against its owning source. */
+interface ResolvedArtifacts {
+  readonly rulebooks: ReadonlyArray<ResolvedRulebook>;
+  readonly skills: ReadonlyArray<ResolvedSkill>;
+  readonly subagents: ReadonlyArray<ResolvedSubagent>;
+  readonly defects: ReadonlyArray<ContentDefect>;
+}
 
 /**
  * Enumerates every artifact that the root ships as a closure seed. Adds collections to the per-type catalog
