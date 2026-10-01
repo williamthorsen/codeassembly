@@ -24,6 +24,19 @@ describe(renderDigest, () => {
     expect(page?.markdown).not.toContain('Depends on #5');
   });
 
+  it('leads a hub with its own escalation, under one heading, when the hub escalated too', () => {
+    const escalations = [
+      buildEscalation(12, { dependsOn: 50 }),
+      buildEscalation(50),
+      buildEscalation(80, { dependsOn: 50 }),
+    ];
+
+    const [page] = renderDigest({ escalations, pageSize: 20, titles: new Map() });
+
+    expect(page?.markdown.match(/### Hub: #50/g)).toHaveLength(1);
+    expect(page?.entries.map((entry) => entry.number)).toStrictEqual([50, 12, 80]);
+  });
+
   it('does not make a hub of a ticket that one escalation on the page depends on', () => {
     const [page] = renderDigest({
       escalations: [buildEscalation(20, { dependsOn: 5 }), buildEscalation(30)],

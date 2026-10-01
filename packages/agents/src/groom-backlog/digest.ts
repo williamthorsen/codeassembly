@@ -36,12 +36,22 @@ export function renderDigest(input: {
   const groupOf = new Map<number, OverlapGroup>();
   for (const group of groups) for (const ticket of group.tickets) groupOf.set(ticket, group);
 
-  /** Returns the number by which an escalation is ordered: its hub, its overlap group, or its own. */
+  const dependedOn = new Set(input.escalations.map((escalation) => escalation.record.dependsOn));
+
+  /**
+   * Returns the number by which an escalation is ordered: its own when another escalation depends on it, so that a hub
+   * leads its dependents; otherwise its hub, its overlap group, or its own.
+   */
   function clusterOf(escalation: Escalation): number {
-    return escalation.record.dependsOn ?? groupOf.get(escalation.record.number)?.tickets[0] ?? escalation.record.number;
+    const { dependsOn, number } = escalation.record;
+    if (dependedOn.has(number)) return number;
+    return dependsOn ?? groupOf.get(number)?.tickets[0] ?? number;
   }
   const ordered = input.escalations.toSorted(
-    (a, b) => clusterOf(a) - clusterOf(b) || a.record.number - b.record.number,
+    (a, b) =>
+      clusterOf(a) - clusterOf(b) ||
+      Number(a.record.number !== clusterOf(a)) - Number(b.record.number !== clusterOf(b)) ||
+      a.record.number - b.record.number,
   );
 
   const pageCount = Math.ceil(ordered.length / input.pageSize);
@@ -159,10 +169,9 @@ function renderPage(input: {
   let heading: string | undefined;
   for (const [offset, escalation] of input.members.entries()) {
     const { record } = escalation;
-    const hub =
-      record.dependsOn !== null && record.dependsOn !== undefined && hubs.includes(record.dependsOn)
-        ? record.dependsOn
-        : undefined;
+    const hub = [record.number, record.dependsOn].find(
+      (ticket): ticket is number => typeof ticket === 'number' && hubs.includes(ticket),
+    );
     const group = input.groupOf.get(record.number);
     const nextHeading =
       hub === undefined ? (group === undefined ? undefined : `overlap:${group.tickets.join(',')}`) : `hub:${hub}`;
@@ -176,7 +185,7 @@ function renderPage(input: {
     heading = nextHeading;
 
     const index = offset + 1;
-    blocks.push(renderEntry(index, escalation, hub !== undefined));
+    blocks.push(renderEntry(index, escalation, hub !== undefined && hub === record.dependsOn));
     entries.push({ index, number: record.number, recommendation: record.recommendation });
   }
   return { entries, hubs, markdown: `${blocks.join('\n\n')}\n`, page: input.page };
