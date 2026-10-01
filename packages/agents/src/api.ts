@@ -6,7 +6,7 @@ import { parse as parseYaml } from 'yaml';
 import { artifactFrontmatterPath, type ArtifactType as InternalArtifactType } from './lib/artifact-types.ts';
 import type { ContentDefectKind as InternalContentDefectKind } from './lib/content-defects.ts';
 import { resolveContentDir } from './lib/content-resolver.ts';
-import { libraryResolver } from './lib/content-sources.ts';
+import { createSourceResolver } from './lib/content-sources.ts';
 import { validateContentRoot as validateRoot } from './lib/content-validation.ts';
 import { resolveClosure as resolveRootClosure } from './lib/dependency-resolver.ts';
 import { expandIncludes } from './lib/directive-expander.ts';
@@ -116,12 +116,14 @@ export async function renderContentRoot(root: string, options: RenderOptions): P
 }
 
 /**
- * Resolves the dependency closure of `seeds` within `root`, following `dependencies:`, a collection's `members:`, a
- * subagent's `skills:`, and the invocation tokens in each body. Collections are traversal-only, so the result's
- * `collection` list is always empty. Throws on an edge that resolves nowhere in `root`, or on a cycle.
+ * Resolves the dependency closure of `seeds` against `root` with the built-in library behind it, following
+ * `dependencies:`, a collection's `members:`, a subagent's `skills:`, and the invocation tokens in each body. The
+ * closure includes the library artifacts that an edge reaches. Collections are traversal-only, so the result's
+ * `collection` list is always empty. Throws on an edge that resolves in neither, or on a cycle.
  */
 export async function resolveClosure(root: string, seeds: Partial<Catalog>): Promise<Catalog> {
-  const closure = await resolveRootClosure(seeds, libraryResolver(root));
+  const resolver = createSourceResolver([{ name: path.basename(root), dir: root }], resolveContentDir());
+  const closure = await resolveRootClosure(seeds, resolver);
   return { rulebook: closure.rulebooks, skill: closure.skills, subagent: closure.subagents, collection: [] };
 }
 

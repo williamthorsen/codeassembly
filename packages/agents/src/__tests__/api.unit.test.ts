@@ -76,6 +76,15 @@ describe('content API', () => {
         subagent: [],
       });
     });
+    it('resolves an edge into the built-in library behind the root', async () => {
+      await writeFileAt(
+        root,
+        'skills/alpha/SKILL.md',
+        '---\nname: alpha\ndescription: Alpha.\ndependencies:\n  rulebooks:\n    - shell-conventions\n---\n',
+      );
+
+      expect((await resolveClosure(root, { skill: ['alpha'] })).rulebook).toContain('shell-conventions');
+    });
   });
 
   describe(renderContentRoot, () => {
