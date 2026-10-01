@@ -124,7 +124,7 @@ export const DecisionRecordSchema = z.looseObject({
   actor: z.string().min(1),
   decidedBy: z.string().min(1),
   appliedAt: z.string(),
-  supersededBy: z.number().int().positive().optional(),
+  supersededBy: z.number().int().positive().nullable().optional(),
   reason: z.string().optional(),
 });
 
