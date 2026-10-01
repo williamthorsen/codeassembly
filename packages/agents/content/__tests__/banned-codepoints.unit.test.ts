@@ -3,7 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 
 // Fixture data is authored to hold the defects that other suites assert on, so a ban would report a fixture as an
 // offender.

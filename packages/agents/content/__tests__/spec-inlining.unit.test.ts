@@ -4,9 +4,10 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // Output-shaping specs (the option-format contract and the next-steps menus) must be inlined into what the agent
 // reads, not left behind a runtime Markdown link. A link is an optional read at generation time, and the model will
@@ -19,7 +20,6 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // A second guard runs beside them, over the diff-audit checklist. Its risk is the mirror image: A host that states
 // the checklist in its own prose does not have an include directive or an anchor, so nothing in the deployment
 // mechanism can see the fork. Two carriers of `prose-line-breaks` drifted that way before it was guarded.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
 
 interface Spec {
@@ -345,7 +345,7 @@ describe('diff-audit checklist inlining', () => {
  * Returns a skill's include-expanded `SKILL.md`, the body that the install pipeline goes on to rewrite and write out.
  */
 async function expandSkill(slug: string): Promise<string> {
-  return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
+  return readContentFile(`skills/${slug}/SKILL.md`);
 }
 
 // endregion | Helpers

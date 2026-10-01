@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { isTestDirectory } from '../../src/lib/fs-helpers.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
+import { isTestDirectory } from '../test-utils/test-directories.ts';
 
 // Installable Markdown content is rewritten at install time. Runtime cross-references to other installable files must
 // use the `{harness_home_dir}/...` template (expanded by the install pipeline) or a relative Markdown link (rewritten
@@ -19,8 +20,6 @@ const ALLOWLIST: ReadonlyArray<string> = [
 ];
 
 const FORBIDDEN_PATTERN = 'packages/agents/content/';
-
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 interface Violation {
   readonly file: string;

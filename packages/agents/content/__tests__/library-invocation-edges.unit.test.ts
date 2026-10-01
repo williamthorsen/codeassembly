@@ -1,61 +1,57 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { listCatalog, resolveClosure } from 'codeassembly/api';
 import { describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../../src/lib/content-resolver.ts';
-import { libraryResolver } from '../../src/lib/content-sources.ts';
-import { resolveClosure } from '../../src/lib/dependency-resolver.ts';
-import { enumerateCatalogSlugs } from '../../src/lib/library-catalog.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 
 // Asserts that the content library's invocation edges resolve: Declaring a skill pulls the skills and subagents that
 // it invokes into its closure, whether the invocation is an inline body token or a non-inline dispatch declared in
 // frontmatter. An optional body token is the one invocation that does not contribute an edge, so the closure that
 // it stays out of is asserted here alongside the closures entered by the others.
 describe('library invocation edges', () => {
-  const contentDir = resolveContentDir();
-
   it('pulls capture-event into capture-feedback via its body token', async () => {
-    const closure = await resolveClosure({ skill: ['capture-feedback'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['capture-feedback'] });
 
-    expect(closure.skills).toContain('capture-event');
+    expect(closure.skill).toContain('capture-event');
   });
 
   it('pulls capture-feedback into collaborate, and capture-event transitively', async () => {
-    const closure = await resolveClosure({ skill: ['collaborate'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['collaborate'] });
 
-    expect(closure.skills).toContain('capture-feedback');
-    expect(closure.skills).toContain('capture-event');
+    expect(closure.skill).toContain('capture-feedback');
+    expect(closure.skill).toContain('capture-event');
   });
 
   it('pulls summarize-change into add-change-record, which drafts the block through it', async () => {
-    const closure = await resolveClosure({ skill: ['add-change-record'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['add-change-record'] });
 
-    expect(closure.skills).toContain('summarize-change');
+    expect(closure.skill).toContain('summarize-change');
   });
 
   it('pulls create-pr’s required delegates and leaves its optional one out', async () => {
-    const closure = await resolveClosure({ skill: ['create-pr'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['create-pr'] });
 
-    expect(closure.skills).toEqual(expect.arrayContaining(['create-gh-pr', 'summarize-change']));
-    expect(closure.skills).not.toContain('create-bitbucket-pr');
+    expect(closure.skill).toEqual(expect.arrayContaining(['create-gh-pr', 'summarize-change']));
+    expect(closure.skill).not.toContain('create-bitbucket-pr');
   });
 
   it('leaves capture-lede-decision out of merge-pr’s closure and in triage’s', async () => {
     // The merge flow does not record a lede decision, so its body does not contain a token that pulls the skill in. It
     // reaches consumers through the triage collection alone, and both halves are asserted: without the second,
     // deleting the skill from the library would satisfy the first.
-    const mergePr = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
-    const triage = await resolveClosure({ collection: ['triage'] }, libraryResolver(contentDir));
+    const mergePr = await resolveClosure(CONTENT_ROOT, { skill: ['merge-pr'] });
+    const triage = await resolveClosure(CONTENT_ROOT, { collection: ['triage'] });
 
-    expect(mergePr.skills).not.toContain('capture-lede-decision');
-    expect(triage.skills).toContain('capture-lede-decision');
+    expect(mergePr.skill).not.toContain('capture-lede-decision');
+    expect(triage.skill).toContain('capture-lede-decision');
   });
 
   it('pulls orchestrate dispatched subagents declared in frontmatter', async () => {
-    const closure = await resolveClosure({ skill: ['orchestrate'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['orchestrate'] });
 
-    expect(closure.subagents).toEqual(
+    expect(closure.subagent).toEqual(
       expect.arrayContaining([
         'aspect-code-reviewer',
         'orchestrated-coder',
@@ -66,29 +62,29 @@ describe('library invocation edges', () => {
   });
 
   it('pulls refine-plan review subagents declared in frontmatter', async () => {
-    const closure = await resolveClosure({ skill: ['refine-plan'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['refine-plan'] });
 
-    expect(closure.subagents).toEqual(expect.arrayContaining(['plan-reviewer', 'plan-reviser']));
+    expect(closure.subagent).toEqual(expect.arrayContaining(['plan-reviewer', 'plan-reviser']));
   });
 
   it('includes create-pr as a dependency of merge-pr, which names it in its body', async () => {
-    const closure = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['merge-pr'] });
 
-    expect(closure.skills).toContain('create-pr');
+    expect(closure.skill).toContain('create-pr');
   });
 
   it('pulls add-change-record and summarize-change into merge-pr, which offers the one on an absent block', async () => {
-    const closure = await resolveClosure({ skill: ['merge-pr'] }, libraryResolver(contentDir));
+    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['merge-pr'] });
 
-    expect(closure.skills).toEqual(expect.arrayContaining(['add-change-record', 'summarize-change']));
+    expect(closure.skill).toEqual(expect.arrayContaining(['add-change-record', 'summarize-change']));
   });
 
   it('resolves the entire content library without a cycle or missing artifact', async () => {
     // The whole-catalog resolution exercises every self-token (dropped, so it cannot form a self-cycle) and every
     // cross-reference edge (resolves to a real artifact) at once.
-    const catalog = await enumerateCatalogSlugs(contentDir);
+    const catalog = await listCatalog(CONTENT_ROOT);
 
-    await expect(resolveClosure(catalog, libraryResolver(contentDir))).resolves.toBeDefined();
+    await expect(resolveClosure(CONTENT_ROOT, catalog)).resolves.toBeDefined();
   });
 
   it('does not leave a literal command reference to a known skill or subagent in any deployed content', async () => {
@@ -97,18 +93,18 @@ describe('library invocation edges', () => {
     // file, not just top-level skill/subagent bodies: `_data` reference docs, `_partials`, rulebooks, and collections
     // are all deployed too, and a literal reference in a non-rendered doc is the same defect. The trailing-boundary
     // guard excludes script paths (`/slug.mjs`) and file paths (`/slug/...`), which are not command references.
-    const catalog = await enumerateCatalogSlugs(contentDir);
-    const known = new Set([...(catalog.skill ?? []), ...(catalog.subagent ?? [])]);
+    const catalog = await listCatalog(CONTENT_ROOT);
+    const known = new Set([...catalog.skill, ...catalog.subagent]);
     const tokenRe = /\{(?:skill|subagent)\??:[a-z][a-z0-9-]*\}/g;
     const literalRefRe = /(?<![\w./])\/([a-z][a-z0-9-]*)(?![\w/.-])/g;
     const offenders: Array<string> = [];
 
-    const files = await listMarkdownFilesRecursively(contentDir);
+    const files = await listMarkdownFilesRecursively(CONTENT_ROOT);
     for (const file of files) {
       const body = (await readFile(file, 'utf8')).replace(tokenRe, '');
       for (const [, ref] of body.matchAll(literalRefRe)) {
         if (ref !== undefined && known.has(ref)) {
-          offenders.push(`${path.relative(contentDir, file)} -> /${ref}`);
+          offenders.push(`${path.relative(CONTENT_ROOT, file)} -> /${ref}`);
         }
       }
     }

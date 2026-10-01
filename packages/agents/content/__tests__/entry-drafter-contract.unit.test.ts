@@ -2,7 +2,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // The drafter answers "What changed?" from the diff and the commit log, in a form that the author rates, and returns
 // a lede and one entry per outcome. Two edits would defeat that quietly: taking the diff away, which leaves the
@@ -11,7 +11,6 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 // guidance names one, by an exemplar below the floor, every one of which is paragraph-form, and by an entry unit that
 // reads as one edit, whose split entries the caller's audit may not merge. None of these failures shows up at runtime
 // -- each yields a plausible entry list -- so the guard has to be here.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The drafter's assignment, which selects what it reports. */
 const ASSIGNMENT_QUESTION = 'What changed?';
@@ -172,7 +171,7 @@ const TIER_FALLBACK_FLAG = '--tier {tier}';
  */
 const TYPE_RULE_KEYS: ReadonlyArray<string> = ['ai', 'deps', 'deprecate', 'drop', 'fix', 'perf', 'refactor', 'sec'];
 
-const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'subagents', 'entry-drafter.md'), CONTENT_ROOT);
+const EXPANDED = readContentFile('subagents/entry-drafter.md');
 
 describe('entry-drafter contract', () => {
   it('asks the assignment question literally', async () => {
@@ -269,7 +268,7 @@ describe('entry-drafter contract', () => {
   });
 
   it.each(SUBJECT_TEST_SOURCES)('states the subject test in %s', async (relativePath) => {
-    const text = (await expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT)).toLowerCase();
+    const text = (await readContentFile(relativePath)).toLowerCase();
     const missing = SUBJECT_TEST_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =

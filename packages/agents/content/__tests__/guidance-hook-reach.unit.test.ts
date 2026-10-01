@@ -1,23 +1,12 @@
-import { readdir, readFile } from 'node:fs/promises';
-import path from 'node:path';
-
+import { listCatalog } from 'codeassembly/api';
 import { describe, expect, it } from 'vitest';
 
-import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
-import { parseFrontmatter } from '../../src/lib/frontmatter-merger.ts';
-import {
-  assertFilledAnchorsResolve,
-  fillGuidanceHooks,
-  type GuidanceHookFill,
-  type GuidanceHookFills,
-  listGuidanceHooks,
-} from '../../src/lib/guidance-hooks.ts';
-import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
-import { isSkippedSkillEntry } from '../../src/lib/skill-transform.ts';
 import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';
-import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
+import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
+import { renderLibrary } from '../test-utils/rendered-library.ts';
 
 // A guidance hook reaches an agent two ways, and both are checked here: A body declares the directive itself, or a
 // subagent preloads a skill that declares it. Each route is one line that an edit can drop without any other test
@@ -25,10 +14,9 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 //
 // Every hook is a row of one table rather than a file of its own, so a hook added without a row is visible as an
 // absence here instead of as a suite that nobody wrote.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
-const RULEBOOKS_ROOT = path.join(CONTENT_ROOT, 'guidance', 'rulebooks');
-const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
-const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
+
+/** Matches a guidance-hook directive on its own line, capturing the hook's name. */
+const HOOK_DIRECTIVE_PATTERN = /^[ \t]*<!--[ \t]*guidance-hook:[ \t]*(.*?)[ \t]*-->[ \t]*$/gm;
 
 /** A rulebook that a declaration binds to a hook, with a phrase that would not survive the rulebook being gutted. */
 interface BoundRulebook {
@@ -161,6 +149,11 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   },
 ];
 
+/** Maps each hook to the rulebooks bound to it, spanning every guard, as a declaration binds them all at once. */
+const BINDINGS: Readonly<Record<string, ReadonlyArray<string>>> = Object.fromEntries(
+  HOOK_GUARDS.map(({ boundRulebooks, hook }) => [hook, boundRulebooks.map(({ slug }) => slug)]),
+);
+
 /**
  * Skills permitted to declare a hook whose bound rulebooks deliver `ambient`, each with the reason it is permitted.
  * A session running such a skill reads the rulebook twice, once from the harness guidance file and once from the
@@ -189,35 +182,34 @@ const REVIEWER_SUBAGENTS: ReadonlyArray<string> = [
 
 describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, hook, role, spliceProbe }) => {
   it.each(declaringBodies)('$label declares the hook', async ({ label, relativePath }) => {
-    const declared = listGuidanceHooks(await expandBody(relativePath), label).map(({ name }) => name);
+    const declared = listDeclaredHooks(await readContentFile(relativePath));
 
     const message = `${label} ${role} but does not declare the ${hook} hook, so a binding cannot reach it`;
     expect(declared, message).toContain(hook);
   });
 
   it.each(boundRulebooks)('$slug declares hook delivery', async ({ slug }) => {
-    const { rulebook } = parseRulebookFile(await readFile(path.join(RULEBOOKS_ROOT, `${slug}.md`), 'utf8'), slug);
+    const delivery = await readFrontmatterList('rulebook', slug, 'delivery');
 
     const message = `${slug} is bound to ${hook} but its delivery does not name the route, so sync warns about it`;
-    expect(rulebook.delivery, message).toContain('hook');
+    expect(delivery, message).toContain('hook');
   });
 
   it('splices every bound rulebook into a declaring body', async () => {
     const { body, coexisting } = spliceProbe;
-    const filled = fillGuidanceHooks(await expandBody(body.relativePath), await buildFills(), body.label);
+    const filled = await readBoundBody(body.relativePath);
 
     for (const { rule } of boundRulebooks) {
-      expect(filled.content).toContain(rule);
+      expect(filled).toContain(rule);
     }
     for (const text of coexisting) {
-      expect(filled.content).toContain(text);
+      expect(filled).toContain(text);
     }
   });
 
-  it.each(declaringBodies)('$label resolves its anchors once filled', async ({ label, relativePath }) => {
-    const filled = fillGuidanceHooks(await expandBody(relativePath), await buildFills(), label);
-
-    expect(() => assertFilledAnchorsResolve(filled, label)).not.toThrow();
+  // The bound render throws on an anchor that a fill leaves unresolvable, so a body that is present here resolved.
+  it.each(declaringBodies)('$label resolves its anchors once filled', async ({ relativePath }) => {
+    expect(await readBoundBody(relativePath)).toContain(openHookMarker(hook));
   });
 });
 
@@ -226,8 +218,7 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
 // have an empty field for a route that they do not use.
 describe('reviewer-subagent carrier', () => {
   it.each(REVIEWER_SUBAGENTS)('%s preloads the skill declaring the hook', async (slug) => {
-    const content = await readFile(path.join(SUBAGENTS_ROOT, `${slug}.md`), 'utf8');
-    const injected = readInjectedSkills(content, `${slug}.md`);
+    const injected = await readFrontmatterList('subagent', slug, 'skills');
 
     const message = `${slug} judges code but does not preload ${REVIEWER_CARRIER}; injected: [${injected.join(', ')}]`;
     expect(injected, message).toContain(REVIEWER_CARRIER);
@@ -277,8 +268,7 @@ function describeAmbientBinding({ ambientSlugs, hook }: AmbientHookBinding): str
 async function filterAmbientRulebooks(boundRulebooks: ReadonlyArray<BoundRulebook>): Promise<ReadonlyArray<string>> {
   const ambient: Array<string> = [];
   for (const { slug } of boundRulebooks) {
-    const { rulebook } = parseRulebookFile(await readFile(path.join(RULEBOOKS_ROOT, `${slug}.md`), 'utf8'), slug);
-    if (rulebook.delivery.includes('ambient')) {
+    if ((await readFrontmatterList('rulebook', slug, 'delivery')).includes('ambient')) {
       ambient.push(slug);
     }
   }
@@ -297,7 +287,7 @@ async function listAmbientFillDeclarers(): Promise<ReadonlyMap<string, ReadonlyA
     if (ambientSlugs.length === 0) {
       continue;
     }
-    const declaringSkills = await listSkillSlugsDeclaring(hook);
+    const declaringSkills = await listSkillSlugsFilling(hook);
     for (const slug of declaringSkills) {
       const bindings = declarers.get(slug);
       if (bindings === undefined) {
@@ -311,63 +301,48 @@ async function listAmbientFillDeclarers(): Promise<ReadonlyMap<string, ReadonlyA
   return declarers;
 }
 
+/** Lists the hooks declared by a source body's guidance-hook directives. */
+function listDeclaredHooks(body: string): ReadonlyArray<string> {
+  return body
+    .matchAll(HOOK_DIRECTIVE_PATTERN)
+    .map((match) => match[1] ?? '')
+    .toArray();
+}
+
 /**
- * Returns every skill slug declaring `hook` in a Markdown body reached by the deploy walk. `isSkippedSkillEntry` is
- * what `sync` applies, so a directive in a skill-local partial counts here only when a deployed body inlines it, as
- * there.
+ * Returns every skill slug whose deployed files fill `hook` in the bound render. The render walks a skill as `sync`
+ * does, so a directive in a skill-local partial counts here only when a deployed body inlines it, and a support entry
+ * never fills a hook.
  */
-async function listSkillSlugsDeclaring(hook: string): Promise<ReadonlyArray<string>> {
-  const slugs: Array<string> = [];
-  const entries = await readdir(SKILLS_ROOT, { withFileTypes: true });
-  for (const entry of entries) {
-    // `_data` joins the skipped names here: A support entry is not a skill, and the support route does not render a fill.
-    if (!entry.isDirectory() || entry.name.startsWith('_') || isSkippedSkillEntry(entry.name)) {
-      continue;
-    }
-    const skillRoot = path.join(SKILLS_ROOT, entry.name);
-    const files = await listMarkdownFiles(skillRoot);
-    for (const filePath of files) {
-      if (path.relative(skillRoot, filePath).split(path.sep).some(isSkippedSkillEntry)) {
-        continue;
-      }
-      const relativePath = path.relative(CONTENT_ROOT, filePath);
-      const declared = listGuidanceHooks(await expandBody(relativePath), relativePath);
-      if (declared.some(({ name }) => name === hook)) {
-        slugs.push(entry.name);
-        break;
-      }
+async function listSkillSlugsFilling(hook: string): Promise<ReadonlyArray<string>> {
+  const skills = new Set((await listCatalog(CONTENT_ROOT)).skill);
+  const tree = await renderLibrary('claude', BINDINGS);
+  const slugs = new Set<string>();
+  for (const [deployedPath, { body }] of Object.entries(tree)) {
+    const slug = /^skills\/([^/]+)\//.exec(deployedPath)?.[1];
+    if (slug !== undefined && skills.has(slug) && body.includes(openHookMarker(hook))) {
+      slugs.add(slug);
     }
   }
-  return slugs;
+  return slugs.values().toArray();
+}
+
+/** Returns the opening marker of a filled hook's region. */
+function openHookMarker(hook: string): string {
+  return `<!-- codeassembly-guidance-hook:${hook}:start -->`;
 }
 
 /**
- * Builds the fills that a declaration produces, keyed by hook, spanning every guard rather than one hook at a time: A
- * body can declare more than one, and an anchor collision only shows up once they fill together the way `sync` fills
- * them. Bound bodies stay unrendered: Link rewriting and invocation-token resolution belong to `sync` and are covered
- * there, and what these assertions cover is the splice into the real consumer bodies.
+ * Returns a skill or subagent body as the Claude render delivers it with every guard's rulebooks bound. Bound bodies
+ * are rendered, so their link targets and invocation tokens are already resolved.
  */
-async function buildFills(): Promise<GuidanceHookFills> {
-  const entries = await Promise.all(
-    HOOK_GUARDS.map(async ({ boundRulebooks, hook }): Promise<[string, ReadonlyArray<GuidanceHookFill>]> => {
-      const bound = await Promise.all(
-        boundRulebooks.map(async ({ slug }) => ({ slug, body: await readRulebookBody(slug) })),
-      );
-      return [hook, bound];
-    }),
-  );
-  return new Map(entries);
-}
-
-/** Returns a skill or subagent body with its includes expanded, the body that the deploy pipeline goes on to fill. */
-async function expandBody(relativePath: string): Promise<string> {
-  return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
-}
-
-/** Returns a rulebook's body with its frontmatter stripped, the form that a fill splices. */
-async function readRulebookBody(slug: string): Promise<string> {
-  const content = await readFile(path.join(RULEBOOKS_ROOT, `${slug}.md`), 'utf8');
-  return parseFrontmatter(content).body;
+async function readBoundBody(relativePath: string): Promise<string> {
+  const deployedPath = relativePath.replace(/^subagents\//, 'agents/');
+  const entry = (await renderLibrary('claude', BINDINGS))[deployedPath];
+  if (entry === undefined) {
+    throw new Error(`The bound Claude render does not contain ${deployedPath}`);
+  }
+  return entry.body;
 }
 
 /** Returns the declaring-body entry for a subagent named by its slug. */

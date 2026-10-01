@@ -3,19 +3,17 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { readInjectedSkills } from '../../src/lib/dependency-frontmatter.ts';
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
 import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
+import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
 
 // Two mechanisms put the doctrine into an agent's context, and both are checked here: A skill inlines it at install
 // time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent does not
 // need a body edit, only an injected carrier; that injection list is a frontmatter array that an edit can trim
 // without any other test failing.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
-const SKILLS_ROOT = path.join(CONTENT_ROOT, 'skills');
-const SUBAGENTS_ROOT = path.join(CONTENT_ROOT, 'subagents');
 
 const DOCTRINE_HEADING = '## Comment discipline';
 
@@ -62,8 +60,7 @@ describe('comment-discipline reach', () => {
   });
 
   it.each(COMMENT_AUTHORING_SUBAGENTS)('%s injects a skill that inlines the doctrine', async (slug) => {
-    const content = await readFile(path.join(SUBAGENTS_ROOT, `${slug}.md`), 'utf8');
-    const injected = readInjectedSkills(content, `${slug}.md`);
+    const injected = await readFrontmatterList('subagent', slug, 'skills');
     const carriers = injected.filter((skill) => CARRIER_SKILLS.includes(skill));
 
     const message = `${slug} writes or judges comments but does not inject a skill that inlines the doctrine; injected: [${injected.join(', ')}]`;
@@ -90,5 +87,5 @@ describe('comment-discipline reach', () => {
  * Returns a skill's include-expanded `SKILL.md`, the body that the install pipeline goes on to rewrite and write out.
  */
 async function expandSkill(slug: string): Promise<string> {
-  return expandIncludes(path.join(SKILLS_ROOT, slug, 'SKILL.md'), CONTENT_ROOT);
+  return readContentFile(`skills/${slug}/SKILL.md`);
 }

@@ -2,8 +2,8 @@ import { createHash } from 'node:crypto';
 
 import { describe, expect, it } from 'vitest';
 
-import type { ResolvedRulebook } from '../../src/lib/rulebook-deploy.ts';
-import { resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
+import { type ResolvedRulebook, resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleSections } from '../test-utils/rule-markers.ts';
 
 // A rulebook's version names the guidance that an agent holds, so a body that changes without a bump reports one
@@ -12,8 +12,6 @@ import { listRuleSections } from '../test-utils/rule-markers.ts';
 //
 // The pins below are what force the look. A body edit fails this suite until the author decides which of the two
 // remedies applies, and the failure message states both.
-
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** A phrase of `_partials/prose-line-breaks.md` that `commit-conventions` reaches only by including the partial. */
 const INCLUDED_PARTIAL_MARKER = '**No hard line breaks.**';

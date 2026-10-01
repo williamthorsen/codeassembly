@@ -1,8 +1,6 @@
-import path from 'node:path';
-
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // `## Details` renders the drafter's entries, `## What` contains the lede that the same drafter wrote, and a later
 // ticket parses the entries back out of the rendering. Three edits would defeat that quietly: under-specifying the
@@ -10,7 +8,6 @@ import { expandIncludes } from '../../src/lib/directive-expander.ts';
 // made `## Details` a prose re-rendering of the diff; and composing `## What` in this session, which returns the
 // weighting that the fresh-context dispatch removes. None fails at runtime -- each yields a plausible change summary
 // -- so the guard has to be here.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /**
  * Phrases that a restored coverage mandate contains. The mandate required every fact in the lede to reappear in
@@ -74,7 +71,7 @@ const PERMITTED_SUBAGENTS: ReadonlyArray<string> = ['entry-drafter'];
 /** The token form by which a skill names a subagent to dispatch. */
 const SUBAGENT_TOKEN = /\{subagent:([a-z][a-z0-9-]*)\}/g;
 
-const EXPANDED = expandIncludes(path.join(CONTENT_ROOT, 'skills', 'summarize-change', 'SKILL.md'), CONTENT_ROOT);
+const EXPANDED = readContentFile('skills/summarize-change/SKILL.md');
 
 describe('summarize-change contract', () => {
   it('states the `## Details` rendering', async () => {

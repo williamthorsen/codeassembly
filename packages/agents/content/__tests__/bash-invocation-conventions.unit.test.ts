@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // Three conventions bind the Bash invocations in agent-facing content, and all three exist because one invocation
@@ -42,7 +43,6 @@ const INVOCATION_OPENINGS: ReadonlyArray<string> = ['git ', 'node ', '{harness_h
 
 // `_partials` holds content that the expander inlines into skills and subagents at install time. A fence there
 // reaches the same place as one written in the skill itself.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const SCANNED_DIRS: ReadonlyArray<string> = ['_partials', 'skills', 'subagents'];
 
 // A fence's delimiter is a run of three or more backticks, and it closes on a run at least as long without an info

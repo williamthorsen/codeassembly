@@ -3,13 +3,13 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // A dispatch block hands a subagent the scalars that it was not able to derive, and nothing else. A prose value
 // there makes the caller the author of the facts and the subagent a rewriter of them, which is worth nothing when the
 // subagent's value is its fresh context. Such a value does not fail at runtime -- it produces a plausible lede
 // carrying the caller's weighting -- so the guard has to be here.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** Info string marking a fence as a subagent dispatch block. */
 const FENCE_INFO = 'dispatch';

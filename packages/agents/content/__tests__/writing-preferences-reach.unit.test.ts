@@ -3,15 +3,15 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
-import { parseRulebookFile } from '../../src/lib/rulebook-schema.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
+import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
 
 // Two routes deliver these rules, and each is asserted where it can be: The ambient route is a `delivery` value on the
 // rulebook, checked here, and the hook route is a row in `guidance-hook-reach.unit.test.ts`. Both rest on each rule
 // having one statement home, which the last assertion checks. A second statement elsewhere in the corpus is drift that
 // separates a rule from its rulebook.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 const RULEBOOK = 'guidance/rulebooks/williamthorsen-writing-preferences.md';
 const SLUG = 'williamthorsen-writing-preferences';
 
@@ -66,10 +66,10 @@ describe('writing-preferences reach', () => {
   });
 
   it('declares ambient delivery', async () => {
-    const { rulebook } = parseRulebookFile(await readRulebook(), SLUG);
+    const delivery = await readFrontmatterList('rulebook', SLUG, 'delivery');
 
     const message = `${SLUG} drops its ambient route, so an interactive session loses these rules; the hook route reaches subagents alone`;
-    expect(rulebook.delivery, message).toContain('ambient');
+    expect(delivery, message).toContain('ambient');
   });
 
   it('states each rule in one file alone', async () => {
@@ -99,12 +99,7 @@ describe('writing-preferences reach', () => {
 
 /** Returns the rulebook with its includes expanded, so an inlined rule counts as reaching it. */
 async function readExpandedRulebook(): Promise<string> {
-  return expandIncludes(path.join(CONTENT_ROOT, RULEBOOK), CONTENT_ROOT);
-}
-
-/** Returns the rulebook's raw content, frontmatter included. */
-async function readRulebook(): Promise<string> {
-  return readFile(path.join(CONTENT_ROOT, RULEBOOK), 'utf8');
+  return readContentFile(RULEBOOK);
 }
 
 // endregion | Helpers

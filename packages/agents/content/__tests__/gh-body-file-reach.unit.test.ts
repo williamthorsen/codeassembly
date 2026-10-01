@@ -3,15 +3,15 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
+import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // `gh` accepts `--body-file ""` without complaint and publishes its own default body, so a call site that reaches
 // the CLI with an unset path fails silently. The contract binds only when it is already in context as the call is
 // composed. Each carrier inlines it rather than linking to it, for the reason given by the `_partials` README: A
 // runtime link is an optional read, and the model fills from its prior instead.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** The one file permitted to state the contract; every carrier reaches it through an include. */
 const PARTIAL = 'skills/_partials/gh-body-file.md';
@@ -130,7 +130,7 @@ describe('gh-body-file reach', () => {
 
 /** Returns a carrier's include-expanded body, what the install pipeline goes on to rewrite and write out. */
 async function expandCarrier(relativePath: string): Promise<string> {
-  return expandIncludes(path.join(CONTENT_ROOT, relativePath), CONTENT_ROOT);
+  return readContentFile(relativePath);
 }
 
 /** Returns the variable passed by each of a block's body-file arguments, one entry per argument. */

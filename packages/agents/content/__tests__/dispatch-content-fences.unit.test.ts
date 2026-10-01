@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // A content fence is the one channel that hands a subagent text rather than scalars: the passages that a redispatched
@@ -11,7 +12,6 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // exactly as a prose scalar in the dispatch block does, which `dispatch-block-scalars` forbids by holding that
 // block's keys to a closed set. Because neither failure shows at runtime -- each yields a plausible lede carrying the
 // caller's weighting -- the guard has to be here.
-const CONTENT_ROOT = new URL('../', import.meta.url).pathname;
 
 /** Every info string that a content fence may carry. A channel absent from this set is one that nothing reviewed. */
 const DECLARED_FENCES: ReadonlySet<string> = new Set(['rejected']);

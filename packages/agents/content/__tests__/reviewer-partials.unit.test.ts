@@ -1,51 +1,20 @@
-import path from 'node:path';
+import { describe, expect, it } from 'vitest';
 
-import { beforeAll, describe, expect, it } from 'vitest';
-
-import { resolveContentDir } from '../../src/lib/content-resolver.ts';
-import { expandIncludes } from '../../src/lib/directive-expander.ts';
-import { HARNESSES } from '../../src/lib/harness.ts';
-import { loadHarnessOverlay } from '../../src/lib/harness-overlay.ts';
-import type { RulebookInvocationCatalog } from '../../src/lib/invocation-tokens.ts';
-import { homeAnchor } from '../../src/lib/path-rewriter.ts';
-import { renderSubagentForHarness } from '../../src/lib/subagent-transform.ts';
-
-/** The rulebook injected by `orchestrated-coder`; the sources under test don't address any other. */
-const RULEBOOKS: RulebookInvocationCatalog = new Map([
-  ['commit-conventions', { skillName: 'consult-commit-conventions', skill: true }],
-]);
+import { renderLibrary } from '../test-utils/rendered-library.ts';
 
 /**
  * Round-trip tests verifying the reviewer and coder subagents render against the real `content/` tree with their
  * shared partials fully inlined: without any leftover include directives, and with the key prose blocks present. They
- * reproduce `sync`'s subagent-deploy transform (expand includes, then `renderSubagentForHarness`), so they assert the
- * exact body written by `sync`.
+ * read the library's Claude render, so they assert the body that deployment writes.
  */
 describe('reviewer and coder partials render correctly', () => {
-  const contentDir = resolveContentDir();
-  const harnessConfig = HARNESSES.claude;
-  let overlayYaml: string;
-
-  beforeAll(async () => {
-    overlayYaml = await loadHarnessOverlay(contentDir, harnessConfig);
-  });
-
-  /** Renders a subagent's deployed claude body exactly as `sync`'s `deploySubagent` does: expand includes, then merge frontmatter and rewrite tool, path, and template placeholders. */
+  /** Returns a subagent's deployed Claude body. */
   async function readDeployed(name: string): Promise<string> {
-    const fileName = `${name}.md`;
-    const expanded = await expandIncludes(path.join(contentDir, 'subagents', fileName), contentDir);
-    return renderSubagentForHarness(expanded, {
-      overlayYaml,
-      fileRelPath: fileName,
-      sourceLabel: `subagents/${fileName}`,
-      anchor: homeAnchor(harnessConfig.homeDir),
-      guidanceFileName: harnessConfig.guidanceFileName,
-      homeDir: harnessConfig.homeDir,
-      harnessId: harnessConfig.id,
-      skillSigil: harnessConfig.skillSigil,
-      subagentSigil: harnessConfig.subagentSigil,
-      rulebooks: RULEBOOKS,
-    });
+    const entry = (await renderLibrary('claude'))[`agents/${name}.md`];
+    if (entry === undefined) {
+      throw new Error(`The Claude render does not contain the ${name} subagent`);
+    }
+    return entry.body;
   }
 
   const returnBlockReviewers = [
