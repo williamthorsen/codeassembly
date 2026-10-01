@@ -67,7 +67,7 @@ Every comment that the skill posts ends with a marker:
 <!-- codeassembly-triage {"run":"2026-10-01","assessedAt":"2026-10-01T12:00:00Z","sha":"abc1234","verdicts":{...},"recommendation":"close-complete","confidence":"high","rule":null,"remainder":[],"decision":"close-complete","actor":"agent","decidedBy":"policy"} -->
 ```
 
-`>` in the JSON is written as `>`, so that free text cannot close the comment. A bulk decision's marker has null `verdicts`, `recommendation`, `assessedAt`, `sha`, and `confidence`. The latest marker across a ticket's comments is the ticket's prior record, which `collect` passes to the assessor; a marker without `rule` or `remainder` is still read.
+`>` in the JSON is written as `\u003e`, so that free text cannot close the comment. A bulk decision's marker has null `verdicts`, `recommendation`, `assessedAt`, `sha`, and `confidence`. The latest marker across a ticket's comments is the ticket's prior record, which `collect` passes to the assessor; a marker without `rule` or `remainder` is still read.
 
 ## Skill arguments
 
