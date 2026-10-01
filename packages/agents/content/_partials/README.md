@@ -166,7 +166,7 @@ A **partial** resolves by path. The author writes `<!-- include: _partials/x.md 
 
 A **guidance hook** resolves by binding. The author writes `<!-- guidance-hook: name -->` and leaves the slot empty; a `codeassembly.yaml` names which rulebooks fill it, per project or per machine. Use one when the right content differs by who is running (personal code-style preferences, a project's own glossary), which is exactly what a path fixed at authoring time cannot express.
 
-A hook is filled only in a declared skill or subagent, the artifacts that a declaration covers. A directive in a rulebook body, a `skills/_data/` support entry, or a harness guidance file is always stripped, and so is every hook under `install`, which does not resolve any declaration. Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it. `packages/agents/README.md` documents the binding syntax and the naming rules.
+A hook is filled only in a declared skill or subagent, the artifacts that a declaration covers. A directive in a rulebook body, a `skills/_data/` support entry, or a harness guidance file is always stripped, and so is every hook under `install`, which does not resolve any declaration. Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it. `packages/agents/docs/project-declaration.md` documents the binding syntax and the naming rules.
 
 The expander rejects unrecognized parameters following `include:` with an `unrecognized-parameter` error. This stops a typo from being silently ignored.
 

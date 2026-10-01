@@ -45,7 +45,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'codeassembly-content-specification',
-    { bodyHash: '2ba8775f201ce63fcc68655fe7e43e9775da1ecbdc5f649d6f29766afcd14019', version: '24' },
+    { bodyHash: '3332030b1d821c9232e8cba7a841ccdae5cacf8566ea443e5c89da3437ad1097', version: '24' },
   ],
   [
     'commit-conventions',

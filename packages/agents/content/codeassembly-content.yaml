@@ -1,4 +1,4 @@
-# The content-format contract against which this root is authored; see the codeassembly README.
+# The content-format contract against which this root is authored; see "Content-format version" in packages/agents/docs/project-declaration.md.
 format: 2
 
 # The TypeScript helpers that `codeassembly bundle-helpers` bundles into this root, both paths relative to this file.
