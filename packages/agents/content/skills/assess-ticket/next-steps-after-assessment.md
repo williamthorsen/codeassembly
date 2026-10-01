@@ -4,16 +4,9 @@ Prompt for follow-up actions when any assessment verdict is non-baseline. The pr
 
 ## Baseline definition
 
-A verdict is **baseline** when it does not indicate any concern or needed action:
+<!-- include: ../../_partials/ticket-assessment-baseline.md / -->
 
-| Dimension    | Baseline verdict |
-| ------------ | ---------------- |
-| Drift        | `none`           |
-| Relevance    | `relevant`       |
-| Progress     | `none`           |
-| Advisability | `advisable`      |
-
-Complexity verdicts are purely informational and never trigger a prompt.
+Complexity verdicts never trigger a prompt.
 
 When all assessed verdicts are baseline, do not show a next-steps prompt.
 
