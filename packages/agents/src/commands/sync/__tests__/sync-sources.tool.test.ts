@@ -5,15 +5,15 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { resolveContentDir } from '../../../lib/content-resolver.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { syncCommand } from '../sync.ts';
 
-// Syncs a project that draws a rulebook from a declared source alongside one from the real content library, to catch
-// failures that only show up when composing a source over the real catalog end-to-end.
-describe('sync with a declared source (real library fallback)', () => {
+// Syncs a project that draws artifacts from a declared source alongside the library, to catch failures that only show
+// up when composing a source over the library end-to-end.
+describe('sync with a declared source over the library', () => {
   let projectRoot: string;
   let sourceDir: string;
+  let libraryDir: string;
   // Because targeting reads the home tier's declaration and detects installed harnesses under it, every run below
   // is given a temp home rather than the developer's own.
   let homeDir: string;
@@ -23,15 +23,23 @@ describe('sync with a declared source (real library fallback)', () => {
     homeDir = path.join(tmpdir(), `agents-test-sync-sources-int-home-${stamp}`);
     projectRoot = path.join(tmpdir(), `agents-test-sync-sources-int-proj-${stamp}`);
     sourceDir = path.join(tmpdir(), `agents-test-sync-sources-int-src-${stamp}`);
+    libraryDir = path.join(tmpdir(), `agents-test-sync-sources-int-lib-${stamp}`);
     await mkdir(homeDir, { recursive: true });
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await mkdir(path.join(sourceDir, 'guidance', 'rulebooks'), { recursive: true });
+    await mkdir(path.join(libraryDir, 'guidance', 'rulebooks'), { recursive: true });
+    await writeFile(
+      path.join(libraryDir, 'guidance', 'rulebooks', 'library-rules.md'),
+      '---\nslug: library-rules\ndelivery: skill\n---\n\n# Library rules\n\nLibrary-provided guidance.\n',
+      'utf8',
+    );
   });
 
   afterEach(async () => {
     await rm(projectRoot, { recursive: true, force: true });
     await rm(homeDir, { recursive: true, force: true });
     await rm(sourceDir, { recursive: true, force: true });
+    await rm(libraryDir, { recursive: true, force: true });
   });
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
@@ -50,26 +58,26 @@ describe('sync with a declared source (real library fallback)', () => {
   const skillPath = (slug: string): string => path.join(projectRoot, '.claude', 'skills', slug, 'SKILL.md');
   const subagentPath = (slug: string): string => path.join(projectRoot, '.claude', 'agents', `${slug}.md`);
 
-  it('deploys a source ambient rulebook and a real library rulebook together, then retracts the source one', async () => {
+  it('deploys a source ambient rulebook and a library rulebook together, then retracts the source one', async () => {
     await writeFile(
       path.join(sourceDir, 'guidance', 'rulebooks', 'org-rules.md'),
       '---\nslug: org-rules\ndelivery: ambient\n---\n\n# Org rules\n\nSource-provided guidance.\n',
       'utf8',
     );
-    await declare('rulebooks:\n  use:\n    - org-rules\n    - shell-conventions\n');
+    await declare('rulebooks:\n  use:\n    - org-rules\n    - library-rules\n');
 
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
+    await syncCommand(makeOptions(), projectRoot, libraryDir, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('<!-- rulebook:org-rules -->');
     expect(localHost).toContain('Source-provided guidance.');
-    expect(await readFile(skillPath('consult-shell-conventions'), 'utf8')).toContain('# Shell script conventions');
+    expect(await readFile(skillPath('consult-library-rules'), 'utf8')).toContain('# Library rules');
 
-    await declare('rulebooks:\n  use:\n    - shell-conventions\n');
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
+    await declare('rulebooks:\n  use:\n    - library-rules\n');
+    await syncCommand(makeOptions(), projectRoot, libraryDir, homeDir);
 
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:org-rules -->');
-    expect(existsSync(skillPath('consult-shell-conventions'))).toBe(true);
+    expect(existsSync(skillPath('consult-library-rules'))).toBe(true);
   });
 
   it('deploys a source skill and source subagent (expanding a source-local include), then retracts them', async () => {
@@ -92,7 +100,7 @@ describe('sync with a declared source (real library fallback)', () => {
     );
     await declare('skills:\n  use:\n    - org-skill\nsubagents:\n  use:\n    - org-agent\n');
 
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
+    await syncCommand(makeOptions(), projectRoot, libraryDir, homeDir);
 
     const skillMd = await readFile(skillPath('org-skill'), 'utf8');
     expect(skillMd).toContain('<!-- codeassembly-skill:org-skill -->');
@@ -101,13 +109,13 @@ describe('sync with a declared source (real library fallback)', () => {
     expect(await readFile(subagentPath('org-agent'), 'utf8')).toContain('<!-- codeassembly-subagent:org-agent -->');
 
     await declare('skills:\n  use: []\nsubagents:\n  use: []\n');
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
+    await syncCommand(makeOptions(), projectRoot, libraryDir, homeDir);
 
     expect(existsSync(skillPath('org-skill'))).toBe(false);
     expect(existsSync(subagentPath('org-agent'))).toBe(false);
   });
 
-  it('deploys a source-declared collection, resolving members across the source and the real library, then retracts', async () => {
+  it('deploys a source-declared collection, resolving members across the source and the library, then retracts', async () => {
     await mkdir(path.join(sourceDir, 'skills', 'org-skill'), { recursive: true });
     await writeFile(
       path.join(sourceDir, 'skills', 'org-skill', 'SKILL.md'),
@@ -117,22 +125,22 @@ describe('sync with a declared source (real library fallback)', () => {
     await mkdir(path.join(sourceDir, 'collections'), { recursive: true });
     await writeFile(
       path.join(sourceDir, 'collections', 'org-bundle.md'),
-      '---\nname: org-bundle\nmembers:\n  rulebooks:\n    - shell-conventions\n  skills:\n    - org-skill\n---\n\n# Org bundle\n',
+      '---\nname: org-bundle\nmembers:\n  rulebooks:\n    - library-rules\n  skills:\n    - org-skill\n---\n\n# Org bundle\n',
       'utf8',
     );
     await declare('collections:\n  use:\n    - org-bundle\n');
 
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
+    await syncCommand(makeOptions(), projectRoot, libraryDir, homeDir);
 
-    // A source collection is traversal-only: Its members deploy (the source skill and the real library rulebook)
+    // A source collection is traversal-only: Its members deploy (the source skill and the library rulebook)
     // while the collection itself is never emitted.
     expect(await readFile(skillPath('org-skill'), 'utf8')).toContain('Org-provided skill.');
-    expect(await readFile(skillPath('consult-shell-conventions'), 'utf8')).toContain('# Shell script conventions');
+    expect(await readFile(skillPath('consult-library-rules'), 'utf8')).toContain('# Library rules');
 
     await declare('collections:\n  use: []\n');
-    await syncCommand(makeOptions(), projectRoot, resolveContentDir(), homeDir);
+    await syncCommand(makeOptions(), projectRoot, libraryDir, homeDir);
 
     expect(existsSync(skillPath('org-skill'))).toBe(false);
-    expect(existsSync(skillPath('consult-shell-conventions'))).toBe(false);
+    expect(existsSync(skillPath('consult-library-rules'))).toBe(false);
   });
 });

@@ -1,29 +1,45 @@
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveContentDir } from '../content-resolver.ts';
+const { mockedExistsSync } = vi.hoisted(() => {
+  return { mockedExistsSync: vi.fn() };
+});
+
+vi.mock('node:fs', async (importOriginal) => {
+  const original = await importOriginal<typeof import('node:fs')>();
+  return {
+    ...original,
+    default: { ...original, existsSync: mockedExistsSync },
+    existsSync: mockedExistsSync,
+  };
+});
+
+/** The directory containing the resolver module, from which both candidates are resolved. */
+const RESOLVER_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+
+const PRIMARY = path.resolve(RESOLVER_DIR, '../../content');
+const FALLBACK = path.resolve(RESOLVER_DIR, '../../../content');
 
 describe('resolveContentDir', () => {
-  it('should resolve to a directory that exists', () => {
-    const contentDir = resolveContentDir();
-    expect(contentDir).toMatch(/content$/);
+  afterEach(() => {
+    vi.restoreAllMocks();
   });
 
-  it('should resolve to a directory containing skills and subagents', async () => {
-    const { existsSync } = await import('node:fs');
-    const contentDir = resolveContentDir();
+  it('returns the primary candidate when it exists', async () => {
+    mockedExistsSync.mockImplementation((candidate: string) => candidate === PRIMARY || candidate === FALLBACK);
 
-    expect(existsSync(path.join(contentDir, 'skills'))).toBe(true);
-    expect(existsSync(path.join(contentDir, 'subagents'))).toBe(true);
+    const { resolveContentDir } = await import('../content-resolver.ts');
+
+    expect(resolveContentDir()).toBe(PRIMARY);
   });
 
-  it('includes `skills/_data/work-types.json` so that the install sweep ships it', async () => {
-    // The install command copies the resolved content directory wholesale, so a new `_data/` file does not need
-    // any install-code change.
-    const { existsSync } = await import('node:fs');
-    const contentDir = resolveContentDir();
+  it('returns the fallback candidate when only it exists', async () => {
+    mockedExistsSync.mockImplementation((candidate: string) => candidate === FALLBACK);
 
-    expect(existsSync(path.join(contentDir, 'skills', '_data', 'work-types.json'))).toBe(true);
+    const { resolveContentDir } = await import('../content-resolver.ts');
+
+    expect(resolveContentDir()).toBe(FALLBACK);
   });
 });

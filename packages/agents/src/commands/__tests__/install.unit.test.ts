@@ -209,6 +209,16 @@ describe(installCommand, () => {
     }
   });
 
+  it('rewrites a relative link in a support file in link mode', async () => {
+    const claudeHome = await setupClaudeHome();
+    await writeFile(path.join(contentDir, 'skills', '_data', 'guide.md'), 'See [the sample](sample.md).\n', 'utf8');
+
+    await installCommand(makeOptions({ link: true }), tempDir, contentDir);
+
+    const installed = await readFile(path.join(claudeHome, 'skills', '_data', 'guide.md'), 'utf8');
+    expect(installed).toContain('[the sample](~/.claude/skills/_data/sample.md)');
+  });
+
   it('installs support directories for claude but not harness-specific skill directories', async () => {
     const claudeHome = await setupClaudeHome();
 

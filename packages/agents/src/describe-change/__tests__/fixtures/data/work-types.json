@@ -1,0 +1,11 @@
+{
+  "tiers": ["public", "internal", "process"],
+  "types": [
+    { "aliases": [], "breakingPolicy": "optional", "key": "feat", "tier": "public" },
+    { "aliases": [], "breakingPolicy": "optional", "key": "drop", "tier": "public" },
+    { "aliases": [], "breakingPolicy": "optional", "key": "fix", "tier": "public" },
+    { "aliases": [], "breakingPolicy": "optional", "key": "sec", "tier": "public" },
+    { "aliases": [], "breakingPolicy": "forbidden", "key": "refactor", "tier": "internal" },
+    { "aliases": [], "breakingPolicy": "forbidden", "key": "docs", "tier": "process" }
+  ]
+}
