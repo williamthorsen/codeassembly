@@ -35,9 +35,9 @@
     "dist"
   ],
   "scripts": {
-    "build:post": "node scripts/bundle-skill-helpers.ts && node scripts/copy-content.ts && rdy compile",
+    "build:post": "node bin/codeassembly.js bundle-helpers --content content && node scripts/copy-content.ts && rdy compile",
     "build:pre": "rdy verify",
-    "check-bundles": "node scripts/bundle-skill-helpers.ts --check",
+    "check-bundles": "node bin/codeassembly.js bundle-helpers --content content --check",
     "prepublishOnly": "nmr build",
     "test:post": "pnpm run test:sh && pnpm run test:smoke",
     "test:sh": "bash scripts/test-sh.sh",
@@ -63,6 +63,14 @@
     "eslint": "catalog:",
     "readyup": "catalog:",
     "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "peerDependenciesMeta": {
+    "esbuild": {
+      "optional": true
+    }
   },
   "engines": {
     "node": ">=24"

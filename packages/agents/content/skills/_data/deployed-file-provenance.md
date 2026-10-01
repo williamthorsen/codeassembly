@@ -29,7 +29,7 @@ One deployed file has neither a marker nor a marked artifact around it: `install
 
 ## Finding the source
 
-An `install`-deployed file's marker contains a `Source:` line naming the file from which it was built: a link into `packages/agents/content/` for a library file, and the path within the source, the source's name, and the source directory for one owned by a declared source. A script does not have a marker: A shell script's source is the matching file under `scripts/` in the library or the declaring source, while a `.mjs` anywhere is a build output rather than a checked-in file, and its source is the `src/<name>/cli.ts` entry that `packages/agents/scripts/bundle-skill-helpers.ts` maps to it.
+An `install`-deployed file's marker contains a `Source:` line naming the file from which it was built: a link into `packages/agents/content/` for a library file, and the path within the source, the source's name, and the source directory for one owned by a declared source. A script does not have a marker: A shell script's source is the matching file under `scripts/` in the library or the declaring source, while a `.mjs` anywhere is a build output rather than a checked-in file, and its source is the `entry` that the `helpers:` list in its content root's `codeassembly-content.yaml` maps to it.
 
 A `sync`-deployed artifact does not have such a line either. Read the resolution report from the dry run for the file's domain: `codeassembly sync --dry-run` for a file under a project's harness directory, and `codeassembly sync --global --dry-run` for one under the home directory. A dry run of the wrong domain lists other artifacts, or none at all when that domain declares nothing. The report names each deployed artifact's origin:
 

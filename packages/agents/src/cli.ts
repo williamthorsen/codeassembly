@@ -9,6 +9,7 @@ import {
   resolveOutputStyle,
 } from '@williamthorsen/toolbelt.terminal/candidate';
 
+import { bundleHelpersCommand } from './commands/bundle-helpers.ts';
 import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand, initGlobalCommand } from './commands/init.ts';
@@ -42,7 +43,7 @@ const SYNC_FAILURE_EFFECT = 'Nothing was written; the previously deployed guidan
  */
 async function main(): Promise<void> {
   configureStreamStyles();
-  const { command, subcommand, options, content, help, global, warnOnly } = parseArgs(process.argv);
+  const { command, subcommand, options, check, content, help, global, warnOnly } = parseArgs(process.argv);
 
   if (help || !command) {
     printUsage();
@@ -76,6 +77,12 @@ async function main(): Promise<void> {
       // with `Error:` as though it were one failure.
       case 'validate':
         if (!(await validateCommand({ content, harness: options.harness }))) {
+          process.exit(1);
+        }
+        break;
+      // Exit here for the same reason as `validate`: A drift report lists one finding per bundle.
+      case 'bundle-helpers':
+        if (!(await bundleHelpersCommand({ check, content }))) {
           process.exit(1);
         }
         break;
@@ -121,6 +128,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   command: string;
   subcommand: string;
   options: InstallOptions;
+  check: boolean;
   content: string | undefined;
   help: boolean;
   global: boolean;
@@ -129,6 +137,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   const args = argv.slice(2);
   let command = '';
   let subcommand = '';
+  let check = false;
   let content: string | undefined;
   let harness: InstallOptions['harness'] = 'all';
   let link = false;
@@ -147,6 +156,9 @@ function parseArgs(argv: ReadonlyArray<string>): {
 
     const flag = parseFlag(arg);
     switch (flag) {
+      case 'check':
+        check = true;
+        break;
       case 'help':
         help = true;
         break;
@@ -206,6 +218,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
     command,
     subcommand,
     options: { harness, link, force, dryRun, hooks, print, shouldOverrideWriter },
+    check,
     content,
     help,
     global,
@@ -214,6 +227,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
 }
 
 type FlagName =
+  | 'check'
   | 'content'
   | 'dry-run'
   | 'force'
@@ -240,6 +254,7 @@ function parseFlag(arg: string): FlagName | null {
     '--global': 'global',
     '--override-writer': 'override-writer',
     '--warn-only': 'warn-only',
+    '--check': 'check',
     '--content': 'content',
     '--harness': 'harness',
     '--output-style': 'output-style',
@@ -289,11 +304,13 @@ Commands:
   sizes            Rank the last recorded deployment's documents by size, with the context aggregates beneath them
   status           Show the current state of installed items, including hook entries
   validate         Check a content root for defects that reach a consumer; writes nothing
+  bundle-helpers   Bundle the helpers declared by a content root's manifest (needs the optional esbuild peer)
   library list     List available library artifacts (rulebooks, skills, subagents)
   generate <target> Generate a configuration file (e.g., label-map)
 
 Options:
-  --content <dir>   Content root to validate; defaults to codeassembly.content in ./package.json (validate only)
+  --content <dir>   Content root to act on; defaults to codeassembly.content in ./package.json (validate and bundle-helpers)
+  --check           Fail on a bundle that differs from a fresh build, is not recorded at HEAD, or has no helper; writes nothing (bundle-helpers only)
   --harness <name>  Target harness: ${HARNESS_ARG_LIST} (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)

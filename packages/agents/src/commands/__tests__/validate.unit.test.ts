@@ -58,22 +58,8 @@ describe(validateCommand, () => {
     expect(await validateCommand({ harness: 'all' }, projectDir)).toBe(true);
   });
 
-  it('prefers an explicit --content over the declared key', async () => {
-    await writeSkill(path.join(projectDir, 'guidance'), 'alpha', 'Invoke {tool:NoSuchTool}.');
-    await writeSkill(path.join(projectDir, 'other'), 'beta');
-    await writeManifest(projectDir, { codeassembly: { content: 'guidance' } });
-
-    expect(await validateCommand({ content: 'other', harness: 'all' }, projectDir)).toBe(true);
-  });
-
-  it('names both routes when neither yields a content root', async () => {
-    await writeManifest(projectDir, { name: 'no-content-here' });
-
-    await expect(validateCommand({ harness: 'all' }, projectDir)).rejects.toThrow(/--content <dir>/);
-  });
-
-  it('names both routes when the working directory does not contain any package.json at all', async () => {
-    await expect(validateCommand({ harness: 'all' }, projectDir)).rejects.toThrow(/--content <dir>/);
+  it('fails naming its own purpose when no content root resolves', async () => {
+    await expect(validateCommand({ harness: 'all' }, projectDir)).rejects.toThrow(/^No content root to validate:/);
   });
 
   it('checks only the named harness when one is given', async () => {

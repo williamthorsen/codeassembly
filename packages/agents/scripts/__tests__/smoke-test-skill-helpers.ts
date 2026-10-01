@@ -18,10 +18,12 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
+import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { bundleSkillHelpers, type BundleTarget, packageRoot, targets } from '../bundle-skill-helpers.ts';
+import { bundleHelpers } from '../../src/lib/helper-bundler.ts';
+import { type HelperTarget, readHelperTargets } from '../../src/lib/helper-manifest.ts';
 import { makeCaptureEventSmokeTest } from '../test-utils/make-capture-event-smoke-test.ts';
 import { makeDeriveSessionContextSmokeTest } from '../test-utils/make-derive-session-context-smoke-test.ts';
 import { makeDescribeChangeSmokeTest } from '../test-utils/make-describe-change-smoke-test.ts';
@@ -40,27 +42,30 @@ import { makeStreamlineGuidanceSmokeTest } from '../test-utils/make-streamline-g
 import { makeUpdateJiraTicketSmokeTest } from '../test-utils/make-update-jira-ticket-smoke-test.ts';
 import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts';
 
-// Each bundle that needs a non-default smoke run, keyed by its `entry`; a bundle absent here runs without args and
+// Each bundle that needs a non-default smoke run, keyed by its `entry` as the content manifest writes it; a bundle absent here runs without args and
 // with empty stdin. Because the builders run here, and not on import of the utilities module, building a bundle never
 // triggers fixture setup.
 const smokeTests: Record<string, SmokeTestInvocation> = {
-  'src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
-  'src/derive-session-context/cli.ts': makeDeriveSessionContextSmokeTest(),
-  'src/describe-change/cli.ts': makeDescribeChangeSmokeTest(),
-  'src/emit-event/cli.ts': makeEmitEventSmokeTest(),
-  'src/feedback-memories/cli.ts': makeFeedbackMemoriesSmokeTest(),
-  'src/groom-backlog/cli.ts': makeGroomBacklogSmokeTest(),
-  'src/kb-curate/cli.ts': makeKbCurateSmokeTest(),
-  'src/kb-edit/cli.ts': makeKbEditSmokeTest(),
-  'src/kb-retrieve-events/cli.ts': makeKbRetrieveEventsSmokeTest(),
-  'src/kb-update-events/cli.ts': makeKbUpdateEventsSmokeTest(),
-  'src/merge-gh-pr/cli.ts': makeMergeGhPrSmokeTest(),
-  'src/relay-hook-event/cli.ts': makeRelayHookEventSmokeTest(),
-  'src/revise-prose/cli.ts': makeReviseProseSmokeTest(),
-  'src/select-lede-exemplars/cli.ts': makeSelectLedeExemplarsSmokeTest(),
-  'src/streamline-guidance/cli.ts': makeStreamlineGuidanceSmokeTest(),
-  'src/update-jira-ticket/cli.ts': makeUpdateJiraTicketSmokeTest(),
+  '../src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
+  '../src/derive-session-context/cli.ts': makeDeriveSessionContextSmokeTest(),
+  '../src/describe-change/cli.ts': makeDescribeChangeSmokeTest(),
+  '../src/emit-event/cli.ts': makeEmitEventSmokeTest(),
+  '../src/feedback-memories/cli.ts': makeFeedbackMemoriesSmokeTest(),
+  '../src/groom-backlog/cli.ts': makeGroomBacklogSmokeTest(),
+  '../src/kb-curate/cli.ts': makeKbCurateSmokeTest(),
+  '../src/kb-edit/cli.ts': makeKbEditSmokeTest(),
+  '../src/kb-retrieve-events/cli.ts': makeKbRetrieveEventsSmokeTest(),
+  '../src/kb-update-events/cli.ts': makeKbUpdateEventsSmokeTest(),
+  '../src/merge-gh-pr/cli.ts': makeMergeGhPrSmokeTest(),
+  '../src/relay-hook-event/cli.ts': makeRelayHookEventSmokeTest(),
+  '../src/revise-prose/cli.ts': makeReviseProseSmokeTest(),
+  '../src/select-lede-exemplars/cli.ts': makeSelectLedeExemplarsSmokeTest(),
+  '../src/streamline-guidance/cli.ts': makeStreamlineGuidanceSmokeTest(),
+  '../src/update-jira-ticket/cli.ts': makeUpdateJiraTicketSmokeTest(),
 };
+
+const contentRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../content');
+const targets = await readHelperTargets(contentRoot);
 
 // Fail loudly if a pairing no longer matches a bundle, rather than silently never running it.
 const knownEntries = new Set(targets.map((target) => target.entry));
@@ -71,11 +76,11 @@ for (const entry of Object.keys(smokeTests)) {
 }
 
 const bundleRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-helper-smoke-'));
-fs.cpSync(path.join(packageRoot, 'content'), path.join(bundleRoot, 'content'), {
+fs.cpSync(contentRoot, bundleRoot, {
   filter: (source) => !source.endsWith('.mjs'),
   recursive: true,
 });
-await bundleSkillHelpers(bundleRoot);
+await bundleHelpers(targets, bundleRoot);
 
 let failed = false;
 for (const target of targets) {
@@ -84,11 +89,11 @@ for (const target of targets) {
     const stdout = await runBundle(target, invocation);
     const parsed: unknown = JSON.parse(stdout);
     invocation.assertResult?.(parsed);
-    console.info(`Smoke test passed: ${target.outFile} exits 0 with valid JSON.`);
+    console.info(`Smoke test passed: ${target.out} exits 0 with valid JSON.`);
   } catch (error) {
     failed = true;
     const message = describeError(error);
-    console.error(`Smoke test failed for ${target.outFile}: ${message}`);
+    console.error(`Smoke test failed for ${target.out}: ${message}`);
   }
 }
 
@@ -99,8 +104,8 @@ if (failed) {
 }
 
 /** Runs the built bundle for `target` under node with `invocation`, returning its stdout. Throws on non-zero exit. */
-async function runBundle(target: BundleTarget, invocation: SmokeTestInvocation): Promise<string> {
-  const bundlePath = path.join(bundleRoot, target.outFile);
+async function runBundle(target: HelperTarget, invocation: SmokeTestInvocation): Promise<string> {
+  const bundlePath = path.join(bundleRoot, target.out);
   const args = invocation.args ?? [];
 
   return new Promise<string>((resolve, reject) => {

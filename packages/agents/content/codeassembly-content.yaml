@@ -1,2 +1,43 @@
 # The content-format contract against which this root is authored; see the codeassembly README.
 format: 2
+
+# The TypeScript helpers that `codeassembly bundle-helpers` bundles into this root, both paths relative to this file.
+helpers:
+  - entry: ../src/kb-add/cli.ts
+    out: skills/kb-add/kb-add.mjs
+  - entry: ../src/kb-edit/cli.ts
+    out: skills/kb-edit/kb-edit.mjs
+  - entry: ../src/kb-curate/cli.ts
+    out: skills/kb-curate/kb-curate.mjs
+  - entry: ../src/kb-retrieve/cli.ts
+    out: skills/kb-retrieve/kb-retrieve.mjs
+  - entry: ../src/kb-retrieve-events/cli.ts
+    out: skills/kb-retrieve-events/kb-retrieve-events.mjs
+  - entry: ../src/update-jira-ticket/cli.ts
+    out: skills/update-jira-ticket/update-jira-ticket.mjs
+  - entry: ../src/derive-session-context/cli.ts
+    out: skills/derive-session-context/derive-session-context.mjs
+  - entry: ../src/capture-event/cli.ts
+    out: skills/capture-event/capture-event.mjs
+  - entry: ../src/capture-lede-decision/cli.ts
+    out: skills/capture-lede-decision/capture-lede-decision.mjs
+  - entry: ../src/kb-update-events/cli.ts
+    out: skills/kb-update-events/kb-update-events.mjs
+  - entry: ../src/feedback-memories/cli.ts
+    out: skills/migrate-feedback-memories/feedback-memories.mjs
+  - entry: ../src/emit-event/cli.ts
+    out: skills/emit-event/emit-event.mjs
+  - entry: ../src/groom-backlog/cli.ts
+    out: skills/groom-backlog/groom-backlog.mjs
+  - entry: ../src/revise-prose/cli.ts
+    out: skills/revise-prose/revise-prose.mjs
+  - entry: ../src/streamline-guidance/cli.ts
+    out: skills/streamline-guidance/streamline-guidance.mjs
+  - entry: ../src/describe-change/cli.ts
+    out: scripts/describe-change.mjs
+  - entry: ../src/relay-hook-event/cli.ts
+    out: scripts/relay-hook-event.mjs
+  - entry: ../src/select-lede-exemplars/cli.ts
+    out: scripts/select-lede-exemplars.mjs
+  - entry: ../src/merge-gh-pr/cli.ts
+    out: skills/merge-gh-pr/merge-gh-pr.mjs
