@@ -9,7 +9,7 @@ This directory contains two kinds of helper, distinguished by who invokes them:
 - **Agent-invoked.** Helpers run by a skill or subagent, via the `{harness_home_dir}/scripts/` prefix documented below.
 - **Harness-invoked.** Helpers wired into a harness's own configuration, without an agent in the loop.
 
-The extension says how a helper is written, not who runs it: A `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source is in `src/`. The bundles are tracked build output, generated here by `scripts/bundle-skill-helpers.ts`, so a source edit is committed together with its rebuilt bundle. Either kind serves either invoker.
+The extension says how a helper is written, not who runs it: A `.sh` is a shell script kept in this directory, while a `.mjs` is a bundled TypeScript helper whose source is in `src/`. The bundles are tracked build output, generated here by `codeassembly bundle-helpers` from the `helpers:` list in `codeassembly-content.yaml`, so a source edit is committed together with its rebuilt bundle. Either kind serves either invoker.
 
 Files of any other extension (such as this README) are not installed.
 

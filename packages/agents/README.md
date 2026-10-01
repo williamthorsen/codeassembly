@@ -40,10 +40,11 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `sizes`             | Rank the last recorded deployment's documents by size, with the context aggregates beneath them            |
 | `status`            | Show the current state of installed items                                                                  |
 | `validate`          | Check a content root for defects that reach a consumer; writes nothing                                     |
+| `bundle-helpers`    | Bundle the helpers that a content root declares; `--check` fails on a stale bundle                         |
 | `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
-Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, `--output-style <auto\|plain\|rich>`, and `--help`. `--output-style` prints status glyphs as emoji (`rich`) or as words (`plain`); `auto`, the default, prints plain to a stream that is not a terminal or in CI, and `CODEASSEMBLY_OUTPUT_STYLE` sets it when the flag is absent. `--content <dir>` applies to `validate` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
+Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, `--output-style <auto\|plain\|rich>`, and `--help`. `--output-style` prints status glyphs as emoji (`rich`) or as words (`plain`); `auto`, the default, prints plain to a stream that is not a terminal or in CI, and `CODEASSEMBLY_OUTPUT_STYLE` sets it when the flag is absent. `--content <dir>` applies to `validate` and `bundle-helpers`, and `--check` to `bundle-helpers` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
 
 ## Session-lifecycle hooks
 
@@ -478,7 +479,7 @@ The tool holds the set of formats that it supports and refuses a root declaring 
 
 **A root without a manifest is format 1**, which keeps a producer that predates the manifest working unchanged. A manifest that exists states its format: An absent or malformed `format` fails rather than passing as format 1, so every manifest that exists is self-describing.
 
-Unknown keys pass through. A later tool can read a key that an older one ignores without the older one rejecting a root that it would otherwise honor. `helpers:` is reserved for the helper-bundling command and is unread at format 1.
+Unknown keys pass through. A later tool can read a key that an older one ignores without the older one rejecting a root that it would otherwise honor. `helpers:` declares the TypeScript helpers that the root bundles, and only `bundle-helpers` reads it; see [Bundling helpers](docs/bundling-helpers.md), which also covers the optional `esbuild` peer that the command needs.
 
 **What a bump obliges.** The format version names the contract that the tool implements (frontmatter keys, invocation tokens, directives, and content-root layout), so it rises when content authored against the new contract would deploy wrongly under the old one rather than failing outright. Adding a key nothing older depends on does not need one; changing what an existing key means does.
 
