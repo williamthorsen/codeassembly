@@ -22,7 +22,7 @@ A declared rulebook is delivered by its delivery mode: An `ambient` rulebook is 
 
 A declared skill is deployed into each targeted harness's project-local skills directory (`.claude/skills/<slug>/`) with the harness transform applied (include expansion, `{tool:…}` rewrite, link rewriting), carrying a `<!-- codeassembly-skill:<slug> -->` ownership marker so that `sync` can retract it once it is no longer declared. Bare `sync` deploys into the project's harness directories; `sync --global` resolves the user-global tier and deploys the same way into the home harness directories instead (see [Scopes](#scopes)).
 
-A skill may restrict itself to specific harnesses with a `supported-harnesses:` frontmatter field (a single harness id or a list, e.g. `supported-harnesses: [rovo]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill without a `supported-harnesses:` field deploys to every harness. This is how a skill that one harness provides natively, but the library supplies for the others, is targeted at just the harnesses that need it, without duplicating it per harness.
+A skill may restrict itself to specific harnesses with a `supported-harnesses:` frontmatter field (a single harness id or a list, e.g. `supported-harnesses: [rovo]`); `sync` then deploys it only into those harnesses, and `library list` shows the restriction. A skill without a `supported-harnesses:` field deploys to every harness. This is how a skill that one harness provides natively, but a source supplies for the others, is targeted at just the harnesses that need it, without duplicating it per harness.
 
 A declared subagent is deployed into each targeted harness's project-local subagents directory (`.claude/agents/<slug>.md`), with the harness transform applied (frontmatter `_defaults` merge, `{tool:…}` rewrite, `{harness_home_dir}` rewrite) and a `<!-- codeassembly-subagent:<slug> -->` ownership marker so that `sync` can retract it once it is no longer declared. A declared subagent deploys into the repo under `sync` and into the home harness directories under `sync --global`.
 
@@ -88,7 +88,7 @@ guidance-hooks:
 
 A binding is also a dependency edge: A bound rulebook joins the deploy closure and still deploys by its own `delivery:`, so binding it and declaring it are one act. Bound bodies fill in declaration order, with their headings demoted one level so that a rulebook's title nests under the host's structure, and the result is wrapped in `<!-- codeassembly-guidance-hook:<name>:start -->` / `:end` markers enclosing one `<!-- rulebook:<slug> -->` block per rulebook, each naming the rulebook's version on a `<!-- rulebook-version: <version> -->` line when it declares one. A deployed file therefore says what filled it, and at which version, without being re-rendered.
 
-A hook that nothing binds contributes nothing to deployed output, marker included. `install` doesn't read any `guidance-hooks:` block, so every hook that it meets is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
+A hook that nothing binds contributes nothing to deployed output, marker included. `install` doesn't read any `guidance-hooks:` block, so every hook in a harness guidance template is unbound; so is every hook in a rulebook body, a `skills/_data/` support entry, or a harness guidance file, none of which a binding can reach. Filling is for declared skills and subagents alone.
 
 Name a hook for the concern rather than the consumer (`implementation-preferences`, not `implement-plan-preferences`), since concern-scoping lets one binding fill every consumer, and don't give it a user or org prefix, since the slot is generic and only the binding is personal. Names are lowercase kebab-case and letter-led, the same grammar enforced by the directive. Concern-scoping and the no-prefix rule are conventions; nothing checks them.
 
@@ -159,7 +159,7 @@ An artifact in none of them is standalone: deliberate, declared directly where w
 
 ### The `@library` token
 
-A collection whose `members:` is the string `'@library'` resolves to every deployable artifact (all rulebooks, skills, and subagents) in the content root from which the collection resolves: the built-in library for a library collection, or the owning source for a collection declared in a source. It is computed at resolution time so that a newly added artifact joins automatically without an edit to the collection. The `@` sigil marks a computed directive rather than a literal slug, so the value must be YAML-quoted (`'@library'`). Collections are excluded from the result: The resolver never emits them, and "every collection" would be self-referential.
+A collection whose `members:` is the string `'@library'` resolves to every deployable artifact (all rulebooks, skills, and subagents) in the content root from which the collection resolves: the declared source from which the collection resolved, and no other. It is computed at resolution time so that a newly added artifact joins automatically without an edit to the collection. The `@` sigil marks a computed directive rather than a literal slug, so the value must be YAML-quoted (`'@library'`). Collections are excluded from the result: The resolver never emits them, and "every collection" would be self-referential.
 
 The shipped `all` collection declares `'@library'`; declaring `collections: use: [all]` deploys the whole catalog.
 
@@ -181,10 +181,12 @@ The resolver follows `members:` and `dependencies:` identically; the split is se
 
 ## Sources
 
-By default, a declared artifact resolves from CodeAssembly's built-in content library. A top-level `sources:` list adds further content directories (machine-local, project-local, or a third-party guidance repo), each structured like the library's `content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`). Resolution searches the declared sources first, then the library:
+A declared artifact resolves from the content directories that the declaration names, and from nowhere else. A top-level `sources:` list names them (a clone of the CodeAssembly library, a machine-local directory, a project-local one, or a third-party guidance repo), each structured like `packages/agents/content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`); a package adopted via [`packages`](#packages) is a source too. `sync`, `sync --global`, and `install` stop before writing anything, `--dry-run` included, when the governing chain declares no source, or when none of the declared sources has a directory, and the message names the file that the declaration belongs in. A project resolves from its own chain alone, never from the sources that the home chain declares, so a project deploys the same content on every machine.
 
 ```yaml
 sources:
+  - name: codeassembly
+    path: ~/repos/codeassembly/packages/agents/content
   - name: org-guidance
     path: ../shared-guidance
   - name: personal
@@ -194,13 +196,13 @@ rulebooks:
     - team-standards
 ```
 
-Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format against which it was authored; see [Content-format version](#content-format-version). Declaration entries stay bare slugs: Resolution is transparent, so `team-standards` resolves from whichever source (or the library) provides it, without a per-entry `from:` syntax.
+Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format against which it was authored; see [Content-format version](#content-format-version). Declaration entries stay bare slugs: Resolution is transparent, so `team-standards` resolves from whichever source provides it, without a per-entry `from:` syntax.
 
-**Precedence.** A later-declared source shadows an earlier one, and any source shadows the library, which lets a source override a same-slug library artifact. A package adopted via [`packages`](#packages) is a source too, ranked below every hand-declared one. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
+**Precedence.** A later-declared source shadows an earlier one, which lets a source override a same-slug artifact of another. `sync` warns about every artifact that a higher-precedence source shadows in a lower one, and `sync --dry-run` and `library list` name the source of each. Declare the CodeAssembly library first, so that every source declared after it can override it. A package adopted via [`packages`](#packages) is a source too, ranked below every hand-declared one. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
 
-**Undeclared content.** `scripts/` and the harness guidance templates under `guidance/_harnesses/` are not named by any declaration entry, so they resolve by directory rather than by slug and `install` deploys them. Scripts merge by file name across every root: A source shipping one script leaves the library's others in place. A harness's template directory is owned whole by the highest-precedence root shipping it, which keeps the `guidance/shared/AGENTS.md` that a template inlines resolving inside one root; a template file omitted by the owning source is retracted from the harness home. A file name or template directory shipped by more than one root installs from the highest-precedence one and warns, whether the loser is another source or the library. A source-owned deployed file's provenance marker names its path within the source, the source's name, and the source directory, in place of the codeassembly URL that a library file names.
+**Undeclared content.** `scripts/` and the harness guidance templates under `guidance/_harnesses/` are not named by any declaration entry, so they resolve by directory rather than by slug and `install` deploys them. Scripts merge by file name across every root: A source shipping one script leaves another root's other scripts in place. A harness's template directory is owned whole by the highest-precedence root shipping it, which keeps the `guidance/shared/AGENTS.md` that a template inlines resolving inside one root; a template file omitted by the owning source is retracted from the harness home. A file name or template directory shipped by more than one root installs from the highest-precedence one and warns. A deployed guidance file's provenance marker names its path within the source, the source's name, and the source directory.
 
-Every artifact type resolves through sources: An artifact's body and its closure edges (`dependencies:`, or `members:` for a collection) resolve from the source that owns it, with ownership and retraction semantics identical to a library artifact's. A source-resolved skill or subagent expands its `<!-- include: … -->` directives against its own source root: It can reuse partials within its own source tree, but a target that resolves outside that root fails. A source-resolved **collection** expands its members through the resolver like any other type, and its `'@library'` token is source-scoped: It enumerates that source's own catalog rather than the built-in library. A declared source whose path is not a directory, or is unreadable, fails the run (dry-run included) before any file is written; one whose directory does not exist yet is reported as a warning and contributes nothing, so a source can be declared before it is populated. A slug not found in any source or in the library fails with an error naming every location searched.
+Every artifact type resolves through sources: An artifact's body and its closure edges (`dependencies:`, or `members:` for a collection) resolve from the source that owns it, with the same ownership and retraction semantics in every source. A source-resolved skill or subagent expands its `<!-- include: … -->` directives against its own source root: It can reuse partials within its own source tree, but a target that resolves outside that root fails. A source-resolved **collection** expands its members through the resolver like any other type, and its `'@library'` token is source-scoped: It enumerates that source's own catalog rather than every declared source's. A declared source whose path is not a directory, or is unreadable, fails the run (dry-run included) before any file is written; one whose directory does not exist yet is reported as a warning and contributes nothing, so a source can be declared before it is populated. A slug not found in any source fails with an error naming every location searched.
 
 ## Packages
 
@@ -223,7 +225,7 @@ packages:
     - '@williamthorsen/nmr'
 ```
 
-**Precedence.** Every `sources` entry, from any tier, outranks every package, and every package outranks the built-in library: A directory named by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. A package that masks a library slug is reported by the same shadow warning that a declared source triggers; two packages that ship the same slug resolve by precedence without a warning, and `sync --dry-run` names the source from which each artifact resolved.
+**Precedence.** Every `sources` entry, from any tier, outranks every package: A directory named by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. Every shadow is reported by the same warning, whichever two sources it is between, and `sync --dry-run` names the source from which each artifact resolved.
 
 **Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain searched by Node itself, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration that a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or doesn't declare a content directory, fails the run (dry-run included) before any file is written, naming what was searched. One that declares a content directory that it does not ship warns rather than failing, like any other missing source. The consumer's declaration doesn't contain a path to correct, so the remedy is to create the directory in a package that the consumer maintains, or report the omission upstream in one that they do not.
 
@@ -233,7 +235,7 @@ Upgrading an already-declared package is the other case. Its catalog is read fro
 
 ### Shipping guidance from a package
 
-A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like the library's `content/`:
+A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like `packages/agents/content/`:
 
 ```json
 {
@@ -253,9 +255,9 @@ content/agents/
 
 The key is required and doesn't have a default location. That is deliberate: A default would claim a directory name in every producer's package root, so instead a producer says where its content lives and can nest it under a directory that it already owns, including build output, if a build step puts it there.
 
-A package's catalog is its rulebooks, skills, and subagents; a `collections/` entry is resolvable but not adopted on its own. A collection reaches a consumer only when that consumer declares it by name. Its members are already in the catalog anyway. The way to pull in an artifact from outside the package (a library rulebook, say) is a `dependencies:` edge on an artifact that the catalog does contain.
+A package's catalog is its rulebooks, skills, and subagents; a `collections/` entry is resolvable but not adopted on its own. A collection reaches a consumer only when that consumer declares it by name. Its members are already in the catalog anyway. The way to pull in an artifact from outside the package (a rulebook of another source, say) is a `dependencies:` edge on an artifact that the catalog does contain.
 
-**Shipping support files.** Anything under `skills/` that doesn't contain a `SKILL.md` is a support entry: shared reference content that a skill or rulebook reads at runtime by path, `skills/_data/` being the usual case. A package ships them by placing them where the library does, and they deploy alongside the skills whenever the package is adopted, without a declaration of their own, since nothing names them but the links that reach them.
+**Shipping support files.** Anything under `skills/` that doesn't contain a `SKILL.md` is a support entry: shared reference content that a skill or rulebook reads at runtime by path, `skills/_data/` being the usual case. A package ships them under its own `skills/`, and they deploy alongside the skills whenever the package is adopted, without a declaration of their own, since nothing names them but the links that reach them.
 
 ```
 content/agents/
@@ -266,7 +268,7 @@ content/agents/
       SKILL.md          # links to ../_data/house-style.md
 ```
 
-Each source's support entries deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the built-in library and any number of packages can each ship a `_data/house-style.md` without one masking another. A scoped package name nests as its own segments (`_sources/@williamthorsen/nmr/`). Author links exactly as the library does, relative to the file's own place in the content tree, and delivery rewrites them to wherever they are deployed; a source name that could not name a directory fails the run rather than being silently reshaped.
+Each source's support entries deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the CodeAssembly library and any number of packages can each ship a `_data/house-style.md` without one masking another. A scoped package name nests as its own segments (`_sources/@williamthorsen/nmr/`). Author links relative to the file's own place in the content tree, and delivery rewrites them to wherever they are deployed; a source name that could not name a directory fails the run rather than being silently reshaped.
 
 `_partials/` is the exception, being an include target inlined into the files that include it rather than a file that deploys.
 
@@ -282,7 +284,7 @@ codeassembly validate
 
 Because it doesn't read any `codeassembly.yaml`, a package that produces guidance without consuming any still has a gate: Wire it into the repo's `check` and a defect fails the producer's build instead of the next consumer's install. The root comes from `--content <dir>`, or from the `codeassembly.content` key above when the flag is absent; neither yielding one is an error naming both routes. `--harness` narrows the run, and the default checks every harness to which the root could deploy, since a defect can reach only one. A clean root exits 0; any defect exits 1 after a report grouped by file. Some checks don't have a `sync` counterpart, and catch what nothing else would: a skill declaring the retired `harnesses:` key, which narrows nothing and survives into the deployed file rather than failing anywhere; a relative link whose file is missing or whose `#fragment` names zero or several headings; a non-breaking space in an authored file; a helper-script invocation without the `{harness_home_dir}/scripts/` prefix; an include or guidance-hook directive followed by a heading that would nest under the injected content; a support-entry token that resolves nowhere, or whose section a linking skill or subagent does not declare; and a relative link, or a skill named in prose that does not deploy to every harness, in shared guidance.
 
-Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that don't contain a `SKILL.md`. A link target resolves against the content root, then at the same path in the library, since the deployed tree unions the two.
+Coverage is what the root ships that reaches a consumer: rulebooks, skills, subagents, collections, and the support entries under `skills/` that don't contain a `SKILL.md`. The root resolves alone: A link target, a dependency edge, or an invocation token that names something the root does not contain is a defect.
 
 One shape cannot consume its own guidance: A single-package repo whose package is the repo root doesn't have a `workspace:*` self-link to resolve through. Such a repo declares a `sources:` entry pointing at the directory instead.
 
@@ -353,7 +355,7 @@ When upgrading from a build in which `install` deployed the catalog, run `instal
 
 ### Designated home-domain writer
 
-Every repository and worktree has a `codeassembly` binary of its own, and each ships the library that its own checkout holds. `install` and `sync --global` write the shared home domain, so whichever binary ran last decides what the home state contains. An older one silently overwrites a newer one's artifacts, and its orphan retraction deletes what its smaller catalog does not name.
+Every repository and worktree has a `codeassembly` binary of its own, at the version that its own checkout holds. `install` and `sync --global` write the shared home domain, so whichever binary ran last decides how the home state is rendered. An older one silently overwrites a newer one's output, and its orphan retraction deletes what it does not recognize.
 
 `home-writer` names the one installation allowed to write:
 
@@ -366,7 +368,7 @@ The setting reads from the home domain's chain alone, the local tier overriding 
 
 With the setting present, `install` and `sync --global` invoked from any other installation refuse before writing anything, naming the designated path, the invoking one, and the file that configured it. `--dry-run` refuses identically, so a preview never reports a write that the real run would reject. `--override-writer` proceeds from a non-designated installation and says so in the output.
 
-With the setting absent the commands behave as they always have: A fresh machine bootstraps with `npx codeassembly install`, and an external consumer doesn't need any configuration. Removing the key is how to stop designating a writer; an empty or relative value fails the run rather than quietly disabling the guard.
+With the setting absent, any installation may write the home domain, and an external consumer doesn't need any configuration. Removing the key is how to stop designating a writer; an empty or relative value fails the run rather than quietly disabling the guard.
 
 ### Home-domain provenance
 
