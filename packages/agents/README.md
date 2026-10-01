@@ -166,6 +166,8 @@ Authoring conventions for the declared artifacts (frontmatter fields, the `depen
 - [Content-format version](docs/project-declaration.md#content-format-version): the format contract that a content root declares.
 - [Scopes](docs/project-declaration.md#scopes): the repo and home domains, the designated home-domain writer, and home-domain provenance.
 
+A content root's own tests read it as consumers receive it through the `codeassembly/api` subpath; see [Content API](docs/content-api.md).
+
 ## Keeping deployed guidance current
 
 `sync` writes what the declaration resolved at the moment it ran, and nothing re-runs it on its own. The rule is to sync when the content that it renders last changed, and that moment falls in a different place depending on where the content comes from:
