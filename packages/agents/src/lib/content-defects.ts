@@ -12,7 +12,18 @@ export interface ContentDefect {
 
 /** Which stage rejected an artifact, so a report can group by cause rather than presenting one undifferentiated list. */
 export type ContentDefectKind =
-  'collision' | 'dependency' | 'frontmatter' | 'render' | 'resolution' | 'root' | 'target';
+  | 'codepoint'
+  | 'collision'
+  | 'dependency'
+  | 'frontmatter'
+  | 'heading'
+  | 'invocation'
+  | 'link'
+  | 'reference'
+  | 'render'
+  | 'resolution'
+  | 'root'
+  | 'target';
 
 /** A render defect paired with the harness whose render raised it, before harness-invariant ones are collapsed. */
 export interface HarnessDefect {

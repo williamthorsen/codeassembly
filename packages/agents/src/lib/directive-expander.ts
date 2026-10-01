@@ -3,13 +3,13 @@ import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 /** Matches a self-closing include directive on its own line: `<!-- include: path / -->`, capturing the path target. */
-const SELF_CLOSE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+?)[ \t]*\/[ \t]*-->[ \t]*$/;
+export const SELF_CLOSE_INCLUDE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+?)[ \t]*\/[ \t]*-->[ \t]*$/;
 
 /** Matches a closing include directive on its own line: `<!-- /include -->`. */
-const CLOSE_REGEX = /^[ \t]*<!--[ \t]*\/include[ \t]*-->[ \t]*$/;
+export const CLOSE_INCLUDE_REGEX = /^[ \t]*<!--[ \t]*\/include[ \t]*-->[ \t]*$/;
 
 /** Matches an opening include directive on its own line: `<!-- include: path -->`, capturing the path target. */
-const OPEN_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+)[ \t]*-->[ \t]*$/;
+export const OPEN_INCLUDE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*(\S+)[ \t]*-->[ \t]*$/;
 
 /** Matches the children-slot placeholder line inside a partial: `<!-- children -->`. */
 const CHILDREN_PLACEHOLDER_REGEX = /^[ \t]*<!--[ \t]*children[ \t]*-->[ \t]*$/;
@@ -66,7 +66,7 @@ export async function listIncludeTargets(filePath: string, contentDir: string): 
   for (const [i, line] of content.split('\n').entries()) {
     const lineNumber = i + 1;
     // Self-close is matched first, as in expansion, so a target ending in a slash is not read as an open directive.
-    const target = SELF_CLOSE_REGEX.exec(line)?.[1] ?? OPEN_REGEX.exec(line)?.[1];
+    const target = SELF_CLOSE_INCLUDE_REGEX.exec(line)?.[1] ?? OPEN_INCLUDE_REGEX.exec(line)?.[1];
     if (target === undefined) {
       if (ANY_INCLUDE_LIKE_REGEX.test(line)) {
         throw buildUnrecognizedParameterError(resolvedFile, lineNumber, line);
@@ -108,9 +108,9 @@ async function expandFile(filePath: string, contentDir: string, visited: Set<str
 
       // Match in priority order: self-close, close, open. Self-close must precede open
       // because both can match a path; the slash disambiguates.
-      const selfCloseMatch = SELF_CLOSE_REGEX.exec(line);
-      const closeMatch = selfCloseMatch ? null : CLOSE_REGEX.exec(line);
-      const openMatch = selfCloseMatch || closeMatch ? null : OPEN_REGEX.exec(line);
+      const selfCloseMatch = SELF_CLOSE_INCLUDE_REGEX.exec(line);
+      const closeMatch = selfCloseMatch ? null : CLOSE_INCLUDE_REGEX.exec(line);
+      const openMatch = selfCloseMatch || closeMatch ? null : OPEN_INCLUDE_REGEX.exec(line);
 
       const selfCloseTarget = selfCloseMatch?.[1];
       if (selfCloseTarget !== undefined) {

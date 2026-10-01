@@ -25,7 +25,7 @@ At install time, `{harness_home_dir}` expands to `~/.claude`, `~/.codex`, `~/.op
 
 Bare invocations (e.g., `` Run `resolve-frontmatter.sh ...` ``) do not resolve at runtime: The install directory is not on `$PATH`, and only `feedback-memories.sh` is symlinked into `/usr/local/bin`. An agent that encounters a bare invocation typically guesses a path and fails before succeeding, wasting tool calls.
 
-Prose mentions of script names that are not invocations (e.g., ``"the `describe-change.mjs` script renders titles"``) do not need the prefix.
+Prose mentions of script names that are not invocations (e.g., ``"the `describe-change.mjs` script renders titles"``) do not need the prefix. `validate` recognizes an invocation by what surrounds the name: a flag, line continuation, quoted argument, shell variable, or shell operator after it, or an interpreter word (`bash`, `node`, `sh`, `source`, `zsh`) directly before it. Write a bundle's invocation as `node <path> <subcommand>`, which the interpreter word marks.
 
 ## Scripts
 
@@ -43,6 +43,4 @@ Harness-invoked:
 
 ## Drift detection
 
-The regression test at `content/__tests__/script-invocation-conventions.unit.test.ts` walks every `.md` file under `content/skills/` and `content/subagents/` and fails when any executable invocation of a known helper script lacks the `{harness_home_dir}/scripts/` prefix.
-
-When adding a new helper script, append its filename to the `KNOWN_SCRIPTS` array in the test file.
+`codeassembly validate` walks every `.md` file under `skills/` and `subagents/` and reports each executable invocation of a known helper script that lacks the `{harness_home_dir}/scripts/` prefix. Every file directly in this directory other than Markdown is a known script, so a new script is covered once it is added here.

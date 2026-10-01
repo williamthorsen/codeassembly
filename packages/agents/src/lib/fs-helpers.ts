@@ -28,16 +28,28 @@ export function isUnderTestDirectory(relativePath: string): boolean {
 }
 
 /**
+ * Lists every file under `root` at any depth whose extension is one of `extensions` (each with its leading dot), as
+ * absolute paths in sorted order, skipping the test tree. Empty when `root` is absent.
+ */
+export async function listFilesRecursively(
+  root: string,
+  extensions: ReadonlyArray<string>,
+): Promise<ReadonlyArray<string>> {
+  const entries = await readDirEntriesRecursively(root);
+  return entries
+    .filter((entry) => entry.isFile() && extensions.includes(path.extname(entry.name)))
+    .map((entry) => path.join(entry.parentPath, entry.name))
+    .filter((file) => !isUnderTestDirectory(path.relative(root, file)))
+    .toSorted();
+}
+
+/**
  * Lists every authored Markdown file under `root` at any depth, as absolute paths, skipping the test tree. Partials
  * and dotfiles are included: A check that reads a body as the pipeline expands it sees a partial's content too, so a
  * walk that dropped them would miss what an inlining body delivers. Empty when `root` is absent.
  */
 export async function listMarkdownFilesRecursively(root: string): Promise<ReadonlyArray<string>> {
-  const entries = await readDirEntriesRecursively(root);
-  return entries
-    .filter((entry) => entry.isFile() && entry.name.endsWith('.md'))
-    .map((entry) => path.join(entry.parentPath, entry.name))
-    .filter((file) => !isUnderTestDirectory(path.relative(root, file)));
+  return listFilesRecursively(root, ['.md']);
 }
 
 /** Lists visible (`.md`, non-`_`, non-dotfile) regular-file names directly in `dir`; empty when `dir` is absent. */

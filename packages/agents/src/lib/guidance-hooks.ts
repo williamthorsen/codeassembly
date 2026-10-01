@@ -19,13 +19,16 @@ import { renderRulebookBlock } from './sentinel-inliner.ts';
  */
 
 /** A fenced code block's opening or closing marker: three or more backticks, or three or more tildes. */
-const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
+export const FENCE_REGEX = /^\s*(`{3,}|~{3,})/;
 
 /** An ATX heading, captured so that demotion can add a level without disturbing the text that follows. */
-const HEADING_REGEX = /^(#{1,6})(\s)/;
+export const HEADING_REGEX = /^(#{1,6})(\s)/;
+
+/** The level at which a bound rulebook's title renders, since `fillGuidanceHooks` demotes every fill heading by one. */
+export const HOOK_FILL_LEVEL = 2;
 
 /** Matches a guidance-hook directive on its own line: `<!-- guidance-hook: name -->`. The captured group is the name. */
-const HOOK_DIRECTIVE_REGEX = /^[ \t]*<!--[ \t]*guidance-hook:[ \t]*(.*?)[ \t]*-->[ \t]*$/;
+export const HOOK_DIRECTIVE_REGEX = /^[ \t]*<!--[ \t]*guidance-hook:[ \t]*(.*?)[ \t]*-->[ \t]*$/;
 
 /**
  * Matches a full-line comment whose opening token is a near-miss of `guidance-hook:` -- a plural `guidance-hooks:`, a
