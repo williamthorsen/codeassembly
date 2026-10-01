@@ -37,7 +37,7 @@ import {
   type LedgerRecord,
   RecordInputSchema,
 } from './schemas.ts';
-import { applySelectors, groupByScope, parseAge } from './select.ts';
+import { applySelectors, groupByScope, orderForSweep, parseAge } from './select.ts';
 import type { CommandRunner, Escalation, TicketGroup, TicketInput } from './types.ts';
 
 /** Everything a command reads from its environment, injected so that tests can supply fixtures. */
@@ -193,7 +193,8 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
     if (!changed) resumed.push(issue.number);
     return changed;
   });
-  const issues = selectors.limit === undefined ? pending : pending.slice(0, selectors.limit);
+  const ordered = orderForSweep(pending);
+  const issues = selectors.limit === undefined ? ordered : ordered.slice(0, selectors.limit);
 
   const numbers = new Set(issues.map((issue) => issue.number));
   const inProgress = await detectInProgress({

@@ -56,6 +56,13 @@ export function groupByScope(issues: readonly Issue[], inProgress: ReadonlyMap<n
   });
 }
 
+/** Returns `issues` in sweep order: by scope as `groupByScope` orders the groups, then oldest first. */
+export function orderForSweep(issues: readonly Issue[]): Issue[] {
+  return groupByScope(issues, new Map()).flatMap((group) =>
+    group.tickets.flatMap((ticket) => issues.filter((issue) => issue.number === ticket.number)),
+  );
+}
+
 /** Parses an `--older-than` value, `<N>d` or `<N>w`, into days. Throws on any other form. */
 export function parseAge(value: string): number {
   const match = /^([1-9]\d*)([dw])$/.exec(value);

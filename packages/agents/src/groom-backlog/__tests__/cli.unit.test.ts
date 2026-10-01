@@ -94,11 +94,15 @@ describe(runCli, () => {
       });
     });
 
-    it('caps the tickets at --limit after the resume skip', async () => {
+    it('caps the tickets at --limit in sweep order, after the resume skip', async () => {
+      writeLedger(root, [assessment('r', 10, '2026-03-01T00:00:00Z')]);
+      issues.reverse();
+
       const result = await runCli(['collect', '--run', 'r', '--out', 'in', '--limit', '1'], context);
 
+      // #10 is resumed, and #11, the oldest unscoped ticket, leads #12 whatever order `gh` returns.
       expect(result).toMatchObject({ ok: true, counts: { total: 1 } });
-      expect(result.ok && result.tickets).toMatchObject([{ number: 10 }]);
+      expect(result.ok && result.tickets).toMatchObject([{ number: 11 }]);
     });
 
     it('skips a ticket assessed in the run unless it changed since, ignoring the run marker comment', async () => {
