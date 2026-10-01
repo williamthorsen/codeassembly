@@ -275,6 +275,18 @@ describe(validateContentRoot, () => {
     expect(defects[0]).toMatchObject({ file: 'guidance/rulebooks/house-style.md', kind: 'render' });
   });
 
+  it('reports a content rule defect alongside the render defects', async () => {
+    await writeSkill(root, 'alpha', { body: 'Indented\u{A0}reason.' });
+    await writeSubagent(root, 'helper', { body: 'See [the missing part](#nowhere).' });
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects.map(({ file, kind }) => ({ file, kind }))).toEqual([
+      { file: 'subagents/helper.md', kind: 'render' },
+      { file: 'skills/alpha/SKILL.md', kind: 'codepoint' },
+    ]);
+  });
+
   it('reports an unusable content root on its own, without attempting the stages that need one', async () => {
     const defects = await validateContentRoot(path.join(root, 'absent'), ALL_HARNESS_IDS);
 

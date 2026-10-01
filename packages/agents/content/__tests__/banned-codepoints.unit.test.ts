@@ -33,22 +33,9 @@ interface Offender {
   readonly line: number;
 }
 
-// Each codepoint is written as an escape. The scan reads this file, so a literal would report the guard itself, and a
-// literal non-breaking space is invisible in source besides.
-//
-// The scan decodes each file rather than matching bytes. Because 0xA0 is a continuation byte of ■ (U+25A0) and
-// ➕ (U+2795), a byte-level search reports every gradient example as a hit.
+// Each codepoint is written as an escape: The scan reads this file, so a literal would report the guard itself. The
+// non-breaking-space ban is a `validate` rule, which `library-validation` runs over this tree.
 const BANS: ReadonlyArray<Ban> = [
-  {
-    // The ban is total rather than indent-only: The sole reason to type one into guidance is to indent a subordinate
-    // line, and a blanket check does not need any parsing to decide.
-    allowlist: [],
-    codepoint: '\u{A0}',
-    name: 'a non-breaking space (U+00A0)',
-    remedy:
-      'A whitespace indent does not survive terminal rendering; the line collapses to the left margin and the ' +
-      'reader cannot tell which option its reasoning belongs to. Nest the reasoning as a list item instead.',
-  },
   {
     // A whole file is exempt only when the corpus does not author it. `brainstorming` is a verbatim superpowers
     // extract marked do-not-edit, so its prose is out of the rule's reach entirely. `update-jira-ticket` is ordinary

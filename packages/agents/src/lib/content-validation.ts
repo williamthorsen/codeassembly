@@ -15,6 +15,8 @@ import {
   OPTIONAL_TOKEN_CONTENT_FORMAT,
   readContentRootManifest,
 } from './content-root-manifest.ts';
+import { findNonBreakingSpaceDefects } from './content-rules/non-breaking-space.ts';
+import type { ResolvedArtifacts, RuleContext } from './content-rules/rule-context.ts';
 import { createSourceResolver, type SourceResolver } from './content-sources.ts';
 import { type DirectArtifacts, type ResolvedClosure, resolveSeedClosures } from './dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
@@ -96,8 +98,8 @@ export async function findUnderdeclaredFormatDefects(root: string): Promise<Read
  * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
  * first. Runs the checks that a consumer's `sync` runs before writing (dependency closure, artifact resolution,
  * delivery collisions, and a per-harness render) over a whole content root instead of over one consumer's declared
- * closure, plus one pass for which `sync` does not have a counterpart: the retired frontmatter key, which reaches a
- * consumer intact rather than failing there.
+ * closure, plus the passes for which `sync` does not have a counterpart: the retired frontmatter key, which reaches a
+ * consumer intact rather than failing there, and the content rules, each a convention that holds for any root.
  *
  * Nothing here reads a `codeassembly.yaml`. The root is resolved as if it were a declared source with the built-in
  * library behind it, which is the shape in which a consumer deploys it, so a producing package without a consuming
@@ -130,6 +132,7 @@ export async function validateContentRoot(
   const resolver = createSourceResolver([{ name: root, dir: root }], libraryDir);
   const seeded = await resolveSeedClosures(await collectSeeds(root), resolver);
   const artifacts = await resolveArtifacts(seeded.closure, resolver);
+  const context: RuleContext = { root, libraryDir, resolver, artifacts };
 
   // A body-local defect raises the same message on every harness, so the fold below collapses it to one line; a
   // harness-specific one (a skill scoped to one harness) surfaces naming the harnesses that it affects.
@@ -146,18 +149,11 @@ export async function validateContentRoot(
     ...(await findRetiredKeyDefects(artifacts)),
     ...(await findRetiredOverlayKeyDefects(root, harnessIds)),
     ...foldHarnessDefects(rendered, harnessIds),
+    ...(await findNonBreakingSpaceDefects(context)),
   ];
 }
 
 // region | Helpers
-
-/** Every artifact reached from a content root's seeds, resolved against its owning source. */
-interface ResolvedArtifacts {
-  readonly rulebooks: ReadonlyArray<ResolvedRulebook>;
-  readonly skills: ReadonlyArray<ResolvedSkill>;
-  readonly subagents: ReadonlyArray<ResolvedSubagent>;
-  readonly defects: ReadonlyArray<ContentDefect>;
-}
 
 /**
  * Enumerates every artifact that the root ships as a closure seed. Adds collections to the per-type catalog

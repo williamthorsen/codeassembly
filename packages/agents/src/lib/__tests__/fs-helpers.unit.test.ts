@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   isTestDirectory,
   isUnderTestDirectory,
+  listFilesRecursively,
   listMarkdownFilesRecursively,
   readFileOrEmpty,
   writeIfChanged,
@@ -50,6 +51,39 @@ describe(isUnderTestDirectory, () => {
 
   it('does not match deliverable content', () => {
     expect(isUnderTestDirectory('skills/capture-event/SKILL.md')).toBe(false);
+  });
+});
+
+describe(listFilesRecursively, () => {
+  let dir: string;
+
+  beforeEach(async () => {
+    dir = path.join(tmpdir(), `agents-test-fs-walk-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(dir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it('returns the files with a listed extension at any depth, in sorted order', async () => {
+    await writeAt(dir, 'skills/alpha/SKILL.md', '');
+    await writeAt(dir, 'scripts/run.sh', '');
+    await writeAt(dir, 'scripts/bundle.mjs', '');
+
+    const found = (await listFilesRecursively(dir, ['.md', '.sh'])).map((file) => path.relative(dir, file));
+
+    expect(found).toEqual(['scripts/run.sh', 'skills/alpha/SKILL.md']);
+  });
+
+  it('skips the test tree', async () => {
+    await writeAt(dir, 'kept.ts', '');
+    await writeAt(dir, 'skills/alpha/__tests__/fixture.ts', '');
+    await writeAt(dir, 'test-utils/helper.ts', '');
+
+    const found = (await listFilesRecursively(dir, ['.ts'])).map((file) => path.relative(dir, file));
+
+    expect(found).toEqual(['kept.ts']);
   });
 });
 
