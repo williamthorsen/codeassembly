@@ -70,16 +70,7 @@
 - name: scope:factory
   color: 00ff96
   description: ''
-- name: scope:fleet
-  color: 00ff96
-  description: ''
-- name: scope:foreman
-  color: 00ff96
-  description: ''
 - name: scope:kb
-  color: 00ff96
-  description: ''
-- name: scope:lifecycle
   color: 00ff96
   description: ''
 - name: scope:mcp

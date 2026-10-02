@@ -1,4 +1,4 @@
-// Branch-name ticket parsing per the contract in the agents skills' `_data/ticket-id-extraction.md`: A Jira-style key
+// Branch-name ticket parsing per the contract in `_data/ticket-id-extraction.md`: A Jira-style key
 // anywhere in the name takes precedence, then a bare-numeric prefix, each with an optional `.N` revisit suffix. Raw
 // and sanitized branch spellings parse alike: Neither pattern depends on `/` vs `-` separators.
 

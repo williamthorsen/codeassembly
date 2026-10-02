@@ -2,9 +2,6 @@
 name: merge-pr
 description: Merge a pull request by composing a merge-commit message, validating PR state, and delegating to the platform's merge API
 user-invocable: true
-dependencies:
-  skills:
-    - emit-event
 ---
 
 # Merge pull request
@@ -30,7 +27,7 @@ Merge a pull request on the appropriate platform. `describe-change.mjs` resolves
 
 ### 1. Get session context
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `scm`, `project_slug`, `ticket_id`, `artifact_base_dir`, and `pr_url` from it. Then emit `skill.started` (payload `{"skill":"merge-pr"}`) per [Lifecycle events](#lifecycle-events).
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_ref`, `branch_name`, `default_branch`, `scm`, `project_slug`, `ticket_id`, `artifact_base_dir`, and `pr_url` from it.
 
 ### 2. Resolve the PR
 
@@ -47,7 +44,7 @@ Read the PR's metadata for the steps below, dispatching on `scm`:
 - **`"bitbucket"`**: Issue an `action: "get"` call per [Bitbucket pull-request access](../_data/bitbucket-pr-access.md), then map its fields onto the same names that the steps below use: `description` to `body`, `source.branch.name` to `headRefName`, `source.commit.hash` to `headRefOid`, `destination.branch.name` to `baseRefName`, `links.html.href` to `url`, and an empty array to `labels`. `isCrossRepository` is true when `source.repository.full_name` names a repository other than the PR's own.
 - **Unknown or missing**: Ask the user which platform to use, matching step 7's behavior.
 
-If this step cannot resolve or discover a PR, emit `skill.completed` (payload `{"outcome":"stopped: no PR"}`) per [Lifecycle events](#lifecycle-events), then stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
+If this step cannot resolve or discover a PR, stop with: "No open PR found for branch `{branch_name}`. Create one with `{skill:create-pr}` first."
 
 Capture `title` (PR title), `body` (PR body), `labels` (label objects), `number`, `headRefName` (head branch), `headRefOid` (head commit), `baseRefName` (base branch), and `isCrossRepository` from the response. The steps below use them.
 
@@ -88,11 +85,11 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-merge \
   [--override-title "{title}"]
 ```
 
-The guard keeps a failed read out of the merge. The redirect above truncates the file before `gh` writes, so a failed read leaves it empty, and an empty body does not contain a `## What` or a `change-record` block: The helper would resolve the effective record from the labels alone, step 5 would dispatch the drafter, and the offer below would propose adding a block to a body that was never read. If the guard refuses, emit `skill.completed` (payload `{"outcome":"stopped: PR body not read"}`) per [Lifecycle events](#lifecycle-events) and stop.
+The guard keeps a failed read out of the merge. The redirect above truncates the file before `gh` writes, so a failed read leaves it empty, and an empty body does not contain a `## What` or a `change-record` block: The helper would resolve the effective record from the labels alone, step 5 would dispatch the drafter, and the offer below would propose adding a block to a body that was never read. If the guard refuses, stop.
 
 Pass each PR label from step 2 as a separate `--pr-label` flag. Pass `--ticket-ref` only when `ticket_ref` from session context is non-null and `headRefName` is `branch_name`, since a PR merged from another branch's checkout belongs to another ticket; the helper uses that reference only when the PR title contains none. Pass this skill's `--scope`, `--type`, `--breaking`, and `--no-breaking` as `--override-scope`, `--override-type`, `--override-breaking`, and `--no-override-breaking`, omitting each one that was not given.
 
-If this step's first run exits non-zero, or the helper is not found, emit `skill.completed` (payload `{"outcome":"stopped: merge not resolved"}`) per [Lifecycle events](#lifecycle-events) and stop with its message. Do not compose a title or body without it. Step 8's re-read stops the same way, since the failure there does not come from any answer.
+If this step's first run exits non-zero, or the helper is not found, stop with its message. Do not compose a title or body without it. Step 8's re-read stops the same way, since the failure there does not come from any answer.
 
 A re-run driven by a decision or an answer at step 6's gate does not stop the skill, and neither does a refused `amend-entry`. Report the helper's message and return to the decision or the question that produced the value: The refusal is in the value, and the resolution already in hand is still good. A type spelled with `!` is that case, which step 6 maps rather than passes through.
 
@@ -120,7 +117,7 @@ git rev-parse HEAD
 
 When it is not `headRefOid`, do not make the offer: This checkout describes other commits, and the merge of a pull request from another branch's checkout is a case that this skill supports. Carry the notice to the gate at step 6 and name the checkout there as the reason for not drafting a block here.
 
-When it is `headRefOid`, emit `input.requested` (payload `{"prompt":"add-change-record"}`) per [Lifecycle events](#lifecycle-events), then ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
+When it is `headRefOid`, ask once, naming that consequence and saying that the offer runs `{skill:summarize-change}` to draft the entries:
 
 ```
 PR #{number} does not contain a change record, so the merge would not publish any change entries. Draft the entries and add the block? This runs `{skill:summarize-change}`. 👍🏼👎🏼
@@ -139,7 +136,7 @@ resolveDeletionStrategy(cliOverride):  return cliOverride ?? 'remote'
 
 `--delete both|remote|none` map directly to the same string values.
 
-Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `both`, before step 6 asks for anything. Emit `skill.completed` (payload `{"outcome":"stopped: unsupported deletion strategy"}`) per [Lifecycle events](#lifecycle-events), then stop with:
+Refuse here when `scm` is `"bitbucket"` and the resolved deletion strategy is `both`, before step 6 asks for anything. Stop with:
 
 <!-- include: ../_partials/bitbucket-delete-both-refusal.md / -->
 
@@ -201,7 +198,7 @@ node {harness_home_dir}/scripts/describe-change.mjs amend-entry \
 The helper rewrites the file in place and refuses an amendment that would leave the entry defective. [`amend-entry`](../_data/title-templates.md#amend-entry) states its refusals. Then write the amended body to the PR:
 
 - **`"github"`**: `gh pr edit {number} --body-file "$body_path"`, in a call that opens with the same assignment and guard.
-- **`"bitbucket"`**: [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) does not document a description-write action. Emit `skill.completed` (payload `{"outcome":"stopped: no Bitbucket write path"}`) per [Lifecycle events](#lifecycle-events), then stop, showing the amended `change-record` block from the body file and saying that the author pastes it over the description's block in the Bitbucket UI, then runs the merge again.
+- **`"bitbucket"`**: [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) does not document a description-write action. Stop, showing the amended `change-record` block from the body file and saying that the author pastes it over the description's block in the Bitbucket UI, then runs the merge again.
 
 Then re-run step 3 with the same override set and the same `--head`. Its fresh read of the body confirms that the amendment reached the PR.
 
@@ -224,7 +221,7 @@ When asking option-style questions, follow [option format](#option-format). (Rei
 
 Re-run step 3 after each amendment and each override, with every override added to the override set, until `defects` is empty. Never offer the merge while `defects` contains an item. If an override or an amendment moves the effective record to another tier and step 5 drafted the body, re-run step 5's drafting against the new tier.
 
-Emit `input.requested` (payload `{"prompt":"merge-approval"}`) per [Lifecycle events](#lifecycle-events), then render the proposed merge to the user:
+Render the proposed merge to the user:
 
 ```
 Proposed merge for PR #{pr_number}:
@@ -268,7 +265,7 @@ Render `{confirmation}` so that the ask itself names every destructive side effe
 
 Under a `stale-entries` notice, open the ask with `The change record is stale. ` so that the approval names what it accepts: `The change record is stale. Merge PR #{pr_number}? 👍🏼👎🏼`. Under an `absent-block` notice, open it with `The pull request does not contain a change record. ` in the same way.
 
-If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events), then stop without making an API call or writing an artifact. If they approve, continue.
+If the user declines, stop without making an API call or writing an artifact. If they approve, continue.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -300,7 +297,7 @@ The merge block takes a comparison of its own because `body` excludes the `chang
 
 The window that this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope: The re-run reads the commits up to the head commit read in step 2, and a generated body is not recomposed on account of later commits. The delegate's own branch-sync check reports local and remote divergence.
 
-If every re-read value matches the approved one, continue to step 9 without saying anything. If any differs, re-render step 6's gate with the new values and ask again, and repeat this step after each approval until the values stop changing. Merging the newest version silently would publish text that the user never approved, which is the same defect from the other direction. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop without merging or writing an artifact, exactly as step 6 does.
+If every re-read value matches the approved one, continue to step 9 without saying anything. If any differs, re-render step 6's gate with the new values and ask again, and repeat this step after each approval until the values stop changing. Merging the newest version silently would publish text that the user never approved, which is the same defect from the other direction. If the user declines, stop without merging or writing an artifact, exactly as step 6 does.
 
 ### 9. Check the published body
 
@@ -316,7 +313,7 @@ node {harness_home_dir}/scripts/describe-change.mjs check-merge-body \
 
 The helper refuses a body whose block is malformed, or whose entry count differs from `--entry-count`. A count of `0` requires the body not to contain a block. [`check-merge-body`](../_data/title-templates.md#check-merge-body) states the rules.
 
-If it exits non-zero, emit `skill.completed` (payload `{"outcome":"stopped: merge body failed round-trip"}`) per [Lifecycle events](#lifecycle-events) and stop with its message. Nothing is merged.
+If it exits non-zero, stop with its message. Nothing is merged.
 
 ### 10. Call delegate
 
@@ -335,13 +332,11 @@ Pass the following inputs to the selected delegate per the delegate interface:
 
 The orchestrator never passes a title that `defects` blocks, or a `prompt` sentinel, to the delegate: All values are concrete by this point.
 
-If the delegate stopped or failed, emit `skill.completed` (payload `{"outcome":"stopped: <reason>"}`) per [Lifecycle events](#lifecycle-events) and stop. Otherwise capture one thing from the delegate's completion report and continue: whether it reported a merge. Step 11 reports the outcome from it.
+If the delegate stopped or failed, stop. Otherwise continue.
 
 ### 11. Report the outcome
 
-Emit `skill.completed` per [Lifecycle events](#lifecycle-events): payload `{"outcome":"merged"}` when the delegate reported a merge, and `{"outcome":"not merged"}` when it did not. A merge whose commit SHA is unavailable is still a merge, and is reported as `merged`.
-
-Report nothing else here, and invoke nothing. The merge flow does not record a lede decision or offer to record one; a capture is the author's own request, made whenever they choose.
+Report nothing beyond the delegate's completion report, and invoke nothing. The merge flow does not record a lede decision or offer to record one; a capture is the author's own request, made whenever they choose.
 
 ## Important
 
@@ -353,5 +348,3 @@ Report nothing else here, and invoke nothing. The merge flow does not record a l
 <!-- include: ../_partials/gh-body-file.md / -->
 
 <!-- include: ../_partials/option-format.md / -->
-
-<!-- include: ../_partials/lifecycle-events.md / -->

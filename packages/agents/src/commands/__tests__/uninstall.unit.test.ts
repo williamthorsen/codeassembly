@@ -12,6 +12,7 @@ import type { AgentsManifest, InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+import { RETIRED_CLAUDE_SETTINGS } from '../test-utils/retired-hook-configs.ts';
 import { uninstallCommand } from '../uninstall.ts';
 
 describe('uninstallCommand', () => {
@@ -72,7 +73,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions({ hooks: false }), tempDir);
+    await installCommand(makeInstallOptions(), tempDir);
     const settingsPath = path.join(claudeHome, 'settings.json');
     await writeFile(settingsPath, '{ not json', 'utf8');
 
@@ -85,21 +86,20 @@ describe('uninstallCommand', () => {
     expect(manifest.harnesses.claude).toBeUndefined();
   });
 
-  it('removes the session-lifecycle hook entries but not foreign settings content', async () => {
+  it('removes the retired session-lifecycle hook entries but not foreign settings content', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-    const settingsPath = path.join(claudeHome, 'settings.json');
-    await writeFile(settingsPath, `${JSON.stringify({ model: 'opus' }, undefined, 2)}\n`, 'utf8');
-
     await installCommand(makeInstallOptions(), tempDir);
-    expect(await readFile(settingsPath, 'utf8')).toContain('--sentinel codeassembly-agents');
+    const settingsPath = path.join(claudeHome, 'settings.json');
+    await writeFile(settingsPath, RETIRED_CLAUDE_SETTINGS, 'utf8');
 
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
     const settings = await readFile(settingsPath, 'utf8');
     expect(settings).not.toContain('--sentinel codeassembly-agents');
     expect(settings).toContain('"model": "opus"');
+    expect(settings).toContain('echo foreign');
   });
 
   it('should remove only manifest-tracked files', async () => {

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseTicketRef } from '../ticket-ref.ts';
+import { parseTicketRef } from '../parse-ticket-ref.ts';
 
 describe('parseTicketRef', () => {
   it('parses a bare ticket id', () => {

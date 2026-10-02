@@ -12,6 +12,7 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+import { RETIRED_ROVO_CONFIG } from '../test-utils/retired-hook-configs.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -49,16 +50,16 @@ describe('install retraction of a de-declared harness', () => {
     );
   });
 
-  it('unwires the dropped harness hook entries, so its config stops invoking the removed relay', async () => {
+  it('removes the dropped harness retired hook entries', async () => {
     using silent = silenceConsole(['info', 'warn']);
-    await installBoth({ hooks: true });
+    await installBoth();
     const rovoConfig = path.join(tempDir, ROVO_HOME, 'config.yml');
-    expect(await readFile(rovoConfig, 'utf8')).toContain('relay-hook-event.mjs');
+    await writeFile(rovoConfig, RETIRED_ROVO_CONFIG, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions({ hooks: true }), tempDir);
+    await installCommand(makeOptions(), tempDir);
 
-    expect(await readFile(rovoConfig, 'utf8')).not.toContain('relay-hook-event.mjs');
+    expect(await readFile(rovoConfig, 'utf8')).not.toContain('--sentinel codeassembly-agents');
     expect(silent.warn.mock.calls).toHaveLength(0);
   });
 
@@ -94,16 +95,19 @@ describe('install retraction of a de-declared harness', () => {
   it('previews the retraction under --dry-run, writing neither disk nor manifest', async () => {
     using silent = silenceConsole(['info', 'warn']);
     await installBoth();
+    const rovoConfig = path.join(tempDir, ROVO_HOME, 'config.yml');
+    await writeFile(rovoConfig, RETIRED_ROVO_CONFIG, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions({ dryRun: true, hooks: true }), tempDir);
+    await installCommand(makeOptions({ dryRun: true }), tempDir);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.rovo?.entries.length).toBeGreaterThan(0);
     const lines = silent.info.mock.calls.map((call) => String(call[0]));
     expect(lines).toContainEqual(expect.stringContaining('[dry-run] Would remove stale item'));
-    expect(lines).toContain('  [hooks] Would remove session-lifecycle hook entries');
+    expect(lines).toContain(`  [hooks] Would remove 1 retired session-lifecycle hook entries from ${rovoConfig}`);
+    expect(await readFile(rovoConfig, 'utf8')).toBe(RETIRED_ROVO_CONFIG);
   });
 
   it('retracts every harness when the declaration resolves to an empty set', async () => {
@@ -136,12 +140,12 @@ describe('install retraction of a de-declared harness', () => {
 
   it('warns and completes the retraction when the dropped harness config cannot be parsed', async () => {
     using silent = silenceConsole(['info', 'warn']);
-    await installBoth({ hooks: true });
+    await installBoth();
     const rovoConfig = path.join(tempDir, ROVO_HOME, 'config.yml');
     await writeFile(rovoConfig, BROKEN_CONFIG, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions({ hooks: true }), tempDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(silent.warn.mock.calls.map((call) => String(call[0]))).toContainEqual(
       expect.stringContaining('Skipping hook-entry removal'),
@@ -183,7 +187,7 @@ describe('install retraction of a de-declared harness', () => {
   }
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
-    return { harness: 'all', link: false, force: false, dryRun: false, hooks: false, ...overrides };
+    return { harness: 'all', link: false, force: false, dryRun: false, ...overrides };
   }
 
   /** A content-hashed entry in the rovo home, which is what drift detection can see an edit in. */

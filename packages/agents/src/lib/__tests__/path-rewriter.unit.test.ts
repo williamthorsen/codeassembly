@@ -151,9 +151,11 @@ describe(rewriteSkillsReferences, () => {
 
   it('resolves every reference in a command line', () => {
     const content =
-      'node {harness_home_dir}/skills/emit-event/emit-event.mjs --payload {harness_home_dir}/skills/x.json';
+      'node {harness_home_dir}/skills/capture-event/capture-event.mjs --payload {harness_home_dir}/skills/x.json';
 
-    expect(rewriteSkillsReferences(content, markTarget)).toBe('node <emit-event/emit-event.mjs> --payload <x.json>');
+    expect(rewriteSkillsReferences(content, markTarget)).toBe(
+      'node <capture-event/capture-event.mjs> --payload <x.json>',
+    );
   });
 
   it('keeps trailing sentence punctuation out of the path', () => {

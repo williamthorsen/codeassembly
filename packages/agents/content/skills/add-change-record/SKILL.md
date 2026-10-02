@@ -2,9 +2,6 @@
 name: add-change-record
 description: Add a change-record block to a pull request whose body contains none
 user-invocable: true
-dependencies:
-  skills:
-    - emit-event
 ---
 
 # Add change record
@@ -27,7 +24,7 @@ The block is drafted by `{skill:summarize-change}`, which consolidates the branc
 
 ### 1. Get session context
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `branch_name`, `default_branch`, `scm`, and `pr_url` from it. Then emit `skill.started` (payload `{"skill":"add-change-record"}`) per [Lifecycle events](#lifecycle-events).
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `branch_name`, `default_branch`, `scm`, and `pr_url` from it.
 
 ### 2. Resolve the pull request
 
@@ -44,7 +41,7 @@ Read the pull request's metadata, dispatching on `scm`:
 - **`"bitbucket"`**: Issue an `action: "get"` call per [Bitbucket pull-request access](../_data/bitbucket-pr-access.md), then map its fields onto the same names: `description` to `body`, `source.branch.name` to `headRefName`, `source.commit.hash` to `headRefOid`, and `links.html.href` to `url`.
 - **Unknown or missing**: Ask the user which platform to use.
 
-If the pull request cannot be resolved, emit `skill.completed` (payload `{"outcome":"stopped: no PR"}`) per [Lifecycle events](#lifecycle-events), then stop with: "No open pull request found for branch `{branch_name}`. Create one with `{skill?:create-pr}` first."
+If the pull request cannot be resolved, stop with: "No open pull request found for branch `{branch_name}`. Create one with `{skill?:create-pr}` first."
 
 ### 3. Confirm that HEAD is the pull request's head commit
 
@@ -56,7 +53,7 @@ The next step runs `{skill:summarize-change}`, which reads `{default_branch}...H
 
 Compare the local SHA with `headRefOid`. On GitHub the two are full SHAs and must be equal; on Bitbucket, compare on a prefix per [Bitbucket pull-request access](../_data/bitbucket-pr-access.md#reading-a-pull-request), since the platform may abbreviate its hash.
 
-When they differ, emit `skill.completed` (payload `{"outcome":"stopped: HEAD is not the PR head"}`) per [Lifecycle events](#lifecycle-events), then stop, naming both commits and the branch to check out.
+When they differ, stop, naming both commits and the branch to check out.
 
 ### 4. Confirm that the body does not contain a block
 
@@ -85,7 +82,7 @@ The guard keeps a failed read out of the decision: An empty file does not contai
 
 Read `notices` from the output. The block reading is settled by the helper rather than by a fence scan here, so that this skill and the merge agree on what counts as a block, malformed included.
 
-Continue only when `notices` contains `absent-block`. Otherwise emit `skill.completed` (payload `{"outcome":"stopped: block present"}`) per [Lifecycle events](#lifecycle-events) and stop with the reason that the notices give:
+Continue only when `notices` contains `absent-block`. Otherwise stop with the reason that the notices give:
 
 - **`malformed-block`**: The body's block cannot be read (its `defect`). Say that a written block is never replaced, and that the author repairs this one by hand.
 - **Neither notice**: The body already contains a readable block. Say so, and that a block without entries is left as it is.
@@ -98,17 +95,17 @@ Invoke `{skill:summarize-change}`, passing through `--scope` and `--type` as giv
 
 Take the last `change-record` fence from the summary that this session just saved, copied character for character, the fence lines included. Read it from the saved file rather than from the transcript.
 
-When the saved summary does not contain a fence, emit `skill.completed` (payload `{"outcome":"stopped: no block drafted"}`) per [Lifecycle events](#lifecycle-events) and stop, relaying what `{skill:summarize-change}` reported about `render-block`. Nothing is written to the pull request.
+When the saved summary does not contain a fence, stop, relaying what `{skill:summarize-change}` reported about `render-block`. Nothing is written to the pull request.
 
 ### 6. Show the block and ask
 
-Show the block as it will be appended. Emit `input.requested` (payload `{"prompt":"append-block"}`) per [Lifecycle events](#lifecycle-events), then ask:
+Show the block as it will be appended, then ask:
 
 ```
 Append this change record to PR #{number}? 👍🏼👎🏼
 ```
 
-The ask comes after the block is shown, because the write changes state that others read. If the user declines, emit `skill.completed` (payload `{"outcome":"stopped: declined"}`) per [Lifecycle events](#lifecycle-events) and stop with nothing written.
+The ask comes after the block is shown, because the write changes state that others read. If the user declines, stop with nothing written.
 
 ### 7. Write the body back
 
@@ -122,7 +119,7 @@ Append the block after the body read in step 4, separated by one blank line, and
   gh pr edit {number} --body-file "$body_path"
   ```
 
-- **`"bitbucket"`**: Write through the description-update action that [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) documents, if it documents one. That doc is the single statement of the tool's actions, and today it documents reading, finding, and merging alone. When it does not document that action, emit `skill.completed` (payload `{"outcome":"stopped: no Bitbucket write path"}`) per [Lifecycle events](#lifecycle-events), then stop, showing the block again and saying that the author pastes it as the description's last element in the Bitbucket UI.
+- **`"bitbucket"`**: Write through the description-update action that [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) documents, if it documents one. That doc is the single statement of the tool's actions, and today it documents reading, finding, and merging alone. When it does not document that action, stop, showing the block again and saying that the author pastes it as the description's last element in the Bitbucket UI.
 
 ### 8. Confirm the block is the body's last element
 
@@ -132,10 +129,8 @@ When either check fails, say what the helper reported and that the pull request'
 
 ### 9. Report
 
-Report the pull-request URL and the path of the change summary that step 5 saved, which is a byproduct of the run rather than a second artifact to compose. Then emit `skill.completed` (payload `{"outcome":"block-added"}`) per [Lifecycle events](#lifecycle-events).
+Report the pull-request URL and the path of the change summary that step 5 saved, which is a byproduct of the run rather than a second artifact to compose.
 
 <!-- include: ../_partials/gh-body-file.md / -->
-
-<!-- include: ../_partials/lifecycle-events.md / -->
 
 <!-- include: ../_partials/action-items.md / -->

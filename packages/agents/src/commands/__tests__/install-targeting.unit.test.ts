@@ -82,7 +82,7 @@ describe('install harness targeting', () => {
   }
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {
-    return { harness: 'all', link: false, force: false, dryRun: false, hooks: false, ...overrides };
+    return { harness: 'all', link: false, force: false, dryRun: false, ...overrides };
   }
 
   /** Creates both harness homes, so that detection finds each and a declaration has something to narrow. */

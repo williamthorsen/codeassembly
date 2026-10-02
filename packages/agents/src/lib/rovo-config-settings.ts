@@ -1,57 +1,30 @@
 /**
- * The file layer over the Rovo Dev hook-entry transforms: read and parse `config.yml`, delegate to the pure transform,
- * and write the mutated document back, so foreign entries, foreign comments, and unrelated keys are written to disk
- * exactly as the comment-preserving transform left them. The path is supplied by the caller, which resolves it per harness. A
- * file that cannot be parsed is reported and never written.
+ * The file layer over the Rovo Dev hook-entry removal transform: read and parse `config.yml`, delegate to the pure
+ * transform, and write the mutated document back, so foreign entries, foreign comments, and unrelated keys are written
+ * to disk exactly as the comment-preserving transform left them. The path is supplied by the caller, which resolves it
+ * per harness. A file that cannot be parsed is reported and never written.
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
 
 import { type Document, parseDocument } from 'yaml';
 
-import type { EnsureResult, EntryCheck, RemoveResult } from './managed-entry-contract.ts';
-import {
-  checkHookEntries,
-  ensureHookEntries,
-  type HookEntry,
-  type HookSentinelMatcher,
-  removeHookEntries,
-} from './rovo-config-hooks.ts';
+import type { RemoveResult } from './managed-entry-contract.ts';
+import { type HookSentinelMatcher, removeHookEntries } from './rovo-config-hooks.ts';
 import { isEnoent } from './type-guards.ts';
 
-/** Reports each supplied entry's status in the config file. A file that does not exist reports every entry absent. */
-export async function checkRovoHookEntries(
-  filePath: string,
-  entries: readonly HookEntry[],
-  isOwned: HookSentinelMatcher,
-): Promise<ReadonlyArray<EntryCheck<HookEntry>>> {
-  const doc = await readConfigDocument(filePath);
-  return checkHookEntries(doc, entries, isOwned);
-}
-
 /**
- * Installs `entries` into the config file, creating the file and its parent directory when absent. The file is
- * rewritten only when the entries were missing or drifted, so a re-run leaves its mtime alone.
+ * Deletes every sentinel-matching entry from the config file. A file that does not exist is left uncreated. Under
+ * `dryRun`, reports what the removal would delete and leaves the file unwritten.
  */
-export async function ensureRovoHookEntries(
+export async function removeRovoHookEntries(
   filePath: string,
-  entries: readonly HookEntry[],
   isOwned: HookSentinelMatcher,
-): Promise<EnsureResult> {
-  const doc = await readConfigDocument(filePath);
-  const result = ensureHookEntries(doc, entries, isOwned);
-  if (result.changed) {
-    await writeConfigDocument(filePath, doc);
-  }
-  return result;
-}
-
-/** Deletes every sentinel-matching entry from the config file. A file that does not exist is left uncreated. */
-export async function removeRovoHookEntries(filePath: string, isOwned: HookSentinelMatcher): Promise<RemoveResult> {
+  options: { readonly dryRun?: boolean } = {},
+): Promise<RemoveResult> {
   const doc = await readConfigDocument(filePath);
   const result = removeHookEntries(doc, isOwned);
-  if (result.changed) {
+  if (result.changed && options.dryRun !== true) {
     await writeConfigDocument(filePath, doc);
   }
   return result;
@@ -87,11 +60,10 @@ async function readConfigText(filePath: string): Promise<string | undefined> {
 }
 
 /**
- * Writes the document, creating the parent directory as needed. Line wrapping is disabled so that a long hook command
- * stays one line rather than being folded across several (parse-equivalent, but unreadable and noisy in diffs).
+ * Writes the document. Line wrapping is disabled so that a long hook command stays one line rather than being folded
+ * across several (parse-equivalent, but unreadable and noisy in diffs).
  */
 async function writeConfigDocument(filePath: string, doc: Document): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, doc.toString({ lineWidth: 0 }), 'utf8');
 }
 

@@ -1,13 +1,13 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { printLine } from '../lib/emit-report.ts';
+import { emitReport, printLine } from '../lib/emit-report.ts';
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { removeItem } from '../lib/installer.ts';
 import { getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
+import { removeRetiredHookEntries } from '../lib/retired-hook-entries.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
 import type { AgentsManifest, InstallOptions, ManifestEntry } from '../lib/types.ts';
-import { removeHarnessHookEntries } from './configure-hooks.ts';
 
 /**
  * Executes the uninstall command, removing installed skills, subagents, and guidance files.
@@ -40,10 +40,10 @@ export async function uninstallCommand(
     console.info(`\nUninstalling for harness: ${harnessId}`);
 
     // Remove the hook entries regardless of manifest state: They live inside a shared user config rather than as
-    // tracked files, and configure-hooks can have written them without an install. An unparseable config stops the
-    // hook removal with a warning, never the removal of the tracked items or the manifest update.
+    // tracked files. An unparseable config stops the hook removal with a warning, never the removal of the tracked
+    // items or the manifest update.
     try {
-      await removeHarnessHookEntries(harnessId, baseDir);
+      emitReport(await removeRetiredHookEntries(harnessId, baseDir));
     } catch (error) {
       printLine({
         glyph: 'warning',

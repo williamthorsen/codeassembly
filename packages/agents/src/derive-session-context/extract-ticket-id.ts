@@ -3,8 +3,7 @@
  *
  * The revisit ordinal captured by `parseTicketRef` is dropped: Session context is attributed to the parent ticket.
  */
-import { parseTicketRef } from 'codeassembly-lifecycle';
-
+import { parseTicketRef } from './parse-ticket-ref.ts';
 import type { TicketIdResult } from './types.ts';
 
 /** Bare-numeric id: the form to which the configured `ticket_ref_prefix` applies; a Jira-style key contains its own. */

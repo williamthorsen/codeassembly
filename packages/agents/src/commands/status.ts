@@ -1,11 +1,8 @@
-import { describeError } from '@williamthorsen/toolbelt.errors';
-
 import { printLine } from '../lib/emit-report.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { readHomeProvenance } from '../lib/home-provenance.ts';
 import { detectDrift, getManifestPath, readManifest } from '../lib/manifest.ts';
-import type { HarnessId, InstallOptions } from '../lib/types.ts';
-import { checkHarnessHookEntries, type HookEntryStatus } from './configure-hooks.ts';
+import type { InstallOptions } from '../lib/types.ts';
 
 const MILLISECONDS_PER_DAY = 86_400_000;
 
@@ -28,8 +25,6 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
     const harnessManifest = manifest.harnesses[harnessId];
     if (!harnessManifest) {
       console.info(`\n${harnessId}: Not installed`);
-      // Hook entries can exist without an install (configure-hooks alone); stay quiet only when there are none.
-      await reportHookEntryStatus(harnessId, true, baseDir);
       continue;
     }
 
@@ -61,7 +56,6 @@ export async function statusCommand(options: Pick<InstallOptions, 'harness'>, ba
     }
 
     console.info(`  Summary: ${currentCount} current, ${modifiedCount} modified, ${missingCount} missing`);
-    await reportHookEntryStatus(harnessId, false, baseDir);
   }
 }
 
@@ -110,46 +104,4 @@ async function reportHomeProvenance(baseDir?: string): Promise<void> {
     `Home domain last written by ${lastWrite.version} at ${lastWrite.sourcePath}${commit} ` +
       `via \`${lastWrite.command}\` on ${lastWrite.writtenAt}${staleness}`,
   );
-}
-
-/**
- * Reports the session-lifecycle hook entries' state in the harness's config file. When `quietWhenUnconfigured` is
- * set (the harness isn't installed), prints nothing for an all-absent result rather than noise about a feature
- * not in use.
- */
-async function reportHookEntryStatus(
-  harnessId: HarnessId,
-  quietWhenUnconfigured: boolean,
-  baseDir?: string,
-): Promise<void> {
-  let statuses: ReadonlyArray<HookEntryStatus>;
-  try {
-    statuses = await checkHarnessHookEntries(harnessId, baseDir);
-  } catch (error) {
-    // An unparseable config is itself a status worth reporting; it must not abort the rest of the report.
-    printLine({
-      glyph: 'warning',
-      indent: 2,
-      level: 'warn',
-      text: `Hooks: Could not read the config: ${describeError(error)}`,
-    });
-    return;
-  }
-  const presentCount = statuses.filter((entry) => entry.status === 'present').length;
-  const driftedCount = statuses.filter((entry) => entry.status === 'drifted').length;
-  const absentCount = statuses.filter((entry) => entry.status === 'absent').length;
-
-  if (absentCount === statuses.length) {
-    if (!quietWhenUnconfigured) {
-      console.info('  Hooks: Not configured');
-    }
-    return;
-  }
-
-  console.info(`  Hooks: ${presentCount} present, ${driftedCount} drifted, ${absentCount} absent`);
-  for (const entry of statuses) {
-    if (entry.status !== 'present') {
-      console.info(`    ${entry.status}: ${entry.hook}`);
-    }
-  }
 }

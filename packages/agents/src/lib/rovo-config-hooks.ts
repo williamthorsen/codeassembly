@@ -1,27 +1,27 @@
 /**
- * Managed event-hook entries within a Rovo Dev `config.yml`. CodeAssembly owns individual items of the
- * `eventHooks.events` list, interleaved with foreign items written by other tools. Ownership is per-item, identified by
- * a caller-supplied sentinel matcher: A comment fence cannot delimit interleaved ownership. Every function operates on
- * a parsed `yaml` `Document` and mutates it in place via the comment-preserving Document API, so foreign items, foreign
- * comments, and unrelated keys survive untouched. File IO belongs to the caller.
+ * Removal of CodeAssembly-owned event-hook entries from a Rovo Dev `config.yml`. CodeAssembly owns individual items of
+ * the `eventHooks.events` list, interleaved with foreign items written by other tools. Ownership is per-item,
+ * identified by a caller-supplied sentinel matcher: A comment fence cannot delimit interleaved ownership. Every
+ * function operates on a parsed `yaml` `Document` and mutates it in place via the comment-preserving Document API, so
+ * foreign items, foreign comments, and unrelated keys survive untouched. File IO belongs to the caller.
  *
  * The schema is the one that real configs use: `eventHooks.events` is a YAML list of `{name, commands}` items, where
- * `name` is the hook event (several items may share one) and each
- * `commands` item is a map containing a `command` string. A map keyed by event name (the shape that some documentation
- * describes) makes Rovo Dev treat the whole config as corrupt. This module refuses it rather than modeling it.
+ * `name` is the hook event (several items may share one) and each `commands` item is a map containing a `command`
+ * string. A map keyed by event name (the shape that some documentation describes) makes Rovo Dev treat the whole
+ * config as corrupt. This module refuses it rather than modeling it.
  *
  * The module is agnostic about how the sentinel is encoded (a token in a command string, etc.); the caller fixes the
- * encoding and passes a matcher. The ensure/check/remove shapes come from `managed-entry-contract.ts`, shared with the
- * Claude sibling so that the harness wiring stays uniform.
+ * encoding and passes a matcher. The result shape comes from `managed-entry-contract.ts`, shared with the Claude
+ * sibling.
  */
 
-import { type Document, isMap, isSeq, YAMLMap, YAMLSeq } from 'yaml';
+import { type Document, isMap, isSeq, type YAMLSeq } from 'yaml';
 
-import type { EnsureResult, EntryCheck, ManagedEntryStatus, RemoveResult } from './managed-entry-contract.ts';
+import type { RemoveResult } from './managed-entry-contract.ts';
 
 /**
  * A single `eventHooks.events` item, mirroring the Rovo Dev shape: the hook event on which it fires, and its command
- * strings. In the file each command string is wrapped as a `{command}` map; this module owns that translation. The
+ * strings. In the file each command string is wrapped as a `{command}` map; this module unwraps it when reading. The
  * module never interprets command contents.
  */
 export interface HookEntry {
@@ -42,48 +42,6 @@ export class RovoConfigParseError extends Error {
     this.name = 'RovoConfigParseError';
     this.messages = messages;
   }
-}
-
-/**
- * Reports each supplied entry as `present` (an owned item with its name is equal to it), `drifted` (an owned item with
- * its name differs, or owned items exist under other names only), or `absent` (the list does not contain any owned
- * item). The report is scoped to the entries supplied; an all-present result does not imply ensure would leave the
- * document unchanged, since ensure would still drop an owned item that the caller did not supply.
- */
-export function checkHookEntries(
-  doc: Document,
-  entries: readonly HookEntry[],
-  isOwned: HookSentinelMatcher,
-): ReadonlyArray<EntryCheck<HookEntry>> {
-  assertParsable(doc);
-
-  const array = getEventsList(doc);
-  const owned = array ? readOwnedItems(array, isOwned) : [];
-  return entries.map((entry) => ({ entry, status: classify(owned, entry) }));
-}
-
-/**
- * Installs `entries` into the `eventHooks.events` list, creating missing structure (`eventHooks`, `events`) as needed.
- * The owned subset of the list is replaced wholesale by the supplied entries: spliced in at the first owned position,
- * appended when the list contains none. That makes a re-run a no-op, replaces drifted entries in place, collapses
- * accidental duplicates into the supplied set, and leaves foreign items in their original relative order. `changed` is
- * false when nothing moved.
- *
- * Throws when a supplied entry does not itself satisfy the matcher: An entry written without the sentinel could never
- * be found again by check or remove.
- */
-export function ensureHookEntries(
-  doc: Document,
-  entries: readonly HookEntry[],
-  isOwned: HookSentinelMatcher,
-): EnsureResult {
-  assertParsable(doc);
-  assertAllOwned(entries, isOwned);
-
-  if (entries.length === 0 && getEventsList(doc) === undefined) {
-    return { changed: false };
-  }
-  return { changed: replaceOwnedItems(ensureEventsList(doc), entries, isOwned) };
 }
 
 /**
@@ -120,18 +78,6 @@ export function removeHookEntries(doc: Document, isOwned: HookSentinelMatcher): 
 
 // region | Helpers
 
-/** Throws when a supplied entry fails the matcher, since an unsentineled entry could never be found again. */
-function assertAllOwned(entries: readonly HookEntry[], isOwned: HookSentinelMatcher): void {
-  for (const entry of entries) {
-    if (!isOwned(entry)) {
-      throw new Error(
-        `Refusing to write a hook entry '${entry.name}' that the sentinel matcher does not claim; ` +
-          'an entry without the sentinel could not be found again.',
-      );
-    }
-  }
-}
-
 /** Throws `RovoConfigParseError` when the document has parse errors, guarding every mutation and read. */
 function assertParsable(doc: Document): void {
   const errorMessages = doc.errors.map((error) => error.message);
@@ -141,41 +87,9 @@ function assertParsable(doc: Document): void {
 }
 
 /**
- * Classifies a desired entry against the owned items present, matched by name: `present` needs an equal, pristine
- * match; an owned item under its name that differs (or owned items under other names only) is `drifted`; a list
- * without any owned item is `absent`.
- */
-function classify(owned: readonly ReadItem[], desired: HookEntry): ManagedEntryStatus {
-  const match = owned.find((item) => item.entry.name === desired.name);
-  if (match === undefined) {
-    return owned.length > 0 ? 'drifted' : 'absent';
-  }
-  return match.pristine && entriesEqual(match.entry, desired) ? 'present' : 'drifted';
-}
-
-/** Structural equality of two entries: same name and same ordered command list. */
-function entriesEqual(a: HookEntry, b: HookEntry): boolean {
-  return (
-    a.name === b.name && a.commands.length === b.commands.length && a.commands.every((c, i) => c === b.commands[i])
-  );
-}
-
-/** Returns the `eventHooks.events` list, creating `eventHooks` and `events` as needed. */
-function ensureEventsList(doc: Document): YAMLSeq {
-  const existing = getEventsList(doc);
-  if (existing) {
-    return existing;
-  }
-
-  const array = new YAMLSeq();
-  doc.setIn(['eventHooks', 'events'], array);
-  return array;
-}
-
-/**
  * Returns the `eventHooks.events` list, or undefined when `eventHooks` or `events` is missing. A present `events`
  * that is not a list (the map shape in particular) throws rather than reading as empty: Rovo Dev rejects such a
- * config as corrupt, and treating it as empty would append entries that the CLI never runs.
+ * config as corrupt, and treating it as empty would hide whatever owned entries it contains.
  */
 function getEventsList(doc: Document): YAMLSeq | undefined {
   const events = doc.getIn(['eventHooks', 'events'], true);
@@ -190,38 +104,16 @@ function getEventsList(doc: Document): YAMLSeq | undefined {
 
 /** True when the YAML item reads as a hook entry that the matcher claims. */
 function isOwnedItem(item: unknown, isOwned: HookSentinelMatcher): boolean {
-  const read = readItem(item);
-  return read !== undefined && isOwned(read.entry);
-}
-
-/** True when the current owned items match the desired entries in order, each pristine and equal. */
-function ownedItemsEqual(current: readonly ReadItem[], desired: readonly HookEntry[]): boolean {
-  if (current.length !== desired.length) {
-    return false;
-  }
-  return current.every((item, index) => {
-    const target = desired[index];
-    return target !== undefined && item.pristine && entriesEqual(item.entry, target);
-  });
+  const entry = readItem(item);
+  return entry !== undefined && isOwned(entry);
 }
 
 /**
- * A YAML item read back as an entry. `pristine` records that every command map contained only the `command` key; a
- * hand-added extra key (a timeout, say) must read as drift, not as an equal entry, so ensure rebuilds it and check
- * reports it honestly.
+ * Reads a YAML list item as an entry, or undefined when it is not a well-formed entry: a map containing a string
+ * `name` and a `commands` list whose every item is a map with a string `command`. Reading is lenient about extra keys:
+ * An item carrying more than these keys must still be recognizable, or the ownership check would miss it.
  */
-interface ReadItem {
-  readonly entry: HookEntry;
-  readonly pristine: boolean;
-}
-
-/**
- * Reads a YAML list item into a `ReadItem`, or undefined when it is not a well-formed entry: a map containing a
- * string `name` and a `commands` list whose every item is a map with a string `command`. Reading is lenient about
- * extra keys: A foreign item carrying more than this module writes must still be recognizable, or ownership checks
- * would miss it.
- */
-function readItem(item: unknown): ReadItem | undefined {
+function readItem(item: unknown): HookEntry | undefined {
   if (!isMap(item)) {
     return undefined;
   }
@@ -232,7 +124,6 @@ function readItem(item: unknown): ReadItem | undefined {
   }
 
   const commandStrings: string[] = [];
-  let pristine = item.items.length === 2;
   for (const command of commands.items) {
     if (!isMap(command)) {
       return undefined;
@@ -242,70 +133,8 @@ function readItem(item: unknown): ReadItem | undefined {
       return undefined;
     }
     commandStrings.push(value);
-    pristine &&= command.items.length === 1;
   }
-  return { entry: { name, commands: commandStrings }, pristine };
-}
-
-/** The owned items in the list, in order. */
-function readOwnedItems(array: YAMLSeq, isOwned: HookSentinelMatcher): ReadItem[] {
-  const owned: ReadItem[] = [];
-  for (const item of array.items) {
-    const read = readItem(item);
-    if (read !== undefined && isOwned(read.entry)) {
-      owned.push(read);
-    }
-  }
-  return owned;
-}
-
-/**
- * Replaces the owned subset of the events list with `entries`: The supplied set is spliced in at the first owned
- * position (appended when the list contains none), other owned items are dropped, and foreign items keep their order.
- * Returns whether the list changed.
- */
-function replaceOwnedItems(array: YAMLSeq, entries: readonly HookEntry[], isOwned: HookSentinelMatcher): boolean {
-  const firstOwned = array.items.findIndex((item) => isOwnedItem(item, isOwned));
-  const desired = entries.map(toYamlEntry);
-
-  if (firstOwned === -1) {
-    if (desired.length === 0) {
-      return false;
-    }
-    array.items.push(...desired);
-    return true;
-  }
-
-  const head = array.items.slice(0, firstOwned);
-  const tail = array.items.slice(firstOwned + 1).filter((item) => !isOwnedItem(item, isOwned));
-  const before = array.items
-    .slice(firstOwned)
-    .map(readItem)
-    .filter((read): read is ReadItem => read !== undefined && isOwned(read.entry));
-
-  if (ownedItemsEqual(before, entries)) {
-    return false;
-  }
-
-  array.items = [...head, ...desired, ...tail];
-  return true;
-}
-
-/**
- * Builds a fresh YAML map for an entry, wrapping each command string as a `{command}` map per the file shape. Owned
- * items are rebuilt as a unit; their inner comments are not preserved.
- */
-function toYamlEntry(entry: HookEntry): YAMLMap {
-  const map = new YAMLMap();
-  map.set('name', entry.name);
-  const commands = new YAMLSeq();
-  for (const command of entry.commands) {
-    const commandMap = new YAMLMap();
-    commandMap.set('command', command);
-    commands.add(commandMap);
-  }
-  map.set('commands', commands);
-  return map;
+  return { name, commands: commandStrings };
 }
 
 // endregion | Helpers

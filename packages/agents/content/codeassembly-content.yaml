@@ -25,8 +25,6 @@ helpers:
     out: skills/kb-update-events/kb-update-events.mjs
   - entry: ../src/feedback-memories/cli.ts
     out: skills/migrate-feedback-memories/feedback-memories.mjs
-  - entry: ../src/emit-event/cli.ts
-    out: skills/emit-event/emit-event.mjs
   - entry: ../src/groom-backlog/cli.ts
     out: skills/groom-backlog/groom-backlog.mjs
   - entry: ../src/revise-prose/cli.ts
@@ -35,8 +33,6 @@ helpers:
     out: skills/streamline-guidance/streamline-guidance.mjs
   - entry: ../src/describe-change/cli.ts
     out: scripts/describe-change.mjs
-  - entry: ../src/relay-hook-event/cli.ts
-    out: scripts/relay-hook-event.mjs
   - entry: ../src/select-lede-exemplars/cli.ts
     out: scripts/select-lede-exemplars.mjs
   - entry: ../src/merge-gh-pr/cli.ts

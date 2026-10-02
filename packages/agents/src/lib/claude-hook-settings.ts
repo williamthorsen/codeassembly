@@ -1,16 +1,15 @@
 /**
- * The file layer over the Claude Code hook-entry transforms: read and parse `settings.json`, delegate to the pure
+ * The file layer over the Claude Code hook-entry removal transform: read and parse `settings.json`, delegate to the pure
  * transform, and write the result back in the file's own formatting. The path is supplied by the caller, which resolves
  * it per harness. A file that cannot be parsed is reported and never written.
  */
 
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import path from 'node:path';
+import { readFile, writeFile } from 'node:fs/promises';
 
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 
-import { checkHookEntries, type ClaudeHookEntry, ensureHookEntries, removeHookEntries } from './claude-hook-entries.ts';
-import type { EnsureResult, EntryCheck, RemoveResult } from './managed-entry-contract.ts';
+import { removeHookEntries } from './claude-hook-entries.ts';
+import type { RemoveResult } from './managed-entry-contract.ts';
 import { isEnoent } from './type-guards.ts';
 
 /** The formatting to reproduce when writing a settings file back: the indent unit, and whether the file ends in one. */
@@ -25,62 +24,38 @@ interface SettingsFile {
   readonly format: JsonFormat;
 }
 
-/** The formatting given to a settings file created from scratch. */
-const DEFAULT_FORMAT: JsonFormat = { indent: 2, trailingNewline: true };
-
-/** Reports each supplied entry's status in the settings file. A file that does not exist reports every entry absent. */
-export async function checkClaudeHookEntries(
-  filePath: string,
-  entries: ReadonlyArray<ClaudeHookEntry>,
-  sentinel: string,
-): Promise<ReadonlyArray<EntryCheck<ClaudeHookEntry>>> {
-  const { value } = await readSettingsFile(filePath);
-  return checkHookEntries(value, entries, sentinel);
-}
-
-/**
- * Installs `entries` into the settings file, creating the file and its parent directory when absent. The file is
- * rewritten only when the entries were missing or drifted, so a re-run leaves its mtime alone.
- */
-export async function ensureClaudeHookEntries(
-  filePath: string,
-  entries: ReadonlyArray<ClaudeHookEntry>,
-  sentinel: string,
-): Promise<EnsureResult> {
-  const { value, format } = await readSettingsFile(filePath);
-  const { settings, result } = ensureHookEntries(value, entries, sentinel);
-  if (result.changed) {
-    await writeSettingsFile(filePath, settings, format);
-  }
-  return result;
-}
+/** The indent unit given to a multi-line document that does not contain an indented line. */
+const DEFAULT_INDENT = 2;
 
 /**
  * Deletes from the settings file every entry that contains the sentinel. A file that does not exist is left uncreated.
+ * Under `dryRun`, reports what the removal would delete and leaves the file unwritten.
  */
-export async function removeClaudeHookEntries(filePath: string, sentinel: string): Promise<RemoveResult> {
-  const { value, format } = await readSettingsFile(filePath);
-  const { settings, result } = removeHookEntries(value, sentinel);
-  if (result.changed) {
-    await writeSettingsFile(filePath, settings, format);
+export async function removeClaudeHookEntries(
+  filePath: string,
+  sentinel: string,
+  options: { readonly dryRun?: boolean } = {},
+): Promise<RemoveResult> {
+  const file = await readSettingsFile(filePath);
+  if (file === undefined) {
+    return { changed: false, removedCount: 0 };
+  }
+  const { settings, result } = removeHookEntries(file.value, sentinel);
+  if (result.changed && options.dryRun !== true) {
+    await writeSettingsFile(filePath, settings, file.format);
   }
   return result;
 }
 
 // region | Helpers
 
-/**
- * Reads the indent unit from the first indented line. A single-line document containing members demonstrates compact
- * style and keeps it; a document without members demonstrates nothing, so it takes the default that a missing file
- * takes.
- */
+/** Reads the indent unit from the first indented line; a single-line document demonstrates compact style and keeps it. */
 function detectIndent(body: string): string | number {
   const unit = /\n([ \t]+)\S/.exec(body)?.[1];
   if (unit !== undefined) {
     return unit;
   }
-  const isEmptyDocument = /^\{\s*\}$/.test(body.trim());
-  return !isEmptyDocument && !body.includes('\n') ? 0 : DEFAULT_FORMAT.indent;
+  return body.includes('\n') ? DEFAULT_INDENT : 0;
 }
 
 /** Reads the indent unit and trailing-newline habit from a settings file's text. */
@@ -98,11 +73,11 @@ function parseSettings(text: string, filePath: string): unknown {
   }
 }
 
-/** Reads and parses the settings file; an absent file reads as empty settings in the default formatting. */
-async function readSettingsFile(filePath: string): Promise<SettingsFile> {
+/** Reads and parses the settings file, returning undefined when it does not exist. */
+async function readSettingsFile(filePath: string): Promise<SettingsFile | undefined> {
   const text = await readSettingsText(filePath);
   if (text === undefined) {
-    return { value: {}, format: DEFAULT_FORMAT };
+    return undefined;
   }
   return { value: parseSettings(text, filePath), format: detectJsonFormat(text) };
 }
@@ -134,7 +109,6 @@ async function writeSettingsFile(
   settings: Record<string, unknown>,
   format: JsonFormat,
 ): Promise<void> {
-  await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, renderSettings(settings, format), 'utf8');
 }
 

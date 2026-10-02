@@ -23,7 +23,6 @@ members:
     - create-ticket
     - design-and-plan
     - development-workflows
-    - emit-event
     - find-orchestration-savings
     - get-ticket-id
     - groom-backlog

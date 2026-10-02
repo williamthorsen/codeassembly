@@ -14,6 +14,7 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../test-utils/declare-fixture-source.ts';
+import { RETIRED_CLAUDE_SETTINGS, RETIRED_ROVO_CONFIG } from '../test-utils/retired-hook-configs.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -348,31 +349,63 @@ describe(installCommand, () => {
     }
   });
 
-  describe('session-lifecycle hooks', () => {
-    it('wires the hook entries into the harness config by default', async () => {
+  describe('retired session-lifecycle hooks', () => {
+    it('removes the retired Claude hook entries and keeps foreign settings content', async () => {
+      const claudeHome = await setupClaudeHome();
+      const settingsPath = path.join(claudeHome, 'settings.json');
+      await writeFile(settingsPath, RETIRED_CLAUDE_SETTINGS, 'utf8');
+
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+
+      const settings = await readFile(settingsPath, 'utf8');
+      expect(settings).not.toContain('--sentinel codeassembly-agents');
+      expect(settings).toContain('echo foreign');
+      expect(settings).toContain('"model": "opus"');
+    });
+
+    it('removes the retired Rovo hook entries and keeps foreign config content', async () => {
+      const rovoHome = await setupRovoHome();
+      const configPath = path.join(rovoHome, 'config.yml');
+      await writeFile(configPath, RETIRED_ROVO_CONFIG, 'utf8');
+
+      await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
+
+      const config = await readFile(configPath, 'utf8');
+      expect(config).not.toContain('--sentinel codeassembly-agents');
+      expect(config).toContain('echo foreign');
+      expect(config).toContain('logFile: hooks.log');
+    });
+
+    it('does not create a harness config that is absent', async () => {
       const claudeHome = await setupClaudeHome();
 
       await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-      const settings = await readFile(path.join(claudeHome, 'settings.json'), 'utf8');
-      expect(settings).toContain('--sentinel codeassembly-agents');
-      expect(settings).toContain('SessionStart');
-    });
-
-    it('leaves the harness config untouched with --skip-hooks', async () => {
-      const claudeHome = await setupClaudeHome();
-
-      await installCommand(makeOptions({ harness: 'claude', hooks: false }), tempDir);
-
       expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
     });
 
-    it('leaves the harness config untouched in dry-run mode', async () => {
+    it('previews the removal in dry-run mode without touching the harness config', async () => {
       const claudeHome = await setupClaudeHome();
+      const settingsPath = path.join(claudeHome, 'settings.json');
+      await writeFile(settingsPath, RETIRED_CLAUDE_SETTINGS, 'utf8');
 
-      await installCommand(makeOptions({ dryRun: true }), tempDir);
+      using silent = silenceConsole(['info']);
+      await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir);
+      const lines = silent.info.mock.calls.map((call) => String(call[0]));
 
-      expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
+      expect(lines).toContain(`  [hooks] Would remove 1 retired session-lifecycle hook entries from ${settingsPath}`);
+      expect(await readFile(settingsPath, 'utf8')).toBe(RETIRED_CLAUDE_SETTINGS);
+    });
+
+    it('does not preview a removal in dry-run mode when the harness config contains no retired entries', async () => {
+      const claudeHome = await setupClaudeHome();
+      await writeFile(path.join(claudeHome, 'settings.json'), `${JSON.stringify({ model: 'opus' })}\n`, 'utf8');
+
+      using silent = silenceConsole(['info']);
+      await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir);
+      const lines = silent.info.mock.calls.map((call) => String(call[0]));
+
+      expect(lines.some((line) => line.includes('[hooks]'))).toBe(false);
     });
 
     it('warns and completes the install when the harness config cannot be parsed', async () => {
@@ -384,7 +417,7 @@ describe(installCommand, () => {
       await installCommand(makeOptions({ harness: 'claude' }), tempDir);
       const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
-      expect(warnLines.some((line) => line.includes('Skipping hook wiring'))).toBe(true);
+      expect(warnLines.some((line) => line.includes('Skipping hook-entry removal'))).toBe(true);
       expect(await readFile(settingsPath, 'utf8')).toBe('{ not json');
       const manifest = await readManifest(getManifestPath(tempDir));
       expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);

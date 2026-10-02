@@ -32,14 +32,6 @@ const config = defineConfig([
     },
   },
   {
-    files: ['**/*.js', '**/*.cjs', '**/*.mjs', '**/*.ts', '**/*.tsx'],
-    rules: {
-      // The rule resolves specifiers itself rather than through the resolver settings above, so it reports imports of
-      // fleet's `source`-only export map as missing.
-      'n/no-missing-import': 'off',
-    },
-  },
-  {
     files: ['**/*.ts', '**/*.mts', '**/*.tsx'],
     languageOptions: {
       parserOptions: {

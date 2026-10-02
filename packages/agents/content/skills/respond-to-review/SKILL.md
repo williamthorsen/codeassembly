@@ -2,9 +2,6 @@
 name: respond-to-review
 description: Produce structured response to code review findings with dispositions for each finding
 user-invocable: true
-dependencies:
-  skills:
-    - emit-event
 ---
 
 # Respond to review
@@ -22,7 +19,7 @@ This skill runs between receiving a code review and implementing fixes. The agen
 
 ## Process
 
-1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `artifact_base_dir`, and `pr_url` from it. Then emit `skill.started` (payload `{"skill":"respond-to-review"}`) per [Lifecycle events](#lifecycle-events).
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `artifact_base_dir`, and `pr_url` from it.
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
 3. **Read prior artifacts** in the run directory chronologically for full context
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
@@ -297,7 +294,3 @@ The response is saved as a run artifact: `{timestamp}_coder_change-summary.md`
 2. The timestamp should reflect when this response was produced
 
 Dispositions are embedded in this document: The skill does not write a separate disposition artifact.
-
-Once the change summary is saved, emit `artifact.written` (payload `{"path":"<path>","kind":"change-summary"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"response-saved"}`).
-
-<!-- include: ../_partials/lifecycle-events.md / -->

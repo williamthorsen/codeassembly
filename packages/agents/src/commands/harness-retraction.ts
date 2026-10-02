@@ -3,9 +3,9 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
 import { ALL_HARNESS_IDS, resolveHarnessPaths } from '../lib/harness.ts';
 import type { ReportLine } from '../lib/report-line.ts';
+import { removeRetiredHookEntries } from '../lib/retired-hook-entries.ts';
 import type { ResolvedHarnessTargets } from '../lib/target-harnesses.ts';
 import type { AgentsManifest, HarnessId, HarnessManifest, InstallOptions } from '../lib/types.ts';
-import { removeHarnessHookEntries } from './configure-hooks.ts';
 
 /** The harness map that a retraction pass leaves behind, and what it did to reach it. */
 export interface HarnessRetractionResult {
@@ -17,7 +17,7 @@ export interface HarnessRetractionResult {
 
 /**
  * Removes what a previous `install` deployed to each harness that the manifest tracks but this run no longer targets,
- * and unwires that harness's session-lifecycle hook entries. Returns the harness map that the caller writes to the
+ * and removes that harness's retired session-lifecycle hook entries. Returns the harness map that the caller writes to the
  * manifest.
  *
  * Retraction follows the declaration alone. A `flag` origin names the run's target without declaring any harness
@@ -32,7 +32,7 @@ export async function retractDroppedHarnesses(options: {
   readonly manifest: AgentsManifest;
   readonly targets: ResolvedHarnessTargets;
   readonly baseDir: string | undefined;
-  readonly install: Pick<InstallOptions, 'dryRun' | 'force' | 'hooks'>;
+  readonly install: Pick<InstallOptions, 'dryRun' | 'force'>;
 }): Promise<HarnessRetractionResult> {
   let harnesses: Partial<Record<HarnessId, HarnessManifest>> = { ...options.manifest.harnesses };
   if (options.targets.origin !== 'declaration') {
@@ -54,7 +54,7 @@ export async function retractDroppedHarnesses(options: {
     lines.push(
       { level: 'info', text: `\nRetracting harness dropped from the declaration: ${harnessId}` },
       ...describePruneResult(pruned, options.install),
-      ...(await unwireHooks(harnessId, options.baseDir, options.install)),
+      ...(await removeHooks(harnessId, options.baseDir, options.install)),
     );
 
     didRetract = true;
@@ -72,29 +72,21 @@ export async function retractDroppedHarnesses(options: {
 // region | Helpers
 
 /**
- * Removes the harness's session-lifecycle hook entries, so its config stops invoking a relay script that this pass has
- * just deleted. Reports a warning when the config cannot be parsed, and does not fail the retraction.
+ * Removes the harness's retired session-lifecycle hook entries. Reports a warning when the config cannot be parsed,
+ * and does not fail the retraction.
  */
-async function unwireHooks(
+async function removeHooks(
   harnessId: HarnessId,
   baseDir: string | undefined,
-  install: Pick<InstallOptions, 'dryRun' | 'hooks'>,
+  install: Pick<InstallOptions, 'dryRun'>,
 ): Promise<ReadonlyArray<ReportLine>> {
-  if (install.hooks === false) {
-    return [];
-  }
-  if (install.dryRun) {
-    return [{ level: 'info', text: '  [hooks] Would remove session-lifecycle hook entries' }];
-  }
-
   try {
-    await removeHarnessHookEntries(harnessId, baseDir);
+    return await removeRetiredHookEntries(harnessId, baseDir, install);
   } catch (error) {
     return [
       { glyph: 'warning', indent: 2, level: 'warn', text: `Skipping hook-entry removal: ${describeError(error)}` },
     ];
   }
-  return [];
 }
 
 // endregion | Helpers
