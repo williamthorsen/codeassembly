@@ -1,3 +1,5 @@
+import path from 'node:path';
+
 import type { ResolvedDeclaration } from './codeassembly-manifest.ts';
 import { assertSupportedContentFormats, type ContentRootRef } from './content-root-manifest.ts';
 import { resolvePackageSources } from './package-sources.ts';
@@ -15,29 +17,28 @@ export interface DeclaredSource {
   readonly declaredAs: 'package' | 'path';
 }
 
-/**
- * The content sources to which a declaration resolves, the subset whose directory does not exist, and the roots to
- * read.
- */
+/** The content sources to which a declaration resolves, the subset whose directory does not exist, and the roots to read. */
 export interface DeclaredSources {
   readonly sources: ReadonlyArray<DeclaredSource>;
   readonly missingSources: ReadonlyArray<DeclaredSource>;
-  /**
-   * The roots from which a command reads undeclared content, highest precedence first: every source whose directory
-   * exists, then the built-in library. A root without a `name` is the library.
-   */
+  /** The roots from which a command reads undeclared content, highest precedence first: every source whose directory exists. */
   readonly roots: ReadonlyArray<ContentRootRef>;
 }
 
-/** Renders a content root for a report line, distinguishing a declared source from the built-in library. */
+/** The error raised when a declaration leaves a write command without any content source to read. */
+export class NoContentSourceError extends Error {
+  override readonly name = 'NoContentSourceError';
+}
+
+/** Renders a content root for a report line. */
 export function describeContentRoot(root: ContentRootRef): string {
-  return root.name === undefined ? 'the built-in library' : `source "${root.name}" (${root.dir})`;
+  return `source "${root.name}" (${root.dir})`;
 }
 
 /**
  * The advisory naming a declared source whose directory does not exist. Reported rather than thrown because the
- * absence may be a not-yet state, and named because the alternative is a run that silently resolves from the library
- * when the source was meant to override it.
+ * absence may be a not-yet state, and named because the alternative is a run that silently resolves from a
+ * lower-precedence source when this one was meant to override it.
  *
  * The remedy is keyed to the declaration form: A `sources:` entry names a path that the reader wrote, while a
  * package's content directory is named by the package's own manifest. The package branch names two actions because a
@@ -59,8 +60,9 @@ export function describeMissingSource(source: DeclaredSource): ReportLine {
 
 /**
  * Resolves a declaration's hand-declared and package sources into one precedence-ordered list, validating every root
- * that the run will read before any file is written. An absent declaration resolves to an empty list of sources,
- * which leaves a command without a declaration reading the library alone.
+ * that the run will read before any file is written. Throws `NoContentSourceError` when the declaration is absent,
+ * declares no source, or declares only sources whose directories are missing, because the run would otherwise resolve
+ * nothing and retract everything that it deployed before.
  *
  * The checks run in a fixed order, and the order is load-bearing: an unreadable source directory must report as
  * unreadable rather than as a failed content-manifest read. Every caller shares this one entry point rather than the
@@ -68,13 +70,11 @@ export function describeMissingSource(source: DeclaredSource): ReportLine {
  */
 export async function resolveDeclaredSources(options: {
   baseDir: string;
-  contentDir: string;
   declaration: Pick<ResolvedDeclaration, 'packages' | 'sources'> | undefined;
 }): Promise<DeclaredSources> {
-  const { baseDir, contentDir, declaration } = options;
+  const { baseDir, declaration } = options;
   if (declaration === undefined) {
-    await assertSupportedContentFormats([{ dir: contentDir }]);
-    return { sources: [], missingSources: [], roots: [{ dir: contentDir }] };
+    throw new NoContentSourceError(describeNoSource(baseDir, []));
   }
 
   // A declared package contributes both a source and a set of seeds: The array below puts its content dir under the
@@ -88,23 +88,41 @@ export async function resolveDeclaredSources(options: {
   const missingSources = await checkDeclaredSources(sources);
   assertUsableSourceNames(sources);
   assertDistinctSourceNames(sources);
-  // Every root that the run reads declares the content format against which it was authored, the library included.
-  // Checked after the source checks above, so an unreadable directory reports as unreadable rather than as a failed
-  // manifest read; a source whose directory is missing does not contain a manifest and stays the warning that it is.
-  await assertSupportedContentFormats([...sources, { dir: contentDir }]);
 
   // A missing source does not contribute a root: There is nothing to read from it, and the warning above already
   // names it.
   const missingDirs = new Set(missingSources.map((source) => source.dir));
-  const roots: ReadonlyArray<ContentRootRef> = [
-    ...sources.filter((source) => !missingDirs.has(source.dir)),
-    { dir: contentDir },
-  ];
+  const roots: ReadonlyArray<DeclaredSource> = sources.filter((source) => !missingDirs.has(source.dir));
+  if (roots.length === 0) {
+    throw new NoContentSourceError(describeNoSource(baseDir, missingSources));
+  }
+
+  // Checked after the source checks above, so an unreadable directory reports as unreadable rather than as a failed
+  // manifest read; a source whose directory is missing does not contain a manifest and stays the warning that it is.
+  await assertSupportedContentFormats(roots);
 
   return { sources, missingSources, roots };
 }
 
 // region | Helpers
+
+/**
+ * Renders the no-source error: what is missing, the file that the declaration belongs in, and an example entry. It
+ * also names the gitignored local tier, the place for a path that differs between machines.
+ */
+function describeNoSource(baseDir: string, missing: ReadonlyArray<DeclaredSource>): string {
+  const problem =
+    missing.length === 0
+      ? 'No content source is declared.'
+      : `None of the declared content sources exists: ${missing.map((source) => `"${source.name}" (${source.dir})`).join(', ')}.`;
+  const agentsDir = path.join(baseDir, '.agents');
+  const file = `${path.join(agentsDir, 'codeassembly.yaml')}, or in ${path.join(agentsDir, 'codeassembly.local.yaml')} for a path that is specific to this machine`;
+  return (
+    `${problem} Declare a \`sources:\` entry, or a \`packages:\` entry, in ${file}. For example:\n\n` +
+    'sources:\n  - name: codeassembly\n    path: ~/repos/codeassembly/packages/agents/content\n\n' +
+    'A relative `path` resolves against the `.agents/` directory that contains the declaration.'
+  );
+}
 
 /**
  * Throws when two declared sources share a name, which the hand-declared tier and the package tier can each satisfy

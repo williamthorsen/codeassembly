@@ -246,6 +246,7 @@ describe('source support delivery', () => {
         homeDir: '.claude',
         skillsDirName: 'skills',
         deployedSkillDirs: new Set(),
+        supportEntries: new Set(['_data', 'glossary.md']),
       }),
       guidanceFileName: 'CLAUDE.md',
       homeDir: '.claude',

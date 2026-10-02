@@ -9,10 +9,10 @@ import { isRecord } from './type-guards.ts';
 /** The artifacts on which one artifact depends, grouped by type. An absent type does not contribute an edge. */
 export type ArtifactDependencies = Partial<Record<ArtifactType, ReadonlyArray<string>>>;
 
-/** A collection's constituents: the computed whole library, or an explicit per-type edge set. */
+/** A collection's constituents: every artifact of the collection's own source, or an explicit per-type edge set. */
 export type MembersResult = { kind: 'library' } | { kind: 'explicit'; edges: ArtifactDependencies };
 
-/** The computed token that a collection's `members:` may name to mean every deployable artifact in the library. */
+/** The computed token that a collection's `members:` may name to mean every deployable artifact in its own source. */
 const LIBRARY_TOKEN = '@library';
 
 /** Maps a plural declaration key (`skills`) back to its artifact type (`skill`), the inverse of `ARTIFACT_TYPES`. */

@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -10,6 +10,7 @@ import { HARNESSES } from '../../lib/harness.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -22,6 +23,7 @@ describe('install harness targeting', () => {
     contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
     await buildContentTree(contentDir);
+    await declareFixtureSource(tempDir, contentDir);
   });
 
   afterEach(async () => {
@@ -33,10 +35,10 @@ describe('install harness targeting', () => {
     await setupHarnessHomes();
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
 
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
-    expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(true);
-    expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(false);
+    expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
+    expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(false);
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude (declared).');
   });
 
@@ -44,10 +46,10 @@ describe('install harness targeting', () => {
     using silent = silenceConsole(['info', 'warn']);
     await setupHarnessHomes();
 
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
-    expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(true);
-    expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(true);
+    expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
+    expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude, rovo (detected in ~).');
   });
 
@@ -55,9 +57,9 @@ describe('install harness targeting', () => {
     using silent = silenceConsole(['info', 'warn']);
     await declareHarnesses('harnesses:\n  use:\n    - rovo\n');
 
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
-    expect(existsSync(path.join(tempDir, ROVO_HOME, 'skills', '_data'))).toBe(true);
+    expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting rovo (declared).');
   });
 
@@ -66,9 +68,9 @@ describe('install harness targeting', () => {
     await setupHarnessHomes();
     await declareHarnesses('harnesses:\n  use:\n    - rovo\n');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-    expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(true);
+    expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude (--harness claude).');
   });
 
@@ -76,8 +78,7 @@ describe('install harness targeting', () => {
 
   /** Writes the home tier's declaration file, which is where `install` reads the `harnesses:` block from. */
   async function declareHarnesses(body: string): Promise<void> {
-    await mkdir(path.join(tempDir, '.agents'), { recursive: true });
-    await writeFile(path.join(tempDir, '.agents', 'codeassembly.yaml'), body, 'utf8');
+    await declareFixtureSource(tempDir, contentDir, body);
   }
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {

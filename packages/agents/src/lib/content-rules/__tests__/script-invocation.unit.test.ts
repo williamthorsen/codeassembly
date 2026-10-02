@@ -58,27 +58,13 @@ describe(findScriptInvocationDefects, () => {
     expect(defects.map((defect) => defect.file)).toEqual(['subagents/helper.md']);
   });
 
-  it('recognizes a script that only the library ships', async () => {
-    const library = await createTempRoot('script-invocation-library');
-    try {
-      await writeFileAt(library, 'scripts/lib-only.sh', '');
-      await writeSkillBody('lib-only.sh --flag\n');
-
-      const defects = await findScriptInvocationDefects(buildRuleContext(root, library));
-
-      expect(defects.map((defect) => defect.detail)).toEqual([expect.stringContaining('`lib-only.sh`')]);
-    } finally {
-      await removeTempRoot(library);
-    }
-  });
-
   it('does not treat the scripts README as a script', async () => {
     await writeSkillBody('README.md --flag\n');
 
     expect(await findScriptInvocationDefects(buildRuleContext(root))).toEqual([]);
   });
 
-  it('reports nothing when neither the root nor the library ships scripts', async () => {
+  it('reports nothing when the root does not ship any scripts', async () => {
     const bare = await createTempRoot('script-invocation-bare');
     try {
       await writeFileAt(bare, 'skills/alpha/SKILL.md', 'node describe.mjs --flag\n');

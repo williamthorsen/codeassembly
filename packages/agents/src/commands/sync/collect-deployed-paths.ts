@@ -23,11 +23,10 @@ const SKILL_FILENAME = 'SKILL.md';
 export type DeployedFileRole = 'other' | 'skill' | 'subagent';
 
 /**
- * Maps a declared source's name to the canonical directory from which it resolves, and `undefined` to the built-in
- * library's content directory. One mapping covers all three artifact types, since every resolved artifact already
- * names the source from which it came.
+ * Maps a declared source's name to the canonical directory from which it resolves. One mapping covers all three
+ * artifact types, since every resolved artifact already names the source from which it came.
  */
-export type ResolveSourceRoot = (source: string | undefined) => string | undefined;
+export type ResolveSourceRoot = (source: string) => string | undefined;
 
 /**
  * The authored Markdown behind one deployed document, and the tree against which its include directives resolved.
@@ -39,8 +38,8 @@ export interface AuthoredSource {
   readonly file: string;
   /** Absolute content root against which the file's include directives resolved. */
   readonly contentRoot: string;
-  /** Name of the declared source owning the content root, or `undefined` for the built-in library. */
-  readonly sourceName: string | undefined;
+  /** Name of the declared source owning the content root. */
+  readonly sourceName: string;
 }
 
 /** One deployed file: where it is, the key under which it is recorded, and whether a harness loads it into context. */
@@ -80,14 +79,14 @@ export interface DeployedPathSources {
   readonly resolved: ReadonlyArray<{
     readonly skill: boolean;
     readonly skillName: string;
-    readonly source: string | undefined;
+    readonly source: string;
     readonly srcPath: string;
     readonly contentRoot: string;
   }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
   readonly resolvedSubagents: ReadonlyArray<{
     readonly slug: string;
-    readonly source: string | undefined;
+    readonly source: string;
     readonly srcPath: string;
     readonly contentRoot: string;
   }>;
@@ -284,7 +283,7 @@ async function collectManifestPaths(
 function describeAuthoredSource(artifact: {
   readonly srcPath: string;
   readonly contentRoot: string;
-  readonly source: string | undefined;
+  readonly source: string;
 }): AuthoredSource {
   return { file: artifact.srcPath, contentRoot: artifact.contentRoot, sourceName: artifact.source };
 }

@@ -18,7 +18,7 @@ export interface ExpansionMeasurement {
  * it reaches, and which keys each document holds.
  *
  * One include graph is built per distinct content root and reused across that root's documents, because
- * `buildIncludeGraph` walks every `.md` under the root and building per document would re-walk the library once per
+ * `buildIncludeGraph` walks every `.md` under the root and building per document would re-walk the root once per
  * skill. A root whose graph cannot be built contributes no expansion and raises nothing, so a source that a later
  * command made unreadable leaves the deployment measured and its partials unattributed.
  *
@@ -89,7 +89,7 @@ function listExpansionKeys(
     if (member === file || graph.documents.has(member)) {
       continue;
     }
-    const key = `partial:${source.sourceName ?? 'library'}/${toPosixPath(path.relative(contentRoot, member))}`;
+    const key = `partial:${source.sourceName}/${toPosixPath(path.relative(contentRoot, member))}`;
     pathsByKey.set(key, member);
     keys.push(key);
   }

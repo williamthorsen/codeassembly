@@ -11,6 +11,7 @@ import {
   rewriteMarkdownPaths,
   rewritePathsInDirectory,
   rewritePathsInFile,
+  rewriteSkillsReferences,
   rewriteTemplateVariables,
   type TemplateVariables,
 } from '../path-rewriter.ts';
@@ -135,6 +136,53 @@ describe(rewriteMarkdownPaths, () => {
     const expected =
       'See [local](~/.claude/skills/_data/file.md) and [remote](https://example.com) and [abs](/path.md).';
     expect(rewriteMarkdownPaths(content, 'commit/SKILL.md', skillsAnchor)).toBe(expected);
+  });
+});
+
+describe(rewriteSkillsReferences, () => {
+  /** Marks the path that the anchor receives, so that an assertion shows both what was resolved and what was not. */
+  const markTarget = (target: string): string => `<${target}>`;
+
+  it('resolves a skills reference through the anchor, with the path beneath skills/', () => {
+    const content = 'Read `{harness_home_dir}/skills/_data/concision.md` first.';
+
+    expect(rewriteSkillsReferences(content, markTarget)).toBe('Read `<_data/concision.md>` first.');
+  });
+
+  it('resolves every reference in a command line', () => {
+    const content =
+      'node {harness_home_dir}/skills/emit-event/emit-event.mjs --payload {harness_home_dir}/skills/x.json';
+
+    expect(rewriteSkillsReferences(content, markTarget)).toBe('node <emit-event/emit-event.mjs> --payload <x.json>');
+  });
+
+  it('keeps trailing sentence punctuation out of the path', () => {
+    const content =
+      'See {harness_home_dir}/skills/_data/title-voice.md. Then {harness_home_dir}/skills/_data/a.md, done';
+
+    expect(rewriteSkillsReferences(content, markTarget)).toBe('See <_data/title-voice.md>. Then <_data/a.md>, done');
+  });
+
+  it('keeps the trailing slash of a directory reference', () => {
+    expect(rewriteSkillsReferences('in `{harness_home_dir}/skills/_data/`', markTarget)).toBe('in `<_data/>`');
+  });
+
+  it('normalizes a path before resolving it', () => {
+    expect(rewriteSkillsReferences('{harness_home_dir}/skills/a/../_data/x.md', markTarget)).toBe('<_data/x.md>');
+  });
+
+  it('leaves a reference outside skills/ for template expansion', () => {
+    const content = '{harness_home_dir}/scripts/describe-change.mjs and {harness_home_dir}/{harness_guidance_file}';
+
+    expect(rewriteSkillsReferences(content, markTarget)).toBe(content);
+  });
+
+  it('leaves a reference containing a placeholder', () => {
+    const content =
+      'Each skill lives at `{harness_home_dir}/skills/<slug>/SKILL.md`, ' +
+      '`{harness_home_dir}/skills/consult-<slug>/SKILL.md`, or {harness_home_dir}/skills/{name}/x.';
+
+    expect(rewriteSkillsReferences(content, markTarget)).toBe(content);
   });
 });
 

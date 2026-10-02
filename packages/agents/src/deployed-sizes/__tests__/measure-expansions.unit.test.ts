@@ -35,16 +35,16 @@ describe(measureExpansions, () => {
     const measured = await measureExpansions([skillBody(contentRoot, 'claude/skills/demo/SKILL.md', 'demo')]);
 
     expect(measured.expansions).toStrictEqual({
-      'partial:library/_partials/inner.md': { bytes: INNER_BYTES, reach: 1 },
-      'partial:library/_partials/shared.md': { bytes: SHARED_BYTES, reach: 1 },
+      'partial:codeassembly/_partials/inner.md': { bytes: INNER_BYTES, reach: 1 },
+      'partial:codeassembly/_partials/shared.md': { bytes: SHARED_BYTES, reach: 1 },
     });
   });
 
   it("states a partial's own bytes rather than the bytes that it expands to", async () => {
     const measured = await measureExpansions([skillBody(contentRoot, 'claude/skills/demo/SKILL.md', 'demo')]);
 
-    expect(measured.expansions['partial:library/_partials/shared.md']?.bytes).toBe(SHARED_BYTES);
-    expect(measured.expansions['partial:library/_partials/shared.md']?.bytes).not.toBe(SHARED_BYTES + INNER_BYTES);
+    expect(measured.expansions['partial:codeassembly/_partials/shared.md']?.bytes).toBe(SHARED_BYTES);
+    expect(measured.expansions['partial:codeassembly/_partials/shared.md']?.bytes).not.toBe(SHARED_BYTES + INNER_BYTES);
   });
 
   it('counts one skill deployed to two harnesses as two documents of reach', async () => {
@@ -53,7 +53,7 @@ describe(measureExpansions, () => {
       skillBody(contentRoot, 'rovo/skills/demo/SKILL.md', 'demo'),
     ]);
 
-    expect(measured.expansions['partial:library/_partials/shared.md']?.reach).toBe(2);
+    expect(measured.expansions['partial:codeassembly/_partials/shared.md']?.reach).toBe(2);
   });
 
   it('names the expansion keys that each deployed document holds', async () => {
@@ -63,7 +63,10 @@ describe(measureExpansions, () => {
     ]);
 
     expect(measured.documentExpansions).toStrictEqual({
-      'claude/skills/demo/SKILL.md': ['partial:library/_partials/shared.md', 'partial:library/_partials/inner.md'],
+      'claude/skills/demo/SKILL.md': [
+        'partial:codeassembly/_partials/shared.md',
+        'partial:codeassembly/_partials/inner.md',
+      ],
       'claude/skills/plain/SKILL.md': [],
     });
   });
@@ -101,8 +104,8 @@ describe(measureExpansions, () => {
 
       expect(Object.keys(measured.expansions).toSorted()).toStrictEqual([
         'partial:acme/_partials/only-here.md',
-        'partial:library/_partials/inner.md',
-        'partial:library/_partials/shared.md',
+        'partial:codeassembly/_partials/inner.md',
+        'partial:codeassembly/_partials/shared.md',
       ]);
     } finally {
       await rm(otherRoot, { recursive: true, force: true });
@@ -138,8 +141,8 @@ describe(measureExpansions, () => {
 
 // region | Helpers
 
-/** One deployed skill body, authored at `skills/{slug}/SKILL.md` under `contentRoot`. */
-function skillBody(contentRoot: string, key: string, slug: string, sourceName?: string): DeployedPath {
+/** One deployed skill body, authored at `skills/{slug}/SKILL.md` under the `sourceName` source's `contentRoot`. */
+function skillBody(contentRoot: string, key: string, slug: string, sourceName = 'codeassembly'): DeployedPath {
   return {
     key,
     absPath: path.join('/deployed', key),

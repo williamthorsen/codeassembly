@@ -27,8 +27,8 @@ interface DesignatedWriter {
 /**
  * Refuses a home-domain write from an installation that the `home-writer` setting does not designate, before the
  * command writes anything or previews what it would write. The setting names one installation per machine; every
- * repository and worktree has a binary that could otherwise overwrite the shared home state with its own library's
- * contents.
+ * repository and worktree has a binary that could otherwise overwrite the shared home state with its own version's
+ * output.
  *
  * Passes when every home tier leaves `home-writer` unset, so a machine that never configures one behaves as it always
  * has, and when the running package root lies at or under the designated path, which lets the setting name either the

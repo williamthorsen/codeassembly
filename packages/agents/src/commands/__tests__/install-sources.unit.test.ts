@@ -10,6 +10,7 @@ import { HARNESSES } from '../../lib/harness.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -36,6 +37,7 @@ describe('install with declared sources', () => {
     await mkdir(path.join(tempDir, ROVO_HOME, 'skills'), { recursive: true });
     await mkdir(path.join(tempDir, ROVO_HOME, 'subagents'), { recursive: true });
     await buildContentTree(contentDir);
+    await declareFixtureSource(tempDir, contentDir);
   });
 
   afterEach(async () => {
@@ -49,19 +51,19 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readScript(tempDir, 'org-only.sh')).toContain('echo org');
   });
 
-  it('leaves in place the library scripts that a source does not claim', async () => {
+  it('leaves in place the lower-precedence scripts that a source does not claim', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       scripts: { 'org-only.sh': '#!/usr/bin/env bash\necho org\n' },
     });
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo demo');
   });
@@ -73,11 +75,11 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo from-source');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /demo\.sh is shipped by more than one content root.*the built-in library/s,
+      /demo\.sh is shipped by more than one content root.*source "codeassembly"/s,
     );
   });
 
@@ -95,7 +97,7 @@ describe('install with declared sources', () => {
     ]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readScript(tempDir, 'contested.sh')).toContain('echo higher');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
@@ -103,18 +105,11 @@ describe('install with declared sources', () => {
     );
   });
 
-  it("deploys from the library alone when the project doesn't declare any sources", async () => {
-    using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
-
-    expect(await readScript(tempDir, 'demo.sh')).toContain('echo demo');
-  });
-
-  it('warns about a declared source whose directory does not exist and installs from the library', async () => {
+  it('warns about a declared source whose directory does not exist and installs from the remaining source', async () => {
     await declareSources(tempDir, [{ name: 'not-yet', dir: path.join(tempDir, 'not-yet') }]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(warnedLines(silent.warn.mock.calls)).toMatch(/Declared source "not-yet".*does not exist/s);
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo demo');
@@ -125,7 +120,7 @@ describe('install with declared sources', () => {
     await writeFile(filePath, '', 'utf8');
     await declareSources(tempDir, [{ name: 'a-file', dir: filePath }]);
 
-    await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(/Invalid declared source/);
+    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(/Invalid declared source/);
     expect(existsSync(path.join(tempDir, '.claude', 'scripts'))).toBe(false);
   });
 
@@ -134,9 +129,7 @@ describe('install with declared sources', () => {
     await writeFile(filePath, '', 'utf8');
     await declareSources(tempDir, [{ name: 'a-file', dir: filePath }]);
 
-    await expect(installCommand(makeOptions({ dryRun: true }), tempDir, contentDir)).rejects.toThrow(
-      /Invalid declared source/,
-    );
+    await expect(installCommand(makeOptions({ dryRun: true }), tempDir)).rejects.toThrow(/Invalid declared source/);
   });
 
   it('refuses a declared source declaring an unsupported content format on a dry run', async () => {
@@ -144,9 +137,7 @@ describe('install with declared sources', () => {
     await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 99\n', 'utf8');
     await declareSources(tempDir, [{ name: 'future', dir: sourceDir }]);
 
-    await expect(installCommand(makeOptions({ dryRun: true }), tempDir, contentDir)).rejects.toThrow(
-      /Unsupported content format/,
-    );
+    await expect(installCommand(makeOptions({ dryRun: true }), tempDir)).rejects.toThrow(/Unsupported content format/);
   });
 
   it('deploys a source template with its own shared guidance inlined', async () => {
@@ -157,7 +148,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     const deployed = await readGuidance(tempDir);
     expect(deployed).toContain('Org claude preamble.');
@@ -173,7 +164,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readGuidance(tempDir)).toContain(
       `Source: guidance/_harnesses/claude/CLAUDE.md in source "org" (${sourceDir})`,
@@ -187,7 +178,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(
       /Include directive target not found.*org\/guidance\/shared\/AGENTS\.md/s,
     );
   });
@@ -200,10 +191,10 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /claude guidance template is shipped by more than one content root.*the built-in library/s,
+      /claude guidance template is shipped by more than one content root.*source "codeassembly"/s,
     );
   });
 
@@ -216,7 +207,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     const deployed = await readGuidance(tempDir);
     expect(deployed).toContain('Org claude preamble, no ambient region.');
@@ -237,13 +228,13 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readGuidance(tempDir)).toContain('Org claude preamble.');
     expect(existsSync(path.join(tempDir, '.claude', 'fragments'))).toBe(false);
   });
 
-  it('falls back to the library when a source ships only a subdirectory for the harness', async () => {
+  it('falls back to the lower-precedence source when a source ships only a subdirectory for the harness', async () => {
     const sourceDir = path.join(tempDir, 'sources', 'org');
     await mkdir(path.join(sourceDir, 'guidance', '_harnesses', 'claude', 'fragments'), { recursive: true });
     await writeFile(
@@ -254,14 +245,14 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readGuidance(tempDir)).toContain('Fixture claude preamble.');
   });
 
   it('retracts a template file not shipped by the owning source', async () => {
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(true);
 
     const sourceDir = path.join(tempDir, 'sources', 'org');
@@ -275,7 +266,7 @@ describe('install with declared sources', () => {
     );
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(false);
   });
@@ -283,11 +274,13 @@ describe('install with declared sources', () => {
 
 // region | Helpers
 
-/** Writes a home declaration under `homeDir` naming `sources` in precedence order. */
+/**
+ * Writes a home declaration under `homeDir` naming `sources` in precedence order, above the fixture tree at
+ * `<homeDir>/content`, which stays the lowest-precedence source.
+ */
 async function declareSources(homeDir: string, sources: ReadonlyArray<{ name: string; dir: string }>): Promise<void> {
   const body = sources.map((source) => `  - name: '${source.name}'\n    path: ${source.dir}`).join('\n');
-  await mkdir(path.join(homeDir, '.agents'), { recursive: true });
-  await writeFile(path.join(homeDir, '.agents', 'codeassembly.yaml'), `sources:\n${body}\n`, 'utf8');
+  await declareFixtureSource(homeDir, path.join(homeDir, 'content'), `sources:\n${body}\n`);
 }
 
 /** The install options with which every case runs, targeting the claude harness on a real (non-dry) run. */

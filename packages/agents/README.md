@@ -2,26 +2,41 @@
 
 # codeassembly
 
-A CLI that installs reusable AI agent guidance into coding-harness directories, and the library of rulebooks, skills, and subagents that it deploys.
+A CLI that deploys reusable AI agent guidance (rulebooks, skills, and subagents) from the content sources that a declaration names into coding-harness directories. This repository also contains the CodeAssembly library of that guidance, under `content/`.
 
 <!-- section:release-notes --><!-- /section:release-notes -->
 
 ## Installation
 
-Try it without installing it:
+The tool deploys only what a declaration names, so the first run starts by declaring where the content is. To deploy the CodeAssembly library into the home harness directories:
+
+```bash
+git clone https://github.com/williamthorsen/codeassembly.git ~/repos/codeassembly
+npx codeassembly init --global
+```
+
+Uncomment the `sources:` entry in `~/.agents/codeassembly.yaml` and point it at the clone:
+
+```yaml
+sources:
+  - name: codeassembly
+    path: ~/repos/codeassembly/packages/agents/content
+```
+
+Then deploy:
 
 ```bash
 npx codeassembly install
-npx codeassembly sync
+npx codeassembly sync --global
 ```
 
-Add it to a project when the repo ships guidance of its own, or wants `sync` to run from a script:
+`install` deploys the harness guidance files, scripts, and hook entries. `sync --global` deploys the artifacts that the home declaration names, with each source's support files under `skills/_sources/<name>/`. Both commands stop without writing anything until a source is declared.
+
+A project declares its own sources and artifacts in `.agents/codeassembly.yaml` (`codeassembly init` scaffolds one), and `sync` materializes exactly what it declares, including guidance shipped by its dependencies (see [Packages](docs/project-declaration.md#packages)). Add the tool to a project when the repo ships guidance of its own, or wants `sync` to run from a script:
 
 ```bash
 pnpm add --save-dev codeassembly
 ```
-
-`install` deploys the built-in library into the harness directories. `sync` resolves `.agents/codeassembly.yaml` and materializes exactly what the project declares, including guidance shipped by its dependencies (see [Packages](docs/project-declaration.md#packages)).
 
 Supported harnesses are Claude Code and Rovo Dev; `--harness` narrows a run to one.
 
@@ -33,7 +48,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 
 | Command             | Description                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `install`           | Install harness guidance, scripts, and support data into harness directories                               |
+| `install`           | Install harness guidance files, scripts, and hook entries from the declared sources                        |
 | `init`              | Scaffold `.agents/codeassembly.yaml` for the project, or `--global` for `~/.agents/codeassembly.yaml`      |
 | `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
@@ -41,7 +56,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `status`            | Show the current state of installed items                                                                  |
 | `validate`          | Check a content root for defects that reach a consumer; writes nothing                                     |
 | `bundle-helpers`    | Bundle the helpers that a content root declares; `--check` fails on a stale bundle                         |
-| `library list`      | List available library artifacts (rulebooks, skills, subagents, collections)                               |
+| `library list`      | List each declared source's artifacts, marking those that a higher-precedence source shadows               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
 Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, `--output-style <auto\|plain\|rich>`, and `--help`. `--output-style` prints status glyphs as emoji (`rich`) or as words (`plain`); `auto`, the default, prints plain to a stream that is not a terminal or in CI, and `CODEASSEMBLY_OUTPUT_STYLE` sets it when the flag is absent. `--content <dir>` applies to `validate` and `bundle-helpers`, and `--check` to `bundle-helpers` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](docs/project-declaration.md#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
@@ -160,7 +175,7 @@ Authoring conventions for the declared artifacts (frontmatter fields, the `depen
 - [Format](docs/project-declaration.md#format): the `use` and `drop` lists, harness targeting, and guidance hooks.
 - [Collections](docs/project-declaration.md#collections): aggregates that pull in their members, and the `@library` token.
 - [Dependencies](docs/project-declaration.md#dependencies): artifacts that a declared artifact pulls in.
-- [Sources](docs/project-declaration.md#sources): content roots outside the built-in library.
+- [Sources](docs/project-declaration.md#sources): the content roots from which every artifact resolves, and how one shadows another.
 - [Packages](docs/project-declaration.md#packages): guidance shipped by a dependency.
 - [References](docs/project-declaration.md#references): documentation that a dependency ships for agents.
 - [Content-format version](docs/project-declaration.md#content-format-version): the format contract that a content root declares.

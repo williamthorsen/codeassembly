@@ -11,6 +11,7 @@ import { getManifestPath, readManifest, writeManifest } from '../../lib/manifest
 import type { AgentsManifest, InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 import { uninstallCommand } from '../uninstall.ts';
 
 describe('uninstallCommand', () => {
@@ -22,6 +23,7 @@ describe('uninstallCommand', () => {
     contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
     await buildContentTree(contentDir);
+    await declareFixtureSource(tempDir, contentDir);
   });
 
   afterEach(async () => {
@@ -70,7 +72,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions({ hooks: false }), tempDir, contentDir);
+    await installCommand(makeInstallOptions({ hooks: false }), tempDir);
     const settingsPath = path.join(claudeHome, 'settings.json');
     await writeFile(settingsPath, '{ not json', 'utf8');
 
@@ -90,7 +92,7 @@ describe('uninstallCommand', () => {
     const settingsPath = path.join(claudeHome, 'settings.json');
     await writeFile(settingsPath, `${JSON.stringify({ model: 'opus' }, undefined, 2)}\n`, 'utf8');
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
     expect(await readFile(settingsPath, 'utf8')).toContain('--sentinel codeassembly-agents');
 
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
@@ -105,7 +107,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     const manualFile = path.join(claudeHome, 'agents', 'manual-agent.md');
     await writeFile(manualFile, 'manual content', 'utf8');
@@ -130,7 +132,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
@@ -148,7 +150,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
@@ -167,7 +169,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');

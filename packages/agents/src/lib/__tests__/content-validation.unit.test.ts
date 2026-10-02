@@ -30,7 +30,7 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
-  it('reports a collection member that resolves from neither the root nor the library', async () => {
+  it('reports a collection member that the root does not contain', async () => {
     await writeCollection(root, 'starter', { skills: ['no-such-skill'] });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
@@ -40,27 +40,30 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).toContain('no-such-skill');
   });
 
-  it('resolves a dependency into the built-in library rather than reporting it as dangling', async () => {
+  it('reports a dependency edge to an artifact that the root does not contain, naming the edge', async () => {
     await writeSkill(root, 'alpha', { dependencies: { subagents: ['canary'] } });
 
-    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]).toMatchObject({ file: 'skills/alpha/SKILL.md', kind: 'dependency' });
+    expect(defects[0]?.detail).toMatch(/subagent "canary", named by skill:alpha, was not found/);
   });
 
-  it('stays silent about a defect in a library artifact reached by a dependency edge', async () => {
-    const library = path.join(root, 'library');
-    await writeSubagent(library, 'lib-helper', { body: 'See [the missing part](#nowhere).' });
-    const producer = path.join(root, 'producer');
-    await writeSkill(producer, 'alpha', { dependencies: { subagents: ['lib-helper'] } });
+  it('reports a body token naming an artifact that the root does not contain, naming the edge', async () => {
+    await writeSkill(root, 'alpha', { body: 'Delegate to {subagent:canary}.' });
 
-    expect(await validateContentRoot(producer, ALL_HARNESS_IDS, library)).toEqual([]);
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]).toMatchObject({ file: 'skills/alpha/SKILL.md', kind: 'dependency' });
+    expect(defects[0]?.detail).toMatch(/subagent "canary", named by skill:alpha, was not found/);
   });
 
-  it('reports the same defect when the artifact containing it belongs to the root', async () => {
-    const library = path.join(root, 'library');
-    const producer = path.join(root, 'producer');
-    await writeSubagent(producer, 'lib-helper', { body: 'See [the missing part](#nowhere).' });
+  it('reports a broken in-body anchor in a subagent that the root contains', async () => {
+    await writeSubagent(root, 'lib-helper', { body: 'See [the missing part](#nowhere).' });
 
-    const defects = await validateContentRoot(producer, ALL_HARNESS_IDS, library);
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
 
     expect(defects).toHaveLength(1);
     expect(defects[0]).toMatchObject({ file: 'subagents/lib-helper.md', kind: 'render' });
@@ -175,42 +178,21 @@ describe(validateContentRoot, () => {
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
-  it("renders a root subagent against the root's own overlay, not the library one", async () => {
-    const library = path.join(root, 'library');
-    await writeFileAt(library, 'subagents/_data/claude.yaml', '_defaults:\n  description: Fine.\n');
-    const producer = path.join(root, 'producer');
-    await writeSubagent(producer, 'alpha');
-    await writeFileAt(producer, 'subagents/_data/claude.yaml', '_defaults:\n  description: Use {tool:NoSuchTool}\n');
+  it("renders a root subagent against the root's own overlay", async () => {
+    await writeSubagent(root, 'alpha');
+    await writeFileAt(root, 'subagents/_data/claude.yaml', '_defaults:\n  description: Use {tool:NoSuchTool}\n');
 
-    const defects = await validateContentRoot(producer, ['claude'], library);
+    const defects = await validateContentRoot(root, ['claude']);
 
     expect(defects).toHaveLength(1);
     expect(defects[0]).toMatchObject({ file: 'subagents/alpha.md', kind: 'render' });
     expect(defects[0]?.detail).toContain('NoSuchTool');
   });
 
-  it('passes a root subagent whose own overlay is clean, whatever the library overlay declares', async () => {
-    const library = path.join(root, 'library');
-    await writeFileAt(library, 'subagents/_data/claude.yaml', '_defaults:\n  description: Use {tool:NoSuchTool}\n');
-    const producer = path.join(root, 'producer');
-    await writeSubagent(producer, 'alpha');
-
-    expect(await validateContentRoot(producer, ['claude'], library)).toEqual([]);
-  });
-
   it('passes a skill that declares only the current harness-narrowing key', async () => {
     await writeSkill(root, 'alpha', { supportedHarnesses: ['claude'] });
 
     expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
-  });
-
-  it('stays silent about a library skill declaring the retired key, which the root cannot rename', async () => {
-    const library = path.join(root, 'library');
-    await writeSkill(library, 'lib-legacy', { retiredHarnesses: ['claude'] });
-    const producer = path.join(root, 'producer');
-    await writeSkill(producer, 'alpha', { dependencies: { skills: ['lib-legacy'] } });
-
-    expect(await validateContentRoot(producer, ALL_HARNESS_IDS, library)).toEqual([]);
   });
 
   it('reports two skill-delivery rulebooks that resolve to one skill name', async () => {

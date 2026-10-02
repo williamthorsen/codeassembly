@@ -6,7 +6,6 @@ import { parse as parseYaml } from 'yaml';
 
 import { artifactFrontmatterPath } from './artifact-types.ts';
 import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from './content-defects.ts';
-import { resolveContentDir } from './content-resolver.ts';
 import {
   CONTENT_MANIFEST_FILENAME,
   type ContentFormatProblem,
@@ -29,12 +28,7 @@ import { listMarkdownFilesRecursively } from './fs-helpers.ts';
 import { HARNESSES } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
 import { locateInvocationTokens } from './invocation-tokens.ts';
-import {
-  ownedByRoot,
-  renderResolvedContentRoot,
-  resolveContentRoot,
-  type ResolvedRootArtifacts,
-} from './render-content-root.ts';
+import { renderResolvedContentRoot, resolveContentRoot, type ResolvedRootArtifacts } from './render-content-root.ts';
 import { SUPPORTED_HARNESSES_KEY } from './skill-deploy.ts';
 import { findSourceProblem } from './source-validation.ts';
 import { isRecord } from './type-guards.ts';
@@ -62,21 +56,16 @@ const RETIRED_TOOLS_KEY = '_tools';
  * closure, plus the passes for which `sync` does not have a counterpart: the retired frontmatter key, which reaches a
  * consumer intact rather than failing there, and the content rules, each a convention that holds for any root.
  *
- * Nothing here reads a `codeassembly.yaml`. The root is resolved as if it were a declared source with the built-in
- * library behind it, which is the shape in which a consumer deploys it, so a producing package without a consuming
- * project anywhere on its path validates exactly as it will be consumed. A dependency edge into a library artifact
- * therefore resolves rather than dangling.
+ * Nothing here reads a `codeassembly.yaml`. The root is resolved alone, as a declared source with nothing behind it,
+ * so a producing package without a consuming project anywhere on its path validates the same way on every machine. A
+ * dependency edge to an artifact that the root does not contain is a defect.
  *
  * Every stage after the root check runs to completion, and a defect in one artifact never suppresses the rest: One run
- * reports the whole list that an author has to fix. Only the root's own artifacts are reported on; see
- * `renderResolvedContentRoot`.
- *
- * `libraryDir` overrides the library against which the root resolves, matching `sync`'s own override.
+ * reports the whole list that an author has to fix.
  */
 export async function validateContentRoot(
   root: string,
   harnessIds: ReadonlyArray<HarnessId>,
-  libraryDir: string = resolveContentDir(),
 ): Promise<ReadonlyArray<ContentDefect>> {
   const problem = await findSourceProblem(root);
   if (problem !== undefined) {
@@ -90,14 +79,14 @@ export async function validateContentRoot(
     return [{ file: '.', kind: 'root', detail: describeContentFormatDefect(formatProblem) }];
   }
 
-  const { artifacts, defects, resolver } = await resolveContentRoot(root, libraryDir);
-  const context: RuleContext = { root, libraryDir, resolver };
+  const { artifacts, defects, resolver } = await resolveContentRoot(root);
+  const context: RuleContext = { root, resolver };
 
   // A body-local defect raises the same message on every harness, so the fold below collapses it to one line; a
   // harness-specific one (a skill scoped to one harness) surfaces naming the harnesses that it affects.
   const rendered: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
-    const { failures } = await renderResolvedContentRoot(harnessId, root, libraryDir, artifacts);
+    const { failures } = await renderResolvedContentRoot(harnessId, root, artifacts);
     for (const { file, error } of failures) {
       rendered.push({ harnessId, defect: { file, kind: 'render', detail: describeError(error) } });
     }
@@ -148,16 +137,12 @@ function describeContentFormatDefect(problem: ContentFormatProblem): string {
  */
 function findCollisionDefects(artifacts: ResolvedRootArtifacts): ReadonlyArray<ContentDefect> {
   const defects: Array<ContentDefect> = [];
-  const ownedRulebooks = artifacts.rulebooks.filter(ownedByRoot);
-  const ownedSkillSlugs = new Set(artifacts.skills.filter(ownedByRoot).map((skill) => skill.slug));
 
   for (const { skillName, slugs } of findSkillNameCollisions(artifacts.rulebooks)) {
-    // Attributed to a rulebook owned by the root. A collision entirely between library rulebooks is the library's to
-    // fix and does not name any file that the root contains, so it is left to the library's own gate.
-    const owned = slugs.find((slug) => ownedRulebooks.some((book) => book.slug === slug));
-    if (owned !== undefined) {
+    const [first] = slugs;
+    if (first !== undefined) {
       defects.push({
-        file: artifactFrontmatterPath('rulebook', owned),
+        file: artifactFrontmatterPath('rulebook', first),
         kind: 'collision',
         detail: `Rulebooks ${slugs.join(', ')} all resolve to skill "${skillName}"; give all but one a distinct \`skill-name\`.`,
       });
@@ -167,25 +152,18 @@ function findCollisionDefects(artifacts: ResolvedRootArtifacts): ReadonlyArray<C
   const rulebookSkillDirs = artifacts.rulebooks.filter((book) => book.skill).map((book) => book.skillName);
   const declaredSkillSlugs = new Set(artifacts.skills.map((skill) => skill.slug));
   for (const name of findCrossNamespaceCollisions(rulebookSkillDirs, declaredSkillSlugs)) {
-    // The check reports against whichever side the root owns, since that is the side that its author can rename.
-    const ownedRulebook = ownedRulebooks.find((book) => book.skill && book.skillName === name);
-    const file = ownedSkillSlugs.has(name)
-      ? artifactFrontmatterPath('skill', name)
-      : ownedRulebook && artifactFrontmatterPath('rulebook', ownedRulebook.slug);
-    if (file !== undefined) {
-      defects.push({
-        file,
-        kind: 'collision',
-        detail: `"${name}" is delivered as both a rulebook skill and a declared skill; rename one so that they no longer share a directory.`,
-      });
-    }
+    defects.push({
+      file: artifactFrontmatterPath('skill', name),
+      kind: 'collision',
+      detail: `"${name}" is delivered as both a rulebook skill and a declared skill; rename one so that they no longer share a directory.`,
+    });
   }
 
   return defects;
 }
 
 /**
- * Reports every root-owned skill whose frontmatter still declares the retired harness-narrowing key. The rename is
+ * Reports every skill whose frontmatter still declares the retired harness-narrowing key. The rename is
  * silent at deploy time in both directions (the skill stops narrowing and reaches every harness, and the key survives
  * into the deployed `SKILL.md` because the strip pattern no longer matches it), so this pass reports it.
  *
@@ -194,9 +172,6 @@ function findCollisionDefects(artifacts: ResolvedRootArtifacts): ReadonlyArray<C
 async function findRetiredKeyDefects(artifacts: ResolvedRootArtifacts): Promise<ReadonlyArray<ContentDefect>> {
   const defects: Array<ContentDefect> = [];
   for (const skill of artifacts.skills) {
-    if (!ownedByRoot(skill)) {
-      continue;
-    }
     const file = artifactFrontmatterPath('skill', skill.slug);
     try {
       if (declaresRetiredHarnessesKey(await readFile(path.join(skill.srcDir, 'SKILL.md'), 'utf8'))) {

@@ -13,8 +13,7 @@ import { isEnoent } from './type-guards.ts';
  * namespace directory.
  *
  * A source that doesn't ship a `skills/` directory renders to nothing, which is the ordinary case: most sources ship
- * skills and subagents alone. That is not an error, unlike the library's own missing `skills/`, whose absence leaves
- * every skill without the reference files that it reads at runtime.
+ * skills and subagents alone.
  */
 export async function renderSourceSupport(
   sourceDir: string,

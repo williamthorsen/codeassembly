@@ -14,7 +14,8 @@ const RECIPE_PATH = path.join(CONTENT_ROOT, 'skills', '_data', 'deployed-file-pr
 
 /**
  * A root shipping one of each marked artifact: a skill, a subagent, a rulebook delivered both as a skill and ambient,
- * two support files on either side of the frontmatter branch, and a guidance template with an ambient region.
+ * and a guidance template with an ambient region, beside two further template files on either side of the frontmatter
+ * branch.
  */
 const MARKER_ROOT = path.join(import.meta.dirname, 'fixtures', 'marker-root');
 
@@ -45,10 +46,10 @@ const OWNERSHIP_MARKER_CASES: ReadonlyArray<{ deployedPath: string; label: strin
   { deployedPath: 'CLAUDE.md', label: 'rulebook block', markerCount: 2 },
 ];
 
-/** One support file per shape on which the provenance marker written by `install` branches. */
-const PROVENANCE_CASES: ReadonlyArray<{ deployedPath: string; label: string }> = [
-  { deployedPath: 'skills/_data/frontmatter.md', label: 'frontmatter' },
-  { deployedPath: 'skills/_data/bare.md', label: 'bare' },
+/** One guidance template file per shape on which the provenance marker written by `install` branches. */
+const PROVENANCE_CASES: ReadonlyArray<{ deployedPath: string; label: string; sourcePath: string }> = [
+  { deployedPath: 'frontmatter.md', label: 'frontmatter', sourcePath: 'guidance/_harnesses/claude/frontmatter.md' },
+  { deployedPath: 'bare.md', label: 'bare', sourcePath: 'guidance/_harnesses/claude/bare.md' },
 ];
 
 /** The fixture root's Claude render, read once for every case below. */
@@ -71,8 +72,8 @@ describe('deployment markers', () => {
     }
   });
 
-  it.each(PROVENANCE_CASES)('quotes the $label provenance headline', async ({ deployedPath }) => {
-    const source = await readFile(path.join(MARKER_ROOT, deployedPath), 'utf8');
+  it.each(PROVENANCE_CASES)('quotes the $label provenance headline', async ({ deployedPath, sourcePath }) => {
+    const source = await readFile(path.join(MARKER_ROOT, sourcePath), 'utf8');
 
     expect(recipe).toContain(takeFirstAddedLine(source, readRendered(tree, deployedPath)));
   });
@@ -97,10 +98,10 @@ describe('deployment markers', () => {
     expect(recipe).toContain(lines.join('').replaceAll(SENTINEL_VERSION, () => VERSION_PLACEHOLDER));
   });
 
-  // The render anchors links at the harness home, as `install` does, so it does not produce the directory under which
-  // `sync` places a declared source's support entries.
+  // The marker root does not ship a support entry, so the render does not produce the directory under which `sync`
+  // places a declared source's support entries.
   it('names the source-support directory as deployment writes it', () => {
-    expect(recipe).toContain('_sources/');
+    expect(recipe).toContain('_sources/<name>/');
   });
 });
 

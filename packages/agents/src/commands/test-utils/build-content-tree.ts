@@ -27,8 +27,8 @@ export interface ContentTreeOptions {
 }
 
 /**
- * Writes a minimal but realistic CodeAssembly content tree into `contentDir` for use as the third argument to
- * `installCommand`, so that install-command tests exercise the full pipeline against a small fixture. The default tree
+ * Writes a minimal but realistic CodeAssembly content tree into `contentDir`, which a test declares as a source with
+ * `declareFixtureSource` so that a command run exercises the full pipeline against a small fixture. The default tree
  * contains every shape on which the integration tests rely. Provided options shallow-merge over the defaults by
  * top-level key.
  */
@@ -70,8 +70,7 @@ export async function buildContentTree(contentDir: string, options: ContentTreeO
 const HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovo'];
 
 const DEFAULT_SKILLS: Record<string, Record<string, string>> = {
-  // `alpha` is user-invocable (default) and contains a relative `../_data/` link, so the install exercises path
-  // rewriting and `alpha` appears in the generated Rovo Dev prompts.yml.
+  // `alpha` is user-invocable (default) and contains a relative `../_data/` link, which exercises path rewriting.
   alpha: {
     'SKILL.md': [
       '---',

@@ -26,9 +26,9 @@ export interface TemplateVariables {
  * Maps a resolved link target to the absolute path at which it deploys. The argument is normalized and fragment-free,
  * so an implementation decides only which tree the target is deployed into, never how the target itself was resolved.
  *
- * Deployment location is not a property of the rewriting file: The same relative target can name a tree that `install`
- * populates in the harness home and one that `sync` populates in a project. The caller that knows which of the two
- * supplies this.
+ * Deployment location is not a property of the rewriting file: The same relative target can name a tree that a
+ * home-domain deploy populates in the harness home and one that `sync` populates in a project. The caller that knows
+ * which of the two supplies this.
  */
 export type ResolveLinkAnchor = (normalizedTarget: string) => string;
 
@@ -101,6 +101,20 @@ export function rewriteMarkdownPaths(content: string, fileRelPath: string, ancho
 }
 
 /**
+ * Resolves each `{harness_home_dir}/skills/<path>` reference in `content` to where `<path>` deploys, through
+ * `resolveWithinSkills`, which receives the normalized path beneath `skills/`. Such a reference names a file by its
+ * place in the content tree, as a link does, so it follows the file wherever the run deploys it; a reference written
+ * in inline code or a command is the form that a partial inlined at several depths can use. A reference elsewhere
+ * under `{harness_home_dir}` is left for `rewriteTemplateVariables`, since those trees deploy to the harness home.
+ */
+export function rewriteSkillsReferences(content: string, resolveWithinSkills: ResolveLinkAnchor): string {
+  return content.replaceAll(
+    SKILLS_REFERENCE_REGEX,
+    (_match, target: string, trailing: string) => `${resolveWithinSkills(path.posix.normalize(target))}${trailing}`,
+  );
+}
+
+/**
  * Expands install-time template variables in `content`: `{harness_home_dir}` to `~/{homeDir}` (e.g. `~/.claude`),
  * `{harness_guidance_file}` to the harness's guidance filename (e.g. `CLAUDE.md`), and `{harness_id}` to the harness
  * identifier (e.g. `claude`), the value that capture-event records as the agent harness.
@@ -116,6 +130,12 @@ export function rewriteTemplateVariables(content: string, variables: TemplateVar
     .replaceAll('{harness_home_dir}', () => `~/${variables.homeDir}`)
     .replaceAll('{harness_id}', () => variables.harnessId);
 }
+
+/**
+ * Matches a `{harness_home_dir}/skills/<path>` reference. The first group is the path beneath `skills/`, and the second
+ * is trailing sentence punctuation, kept out of the path.
+ */
+const SKILLS_REFERENCE_REGEX = /\{harness_home_dir\}\/skills\/([^\s`'"()<>[\]{}]+?)([.,;:!?]*)(?=[\s`'"()[\]]|$)/gm;
 
 /**
  * Applies Markdown path rewriting and template variable expansion to a single `.md` file.

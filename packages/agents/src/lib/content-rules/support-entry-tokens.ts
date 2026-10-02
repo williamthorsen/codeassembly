@@ -1,4 +1,3 @@
-import { existsSync } from 'node:fs';
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -27,7 +26,7 @@ interface Host {
 }
 
 /** Finds the section map of the support entry that a link names, or `undefined` when the link names none. */
-type CarrierLookup = (file: string) => Promise<SectionCarriers | undefined>;
+type CarrierLookup = (file: string) => SectionCarriers | undefined;
 
 /** For one support entry, the artifacts named by its required tokens, keyed by every enclosing heading slug. */
 type SectionCarriers = ReadonlyMap<string, ReadonlySet<ArtifactId>>;
@@ -36,11 +35,10 @@ type SectionCarriers = ReadonlyMap<string, ReadonlySet<ArtifactId>>;
  * Reports the two ways in which a support entry's invocation token can ship a pointer to nothing. The closure walk
  * never reads a support entry, because one is reached by a link rather than inlined, so neither is caught elsewhere.
  *
- * - A `{skill:…}` or `{subagent:…}` token, required or optional, that resolves from neither the root nor the library,
- *   reported against the entry.
+ * - A `{skill:…}` or `{subagent:…}` token, required or optional, that the root does not contain, reported against the
+ *   entry.
  * - A skill or subagent whose include-expanded body links into a support-entry section carrying a required token, and
- *   whose closure does not reach the token's target, reported against the host. The entry may be the root's or, at
- *   the same root-relative path, the library's, since a link resolves against both. A support entry ships
+ *   whose closure does not reach the token's target, reported against the host. A support entry ships
  *   unconditionally, so the host's `dependencies:` declaration is what brings the target along. A token counts in its
  *   own section and every section enclosing it, since a link to an ancestor heading reaches it too. An optional token
  *   does not carry any requirement: Compelling a declaration would deploy the target that the marker exists to leave out.
@@ -49,7 +47,6 @@ type SectionCarriers = ReadonlyMap<string, ReadonlySet<ArtifactId>>;
  */
 export async function findSupportEntryTokenDefects({
   root,
-  libraryDir,
   resolver,
 }: RuleContext): Promise<ReadonlyArray<ContentDefect>> {
   const defects: Array<ContentDefect> = [];
@@ -69,7 +66,7 @@ export async function findSupportEntryTokenDefects({
     carriers.set(file, mapTokenCarriers(body));
   }
 
-  const lookup = createCarrierLookup(root, libraryDir, carriers);
+  const lookup: CarrierLookup = (file) => carriers.get(file);
   defects.push(...(await findUndeclaredTargets(root, resolver, lookup)));
   return defects;
 }
@@ -96,7 +93,7 @@ async function collectRequiredTargets(
     if (pathPart === undefined || section === undefined) {
       continue;
     }
-    const carried = (await lookup(path.resolve(path.dirname(host.file), pathPart)))?.get(section) ?? [];
+    const carried = lookup(path.resolve(path.dirname(host.file), pathPart))?.get(section) ?? [];
     for (const id of carried) {
       if (!required.has(id)) {
         required.set(id, target);
@@ -104,43 +101,6 @@ async function collectRequiredTargets(
     }
   }
   return required;
-}
-
-/**
- * Creates the lookup that resolves a linked file to its section map: the root's own support entry, or else, when the
- * root does not contain the file, the library's support entry at the same root-relative path. A library entry is read
- * on first use and cached.
- */
-function createCarrierLookup(
-  root: string,
-  libraryDir: string,
-  rootCarriers: ReadonlyMap<string, SectionCarriers>,
-): CarrierLookup {
-  const libraryCarriers = new Map<string, SectionCarriers | undefined>();
-  let librarySupportFiles: ReadonlySet<string> | undefined;
-
-  return async (file) => {
-    const relativePath = path.relative(root, file);
-    const outsideRoot = relativePath.startsWith('..') || path.isAbsolute(relativePath);
-    if (rootCarriers.has(file) || outsideRoot || existsSync(file)) {
-      return rootCarriers.get(file);
-    }
-
-    const libraryFile = path.join(libraryDir, relativePath);
-    if (!libraryCarriers.has(libraryFile)) {
-      librarySupportFiles ??= new Set(await listSupportEntryFiles(libraryDir));
-      let sections: SectionCarriers | undefined;
-      if (librarySupportFiles.has(libraryFile)) {
-        try {
-          sections = mapTokenCarriers(await readFile(libraryFile, 'utf8'));
-        } catch {
-          // Leave an unreadable library entry without sections; an edit to the root cannot repair it.
-        }
-      }
-      libraryCarriers.set(libraryFile, sections);
-    }
-    return libraryCarriers.get(libraryFile);
-  };
 }
 
 /**
@@ -196,7 +156,7 @@ async function findUndeclaredTargets(
   return defects;
 }
 
-/** Reports each skill or subagent token in a support entry that resolves from neither the root nor the library. */
+/** Reports each skill or subagent token in a support entry whose target the root does not contain. */
 async function findUnresolvedTokens(
   body: string,
   relativePath: string,
@@ -218,7 +178,7 @@ async function findUnresolvedTokens(
       defects.push({
         file: relativePath,
         kind: 'dependency',
-        detail: `Line ${line} invokes ${written}, which resolves from neither the content root nor the library.`,
+        detail: `Line ${line} invokes ${written}, which the content root does not contain.`,
       });
     }
   }

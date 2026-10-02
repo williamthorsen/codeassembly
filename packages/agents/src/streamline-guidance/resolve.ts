@@ -336,7 +336,7 @@ function listLinkedPaths(
   }
   if (input.contentRoot !== undefined) {
     for (const match of content.matchAll(HARNESS_HOME_REFERENCE_REGEX)) {
-      found.add(path.join(input.contentRoot, trimTrailingPunctuation(match[1] ?? '')));
+      found.add(mapDeployedPathToContentRoot(input.contentRoot, trimTrailingPunctuation(match[1] ?? '')));
     }
   }
 
@@ -415,6 +415,14 @@ async function measureExpandedBytes(file: string, contentRoot: string): Promise<
   }
 }
 
+/**
+ * Maps a path beneath the harness home to the content-root file deployed there. A source's support entries deploy
+ * under `skills/_sources/<name>/`, a name that may be scoped, and are authored directly under `skills/`.
+ */
+function mapDeployedPathToContentRoot(contentRoot: string, beneath: string): string {
+  return path.join(contentRoot, beneath.replace(/^skills\/_sources\/(?:@[^/]+\/)?[^/]+\//, 'skills/'));
+}
+
 /** Resolves a Markdown link target to an absolute path, or undefined when the target is not a local file. */
 function resolveLinkTarget(
   rawTarget: string,
@@ -427,7 +435,7 @@ function resolveLinkTarget(
   if (target.startsWith('{harness_home_dir}/')) {
     const beneath = target.slice('{harness_home_dir}/'.length);
     return input.contentRoot !== undefined && /^(?:scripts|skills)\//.test(beneath)
-      ? path.join(input.contentRoot, beneath)
+      ? mapDeployedPathToContentRoot(input.contentRoot, beneath)
       : undefined;
   }
   if (target.startsWith('{')) {

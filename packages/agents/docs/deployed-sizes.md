@@ -55,7 +55,7 @@ A file's own `kind` states whether a harness loads it into context. Classificati
 
 `expansions` states every unit that deploys inside the documents rather than as a file of its own. A partial is the one kind that it holds today: The expander inlines a partial into each document that includes it, so the deployed tree does not contain any partial and the deployed vector alone cannot say which partial moved a document.
 
-A key is `{kind}:{source}/{relPath}`, where `{source}` names the declared source that owns the content root, or `library` for the built-in one, and `{relPath}` is the unit's path relative to that root, written with forward slashes on every platform. A value states two fields:
+A key is `{kind}:{source}/{relPath}`, where `{source}` names the declared source that owns the content root, and `{relPath}` is the unit's path relative to that root, written with forward slashes on every platform. A value states two fields:
 
 | Field   | What it states                                              |
 | ------- | ----------------------------------------------------------- |

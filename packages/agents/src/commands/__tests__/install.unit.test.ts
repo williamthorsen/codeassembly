@@ -6,11 +6,14 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { NoContentSourceError } from '../../lib/declared-sources.ts';
 import { HARNESSES } from '../../lib/harness.ts';
+import { getHomeProvenancePath } from '../../lib/home-provenance.ts';
 import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../test-utils/declare-fixture-source.ts';
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -23,6 +26,7 @@ describe(installCommand, () => {
     contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
     await buildContentTree(contentDir);
+    await declareFixtureSource(tempDir, contentDir);
   });
 
   afterEach(async () => {
@@ -51,17 +55,18 @@ describe(installCommand, () => {
     const claudeHome = await setupClaudeHome();
     await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
 
-    await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir)).rejects.toThrow(
       /Unsupported content format.*3.*supports content formats 1 and 2/s,
     );
-    expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(false);
+    expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(false);
+    expect(existsSync(getManifestPath(tempDir))).toBe(false);
   });
 
   it('refuses a dry run exactly as it refuses the real one', async () => {
     await setupClaudeHome();
     await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
 
-    await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, contentDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir)).rejects.toThrow(
       /Unsupported content format/,
     );
   });
@@ -70,45 +75,34 @@ describe(installCommand, () => {
     const claudeHome = await setupClaudeHome();
     await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 1\n', 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-    expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(true);
+    expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
   });
 
-  it('installs support directories and guidance with a manifest', async () => {
+  it('installs scripts and guidance with a manifest', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-    expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(true);
-    // `install` doesn't plant any skill directory: Harness skills and catalog skills deploy via sync, not install.
+    expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
+    expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(true);
+    // `install` doesn't plant any skill directory or support entry: Skills and support entries deploy via sync.
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'))).toBe(false);
+    expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(false);
 
     const manifest = await readManifest(getManifestPath(tempDir));
-    expect(manifest.harnesses.claude?.entries.length).toBeGreaterThan(0);
-  });
-
-  it('skips a support directory that renders to zero installable entries', async () => {
-    const claudeHome = await setupClaudeHome();
-    // A support directory whose only content is a dotfile renders to zero entries (the renderer skips dotfiles),
-    // so install must skip it rather than create anything.
-    const emptySupportSrc = path.join(contentDir, 'skills', 'empty-support');
-    await mkdir(emptySupportSrc, { recursive: true });
-    await writeFile(path.join(emptySupportSrc, '.DS_Store'), '');
-
-    await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir)).resolves.toBeUndefined();
-
-    expect(existsSync(path.join(claudeHome, 'skills', 'empty-support'))).toBe(false);
-    const manifest = await readManifest(getManifestPath(tempDir));
-    const entries = manifest.harnesses.claude?.entries ?? [];
-    expect(entries.some((entry) => entry.relativePath === 'skills/empty-support')).toBe(false);
+    expect(manifest.harnesses.claude?.entries.map((entry) => entry.relativePath).toSorted()).toEqual([
+      'CLAUDE.md',
+      'scripts/demo.sh',
+    ]);
   });
 
   it('writes nothing in dry-run mode', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+    await installCommand(makeOptions({ dryRun: true }), tempDir);
 
     expect(existsSync(getManifestPath(tempDir))).toBe(false);
     expect(await readdir(path.join(claudeHome, 'skills'))).toHaveLength(0);
@@ -117,15 +111,15 @@ describe(installCommand, () => {
   it('is idempotent: Re-installing is byte-identical', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    const firstData = await readFile(path.join(claudeHome, 'skills', '_data', 'sample.md'), 'utf8');
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    const firstGuidance = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
     const firstScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    const secondData = await readFile(path.join(claudeHome, 'skills', '_data', 'sample.md'), 'utf8');
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    const secondGuidance = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
     const secondScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
-    expect(secondData).toBe(firstData);
+    expect(secondGuidance).toBe(firstGuidance);
     expect(secondScript).toBe(firstScript);
   });
 
@@ -136,18 +130,18 @@ describe(installCommand, () => {
     await mkdir(claudeHome, { recursive: true });
     await symlink(realSkills, path.join(claudeHome, 'skills'));
 
-    await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow('Target directory is a symlink');
+    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow('Target directory is a symlink');
   });
 
   it('skips a user-modified guidance file on re-install without --force', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
     const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     const modified = (await readFile(guidancePath, 'utf8')) + '\n<!-- user modification -->\n';
     await writeFile(guidancePath, modified, 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
     expect(await readFile(guidancePath, 'utf8')).toBe(modified);
   });
@@ -155,12 +149,12 @@ describe(installCommand, () => {
   it('overwrites a user-modified guidance file on re-install with --force', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
     const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     const managed = await readFile(guidancePath, 'utf8');
     await writeFile(guidancePath, managed + '\n<!-- user modification -->\n', 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude', force: true }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude', force: true }), tempDir);
 
     expect(await readFile(guidancePath, 'utf8')).toBe(managed);
   });
@@ -168,12 +162,12 @@ describe(installCommand, () => {
   it('prefixes skip warnings with the warning glyph and the success summary with the passed glyph', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
     const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     await writeFile(guidancePath, `${await readFile(guidancePath, 'utf8')}\n<!-- user modification -->\n`, 'utf8');
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
     const infoLines = silent.info.mock.calls.map((call) => String(call[0]));
 
@@ -181,107 +175,85 @@ describe(installCommand, () => {
     expect(infoLines.some((line) => line.includes('PASS Installed '))).toBe(true);
   });
 
-  it('warns when the content does not ship a skills directory, rather than reporting a clean install', async () => {
+  it('warns when the content does not ship a scripts directory, rather than reporting a clean install', async () => {
     await setupClaudeHome();
-    await rm(path.join(contentDir, 'skills'), { recursive: true, force: true });
+    await rm(path.join(contentDir, 'scripts'), { recursive: true, force: true });
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
-    expect(warnLines.some((line) => line.includes('No skills directory found'))).toBe(true);
+    expect(warnLines.some((line) => line.includes("The content roots don't contain a scripts directory"))).toBe(true);
   });
 
-  it('copies support directories but symlinks scripts in link mode', async () => {
+  it('copies guidance but symlinks scripts in link mode', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ link: true }), tempDir, contentDir);
+    await installCommand(makeOptions({ link: true }), tempDir);
 
-    // Support directories are always copied (path rewriting forbids symlinking); scripts are symlinked.
-    expect(lstatSync(path.join(claudeHome, 'skills', '_data')).isSymbolicLink()).toBe(false);
+    // Guidance is always copied (path rewriting forbids symlinking); scripts are symlinked.
+    expect(lstatSync(path.join(claudeHome, 'CLAUDE.md')).isSymbolicLink()).toBe(false);
     expect(lstatSync(path.join(claudeHome, 'scripts', 'demo.sh')).isSymbolicLink()).toBe(true);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     const entries = manifest.harnesses.claude?.entries ?? [];
+    expect(entries.length).toBeGreaterThan(0);
     for (const entry of entries) {
-      if (entry.relativePath.startsWith('skills/')) expect(entry.linked).toBe(false);
-      if (entry.relativePath.startsWith('scripts/')) expect(entry.linked).toBe(true);
+      expect(entry.linked).toBe(entry.relativePath.startsWith('scripts/'));
     }
   });
 
-  it('rewrites a relative link in a support file in link mode', async () => {
-    const claudeHome = await setupClaudeHome();
-    await writeFile(path.join(contentDir, 'skills', '_data', 'guide.md'), 'See [the sample](sample.md).\n', 'utf8');
-
-    await installCommand(makeOptions({ link: true }), tempDir, contentDir);
-
-    const installed = await readFile(path.join(claudeHome, 'skills', '_data', 'guide.md'), 'utf8');
-    expect(installed).toContain('[the sample](~/.claude/skills/_data/sample.md)');
-  });
-
-  it('installs support directories for claude but not harness-specific skill directories', async () => {
+  it('installs nothing into the claude skills directory', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-    const skills = await readdir(path.join(claudeHome, 'skills'));
-    expect(skills).toContain('_data');
-    expect(skills).not.toContain('claude-only');
-    expect(skills).not.toContain('rovo-only');
+    expect(await readdir(path.join(claudeHome, 'skills'))).toEqual([]);
   });
 
-  it('installs support directories for rovo but not harness-specific skill directories', async () => {
+  it('installs nothing into the rovo skills directory', async () => {
     const rovoHome = await setupRovoHome();
 
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
 
-    const skills = await readdir(path.join(rovoHome, 'skills'));
-    expect(skills).toContain('_data');
-    expect(skills).not.toContain('rovo-only');
-    expect(skills).not.toContain('claude-only');
+    expect(await readdir(path.join(rovoHome, 'skills'))).toEqual([]);
   });
 
-  it('deploys the _data support tree and scripts but not skill directories or subagents', async () => {
+  it('deploys scripts but not skill directories, support entries, or subagents', async () => {
     const claudeHome = await setupClaudeHome();
+    await writeFile(path.join(contentDir, 'skills', 'reference.md'), '# Reference\n', 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-    const skills = await readdir(path.join(claudeHome, 'skills'));
-    expect(skills).toContain('_data');
-    expect(skills).not.toContain('claude-only');
-    expect(skills).not.toContain('alpha');
-    expect(skills).not.toContain('beta');
+    expect(await readdir(path.join(claudeHome, 'skills'))).toEqual([]);
     expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
   });
 
-  it('installs the _data support directory but not _harnesses', async () => {
+  it("resolves an inline support reference in the guidance template to its source's namespace", async () => {
     const claudeHome = await setupClaudeHome();
+    await writeFile(
+      path.join(contentDir, 'guidance', '_harnesses', 'claude', 'CLAUDE.md'),
+      'Read `{harness_home_dir}/skills/_data/sample.md`.\n',
+      'utf8',
+    );
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-    const skills = await readdir(path.join(claudeHome, 'skills'));
-    expect(skills).toContain('_data');
-    expect(skills).not.toContain('_harnesses');
-    expect(await readdir(path.join(claudeHome, 'skills', '_data'))).toContain('sample.md');
+    expect(await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8')).toContain(
+      `Read \`~/.claude/skills/_sources/${FIXTURE_SOURCE_NAME}/_data/sample.md\`.`,
+    );
   });
 
-  it('installs one skills-directory entry per support entry and nothing else', async () => {
-    const claudeHome = await setupClaudeHome();
-    await writeFile(path.join(contentDir, 'skills', 'reference.md'), '# Reference\n', 'utf8');
-
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-
-    expect((await readdir(path.join(claudeHome, 'skills'))).toSorted()).toEqual(['_data', 'reference.md']);
-  });
-
-  it('uses the harness-specific source URL in markers for installed harness guidance', async () => {
+  it('names the guidance template by its path in the source in the provenance marker', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
     const content = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
-    expect(content).toContain('content/guidance/_harnesses/claude/CLAUDE.md');
+    expect(content).toContain(
+      `Source: guidance/_harnesses/claude/CLAUDE.md in source "${FIXTURE_SOURCE_NAME}" (${contentDir})`,
+    );
   });
 
   it('prunes previously-planted harness skills and prompts.yml on re-install', async () => {
@@ -318,8 +290,8 @@ describe(installCommand, () => {
       },
     });
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
 
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only'))).toBe(false);
     expect(existsSync(promptsYmlPath)).toBe(false);
@@ -331,11 +303,56 @@ describe(installCommand, () => {
     expect(rovoPaths).not.toContain('prompts.yml');
   });
 
+  describe('without a usable content source', () => {
+    const cases: ReadonlyArray<{ label: string; declare: () => Promise<void> }> = [
+      {
+        label: 'no declaration',
+        declare: () => rm(path.join(tempDir, '.agents', 'codeassembly.yaml')),
+      },
+      {
+        label: 'a declaration without sources',
+        declare: () =>
+          writeFile(path.join(tempDir, '.agents', 'codeassembly.yaml'), 'harnesses:\n  use:\n    - claude\n', 'utf8'),
+      },
+      {
+        label: 'a declaration whose every source directory is missing',
+        declare: () =>
+          writeFile(
+            path.join(tempDir, '.agents', 'codeassembly.yaml'),
+            `sources:\n  - name: gone\n    path: ${path.join(tempDir, 'gone')}\n`,
+            'utf8',
+          ),
+      },
+    ];
+
+    for (const { label, declare } of cases) {
+      for (const dryRun of [false, true]) {
+        it(`stops with NoContentSourceError and writes nothing, given ${label}${dryRun ? ' (dry run)' : ''}`, async () => {
+          const claudeHome = await setupClaudeHome();
+          await declare();
+          using _silent = silenceConsole(['info', 'warn']);
+
+          const run = installCommand(makeOptions({ dryRun }), tempDir);
+
+          await expect(run).rejects.toBeInstanceOf(NoContentSourceError);
+          await expect(run).rejects.toThrow(path.join(tempDir, '.agents', 'codeassembly.yaml'));
+          await expect(run).rejects.toThrow('codeassembly.local.yaml');
+          expect(existsSync(getManifestPath(tempDir))).toBe(false);
+          expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(false);
+          expect(existsSync(path.join(claudeHome, 'scripts'))).toBe(false);
+          expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
+          expect(await readdir(path.join(claudeHome, 'skills'))).toEqual([]);
+          expect(existsSync(getHomeProvenancePath(tempDir))).toBe(false);
+        });
+      }
+    }
+  });
+
   describe('session-lifecycle hooks', () => {
     it('wires the hook entries into the harness config by default', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
       const settings = await readFile(path.join(claudeHome, 'settings.json'), 'utf8');
       expect(settings).toContain('--sentinel codeassembly-agents');
@@ -345,7 +362,7 @@ describe(installCommand, () => {
     it('leaves the harness config untouched with --skip-hooks', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude', hooks: false }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'claude', hooks: false }), tempDir);
 
       expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
     });
@@ -353,7 +370,7 @@ describe(installCommand, () => {
     it('leaves the harness config untouched in dry-run mode', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+      await installCommand(makeOptions({ dryRun: true }), tempDir);
 
       expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
     });
@@ -364,7 +381,7 @@ describe(installCommand, () => {
       await writeFile(settingsPath, '{ not json', 'utf8');
 
       using silent = silenceConsole(['warn']);
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir, contentDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
       const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
       expect(warnLines.some((line) => line.includes('Skipping hook wiring'))).toBe(true);
@@ -374,52 +391,11 @@ describe(installCommand, () => {
     });
   });
 
-  describe('a flat .md directly under content/skills/', () => {
-    /** Writes a top-level `.md` beside the skill directories, the shape whose `SKILL.md` probe yields ENOTDIR. */
-    async function writeFlatSkill(body: string): Promise<string> {
-      const filePath = path.join(contentDir, 'skills', 'flat-note.md');
-      await writeFile(filePath, body, 'utf8');
-      return filePath;
-    }
-
-    it('installs it rather than aborting the run on the skill-directory probe', async () => {
-      const claudeHome = await setupClaudeHome();
-      await writeFlatSkill('# Flat note\n\nSee [the note](#flat-note).\n');
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-
-      expect(existsSync(path.join(claudeHome, 'skills', 'flat-note.md'))).toBe(true);
-    });
-
-    it('rewrites its links, invocation tokens, and template variables on the way to the harness home', async () => {
-      const claudeHome = await setupClaudeHome();
-      await writeFlatSkill(
-        '# Flat note\n\nSee [the table](_data/table.md), run {skill:commit}, then `{harness_home_dir}/scripts/x.sh`.\n',
-      );
-
-      await installCommand(makeOptions(), tempDir, contentDir);
-
-      const installed = await readFile(path.join(claudeHome, 'skills', 'flat-note.md'), 'utf8');
-      expect(installed).toContain('[the table](~/.claude/skills/_data/table.md)');
-      expect(installed).toContain('run /commit,');
-      expect(installed).toContain('`~/.claude/scripts/x.sh`');
-    });
-
-    it('fails the run when its anchor does not name any heading in the skill', async () => {
-      await setupClaudeHome();
-      await writeFlatSkill('# Flat note\n\nSee [the events](#lifecycle-events).\n');
-
-      await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(
-        /skills\/flat-note\.md contains 1 unresolvable anchor link target/,
-      );
-    });
-  });
-
   describe('scripts', () => {
     it('places scripts and sets the executable bit', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
       expect(existsSync(scriptPath)).toBe(true);
@@ -431,7 +407,7 @@ describe(installCommand, () => {
       // `install` copies a bundled `.mjs` into a harness home by the same path as the shell helpers beside it.
       await buildContentTree(contentDir, { scripts: { 'relay-demo.mjs': 'process.stdout.write("{}")\n' } });
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       expect(existsSync(path.join(claudeHome, 'scripts', 'relay-demo.mjs'))).toBe(true);
       expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
@@ -441,7 +417,7 @@ describe(installCommand, () => {
       const claudeHome = await setupClaudeHome();
       await buildContentTree(contentDir, { scripts: { 'README.md': '# Helper scripts\n' } });
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       expect(existsSync(path.join(claudeHome, 'scripts', 'README.md'))).toBe(false);
     });
@@ -449,7 +425,7 @@ describe(installCommand, () => {
     it('records script entries with a sha256 hash and linked:false in copy mode', async () => {
       await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir, contentDir);
+      await installCommand(makeOptions(), tempDir);
 
       const manifest = await readManifest(getManifestPath(tempDir));
       const scripts = manifest.harnesses.claude?.entries.filter((e) => e.relativePath.startsWith('scripts/')) ?? [];
@@ -463,7 +439,7 @@ describe(installCommand, () => {
     it('records script entries with linked:true in link mode', async () => {
       await setupClaudeHome();
 
-      await installCommand(makeOptions({ link: true }), tempDir, contentDir);
+      await installCommand(makeOptions({ link: true }), tempDir);
 
       const manifest = await readManifest(getManifestPath(tempDir));
       const scripts = manifest.harnesses.claude?.entries.filter((e) => e.relativePath.startsWith('scripts/')) ?? [];
@@ -476,7 +452,7 @@ describe(installCommand, () => {
     it('does not create a scripts directory in dry-run mode', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+      await installCommand(makeOptions({ dryRun: true }), tempDir);
 
       expect(existsSync(path.join(claudeHome, 'scripts'))).toBe(false);
     });

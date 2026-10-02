@@ -337,6 +337,44 @@ describe('guidance-hook advisories', () => {
   });
 });
 
+describe('resolution report', () => {
+  const RESOLUTION = [
+    { type: 'skill', slug: 'plan', source: 'org', shadowedSources: [] },
+    { type: 'rulebook', slug: 'style', source: 'org', shadowedSources: ['team', 'codeassembly'] },
+    { type: 'rulebook', slug: 'comments', source: 'team', shadowedSources: ['codeassembly'] },
+  ] as const;
+
+  it('names the source of each artifact on a dry run, and every source that it shadows', () => {
+    const output = textOf(renderDryRunReport(reconciled({ resolutionReport: RESOLUTION })));
+
+    expect(output).toContain(
+      [
+        '[dry-run] sync would resolve:',
+        '  rulebook  comments  ← source "team" (shadows source "codeassembly")',
+        '  rulebook  style     ← source "org" (shadows sources "team", "codeassembly")',
+        '  skill     plan      ← source "org"',
+      ].join('\n'),
+    );
+  });
+
+  it('warns on a live run about each artifact that shadows a lower-precedence source', () => {
+    const warnings = renderSyncReport(reconciled({ resolutionReport: RESOLUTION })).filter(
+      (line) => line.level === 'warn',
+    );
+
+    expect(warnings.map((line) => line.text)).toStrictEqual([
+      '2 artifacts shadow a lower-precedence source: rulebook "comments" (source "team" over source "codeassembly"), ' +
+        'rulebook "style" (source "org" over sources "team", "codeassembly")',
+    ]);
+  });
+
+  it('does not warn on a live run when no artifact shadows another source', () => {
+    const output = textOf(renderSyncReport(reconciled({ resolutionReport: [RESOLUTION[0]] })));
+
+    expect(output).not.toContain('shadow');
+  });
+});
+
 describe('targeting', () => {
   it('names the harness set and what settled it on both paths', () => {
     const outcome = reconciled({ targets: { harnessIds: ['claude', 'rovo'], origin: 'detection' } });
@@ -373,7 +411,7 @@ describe('deployed sizes', () => {
           changes: [
             {
               kind: 'expansion',
-              key: 'partial:library/_partials/plain-speech.md',
+              key: 'partial:codeassembly/_partials/plain-speech.md',
               bytes: 1_229,
               delta: 132,
               explainedDocumentCount: 17,
@@ -383,7 +421,7 @@ describe('deployed sizes', () => {
       ),
     );
 
-    expect(output).toContain('+2.2 KiB  library/_partials/plain-speech.md  (+132 B × 17 documents, 1.2 KiB)');
+    expect(output).toContain('+2.2 KiB  codeassembly/_partials/plain-speech.md  (+132 B × 17 documents, 1.2 KiB)');
   });
 
   it('states one document for a partial that explains one document', () => {
@@ -393,7 +431,7 @@ describe('deployed sizes', () => {
           changes: [
             {
               kind: 'expansion',
-              key: 'partial:library/_partials/only.md',
+              key: 'partial:codeassembly/_partials/only.md',
               bytes: 300,
               delta: 100,
               explainedDocumentCount: 1,
@@ -426,7 +464,7 @@ describe('deployed sizes', () => {
         changes: [
           {
             kind: 'expansion',
-            key: 'partial:library/_partials/wide.md',
+            key: 'partial:codeassembly/_partials/wide.md',
             bytes: 300,
             delta: 500,
             explainedDocumentCount: 20,
@@ -438,7 +476,7 @@ describe('deployed sizes', () => {
     const changeLines = lines.filter((line) => line.text.includes('  (')).map((line) => line.text);
 
     expect(changeLines).toStrictEqual([
-      '  +9.8 KiB  library/_partials/wide.md  (+500 B × 20 documents, 300 B)',
+      '  +9.8 KiB  codeassembly/_partials/wide.md  (+500 B × 20 documents, 300 B)',
       '    +100 B  a.md  (1.1 KiB)',
     ]);
   });

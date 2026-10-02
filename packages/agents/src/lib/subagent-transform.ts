@@ -4,6 +4,7 @@ import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invoc
 import {
   type ResolveLinkAnchor,
   rewriteMarkdownPaths,
+  rewriteSkillsReferences,
   rewriteTemplateVariables,
   type TemplateVariables,
 } from './path-rewriter.ts';
@@ -52,8 +53,8 @@ export interface SubagentRenderContext extends TemplateVariables {
  * block fails rather than splicing prose into YAML.
  *
  * `anchor` and `homeDir` are distinct fields because they answer different questions: The anchor places a link
- * target in whichever tree deploys it, while `homeDir` expands `{harness_home_dir}` tokens, which name the harness
- * home whatever the target is.
+ * target, or a `{harness_home_dir}/skills/` reference, in whichever tree deploys it, while `homeDir` expands every
+ * other `{harness_home_dir}` token, which names the harness home.
  */
 export function renderSubagentForHarness(expandedSource: string, context: SubagentRenderContext): string {
   const { overlayYaml, harnessId, fileRelPath, sourceLabel, anchor, skillSigil, subagentSigil, rulebooks } = context;
@@ -68,6 +69,9 @@ export function renderSubagentForHarness(expandedSource: string, context: Subage
     sourceLabel,
     rulebooks,
   );
-  const rewrittenPaths = rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor);
+  const rewrittenPaths = rewriteSkillsReferences(
+    rewriteMarkdownPaths(rewrittenInvocations, fileRelPath, anchor),
+    (target) => anchor(`skills/${target}`),
+  );
   return rewriteTemplateVariables(rewrittenPaths, context);
 }

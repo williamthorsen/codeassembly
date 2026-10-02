@@ -11,6 +11,7 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
 describe('statusCommand', () => {
   let tempDir: string;
@@ -21,6 +22,7 @@ describe('statusCommand', () => {
     contentDir = path.join(tempDir, 'content');
     await mkdir(tempDir, { recursive: true });
     await buildContentTree(contentDir);
+    await declareFixtureSource(tempDir, contentDir);
   });
 
   afterEach(async () => {
@@ -36,7 +38,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     using silent = silenceConsole(['info']);
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -50,7 +52,7 @@ describe('statusCommand', () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
     await recordFailedHomeAttempt('sync --global', { summary: 'two rulebooks rejected', defectCount: 2 }, tempDir);
 
     using silent = silenceConsole(['info', 'warn']);
@@ -90,7 +92,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     using silent = silenceConsole(['info']);
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -106,7 +108,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     using silent = silenceConsole(['info']);
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -120,7 +122,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions({ hooks: false }), tempDir, contentDir);
+    await installCommand(makeInstallOptions({ hooks: false }), tempDir);
     await writeFile(path.join(claudeHome, 'settings.json'), '{ not json', 'utf8');
 
     using silent = silenceConsole(['info', 'warn']);
@@ -137,7 +139,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions({ hooks: false }), tempDir, contentDir);
+    await installCommand(makeInstallOptions({ hooks: false }), tempDir);
 
     using silent = silenceConsole(['info']);
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -162,7 +164,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     await unlink(path.join(claudeHome, 'CLAUDE.md'));
 
@@ -178,7 +180,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir, contentDir);
+    await installCommand(makeInstallOptions(), tempDir);
 
     await writeFile(path.join(claudeHome, 'CLAUDE.md'), 'tampered content', 'utf8');
 

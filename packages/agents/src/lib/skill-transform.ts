@@ -8,6 +8,7 @@ import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invoc
 import {
   type ResolveLinkAnchor,
   rewriteMarkdownPaths,
+  rewriteSkillsReferences,
   rewriteTemplateVariables,
   type TemplateVariables,
 } from './path-rewriter.ts';
@@ -23,12 +24,12 @@ export interface SkillDeployContext extends TemplateVariables {
   readonly subagentSigil: string;
   /**
    * Guidance bound to each hook that a declared skill's body may declare. Absent for every caller that doesn't
-   * resolve a declaration (`install`, `validate`, and the support-entry route), which keeps them stripping.
+   * resolve a declaration (`validate` and the support-entry route), which keeps them stripping.
    */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
   /**
-   * The deployed rulebooks that a `{rulebook:<slug>}` token may address. Absent for the support-entry route, which
-   * `install` ships without having resolved a declaration, so a token there is rejected rather than rendered.
+   * The deployed rulebooks that a `{rulebook:<slug>}` token may address. Absent for the support-entry route, whose
+   * output does not depend on any one declaration, so a token there is rejected rather than rendered.
    */
   readonly rulebooks?: RulebookInvocationCatalog | undefined;
 }
@@ -70,8 +71,8 @@ export function isSkippedSkillEntry(name: string): boolean {
  * and tests are the skill's own coverage, neither of them deployed artifacts.
  *
  * `contentRoot` is the include-containment root: Every `<!-- include: … -->` target must resolve within it, and it
- * roots the source label in unmapped-tool errors. It is the skill's own content root: the library for a library skill,
- * the declaring source for a source skill.
+ * roots the source label in unmapped-tool errors. It is the skill's own content root: the directory of the declaring
+ * source.
  */
 export async function renderSkillDirectory(
   srcDir: string,
@@ -85,17 +86,17 @@ export async function renderSkillDirectory(
 }
 
 /**
- * Renders one `skills/` support entry the way an install materializes it: every Markdown file through the whole skill
+ * Renders one `skills/` support entry the way `sync` delivers it: every Markdown file through the whole skill
  * transform, whether it is in a support directory or directly under `skills/`, and anything else not at all, since
  * it is copied byte-for-byte and has nothing to check. Shape decides how an entry is walked, never which rewrites
  * apply to the Markdown that it contains.
  *
  * A support entry never fills a hook, whichever route it takes, so any fills that the caller supplies are dropped
  * here. A support entry is reached by a link rather than inlined, and guidance behind a link is what the hook
- * mechanism exists to route around. Its rulebook catalog is dropped for a different reason: `install` ships a support
- * entry without having resolved a declaration. Honoring a `{rulebook:<slug>}` token under `sync` or `validate` alone
- * would pass a gate that the ship then fails. Dropping both here rather than at each call site keeps the three routes
- * agreeing on what a support entry is.
+ * mechanism exists to route around. Its rulebook catalog is dropped for a different reason: A source's support entries
+ * deliver to every consumer of the source, whichever rulebooks that consumer declares, so a `{rulebook:<slug>}` token in
+ * one could name a rulebook that the consumer does not deploy. Dropping both here rather than at each call site keeps
+ * every route agreeing on what a support entry is.
  *
  * `destName` is the entry's deployed name, which anchors link rewriting: the directory that contains a directory
  * entry's files, and the file's own name for a Markdown file entry.
@@ -186,7 +187,7 @@ async function renderMarkdown(
     contextLabel,
     context.rulebooks,
   );
-  const pathRewritten = rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor);
+  const pathRewritten = rewriteSkillsReferences(rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor), anchor);
   return rewriteTemplateVariables(pathRewritten, context);
 }
 

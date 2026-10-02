@@ -133,7 +133,7 @@ describe(assertSupportedContentFormats, () => {
       assertSupportedContentFormats([
         { name: 'declared', dir: declared },
         { name: 'optional-tokens', dir: optionalTokens },
-        { dir: bare },
+        { name: 'bare', dir: bare },
       ]),
     ).resolves.toBeUndefined();
   });
@@ -151,10 +151,12 @@ describe(assertSupportedContentFormats, () => {
     await expect(failure).rejects.toThrow(/supports content formats 1 and 2/);
   });
 
-  it('attributes an unnamed root by its directory', async () => {
+  it('attributes a root by its name and its directory', async () => {
     const root = await makeRoot(baseDir, 'library', 'format: 3\n');
 
-    await expect(assertSupportedContentFormats([{ dir: root }])).rejects.toThrow(root);
+    await expect(assertSupportedContentFormats([{ name: 'codeassembly', dir: root }])).rejects.toThrow(
+      `"codeassembly" (${root})`,
+    );
   });
 
   // A manifest that will not parse does not have a declared version to compare, so it raises on its own rather than

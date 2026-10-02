@@ -1,7 +1,7 @@
 /**
  * Matches `{rulebook:<slug>}`, `{skill:<slug>}`, and `{subagent:<slug>}` invocation tokens, each in a required form and
  * an optional one marked `?` before the colon. The slug is kebab-case and letter-led (`[a-z][a-z0-9-]*`). The pattern
- * only captures well-formed tokens; a slug that does not name any library artifact is caught downstream by the
+ * only captures well-formed tokens; a slug that does not name any declared artifact is caught downstream by the
  * resolver's missing-artifact check, so the grammar does not police existence.
  *
  * Because `{rulebook?:<slug>}` matches although a body must not contain one, `rewriteInvocationTokens` rejects it by

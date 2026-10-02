@@ -12,3 +12,6 @@ rulebooks:
   use:
     - codeassembly-content-specification
     - live-worktree-policy
+sources:
+  - name: codeassembly
+    path: ../packages/agents/content

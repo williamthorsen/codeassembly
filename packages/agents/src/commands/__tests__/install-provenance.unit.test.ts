@@ -11,6 +11,7 @@ import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
+import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
 describe('install (home provenance)', () => {
   let tempDir: string;
@@ -24,6 +25,7 @@ describe('install (home provenance)', () => {
     contentDir = path.join(tempDir, 'content');
     await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
     await buildContentTree(contentDir);
+    await declareFixtureSource(tempDir, contentDir);
   });
 
   afterEach(async () => {
@@ -35,7 +37,7 @@ describe('install (home provenance)', () => {
   }
 
   it('stamps the run that it completed', async () => {
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     expect(await readHomeProvenance(tempDir)).toMatchObject({ command: 'install' });
   });
@@ -43,29 +45,25 @@ describe('install (home provenance)', () => {
   it("stamps a run that doesn't detect any harness but still writes shared guidance", async () => {
     await rm(path.join(tempDir, '.claude'), { recursive: true, force: true });
 
-    await installCommand(makeOptions({ harness: 'all' }), tempDir, contentDir);
+    await installCommand(makeOptions({ harness: 'all' }), tempDir);
 
     expect(await readHomeProvenance(tempDir)).toMatchObject({ command: 'install' });
   });
 
   it('leaves the stamp untouched on a dry run', async () => {
-    await installCommand(makeOptions({ dryRun: true }), tempDir, contentDir);
+    await installCommand(makeOptions({ dryRun: true }), tempDir);
 
     expect(existsSync(getHomeProvenancePath(tempDir))).toBe(false);
   });
 
   it('records the failed attempt when the run cannot deploy, keeping any earlier write', async () => {
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
     const written = (await readHomeProvenance(tempDir))?.lastWrite;
     await mkdir(path.join(tempDir, '.agents'), { recursive: true });
     await writeFile(path.join(tempDir, '.agents', 'not-a-dir'), 'not a dir\n', 'utf8');
-    await writeFile(
-      path.join(tempDir, '.agents', 'codeassembly.yaml'),
-      'sources:\n  - name: bad-source\n    path: ./not-a-dir\n',
-      'utf8',
-    );
+    await declareFixtureSource(tempDir, contentDir, 'sources:\n  - name: bad-source\n    path: ./not-a-dir\n');
 
-    await expect(installCommand(makeOptions(), tempDir, contentDir)).rejects.toThrow(/bad-source/);
+    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(/bad-source/);
 
     const stamp = await readHomeProvenance(tempDir);
     expect(stamp?.lastAttempt).toMatchObject({ command: 'install', outcome: 'failed' });
@@ -73,7 +71,7 @@ describe('install (home provenance)', () => {
   });
 
   it('records the running package version in the harness manifest', async () => {
-    await installCommand(makeOptions(), tempDir, contentDir);
+    await installCommand(makeOptions(), tempDir);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude?.version).toBe(readRunningPackageVersion());

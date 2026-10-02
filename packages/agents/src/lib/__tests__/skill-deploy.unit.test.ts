@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createSourceResolver, libraryResolver } from '../content-sources.ts';
+import { createSourceResolver } from '../content-sources.ts';
 import { expandIncludes } from '../directive-expander.ts';
 import {
   homeAnchor,
@@ -174,8 +174,8 @@ describe(deploySkill, () => {
   }
 
   /** Builds a ResolvedSkill without the deploy-field check, so that deploySkill tests can use minimal fixtures. */
-  function resolvedSkill(slug: string): { slug: string; srcDir: string; contentRoot: string; source: undefined } {
-    return { slug, srcDir: path.join(librarySkillsDir, slug), contentRoot: librarySkillsDir, source: undefined };
+  function resolvedSkill(slug: string): { slug: string; srcDir: string; contentRoot: string; source: string } {
+    return { slug, srcDir: path.join(librarySkillsDir, slug), contentRoot: librarySkillsDir, source: 'codeassembly' };
   }
 
   // endregion | Helpers
@@ -203,12 +203,15 @@ describe(resolveDeclaredSkill, () => {
   it('resolves a declared skill to its slug, source directory, and content root', async () => {
     await writeLibrarySkill('people-report');
 
-    const resolved = await resolveDeclaredSkill('people-report', libraryResolver(contentDir));
+    const resolved = await resolveDeclaredSkill(
+      'people-report',
+      createSourceResolver([{ name: 'codeassembly', dir: contentDir }]),
+    );
 
     expect(resolved.slug).toBe('people-report');
     expect(resolved.srcDir).toBe(path.join(contentDir, 'skills', 'people-report'));
     expect(resolved.contentRoot).toBe(contentDir);
-    expect(resolved.source).toBeUndefined();
+    expect(resolved.source).toBe('codeassembly');
   });
 
   it('returns the declared source name when the skill resolves from a source', async () => {
@@ -219,7 +222,7 @@ describe(resolveDeclaredSkill, () => {
 
     const resolved = await resolveDeclaredSkill(
       'people-report',
-      createSourceResolver([{ name: 'org', dir: sourceDir }], contentDir),
+      createSourceResolver([{ name: 'org', dir: sourceDir }]),
     );
 
     expect(resolved.source).toBe('org');
@@ -229,7 +232,10 @@ describe(resolveDeclaredSkill, () => {
   it('leaves the target harnesses undefined when the frontmatter does not contain a `supported-harnesses:` field', async () => {
     await writeLibrarySkill('people-report');
 
-    const resolved = await resolveDeclaredSkill('people-report', libraryResolver(contentDir));
+    const resolved = await resolveDeclaredSkill(
+      'people-report',
+      createSourceResolver([{ name: 'codeassembly', dir: contentDir }]),
+    );
 
     expect(resolved.targetHarnesses).toBeUndefined();
   });
@@ -237,7 +243,10 @@ describe(resolveDeclaredSkill, () => {
   it('reads a list-valued `supported-harnesses:` field into the target set', async () => {
     await writeLibrarySkill('brainstorming', 'supported-harnesses: [rovo]');
 
-    const resolved = await resolveDeclaredSkill('brainstorming', libraryResolver(contentDir));
+    const resolved = await resolveDeclaredSkill(
+      'brainstorming',
+      createSourceResolver([{ name: 'codeassembly', dir: contentDir }]),
+    );
 
     expect(resolved.targetHarnesses).toEqual(['rovo']);
   });
@@ -245,7 +254,10 @@ describe(resolveDeclaredSkill, () => {
   it('normalizes a scalar `supported-harnesses:` field into a single-element target set', async () => {
     await writeLibrarySkill('review-permissions', 'supported-harnesses: claude');
 
-    const resolved = await resolveDeclaredSkill('review-permissions', libraryResolver(contentDir));
+    const resolved = await resolveDeclaredSkill(
+      'review-permissions',
+      createSourceResolver([{ name: 'codeassembly', dir: contentDir }]),
+    );
 
     expect(resolved.targetHarnesses).toEqual(['claude']);
   });
@@ -253,10 +265,14 @@ describe(resolveDeclaredSkill, () => {
   it('throws naming the slug and the bad id when `supported-harnesses:` lists an unknown harness', async () => {
     await writeLibrarySkill('exotic', 'supported-harnesses: [codex]');
 
-    await expect(resolveDeclaredSkill('exotic', libraryResolver(contentDir))).rejects.toThrow(/exotic.*codex/s);
+    await expect(
+      resolveDeclaredSkill('exotic', createSourceResolver([{ name: 'codeassembly', dir: contentDir }])),
+    ).rejects.toThrow(/exotic.*codex/s);
   });
 
   it('throws an error naming the slug and every location searched when the skill resolves nowhere', async () => {
-    await expect(resolveDeclaredSkill('ghost', libraryResolver(contentDir))).rejects.toThrow(/ghost/);
+    await expect(
+      resolveDeclaredSkill('ghost', createSourceResolver([{ name: 'codeassembly', dir: contentDir }])),
+    ).rejects.toThrow(/ghost/);
   });
 });

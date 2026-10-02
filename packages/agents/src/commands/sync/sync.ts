@@ -4,18 +4,17 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import { ARTIFACT_TYPE_VALUES, type ArtifactType } from '../../lib/artifact-types.ts';
+import { ARTIFACT_TYPE_VALUES, ARTIFACT_TYPES, type ArtifactType } from '../../lib/artifact-types.ts';
 import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
-import { resolveContentDir } from '../../lib/content-resolver.ts';
-import { createSourceResolver, hasLibraryArtifact, type SourceResolver } from '../../lib/content-sources.ts';
+import { createSourceResolver, findShadowedSources, type SourceResolver } from '../../lib/content-sources.ts';
 import { listDeclaredGuidanceHooks } from '../../lib/declared-guidance-hooks.ts';
 import { resolveDeclaredReferences } from '../../lib/declared-references.ts';
-import { type DeclaredSource, resolveDeclaredSources } from '../../lib/declared-sources.ts';
+import { type DeclaredSource, NoContentSourceError, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
 import { buildGuidanceHookFills } from '../../lib/guidance-hook-fills.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
-import { enumerateCatalogSlugs } from '../../lib/library-catalog.ts';
+import { enumerateCatalogSlugs, listSupportEntries } from '../../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
 import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
@@ -76,7 +75,6 @@ import { describeSyncFailure, SyncValidationError } from './sync-validation-erro
 export async function syncCommand(
   options: InstallOptions,
   projectRoot: string = process.cwd(),
-  contentDirOverride?: string,
   homeDir: string = homedir(),
 ): Promise<SyncOutcome> {
   if (path.resolve(projectRoot) === path.resolve(homeDir)) {
@@ -89,7 +87,6 @@ export async function syncCommand(
     options,
     { baseDir: projectRoot, ambient: 'project-local', anchorBase: path.resolve(projectRoot) },
     homeDir,
-    contentDirOverride,
   );
 }
 
@@ -100,11 +97,7 @@ export async function syncCommand(
  * mechanically. It does not write any agent-read host file. When the home declaration is absent, changes nothing and
  * returns the outcome naming `init --global` as the remedy.
  */
-export async function syncGlobalCommand(
-  options: InstallOptions,
-  homeDir: string = homedir(),
-  contentDirOverride?: string,
-): Promise<SyncOutcome> {
+export async function syncGlobalCommand(options: InstallOptions, homeDir: string = homedir()): Promise<SyncOutcome> {
   // Runs first, and before the dry-run gate: A preview must refuse wherever the real run would.
   await assertDesignatedWriter({
     command: 'sync --global',
@@ -120,17 +113,12 @@ export async function syncGlobalCommand(
   let outcome: SyncOutcome;
   let retirement: Retirement | undefined;
   try {
-    outcome = await reconcileDomain(
-      options,
-      { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' },
-      homeDir,
-      contentDirOverride,
-    );
+    outcome = await reconcileDomain(options, { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' }, homeDir);
     retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
   } catch (error: unknown) {
     // Recorded past the designated-writer guard above, so an installation refused by the guard doesn't touch any home
-    // state.
-    if (!options.dryRun) {
+    // state. A declaration without a usable source is refused the same way, before anything about the run is known.
+    if (!options.dryRun && !(error instanceof NoContentSourceError)) {
       await recordFailedHomeAttempt('sync --global', describeSyncFailure(error), homeDir);
     }
     throw error;
@@ -158,12 +146,7 @@ export async function syncGlobalCommand(
  * `homeDir` is a parameter rather than a `SyncDomain` field because it is the same directory in both domains: It
  * contains the user-global half of the `harnesses` chain and the harnesses to which targeting falls back.
  */
-async function reconcileDomain(
-  options: InstallOptions,
-  domain: SyncDomain,
-  homeDir: string,
-  contentDirOverride?: string,
-): Promise<SyncOutcome> {
+async function reconcileDomain(options: InstallOptions, domain: SyncDomain, homeDir: string): Promise<SyncOutcome> {
   const declaration = await resolveDeclaration({
     cwd: domain.baseDir,
     domain: domain.ambient === 'harness-home' ? 'home' : 'project',
@@ -176,17 +159,14 @@ async function reconcileDomain(
     };
   }
 
-  const contentDir = contentDirOverride ?? resolveContentDir();
-
-  // Resolution searches declared sources (highest precedence first) then the built-in library. Every declared source
-  // is validated up front, so a non-directory or unreadable one fails the whole run (dry-run included) before any
-  // write.
+  // Resolution searches the declared sources alone, highest precedence first. Every declared source is validated up
+  // front, so a non-directory or unreadable one, or a declaration without a usable source, fails the whole run
+  // (dry-run included) before any write.
   const { sources, missingSources } = await resolveDeclaredSources({
     baseDir: domain.baseDir,
-    contentDir,
     declaration,
   });
-  const resolver = createSourceResolver(sources, contentDir);
+  const resolver = createSourceResolver(sources);
 
   // Everything a declared package ships seeds the closure, which makes naming the package the whole declaration. A
   // package whose content dir is missing enumerates nothing: The walk reads through a directory listing that doesn't
@@ -217,7 +197,7 @@ async function reconcileDomain(
   };
 
   // Expand declared collections (and any artifact's own dependencies) into the deployable per-type sets before
-  // resolving against the sources and library, so that a declared collection deploys exactly its transitive closure.
+  // resolving against the sources, so that a declared collection deploys exactly its transitive closure.
   // Because the walk runs one seed at a time, a bad edge is attributed to the artifact that owns it and every
   // remaining seed still resolves. A seed already reported as unresolvable is dropped, so that it is not reported
   // twice.
@@ -243,7 +223,7 @@ async function reconcileDomain(
   const declaredRulebooks = closure.rulebooks;
 
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so that a missing
-  // library file, invalid frontmatter, or a still-`install` artifact is reported rather than leaving a partial sync.
+  // source file, invalid frontmatter, or a still-`install` artifact is reported rather than leaving a partial sync.
   // Each pass resolves what it can: An artifact reported here is simply absent from the passes below.
   const rulebookResolution = await resolveEachArtifact('rulebook', declaredRulebooks, (slug) =>
     resolveRulebook(slug, resolver),
@@ -292,6 +272,7 @@ async function reconcileDomain(
     resolvedSkills,
     desiredSkillDirs.values().toArray(),
     domain.anchorBase,
+    await listSupportEntriesBySource(sources),
   );
   const resolveRulebookContext = createRulebookContextResolver(resolved, resolveAnchorContext);
 
@@ -378,8 +359,8 @@ async function reconcileDomain(
     throw new SyncValidationError(defects.found);
   }
 
-  // Attribute each deployed artifact to the source from which it resolved, flagging any that shadows a same-slug
-  // library artifact. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow
+  // Attribute each deployed artifact to the source from which it resolved, naming any lower-precedence source that
+  // also ships it. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow
   // warning.
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
@@ -463,7 +444,7 @@ async function reconcileDomain(
   // Resolved once per declared source rather than once per deployed file, so that the report can test containment
   // lexically. A `workspace:*` source resolves through a `node_modules` symlink; its canonical directory is the path
   // inside the repository that maintains it.
-  const sourceRoots = await resolveCanonicalSourceRoots(sources, contentDir);
+  const sourceRoots = await resolveCanonicalSourceRoots(sources);
 
   // Last of all, so that the measurement reads the tree that every pass above left. Cannot fail: A size condition
   // must not fail a sync.
@@ -481,9 +462,8 @@ async function reconcileDomain(
 // region | Helpers
 
 /**
- * Attributes each deployed rulebook, skill, and subagent to the source from which it resolved, flagging any
- * source-resolved artifact whose slug also exists in the library as shadowing it. The library probe runs only for
- * source-resolved artifacts (a library-resolved artifact cannot shadow the library) and is batched across all of them.
+ * Attributes each deployed rulebook, skill, and subagent to the source from which it resolved, naming the
+ * lower-precedence sources that ship the same slug and that it therefore shadows.
  */
 async function buildResolutionReport(
   resolver: SourceResolver,
@@ -491,10 +471,11 @@ async function buildResolutionReport(
   skills: ReadonlyArray<ResolvedSkill>,
   subagents: ReadonlyArray<ResolvedSubagent>,
 ): Promise<ReadonlyArray<ResolutionEntry>> {
-  const artifacts: Array<{ type: ArtifactType; slug: string; source: string | undefined }> = Array.from(
-    rulebooks,
-    (rulebook) => ({ type: 'rulebook', slug: rulebook.slug, source: rulebook.source }),
-  );
+  const artifacts: Array<{ type: ArtifactType; slug: string; source: string }> = Array.from(rulebooks, (rulebook) => ({
+    type: 'rulebook',
+    slug: rulebook.slug,
+    source: rulebook.source,
+  }));
   for (const skill of skills) {
     artifacts.push({ type: 'skill', slug: skill.slug, source: skill.source });
   }
@@ -504,9 +485,25 @@ async function buildResolutionReport(
   return Promise.all(
     artifacts.map(async (artifact) => ({
       ...artifact,
-      shadowsLibrary:
-        artifact.source !== undefined && (await hasLibraryArtifact(resolver, artifact.type, artifact.slug)),
+      shadowedSources: await findShadowedSources(resolver, artifact.type, artifact.slug, artifact.source),
     })),
+  );
+}
+
+/** Maps each declared source's name to the support entries that its `skills/` directory ships. */
+async function listSupportEntriesBySource(
+  sources: ReadonlyArray<DeclaredSource>,
+): Promise<ReadonlyMap<string, ReadonlySet<string>>> {
+  return new Map(
+    await Promise.all(
+      sources.map(
+        async (source) =>
+          [
+            source.name,
+            new Set(await listSupportEntries(path.join(source.dir, ARTIFACT_TYPES.skill.contentPath))),
+          ] as const,
+      ),
+    ),
   );
 }
 
@@ -533,16 +530,12 @@ async function resolveCanonicalDir(dir: string): Promise<string> {
   }
 }
 
-/**
- * Maps each declared source's name, and `undefined` for the built-in library, to the canonical directory behind it.
- */
+/** Maps each declared source's name to the canonical directory behind it. */
 async function resolveCanonicalSourceRoots(
   sources: ReadonlyArray<DeclaredSource>,
-  contentDir: string,
-): Promise<ReadonlyMap<string | undefined, string>> {
-  const roots: Array<{ name: string | undefined; dir: string }> = [{ name: undefined, dir: contentDir }, ...sources];
+): Promise<ReadonlyMap<string, string>> {
   return new Map(
-    await Promise.all(roots.map(async (root) => [root.name, await resolveCanonicalDir(root.dir)] as const)),
+    await Promise.all(sources.map(async (source) => [source.name, await resolveCanonicalDir(source.dir)] as const)),
   );
 }
 

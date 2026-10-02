@@ -325,8 +325,8 @@ export function findSkillNameCollisionDefects(resolved: ReadonlyArray<ResolvedRu
 }
 
 /**
- * Reports each guidance-hook binding naming a rulebook that does not resolve from any declared source or the library,
- * naming both the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an
+ * Reports each guidance-hook binding naming a rulebook that does not resolve from any declared source, naming both
+ * the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an
  * anonymous missing reference: The hook name is the half that says where to go and fix it.
  */
 export async function findUnresolvableBindingDefects(
@@ -355,7 +355,7 @@ export async function findUnresolvableBindingDefects(
 
 /**
  * Reports each artifact that a declaration's own `use:` list names and that does not resolve from any declared
- * source or the library, naming the chain files that declare it alongside the slug. The closure catches the same
+ * source, naming the chain files that declare it alongside the slug. The closure catches the same
  * slug, but only as an anonymous missing reference: The declaring file is the half that says where to go and fix it,
  * and a path derived from the domain cannot supply it, since either tier of the chain could have named the slug.
  */

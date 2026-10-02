@@ -61,13 +61,13 @@ A **relative Markdown link** cannot serve both a skill host and a rulebook host.
 
 A partial that `guidance/shared/AGENTS.md` inlines does not contain any relative link at all. That file is inlined into each harness's guidance file at the harness home root, where a source-tree-relative target names nothing, so the template-variable form is the only one that resolves to a file from there. `codeassembly validate` scans the expanded body and reports a relative target that it finds.
 
-A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support entry under `skills/`. The deployed rulebook set is available only to a host that resolves a declaration, and `install` deploys a support entry without resolving one. The token renders in the skill but breaks the support entry's install.
+A **`{rulebook:<slug>}` token** cannot serve both a skill body and a support entry under `skills/`. The deployed rulebook set is available only to a host that resolves a declaration, and a source's support entries deliver to every consumer of the source, whichever rulebooks that consumer declares. The token renders in the skill but breaks the support entry's delivery.
 
 ## Path references in installed content
 
 Installable content is rewritten at install time. Author cross-references in one of three forms, depending on intent:
 
-- **Runtime references**: Paths that the agent reads or executes at runtime. Use `{harness_home_dir}/...` inside inline code or CLI examples (e.g., `{harness_home_dir}/skills/_data/work-types.json`), or `[text](relative/path.md)` for Markdown links. The install pipeline expands `{harness_home_dir}` to the platform home (e.g., `~/.claude`) and rewrites relative Markdown links to absolute tilde-prefixed paths. `sync` does the same, and bare `sync` adds one exception: A link naming a skill deployed by the same run is anchored under the project root rather than the harness home. `sync --global` deploys into the harness home, so that exception does not apply to it.
+- **Runtime references**: Paths that the agent reads or executes at runtime. Use `[text](relative/path.md)` for a Markdown link, or `{harness_home_dir}/...` inside inline code or a command (e.g., `{harness_home_dir}/skills/_data/work-types.json`), the form that a partial inlined at several depths can use. Both name a file by its place in the content tree, and the pipeline resolves both to where that file is deployed: A target naming a skill deployed by the same run resolves where that run wrote it, a target in one of the owning source's support entries resolves into that source's namespace, `skills/_sources/<name>/`, and anything else resolves to the harness home. `sync --global` anchors the first two under the harness home, and bare `sync` under the project root. Every other `{harness_home_dir}` expands to the platform home (e.g., `~/.claude`), where `scripts/` deploys.
 - **Source-tree citations**: Prose pointing the reader to the canonical implementation, like a doc reference. A bare `packages/agents/content/...` path is acceptable in this case, but the file must be added to the allowlist in `packages/agents/content/__tests__/content-path-conventions.unit.test.ts`.
 - **Self-referential prose** about the source tree itself (e.g., this paragraph) is treated as a source-tree citation.
 
@@ -166,7 +166,7 @@ A **partial** resolves by path. The author writes `<!-- include: _partials/x.md 
 
 A **guidance hook** resolves by binding. The author writes `<!-- guidance-hook: name -->` and leaves the slot empty; a `codeassembly.yaml` names which rulebooks fill it, per project or per machine. Use one when the right content differs by who is running (personal code-style preferences, a project's own glossary), which is exactly what a path fixed at authoring time cannot express.
 
-A hook is filled only in a declared skill or subagent, the artifacts that a declaration covers. A directive in a rulebook body, a `skills/_data/` support entry, or a harness guidance file is always stripped, and so is every hook under `install`, which does not resolve any declaration. Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it. `packages/agents/docs/project-declaration.md` documents the binding syntax and the naming rules.
+A hook is filled only in a declared skill or subagent, the artifacts that a declaration covers. A directive in a rulebook body, a `skills/_data/` support entry, or a harness guidance file is always stripped, since none of them is rendered against a declaration. Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it. `packages/agents/docs/project-declaration.md` documents the binding syntax and the naming rules.
 
 The expander rejects unrecognized parameters following `include:` with an `unrecognized-parameter` error. This stops a typo from being silently ignored.
 

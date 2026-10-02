@@ -37,10 +37,11 @@
     ".readyup/kits/*.js",
     ".readyup/manifest.json",
     "bin",
-    "dist"
+    "dist",
+    "!dist/content"
   ],
   "scripts": {
-    "build:post": "node bin/codeassembly.js bundle-helpers --content content && node scripts/copy-content.ts && rdy compile",
+    "build:post": "node bin/codeassembly.js bundle-helpers --content content && node scripts/add-cli-shebang.ts && rdy compile",
     "build:pre": "rdy verify",
     "check-bundles": "node bin/codeassembly.js bundle-helpers --content content --check",
     "prepublishOnly": "nmr build",

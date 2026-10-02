@@ -29,14 +29,14 @@ export interface ResolvedRulebook {
   readonly hook: boolean;
   readonly skill: boolean;
   readonly description: string | undefined;
-  /** The name of the declared source from which it resolved, or `undefined` for the built-in library. */
-  readonly source: string | undefined;
+  /** The name of the declared source from which it resolved. */
+  readonly source: string;
   /** The version declared by the rulebook, named in its deployed output so that an agent can read which version it holds. */
   readonly version: string | undefined;
 }
 
 /**
- * Reads a rulebook from its owning source (a declared source or the library, resolved through `resolver`), expands its
+ * Reads a rulebook from its owning source (resolved through `resolver`), expands its
  * include directives against that source's own root, validates its frontmatter, and returns its neutral body and
  * delivery. Throws an error naming the resolving source when the frontmatter file is missing.
  *
@@ -57,8 +57,9 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
     content = await expandIncludes(srcPath, resolved.dir);
   } catch (error: unknown) {
     if (isEnoent(error)) {
-      const origin = resolved.source === undefined ? 'the library' : `source "${resolved.source}"`;
-      throw new Error(`Declared rulebook "${slug}" was not found in ${origin} at ${srcPath}`, { cause: error });
+      throw new Error(`Declared rulebook "${slug}" was not found in source "${resolved.source}" at ${srcPath}`, {
+        cause: error,
+      });
     }
     throw error;
   }

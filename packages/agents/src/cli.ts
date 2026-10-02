@@ -87,7 +87,7 @@ async function main(): Promise<void> {
         }
         break;
       case 'library':
-        await runLibrary(subcommand);
+        await runLibrary(subcommand, global);
         break;
       case 'generate':
         await runGenerate(subcommand, options);
@@ -296,7 +296,7 @@ function printUsage(): void {
   console.info(`Usage: codeassembly <command> [options]
 
 Commands:
-  install          Install shared guidance, harness-specific skills, scripts, and support data into harness directories
+  install          Install harness guidance files, scripts, and hook entries into the home harness directories from the declared sources
   configure-hooks  Write the session-lifecycle hook entries into harness configs (also run by install; see --print)
   init             Scaffold .agents/codeassembly.yaml (or --global for ~/.agents/codeassembly.yaml)
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks, skills, and subagents
@@ -305,7 +305,7 @@ Commands:
   status           Show the current state of installed items, including hook entries
   validate         Check a content root for defects that reach a consumer; writes nothing
   bundle-helpers   Bundle the helpers declared by a content root's manifest (needs the optional esbuild peer)
-  library list     List available library artifacts (rulebooks, skills, subagents)
+  library list     List each declared source's artifacts (rulebooks, skills, subagents, collections)
   generate <target> Generate a configuration file (e.g., label-map)
 
 Options:
@@ -317,7 +317,7 @@ Options:
   --dry-run          Show what would be done without making changes (install, sync, init)
   --skip-hooks       Leave harness configs untouched during install (install only)
   --print            Print the hook entries instead of writing them (configure-hooks only)
-  --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync and init, and reads the home deployment's record under sizes
+  --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync, init, and library list, and reads the home deployment's record under sizes
   --output-style <auto|plain|rich>  Print status glyphs as emoji (rich) or words (plain); auto (default) prints plain off a terminal, in CI, or under TERM=linux. Overrides CODEASSEMBLY_OUTPUT_STYLE
   --override-writer  Write the home domain from an installation not designated by \`home-writer\` (install and sync --global only)
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
@@ -364,13 +364,13 @@ async function runGenerate(subcommand: string, options: InstallOptions): Promise
 }
 
 /** Dispatches a `library` subcommand, printing that command's usage and exiting non-zero when it is unknown. */
-async function runLibrary(subcommand: string): Promise<void> {
+async function runLibrary(subcommand: string, global: boolean): Promise<void> {
   if (subcommand !== 'list') {
     if (subcommand) console.error(`Error: Unknown library subcommand "${subcommand}"`);
     printLibraryUsage();
     process.exit(1);
   }
-  await libraryListCommand();
+  await libraryListCommand({ global });
 }
 
 /**

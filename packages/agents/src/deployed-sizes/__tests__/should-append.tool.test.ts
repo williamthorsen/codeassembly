@@ -14,7 +14,7 @@ import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from '
 const execFileAsync = promisify(execFile);
 
 /** One expansion key, whose bytes and reach the attribution cases vary. */
-const SHARED = 'partial:library/_partials/shared.md';
+const SHARED = 'partial:codeassembly/_partials/shared.md';
 
 const VECTOR: Record<string, DeployedFile> = {
   'claude/skills/plan/SKILL.md': { bytes: 1_200, kind: 'document' },
