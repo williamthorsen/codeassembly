@@ -5,8 +5,8 @@
  */
 
 import { removeClaudeHookEntries } from './claude-hook-settings.ts';
-import { printLine } from './emit-report.ts';
 import { resolveHarnessPaths } from './harness.ts';
+import type { ReportLine } from './report-line.ts';
 import type { HookSentinelMatcher } from './rovo-config-hooks.ts';
 import { removeRovoHookEntries } from './rovo-config-settings.ts';
 import type { HarnessId } from './types.ts';
@@ -22,31 +22,48 @@ export const isSentinelOwned: HookSentinelMatcher = (entry) =>
   entry.commands.some((command) => command.includes(HOOK_SENTINEL));
 
 /**
- * Deletes the harness's sentinel-marked hook entries from its config file, leaving everything else untouched, and
- * reports only when it removed something.
+ * Deletes the harness's sentinel-marked hook entries from its config file, leaving everything else untouched. Returns
+ * a report only when it removed something; under `dryRun`, reports what it would remove and writes nothing.
  */
-export async function removeRetiredHookEntries(harnessId: HarnessId, baseDir?: string): Promise<void> {
+export async function removeRetiredHookEntries(
+  harnessId: HarnessId,
+  baseDir?: string,
+  options: { readonly dryRun?: boolean } = {},
+): Promise<ReadonlyArray<ReportLine>> {
   const paths = resolveHarnessPaths(harnessId, baseDir);
   const result =
     harnessId === 'claude'
-      ? await removeClaudeHookEntries(paths.configFile, HOOK_SENTINEL)
-      : await removeRovoHookEntries(paths.configFile, isSentinelOwned);
+      ? await removeClaudeHookEntries(paths.configFile, HOOK_SENTINEL, options)
+      : await removeRovoHookEntries(paths.configFile, isSentinelOwned, options);
 
   if (!result.changed) {
-    return;
+    return [];
   }
-  printLine({
-    glyph: 'passed',
-    indent: 2,
-    level: 'info',
-    text: `Removed ${result.removedCount} retired session-lifecycle hook entries from ${paths.configFile}`,
-  });
+  if (options.dryRun === true) {
+    return [
+      {
+        indent: 2,
+        level: 'info',
+        text: `[hooks] Would remove ${result.removedCount} retired session-lifecycle hook entries from ${paths.configFile}`,
+      },
+    ];
+  }
+
+  const lines: Array<ReportLine> = [
+    {
+      glyph: 'passed',
+      indent: 2,
+      level: 'info',
+      text: `Removed ${result.removedCount} retired session-lifecycle hook entries from ${paths.configFile}`,
+    },
+  ];
   if (harnessId === 'rovo') {
-    printLine({
+    lines.push({
       glyph: 'warning',
       indent: 2,
       level: 'info',
       text: 'Rovo Dev reads its config at startup: Restart any running session to drop the hooks.',
     });
   }
+  return lines;
 }

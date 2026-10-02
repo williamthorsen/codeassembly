@@ -80,18 +80,13 @@ async function removeHooks(
   baseDir: string | undefined,
   install: Pick<InstallOptions, 'dryRun'>,
 ): Promise<ReadonlyArray<ReportLine>> {
-  if (install.dryRun) {
-    return [{ level: 'info', text: '  [hooks] Would remove retired session-lifecycle hook entries' }];
-  }
-
   try {
-    await removeRetiredHookEntries(harnessId, baseDir);
+    return await removeRetiredHookEntries(harnessId, baseDir, install);
   } catch (error) {
     return [
       { glyph: 'warning', indent: 2, level: 'warn', text: `Skipping hook-entry removal: ${describeError(error)}` },
     ];
   }
-  return [];
 }
 
 // endregion | Helpers

@@ -393,8 +393,19 @@ describe(installCommand, () => {
       await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir);
       const lines = silent.info.mock.calls.map((call) => String(call[0]));
 
-      expect(lines).toContain('    [hooks] Would remove retired session-lifecycle hook entries');
+      expect(lines).toContain(`  [hooks] Would remove 1 retired session-lifecycle hook entries from ${settingsPath}`);
       expect(await readFile(settingsPath, 'utf8')).toBe(RETIRED_CLAUDE_SETTINGS);
+    });
+
+    it('does not preview a removal in dry-run mode when the harness config contains no retired entries', async () => {
+      const claudeHome = await setupClaudeHome();
+      await writeFile(path.join(claudeHome, 'settings.json'), `${JSON.stringify({ model: 'opus' })}\n`, 'utf8');
+
+      using silent = silenceConsole(['info']);
+      await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir);
+      const lines = silent.info.mock.calls.map((call) => String(call[0]));
+
+      expect(lines.some((line) => line.includes('[hooks]'))).toBe(false);
     });
 
     it('warns and completes the install when the harness config cannot be parsed', async () => {

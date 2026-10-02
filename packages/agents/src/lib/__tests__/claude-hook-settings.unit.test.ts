@@ -43,6 +43,16 @@ describe(removeClaudeHookEntries, () => {
     });
   });
 
+  it('reports the owned entries under dryRun without writing the file', async () => {
+    const text = `${JSON.stringify({ hooks: { PreToolUse: [FOREIGN, OWNED] } }, undefined, 2)}\n`;
+    const file = await writeSettings(text);
+
+    const result = await removeClaudeHookEntries(file, SENTINEL, { dryRun: true });
+
+    expect(result).toEqual({ changed: true, removedCount: 1 });
+    expect(await readFile(file, 'utf8')).toBe(text);
+  });
+
   it.each([
     { name: 'tab', unit: '\t' },
     { name: 'two-space', unit: '  ' },

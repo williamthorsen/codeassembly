@@ -87,6 +87,23 @@ describe(removeRovoHookEntries, () => {
     expect(await readFile(configPath, 'utf8')).toContain(`- command: ${longCommand}\n`);
   });
 
+  it('reports the owned entries under dryRun without writing the file', async () => {
+    const source = [
+      'eventHooks:',
+      '  events:',
+      '    - name: on_session_start',
+      '      commands:',
+      '        - command: run on_session_start --ca',
+      '',
+    ].join('\n');
+    await writeConfig(source);
+
+    const result = await removeRovoHookEntries(configPath, isOwned, { dryRun: true });
+
+    expect(result).toEqual({ changed: true, removedCount: 1 });
+    expect(await readFile(configPath, 'utf8')).toBe(source);
+  });
+
   it('does not create a missing file', async () => {
     const result = await removeRovoHookEntries(configPath, isOwned);
 

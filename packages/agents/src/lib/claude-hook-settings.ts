@@ -29,14 +29,19 @@ const DEFAULT_INDENT = 2;
 
 /**
  * Deletes from the settings file every entry that contains the sentinel. A file that does not exist is left uncreated.
+ * Under `dryRun`, reports what the removal would delete and leaves the file unwritten.
  */
-export async function removeClaudeHookEntries(filePath: string, sentinel: string): Promise<RemoveResult> {
+export async function removeClaudeHookEntries(
+  filePath: string,
+  sentinel: string,
+  options: { readonly dryRun?: boolean } = {},
+): Promise<RemoveResult> {
   const file = await readSettingsFile(filePath);
   if (file === undefined) {
     return { changed: false, removedCount: 0 };
   }
   const { settings, result } = removeHookEntries(file.value, sentinel);
-  if (result.changed) {
+  if (result.changed && options.dryRun !== true) {
     await writeSettingsFile(filePath, settings, file.format);
   }
   return result;

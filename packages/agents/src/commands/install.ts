@@ -150,19 +150,15 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
     // Remove the hook entries that earlier installs wrote, ahead of the orphan prune that deletes the relay script
     // which they invoke. Warn and continue when the config cannot be parsed: The manifest must still record what was
     // copied.
-    if (options.dryRun) {
-      console.info('    [hooks] Would remove retired session-lifecycle hook entries');
-    } else {
-      try {
-        await removeRetiredHookEntries(harnessId, baseDir);
-      } catch (error) {
-        printLine({
-          glyph: 'warning',
-          indent: 2,
-          level: 'warn',
-          text: `Skipping hook-entry removal: ${describeError(error)}`,
-        });
-      }
+    try {
+      emitReport(await removeRetiredHookEntries(harnessId, baseDir, options));
+    } catch (error) {
+      printLine({
+        glyph: 'warning',
+        indent: 2,
+        level: 'warn',
+        text: `Skipping hook-entry removal: ${describeError(error)}`,
+      });
     }
 
     const guidanceEntries = await installHarnessGuidance(roots, paths, harnessId, existingByPath, options);

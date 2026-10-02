@@ -95,6 +95,8 @@ describe('install retraction of a de-declared harness', () => {
   it('previews the retraction under --dry-run, writing neither disk nor manifest', async () => {
     using silent = silenceConsole(['info', 'warn']);
     await installBoth();
+    const rovoConfig = path.join(tempDir, ROVO_HOME, 'config.yml');
+    await writeFile(rovoConfig, RETIRED_ROVO_CONFIG, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
     await installCommand(makeOptions({ dryRun: true }), tempDir);
@@ -104,7 +106,8 @@ describe('install retraction of a de-declared harness', () => {
     expect(manifest.harnesses.rovo?.entries.length).toBeGreaterThan(0);
     const lines = silent.info.mock.calls.map((call) => String(call[0]));
     expect(lines).toContainEqual(expect.stringContaining('[dry-run] Would remove stale item'));
-    expect(lines).toContain('  [hooks] Would remove retired session-lifecycle hook entries');
+    expect(lines).toContain(`  [hooks] Would remove 1 retired session-lifecycle hook entries from ${rovoConfig}`);
+    expect(await readFile(rovoConfig, 'utf8')).toBe(RETIRED_ROVO_CONFIG);
   });
 
   it('retracts every harness when the declaration resolves to an empty set', async () => {

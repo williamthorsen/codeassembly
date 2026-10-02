@@ -13,11 +13,18 @@ import type { RemoveResult } from './managed-entry-contract.ts';
 import { type HookSentinelMatcher, removeHookEntries } from './rovo-config-hooks.ts';
 import { isEnoent } from './type-guards.ts';
 
-/** Deletes every sentinel-matching entry from the config file. A file that does not exist is left uncreated. */
-export async function removeRovoHookEntries(filePath: string, isOwned: HookSentinelMatcher): Promise<RemoveResult> {
+/**
+ * Deletes every sentinel-matching entry from the config file. A file that does not exist is left uncreated. Under
+ * `dryRun`, reports what the removal would delete and leaves the file unwritten.
+ */
+export async function removeRovoHookEntries(
+  filePath: string,
+  isOwned: HookSentinelMatcher,
+  options: { readonly dryRun?: boolean } = {},
+): Promise<RemoveResult> {
   const doc = await readConfigDocument(filePath);
   const result = removeHookEntries(doc, isOwned);
-  if (result.changed) {
+  if (result.changed && options.dryRun !== true) {
     await writeConfigDocument(filePath, doc);
   }
   return result;

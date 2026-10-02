@@ -1,6 +1,6 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { printLine } from '../lib/emit-report.ts';
+import { emitReport, printLine } from '../lib/emit-report.ts';
 import { classifyOwnedEntry } from '../lib/entry-remover.ts';
 import { resolveHarnessIds, resolveHarnessPaths } from '../lib/harness.ts';
 import { removeItem } from '../lib/installer.ts';
@@ -43,7 +43,7 @@ export async function uninstallCommand(
     // tracked files. An unparseable config stops the hook removal with a warning, never the removal of the tracked
     // items or the manifest update.
     try {
-      await removeRetiredHookEntries(harnessId, baseDir);
+      emitReport(await removeRetiredHookEntries(harnessId, baseDir));
     } catch (error) {
       printLine({
         glyph: 'warning',
