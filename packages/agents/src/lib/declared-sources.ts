@@ -1,7 +1,6 @@
 import path from 'node:path';
 
 import type { ResolvedDeclaration } from './codeassembly-manifest.ts';
-import type { DeclarationDomain } from './codeassembly-schema.ts';
 import { assertSupportedContentFormats, type ContentRootRef } from './content-root-manifest.ts';
 import { resolvePackageSources } from './package-sources.ts';
 import type { ReportLine } from './report-line.ts';
@@ -72,11 +71,10 @@ export function describeMissingSource(source: DeclaredSource): ReportLine {
 export async function resolveDeclaredSources(options: {
   baseDir: string;
   declaration: Pick<ResolvedDeclaration, 'packages' | 'sources'> | undefined;
-  domain: DeclarationDomain;
 }): Promise<DeclaredSources> {
-  const { baseDir, declaration, domain } = options;
+  const { baseDir, declaration } = options;
   if (declaration === undefined) {
-    throw new NoContentSourceError(describeNoSource({ baseDir, domain, missing: [] }));
+    throw new NoContentSourceError(describeNoSource(baseDir, []));
   }
 
   // A declared package contributes both a source and a set of seeds: The array below puts its content dir under the
@@ -96,7 +94,7 @@ export async function resolveDeclaredSources(options: {
   const missingDirs = new Set(missingSources.map((source) => source.dir));
   const roots: ReadonlyArray<DeclaredSource> = sources.filter((source) => !missingDirs.has(source.dir));
   if (roots.length === 0) {
-    throw new NoContentSourceError(describeNoSource({ baseDir, domain, missing: missingSources }));
+    throw new NoContentSourceError(describeNoSource(baseDir, missingSources));
   }
 
   // Checked after the source checks above, so an unreadable directory reports as unreadable rather than as a failed
@@ -109,24 +107,16 @@ export async function resolveDeclaredSources(options: {
 // region | Helpers
 
 /**
- * Renders the no-source error: what is missing, the file that the declaration belongs in, and an example entry. The
- * home domain also names its gitignored local tier, the place for a path that differs between machines.
+ * Renders the no-source error: what is missing, the file that the declaration belongs in, and an example entry. It
+ * also names the gitignored local tier, the place for a path that differs between machines.
  */
-function describeNoSource(options: {
-  baseDir: string;
-  domain: DeclarationDomain;
-  missing: ReadonlyArray<DeclaredSource>;
-}): string {
-  const { baseDir, domain, missing } = options;
+function describeNoSource(baseDir: string, missing: ReadonlyArray<DeclaredSource>): string {
   const problem =
     missing.length === 0
       ? 'No content source is declared.'
       : `None of the declared content sources exists: ${missing.map((source) => `"${source.name}" (${source.dir})`).join(', ')}.`;
   const agentsDir = path.join(baseDir, '.agents');
-  const file =
-    domain === 'home'
-      ? `${path.join(agentsDir, 'codeassembly.yaml')}, or in ${path.join(agentsDir, 'codeassembly.local.yaml')} for a path that is specific to this machine`
-      : path.join(agentsDir, 'codeassembly.yaml');
+  const file = `${path.join(agentsDir, 'codeassembly.yaml')}, or in ${path.join(agentsDir, 'codeassembly.local.yaml')} for a path that is specific to this machine`;
   return (
     `${problem} Declare a \`sources:\` entry, or a \`packages:\` entry, in ${file}. For example:\n\n` +
     'sources:\n  - name: codeassembly\n    path: ~/repos/codeassembly/packages/agents/content\n\n' +

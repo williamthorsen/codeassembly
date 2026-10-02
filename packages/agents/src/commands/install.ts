@@ -87,7 +87,6 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
   const { missingSources, roots } = await resolveDeclaredSources({
     baseDir: homeDir,
     declaration: await resolveDeclaration({ cwd: homeDir, domain: 'home' }),
-    domain: 'home',
   });
   emitReport(missingSources.map(describeMissingSource));
 

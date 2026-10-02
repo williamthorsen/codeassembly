@@ -91,7 +91,6 @@ export async function libraryListCommand(
   const { missingSources, roots } = await resolveDeclaredSources({
     baseDir,
     declaration: await resolveDeclaration({ cwd: baseDir, domain }),
-    domain,
   });
   emitReport(missingSources.map(describeMissingSource));
 

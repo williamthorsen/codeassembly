@@ -165,7 +165,6 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
   const { sources, missingSources } = await resolveDeclaredSources({
     baseDir: domain.baseDir,
     declaration,
-    domain: domain.ambient === 'harness-home' ? 'home' : 'project',
   });
   const resolver = createSourceResolver(sources);
 

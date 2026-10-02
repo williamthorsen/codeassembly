@@ -30,7 +30,6 @@ describe(resolveDeclaredSources, () => {
 
     const { sources } = await resolveDeclaredSources({
       baseDir: root,
-      domain: 'project',
       declaration: {
         packages: [],
         sources: [
@@ -52,7 +51,6 @@ describe(resolveDeclaredSources, () => {
 
     const { sources } = await resolveDeclaredSources({
       baseDir: root,
-      domain: 'project',
       declaration: { packages: ['ca-fixture-guidance'], sources: [{ name: 'hand-declared', dir: handDeclared }] },
     });
 
@@ -68,7 +66,6 @@ describe(resolveDeclaredSources, () => {
 
     const { sources, missingSources } = await resolveDeclaredSources({
       baseDir: root,
-      domain: 'project',
       declaration: {
         packages: [],
         sources: [
@@ -90,7 +87,6 @@ describe(resolveDeclaredSources, () => {
 
     const { roots } = await resolveDeclaredSources({
       baseDir: root,
-      domain: 'project',
       declaration: {
         packages: [],
         sources: [
@@ -110,7 +106,6 @@ describe(resolveDeclaredSources, () => {
     await expect(
       resolveDeclaredSources({
         baseDir: root,
-        domain: 'project',
         declaration: { packages: [], sources: [{ name: 'a-file', dir: filePath }] },
       }),
     ).rejects.toThrow(/Invalid declared source/);
@@ -122,7 +117,6 @@ describe(resolveDeclaredSources, () => {
     await expect(
       resolveDeclaredSources({
         baseDir: root,
-        domain: 'project',
         declaration: { packages: [], sources: [{ name: '../escape', dir }] },
       }),
     ).rejects.toThrow(/Unusable declared source name/);
@@ -135,7 +129,6 @@ describe(resolveDeclaredSources, () => {
     await expect(
       resolveDeclaredSources({
         baseDir: root,
-        domain: 'project',
         declaration: {
           packages: [],
           sources: [
@@ -154,7 +147,6 @@ describe(resolveDeclaredSources, () => {
     await expect(
       resolveDeclaredSources({
         baseDir: root,
-        domain: 'project',
         declaration: { packages: [], sources: [{ name: 'future', dir }] },
       }),
     ).rejects.toThrow(/Unsupported content format/);
@@ -171,7 +163,6 @@ describe(resolveDeclaredSources, () => {
     await expect(
       resolveDeclaredSources({
         baseDir: root,
-        domain: 'project',
         declaration: {
           packages: [],
           sources: [
@@ -185,7 +176,7 @@ describe(resolveDeclaredSources, () => {
 
   describe('without a usable source', () => {
     it('throws NoContentSourceError when the declaration is absent', async () => {
-      const promise = resolveDeclaredSources({ baseDir: root, domain: 'project', declaration: undefined });
+      const promise = resolveDeclaredSources({ baseDir: root, declaration: undefined });
 
       await expect(promise).rejects.toBeInstanceOf(NoContentSourceError);
       await expect(promise).rejects.toThrow(/No content source is declared/);
@@ -194,7 +185,6 @@ describe(resolveDeclaredSources, () => {
     it('throws NoContentSourceError for a declaration that does not declare any source or package', async () => {
       const promise = resolveDeclaredSources({
         baseDir: root,
-        domain: 'project',
         declaration: { packages: [], sources: [] },
       });
 
@@ -208,7 +198,6 @@ describe(resolveDeclaredSources, () => {
 
       const promise = resolveDeclaredSources({
         baseDir: root,
-        domain: 'project',
         declaration: {
           packages: [],
           sources: [
@@ -224,16 +213,8 @@ describe(resolveDeclaredSources, () => {
       );
     });
 
-    it('names the project declaration file and shows a sources example in the project domain', async () => {
-      const error = await captureNoSourceError(root, 'project');
-
-      expect(error.message).toContain(path.join(root, '.agents', 'codeassembly.yaml'));
-      expect(error.message).not.toContain('codeassembly.local.yaml');
-      expect(error.message).toContain('sources:\n  - name: codeassembly\n    path: ');
-    });
-
-    it('names both the home declaration file and its local tier in the home domain', async () => {
-      const error = await captureNoSourceError(root, 'home');
+    it('names the declaration file, its local tier, and a sources example', async () => {
+      const error = await captureNoSourceError(root);
 
       expect(error.message).toContain(path.join(root, '.agents', 'codeassembly.yaml'));
       expect(error.message).toContain(path.join(root, '.agents', 'codeassembly.local.yaml'));
@@ -268,10 +249,10 @@ describe(describeMissingSource, () => {
 
 // region | Helpers
 
-/** Resolves an absent declaration in `domain` and returns the `NoContentSourceError` that it throws. */
-async function captureNoSourceError(root: string, domain: 'home' | 'project'): Promise<NoContentSourceError> {
+/** Resolves an absent declaration and returns the `NoContentSourceError` that it throws. */
+async function captureNoSourceError(root: string): Promise<NoContentSourceError> {
   try {
-    await resolveDeclaredSources({ baseDir: root, domain, declaration: undefined });
+    await resolveDeclaredSources({ baseDir: root, declaration: undefined });
   } catch (error: unknown) {
     if (error instanceof NoContentSourceError) {
       return error;
