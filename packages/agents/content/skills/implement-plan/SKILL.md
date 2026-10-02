@@ -2,9 +2,6 @@
 name: implement-plan
 description: Implement a feature plan's tasks in order against the ticket's acceptance criteria
 user-invocable: true
-dependencies:
-  skills:
-    - emit-event
 ---
 
 # Implement plan
@@ -26,11 +23,11 @@ This skill implements a feature plan, the `## Tasks` / `## Verification` shape d
 
 The ticket's acceptance criteria are the contract; the plan is the mechanism by which they are met. When the plan and the facts on the ground disagree, the acceptance criteria decide: A plan step that no longer serves them is the one to abandon.
 
-The plan artifact is read-only. It is a record of what was decided at plan time, and a later reader compares it against the diff to see how implementation departed from it. Never edit it to match what was built: Lifecycle events and the commits themselves record progress.
+The plan artifact is read-only. It is a record of what was decided at plan time, and a later reader compares it against the diff to see how implementation departed from it. Never edit it to match what was built: The commits themselves record progress.
 
 ## Process
 
-1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `ticket_url`, `scm`, `project_slug`, and `artifact_base_dir` from it. Then emit `skill.started` (payload `{"skill":"implement-plan"}`) per [Lifecycle events](#lifecycle-events).
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `ticket_url`, `scm`, `project_slug`, and `artifact_base_dir` from it.
 
 2. **Resolve the plan**: Stop at the first source that yields one:
    - **Explicit `--plan=<path>`**: Read it.
@@ -49,7 +46,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 4. **Read the plan and the ticket** in full before touching code, including the plan's `## Risks` section: It names where the author expected the work to need adaptation.
 
-   Check the shape as you read: A plan with `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Emit `skill.completed` (payload `{"outcome":"stopped: spike plan"}`) per [Lifecycle events](#lifecycle-events), then stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
+   Check the shape as you read: A plan with `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
 
 5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Audit the comments that you write along the way per [Comment discipline](#comment-discipline).
 
@@ -61,9 +58,9 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 7. **Run the plan's verification gates.** Execute the `## Verification` section's checks and report the actual results. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass.
 
-8. **Report completion.** Route each fact surfaced by the run per [Fact routing](#fact-routing), then summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met. Then emit `skill.completed` (payload `{"outcome":"plan-implemented"}`) per [Lifecycle events](#lifecycle-events).
+8. **Report completion.** Route each fact surfaced by the run per [Fact routing](#fact-routing), then summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met.
 
-9. **Present next steps** following [next-steps options](#next-steps-options). As you present the menu, emit `input.requested` (payload `{"prompt":"next-steps"}`) per [Lifecycle events](#lifecycle-events).
+9. **Present next steps** following [next-steps options](#next-steps-options).
 
 <!-- include: ../../_partials/comment-discipline.md / -->
 
@@ -159,5 +156,3 @@ Never push, force-push, or delete a remote branch, never create a worktree, and 
 **Report.** Report each ticket reference, each branch with its base, and each piece's next step. With two pieces, the first piece continues in this session at Review branch. A piece reviewed in its own worktree runs `review-branch --diff-base=<previous piece's branch>`, which reviews that piece alone because its predecessor's branch is a prefix of its own; the first piece of three or more uses the default diff base. Tell each later piece's session to rebase onto the default branch before its first push, once its predecessor has merged.
 
 <!-- include: ../_partials/option-format.md / -->
-
-<!-- include: ../_partials/lifecycle-events.md / -->

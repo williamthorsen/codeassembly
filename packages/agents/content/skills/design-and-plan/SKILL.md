@@ -4,7 +4,6 @@ description: Interactive design exploration followed by ticket refinement and im
 user-invocable: true
 dependencies:
   skills:
-    - emit-event
     - save-artifact
     - testing-conventions
 ---
@@ -33,11 +32,9 @@ Do NOT generate the implementation plan until the ticket has been approved. This
 
 ## Process
 
-**Narrate every ask.** Throughout the phases below, before presenting any ask to the user (a clarifying question that blocks the design, the ticket checkpoint, the plan checkpoint, a drift-verdict decision, the closing next-steps menu), emit `input.requested` with a short label of the ask (e.g. payload `{"prompt":"tier selection"}`) per [Lifecycle events](#lifecycle-events), so that a watching surface shows which question this session is waiting on. Compose the label fresh for each ask and keep it to a few words. Emit before presenting, in the same turn. Never at the end of the turn.
-
 ### Phase 1: Resolve task source and assess relevancy
 
-1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 5's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument. Once the source is resolved, emit `skill.started` (payload `{"skill":"design-and-plan"}`) per [Lifecycle events](#lifecycle-events).
+1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 5's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument.
 
 2. **Assess relevancy**: Determine whether the ticket may be stale and, if so, verify it is still relevant.
 
@@ -63,7 +60,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 **After the check**: Interpret the drift verdict:
 
 - 🟢 `none`: Continue silently into Phase 2.
-- 🟠 `partial` or 🔴 `severe`: Present the assessment findings to the user. Ask whether to proceed as-is, adjust the scope, or stop. If the user stops, emit `skill.completed` (payload `{"outcome":"stopped: ticket drift"}`) per [Lifecycle events](#lifecycle-events).
+- 🟠 `partial` or 🔴 `severe`: Present the assessment findings to the user. Ask whether to proceed as-is, adjust the scope, or stop.
 
 ### Phase 2: Understand the task
 
@@ -150,9 +147,7 @@ Then save both artifacts:
 
    Prepend the resolved frontmatter to each artifact content before writing.
 
-   Once both artifacts are saved, emit `artifact.written` for each (payloads `{"path":"<ticket path>","kind":"ticket"}` and `{"path":"<plan path>","kind":"plan"}`) per [Lifecycle events](#lifecycle-events), then emit `skill.completed` (payload `{"outcome":"designed-and-planned"}`) on the same turn, before the next-steps prompt below. Because completion is emitted at the save point, the lifecycle fold resolves an abandoned session to a finished state.
-
-4. Report paths and present next steps (the next-steps menu is an ask; the standing rule above applies, with payload `{"prompt":"next-steps"}`).
+4. Report paths and present next steps.
 
 ```
 Design and plan complete:
@@ -197,5 +192,3 @@ Follow the options, output format, and recommendation rules in [next-steps optio
 <!-- include: ../_partials/next-steps-after-plan.md / -->
 
 <!-- include: ../_partials/option-format.md / -->
-
-<!-- include: ../_partials/lifecycle-events.md / -->

@@ -2,9 +2,6 @@
 name: create-pr
 description: Create a pull request by orchestrating change summary, title rendering, label resolution, and platform delegation
 user-invocable: true
-dependencies:
-  skills:
-    - emit-event
 ---
 
 # Create pull request
@@ -24,7 +21,7 @@ Both are passed to `summarize-change`, which records them as overrides beside th
 
 ### 1. Get session context
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `scm`, `default_branch`, `branch_name`, and `artifact_base_dir` from it. Then emit `skill.started` (payload `{"skill":"create-pr"}`) per [Lifecycle events](#lifecycle-events).
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `scm`, `default_branch`, `branch_name`, and `artifact_base_dir` from it.
 
 ### 2. Check branch sync
 
@@ -35,7 +32,7 @@ git fetch origin
 git status
 ```
 
-If the branch is not up to date with remote, emit `skill.completed` (payload `{"outcome":"stopped: branch not in sync"}`) per [Lifecycle events](#lifecycle-events), then **STOP THIS TASK** and notify the user. Do not proceed to `summarize-change` or any later step. Otherwise, continue.
+If the branch is not up to date with remote, **STOP THIS TASK** and notify the user. Do not proceed to `summarize-change` or any later step. Otherwise, continue.
 
 ### 3. Call `summarize-change`
 
@@ -62,7 +59,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-effective-record \
 
 Omit each flag whose field is absent from the frontmatter, and pass `--breaking` and `--override-breaking` only if that field is `true`. Read `effective_record` from the output; [`resolve-effective-record`](../_data/title-templates.md#resolve-effective-record) states its fields. Steps 6 and 7 use the effective record, and step 9 records the consolidated record and the overrides apart.
 
-If the call fails, emit `skill.completed` (payload `{"outcome":"stopped: effective record not resolved"}`) per [Lifecycle events](#lifecycle-events), then stop and report its error: The title and the labels both depend on the effective record.
+If the call fails, stop and report its error: The title and the labels both depend on the effective record.
 
 ### 6. Render PR title
 
@@ -110,7 +107,7 @@ Read `scm` from the session context manifest:
 
 - `"github"` -> delegate to `{skill:create-gh-pr}`
 - `"bitbucket"` -> delegate to `{skill?:create-bitbucket-pr}`
-- Unknown or missing -> ask the user which platform to use. On this branch only, emit `input.requested` (payload `{"prompt":"platform"}`) per [Lifecycle events](#lifecycle-events) before asking.
+- Unknown or missing -> ask the user which platform to use.
 
 ### 9. Insert the closing line above the record block
 
@@ -146,12 +143,8 @@ The delegate reports the created PR's URL (its `PR created: {URL}` line). Persis
 node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs --set-pr-url "{URL}"
 ```
 
-Then emit `pr.created` (payload `{"number":<n>,"url":"<url>"}`, taking `<n>` from the created PR's number and `<url>` from its URL) per [Lifecycle events](#lifecycle-events), followed by `skill.completed` (payload `{"outcome":"pr-created"}`).
-
 ## Important
 
 - The orchestrator makes all decisions (scope, type, title rendering, labels). Delegates only make the platform API calls.
 - Strip the remote prefix from `default_branch` (e.g., `origin/main` -> `main`) before passing to the delegate.
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
-
-<!-- include: ../_partials/lifecycle-events.md / -->

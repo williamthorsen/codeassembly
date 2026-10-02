@@ -3,8 +3,6 @@ name: orchestrate
 description: Pipeline execution engine for multi-phase development workflows using specialized subagents
 user-invocable: false
 dependencies:
-  skills:
-    - emit-event
   subagents:
     - aspect-code-reviewer
     - aspect-silent-failure-reviewer
@@ -165,7 +163,7 @@ Prefix the status line with a colored emoji for visual distinction:
 
 ## Run initialization
 
-1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: Run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}`. Pass this concrete SHA to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one. Then emit `skill.started` (payload `{"skill":"orchestrate-dev"}` or `{"skill":"orchestrate-review"}`, naming the wrapper skill that invoked this engine) per [Lifecycle events](#lifecycle-events).
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `project_slug`, `ticket_id`, `default_branch`, and `artifact_base_dir` from it. Resolve the diff base: Use `--diff-base` if provided, otherwise use `default_branch` from the manifest. Then compute the merge-base SHA once: Run `git merge-base HEAD {diff-base}` and store the result as `{merge-base-sha}`. Pass this concrete SHA to all downstream agents. The ticket ID is optional -- if unavailable, `init_run` will auto-generate one.
 2. **Read ticket** (if available): If the ticket ID resolves to a GitHub issue, read it via `gh issue view {number}` and store the content as `{ticket-content}`. If the read fails (not a GitHub issue, CLI unavailable), continue without ticket content.
 3. **Detect external plan and evaluate trust**: Determine whether the task description contains or references an **external plan**, step-by-step implementation instructions with specific file paths or code changes. If it does, set `{externalPlan}` to `true` and extract the plan content. Otherwise, set `{externalPlan}` to `false` and set `{planTrust}` to `null`.
 
@@ -232,8 +230,8 @@ Prefix the status line with a colored emoji for visual distinction:
    The `init_run` tool creates the run directory, writes a v3 `run-index.json` header, creates an empty `run-log.jsonl`, and emits a `run_started` event automatically. Do not write `run-index.json` manually.
 
    **Failure path when MCP is unavailable** (tool not found / server not connected): Resolve `mcp_policy` (see "Resolving MCP policy" above) and apply the policy:
-   - `required`: Emit `skill.completed` (payload `{"outcome":"stopped: MCP unavailable"}`) per [Lifecycle events](#lifecycle-events), then abort with a clear message explaining that MCP is unavailable and the policy requires it.
-   - `prompt`: Emit `input.requested` (payload `{"prompt":"continue without MCP"}`) per [Lifecycle events](#lifecycle-events), then ask the developer: "MCP server is unavailable; this run will not produce a run-index.json, run-log.jsonl, or Factory visualization. Continue without MCP tracking? (yes / no)". Abort if the developer declines, emitting `skill.completed` (payload `{"outcome":"stopped: declined"}`); continue on confirmation.
+   - `required`: Abort with a clear message explaining that MCP is unavailable and the policy requires it.
+   - `prompt`: Ask the developer: "MCP server is unavailable; this run will not produce a run-index.json, run-log.jsonl, or Factory visualization. Continue without MCP tracking? (yes / no)". Abort if the developer declines; continue on confirmation.
    - `optional`: Print one-line notice "MCP unavailable; continuing without tracking" and proceed.
 
    **Fallback local context generation** (when policy permits continuing without MCP):
@@ -325,7 +323,7 @@ Store the full path as `{run-manifest-path}`; increment `{seq}`.
 
 ### MCP call policy
 
-When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. Individual call sites do not need guards of their own: This one policy applies to every call site in this file and in loaded modules. It applies to MCP tool calls only: Lifecycle emissions per [Lifecycle events](#lifecycle-events) are a separate channel (a Bash helper, not an MCP tool) and run regardless of `{mcp-available}`.
+When `{mcp-available}` is `false`, skip ALL `emit_event`, `register_artifact`, and `complete_run` calls silently. Individual call sites do not need guards of their own: This one policy applies to every call site in this file and in loaded modules.
 
 `get_run_state` retains its existing conversation-tracked fallback (see "Error handling" and `review-cycle.md` fallback policy note).
 
@@ -726,7 +724,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill orchestrate --int
 
 The orchestrator's `provenance.model` is omitted: The run-summary aggregates work from many subagents, each with its own model recorded in its own artifact. The summary itself is composed by the orchestrator and is not a single-model artifact.
 
-After writing the artifact, emit `artifact.written` (payload `{"path":"<run-summary path>","kind":"run-summary"}`) per [Lifecycle events](#lifecycle-events) and call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content; do not abbreviate or omit sections.
+After writing the artifact, call `register_artifact` for the run-summary artifact. Present the same summary to the user in the conversation. The conversational output should match the artifact content; do not abbreviate or omit sections.
 
 After the savings-analyzer {tool:Task} completes (it runs concurrently and will finish while or after the run-summary is written), call `register_artifact` with:
 
@@ -742,11 +740,9 @@ phase: summary
 
 Call MCP tool `complete_run` with `{ runDir: {run-dir}, status: "completed" | "failed" | "needs_manual_review", reason?: string }`. When `status` is `"failed"`, this emits a `run_failed` event (the optional `reason` field is included if provided); otherwise it emits a `run_completed` event. Either way, `completedAt` is stamped on the run-index.json header.
 
-Then emit `skill.completed` (payload `{"outcome":"<completed|failed|needs_manual_review>"}`, matching the run status) per [Lifecycle events](#lifecycle-events), on the MCP-unavailable path too, on which `complete_run` itself is skipped.
-
 ## Phase 6: Wrap-up (prompted, conditional)
 
-After the summary is presented and `complete_run` has been called, check whether the run-summary contains a non-empty `## Deferred items` or `## Insights` section. If either section is present and non-empty, invoke `{skill:wrap-up}` to offer post-run housekeeping, emitting `input.requested` (payload `{"prompt":"wrap-up"}`) per [Lifecycle events](#lifecycle-events) as the offer is presented.
+After the summary is presented and `complete_run` has been called, check whether the run-summary contains a non-empty `## Deferred items` or `## Insights` section. If either section is present and non-empty, invoke `{skill:wrap-up}` to offer post-run housekeeping.
 
 Like Phase 5, this is an inherent engine responsibility, not a pipeline phase. It does not get `phase_decision` or `phase_started`/`phase_completed` events.
 
@@ -810,5 +806,3 @@ Subagents include a structured return block at the end of their {tool:Task} resp
 - Keep context lean: Only pass relevant information downstream
 - All orchestration artifacts go in the artifact directory
 - **Prefer exhausting iteration budget over escaping findings.** A defect that escapes to remote review costs an order of magnitude more in developer time than an additional local review cycle. Agent compute is cheap; context-switching and manual rework are not. When findings exist and review rounds remain, fix and re-review.
-
-<!-- include: ../_partials/lifecycle-events.md / -->
