@@ -33,8 +33,6 @@ helpers:
     out: skills/streamline-guidance/streamline-guidance.mjs
   - entry: ../src/describe-change/cli.ts
     out: scripts/describe-change.mjs
-  - entry: ../src/relay-hook-event/cli.ts
-    out: scripts/relay-hook-event.mjs
   - entry: ../src/select-lede-exemplars/cli.ts
     out: scripts/select-lede-exemplars.mjs
   - entry: ../src/merge-gh-pr/cli.ts

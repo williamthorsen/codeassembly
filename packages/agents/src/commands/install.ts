@@ -26,6 +26,7 @@ import { assertDesignatedWriter } from '../lib/home-writer-guard.ts';
 import { checkSymlinkSafety, copyItem, linkItem, unlinkIfSymlink } from '../lib/installer.ts';
 import { computeContentHash, detectDrift, getManifestPath, readManifest, writeManifest } from '../lib/manifest.ts';
 import type { ReportLine } from '../lib/report-line.ts';
+import { removeRetiredHookEntries } from '../lib/retired-hook-entries.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../lib/running-package.ts';
 import { retireSharedGuidance, withoutSharedTier } from '../lib/shared-guidance-retirement.ts';
 import { describeHarnessTargeting, resolveTargetHarnesses } from '../lib/target-harnesses.ts';
@@ -38,7 +39,6 @@ import type {
   InstallOptions,
   ManifestEntry,
 } from '../lib/types.ts';
-import { ensureHarnessHookEntries } from './configure-hooks.ts';
 import { retractDroppedHarnesses } from './harness-retraction.ts';
 
 /**
@@ -147,23 +147,21 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
     );
     entries.push(...scriptEntries);
 
-    // Wire the session-lifecycle hook entries once the relay script is in place, so that the configured commands point
-    // at a script that exists. `--skip-hooks` leaves the harness config untouched. Warn and continue when the config
-    // cannot be parsed: The manifest must still record what was copied.
-    if (options.hooks !== false) {
-      if (options.dryRun) {
-        console.info('    [hooks] Would wire session-lifecycle hook entries');
-      } else {
-        try {
-          await ensureHarnessHookEntries(harnessId, baseDir);
-        } catch (error) {
-          printLine({
-            glyph: 'warning',
-            indent: 2,
-            level: 'warn',
-            text: `Skipping hook wiring: ${describeError(error)} (fix the config, then run configure-hooks)`,
-          });
-        }
+    // Remove the hook entries that earlier installs wrote, ahead of the orphan prune that deletes the relay script
+    // which they invoke. Warn and continue when the config cannot be parsed: The manifest must still record what was
+    // copied.
+    if (options.dryRun) {
+      console.info('    [hooks] Would remove retired session-lifecycle hook entries');
+    } else {
+      try {
+        await removeRetiredHookEntries(harnessId, baseDir);
+      } catch (error) {
+        printLine({
+          glyph: 'warning',
+          indent: 2,
+          level: 'warn',
+          text: `Skipping hook-entry removal: ${describeError(error)}`,
+        });
       }
     }
 

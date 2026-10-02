@@ -103,51 +103,6 @@ describe('statusCommand', () => {
     expect(output).not.toContain('missing:');
   });
 
-  it('reports the session-lifecycle hook entries alongside the installed items', async () => {
-    const claudeHome = path.join(tempDir, '.claude');
-    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-
-    await installCommand(makeInstallOptions(), tempDir);
-
-    using silent = silenceConsole(['info']);
-    await statusCommand({ harness: 'claude' }, tempDir);
-
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('Hooks: 4 present, 0 drifted, 0 absent');
-  });
-
-  it('warns and completes the report when the harness config cannot be parsed', async () => {
-    const claudeHome = path.join(tempDir, '.claude');
-    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-
-    await installCommand(makeInstallOptions({ hooks: false }), tempDir);
-    await writeFile(path.join(claudeHome, 'settings.json'), '{ not json', 'utf8');
-
-    using silent = silenceConsole(['info', 'warn']);
-    await statusCommand({ harness: 'claude' }, tempDir);
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
-
-    expect(warnLines.some((line) => line.includes('Could not read the config'))).toBe(true);
-    expect(output).toContain('Summary:');
-  });
-
-  it('reports hooks as not configured after a --skip-hooks install', async () => {
-    const claudeHome = path.join(tempDir, '.claude');
-    await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
-    await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-
-    await installCommand(makeInstallOptions({ hooks: false }), tempDir);
-
-    using silent = silenceConsole(['info']);
-    await statusCommand({ harness: 'claude' }, tempDir);
-
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('Hooks: Not configured');
-  });
-
   it('should report not installed for a harness without a manifest', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });

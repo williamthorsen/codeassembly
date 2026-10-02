@@ -79,10 +79,6 @@ export interface InstallOptions {
   readonly link: boolean;
   readonly force: boolean;
   readonly dryRun: boolean;
-  /** Whether `install` also wires the session-lifecycle hook entries; `--skip-hooks` clears it (absent reads as true). */
-  readonly hooks?: boolean;
-  /** Whether `configure-hooks` prints the hook entries instead of writing them (`--print`). */
-  readonly print?: boolean;
   /** Whether a home-domain write proceeds from an installation that the `home-writer` setting does not designate. */
   readonly shouldOverrideWriter?: boolean;
 }

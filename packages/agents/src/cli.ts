@@ -10,7 +10,6 @@ import {
 } from '@williamthorsen/toolbelt.terminal/candidate';
 
 import { bundleHelpersCommand } from './commands/bundle-helpers.ts';
-import { configureHooksCommand } from './commands/configure-hooks.ts';
 import { generateLabelMap, printGenerateUsage } from './commands/generate-label-map.ts';
 import { initCommand, initGlobalCommand } from './commands/init.ts';
 import { installCommand } from './commands/install.ts';
@@ -54,9 +53,6 @@ async function main(): Promise<void> {
     switch (command) {
       case 'install':
         await installCommand(options);
-        break;
-      case 'configure-hooks':
-        await configureHooksCommand(options);
         break;
       case 'init':
         await (global ? initGlobalCommand(options) : initCommand(options));
@@ -143,8 +139,6 @@ function parseArgs(argv: ReadonlyArray<string>): {
   let link = false;
   let force = false;
   let dryRun = false;
-  let hooks = true;
-  let print = false;
   let help = false;
   let global = false;
   let warnOnly = false;
@@ -170,12 +164,6 @@ function parseArgs(argv: ReadonlyArray<string>): {
         break;
       case 'dry-run':
         dryRun = true;
-        break;
-      case 'skip-hooks':
-        hooks = false;
-        break;
-      case 'print':
-        print = true;
         break;
       case 'global':
         global = true;
@@ -217,7 +205,7 @@ function parseArgs(argv: ReadonlyArray<string>): {
   return {
     command,
     subcommand,
-    options: { harness, link, force, dryRun, hooks, print, shouldOverrideWriter },
+    options: { harness, link, force, dryRun, shouldOverrideWriter },
     check,
     content,
     help,
@@ -237,8 +225,6 @@ type FlagName =
   | 'link'
   | 'output-style'
   | 'override-writer'
-  | 'print'
-  | 'skip-hooks'
   | 'warn-only';
 
 function parseFlag(arg: string): FlagName | null {
@@ -249,8 +235,6 @@ function parseFlag(arg: string): FlagName | null {
     '--link': 'link',
     '--force': 'force',
     '--dry-run': 'dry-run',
-    '--skip-hooks': 'skip-hooks',
-    '--print': 'print',
     '--global': 'global',
     '--override-writer': 'override-writer',
     '--warn-only': 'warn-only',
@@ -296,13 +280,12 @@ function printUsage(): void {
   console.info(`Usage: codeassembly <command> [options]
 
 Commands:
-  install          Install harness guidance files, scripts, and hook entries into the home harness directories from the declared sources
-  configure-hooks  Write the session-lifecycle hook entries into harness configs (also run by install; see --print)
+  install          Install harness guidance files and scripts into the home harness directories from the declared sources
   init             Scaffold .agents/codeassembly.yaml (or --global for ~/.agents/codeassembly.yaml)
   sync             Resolve .agents/codeassembly.yaml and materialize declared rulebooks, skills, and subagents
-  uninstall        Remove installed guidance, skills, subagents, and hook entries
+  uninstall        Remove installed guidance, skills, and subagents
   sizes            Rank the last recorded deployment's documents by size, with the context aggregates beneath them
-  status           Show the current state of installed items, including hook entries
+  status           Show the current state of installed items
   validate         Check a content root for defects that reach a consumer; writes nothing
   bundle-helpers   Bundle the helpers declared by a content root's manifest (needs the optional esbuild peer)
   library list     List each declared source's artifacts (rulebooks, skills, subagents, collections)
@@ -315,8 +298,6 @@ Options:
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)
-  --skip-hooks       Leave harness configs untouched during install (install only)
-  --print            Print the hook entries instead of writing them (configure-hooks only)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync, init, and library list, and reads the home deployment's record under sizes
   --output-style <auto|plain|rich>  Print status glyphs as emoji (rich) or words (plain); auto (default) prints plain off a terminal, in CI, or under TERM=linux. Overrides CODEASSEMBLY_OUTPUT_STYLE
   --override-writer  Write the home domain from an installation not designated by \`home-writer\` (install and sync --global only)
