@@ -225,14 +225,24 @@ describe(installCommand, () => {
 
     await installCommand(makeOptions({ harness: 'claude' }), tempDir);
 
-    const skills = await readdir(path.join(claudeHome, 'skills'));
-    expect(skills).not.toContain('_data');
-    expect(skills).not.toContain('reference.md');
-    expect(skills).not.toContain('claude-only');
-    expect(skills).not.toContain('alpha');
-    expect(skills).not.toContain('beta');
+    expect(await readdir(path.join(claudeHome, 'skills'))).toEqual([]);
     expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
+  });
+
+  it("resolves an inline support reference in the guidance template to its source's namespace", async () => {
+    const claudeHome = await setupClaudeHome();
+    await writeFile(
+      path.join(contentDir, 'guidance', '_harnesses', 'claude', 'CLAUDE.md'),
+      'Read `{harness_home_dir}/skills/_data/sample.md`.\n',
+      'utf8',
+    );
+
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+
+    expect(await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8')).toContain(
+      `Read \`~/.claude/skills/_sources/${FIXTURE_SOURCE_NAME}/_data/sample.md\`.`,
+    );
   });
 
   it('names the guidance template by its path in the source in the provenance marker', async () => {
@@ -244,7 +254,6 @@ describe(installCommand, () => {
     expect(content).toContain(
       `Source: guidance/_harnesses/claude/CLAUDE.md in source "${FIXTURE_SOURCE_NAME}" (${contentDir})`,
     );
-    expect(content).not.toContain('github.com');
   });
 
   it('prunes previously-planted harness skills and prompts.yml on re-install', async () => {

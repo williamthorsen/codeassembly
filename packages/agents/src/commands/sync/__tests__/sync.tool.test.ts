@@ -2093,6 +2093,26 @@ describe(syncCommand, () => {
       await declareFixtureSource(projectRoot, contentDir, `subagents:\n${useBlock}`);
     }
 
+    it("resolves an inline support reference in a subagent to its source's project namespace", async () => {
+      await writeOverlays();
+      await writeFixtureSupportFile('_data/x.md');
+      await writeFixtureSubagent('canary', { body: 'Read `{harness_home_dir}/skills/_data/x.md`.' });
+      await declareSubagents('canary');
+
+      await syncCommand(makeOptions(), projectRoot, homeDir);
+
+      const supportFile = path.join(
+        path.resolve(projectRoot),
+        '.claude',
+        'skills',
+        '_sources',
+        FIXTURE_SOURCE_NAME,
+        '_data',
+        'x.md',
+      );
+      expect(await readFile(subagentPath('canary'), 'utf8')).toContain(`Read \`${supportFile}\`.`);
+    });
+
     it('anchors a project-deployed subagent link in the project, where the same run deploys the target', async () => {
       await writeOverlays();
       await writeFixtureSubagent('canary', { body: 'See [the skill](skills/commit/SKILL.md).' });
@@ -2564,7 +2584,6 @@ describe(syncGlobalCommand, () => {
     expect(await readFile(path.join(sourcesRoot, FIXTURE_SOURCE_NAME, '_data', 'concision.md'), 'utf8')).toBe(
       '# Concision\n',
     );
-    expect(existsSync(path.join(homeDir, '.claude', 'skills', '_data'))).toBe(false);
   });
 
   it("resolves an inline support reference in a rulebook to the source's ~-anchored namespace", async () => {

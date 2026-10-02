@@ -287,11 +287,14 @@ describe('sync with a declared package', () => {
     await writeRulebook(secondContent, 'contested', 'delivery: ambient', 'Second body.');
     await declare("packages:\n  use:\n    - '@ca-fixture/first'\n    - '@ca-fixture/second'\n");
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Second body.');
     expect(localHost).not.toContain('First body.');
+    expect(renderReportText(outcome, { level: 'warn' })).toContain(
+      'rulebook "contested" (source "@ca-fixture/second" over source "@ca-fixture/first")',
+    );
   });
 
   it('stops advising a package that the project declined with drop', async () => {

@@ -276,6 +276,8 @@ describe(renderLibraryTable, () => {
   });
 });
 
+// region | Helpers
+
 /** Runs the command from `cwd`, returning its captured stdout table and stderr warnings. */
 async function captureList(
   options: { global: boolean },
@@ -320,39 +322,47 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
 
   await writeFile(
     path.join(rulebooks, 'sample.md'),
-    frontmatter({ slug: 'sample-rulebook', description: 'Sample rulebook.', delivery: '[ambient, skill]' }),
+    renderFrontmatter({ slug: 'sample-rulebook', description: 'Sample rulebook.', delivery: '[ambient, skill]' }),
   );
-  await writeFile(path.join(rulebooks, '_hidden.md'), frontmatter({ slug: 'hidden-rulebook' }));
-  await writeFile(path.join(rulebooks, 'bad.md'), frontmatter({ slug: 'Not A Valid Slug' }));
+  await writeFile(path.join(rulebooks, '_hidden.md'), renderFrontmatter({ slug: 'hidden-rulebook' }));
+  await writeFile(path.join(rulebooks, 'bad.md'), renderFrontmatter({ slug: 'Not A Valid Slug' }));
 
-  await writeFile(path.join(skills, 'bravo', 'SKILL.md'), frontmatter({ name: 'bravo-skill', description: 'Bravo.' }));
+  await writeFile(
+    path.join(skills, 'bravo', 'SKILL.md'),
+    renderFrontmatter({ name: 'bravo-skill', description: 'Bravo.' }),
+  );
   await writeFile(
     path.join(skills, 'charlie', 'SKILL.md'),
-    frontmatter({ name: 'charlie-skill', description: 'Charlie.', 'supported-harnesses': '[rovo]' }),
+    renderFrontmatter({ name: 'charlie-skill', description: 'Charlie.', 'supported-harnesses': '[rovo]' }),
   );
-  await writeFile(path.join(skills, '_data', 'reserved.md'), frontmatter({ name: 'reserved' }));
+  await writeFile(path.join(skills, '_data', 'reserved.md'), renderFrontmatter({ name: 'reserved' }));
 
-  await writeFile(path.join(subagents, 'yankee.md'), frontmatter({ name: 'yankee-agent', description: 'Yankee.' }));
-  await writeFile(path.join(subagents, 'xray.md'), frontmatter({ description: 'Xray without a name.' }));
+  await writeFile(
+    path.join(subagents, 'yankee.md'),
+    renderFrontmatter({ name: 'yankee-agent', description: 'Yankee.' }),
+  );
+  await writeFile(path.join(subagents, 'xray.md'), renderFrontmatter({ description: 'Xray without a name.' }));
   await writeFile(path.join(subagents, 'broken.md'), '---\nname: "unterminated\ndescription: oops\n---\n\n# Body\n');
 
   await writeFile(
     path.join(collections, 'sample.md'),
-    frontmatter({ name: 'sample-collection', description: 'Sample collection.' }),
+    renderFrontmatter({ name: 'sample-collection', description: 'Sample collection.' }),
   );
+}
+
+/** Renders a minimal markdown file with the given frontmatter keys and a throwaway body. */
+function renderFrontmatter(fields: Record<string, string>): string {
+  const body = Object.entries(fields)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join('\n');
+  return `---\n${body}\n---\n\n# Body\n`;
 }
 
 /** Writes a skill `<dir>/skills/<dirName>/SKILL.md` declaring `name` and `description`. */
 async function writeSkillAt(dir: string, dirName: string, name: string, description: string): Promise<void> {
   const skillDir = path.join(dir, 'skills', dirName);
   await mkdir(skillDir, { recursive: true });
-  await writeFile(path.join(skillDir, 'SKILL.md'), frontmatter({ name, description }));
+  await writeFile(path.join(skillDir, 'SKILL.md'), renderFrontmatter({ name, description }));
 }
 
-/** Renders a minimal markdown file with the given frontmatter keys and a throwaway body. */
-function frontmatter(fields: Record<string, string>): string {
-  const body = Object.entries(fields)
-    .map(([key, value]) => `${key}: ${value}`)
-    .join('\n');
-  return `---\n${body}\n---\n\n# Body\n`;
-}
+// endregion | Helpers

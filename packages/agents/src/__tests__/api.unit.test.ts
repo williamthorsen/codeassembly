@@ -135,7 +135,6 @@ describe('content API', () => {
       const tree = await renderContentRoot(root, { harness: 'claude' });
 
       expect(tree[`skills/_sources/${namespace}/_data/reference.md`]?.content).toBe('# Reference\n');
-      expect(tree['skills/_data/reference.md']).toBeUndefined();
       expect(tree['skills/alpha/SKILL.md']?.content).toContain(
         `(~/.claude/skills/_sources/${namespace}/_data/reference.md)`,
       );

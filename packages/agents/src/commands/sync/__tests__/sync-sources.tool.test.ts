@@ -338,6 +338,8 @@ describe('sync source resolution', () => {
   });
 });
 
+// region | Helpers
+
 /** Awaits `promise` and returns the error that it rejects with, failing the test if it resolves. */
 async function captureError(promise: Promise<unknown>): Promise<Error> {
   try {
@@ -360,3 +362,5 @@ async function writeRulebook(contentDir: string, slug: string, text: string): Pr
     'utf8',
   );
 }
+
+// endregion | Helpers
