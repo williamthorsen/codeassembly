@@ -11,8 +11,8 @@ import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
+import { isHarnessDeployPath } from '../lib/is-harness-deploy-path.ts';
 import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
-import { isHarnessDeployPath } from '../shared/is-harness-deploy-path.ts';
 import { extractYamlProse, UnparsableYamlError } from './extract-yaml.ts';
 import { findHashCommentStart } from './hash-comments.ts';
 import { maskCodeSpans } from './mask-code-spans.ts';

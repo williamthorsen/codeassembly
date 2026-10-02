@@ -8,11 +8,16 @@ import type { ContentDefectKind as InternalContentDefectKind } from './lib/conte
 import { createSourceResolver } from './lib/content-sources.ts';
 import { validateContentRoot as validateRoot } from './lib/content-validation.ts';
 import { resolveClosureWithCollections } from './lib/dependency-resolver.ts';
-import { expandIncludes } from './lib/directive-expander.ts';
+import { expandIncludes as expandFileIncludes, type FailureReason } from './lib/directive-expander.ts';
 import { parseFrontmatter } from './lib/frontmatter-merger.ts';
 import { ALL_HARNESS_IDS } from './lib/harness.ts';
+import { buildIncludeGraph as buildRootIncludeGraph, type IncludeGraph } from './lib/include-graph.ts';
+import { isHarnessDeployPath as isDeployPath } from './lib/is-harness-deploy-path.ts';
 import { listContentRootCatalog, renderContentRoot as renderRoot } from './lib/render-content-root.ts';
 import { isRecord } from './lib/type-guards.ts';
+
+export { DirectiveExpansionError } from './lib/directive-expander.ts';
+export type { IncludeClosure, IncludeEdge, IncludeGraph } from './lib/include-graph.ts';
 
 /** A kind of artifact that a content root ships. */
 export type ArtifactType = InternalArtifactType;
@@ -39,6 +44,9 @@ export interface ContentDefect {
 
 /** Which stage of validation rejected a file. */
 export type ContentDefectKind = InternalContentDefectKind;
+
+/** Why an include directive failed to expand, as `DirectiveExpansionError.reason` reports it. */
+export type DirectiveExpansionReason = FailureReason;
 
 /** A harness to which a content root renders. */
 export type HarnessId = (typeof HARNESS_IDS)[number];
@@ -68,6 +76,31 @@ export interface RenderedEntry {
 export type RenderedTree = Readonly<Record<string, RenderedEntry>>;
 
 /**
+ * Builds the include graph of `root`: which Markdown files deploy as themselves, what each file transitively includes,
+ * and how many of those documents each included file reaches. A file whose own directives do not resolve is reported
+ * through `hasUnresolvedIncludes` rather than thrown, so one malformed directive leaves the rest of the root queryable.
+ */
+export async function buildIncludeGraph(root: string): Promise<IncludeGraph> {
+  return buildRootIncludeGraph(root);
+}
+
+/**
+ * Expands the include directives of `file`, a Markdown file under `root`, recursively, and returns the expanded text.
+ * Throws `DirectiveExpansionError` for a missing or out-of-tree target, an include cycle, or a malformed directive.
+ */
+export async function expandIncludes(root: string, file: string): Promise<string> {
+  return expandFileIncludes(file, root);
+}
+
+/**
+ * Reports whether `file` lies in a harness's deployed `skills/` or `scripts/` tree, whose files are copies of a content
+ * root's. Accepts a repository-relative or an absolute path.
+ */
+export function isHarnessDeployPath(file: string): boolean {
+  return isDeployPath(file);
+}
+
+/**
  * Lists every artifact that `root` ships, per type, collections included. Slugs are filesystem basenames: a skill's
  * directory name, and every other type's file name without `.md`.
  */
@@ -80,7 +113,7 @@ export async function listCatalog(root: string): Promise<Catalog> {
  * source before any per-harness rewrite. Throws when the artifact's file is missing or an include cannot be expanded.
  */
 export async function readArtifact(root: string, type: ArtifactType, slug: string): Promise<ArtifactRead> {
-  const content = await expandIncludes(path.join(root, artifactFrontmatterPath(type, slug)), root);
+  const content = await expandFileIncludes(path.join(root, artifactFrontmatterPath(type, slug)), root);
   return { frontmatter: parseFrontmatterRecord(content) ?? {}, content };
 }
 

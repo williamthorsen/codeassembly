@@ -1,6 +1,6 @@
 import path from 'node:path';
 
-import { HARNESSES } from '../lib/harness.ts';
+import { HARNESSES } from './harness.ts';
 
 /**
  * Reports whether a path lies in a harness's deployed `skills/` or `scripts/` tree, whose files are copied from a source

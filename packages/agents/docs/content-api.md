@@ -1,6 +1,6 @@
 # Content API
 
-The `codeassembly/api` subpath serves a content root's own tests. A producer that ships rulebooks, skills, or subagents can test its content as consumers will receive it, without importing anything from the tool's internals.
+The `codeassembly/api` subpath serves a content root's own tests and helpers. A producer that ships rulebooks, skills, or subagents can test its content as consumers will receive it, without importing anything from the tool's internals.
 
 ```ts
 import { HARNESS_IDS, renderContentRoot } from 'codeassembly/api';
@@ -32,7 +32,10 @@ The doc comments in `src/api.ts` are the reference. In summary:
 - **`readArtifact(root, type, slug)`** returns one artifact's parsed `frontmatter` and its source `content` with includes expanded, before any per-harness rewrite.
 - **`validateContentRoot(root, harnesses)`** returns the defects that `codeassembly validate` reports for the root, or an empty list.
 - **`HARNESS_IDS`** lists every supported harness, so a suite looping over it covers a new harness without an edit.
+- **`expandIncludes(root, file)`** returns a Markdown file under the root with its include directives expanded recursively. It throws `DirectiveExpansionError` for a missing or out-of-tree target, an include cycle, or a malformed directive; the error's `reason` (a `DirectiveExpansionReason`) names which.
+- **`buildIncludeGraph(root)`** returns the root's `IncludeGraph`, queried by absolute path: `documents`, the Markdown files that deploy as themselves; `listClosure(file)`, a file's transitive includes and the edges that reach them; `countReach(file)`, how many documents include the file transitively; and `hasUnresolvedIncludes(file)`. A file whose own directives do not resolve is reported through `hasUnresolvedIncludes` rather than thrown.
+- **`isHarnessDeployPath(file)`** reports whether a path lies in a harness's deployed `skills/` or `scripts/` tree, whose files are copies of a content root's. A helper that scans a repository uses it to skip those copies.
 
 ## Scope
 
-The API exports coarse functions over a content root, never the tool's internals. A test that cannot be written against these functions is evidence of a missing function. The missing function belongs here only when it answers a question that a content root's tests would ask in general.
+The API exports coarse functions over a content root, never the tool's internals. A test or a helper that cannot be written against these functions is evidence of a missing function. The missing function belongs here only when it answers a question that a content root's tests or helpers would ask in general, such as how the root's includes expand or where a harness deploys.

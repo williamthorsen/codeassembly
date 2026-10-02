@@ -378,6 +378,8 @@ The same commands record the attempt under `lastAttempt`, on a failure as well a
 
 The write fields are also mirrored at the top level of the file, which is where a `codeassembly` predating `lastWrite` reads them. Because every repository and worktree has a binary of its own, a machine part-way through an upgrade is the ordinary case rather than an edge one.
 
+The stamp is a file format, not an internal detail, so another tool can read it without importing `codeassembly`. It is a JSON object with a numeric `schemaVersion`, currently `2`. `lastWrite`, when present, contains the string fields `version`, `sourcePath`, `command` (`install` or `sync --global`), and `writtenAt` (an ISO 8601 timestamp), and the optional string `sourceCommit`. `lastAttempt`, when present, contains `command`, `attemptedAt`, `outcome` (`failed` or `succeeded`), and, on a failure, the optional `failureSummary` and `defectCount`. A reader of a stamp that lacks `lastWrite` takes the write fields from the top level, as `codeassembly` does.
+
 `codeassembly status` renders the stamp as its first line:
 
 ```

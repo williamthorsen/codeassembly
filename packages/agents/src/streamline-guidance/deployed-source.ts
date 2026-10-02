@@ -5,7 +5,7 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 
-import { isHarnessDeployPath } from '../shared/is-harness-deploy-path.ts';
+import { isHarnessDeployPath } from '../lib/is-harness-deploy-path.ts';
 
 /** The outcome of a source lookup: the source's absolute path, or the reason that none was found. */
 export type SourceLookup = { found: string } | { reason: 'ambiguous-source' | 'source-not-in-repository' };
