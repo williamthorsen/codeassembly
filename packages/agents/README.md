@@ -30,7 +30,7 @@ npx codeassembly install
 npx codeassembly sync --global
 ```
 
-`install` deploys the harness guidance files, scripts, and hook entries. `sync --global` deploys the artifacts that the home declaration names, with each source's support files under `skills/_sources/<name>/`. Both commands stop without writing anything until a source is declared.
+`install` deploys the harness guidance files and scripts. `sync --global` deploys the artifacts that the home declaration names, with each source's support files under `skills/_sources/<name>/`. Both commands stop without writing anything until a source is declared.
 
 A project declares its own sources and artifacts in `.agents/codeassembly.yaml` (`codeassembly init` scaffolds one), and `sync` materializes exactly what it declares, including guidance shipped by its dependencies (see [Packages](docs/project-declaration.md#packages)). Add the tool to a project when the repo ships guidance of its own, or wants `sync` to run from a script:
 
@@ -48,7 +48,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 
 | Command             | Description                                                                                                |
 | ------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `install`           | Install harness guidance files, scripts, and hook entries from the declared sources                        |
+| `install`           | Install harness guidance files and scripts from the declared sources                                       |
 | `init`              | Scaffold `.agents/codeassembly.yaml` for the project, or `--global` for `~/.agents/codeassembly.yaml`      |
 | `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
@@ -60,111 +60,6 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
 
 Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, `--output-style <auto\|plain\|rich>`, and `--help`. `--output-style` prints status glyphs as emoji (`rich`) or as words (`plain`); `auto`, the default, prints plain to a stream that is not a terminal or in CI, and `CODEASSEMBLY_OUTPUT_STYLE` sets it when the flag is absent. `--content <dir>` applies to `validate` and `bundle-helpers`, and `--check` to `bundle-helpers` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](docs/project-declaration.md#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
-
-## Session-lifecycle hooks
-
-Skills report the work that they do, but they cannot report a session opening, exiting, or handing a turn back to the developer: At those moments, the session isn't running any skill. Each harness reports them instead, through its own event hooks, and `relay-hook-event.mjs` turns a hook into a lifecycle event:
-
-| Event             | Claude Code        | Rovo Dev           |
-| ----------------- | ------------------ | ------------------ |
-| `session.started` | `SessionStart`     | `on_session_start` |
-| `session.ended`   | `SessionEnd`       | `on_session_end`   |
-| `turn.started`    | `UserPromptSubmit` | `on_user_prompt`   |
-| `turn.completed`  | `Stop`             | `on_complete`      |
-
-`install` places the relay in each harness's `scripts/` directory and then wires the entries below into the harness config (`~/.claude/settings.json`, `~/.rovo/config.yml`) by default. The wiring is its own step, shared across the CLI:
-
-- `install --skip-hooks` installs everything else and leaves the configs untouched.
-- `codeassembly configure-hooks` runs just the wiring, for re-applying it later.
-- `configure-hooks --print` prints the entries without writing anything: the manual-adoption path for a config managed elsewhere. The snippets below are exactly what it emits.
-- `uninstall` removes the entries; `status` reports each one as present, drifted, or absent.
-
-Every managed command ends in `--sentinel codeassembly-agents`. That token is the ownership marker: The CLI creates, replaces, and removes only entries whose command contains it, so hand-written hooks and other tools' entries are never disturbed. The relay accepts the flag and ignores it.
-
-The relay reports a boundary and nothing more. It never sends the prompt text, and it always exits 0: A relay that failed loudly would be worse than the missing event, since both harnesses read some non-zero hook exits as a signal to block the agent.
-
-### Claude Code
-
-In `~/.claude/settings.json`, under `hooks`. Each entry names the hook that it relays, so the relay never has to infer where it was called from:
-
-```json
-{
-  "hooks": {
-    "SessionStart": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionStart --sentinel codeassembly-agents"
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook SessionEnd --sentinel codeassembly-agents"
-          }
-        ]
-      }
-    ],
-    "UserPromptSubmit": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook UserPromptSubmit --sentinel codeassembly-agents"
-          }
-        ]
-      }
-    ],
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node ~/.claude/scripts/relay-hook-event.mjs --harness claude --hook Stop --sentinel codeassembly-agents"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-Omit `matcher` on all four. `SessionStart` and `SessionEnd` accept one to select a start source or an end reason, and leaving it out relays every one of them; `UserPromptSubmit` and `Stop` ignore it.
-
-Keep the whole invocation in `command` rather than splitting the flags into an `args` array: `~` expands only in the single-string form.
-
-### Rovo Dev
-
-In `~/.rovo/config.yml`, under `eventHooks`:
-
-```yaml
-eventHooks:
-  events:
-    - name: on_session_start
-      commands:
-        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_session_start --sentinel codeassembly-agents
-    - name: on_session_end
-      commands:
-        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_session_end --sentinel codeassembly-agents
-    - name: on_user_prompt
-      commands:
-        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_user_prompt --sentinel codeassembly-agents
-    - name: on_complete
-      commands:
-        - command: node /Users/you/.rovo/scripts/relay-hook-event.mjs --harness rovo --hook on_complete --sentinel codeassembly-agents
-```
-
-Write the home directory out in full where the snippet shows `/Users/you`: `configure-hooks` writes the machine's absolute path here, matching the entries that Rovo's own tooling generates.
-
-Two things to know about Rovo:
-
-- **Restart to pick up the change.** Rovo reads its config at startup, so a running session ignores hooks added under it.
-- **`on_complete` fires when a run completes successfully.** A turn that errors or is aborted may not report its end, leaving that session reading as still working until its next event.
 
 ## Project declaration
 
