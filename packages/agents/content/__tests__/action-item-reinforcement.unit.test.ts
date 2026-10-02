@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 // The duplication guarded by this list is deliberate: The convention is also stated globally, and a DRY-driven
 // refactor that strips the skill-local copies removes the mechanism by which the global rule takes effect. See the
-// `codeassembly-content-specification` rulebook, § "Skill-local reinforcement".
+// `codeassembly-repo-conventions` rulebook, § "Skill-local reinforcement".
 //
 // Membership is skills that routinely close a turn awaiting a user response. Skills whose only ask is an exception
 // path (`create-pr`'s unknown-platform fallback, `capture-feedback`'s ambiguity confirm) are absent by design; a
