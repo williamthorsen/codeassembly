@@ -3,7 +3,7 @@
  *
  * The revisit ordinal captured by `parseTicketRef` is dropped: Session context is attributed to the parent ticket.
  */
-import { parseTicketRef } from 'codeassembly-lifecycle';
+import { parseTicketRef } from './parse-ticket-ref.ts';
 
 import type { TicketIdResult } from './types.ts';
 
