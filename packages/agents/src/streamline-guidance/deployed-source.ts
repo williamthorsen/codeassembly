@@ -12,8 +12,9 @@ export type SourceLookup = { found: string } | { reason: 'ambiguous-source' | 's
 
 /**
  * Finds the absolute path of a deployed copy's source inside the repository. An `install` copy names its source on a
- * `Source:` line, as a path within a source directory; a `sync` copy names only its slug in an ownership marker, and
- * `findDeployedSource` resolves that slug under each content root.
+ * `Source:` line, as a path within a source directory; a source directory outside the repository, such as another
+ * checkout of the same content, resolves that path under each content root instead. A `sync` copy names only its slug
+ * in an ownership marker, and `findDeployedSource` resolves that slug under each content root.
  */
 export function findDeployedSource(
   content: string,
@@ -23,9 +24,10 @@ export function findDeployedSource(
   if (sourceLine !== null) {
     const [, relative = '', sourceDir = ''] = sourceLine;
     const candidate = path.resolve(sourceDir, relative);
-    return isWithin(input.root, candidate) && existsSync(candidate)
-      ? { found: candidate }
-      : { reason: 'source-not-in-repository' };
+    if (isWithin(input.root, candidate)) {
+      return existsSync(candidate) ? { found: candidate } : { reason: 'source-not-in-repository' };
+    }
+    return findUnderContentRoots(relative, input.contentRoots);
   }
 
   const ownership = OWNERSHIP_MARKER_REGEX.exec(content);
@@ -34,14 +36,7 @@ export function findDeployedSource(
   if (kind === undefined || slug === undefined) {
     return { reason: 'source-not-in-repository' };
   }
-  const matches = input.contentRoots
-    .map((contentRoot) => path.join(contentRoot, composeSourcePath(kind, slug)))
-    .filter((candidate) => existsSync(candidate));
-  if (matches.length > 1) {
-    return { reason: 'ambiguous-source' };
-  }
-  const [match] = matches;
-  return match === undefined ? { reason: 'source-not-in-repository' } : { found: match };
+  return findUnderContentRoots(composeSourcePath(kind, slug), input.contentRoots);
 }
 
 /**
@@ -78,6 +73,18 @@ function composeSourcePath(kind: string, slug: string): string {
     default:
       return path.join('subagents', `${slug}.md`);
   }
+}
+
+/** Finds the one content root containing `relative`, reporting none or several as the reason that none was chosen. */
+function findUnderContentRoots(relative: string, contentRoots: readonly string[]): SourceLookup {
+  const matches = contentRoots
+    .map((contentRoot) => path.join(contentRoot, relative))
+    .filter((candidate) => existsSync(candidate));
+  if (matches.length > 1) {
+    return { reason: 'ambiguous-source' };
+  }
+  const [match] = matches;
+  return match === undefined ? { reason: 'source-not-in-repository' } : { found: match };
 }
 
 /** Reports whether `candidate` is `root` or lies beneath it. */
