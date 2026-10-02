@@ -12,6 +12,7 @@ import {
   listRewritableLinkTargets,
   type ResolveLinkAnchor,
   rewriteMarkdownPaths,
+  rewriteSkillsReferences,
   rewriteTemplateVariables,
   type TemplateVariables,
 } from './path-rewriter.ts';
@@ -71,7 +72,9 @@ export function renderRulebookBody(body: string, slug: string, context: Rulebook
   assertAnchorsResolve(stripped, sourceLabel);
   assertLinkTargetsAreDeliverable(stripped, slug);
   assertRulebookTokensResolve(stripped, slug, context.rulebooks);
-  const pathRewritten = rewriteMarkdownPaths(stripped, sourceLabel, context.anchor);
+  const pathRewritten = rewriteSkillsReferences(rewriteMarkdownPaths(stripped, sourceLabel, context.anchor), (target) =>
+    context.anchor(`skills/${target}`),
+  );
   const tokenRewritten = rewriteInvocationTokens(pathRewritten, context, sourceLabel, context.rulebooks);
   return rewriteTemplateVariables(tokenRewritten, context);
 }

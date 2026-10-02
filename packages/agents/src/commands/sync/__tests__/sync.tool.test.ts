@@ -1858,6 +1858,27 @@ describe(syncCommand, () => {
       );
     });
 
+    it('resolves each inline harness-home reference to where its target deploys', async () => {
+      await writeFixtureSupportFile('_data/x.md');
+      await writeFixtureSkill('demo', {
+        body: [
+          'Read `{harness_home_dir}/skills/_data/x.md`.',
+          'Run `{harness_home_dir}/skills/helper/SKILL.md` and `{harness_home_dir}/skills/elsewhere/SKILL.md`.',
+          'Run `{harness_home_dir}/scripts/demo.sh`.',
+        ].join('\n'),
+      });
+      await writeFixtureSkill('helper');
+      await declareSkills('demo', 'helper');
+
+      await syncCommand(makeOptions(), projectRoot, homeDir);
+
+      const skillsDir = path.join(path.resolve(projectRoot), '.claude', 'skills');
+      const body = await readFile(skillPath('demo'), 'utf8');
+      expect(body).toContain(`Read \`${skillsDir}/_sources/${FIXTURE_SOURCE_NAME}/_data/x.md\`.`);
+      expect(body).toContain(`Run \`${skillsDir}/helper/SKILL.md\` and \`~/.claude/skills/elsewhere/SKILL.md\`.`);
+      expect(body).toContain('Run `~/.claude/scripts/demo.sh`.');
+    });
+
     it('fails before writing when a declared skill has an unmapped tool placeholder, dry-run included', async () => {
       await writeFixtureSkill('demo', { body: 'Use {tool:NoSuchTool}.' });
       await declareSkills('demo');
@@ -2544,6 +2565,17 @@ describe(syncGlobalCommand, () => {
       '# Concision\n',
     );
     expect(existsSync(path.join(homeDir, '.claude', 'skills', '_data'))).toBe(false);
+  });
+
+  it("resolves an inline support reference in a rulebook to the source's ~-anchored namespace", async () => {
+    await writeFixtureSupportFile('_data/concision.md');
+    await writeFixtureRulebook('alpha', 'delivery: skill', 'Read `{harness_home_dir}/skills/_data/concision.md`.');
+    await declareRaw('rulebooks:\n  use:\n    - alpha\n');
+
+    await syncGlobalCommand(makeOptions(), homeDir);
+
+    const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'consult-alpha', 'SKILL.md'), 'utf8');
+    expect(skill).toContain(`Read \`~/.claude/skills/_sources/${FIXTURE_SOURCE_NAME}/_data/concision.md\`.`);
   });
 
   it("anchors a support link at the source's ~-anchored namespace in the home domain", async () => {

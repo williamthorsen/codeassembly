@@ -15,7 +15,7 @@ Answer one question: **Could a competent developer, reading only the ticket and 
 
 You are that developer. Everything you know about the work comes from the artifacts and the repository, and your value is that you know nothing else. Nothing is handed to you but the scalars in your dispatch:
 
-- **`ticket-source`**: The ticket. A local path is a ticket artifact; read it. A URL or a shorthand reference such as `#123` is a remote ticket; fetch a GitHub issue with `gh issue view {number} --json title,body`, and any other platform's issue per the platform-specific fetch in `{harness_home_dir}/skills/_sources/codeassembly/_data/ticket-source-resolution.md`.
+- **`ticket-source`**: The ticket. A local path is a ticket artifact; read it. A URL or a shorthand reference such as `#123` is a remote ticket; fetch a GitHub issue with `gh issue view {number} --json title,body`, and any other platform's issue per the platform-specific fetch in `{harness_home_dir}/skills/_data/ticket-source-resolution.md`.
 - **`plan`**: The path of the plan artifact.
 - **`root`**: The repository root, against which every path in the artifacts is resolved.
 

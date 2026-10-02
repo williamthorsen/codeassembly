@@ -268,7 +268,7 @@ content/agents/
       SKILL.md          # links to ../_data/house-style.md
 ```
 
-Each source's support entries deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the CodeAssembly library and any number of packages can each ship a `_data/house-style.md` without one masking another. A scoped package name nests as its own segments (`_sources/@williamthorsen/nmr/`). Author links relative to the file's own place in the content tree, and delivery rewrites them to wherever they are deployed; a source name that could not name a directory fails the run rather than being silently reshaped.
+Each source's support entries deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the CodeAssembly library and any number of packages can each ship a `_data/house-style.md` without one masking another. A scoped package name nests as its own segments (`_sources/@williamthorsen/nmr/`). Author links relative to the file's own place in the content tree, or name a file in inline code or a command as `{harness_home_dir}/skills/<path>`, where `<path>` is its place under the content root's `skills/`. Delivery resolves both forms to wherever the file is deployed, so content never names the source's namespace; a source name that could not name a directory fails the run rather than being silently reshaped.
 
 `_partials/` is the exception, being an include target inlined into the files that include it rather than a file that deploys.
 

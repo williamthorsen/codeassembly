@@ -17,9 +17,21 @@ import { type RuleContext, toRootRelative } from './rule-context.ts';
  */
 const HOST_DIRECTORIES: ReadonlyArray<string> = ['guidance/rulebooks', 'skills', 'subagents'];
 
+/** The template variable that opens a reference to the deployed harness home. */
+const HOME_TOKEN = '{harness_home_dir}';
+
+/**
+ * Matches a `{harness_home_dir}/skills/<path>` or `{harness_home_dir}/scripts/<path>` reference, whose captured group is
+ * the content path that it names. A path containing a placeholder (`<slug>`, `{name}`) does not match.
+ */
+const HOME_REFERENCE_REGEX =
+  /\{harness_home_dir\}\/((?:scripts|skills)\/[^\s`'"()<>[\]{}]+?)[.,;:!?]*(?=[\s`'"()<>[\]]|$)/gm;
+
 /**
  * Reports each relative Markdown link, in an installable host's include-expanded body, whose file does not exist, or
- * whose `#fragment` names zero or several headings in the file into which it points.
+ * whose `#fragment` names zero or several headings in the file into which it points. Reports likewise each
+ * `{harness_home_dir}/skills/` or `{harness_home_dir}/scripts/` reference whose file the root does not contain, since
+ * such a reference names a file by its place in the content tree.
  *
  * A relative target resolves against the host's own directory, as `rewriteMarkdownPaths` resolves it. A `_partials/`
  * file is never a host. Its links are authored against the host that inlines it, and expansion reaches
@@ -60,6 +72,19 @@ export async function findLinkResolutionDefects({ root }: RuleContext): Promise<
           file: relativePath,
           kind: 'link',
           detail: `Links to \`${target}\`, ${problem}. If the link was authored in an inlined partial, fix it there.`,
+        });
+      }
+    }
+
+    const references = new Set(expanded.matchAll(HOME_REFERENCE_REGEX).map((match) => match[1] ?? ''));
+    for (const reference of references) {
+      if (!existsSync(path.join(root, reference))) {
+        defects.push({
+          file: relativePath,
+          kind: 'link',
+          detail:
+            `Names \`${HOME_TOKEN}/${reference}\`, whose file is not present in the content root. If the ` +
+            'reference was authored in an inlined partial, fix it there.',
         });
       }
     }

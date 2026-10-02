@@ -60,7 +60,7 @@ Determine whether the described work has been implemented. The output format dep
 
 ### Advisability
 
-Determine whether the ticket should be implemented as written. Synthesize the four facets defined in `{harness_home_dir}/skills/_sources/codeassembly/_data/ticket-evaluation.md` (problem reality, scope correctness, solution soundness, title accuracy) against the codebase and ticket text.
+Determine whether the ticket should be implemented as written. Synthesize the four facets defined in `{harness_home_dir}/skills/_data/ticket-evaluation.md` (problem reality, scope correctness, solution soundness, title accuracy) against the codebase and ticket text.
 
 1. Apply each facet in turn. Does the underlying observation hold? Is scope right at the appropriate class? Does the proposed solution treat the cause? Does the title accurately describe the work?
 2. Synthesize a verdict from the facet results.
@@ -76,7 +76,7 @@ Bias toward `advisable`: For a recommendation dimension, false-positive concerns
 
 ### Complexity
 
-Classify how complex the described work is relative to the current codebase. Reference the complexity classification rubric in `{harness_home_dir}/skills/_sources/codeassembly/_data/complexity-classification.md` for level definitions.
+Classify how complex the described work is relative to the current codebase. Reference the complexity classification rubric in `{harness_home_dir}/skills/_data/complexity-classification.md` for level definitions.
 
 1. Identify the work surface: files, modules, packages, APIs, interfaces, and dependencies that the ticket describes changing or creating. Verify against the codebase.
 2. Assess cross-cutting extent: how many modules or packages are touched, whether changes cross package boundaries, and whether shared interfaces or data structures are affected.

@@ -8,6 +8,7 @@ import { rewriteInvocationTokens, type RulebookInvocationCatalog } from './invoc
 import {
   type ResolveLinkAnchor,
   rewriteMarkdownPaths,
+  rewriteSkillsReferences,
   rewriteTemplateVariables,
   type TemplateVariables,
 } from './path-rewriter.ts';
@@ -186,7 +187,7 @@ async function renderMarkdown(
     contextLabel,
     context.rulebooks,
   );
-  const pathRewritten = rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor);
+  const pathRewritten = rewriteSkillsReferences(rewriteMarkdownPaths(invocationRewritten, fileRelPath, anchor), anchor);
   return rewriteTemplateVariables(pathRewritten, context);
 }
 

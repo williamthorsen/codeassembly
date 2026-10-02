@@ -185,7 +185,7 @@ If the project does not have a particular quality gate configured, note "N/A" fo
 <HARD-GATE>
 Every commit message MUST satisfy every rule below. Violations are treated as quality gate failures.
 
-1. **Compose the title's text per `{harness_home_dir}/skills/_sources/codeassembly/_data/title-voice.md`.** Read it before composing; it states the voice, the length bound, the content discipline, and the markup that a title contains.
+1. **Compose the title's text per `{harness_home_dir}/skills/_data/title-voice.md`.** Read it before composing; it states the voice, the length bound, the content discipline, and the markup that a title contains.
 2. **Render the commit title.** Run `node {harness_home_dir}/scripts/describe-change.mjs render-titles --title "<title>" --scope "<scope>" --type "<type>"` via Bash and read `commit_title` from the JSON output.
 3. **Use backtick formatting for code identifiers in the body.** Variable names, function names, class names, file paths, and other code references must be wrapped in backticks; e.g., `handleStateUpdate`, `AgentActor`, `stationIndex`.
 

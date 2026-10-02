@@ -1,4 +1,4 @@
-**Choosing a work type.** Whom a change affects decides its type, not the format of its files. Apply the descriptions in `{harness_home_dir}/skills/_sources/codeassembly/_data/work-types.json` to the change itself. Never infer a type from how earlier changes were typed, because many were typed wrongly.
+**Choosing a work type.** Whom a change affects decides its type, not the format of its files. Apply the descriptions in `{harness_home_dir}/skills/_data/work-types.json` to the change itself. Never infer a type from how earlier changes were typed, because many were typed wrongly.
 
 **`fix` requires a defect that a consumer meets.** Two questions decide it, in order.
 

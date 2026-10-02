@@ -52,7 +52,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
    Read the whole diff. Your question is what changed, and the outcomes are in the hunks; the granularity rule in "The form that your answer takes" is what keeps the diff from becoming an inventory of edits.
 
-4. **The taxonomy.** Read `{harness_home_dir}/skills/_sources/codeassembly/_data/work-types.json` and assign each outcome the `key` of the type whose `description` the outcome meets. That key is the entry's `type`, and its `tier` names the entry's reader.
+4. **The taxonomy.** Read `{harness_home_dir}/skills/_data/work-types.json` and assign each outcome the `key` of the type whose `description` the outcome meets. That key is the entry's `type`, and its `tier` names the entry's reader.
 
 5. **The ticket.** Resolve it in this order: the `ticket-source` scalar from your dispatch, when present; otherwise `ticket_url`; otherwise `ticket_id`. Fetch a GitHub issue with `gh issue view {number} --json title,body`. Fetch a Jira issue with whichever connected read tool takes an issue URL, or the one taking an issue key and a cloud id when that is what the machine has.
 

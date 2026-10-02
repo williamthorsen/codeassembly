@@ -10,7 +10,7 @@ import { HARNESSES } from './harness.ts';
 import { listSupportEntries } from './library-catalog.ts';
 import { createContentRootLinkAnchor } from './link-anchor.ts';
 import { buildSourceReference, injectProvenanceMarker } from './marker-injector.ts';
-import { rewriteMarkdownPaths, rewriteTemplateVariables } from './path-rewriter.ts';
+import { rewriteMarkdownPaths, rewriteSkillsReferences, rewriteTemplateVariables } from './path-rewriter.ts';
 import { isEnoent } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
@@ -69,7 +69,10 @@ export async function renderGuidanceTemplateFile(
     supportEntries: new Set(await listSupportEntries(path.join(root.dir, ARTIFACT_TYPES.skill.contentPath))),
     supportNamespace: root.name,
   });
-  const rewritten = rewriteTemplateVariables(rewriteMarkdownPaths(expanded, fileName, anchor), {
+  const pathRewritten = rewriteSkillsReferences(rewriteMarkdownPaths(expanded, fileName, anchor), (target) =>
+    anchor(`skills/${target}`),
+  );
+  const rewritten = rewriteTemplateVariables(pathRewritten, {
     guidanceFileName: config.guidanceFileName,
     harnessId: config.id,
     homeDir: config.homeDir,

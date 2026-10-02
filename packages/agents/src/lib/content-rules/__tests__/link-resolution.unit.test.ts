@@ -77,6 +77,48 @@ describe(findLinkResolutionDefects, () => {
     ]);
   });
 
+  it('reports a harness-home reference to a file that the content root does not contain', async () => {
+    await writeSkillBody(
+      'Read `{harness_home_dir}/skills/_data/gone.md`, then run `{harness_home_dir}/scripts/gone.sh`.',
+    );
+
+    const defects = await findLinkResolutionDefects(buildRuleContext(root));
+
+    expect(defects.map((defect) => defect.detail)).toEqual([
+      expect.stringContaining(
+        '`{harness_home_dir}/skills/_data/gone.md`, whose file is not present in the content root',
+      ),
+      expect.stringContaining('`{harness_home_dir}/scripts/gone.sh`, whose file is not present in the content root'),
+    ]);
+  });
+
+  it('passes a harness-home reference to a file or directory that the content root contains', async () => {
+    await writeFileAt(root, 'scripts/run.sh', '#!/usr/bin/env bash\n');
+    await writeSkillBody(
+      'Read {harness_home_dir}/skills/_data/notes.md. List `{harness_home_dir}/skills/_data/` and run ' +
+        '`{harness_home_dir}/scripts/run.sh`.',
+    );
+
+    expect(await findLinkResolutionDefects(buildRuleContext(root))).toEqual([]);
+  });
+
+  it('ignores a harness-home reference containing a placeholder', async () => {
+    await writeSkillBody(
+      'Each lives at `{harness_home_dir}/skills/<slug>/SKILL.md` or `{harness_home_dir}/skills/{name}/x.md`.',
+    );
+
+    expect(await findLinkResolutionDefects(buildRuleContext(root))).toEqual([]);
+  });
+
+  it('reports a harness-home reference authored in a partial against the host that inlines it', async () => {
+    await writeFileAt(root, 'skills/_partials/pointer.md', 'Read `{harness_home_dir}/skills/_data/gone.md`.\n');
+    await writeSkillBody('<!-- include: ../_partials/pointer.md / -->');
+
+    const defects = await findLinkResolutionDefects(buildRuleContext(root));
+
+    expect(defects).toMatchObject([{ file: 'skills/alpha/SKILL.md', kind: 'link' }]);
+  });
+
   it('leaves an anchor-only target to the render pass', async () => {
     await writeSkillBody('See [nothing](#absent).');
 
