@@ -20,7 +20,7 @@ Options that invoke a skill include context-clearing guidance:
 
 - **Refine plan**: Prepend "Clear context and use..." because the plan artifact is self-contained; prior conversation wastes tokens and can introduce bias.
 - **Split the ticket**: No "Clear context" prefix, and no pasted invocation line; the split runs in this session, which holds the plan from which the pieces are cut. See [Splitting the ticket](#splitting-the-ticket).
-- **Implement**: No "Clear context" prefix; the conversation that produced the plan contains the design decisions behind it, and `implement-plan` uses them when they are there. The user can also paste the same line into a fresh session or the other harness, in which the skill re-resolves the plan and ticket from the environment instead.
+- **Implement**: No "Clear context" prefix. The ticket and plan are self-contained, so `implement-plan` works the same in this session or in a fresh one, and clearing gains nothing: Unlike a refine or review pass, implementation is not harmed by sharing the planner's view. The user can also paste the same line into a fresh session or the other harness, in which the skill re-resolves the plan and ticket from the environment.
 
 Example (rendered for the default case, in which the recommendation rules below select Implement):
 
