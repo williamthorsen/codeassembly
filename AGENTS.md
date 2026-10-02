@@ -18,7 +18,7 @@ The dependency chain: mcp and factory depend on run-core, and agents on kb.
 
 ## Content authoring
 
-When authoring a skill, subagent, rulebook, or collection, consult `packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md` (the `consult-codeassembly-content-specification` skill).
+When authoring a skill, subagent, rulebook, or collection, consult `packages/agents/content/guidance/rulebooks/codeassembly-content-specification.md` (the `consult-codeassembly-content-specification` skill) for the contract that any content root follows, and `.agents/content/guidance/rulebooks/codeassembly-repo-conventions.md` (the `consult-codeassembly-repo-conventions` skill) for the conventions that apply to the library in this repository.
 
 Content appearing identically in two or more skill or subagent files belongs in a partial. The expander inlines partials at install time to byte-identical output, so they are the correct DRY mechanism even when verbatim execution context is a requirement. See `packages/agents/content/_partials/README.md`.
 
