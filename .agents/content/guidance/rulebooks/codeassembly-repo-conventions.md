@@ -7,11 +7,11 @@ version: '1'
 
 # CodeAssembly repository conventions
 
-These conventions supplement {rulebook:codeassembly-content-specification}, the contract for any content root, with the doctrine that applies to the library in this repository.
+These conventions supplement {rulebook:codeassembly-content-specification}, the contract for any content root, with the doctrine that applies to the library in this repository. A path below is relative to the library's content root, `packages/agents/content/`.
 
 ## Enforcement by test
 
-The suites in `content/__tests__/` read the library's own content and assert its conventions hold. When one of them checks a rule, the rule names its test. A rule that holds for any content root is checked by `codeassembly validate` instead, which `library-validation.unit.test.ts` runs over the library; such a rule names `validate`.
+The suites in `__tests__/` read the library's own content and assert its conventions hold. When one of them checks a rule, the rule names its test. A rule that holds for any content root is checked by `codeassembly validate` instead, which `library-validation.unit.test.ts` runs over the library; such a rule names `validate`.
 
 Some rules in the specification read as conventions there, because nothing checks them in a consumer's root, but a library suite enforces them here:
 
