@@ -104,7 +104,8 @@ describe(findLinkResolutionDefects, () => {
 
   it('ignores a harness-home reference containing a placeholder', async () => {
     await writeSkillBody(
-      'Each lives at `{harness_home_dir}/skills/<slug>/SKILL.md` or `{harness_home_dir}/skills/{name}/x.md`.',
+      'Each lives at `{harness_home_dir}/skills/<slug>/SKILL.md`, `{harness_home_dir}/skills/consult-<slug>/SKILL.md`, ' +
+        'or `{harness_home_dir}/skills/{name}/x.md`.',
     );
 
     expect(await findLinkResolutionDefects(buildRuleContext(root))).toEqual([]);

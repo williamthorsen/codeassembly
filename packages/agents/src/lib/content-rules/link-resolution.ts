@@ -25,7 +25,7 @@ const HOME_TOKEN = '{harness_home_dir}';
  * the content path that it names. A path containing a placeholder (`<slug>`, `{name}`) does not match.
  */
 const HOME_REFERENCE_REGEX =
-  /\{harness_home_dir\}\/((?:scripts|skills)\/[^\s`'"()<>[\]{}]+?)[.,;:!?]*(?=[\s`'"()<>[\]]|$)/gm;
+  /\{harness_home_dir\}\/((?:scripts|skills)\/[^\s`'"()<>[\]{}]+?)[.,;:!?]*(?=[\s`'"()[\]]|$)/gm;
 
 /**
  * Reports each relative Markdown link, in an installable host's include-expanded body, whose file does not exist, or

@@ -135,7 +135,7 @@ export function rewriteTemplateVariables(content: string, variables: TemplateVar
  * Matches a `{harness_home_dir}/skills/<path>` reference. The first group is the path beneath `skills/`, and the second
  * is trailing sentence punctuation, kept out of the path.
  */
-const SKILLS_REFERENCE_REGEX = /\{harness_home_dir\}\/skills\/([^\s`'"()<>[\]{}]+?)([.,;:!?]*)(?=[\s`'"()<>[\]]|$)/gm;
+const SKILLS_REFERENCE_REGEX = /\{harness_home_dir\}\/skills\/([^\s`'"()<>[\]{}]+?)([.,;:!?]*)(?=[\s`'"()[\]]|$)/gm;
 
 /**
  * Applies Markdown path rewriting and template variable expansion to a single `.md` file.
