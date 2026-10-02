@@ -179,7 +179,8 @@ describe(rewriteSkillsReferences, () => {
 
   it('leaves a reference containing a placeholder', () => {
     const content =
-      'Each skill lives at `{harness_home_dir}/skills/<slug>/SKILL.md` or {harness_home_dir}/skills/{name}/x.';
+      'Each skill lives at `{harness_home_dir}/skills/<slug>/SKILL.md`, ' +
+      '`{harness_home_dir}/skills/consult-<slug>/SKILL.md`, or {harness_home_dir}/skills/{name}/x.';
 
     expect(rewriteSkillsReferences(content, markTarget)).toBe(content);
   });
