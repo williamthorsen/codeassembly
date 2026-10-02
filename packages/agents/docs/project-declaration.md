@@ -153,7 +153,7 @@ Five collections ship, each making a claim that a reader can act on:
 | `triage`         | Not yet examined, and where new content starts. It shrinks by promotion.                                                           |
 | `all`            | The whole catalog, computed. It doesn't make any claim about its members, and is the escape hatch rather than the expected choice. |
 
-An artifact in none of them is standalone: deliberate, declared directly where wanted, and either too rarely invoked to justify a standing line in the skill index or wanted only in specific projects. The criteria deciding which disposition an artifact takes are recorded in the `codeassembly-content-specification` rulebook, under `## Collections`.
+An artifact in none of them is standalone: deliberate, declared directly where wanted, and either too rarely invoked to justify a standing line in the skill index or wanted only in specific projects. The criteria deciding which disposition an artifact takes are recorded in this repository's `codeassembly-repo-conventions` rulebook (`.agents/content/guidance/rulebooks/`), under "Collection dispositions".
 
 `codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`; add any other collection to that file by hand. A project adds a collection for repo deployment by declaring it explicitly.
 

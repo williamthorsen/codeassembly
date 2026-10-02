@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
 delivery: skill
-version: '25'
+version: '26'
 ---
 
 # CodeAssembly content specification
@@ -15,7 +15,7 @@ Every rule below belongs to one of three classes, marked where it appears.
 
 **Validated on parse.** A malformed `slug` or `skill-name`, a `delivery` value outside `ambient`/`hook`/`skill`, an empty `delivery` list, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Seven more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, whether it names that artifact as a dependency or optionally; a rulebook link target outside a linkable root fails the run before anything is written; a rulebook token naming a target that does not deploy a skill to invoke fails the same pre-write pass, and so does a rulebook token written in the optional form, which does not have a name to render; an anchor-only link target that does not name any heading in its own body fails wherever that body is rendered or installed, and so does a code fence that nothing closes; and a harness that does not declare a sigil is a type error at its `HarnessConfig` literal, so the build fails.
 
-**Enforced by test.** The suites in `content/__tests__/` read the library's own content and assert its conventions hold. When one of them checks a rule, the rule names its test. A rule that holds for any content root is checked by `codeassembly validate` instead, which `library-validation.unit.test.ts` runs over the library; such a rule names `validate`.
+**Enforced by `validate`.** `codeassembly validate` checks a content root against these rules without deploying it. Such a rule names `validate`.
 
 **Convention.** The rest is marked _(Convention; not enforced.)_ Nothing checks it.
 
@@ -53,7 +53,7 @@ A support entry under `skills/` does not contribute an edge: It is linked to rat
 
 Rulebooks, skills, and subagents all support tokens; collections do not have a body to render. `{rulebook:<slug>}` has one restriction that the others do not: It renders only if a declaration supplies the deployed rulebook set, which is true for every body that `sync` and `validate` render but not for a support entry under `skills/`, since a source's support entries deliver to every consumer of the source, whichever rulebooks that consumer declares. A rulebook token in a support entry fails the run, as does one naming a rulebook that does not deploy a skill -- an `ambient`-only target is already in the reader's context, so there is nothing to invoke. Express that relationship with `dependencies:` instead.
 
-That boundary decides what a shared partial may contain. A partial inlined by both a skill body and a support entry cannot contain a `{rulebook:<slug>}` token: It renders in the skill but breaks the support entry's delivery. The pairing is live -- `skills/_data/recommendation-gradient.md` inlines `skills/_partials/option-format.md`, which skill bodies inline too.
+That boundary decides what a shared partial may contain. A partial inlined by both a skill body and a support entry cannot contain a `{rulebook:<slug>}` token: It renders in the skill but breaks the support entry's delivery.
 
 Only `{rulebook:<slug>}` is checked for deployability. A `{skill:<slug>}` or `{subagent:<slug>}` token renders on every harness to which the body deploys, including one to which its target does not deploy: A token naming a skill that narrows itself with `supported-harnesses:` still renders an invocation elsewhere. Name such a skill only where the surrounding text already scopes it to that harness. _(Convention; not enforced.)_
 
@@ -99,45 +99,6 @@ members:
 
 `members:` is collections-only; rulebooks, skills, and subagents use `dependencies:` instead. Declaring `dependencies:` on a collection, or `members:` on any other type, is an error. The resolver follows both keys identically -- the split is semantic: A collection contains members, an artifact depends on prerequisites.
 
-A collection enumerates every member, not just its dependency roots. Roots-only membership would let an unexamined artifact enter through an edge and be treated as examined, which is the outcome that the dispositions below exist to prevent.
-
-### Dispositions
-
-Declaring a collection is a claim about its members, so every artifact has at least one disposition recording the claims that it is under; an artifact under none is an oversight rather than a decision. Membership is many-to-many -- i.e., the vetted collections may overlap -- and a collection outside this scheme is a plain bundle whose membership claims nothing: It neither satisfies coverage nor conflicts with any disposition. The two dispositions that assert an absence do not tolerate any conflicting claim: Standalone means that an artifact does not belong to any collection, and triage excludes vetted membership. An opt-in collection asserts an absence of its own: Nothing outside it reaches its members. _(Enforced by `collection-dispositions.unit.test.ts`.)_
-
-Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
-
-1. **Read the prose** for personal doctrine -- a preference stated as a rule that another team would answer differently.
-2. **Ask what the artifact names that exists only here** -- a store, path, host, repository, tracker, or tool that a consumer would not have. Such coupling appears in a default value or an example rather than in the prose, so the first pass misses it.
-
-**A public collection** (`recommended` here) is one that anyone may declare, and membership in it claims general fitness. Every criterion must hold:
-
-- Nothing it names is specific to the author's environment.
-- It does not state any personal doctrine.
-- Its prerequisites appear where a reader looks before invoking, rather than appearing only on failure.
-- Its closure contains only public members.
-- It deploys where it works: An artifact that functions on one harness alone declares that harness rather than deploying everywhere under a general claim.
-
-**A personal collection** (`williamthorsen` here) claims deliberate fit for one author rather than general fitness:
-
-- It deliberately encodes that author's preferences, environment, or domain -- whatever disqualifies it from the public collection qualifies it here.
-- Its closure contains only personal and public members.
-- It is invoked often enough to justify a standing line in the skill index.
-
-**An opt-in collection** (`atlassian` here) claims fit to one vendor ecosystem rather than to one author or to everyone:
-
-- Nothing outside it reaches its members: The closure of every other collection that enumerates its own members excludes them, so a consumer that does not declare it never deploys one.
-- Its closure contains only opt-in and public members.
-- A consumer declares it only if that vendor's products are in use, since each member takes a line in the skill index of every session.
-
-The first criterion is enforced rather than observed, because a single invocation token restored to its required form would undo it silently. _(Enforced by `collection-dispositions.unit.test.ts`.)_
-
-**Standalone** is the absence of any collection membership: deliberate, declared directly where wanted, and recorded so that the coverage check reads it as a decision rather than an omission. An artifact belongs here when it is deliberate but rarely invoked, or wanted only in specific projects. Every deployed skill takes a line in the skill index at every session, and a rarely-invoked artifact does not justify that line.
-
-**Triage** (`triage` here) contains what has not been examined. It is where new content starts, and it shrinks by promotion rather than growing.
-
-A vetted collection is closed under its dependency edges, which makes the vetting real: Without closure, a vetted collection deploys unexamined content through an edge. Promoting an artifact therefore means promoting everything its closure contains. _(Enforced by `collection-dispositions.unit.test.ts`.)_
-
 ## Frontmatter fields
 
 - **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `hook`, `skill`, or a non-empty list of them; defaults to `ambient`), optional `skill-name`, optional `version`. A declared `version` is an opaque string, never parsed as semver, and every route that delivers the rulebook names it on a `<!-- rulebook-version: <version> -->` line directly below the marker that names the slug, so that an agent can read which version of a rulebook it has. A route omits the line for a rulebook that does not declare a version. Quote the value: YAML reads an unquoted `1.10` as the number `1.1`, and the schema rejects a non-string rather than deploying the digits that it lost. It rejects a value that the version line cannot contain on its own, which is a blank one, a multi-line one, and one containing `-->`.
@@ -153,7 +114,7 @@ Only the rulebook row is validated on parse; a `members:` block is validated whe
 
 A rulebook's `version` tracks the operative content of its deployed body: Bump it whenever an edit changes what the rulebook asks of an agent, and leave it when the edit was cosmetic. The field exists to prevent two different bodies from reporting one version. `revise-prose` does not key a repository's sweep coverage on it: Coverage follows each rule's sweep version, as "Declaring rule ids and sweep versions" below states.
 
-The deployed body is the body after includes expand. Editing a partial is therefore a content change for every rulebook that includes it, and the version changes although the rulebook's own file is untouched. A file that the body links to rather than inlines, such as a `_data/` reference, is outside the body and does not require a bump. _(Enforced by `rulebook-version-pins.unit.test.ts`.)_
+The deployed body is the body after includes expand. Editing a partial is therefore a content change for every rulebook that includes it, and the version changes although the rulebook's own file is untouched. A file that the body links to rather than inlines, such as a `_data/` reference, is outside the body and does not require a bump. _(Convention; not enforced.)_
 
 A `revise-prose` repair does not change what a rulebook asks, because the sweep's calibration rules out any rewrite that would change what the text directs. Keep the rulebook's `version` and each rule's sweep version, and re-pin only the hashes that changed: Once a rule's sweep version rises, `revise-prose` no longer counts that rule's coverage, including the coverage that the same sweep recorded. _(Convention; not enforced.)_
 
@@ -165,8 +126,6 @@ A rulebook slug's final segment names the kind of document rather than its subje
 
 Skill names are verb-led. Order list members and frontmatter lists alphabetically unless there is a reason to group otherwise. _(Conventions; not enforced.)_
 
-A `codeassembly-` prefix marks guidance for working in the CodeAssembly repository itself, as this specification does. Its absence marks content that applies in any project, CodeAssembly's own behavior included when a consumer meets it. Prefix a new artifact only when a project that merely consumes the library would not use it. _(Convention; not enforced.)_
-
 ## Adding guidance
 
 Correct a behavior at the fewest surfaces that plausibly account for it, deploy that change, and observe. Extend to further surfaces only after the minimal change has been seen to fail. Changing every contributing surface at once means that the improvement cannot be credited to any single edit, so the cheapest sufficient fix is never learned, and each surface touched permanently adds tokens to every later invocation.
@@ -175,27 +134,17 @@ A proposal justifies its breadth rather than assuming it. A contributing surface
 
 Before making any change to a guidance file, identify whether the new text makes any existing text redundant (whether in that file or any other) and trim the redundancy in the same change. If the file is larger after the change than before, offer to run {skill:streamline-guidance} against it. _(Convention; not enforced.)_
 
-## Changing the sweep's own doctrine
-
-`revise-prose` delivers `_partials/plain-speech.md` and `_partials/plain-speech-calibration.md` inside the prompts of `skills/revise-prose/SKILL.md` and `subagents/prose-reviser.md`, so those files state a rule and exhibit it at once. Check an edit to any of them by running the sweep over that set on the branch, rather than by reading the diff for violations: A hand check reads what the author was already looking at, while the sweep reads each file whole against every rule.
-
-Because a sweeper applies the doctrine deployed to its harness, deploy the content of a branch that edits the doctrine before sweeping that branch. If the deployed copy is behind the branch, sync the branch's content to the project tier first; if `live` already matches the branch, the deployed copy is the branch's and the sweep runs as it stands. _(Convention; not enforced.)_
-
 ## Declaring rule ids and sweep versions
 
-A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id and a sweep version for each rule that it states. The declaration is a `<!-- rule: <id> <version> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading. `_partials/plain-speech-calibration.md` declares a rule of the `plain-speech` unit the same way, with its marker under a `###` heading of its own, and `plain-speech-calibration.unit.test.ts` pins that marker with the rest of the calibration's text.
+A rulebook written for the `comment-preferences` or `writing-preferences` hook is a unit of the `revise-prose` sweep, and it declares an id and a sweep version for each rule that it states. The declaration is a `<!-- rule: <id> <version> -->` marker on the first non-blank line under the rule's `##` heading; a rule stated in an included partial has its marker in the partial. The sweep records coverage and rejections under the id, and `prose-reviser` reports each site under it; therefore, an id stays as written when its heading changes. Take a new rule's id from the kebab-case form of its heading.
 
-The marker declares the rule whether or not a detector covers it: The helper's registry alone decides which rules it detects. A rulebook that declares one id declares one under every `##` heading, and each id is declared only once across the library. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`.)_
+The marker declares the rule whether or not a detector covers it: The helper's registry alone decides which rules it detects. A rulebook that declares one id declares one under every `##` heading, and each id is declared only once across the content root. _(Convention; not enforced.)_
 
-A sweep version is a positive integer, and a new rule starts at `1`. Raise it when some text that complied with the rule's old wording could fail the new one, including through an edit outside every rule section, such as to a rulebook's introduction, and raise it when unsure. Leave it for a relaxation, a clarification, or a rewording. The `plain-speech` unit's `unit-version` follows the same test. A raised sweep version re-opens that rule's coverage and rejections in every repository's record, and a rulebook `version` change re-opens none. Because a rule that becomes stricter changes what its rulebook asks, the rulebook's `version` rises with every sweep-version rise. _(Enforced by `prose-sweep-vocabulary.unit.test.ts`, which requires the version, and by `rulebook-version-pins.unit.test.ts`, which pins each rule's section against it.)_
+A sweep version is a positive integer, and a new rule starts at `1`. Raise it when some text that complied with the rule's old wording could fail the new one, including through an edit outside every rule section, such as to a rulebook's introduction, and raise it when unsure. Leave it for a relaxation, a clarification, or a rewording. The `plain-speech` unit's `unit-version` follows the same test. A raised sweep version re-opens that rule's coverage and rejections in every repository's record, and a rulebook `version` change re-opens none. Because a rule that becomes stricter changes what its rulebook asks, the rulebook's `version` rises with every sweep-version rise. _(Convention; not enforced.)_
 
-## Skill-local reinforcement
+## Guidance hooks
 
-Behavioral rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. When the boundary below requires a restatement, put it at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when the rule appears next to the action to which it applies than when the agent must follow a link to read it, and it imitates a nearby concrete example more reliably still than it follows a directive.
-
-Treat that restatement as necessary redundancy, not duplication, when the rule specifies an output shape that the agent must reproduce: Stripping the skill-local pointers there leaves the agent to improvise the block instead of copying it. If the agent can follow the rule from a single statement, extend it to skill-local surfaces after that statement has been seen to fail, not in anticipation. _(Enforced for the specs named above by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_
-
-When a step's guidance is a matter of local taste rather than library doctrine -- such as a user's code-style preferences, or a project's own glossary -- neither restatement above fits: A pointer sends the agent away to fetch the rule, and an inlined partial fixes one answer for every consumer at authoring time. Declare a guidance hook instead, `<!-- guidance-hook: <name> -->`, and leave the slot for a `codeassembly.yaml` to bind per project or per machine. An unbound hook contributes nothing to deployed output, so declaring one is safe wherever nothing fills it. A rulebook written for that slot declares `delivery: hook`, which records the route and lets `sync` report a binding and a delivery that disagree. The directive grammar is specified in `content/_partials/README.md` and the binding syntax in `packages/agents/docs/project-declaration.md`. _(Convention; not enforced.)_
+When a step's guidance is a matter of local taste rather than library doctrine -- such as a user's code-style preferences, or a project's own glossary -- neither a pointer to a stated rule nor an inlined partial fits: A pointer sends the agent away to fetch the rule, and an inlined partial fixes one answer for every consumer at authoring time. Declare a guidance hook instead, `<!-- guidance-hook: <name> -->`, and leave the slot for a `codeassembly.yaml` to bind per project or per machine. An unbound hook contributes nothing to deployed output, so declaring one is safe wherever nothing fills it. A rulebook written for that slot declares `delivery: hook`, which records the route and lets `sync` report a binding and a delivery that disagree. The directive grammar is specified in `content/_partials/README.md` and the binding syntax in `packages/agents/docs/project-declaration.md`. _(Convention; not enforced.)_
 
 ## Injection-point placement
 
