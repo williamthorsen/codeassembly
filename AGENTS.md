@@ -10,14 +10,11 @@ A pnpm monorepo centered on agentic code-orchestration flows. Each package's own
 
 - **agents** (`packages/agents/`): The `codeassembly` CLI and the library of rulebooks, skills, and subagents that it deploys. See `packages/agents/README.md`.
 - **factory** (`packages/factory/`): Dormant demo visualization of orchestration runs. See `packages/factory/README.md`.
-- **fleet** (`packages/fleet/`): Server of the fleet-visibility stack. See `packages/fleet/README.md`.
-- **foreman** (`packages/foreman/`): Client app of the fleet-visibility stack. See `packages/foreman/README.md`.
 - **kb** (`packages/kb/`): Knowledge-base foundation library. See `packages/kb/README.md`.
-- **lifecycle** (`packages/lifecycle/`): Session-lifecycle event envelope, vocabulary, and lane fold. See `packages/lifecycle/README.md`.
 - **mcp** (`packages/mcp/`): MCP server exposing run management over run-core. Its five tools are described in `packages/mcp/src/server.ts`.
 - **run-core** (`packages/run-core/`): Canonical domain model, schemas, and run-data parsing. See `packages/run-core/README.md`.
 
-The dependency chain: mcp and factory depend on run-core, fleet on lifecycle, foreman on fleet, and agents on both kb and lifecycle.
+The dependency chain: mcp and factory depend on run-core, and agents on kb.
 
 ## Content authoring
 
