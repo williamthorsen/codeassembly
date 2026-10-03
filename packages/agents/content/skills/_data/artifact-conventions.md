@@ -13,6 +13,10 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         ├── tickets/
         │   └── {ticket-id}/
         │       ├── {timestamp}_{slug}_{artifact-type}.md    ← ticket-level artifacts (devlogs are written here when a ticket is in session)
+        │       ├── prototypes/                               ← the ticket's prototype set, kept by `index-prototypes`
+        │       │   ├── manifest.json
+        │       │   ├── shots/{slug}-v{n}.png
+        │       │   └── {slug}-v{n}.html
         │       └── {run-id}/                                 ← review run directory
         │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
@@ -33,6 +37,10 @@ Always present under `projects/`, even when `{base_dir}/` is inside the project.
 ### Ticket ID
 
 Always present under `tickets/` within the project directory. If the work does not have a real ticket, auto-generate one: `{YYYYMMDD}-{4 random hex}` (e.g., `20260221-a3f2`).
+
+### Prototype sets
+
+`prototypes/` holds the ticket's one prototype set: the sources, the stored screenshots, and the manifest from which `index-prototypes` renders the set's index page. The page itself is rendered into the session's scratch directory for publishing and is not kept here.
 
 ### Run directories
 

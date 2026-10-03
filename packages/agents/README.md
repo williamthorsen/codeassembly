@@ -129,6 +129,10 @@ Every key, its type, and its default are documented in [Preferences](docs/prefer
 
 `src/groom-backlog/` contains the helper that the `groom-backlog` skill runs. Its commands, its ledger, its comment marker, and the skill's arguments are documented in [docs/groom-backlog-helper.md](docs/groom-backlog-helper.md).
 
+## Prototype index helper
+
+`src/index-prototypes/` contains the helper that the `index-prototypes` skill runs. Its commands, the manifest layout, and the verdict documents that the index page writes are documented in [docs/index-prototypes-helper.md](docs/index-prototypes-helper.md).
+
 ## Guidance streamlining helper
 
 `src/streamline-guidance/` contains the helper that the `streamline-guidance` skill runs. Its commands, their output, and the record of declined cuts are documented in [docs/streamline-guidance-helper.md](docs/streamline-guidance-helper.md).

@@ -27,6 +27,7 @@ members:
     - get-ticket-id
     - groom-backlog
     - implement-plan
+    - index-prototypes
     - kb-add
     - kb-curate
     - kb-edit

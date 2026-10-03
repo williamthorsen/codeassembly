@@ -37,3 +37,5 @@ helpers:
     out: scripts/select-lede-exemplars.mjs
   - entry: ../src/merge-gh-pr/cli.ts
     out: skills/merge-gh-pr/merge-gh-pr.mjs
+  - entry: ../src/index-prototypes/cli.ts
+    out: skills/index-prototypes/index-prototypes.mjs
