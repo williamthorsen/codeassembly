@@ -30,6 +30,7 @@ import { makeDeriveSessionContextSmokeTest } from '../test-utils/make-derive-ses
 import { makeDescribeChangeSmokeTest } from '../test-utils/make-describe-change-smoke-test.ts';
 import { makeFeedbackMemoriesSmokeTest } from '../test-utils/make-feedback-memories-smoke-test.ts';
 import { makeGroomBacklogSmokeTest } from '../test-utils/make-groom-backlog-smoke-test.ts';
+import { makeIndexPrototypesSmokeTest } from '../test-utils/make-index-prototypes-smoke-test.ts';
 import { makeKbCurateSmokeTest } from '../test-utils/make-kb-curate-smoke-test.ts';
 import { makeKbEditSmokeTest } from '../test-utils/make-kb-edit-smoke-test.ts';
 import { makeKbRetrieveEventsSmokeTest } from '../test-utils/make-kb-retrieve-events-smoke-test.ts';
@@ -50,6 +51,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   '../src/describe-change/cli.ts': makeDescribeChangeSmokeTest(),
   '../src/feedback-memories/cli.ts': makeFeedbackMemoriesSmokeTest(),
   '../src/groom-backlog/cli.ts': makeGroomBacklogSmokeTest(),
+  '../src/index-prototypes/cli.ts': makeIndexPrototypesSmokeTest(),
   '../src/kb-curate/cli.ts': makeKbCurateSmokeTest(),
   '../src/kb-edit/cli.ts': makeKbEditSmokeTest(),
   '../src/kb-retrieve-events/cli.ts': makeKbRetrieveEventsSmokeTest(),
