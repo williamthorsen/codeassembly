@@ -2,7 +2,7 @@
 export const VERDICTS_COLLECTION = 'verdicts';
 
 /** The keys that the page binds, as the shortcut hint lists them. */
-export const SHORTCUT_KEYS = ['j', 'k', 'x', 'w', '1–9'] as const;
+export const SHORTCUT_KEYS = ['←', '→', '↑', '↓', 'x', 'w', '1–9'] as const;
 
 /**
  * The index page's client script. It reads verdicts from the `verdicts` collection once the `db` capability resolves,
@@ -182,12 +182,20 @@ export const INDEX_PAGE_SCRIPT = `(() => {
     }
   }
 
-  function moveFocus(card, step) {
+  // A row is the run of visible cards that share the first card's top edge.
+  function countColumns(visible) {
+    const top = visible[0].offsetTop;
+    return Math.max(1, visible.filter((card) => card.offsetTop === top).length);
+  }
+
+  function moveFocus(card, key) {
     const visible = Array.from(grid.querySelectorAll('.card')).filter((candidate) => !candidate.hidden);
-    if (visible.length === 0) return;
-    const index = card ? visible.indexOf(card) : -1;
-    const target = index === -1 ? visible[0] : visible[Math.min(visible.length - 1, Math.max(0, index + step))];
-    target.focus();
+    const index = visible.indexOf(card);
+    if (index === -1) return;
+    const columns = countColumns(visible);
+    const steps = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -columns, ArrowDown: columns };
+    const target = visible[index + steps[key]];
+    if (target) target.focus();
   }
 
   grid.addEventListener('click', (event) => {
@@ -212,9 +220,12 @@ export const INDEX_PAGE_SCRIPT = `(() => {
     if (target && target.closest('input, select, textarea, [contenteditable]')) return;
     const card = target ? target.closest('.card') : null;
     const key = event.key;
-    if (key === 'j' || key === 'k') {
-      event.preventDefault();
-      moveFocus(card, key === 'j' ? 1 : -1);
+    if (key.startsWith('Arrow')) {
+      // Arrows move between cards only from a focused card, so the page scrolls as usual elsewhere.
+      if (!event.shiftKey && target && target.classList.contains('card')) {
+        event.preventDefault();
+        moveFocus(target, key);
+      }
       return;
     }
     if (!card || !canAct()) return;

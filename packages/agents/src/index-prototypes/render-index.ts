@@ -31,7 +31,7 @@ export function renderIndexPage(input: { title: string; cards: readonly IndexCar
     '</header>',
     '<div class="toolbar">',
     '<label class="toggle" id="rejected-toggle" hidden><input type="checkbox" id="show-rejected" checked> Show rejected</label>',
-    '<p class="hint" id="shortcuts" hidden>Keys: <kbd>j</kbd> / <kbd>k</kbd> move between cards · <kbd>x</kbd> reject · <kbd>w</kbd> winner · <kbd>1–9</kbd> rank</p>',
+    '<p class="hint" id="shortcuts" hidden>On a focused card: <kbd>←</kbd> <kbd>→</kbd> <kbd>↑</kbd> <kbd>↓</kbd> move between cards · <kbd>x</kbd> reject · <kbd>w</kbd> winner · <kbd>1–9</kbd> rank</p>',
     '<p class="status" id="status" role="status" aria-live="polite"></p>',
     '</div>',
     '<div class="grid" id="grid">',

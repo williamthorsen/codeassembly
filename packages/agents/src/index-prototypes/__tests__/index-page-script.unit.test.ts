@@ -117,15 +117,37 @@ describe('index page script', () => {
     expect(page.element('[data-slug="c"]').hidden).toBe(true);
   });
 
-  it('binds j and k to card focus and x, w, and digits to verdicts', async () => {
+  it('moves between cards with the arrow keys, by one card across and one row down', async () => {
+    const page = await openPage({});
+    page.layOutRows([['a', 'b'], ['c']]);
+
+    page.focus('a');
+    page.press('ArrowRight');
+    expect(page.focusedSlug()).toBe('b');
+    page.press('ArrowRight');
+    expect(page.focusedSlug()).toBe('c');
+    page.press('ArrowUp');
+    expect(page.focusedSlug()).toBe('a');
+    page.press('ArrowLeft');
+    expect(page.focusedSlug()).toBe('a');
+    page.press('ArrowDown');
+    expect(page.focusedSlug()).toBe('c');
+  });
+
+  it('leaves arrow keys alone unless a card itself has focus', async () => {
+    const page = await openPage({});
+
+    expect(page.press('ArrowDown')).toBe(true);
+    expect(page.focusedSlug()).toBeUndefined();
+    page.element('[data-slug="a"] [data-action="reject"]').focus();
+    expect(page.press('ArrowRight')).toBe(true);
+    expect(page.element('[data-slug="a"] [data-action="reject"]')).toBe(page.activeElement());
+  });
+
+  it('binds x, w, and digits on a focused card to verdicts', async () => {
     const page = await openPage({});
 
     page.focus('a');
-    page.press('j');
-    expect(page.focusedSlug()).toBe('b');
-    page.press('k');
-    expect(page.focusedSlug()).toBe('a');
-
     page.press('x');
     await settle();
     page.focus('b');
@@ -261,9 +283,19 @@ async function openPage(options: {
     },
     focus: (slug: string) => element(`[data-slug="${slug}"]`).focus(),
     focusedSlug: () => window.document.activeElement?.closest<HTMLElement>('.card')?.dataset.slug,
+    activeElement: () => window.document.activeElement,
+    // JSDOM does not lay out, so each card reports the top edge of the row that it is assigned to.
+    layOutRows: (rows: string[][]) => {
+      for (const [rowIndex, row] of rows.entries()) {
+        for (const slug of row) {
+          Object.defineProperty(element(`[data-slug="${slug}"]`), 'offsetTop', { value: rowIndex * 400 });
+        }
+      }
+    },
+    // Returns false when the page handled the key and suppressed its default action.
     press: (key: string) => {
       const target = window.document.activeElement ?? window.document.body;
-      target.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      return target.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
     },
   };
 }
