@@ -86,7 +86,7 @@ node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs register \
   --screenshot "{working_dir}/.playwright-mcp/{slug}-v{n}.png"
 ```
 
-Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already held another version of the slug, so rename the source to match. A `warning` says that the screenshot was stored at its original size; the page still works, at a larger size.
+Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already held another version of the slug, so rename the source to match.
 
 ### 5. Render and publish the index
 

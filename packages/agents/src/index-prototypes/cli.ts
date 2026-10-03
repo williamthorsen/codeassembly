@@ -10,7 +10,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent } from '../lib/type-guards.ts';
-import { type CommandRunner, intakeScreenshot } from './intake-screenshot.ts';
+import { intakeScreenshot } from './intake-screenshot.ts';
 import { isValidSlug, listLatestEntries, nextVersion, readManifest, writeManifest } from './manifest.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
 import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry } from './types.ts';
@@ -77,7 +77,6 @@ if (isEntryPoint()) {
 export async function runIndexPrototypes(input: {
   argv: readonly string[];
   now: Date;
-  runner?: CommandRunner;
 }): Promise<IndexPrototypesResult> {
   let args: ParsedArgs;
   try {
@@ -91,7 +90,7 @@ export async function runIndexPrototypes(input: {
     case 'record-index':
       return recordIndex(setDir, requireFlag(args.values, 'url'));
     case 'register':
-      return register(setDir, args.values, input.now, input.runner);
+      return register(setDir, args.values, input.now);
     case 'render':
       return render(setDir, path.resolve(requireFlag(args.values, 'out')));
     default: {
@@ -217,12 +216,7 @@ async function recordIndex(setDir: string, url: string): Promise<IndexPrototypes
 }
 
 /** Adds a registration to the set's manifest, creating the manifest on the set's first registration. */
-async function register(
-  setDir: string,
-  values: Record<string, string>,
-  now: Date,
-  runner: CommandRunner | undefined,
-): Promise<IndexPrototypesResult> {
+async function register(setDir: string, values: Record<string, string>, now: Date): Promise<IndexPrototypesResult> {
   const slug = requireFlag(values, 'slug');
   if (!isValidSlug(slug)) {
     return fail('invalid-slug', `slug "${slug}" must match [a-z0-9][a-z0-9-]{0,39}`);
@@ -244,8 +238,6 @@ async function register(
 
   const version = nextVersion(existing, slug);
   let shot: string | null = null;
-  let downsized = false;
-  let warning: string | undefined;
   const screenshot = values.screenshot;
   if (screenshot !== undefined) {
     const intake = await intakeScreenshot({
@@ -253,12 +245,11 @@ async function register(
       setDir,
       slug,
       version,
-      ...(runner !== undefined && { runner }),
     });
     if (!intake.ok) {
       return fail(intake.error, intake.message);
     }
-    ({ shot, downsized, warning } = intake);
+    shot = intake.shot;
   }
 
   const entry: ManifestEntry = {
@@ -272,7 +263,6 @@ async function register(
     inputs: parseInputs(values.inputs),
     description: values.description ?? null,
     shot,
-    downsized,
   };
 
   const manifest: Manifest = {
@@ -281,7 +271,7 @@ async function register(
     entries: [...(existing?.entries ?? []), entry],
   };
   const manifestPath = await writeManifest(setDir, manifest);
-  return { ok: true, command: 'register', manifestPath, entry, ...(warning !== undefined && { warning }) };
+  return { ok: true, command: 'register', manifestPath, entry };
 }
 
 /**

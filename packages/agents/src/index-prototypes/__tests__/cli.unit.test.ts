@@ -5,7 +5,6 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runIndexPrototypes } from '../cli.ts';
-import type { CommandRunner } from '../intake-screenshot.ts';
 import { buildPng } from '../test-utils/build-png.ts';
 
 const NOW = new Date('2026-10-03T01:19:36.000Z');
@@ -94,7 +93,6 @@ describe(runIndexPrototypes, () => {
         inputs: ['ticket', 'sketch'],
         description: 'Packs the toolbar into one row.',
         shot: null,
-        downsized: false,
       },
     });
     expect(await readManifestFile(setDir)).toMatchObject({ title: 'Header variants', indexUrl: null });
@@ -168,65 +166,14 @@ describe(runIndexPrototypes, () => {
   it("stores a screenshot under the registration's version and records it on the entry", async () => {
     const setDir = await makeSetDir();
     const capture = path.join(setDir, 'capture.png');
-    await writeFile(capture, buildPng(1_280, 2));
-    const runner: CommandRunner = async (argv) => {
-      await writeFile(argv[4] ?? '', buildPng(640, 1));
-      return { status: 0, stderr: '' };
-    };
+    const png = buildPng(1_280, 2);
+    await writeFile(capture, png);
     await register(setDir, 'a', NOW, ['--set-title', 'Set']);
 
-    const result = await runIndexPrototypes({
-      argv: [
-        'register',
-        '--set-dir',
-        setDir,
-        '--slug',
-        'a',
-        '--title',
-        'A',
-        '--url',
-        'https://x.test/a',
-        '--screenshot',
-        capture,
-      ],
-      now: LATER,
-      runner,
-    });
+    const result = await register(setDir, 'a', LATER, ['--screenshot', capture]);
 
-    expect(result).toMatchObject({
-      ok: true,
-      entry: { version: 2, shot: path.join('shots', 'a-v2.png'), downsized: true },
-    });
-    expect(result).not.toHaveProperty('warning');
-  });
-
-  it('reports the intake warning on the result', async () => {
-    const setDir = await makeSetDir();
-    const capture = path.join(setDir, 'capture.png');
-    await writeFile(capture, buildPng(1_280, 2));
-    const runner: CommandRunner = () => Promise.resolve({ status: null, stderr: '' });
-
-    const result = await runIndexPrototypes({
-      argv: [
-        'register',
-        '--set-dir',
-        setDir,
-        '--set-title',
-        'S',
-        '--slug',
-        'a',
-        '--title',
-        'A',
-        '--url',
-        'https://x.test/a',
-        '--screenshot',
-        capture,
-      ],
-      now: NOW,
-      runner,
-    });
-
-    expect(result).toMatchObject({ ok: true, entry: { downsized: false }, warning: expect.stringMatching(/sips/) });
+    expect(result).toMatchObject({ ok: true, entry: { version: 2, shot: path.join('shots', 'a-v2.png') } });
+    expect(await readFile(path.join(setDir, 'shots', 'a-v2.png'))).toEqual(png);
   });
 
   it('refuses a screenshot that is not a PNG without writing the manifest', async () => {

@@ -14,7 +14,6 @@ export interface ManifestEntry {
   description: string | null;
   /** Path of the stored screenshot, relative to the set directory. */
   shot: string | null;
-  downsized: boolean;
 }
 
 /** The `manifest.json` of one prototype set. */
@@ -50,8 +49,6 @@ export interface RegisterSuccess {
   command: 'register';
   manifestPath: string;
   entry: ManifestEntry;
-  /** Why the screenshot was stored at its original size, when it was not downsized for a reason worth reporting. */
-  warning?: string;
 }
 
 /** The stdout payload of a successful `record-index`. */

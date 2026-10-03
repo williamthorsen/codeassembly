@@ -28,7 +28,6 @@ export function makeIndexPrototypesSmokeTest(): SmokeTestInvocation {
           inputs: [],
           description: null,
           shot: null,
-          downsized: false,
         },
       ],
     }),

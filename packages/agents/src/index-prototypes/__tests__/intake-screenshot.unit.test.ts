@@ -4,67 +4,22 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { type CommandRunner, intakeScreenshot } from '../intake-screenshot.ts';
+import { intakeScreenshot } from '../intake-screenshot.ts';
 import { buildPng } from '../test-utils/build-png.ts';
 
 describe(intakeScreenshot, () => {
-  it('downsizes a wide capture through sips into the shots directory', async () => {
-    const { setDir, sourcePath } = await makeCapture(buildPng(1_280, 4));
-    const calls: (readonly string[])[] = [];
-    const runner: CommandRunner = async (argv) => {
-      calls.push(argv);
-      await writeFile(argv[4] ?? '', buildPng(640, 2));
-      return { status: 0, stderr: '' };
-    };
-
-    const result = await intakeScreenshot({ sourcePath, setDir, slug: 'dense', version: 2, runner });
-
-    const target = path.join(setDir, 'shots', 'dense-v2.png');
-    expect(result).toEqual({ ok: true, shot: path.join('shots', 'dense-v2.png'), downsized: true });
-    expect(calls).toEqual([['sips', '--resampleWidth', '640', '--out', target, sourcePath]]);
-  });
-
-  it('copies a capture that is already narrow enough without running sips', async () => {
-    const original = buildPng(600, 2);
+  it('stores the capture unchanged in the shots directory under its slug and version', async () => {
+    const original = buildPng(1_280, 8);
     const { setDir, sourcePath } = await makeCapture(original);
-    const runner: CommandRunner = () => Promise.reject(new Error('sips should not run'));
 
-    const result = await intakeScreenshot({ sourcePath, setDir, slug: 'a', version: 1, runner });
+    const result = await intakeScreenshot({ sourcePath, setDir, slug: 'dense', version: 2 });
 
-    expect(result).toEqual({ ok: true, shot: path.join('shots', 'a-v1.png'), downsized: false });
-    expect(await readFile(path.join(setDir, 'shots', 'a-v1.png'))).toEqual(original);
-  });
-
-  it('copies the original and reports it when sips is not available', async () => {
-    const original = buildPng(1_280, 2);
-    const { setDir, sourcePath } = await makeCapture(original);
-    const runner: CommandRunner = () => Promise.resolve({ status: null, stderr: '' });
-
-    const result = await intakeScreenshot({ sourcePath, setDir, slug: 'a', version: 1, runner });
-
-    expect(result).toMatchObject({
-      ok: true,
-      downsized: false,
-      warning: expect.stringMatching(/sips is not available/),
-    });
-    expect(await readFile(path.join(setDir, 'shots', 'a-v1.png'))).toEqual(original);
-  });
-
-  it('copies the original and reports the stderr when sips fails', async () => {
-    const { setDir, sourcePath } = await makeCapture(buildPng(1_280, 2));
-    const runner: CommandRunner = () => Promise.resolve({ status: 13, stderr: 'Error: bad image\n' });
-
-    const result = await intakeScreenshot({ sourcePath, setDir, slug: 'a', version: 1, runner });
-
-    expect(result).toMatchObject({
-      ok: true,
-      downsized: false,
-      warning: expect.stringMatching(/sips exited 13: Error: bad image;/),
-    });
+    expect(result).toEqual({ ok: true, shot: path.join('shots', 'dense-v2.png') });
+    expect(await readFile(path.join(setDir, 'shots', 'dense-v2.png'))).toEqual(original);
   });
 
   it('refuses a file that is not a PNG', async () => {
-    const { setDir, sourcePath } = await makeCapture(Buffer.from('ÿØÿ jpeg-ish bytes padding padding'));
+    const { setDir, sourcePath } = await makeCapture(Buffer.from('GIF89a, not a PNG'));
 
     await expect(intakeScreenshot({ sourcePath, setDir, slug: 'a', version: 1 })).resolves.toMatchObject({
       ok: false,

@@ -167,7 +167,6 @@ function buildEntry(slug: string, minute: number): ManifestEntry {
     inputs: [],
     description: null,
     shot: null,
-    downsized: false,
   };
 }
 

@@ -55,7 +55,7 @@ describe(readManifest, () => {
 
   it('reports a manifest whose entry lacks a field', async () => {
     const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
-    const { downsized: _omitted, ...partial } = buildEntry('a', 1);
+    const { shot: _omitted, ...partial } = buildEntry('a', 1);
     await writeFile(
       path.join(setDir, 'manifest.json'),
       JSON.stringify({ title: 'T', indexUrl: null, entries: [partial] }),
@@ -92,7 +92,6 @@ function buildEntry(slug: string, version: number): ManifestEntry {
     inputs: [],
     description: null,
     shot: null,
-    downsized: false,
   };
 }
 

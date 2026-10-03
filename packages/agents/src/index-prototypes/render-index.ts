@@ -120,7 +120,7 @@ img { max-width: 100%; }
 .toggle { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; }
 .toggle input { width: 18px; height: 18px; accent-color: var(--accent); }
 kbd { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(--text); background: var(--chip); border-radius: 4px; padding: 0 4px; }
-.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr)); }
+.grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(480px, 100%), 1fr)); }
 .card { display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--control-border); border-radius: 10px; overflow: hidden; }
 .card.is-winner { border: 3px solid var(--winner-border); }
 .card:focus-visible, a:focus-visible, button:focus-visible, select:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }

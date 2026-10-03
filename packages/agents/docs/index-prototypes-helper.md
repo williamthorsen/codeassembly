@@ -12,7 +12,7 @@ index-prototypes.mjs record-index --set-dir <dir> --url <url>
 index-prototypes.mjs render --set-dir <dir> --out <file>
 ```
 
-- **`register`** appends an entry to the set's manifest, creating the manifest on the set's first registration, which requires `--set-title`. A later `--set-title` renames the set. The entry's `version` is 1 for a new slug and one past the slug's highest version otherwise, and `registeredAt` is the UTC time of the call. `--inputs` is split on commas, and each item is trimmed. `--source` is recorded as given, not copied. `--url` must be an http or https URL. The result contains `manifestPath`, the new `entry`, and, when the screenshot was not downsized for a reason worth reporting, a `warning`.
+- **`register`** appends an entry to the set's manifest, creating the manifest on the set's first registration, which requires `--set-title`. A later `--set-title` renames the set. The entry's `version` is 1 for a new slug and one past the slug's highest version otherwise, and `registeredAt` is the UTC time of the call. `--inputs` is split on commas, and each item is trimmed. `--source` is recorded as given, not copied. `--url` must be an http or https URL. The result contains `manifestPath` and the new `entry`.
 - **`record-index`** stores the published index page's URL as the manifest's `indexUrl`, which later registrations keep. The result contains `manifestPath` and `indexUrl`.
 - **`render`** writes the index page to `--out`. The result contains `path`, `bytes`, `cards`, `title`, `indexUrl`, `missingShots` (slugs whose recorded screenshot is missing from disk), and a `warning` when the page exceeds 12,000,000 bytes. Above 16,000,000 bytes, the artifact page cap, `render` writes nothing and returns `page-too-large`.
 
@@ -41,8 +41,7 @@ A slug matches `[a-z0-9][a-z0-9-]{0,39}`, so that it serves as a file stem and a
       "lens": "information density",
       "inputs": ["ticket", "sketch"],
       "description": "Packs the toolbar into one row.",
-      "shot": "shots/dense-v1.png",
-      "downsized": true
+      "shot": "shots/dense-v1.png"
     }
   ]
 }
@@ -52,7 +51,7 @@ A slug matches `[a-z0-9][a-z0-9-]{0,39}`, so that it serves as a file stem and a
 
 ## Screenshots
 
-`--screenshot` must be a PNG file. The helper stores it as `shots/{slug}-v{version}.png`. A capture wider than 640px is downsized through `sips --resampleWidth 640`; when `sips` cannot be started or fails, the helper stores the original, sets `downsized: false`, and says why in `warning`. Inside the agent sandbox, `sips` fails because it cannot write its temporary file. `render` embeds each stored screenshot as a `data:image/png;base64` URI.
+`--screenshot` must be a PNG file. The helper stores it unchanged as `shots/{slug}-v{version}.png`, and `render` embeds each stored screenshot as a `data:image/png;base64` URI. The skill captures at 1280×800 CSS pixels, which the page shows in cards at least 480px wide.
 
 ## Index page
 

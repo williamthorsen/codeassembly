@@ -190,7 +190,6 @@ function buildEntry(fields: Partial<ManifestEntry> & { slug: string }): Manifest
     inputs: [],
     description: null,
     shot: null,
-    downsized: false,
     ...fields,
   };
 }

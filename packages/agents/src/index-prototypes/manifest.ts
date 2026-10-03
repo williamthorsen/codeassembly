@@ -118,8 +118,7 @@ function isManifestEntry(value: unknown): value is ManifestEntry {
     Array.isArray(value.inputs) &&
     value.inputs.every((input) => typeof input === 'string') &&
     isNullableString(value.description) &&
-    isNullableString(value.shot) &&
-    typeof value.downsized === 'boolean'
+    isNullableString(value.shot)
   );
 }
 
