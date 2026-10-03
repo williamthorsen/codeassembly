@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
+import { type CommandRunner, intakeScreenshot } from './intake-screenshot.ts';
 import { isValidSlug, nextVersion, readManifest, writeManifest } from './manifest.ts';
 import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry } from './types.ts';
 
@@ -21,6 +22,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'description', takesValue: true },
   { name: 'inputs', takesValue: true },
   { name: 'lens', takesValue: true },
+  { name: 'screenshot', takesValue: true },
   { name: 'set-dir', takesValue: true },
   { name: 'set-title', takesValue: true },
   { name: 'slug', takesValue: true },
@@ -33,7 +35,7 @@ const COMMAND_FLAGS: Record<Command, { required: readonly string[]; optional: re
   'record-index': { required: ['set-dir', 'url'], optional: [] },
   register: {
     required: ['set-dir', 'slug', 'title', 'url'],
-    optional: ['description', 'inputs', 'lens', 'set-title', 'source'],
+    optional: ['description', 'inputs', 'lens', 'screenshot', 'set-title', 'source'],
   },
 };
 
@@ -70,6 +72,7 @@ if (isEntryPoint()) {
 export async function runIndexPrototypes(input: {
   argv: readonly string[];
   now: Date;
+  runner?: CommandRunner;
 }): Promise<IndexPrototypesResult> {
   let args: ParsedArgs;
   try {
@@ -83,7 +86,7 @@ export async function runIndexPrototypes(input: {
     case 'record-index':
       return recordIndex(setDir, requireFlag(args.values, 'url'));
     case 'register':
-      return register(setDir, args.values, input.now);
+      return register(setDir, args.values, input.now, input.runner);
     default: {
       const _exhaustive: never = args.command;
       throw new Error(`unhandled command: ${String(_exhaustive)}`);
@@ -195,7 +198,12 @@ async function recordIndex(setDir: string, url: string): Promise<IndexPrototypes
 }
 
 /** Adds a registration to the set's manifest, creating the manifest on the set's first registration. */
-async function register(setDir: string, values: Record<string, string>, now: Date): Promise<IndexPrototypesResult> {
+async function register(
+  setDir: string,
+  values: Record<string, string>,
+  now: Date,
+  runner: CommandRunner | undefined,
+): Promise<IndexPrototypesResult> {
   const slug = requireFlag(values, 'slug');
   if (!isValidSlug(slug)) {
     return fail('invalid-slug', `slug "${slug}" must match [a-z0-9][a-z0-9-]{0,39}`);
@@ -215,9 +223,28 @@ async function register(setDir: string, values: Record<string, string>, now: Dat
     return fail('missing-set-title', 'the first registration in a set requires --set-title');
   }
 
+  const version = nextVersion(existing, slug);
+  let shot: string | null = null;
+  let downsized = false;
+  let warning: string | undefined;
+  const screenshot = values.screenshot;
+  if (screenshot !== undefined) {
+    const intake = await intakeScreenshot({
+      sourcePath: path.resolve(screenshot),
+      setDir,
+      slug,
+      version,
+      ...(runner !== undefined && { runner }),
+    });
+    if (!intake.ok) {
+      return fail(intake.error, intake.message);
+    }
+    ({ shot, downsized, warning } = intake);
+  }
+
   const entry: ManifestEntry = {
     slug,
-    version: nextVersion(existing, slug),
+    version,
     registeredAt: now.toISOString(),
     title: requireFlag(values, 'title'),
     url,
@@ -225,8 +252,8 @@ async function register(setDir: string, values: Record<string, string>, now: Dat
     lens: values.lens ?? null,
     inputs: parseInputs(values.inputs),
     description: values.description ?? null,
-    shot: null,
-    downsized: false,
+    shot,
+    downsized,
   };
 
   const manifest: Manifest = {
@@ -235,7 +262,7 @@ async function register(setDir: string, values: Record<string, string>, now: Dat
     entries: [...(existing?.entries ?? []), entry],
   };
   const manifestPath = await writeManifest(setDir, manifest);
-  return { ok: true, command: 'register', manifestPath, entry };
+  return { ok: true, command: 'register', manifestPath, entry, ...(warning !== undefined && { warning }) };
 }
 
 /** Returns a required flag's value, which `parseArgs` has already guaranteed. */

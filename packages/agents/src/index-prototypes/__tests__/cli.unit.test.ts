@@ -1,10 +1,12 @@
-import { mkdtemp, readFile } from 'node:fs/promises';
+import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runIndexPrototypes } from '../cli.ts';
+import type { CommandRunner } from '../intake-screenshot.ts';
+import { buildPng } from '../test-utils/build-png.ts';
 
 const NOW = new Date('2026-10-03T01:19:36.000Z');
 
@@ -161,6 +163,98 @@ describe(runIndexPrototypes, () => {
     });
 
     expect(result).toMatchObject({ ok: false, error: 'invalid-url' });
+  });
+
+  it("stores a screenshot under the registration's version and records it on the entry", async () => {
+    const setDir = await makeSetDir();
+    const capture = path.join(setDir, 'capture.png');
+    await writeFile(capture, buildPng(1_280, 2));
+    const runner: CommandRunner = async (argv) => {
+      await writeFile(argv[4] ?? '', buildPng(640, 1));
+      return { status: 0, stderr: '' };
+    };
+    await register(setDir, 'a', NOW, ['--set-title', 'Set']);
+
+    const result = await runIndexPrototypes({
+      argv: [
+        'register',
+        '--set-dir',
+        setDir,
+        '--slug',
+        'a',
+        '--title',
+        'A',
+        '--url',
+        'https://x.test/a',
+        '--screenshot',
+        capture,
+      ],
+      now: LATER,
+      runner,
+    });
+
+    expect(result).toMatchObject({
+      ok: true,
+      entry: { version: 2, shot: path.join('shots', 'a-v2.png'), downsized: true },
+    });
+    expect(result).not.toHaveProperty('warning');
+  });
+
+  it('reports the intake warning on the result', async () => {
+    const setDir = await makeSetDir();
+    const capture = path.join(setDir, 'capture.png');
+    await writeFile(capture, buildPng(1_280, 2));
+    const runner: CommandRunner = () => Promise.resolve({ status: null, stderr: '' });
+
+    const result = await runIndexPrototypes({
+      argv: [
+        'register',
+        '--set-dir',
+        setDir,
+        '--set-title',
+        'S',
+        '--slug',
+        'a',
+        '--title',
+        'A',
+        '--url',
+        'https://x.test/a',
+        '--screenshot',
+        capture,
+      ],
+      now: NOW,
+      runner,
+    });
+
+    expect(result).toMatchObject({ ok: true, entry: { downsized: false }, warning: expect.stringMatching(/sips/) });
+  });
+
+  it('refuses a screenshot that is not a PNG without writing the manifest', async () => {
+    const setDir = await makeSetDir();
+    const capture = path.join(setDir, 'capture.jpg');
+    await writeFile(capture, 'not a png at all, but long enough');
+
+    const result = await runIndexPrototypes({
+      argv: [
+        'register',
+        '--set-dir',
+        setDir,
+        '--set-title',
+        'S',
+        '--slug',
+        'a',
+        '--title',
+        'A',
+        '--url',
+        'https://x.test/a',
+        '--screenshot',
+        capture,
+      ],
+      now: NOW,
+    });
+
+    expect(result).toMatchObject({ ok: false, error: 'not-png' });
+    await expect(readFile(path.join(setDir, 'manifest.json'), 'utf8')).rejects.toThrow(/ENOENT/);
   });
 
   it('records the index URL in the manifest', async () => {
