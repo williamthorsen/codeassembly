@@ -20,4 +20,4 @@ The root entry does not import any Node.js API, so a browser build can use its t
 | `./parsers`  | `parseRunData()`, and `parseRunRawData()` for a v3 run's header and events before folding | Node.js     |
 | `./scanners` | `discoverRunDirectories()` and `validateRunDirectory()`                                   | Node.js     |
 
-The `run-index.json` format is specified in [artifact conventions](https://github.com/williamthorsen/codeassembly/blob/main/packages/agents/content/skills/_data/artifact-conventions.md#run-indexjson).
+The `run-index.json` format is specified in [artifact conventions](https://github.com/williamthorsen/codeassembly/blob/main/packages/guidance/content/skills/_data/artifact-conventions.md#run-indexjson).

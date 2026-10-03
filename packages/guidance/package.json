@@ -1,0 +1,65 @@
+{
+  "name": "codeassembly-guidance",
+  "version": "0.0.0",
+  "description": "The CodeAssembly library of agent guidance: rulebooks, skills, and subagents that the codeassembly CLI deploys",
+  "keywords": [
+    "agents",
+    "ai",
+    "claude-code",
+    "rulebooks",
+    "skills"
+  ],
+  "homepage": "https://github.com/williamthorsen/codeassembly/tree/main/packages/guidance#readme",
+  "bugs": {
+    "url": "https://github.com/williamthorsen/codeassembly/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamthorsen/codeassembly.git",
+    "directory": "packages/guidance"
+  },
+  "license": "ISC",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "content",
+    "!content/**/__tests__",
+    "!content/test-utils"
+  ],
+  "scripts": {
+    "build": "codeassembly bundle-helpers",
+    "check:content": "codeassembly validate && codeassembly bundle-helpers --check",
+    "check:post": "pnpm run check:content",
+    "check:strict:post": "pnpm run check:content",
+    "test:post": "pnpm run test:sh && pnpm run test:smoke",
+    "test:sh": "bash scripts/test-sh.sh",
+    "test:smoke": "node scripts/__tests__/smoke-test-skill-helpers.ts"
+  },
+  "devDependencies": {
+    "@hyperjump/json-schema": "1.17.8",
+    "@types/jsdom": "30.0.0",
+    "@types/node": "catalog:",
+    "@williamthorsen/kb": "workspace:*",
+    "@williamthorsen/nmr": "catalog:",
+    "@williamthorsen/toolbelt.errors": "catalog:",
+    "@williamthorsen/toolbelt.terminal": "catalog:",
+    "codeassembly": "workspace:*",
+    "esbuild": "catalog:",
+    "eslint": "catalog:",
+    "jsdom": "catalog:",
+    "ulid": "3.0.2",
+    "vitest": "catalog:",
+    "yaml": "catalog:",
+    "zod": "catalog:"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "codeassembly": {
+    "content": "content"
+  }
+}

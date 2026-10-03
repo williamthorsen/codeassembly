@@ -218,7 +218,7 @@ describe(resolveDeclaredSources, () => {
 
       expect(error.message).toContain(path.join(root, '.agents', 'codeassembly.yaml'));
       expect(error.message).toContain(path.join(root, '.agents', 'codeassembly.local.yaml'));
-      expect(error.message).toContain('sources:\n  - name: codeassembly\n    path: ');
+      expect(error.message).toContain('sources:\n  - name: codeassembly-guidance\n    path: ');
     });
   });
 });

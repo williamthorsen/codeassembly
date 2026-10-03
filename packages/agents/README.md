@@ -19,8 +19,8 @@ Uncomment the `sources:` entry in `~/.agents/codeassembly.yaml` and point it at 
 
 ```yaml
 sources:
-  - name: codeassembly
-    path: ~/repos/codeassembly/packages/agents/content
+  - name: codeassembly-guidance
+    path: ~/repos/codeassembly/packages/guidance/content
 ```
 
 Then deploy:

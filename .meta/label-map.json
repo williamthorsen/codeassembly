@@ -20,10 +20,8 @@
   "scopes": {
     "agents": "scope:agents",
     "factory": "scope:factory",
-    "fleet": "scope:fleet",
-    "foreman": "scope:foreman",
+    "guidance": "scope:guidance",
     "kb": "scope:kb",
-    "lifecycle": "scope:lifecycle",
     "mcp": "scope:mcp",
     "run-core": "scope:run-core",
     "root": "scope:root"

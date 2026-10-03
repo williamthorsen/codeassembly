@@ -181,12 +181,12 @@ The resolver follows `members:` and `dependencies:` identically; the split is se
 
 ## Sources
 
-A declared artifact resolves from the content directories that the declaration names, and from nowhere else. A top-level `sources:` list names them (a clone of the CodeAssembly library, a machine-local directory, a project-local one, or a third-party guidance repo), each structured like `packages/agents/content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`); a package adopted via [`packages`](#packages) is a source too. `sync`, `sync --global`, and `install` stop before writing anything, `--dry-run` included, when the governing chain declares no source, or when none of the declared sources has a directory, and the message names the file that the declaration belongs in. A project resolves from its own chain alone, never from the sources that the home chain declares, so a project deploys the same content on every machine.
+A declared artifact resolves from the content directories that the declaration names, and from nowhere else. A top-level `sources:` list names them (a clone of the CodeAssembly library, a machine-local directory, a project-local one, or a third-party guidance repo), each structured like `packages/guidance/content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`); a package adopted via [`packages`](#packages) is a source too. `sync`, `sync --global`, and `install` stop before writing anything, `--dry-run` included, when the governing chain declares no source, or when none of the declared sources has a directory, and the message names the file that the declaration belongs in. A project resolves from its own chain alone, never from the sources that the home chain declares, so a project deploys the same content on every machine.
 
 ```yaml
 sources:
-  - name: codeassembly
-    path: ~/repos/codeassembly/packages/agents/content
+  - name: codeassembly-guidance
+    path: ~/repos/codeassembly/packages/guidance/content
   - name: org-guidance
     path: ../shared-guidance
   - name: personal
@@ -235,7 +235,7 @@ Upgrading an already-declared package is the other case. Its catalog is read fro
 
 ### Shipping guidance from a package
 
-A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like `packages/agents/content/`:
+A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like `packages/guidance/content/`:
 
 ```json
 {

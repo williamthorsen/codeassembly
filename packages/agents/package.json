@@ -41,13 +41,9 @@
     "!dist/content"
   ],
   "scripts": {
-    "build:post": "node bin/codeassembly.js bundle-helpers --content content && node scripts/add-cli-shebang.ts && rdy compile",
+    "build:post": "node scripts/add-cli-shebang.ts && rdy compile",
     "build:pre": "rdy verify",
-    "check-bundles": "node bin/codeassembly.js bundle-helpers --content content --check",
-    "prepublishOnly": "nmr build",
-    "test:post": "pnpm run test:sh && pnpm run test:smoke",
-    "test:sh": "bash scripts/test-sh.sh",
-    "test:smoke": "node scripts/__tests__/smoke-test-skill-helpers.ts"
+    "prepublishOnly": "nmr build"
   },
   "dependencies": {
     "@williamthorsen/kb": "workspace:*",

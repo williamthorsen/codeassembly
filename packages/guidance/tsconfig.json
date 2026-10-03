@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../tsconfig.json",
+  // prettier-ignore
+  "include": [
+    // A suite covering the whole package sits at its root, since no one directory contains what it reads.
+    "__tests__/**/*.ts",
+    // Content-convention suites sit beside the content tree they cover.
+    "content/__tests__/**/*.ts",
+    "content/test-utils/**/*.ts",
+    "scripts/",
+    "src/",
+    "*.ts",
+  ],
+}

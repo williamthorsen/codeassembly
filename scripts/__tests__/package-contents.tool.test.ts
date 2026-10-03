@@ -11,19 +11,20 @@ import { describe, expect, it } from 'vitest';
  */
 const requiredPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
   codeassembly: ['dist/esm/cli.js'],
+  'codeassembly-guidance': ['content/codeassembly-content.yaml'],
 };
 
-/** Paths that a named package must not include, matched by prefix as `requiredPaths` is. */
-const excludedPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
-  codeassembly: ['dist/content/'],
-};
-
-describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, name }) => {
+describe.each(findPublishablePackages())('$name packs correctly', ({ bins, contentDir, dir, name }) => {
   const packed = readPackedPaths(dir);
 
   it('includes build output', () => {
+    // A content package's build output is the helper bundles inside its content directory rather than `dist/`.
+    const isBuildOutput = (entry: string): boolean =>
+      contentDir === undefined
+        ? entry.startsWith('dist/')
+        : entry.startsWith(`${contentDir}/`) && entry.endsWith('.mjs');
     expect(
-      packed.filter((entry) => entry.startsWith('dist/')),
+      packed.filter((entry) => isBuildOutput(entry)),
       `${name} doesn't pack any build output. Run \`nmr build\` before this suite.`,
     ).not.toHaveLength(0);
   });
@@ -34,10 +35,6 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, 
 
   it.each(requiredPaths[name] ?? [])('includes %s', (required) => {
     expect(packed.filter((entry) => entry.startsWith(required))).not.toHaveLength(0);
-  });
-
-  it.each(excludedPaths[name] ?? [])('excludes %s', (excluded) => {
-    expect(packed.filter((entry) => entry.startsWith(excluded))).toEqual([]);
   });
 
   it('excludes the TypeScript sources', () => {
@@ -53,9 +50,10 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, 
 
 // region | Helpers
 
-/** One workspace package that publishes, with the bin paths declared by its manifest. */
+/** One workspace package that publishes, with the bin paths and the content directory declared by its manifest. */
 interface PublishablePackage {
   readonly bins: ReadonlyArray<string>;
+  readonly contentDir: string | undefined;
   readonly dir: string;
   readonly name: string;
 }
@@ -75,7 +73,7 @@ function findPublishablePackages(): ReadonlyArray<PublishablePackage> {
     if (isPrivate || name === undefined) {
       return [];
     }
-    return [{ bins: readBinPaths(manifest), dir, name }];
+    return [{ bins: readBinPaths(manifest), contentDir: readContentDir(manifest), dir, name }];
   });
   return packages.toSorted((a, b) => a.name.localeCompare(b.name));
 }
@@ -94,6 +92,15 @@ function readBinPaths(manifest: object): ReadonlyArray<string> {
   }
   const targets: ReadonlyArray<unknown> = Object.values(bin);
   return targets.filter((target): target is string => typeof target === 'string');
+}
+
+/** Reads the content directory that a manifest declares under `codeassembly.content`, if any. */
+function readContentDir(manifest: object): string | undefined {
+  if (!('codeassembly' in manifest) || typeof manifest.codeassembly !== 'object' || manifest.codeassembly === null) {
+    return undefined;
+  }
+  const { codeassembly } = manifest;
+  return 'content' in codeassembly && typeof codeassembly.content === 'string' ? codeassembly.content : undefined;
 }
 
 /**

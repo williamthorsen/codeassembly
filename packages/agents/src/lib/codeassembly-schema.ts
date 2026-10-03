@@ -18,7 +18,7 @@ export const EntrySchema = z
 const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose());
 
 /**
- * A declared content source: a named directory structured like `packages/agents/content/`. Both `name` and `path` are
+ * A declared content source: a named directory structured like `packages/guidance/content/`. Both `name` and `path` are
  * required; unknown keys pass through (`.loose()`) so that a later cut can add per-source config without a breaking
  * change, mirroring `EntrySchema`.
  */

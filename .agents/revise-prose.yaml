@@ -26,141 +26,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -178,6 +59,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -244,141 +250,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -396,6 +283,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -462,141 +474,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -614,6 +507,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -680,141 +698,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -832,6 +731,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -898,47 +922,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -956,6 +955,37 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -1021,24 +1051,8 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/merge-pr/SKILL.md
-      - packages/agents/src/capture-event
-      - packages/agents/src/derive-session-context
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/update-jira-ticket
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -1055,6 +1069,22 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/merge-pr/SKILL.md
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -1121,141 +1151,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -1273,6 +1184,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -1339,141 +1375,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -1491,6 +1408,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -1557,141 +1599,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -1709,6 +1632,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -1775,141 +1823,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -1927,6 +1856,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE
@@ -1993,141 +2047,22 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents/.meta
-      - packages/agents/.prettierignore
       - packages/agents/.readyup
-      - packages/agents/.shellspec
       - packages/agents/LICENSE
       - packages/agents/README.md
       - packages/agents/__tests__
       - packages/agents/bin
-      - packages/agents/content/__tests__
-      - packages/agents/content/_partials
-      - packages/agents/content/codeassembly-content.yaml
-      - packages/agents/content/collections
-      - packages/agents/content/guidance
-      - packages/agents/content/scripts
-      - packages/agents/content/skills/_data/action-items.md
-      - packages/agents/content/skills/_data/artifact-conventions.md
-      - packages/agents/content/skills/_data/bitbucket-pr-access.md
-      - packages/agents/content/skills/_data/branch-format.md
-      - packages/agents/content/skills/_data/change-record.md
-      - packages/agents/content/skills/_data/complexity-classification.md
-      - packages/agents/content/skills/_data/concision.md
-      - packages/agents/content/skills/_data/deployed-file-provenance.md
-      - packages/agents/content/skills/_data/design-priorities.md
-      - packages/agents/content/skills/_data/gh-body-file.md
-      - packages/agents/content/skills/_data/git-commands.md
-      - packages/agents/content/skills/_data/naming-conventions.md
-      - packages/agents/content/skills/_data/pr-resolution.md
-      - packages/agents/content/skills/_data/pr-source-resolution.md
-      - packages/agents/content/skills/_data/recommendation-gradient.md
-      - packages/agents/content/skills/_data/scope-and-deferral.md
-      - packages/agents/content/skills/_data/spike-conventions.md
-      - packages/agents/content/skills/_data/ticket-evaluation.md
-      - packages/agents/content/skills/_data/ticket-id-extraction.md
-      - packages/agents/content/skills/_data/ticket-source-resolution.md
-      - packages/agents/content/skills/_data/title-templates.md
-      - packages/agents/content/skills/_data/title-voice.md
-      - packages/agents/content/skills/_data/work-types.json
-      - packages/agents/content/skills/_partials
-      - packages/agents/content/skills/add-test-ids
-      - packages/agents/content/skills/align-ticket-with-implementation
-      - packages/agents/content/skills/anti-patterns
-      - packages/agents/content/skills/assess-ticket
-      - packages/agents/content/skills/brainstorming
-      - packages/agents/content/skills/capture-event
-      - packages/agents/content/skills/capture-feedback
-      - packages/agents/content/skills/capture-lede-decision
-      - packages/agents/content/skills/classify-complexity
-      - packages/agents/content/skills/collaborate
-      - packages/agents/content/skills/condense-branch
-      - packages/agents/content/skills/create-bitbucket-pr
-      - packages/agents/content/skills/create-commit
-      - packages/agents/content/skills/create-devlog
-      - packages/agents/content/skills/create-gh-pr
-      - packages/agents/content/skills/create-pr
-      - packages/agents/content/skills/create-ticket
-      - packages/agents/content/skills/derive-session-context
-      - packages/agents/content/skills/design-and-plan
-      - packages/agents/content/skills/development-workflows
-      - packages/agents/content/skills/emit-event
-      - packages/agents/content/skills/find-orchestration-savings
-      - packages/agents/content/skills/get-ticket-id
-      - packages/agents/content/skills/implement-plan
-      - packages/agents/content/skills/kb-add
-      - packages/agents/content/skills/kb-curate
-      - packages/agents/content/skills/kb-edit
-      - packages/agents/content/skills/kb-retrieve
-      - packages/agents/content/skills/kb-retrieve-events
-      - packages/agents/content/skills/kb-update-events
-      - packages/agents/content/skills/merge-bb-pr
-      - packages/agents/content/skills/merge-gh-pr
-      - packages/agents/content/skills/merge-pr
-      - packages/agents/content/skills/migrate-feedback-memories
-      - packages/agents/content/skills/orchestrate
-      - packages/agents/content/skills/orchestrate-dev
-      - packages/agents/content/skills/orchestrate-review
-      - packages/agents/content/skills/people-report
-      - packages/agents/content/skills/plan
-      - packages/agents/content/skills/plan-orchestrable-steps
-      - packages/agents/content/skills/refine-plan
-      - packages/agents/content/skills/respond-to-review
-      - packages/agents/content/skills/review-bb-pr
-      - packages/agents/content/skills/review-branch
-      - packages/agents/content/skills/review-criteria
-      - packages/agents/content/skills/review-gh-pr
-      - packages/agents/content/skills/review-permissions
-      - packages/agents/content/skills/review-pr
-      - packages/agents/content/skills/revise-comments
-      - packages/agents/content/skills/revise-prose
-      - packages/agents/content/skills/save-artifact
-      - packages/agents/content/skills/save-plan
-      - packages/agents/content/skills/software-engineering
-      - packages/agents/content/skills/streamline-guidance
-      - packages/agents/content/skills/summarize-change
-      - packages/agents/content/skills/summarize-chat
-      - packages/agents/content/skills/systematic-debugging
-      - packages/agents/content/skills/testing-conventions
-      - packages/agents/content/skills/typescript-testing-conventions
-      - packages/agents/content/skills/update-jira-ticket
-      - packages/agents/content/skills/update-project-guidance
-      - packages/agents/content/skills/upgrade-dependencies
-      - packages/agents/content/skills/wrap-up
-      - packages/agents/content/subagents
-      - packages/agents/content/test-utils
       - packages/agents/docs
       - packages/agents/eslint.config.ts
       - packages/agents/package.json
-      - packages/agents/schemas
       - packages/agents/scripts
-      - packages/agents/spec
       - packages/agents/src/__tests__
-      - packages/agents/src/capture-event
-      - packages/agents/src/capture-lede-decision
-      - packages/agents/src/change-grammar
       - packages/agents/src/cli.ts
       - packages/agents/src/commands
-      - packages/agents/src/derive-session-context
-      - packages/agents/src/describe-change
       - packages/agents/src/emit-event
-      - packages/agents/src/feedback-memories
-      - packages/agents/src/kb-add
-      - packages/agents/src/kb-curate
-      - packages/agents/src/kb-edit
-      - packages/agents/src/kb-retrieve
-      - packages/agents/src/kb-retrieve-events
-      - packages/agents/src/kb-search
-      - packages/agents/src/kb-shared
-      - packages/agents/src/kb-update-events
-      - packages/agents/src/lede-corpus
       - packages/agents/src/lib
       - packages/agents/src/relay-hook-event
-      - packages/agents/src/revise-prose
-      - packages/agents/src/select-lede-exemplars
       - packages/agents/src/shared
-      - packages/agents/src/streamline-guidance
-      - packages/agents/src/test-utils
-      - packages/agents/src/update-jira-ticket
       - packages/agents/tsconfig.json
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
@@ -2145,6 +2080,131 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/LICENSE
+      - packages/guidance/content/__tests__
+      - packages/guidance/content/_partials
+      - packages/guidance/content/codeassembly-content.yaml
+      - packages/guidance/content/collections
+      - packages/guidance/content/guidance
+      - packages/guidance/content/scripts
+      - packages/guidance/content/skills/_data/action-items.md
+      - packages/guidance/content/skills/_data/artifact-conventions.md
+      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
+      - packages/guidance/content/skills/_data/branch-format.md
+      - packages/guidance/content/skills/_data/change-record.md
+      - packages/guidance/content/skills/_data/complexity-classification.md
+      - packages/guidance/content/skills/_data/concision.md
+      - packages/guidance/content/skills/_data/deployed-file-provenance.md
+      - packages/guidance/content/skills/_data/design-priorities.md
+      - packages/guidance/content/skills/_data/gh-body-file.md
+      - packages/guidance/content/skills/_data/git-commands.md
+      - packages/guidance/content/skills/_data/naming-conventions.md
+      - packages/guidance/content/skills/_data/pr-resolution.md
+      - packages/guidance/content/skills/_data/pr-source-resolution.md
+      - packages/guidance/content/skills/_data/recommendation-gradient.md
+      - packages/guidance/content/skills/_data/scope-and-deferral.md
+      - packages/guidance/content/skills/_data/spike-conventions.md
+      - packages/guidance/content/skills/_data/ticket-evaluation.md
+      - packages/guidance/content/skills/_data/ticket-id-extraction.md
+      - packages/guidance/content/skills/_data/ticket-source-resolution.md
+      - packages/guidance/content/skills/_data/title-templates.md
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/_data/work-types.json
+      - packages/guidance/content/skills/_partials
+      - packages/guidance/content/skills/add-test-ids
+      - packages/guidance/content/skills/align-ticket-with-implementation
+      - packages/guidance/content/skills/anti-patterns
+      - packages/guidance/content/skills/assess-ticket
+      - packages/guidance/content/skills/brainstorming
+      - packages/guidance/content/skills/capture-event
+      - packages/guidance/content/skills/capture-feedback
+      - packages/guidance/content/skills/capture-lede-decision
+      - packages/guidance/content/skills/classify-complexity
+      - packages/guidance/content/skills/collaborate
+      - packages/guidance/content/skills/condense-branch
+      - packages/guidance/content/skills/create-bitbucket-pr
+      - packages/guidance/content/skills/create-commit
+      - packages/guidance/content/skills/create-devlog
+      - packages/guidance/content/skills/create-gh-pr
+      - packages/guidance/content/skills/create-pr
+      - packages/guidance/content/skills/create-ticket
+      - packages/guidance/content/skills/derive-session-context
+      - packages/guidance/content/skills/design-and-plan
+      - packages/guidance/content/skills/development-workflows
+      - packages/guidance/content/skills/emit-event
+      - packages/guidance/content/skills/find-orchestration-savings
+      - packages/guidance/content/skills/get-ticket-id
+      - packages/guidance/content/skills/implement-plan
+      - packages/guidance/content/skills/kb-add
+      - packages/guidance/content/skills/kb-curate
+      - packages/guidance/content/skills/kb-edit
+      - packages/guidance/content/skills/kb-retrieve
+      - packages/guidance/content/skills/kb-retrieve-events
+      - packages/guidance/content/skills/kb-update-events
+      - packages/guidance/content/skills/merge-bb-pr
+      - packages/guidance/content/skills/merge-gh-pr
+      - packages/guidance/content/skills/merge-pr
+      - packages/guidance/content/skills/migrate-feedback-memories
+      - packages/guidance/content/skills/orchestrate
+      - packages/guidance/content/skills/orchestrate-dev
+      - packages/guidance/content/skills/orchestrate-review
+      - packages/guidance/content/skills/people-report
+      - packages/guidance/content/skills/plan
+      - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/refine-plan
+      - packages/guidance/content/skills/respond-to-review
+      - packages/guidance/content/skills/review-bb-pr
+      - packages/guidance/content/skills/review-branch
+      - packages/guidance/content/skills/review-criteria
+      - packages/guidance/content/skills/review-gh-pr
+      - packages/guidance/content/skills/review-permissions
+      - packages/guidance/content/skills/review-pr
+      - packages/guidance/content/skills/revise-comments
+      - packages/guidance/content/skills/revise-prose
+      - packages/guidance/content/skills/save-artifact
+      - packages/guidance/content/skills/save-plan
+      - packages/guidance/content/skills/software-engineering
+      - packages/guidance/content/skills/streamline-guidance
+      - packages/guidance/content/skills/summarize-change
+      - packages/guidance/content/skills/summarize-chat
+      - packages/guidance/content/skills/systematic-debugging
+      - packages/guidance/content/skills/testing-conventions
+      - packages/guidance/content/skills/typescript-testing-conventions
+      - packages/guidance/content/skills/update-jira-ticket
+      - packages/guidance/content/skills/update-project-guidance
+      - packages/guidance/content/skills/upgrade-dependencies
+      - packages/guidance/content/skills/wrap-up
+      - packages/guidance/content/subagents
+      - packages/guidance/content/test-utils
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/schemas
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src/capture-event
+      - packages/guidance/src/capture-lede-decision
+      - packages/guidance/src/change-grammar
+      - packages/guidance/src/derive-session-context
+      - packages/guidance/src/describe-change
+      - packages/guidance/src/feedback-memories
+      - packages/guidance/src/kb-add
+      - packages/guidance/src/kb-curate
+      - packages/guidance/src/kb-edit
+      - packages/guidance/src/kb-retrieve
+      - packages/guidance/src/kb-retrieve-events
+      - packages/guidance/src/kb-search
+      - packages/guidance/src/kb-shared
+      - packages/guidance/src/kb-update-events
+      - packages/guidance/src/lede-corpus
+      - packages/guidance/src/lib
+      - packages/guidance/src/revise-prose
+      - packages/guidance/src/select-lede-exemplars
+      - packages/guidance/src/shared
+      - packages/guidance/src/streamline-guidance
+      - packages/guidance/src/test-utils
+      - packages/guidance/src/update-jira-ticket
       - packages/kb/.meta
       - packages/kb/.prettierignore
       - packages/kb/LICENSE

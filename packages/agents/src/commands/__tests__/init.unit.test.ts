@@ -174,14 +174,17 @@ describe(initGlobalCommand, () => {
 
     const content = await readFile(declarationPath(), 'utf8');
     const uncommented = content.replace(
-      '# sources:\n#   - name: codeassembly\n#     path: ',
-      'sources:\n  - name: codeassembly\n    path: ',
+      '# sources:\n#   - name: codeassembly-guidance\n#     path: ',
+      'sources:\n  - name: codeassembly-guidance\n    path: ',
     );
     expect(uncommented).not.toBe(content);
     await writeFile(declarationPath(), uncommented, 'utf8');
 
     expect((await resolveDeclaration({ cwd: homeDir }))?.sources).toEqual([
-      { name: 'codeassembly', dir: path.join(homedir(), 'repos', 'codeassembly', 'packages', 'agents', 'content') },
+      {
+        name: 'codeassembly-guidance',
+        dir: path.join(homedir(), 'repos', 'codeassembly', 'packages', 'guidance', 'content'),
+      },
     ]);
   });
 
