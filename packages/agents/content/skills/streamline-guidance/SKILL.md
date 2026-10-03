@@ -1,12 +1,12 @@
 ---
 name: streamline-guidance
-description: Reduce bloat in guidance files (skills, subagents, rulebooks, partials, AGENTS.md) in gradual steps, proposing cuts at a chosen level, applying the approved ones, and recording the declined ones
+description: Reduce bloat in guidance files (skills, subagents, rulebooks, partials, AGENTS.md) in gradual steps, proposing cuts at a chosen level, applying the approved ones, and recording the review and the declined ones
 user-invocable: true
 ---
 
 # Streamline guidance
 
-Cut the bloat from guidance files without weakening what they direct. A bundled helper does the mechanical work: It resolves the files that a run may cut, reports the evidence against each candidate cut, and records the cuts that the user declines. You make the judgment calls: what is a candidate, whether the evidence rules it out, and which candidates to propose.
+Cut the bloat from guidance files without weakening what they direct. A bundled helper does the mechanical work: It resolves the files that a run may cut, reports the evidence against each candidate cut, and records each run's review and the cuts that the user declines. You make the judgment calls: what is a candidate, whether the evidence rules it out, and which candidates to propose.
 
 The effect of a cut on agent behavior cannot be measured directly, so the level sets how much evidence a cut needs, and the lowest levels let a run take one small step at a time. Every cut is proposed before any file changes.
 
@@ -46,7 +46,7 @@ At any level, in any file:
 - The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since every description loads into the skill index of every session.
 - Text inside a generated region, which the next deployment rewrites.
 
-Do not edit any file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 8 updates.
+Do not edit any file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 7 updates.
 
 ## Process
 
@@ -62,13 +62,13 @@ The helper prints one JSON object. On failure it contains `ok: false`, an `error
 
 On success it contains:
 
-- `targets` and `transitive`: Each file's repository-relative `file`, its source `bytes`, its `deployedBytes`, whether it is `dirty`, and its `generatedRegions` as line ranges. `deployedBytes` is a document's size once its includes are expanded, and, for a file that deploys only inside the documents that include it, its own size times the number of documents that it reaches; it is absent for a file that deploys nothing. A target named as a deployed copy contains `redirectedFrom`, and its `file` is the source. A transitive file contains `via`, the edges by which a target reaches it: `include` or `link`.
+- `targets` and `transitive`: Each file's repository-relative `file`, its source `bytes`, its `deployedBytes`, whether it is `dirty`, and its `generatedRegions` as line ranges. `deployedBytes` is a document's size once its includes are expanded, and, for a file that deploys only inside the documents that include it, its own size times the number of documents that it reaches; it is absent for a file that deploys nothing. A target named as a deployed copy contains `redirectedFrom`, and its `file` is the source. A transitive file contains `via`, the edges by which a target reaches it: `include` or `link`. A file that an earlier run reviewed contains `lastReview`: that run's `reviewedAt` date and, when it was measured, the `deployedBytes` that the run left the file at.
 - `declined`: The cuts that the user declined on earlier runs whose text is still present, each with its `file`, `phrase`, and `class`.
 - `rejected`: Each named path that cannot be a target, with its `reason`.
 
 Report every rejected path and every redirect. Stop if `targets` is empty. Stop if any target or transitive file is `dirty`, and name those files: The run's commit must contain only the run's edits.
 
-Keep the `deployedBytes` of each file for the summary: A cut is worth what it removes from what an agent loads, which for a partial is its own saving times its reach.
+Keep the `deployedBytes` and `lastReview` of each file for the summary: A cut is worth what it removes from what an agent loads, which for a partial is its own saving times its reach.
 
 ### 2. Compose the candidates
 
@@ -103,40 +103,17 @@ Drop every candidate that touches an output shape or its skill-local reinforceme
 - At any level, propose at most two cuts in transitive files, ranked the same way.
 - Otherwise, propose every remaining candidate.
 
-If nothing remains, report that the files do not have any cut to propose at this level, then mark the review per step 5 and stop.
+If nothing remains, report that the files do not have any cut to propose at this level, then continue at step 8.
 
-### 5. Mark the review
-
-Record what this run read, whether or not it proposes or applies a cut. The marker sets the baseline against which a later deployment reports each document's growth, and a run that proposes nothing has still reviewed the files.
-
-```bash
-cat <<'EOF' | node {harness_home_dir}/skills/streamline-guidance/streamline-guidance.mjs mark
-{"reviewedAt":"{now}","files":["{file}"]}
-EOF
-```
-
-`reviewedAt` is the current instant as an ISO 8601 timestamp. `files` names every target and every transitive file from step 1: A transitive file is read whole, so it was reviewed. The result's `unrooted` names each file that is not in any content root, which the marker leaves out.
-
-### 6. Present the cuts
+### 5. Present the cuts
 
 Present one numbered table per [Cut table](#cut-table), then ask which rows to apply and which to decline, in the form `apply 1, 3; decline 2`. A row named in neither list is deferred: You do nothing with it, and a later run may propose it again.
 
-### 7. Apply and record
+### 6. Apply
 
-1. Apply each row named to apply with {tool:Edit}, phrase to phrase. Stop at the first edit that does not match, and report which row diverged.
-2. If any row was declined, compose the fold and pipe it to `record`, the only write path of `.agents/streamline-guidance.yaml`:
+Apply each row named to apply with {tool:Edit}, phrase to phrase. Stop at the first edit that does not match, and report which row diverged.
 
-   ```bash
-   cat <<'EOF' | node {harness_home_dir}/skills/streamline-guidance/streamline-guidance.mjs record
-   {"declinedAt":"{today}","declined":[{"file":"{file}","phrase":"{phrase}","class":"{class}"}]}
-   EOF
-   ```
-
-   `declinedAt` is today's ISO calendar date. Each `phrase` is the text as it reads in the file.
-
-If the run did not apply any row and the user did not decline any, skip to the summary.
-
-### 8. Bump versions and run the quality gate
+### 7. Bump versions and run the quality gate
 
 Skip this step if the run did not apply any row.
 
@@ -145,13 +122,25 @@ Skip this step if the run did not apply any row.
    - If it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone if the cuts did not change what the rulebook asks.
    - If it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again. If the restored cut was the only cut to change what its rulebook asks, also restore that rulebook's `version`, and its pin if this step updated it.
 
+### 8. Record the run
+
+Record what the run read and what the user declined, whether or not the run proposed or applied a cut: A run that proposes nothing has still reviewed the files. Pipe the fold to `record`, the only write path of `.agents/streamline-guidance.yaml`:
+
+```bash
+cat <<'EOF' | node {harness_home_dir}/skills/streamline-guidance/streamline-guidance.mjs record
+{"date":"{today}","declined":[{"file":"{file}","phrase":"{phrase}","class":"{class}"}],"reviewed":["{file}"]}
+EOF
+```
+
+`date` is today's ISO calendar date. `declined` lists each row that the user declined, its `phrase` as the text reads in the file, and is empty when the user declined none. `reviewed` names every target and every transitive file from step 1: A transitive file is read whole, so it was reviewed. `record` measures each reviewed file as it now stands, so the record states the size at which this run left it, the baseline for the growth that a later run reports.
+
 ### 9. Commit
 
-Commit per {skill:create-commit}, staging only the edited guidance files, any pin or version that step 8 updated, and the record. The body names each applied cut by file, class, and the text removed or reworded.
+Commit per {skill:create-commit}, staging only the edited guidance files, any pin or version that step 7 updated, and the record. The body names each applied cut by file, class, and the text removed or reworded; when the run applied none, the commit contains the record alone.
 
 ### 10. Emit the summary
 
-Emit the summary per [Summary format](#summary-format). For the sizes after the run, run `resolve` again with the same paths.
+Emit the summary per [Summary format](#summary-format). For the sizes after the run, run `resolve` again with the same paths; its `lastReview` now states this run, so take `Reviewed` and `Growth` from step 1.
 
 ## Cut table
 
@@ -170,16 +159,16 @@ Emit the summary per [Summary format](#summary-format). For the sizes after the 
 ```
 streamline-guidance summary (moderate)
 
-| File                 | Deployed before | Deployed after | Saved |
-| -------------------- | --------------- | -------------- | ----- |
-| skills/demo/SKILL.md | 11,048          | 10,872         | 176   |
-| _partials/shared.md  | 2,436           | 2,400          | 36    |
-| Total                | 13,484          | 13,272         | 212   |
+| File                 | Reviewed   | Growth | Deployed before | Deployed after | Saved |
+| -------------------- | ---------- | ------ | --------------- | -------------- | ----- |
+| skills/demo/SKILL.md | 2026-09-01 | +1,204 | 11,048          | 10,872         | 176   |
+| _partials/shared.md  | never      | n/a    | 2,436           | 2,400          | 36    |
+| Total                |            |        | 13,484          | 13,272         | 212   |
 
 Applied 2, declined 1, deferred 0.
 Follow-up: {skill?:revise-prose} skills/demo/SKILL.md
 ```
 
-List each target and each edited transitive file. A document's figure contains its partials' bytes, so a partial on a row of its own is counted in both. Name the follow-up only if a cut was applied.
+List each target and each edited transitive file. `Reviewed` is the date of the file's `lastReview` from step 1, or `never`. `Growth` is `Deployed before` less that review's `deployedBytes`, signed, or `n/a` without both figures. A document's figure contains its partials' bytes, so a partial on a row of its own is counted in both. Name the follow-up only if a cut was applied.
 
 <!-- include: ../_partials/action-items.md / -->

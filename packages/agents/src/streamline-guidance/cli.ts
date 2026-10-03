@@ -6,7 +6,7 @@
  * Each command writes its JSON result on stdout, and the helper does not edit any guidance: The agent applies every
  * cut through its own editing tool.
  */
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -16,17 +16,14 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { scanFlags } from '../lib/parse-flags.ts';
 import { checkCuts, parseCheckInput } from './check.ts';
-import { markReviewed, parseMarkInput } from './mark.ts';
 import { composeRecord, parseFold, parseRecord, RECORD_PATH, stringifyRecord } from './record.ts';
-import { findRepositoryRoot, NotARepositoryError, resolveGuidance } from './resolve.ts';
+import { findRepositoryRoot, measureDeployedBytes, NotARepositoryError, resolveGuidance } from './resolve.ts';
 import type {
   CheckInput,
   CheckSuccess,
-  DeclineFold,
-  DeclineRecord,
+  GuidanceRecord,
   HelperFailure,
-  MarkInput,
-  MarkSuccess,
+  RecordFold,
   RecordSuccess,
   ResolveSuccess,
 } from './types.ts';
@@ -80,20 +77,16 @@ export async function runCommand(input: {
   cwd: string;
   home: string;
   readStdin: () => Promise<string>;
-}): Promise<CheckSuccess | HelperFailure | MarkSuccess | RecordSuccess | ResolveSuccess> {
+}): Promise<CheckSuccess | HelperFailure | RecordSuccess | ResolveSuccess> {
   const [command, ...rest] = input.argv;
   switch (command) {
     case 'check':
       return rest.length === 0
         ? runCheck({ cwd: input.cwd, inputJson: await input.readStdin() })
         : rejectArguments('check');
-    case 'mark':
-      return rest.length === 0
-        ? runMark({ cwd: input.cwd, home: input.home, inputJson: await input.readStdin() })
-        : rejectArguments('mark');
     case 'record':
       return rest.length === 0
-        ? runRecord({ cwd: input.cwd, foldJson: await input.readStdin() })
+        ? await runRecord({ cwd: input.cwd, foldJson: await input.readStdin() })
         : rejectArguments('record');
     case 'resolve':
       return runResolve({ argv: rest, cwd: input.cwd, home: input.home });
@@ -101,47 +94,19 @@ export async function runCommand(input: {
       return {
         ok: false,
         error: 'invalid-args',
-        message: `expected a command (check, mark, record, resolve), got ${command ?? 'none'}`,
+        message: `expected a command (check, record, resolve), got ${command ?? 'none'}`,
       };
   }
 }
 
 /**
- * Appends the run's review marker to the repository's record and to the home record.
+ * Folds one run's declined cuts and reviews into the repository's record and writes it, measuring each reviewed file's
+ * deployed bytes as it stands. On a failure, it returns before the write, leaving the record unchanged.
  *
  * @internal - Exported to allow testing.
  */
-export async function runMark(input: {
-  cwd: string;
-  home: string;
-  inputJson: string;
-}): Promise<HelperFailure | MarkSuccess> {
-  let mark: MarkInput;
-  try {
-    mark = parseMarkInput(input.inputJson);
-  } catch (error) {
-    return { ok: false, error: 'invalid-input', message: describeError(error) };
-  }
-
-  let root: string;
-  try {
-    root = findRepositoryRoot(input.cwd);
-  } catch (error) {
-    if (!(error instanceof NotARepositoryError)) throw error;
-    return { ok: false, error: 'not-a-repository', message: error.message };
-  }
-
-  return markReviewed({ home: input.home, root, mark });
-}
-
-/**
- * Folds one run's declined cuts into the repository's record and writes it. On a failure, it returns before the write,
- * leaving the record unchanged.
- *
- * @internal - Exported to allow testing.
- */
-export function runRecord(input: { cwd: string; foldJson: string }): HelperFailure | RecordSuccess {
-  let fold: DeclineFold;
+export async function runRecord(input: { cwd: string; foldJson: string }): Promise<HelperFailure | RecordSuccess> {
+  let fold: RecordFold;
   try {
     fold = parseFold(input.foldJson);
   } catch (error) {
@@ -156,18 +121,25 @@ export function runRecord(input: { cwd: string; foldJson: string }): HelperFailu
     return { ok: false, error: 'not-a-repository', message: error.message };
   }
 
-  let prior: DeclineRecord;
+  let prior: GuidanceRecord;
   try {
     prior = readRecordFile(root);
   } catch (error) {
     return { ok: false, error: 'invalid-record', message: describeError(error) };
   }
 
-  const record = composeRecord(prior, fold, (file) => readFileIfPresent(path.join(root, file)));
+  const reviewed = fold.reviewed.filter((file) => existsSync(path.join(root, file)));
+  const deployedBytes = await measureDeployedBytes(root, reviewed);
+  const record = composeRecord(
+    prior,
+    { ...fold, reviewed },
+    (file) => readFileIfPresent(path.join(root, file)),
+    deployedBytes,
+  );
   const absolutePath = path.join(root, RECORD_PATH);
   mkdirSync(path.dirname(absolutePath), { recursive: true });
   writeFileSync(absolutePath, stringifyRecord(record), 'utf8');
-  return { ok: true, path: RECORD_PATH, declined: record.declined.length };
+  return { ok: true, path: RECORD_PATH, declined: record.declined.length, reviewed: record.reviewed.length };
 }
 
 /**
@@ -198,7 +170,7 @@ export async function runResolve(input: {
     return { ok: false, error: 'not-a-repository', message: error.message };
   }
 
-  let record: DeclineRecord;
+  let record: GuidanceRecord;
   try {
     record = readRecordFile(root);
   } catch (error) {
@@ -256,9 +228,9 @@ async function readStdin(): Promise<string> {
 }
 
 /** Reads the repository's record, treating an absent file as the empty record. */
-function readRecordFile(root: string): DeclineRecord {
+function readRecordFile(root: string): GuidanceRecord {
   const content = readFileIfPresent(path.join(root, RECORD_PATH));
-  return content === undefined ? { declined: [] } : parseRecord(content);
+  return content === undefined ? { declined: [], reviewed: [] } : parseRecord(content);
 }
 
 // endregion | Helpers

@@ -212,6 +212,19 @@ describe(runResolve, () => {
     ]);
   });
 
+  it("reports a reviewed file's last review, and omits it for a file that the record does not review", async () => {
+    await writeFile(
+      path.join(repository, RECORD_PATH),
+      ['reviewed:', `  - file: ${TARGET}`, '    reviewed-at: 2026-09-01', '    deployed-bytes: 512', ''].join('\n'),
+      'utf8',
+    );
+
+    const result = expectSuccess(await resolve(TARGET));
+
+    expect(result.targets[0]?.lastReview).toStrictEqual({ reviewedAt: '2026-09-01', deployedBytes: 512 });
+    expect(result.transitive.every((file) => file.lastReview === undefined)).toBe(true);
+  });
+
   describe('deployed bytes', () => {
     it("reports a document's deployed bytes as the size of its body once its includes are expanded", async () => {
       const source = ['xy', '', '<!-- include: ../../_partials/tiny.md / -->', ''].join('\n');
