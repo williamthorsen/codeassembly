@@ -117,6 +117,29 @@ describe('index page script', () => {
     expect(page.element('[data-slug="c"]').hidden).toBe(true);
   });
 
+  it('moves focus to the next card when a rejection hides the focused card', async () => {
+    const page = await openPage({});
+    page.element('#show-rejected').click();
+
+    page.focus('a');
+    page.press('x');
+    await settle();
+
+    expect(page.element('[data-slug="a"]').hidden).toBe(true);
+    expect(page.focusedSlug()).toBe('b');
+  });
+
+  it('moves focus to the previous card when the hidden card was last', async () => {
+    const page = await openPage({});
+    page.element('#show-rejected').click();
+
+    page.focus('c');
+    page.press('x');
+    await settle();
+
+    expect(page.focusedSlug()).toBe('b');
+  });
+
   it('moves between cards with the arrow keys, by one card across and one row down', async () => {
     const page = await openPage({});
     page.layOutRows([['a', 'b'], ['c']]);

@@ -87,6 +87,7 @@ export const INDEX_PAGE_SCRIPT = `(() => {
   function render() {
     const winner = resolveWinner();
     const focused = document.activeElement;
+    const shownOrder = Array.from(grid.children);
     const sorted = cards.slice().sort((left, right) => compareKeys(buildSortKey(left, winner), buildSortKey(right, winner)));
     for (const card of sorted) grid.append(card);
     if (focused instanceof HTMLElement && focused !== document.activeElement && grid.contains(focused)) {
@@ -113,6 +114,17 @@ export const INDEX_PAGE_SCRIPT = `(() => {
       controls.querySelector('[data-action="reject"]').setAttribute('aria-pressed', String(verdict.rejected));
       controls.querySelector('[data-action="winner"]').setAttribute('aria-pressed', String(isWinner));
       controls.querySelector('[data-action="rank"]').value = verdict.rank === null ? '' : String(verdict.rank);
+    }
+
+    // Keep keyboard focus where the viewer was when a verdict hides the focused card: on its neighbor in the order
+    // shown before this render.
+    const focusedCard = focused instanceof Element ? focused.closest('.card') : null;
+    if (focusedCard && focusedCard.hidden) {
+      const index = shownOrder.indexOf(focusedCard);
+      const neighbor =
+        shownOrder.slice(index + 1).find((card) => !card.hidden) ||
+        shownOrder.slice(0, index).reverse().find((card) => !card.hidden);
+      if (neighbor) neighbor.focus({ preventScroll: true });
     }
 
     const parts = [cards.length + (cards.length === 1 ? ' prototype' : ' prototypes')];
