@@ -18,7 +18,7 @@ const CHILDREN_PLACEHOLDER_REGEX = /^[ \t]*<!--[ \t]*children[ \t]*-->[ \t]*$/;
 const ANY_INCLUDE_LIKE_REGEX = /^[ \t]*<!--[ \t]*include:[ \t]*.*-->[ \t]*$/;
 
 /** Reason an include directive failed to resolve, reported in error messages. */
-type FailureReason =
+export type FailureReason =
   | 'cycle'
   | 'not-found'
   | 'orphan-close'

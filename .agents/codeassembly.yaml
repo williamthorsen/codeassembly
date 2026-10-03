@@ -14,7 +14,7 @@ rulebooks:
     - codeassembly-repo-conventions
     - live-worktree-policy
 sources:
-  - name: codeassembly
-    path: ../packages/agents/content
+  - name: codeassembly-guidance
+    path: ../packages/guidance/content
   - name: codeassembly-repo
     path: content

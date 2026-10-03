@@ -7,7 +7,7 @@ version: '1'
 
 # CodeAssembly repository conventions
 
-These conventions supplement {rulebook:codeassembly-content-specification}, the contract for any content root, with the doctrine that applies to the library in this repository. A path below is relative to the library's content root, `packages/agents/content/`.
+These conventions supplement {rulebook:codeassembly-content-specification}, the contract for any content root, with the doctrine that applies to the library in this repository. A path below is relative to the library's content root, `packages/guidance/content/`.
 
 ## Enforcement by test
 

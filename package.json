@@ -22,10 +22,10 @@
   "type": "module",
   "scripts": {
     "agents:install": "node packages/agents/src/cli.ts install",
-    "agents:install-launchers": "bash packages/agents/scripts/install-launchers.sh",
+    "agents:install-launchers": "bash packages/guidance/scripts/install-launchers.sh",
     "agents:sync": "node packages/agents/bin/codeassembly.js sync",
     "bootstrap": "nmr build && pnpm run agents:sync",
-    "check:strict:post": "pnpm --filter codeassembly run check-bundles",
+    "check:strict:post": "pnpm --filter codeassembly-guidance run check:content",
     "prepare": "lefthook install"
   },
   "devDependencies": {

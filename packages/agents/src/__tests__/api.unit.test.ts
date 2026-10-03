@@ -5,7 +5,11 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import {
+  buildIncludeGraph,
+  DirectiveExpansionError,
+  expandIncludes,
   HARNESS_IDS,
+  isHarnessDeployPath,
   listCatalog,
   readArtifact,
   renderContentRoot,
@@ -28,6 +32,58 @@ describe('content API', () => {
   describe('HARNESS_IDS', () => {
     it('lists every supported harness', () => {
       expect(HARNESS_IDS).toEqual(['claude', 'rovo']);
+    });
+  });
+
+  describe(buildIncludeGraph, () => {
+    it('counts the documents that reach a partial through their includes', async () => {
+      await writeFileAt(root, '_partials/shared.md', 'Shared text.\n');
+      await writeSkill(root, 'alpha', '<!-- include: ../../_partials/shared.md / -->\n');
+      await writeSkill(root, 'beta', '<!-- include: ../../_partials/shared.md / -->\n');
+      const partial = path.join(root, '_partials/shared.md');
+
+      const graph = await buildIncludeGraph(root);
+
+      expect(graph.documents.has(path.join(root, 'skills/alpha/SKILL.md'))).toBe(true);
+      expect(graph.documents.has(partial)).toBe(false);
+      expect(graph.countReach(partial)).toBe(2);
+    });
+
+    it('reports a file with an unresolved directive instead of throwing', async () => {
+      await writeSkill(root, 'alpha', '<!-- include: ../../_partials/missing.md / -->\n');
+
+      const graph = await buildIncludeGraph(root);
+
+      expect(graph.hasUnresolvedIncludes(path.join(root, 'skills/alpha/SKILL.md'))).toBe(true);
+    });
+  });
+
+  describe(expandIncludes, () => {
+    it('returns the file with its includes expanded', async () => {
+      await writeFileAt(root, '_partials/shared.md', 'Shared text.\n');
+      await writeSkill(root, 'alpha', '<!-- include: ../../_partials/shared.md / -->\n');
+
+      expect(await expandIncludes(root, path.join(root, 'skills/alpha/SKILL.md'))).toContain('Shared text.');
+    });
+
+    it('throws a DirectiveExpansionError naming why a directive failed', async () => {
+      await writeSkill(root, 'alpha', '<!-- include: ../../_partials/missing.md / -->\n');
+
+      const expansion = expandIncludes(root, path.join(root, 'skills/alpha/SKILL.md'));
+
+      await expect(expansion).rejects.toBeInstanceOf(DirectiveExpansionError);
+      await expect(expansion).rejects.toMatchObject({ reason: 'not-found' });
+    });
+  });
+
+  describe(isHarnessDeployPath, () => {
+    it.each([
+      ['.claude/skills/alpha/SKILL.md', true],
+      ['/home/user/.rovo/scripts/tool.mjs', true],
+      ['.claude/agents/helper.md', false],
+      ['content/skills/alpha/SKILL.md', false],
+    ])('reports %s as %s', (file, expected) => {
+      expect(isHarnessDeployPath(file)).toBe(expected);
     });
   });
 

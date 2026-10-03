@@ -37,29 +37,20 @@
     ".readyup/kits/*.js",
     ".readyup/manifest.json",
     "bin",
-    "dist",
-    "!dist/content"
+    "dist"
   ],
   "scripts": {
-    "build:post": "node bin/codeassembly.js bundle-helpers --content content && node scripts/add-cli-shebang.ts && rdy compile",
+    "build:post": "node scripts/add-cli-shebang.ts && rdy compile",
     "build:pre": "rdy verify",
-    "check-bundles": "node bin/codeassembly.js bundle-helpers --content content --check",
-    "prepublishOnly": "nmr build",
-    "test:post": "pnpm run test:sh && pnpm run test:smoke",
-    "test:sh": "bash scripts/test-sh.sh",
-    "test:smoke": "node scripts/__tests__/smoke-test-skill-helpers.ts"
+    "prepublishOnly": "nmr build"
   },
   "dependencies": {
-    "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.terminal": "catalog:",
-    "ulid": "3.0.2",
     "yaml": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@hyperjump/json-schema": "1.17.8",
-    "@types/jsdom": "30.0.0",
     "@types/node": "catalog:",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.strings": "8.0.1",
@@ -67,7 +58,6 @@
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "esbuild": "catalog:",
     "eslint": "catalog:",
-    "jsdom": "catalog:",
     "readyup": "catalog:",
     "vitest": "catalog:"
   },

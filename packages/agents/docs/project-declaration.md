@@ -115,7 +115,7 @@ Three further mismatches are reported without failing the run, on a live sync an
 
 The last two are not defects. A collection can carry a hook-declaring rulebook into a project that never binds it, and a home-tier binding applies to every project, including those that deploy nothing declaring the hook. Each line names an affordance going unused rather than something broken. A binding that reaches nothing is also how a mistyped hook name surfaces, since nothing else would say so.
 
-A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none of them, and two things make the pairing legitimate. A hook that only subagents declare duplicates nothing: A subagent's context never contains the ambient region. The two routes are how one rulebook reaches a session and a subagent both. When a skill declares the hook, ambient delivery places the rulebook in the guidance file loaded by that session, so the fill hands it a second copy; the author who wrote both routes into `delivery` has weighed that, and the skill may be parsing what the fill delivers rather than only containing it, as `revise-prose` does. `content/__tests__/guidance-hook-reach.unit.test.ts` holds the library's record of which skills may.
+A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none of them, and two things make the pairing legitimate. A hook that only subagents declare duplicates nothing: A subagent's context never contains the ambient region. The two routes are how one rulebook reaches a session and a subagent both. When a skill declares the hook, ambient delivery places the rulebook in the guidance file loaded by that session, so the fill hands it a second copy; the author who wrote both routes into `delivery` has weighed that, and the skill may be parsing what the fill delivers rather than only containing it, as `revise-prose` does. The library's `content/__tests__/guidance-hook-reach.unit.test.ts`, in `packages/guidance`, holds its record of which skills may.
 
 A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance that every consumer of the library should get is a partial; guidance that one user or one project wants is a hook. See `content/_partials/README.md`.
 
@@ -181,12 +181,12 @@ The resolver follows `members:` and `dependencies:` identically; the split is se
 
 ## Sources
 
-A declared artifact resolves from the content directories that the declaration names, and from nowhere else. A top-level `sources:` list names them (a clone of the CodeAssembly library, a machine-local directory, a project-local one, or a third-party guidance repo), each structured like `packages/agents/content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`); a package adopted via [`packages`](#packages) is a source too. `sync`, `sync --global`, and `install` stop before writing anything, `--dry-run` included, when the governing chain declares no source, or when none of the declared sources has a directory, and the message names the file that the declaration belongs in. A project resolves from its own chain alone, never from the sources that the home chain declares, so a project deploys the same content on every machine.
+A declared artifact resolves from the content directories that the declaration names, and from nowhere else. A top-level `sources:` list names them (a clone of the CodeAssembly library, a machine-local directory, a project-local one, or a third-party guidance repo), each structured like `packages/guidance/content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`); a package adopted via [`packages`](#packages) is a source too. `sync`, `sync --global`, and `install` stop before writing anything, `--dry-run` included, when the governing chain declares no source, or when none of the declared sources has a directory, and the message names the file that the declaration belongs in. A project resolves from its own chain alone, never from the sources that the home chain declares, so a project deploys the same content on every machine.
 
 ```yaml
 sources:
-  - name: codeassembly
-    path: ~/repos/codeassembly/packages/agents/content
+  - name: codeassembly-guidance
+    path: ~/repos/codeassembly/packages/guidance/content
   - name: org-guidance
     path: ../shared-guidance
   - name: personal
@@ -235,7 +235,7 @@ Upgrading an already-declared package is the other case. Its catalog is read fro
 
 ### Shipping guidance from a package
 
-A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like `packages/agents/content/`:
+A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like `packages/guidance/content/`:
 
 ```json
 {
@@ -377,6 +377,8 @@ Every non-dry-run `install` and `sync --global` records what it wrote to `~/.cod
 The same commands record the attempt under `lastAttempt`, on a failure as well as on a success: its command, a timestamp, the outcome, and, when the run failed, the rendered failure and how many defects it reported. A failed attempt writes nothing else. `lastWrite` keeps naming the deployment still in effect. The attempt separates a current deployment from one left behind by an abandoned run: A write timestamp alone reads the same on a machine that has not needed a sync and on one whose sync has been failing for a fortnight. The attempt is recorded only past the designated-writer guard, so an installation refused by the guard leaves the home domain's record untouched.
 
 The write fields are also mirrored at the top level of the file, which is where a `codeassembly` predating `lastWrite` reads them. Because every repository and worktree has a binary of its own, a machine part-way through an upgrade is the ordinary case rather than an edge one.
+
+The stamp is a file format, not an internal detail, so another tool can read it without importing `codeassembly`. It is a JSON object with a numeric `schemaVersion`, currently `2`. `lastWrite`, when present, contains the string fields `version`, `sourcePath`, `command` (`install` or `sync --global`), and `writtenAt` (an ISO 8601 timestamp), and the optional string `sourceCommit`. `lastAttempt`, when present, contains `command`, `attemptedAt`, `outcome` (`failed` or `succeeded`), and, on a failure, the optional `failureSummary` and `defectCount`. A reader of a stamp that lacks `lastWrite` takes the write fields from the top level, as `codeassembly` does.
 
 `codeassembly status` renders the stamp as its first line:
 
