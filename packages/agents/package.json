@@ -37,8 +37,7 @@
     ".readyup/kits/*.js",
     ".readyup/manifest.json",
     "bin",
-    "dist",
-    "!dist/content"
+    "dist"
   ],
   "scripts": {
     "build:post": "node scripts/add-cli-shebang.ts && rdy compile",
@@ -46,16 +45,12 @@
     "prepublishOnly": "nmr build"
   },
   "dependencies": {
-    "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.terminal": "catalog:",
-    "ulid": "3.0.2",
     "yaml": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@hyperjump/json-schema": "1.17.8",
-    "@types/jsdom": "30.0.0",
     "@types/node": "catalog:",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.strings": "8.0.1",
@@ -63,7 +58,6 @@
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "esbuild": "catalog:",
     "eslint": "catalog:",
-    "jsdom": "catalog:",
     "readyup": "catalog:",
     "vitest": "catalog:"
   },

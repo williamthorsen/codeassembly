@@ -2,8 +2,6 @@ import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { pathExists } from '@williamthorsen/kb/filesystem';
-
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 
 /** Canonical mapping from commit type keys to the label names that a tracker uses. */
@@ -89,8 +87,13 @@ export async function readReleaseKitVersion(): Promise<string> {
   let dir = thisDir;
   for (;;) {
     const candidate = path.join(dir, 'node_modules', '@williamthorsen', 'release-kit', 'package.json');
-    if (await pathExists(candidate, { treatErrorsAsAbsent: true })) {
-      const raw = await readFile(candidate, 'utf8');
+    let raw = '';
+    try {
+      raw = await readFile(candidate, 'utf8');
+    } catch {
+      // Treat an unreadable candidate as absent and keep walking up.
+    }
+    if (raw !== '') {
       const parsed: unknown = JSON.parse(raw);
       if (isReleaseKitPackageJson(parsed)) {
         return parsed.version;
