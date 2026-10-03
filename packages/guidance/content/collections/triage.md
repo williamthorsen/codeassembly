@@ -41,6 +41,7 @@ members:
     - orchestrate-review
     - plan
     - plan-orchestrable-steps
+    - prepare-prototype-brief
     - refine-plan
     - respond-to-review
     - review-branch
