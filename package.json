@@ -44,7 +44,6 @@
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "codeassembly": "workspace:*",
-    "codeassembly-guidance": "workspace:*",
     "dotenv": "18.0.3",
     "eslint": "catalog:",
     "eslint-import-resolver-typescript": "4.4.5",

@@ -286,9 +286,6 @@ importers:
       codeassembly:
         specifier: workspace:*
         version: link:packages/agents
-      codeassembly-guidance:
-        specifier: workspace:*
-        version: link:packages/guidance
       dotenv:
         specifier: 18.0.3
         version: 18.0.3
