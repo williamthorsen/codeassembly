@@ -2,7 +2,7 @@
 
 # codeassembly
 
-A CLI that deploys reusable AI agent guidance (rulebooks, skills, and subagents) from the content sources that a declaration names into coding-harness directories. This repository also contains the CodeAssembly library of that guidance, under `content/`.
+A CLI that deploys reusable AI agent guidance (rulebooks, skills, and subagents) from the content sources that a declaration names into coding-harness directories. The CodeAssembly library of that guidance is the sibling package [`codeassembly-guidance`](../guidance/README.md).
 
 <!-- section:release-notes --><!-- /section:release-notes -->
 
@@ -65,7 +65,7 @@ Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--fo
 
 A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts that the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains: the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `recommended` and `triage` collections. See [Scopes](docs/project-declaration.md#scopes).
 
-Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) live in the `codeassembly-content-specification` rulebook (`content/guidance/rulebooks/codeassembly-content-specification.md`). [Project declaration](docs/project-declaration.md) documents the declaration mechanism itself:
+Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) live in the library's `codeassembly-content-specification` rulebook ([`codeassembly-content-specification.md`](../guidance/content/guidance/rulebooks/codeassembly-content-specification.md)). [Project declaration](docs/project-declaration.md) documents the declaration mechanism itself:
 
 - [Format](docs/project-declaration.md#format): the `use` and `drop` lists, harness targeting, and guidance hooks.
 - [Collections](docs/project-declaration.md#collections): aggregates that pull in their members, and the `@library` token.
@@ -111,31 +111,7 @@ For the record's path and line shape, the conditions under which a snapshot is a
 
 ## Preferences
 
-Agent behavior is configured through `.agents/preferences.yaml` files. The resolution cascade is:
-
-1. **Project**: `.agents/preferences.yaml` in the repository root (committed, shared with team)
-2. **Global**: `~/.agents/preferences.yaml` in the user's home directory (personal defaults)
-3. **Default**: built-in fallback (documented per key in [Preferences](docs/preferences.md))
-
-Project-level values take precedence over global. An explicitly empty value at the project level (e.g., `title_format: ''`) overrides a non-empty global value.
-
-Every key, its type, and its default are documented in [Preferences](docs/preferences.md), which ends with a full example.
-
-## Prose sweep helper
-
-`src/revise-prose/` contains the sweep that the `revise-prose` skill runs. Its commands, its detectors, and the per-repository record are documented in [docs/revise-prose-helper.md](docs/revise-prose-helper.md).
-
-## Backlog sweep helper
-
-`src/groom-backlog/` contains the helper that the `groom-backlog` skill runs. Its commands, its ledger, its comment marker, and the skill's arguments are documented in [docs/groom-backlog-helper.md](docs/groom-backlog-helper.md).
-
-## Prototype index helper
-
-`src/index-prototypes/` contains the helper that the `index-prototypes` skill runs. Its commands, the manifest layout, and the verdict documents that the index page writes are documented in [docs/index-prototypes-helper.md](docs/index-prototypes-helper.md).
-
-## Guidance streamlining helper
-
-`src/streamline-guidance/` contains the helper that the `streamline-guidance` skill runs. Its commands, their output, and the record of declined cuts are documented in [docs/streamline-guidance-helper.md](docs/streamline-guidance-helper.md).
+The library's skills read `.agents/preferences.yaml`; the [`codeassembly-guidance` README](../guidance/README.md#preferences) documents the cascade and every key.
 
 ## Development
 
