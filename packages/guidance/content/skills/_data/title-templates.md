@@ -462,7 +462,7 @@ project:
 
 **A path is read relative to the repository root**, which git resolves from the invoking directory, so an absolute path and a root-relative one resolve alike whatever subdirectory the caller ran from. A path outside the root resolves to `root`. When git does not resolve a repository root, the run warns and anchors at the invoking directory.
 
-**The subcommand does not define a workspace rule of its own.** It delegates workspace discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/agents` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the workspace discovery rule belongs upstream, in nmr.
+**The subcommand does not define a workspace rule of its own.** It delegates workspace discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/guidance` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the workspace discovery rule belongs upstream, in nmr.
 
 ## `resolve-labels`
 
