@@ -59,6 +59,7 @@
   },
   "devDependencies": {
     "@hyperjump/json-schema": "1.17.8",
+    "@types/jsdom": "30.0.0",
     "@types/node": "catalog:",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.strings": "8.0.1",
@@ -66,6 +67,7 @@
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "esbuild": "catalog:",
     "eslint": "catalog:",
+    "jsdom": "catalog:",
     "readyup": "catalog:",
     "vitest": "catalog:"
   },
