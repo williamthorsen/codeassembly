@@ -1,12 +1,6 @@
 import { z } from 'zod';
 
-import type { ReviewMarker, SizeSnapshot } from './types.ts';
-
-/**
- * Schema version written by this build, and the only one that `parseReviewMarkerLine` accepts. Versioned apart from
- * the snapshot, because the two line kinds share a record and evolve independently.
- */
-export const REVIEW_MARKER_SCHEMA_VERSION = 1;
+import type { SizeSnapshot } from './types.ts';
 
 /** Schema version written by this build, and the only one that `parseSnapshotLine` accepts. */
 export const SNAPSHOT_SCHEMA_VERSION = 1;
@@ -36,13 +30,6 @@ const SizeAggregatesSchema = z.object({
   assets: ByteCountSchema,
 });
 
-const ReviewMarkerSchema = z.object({
-  schemaVersion: z.literal(REVIEW_MARKER_SCHEMA_VERSION),
-  kind: z.literal('review'),
-  recordedAt: z.string().min(1),
-  reviewed: z.array(z.string().min(1)),
-});
-
 const SizeSnapshotSchema = z.object({
   schemaVersion: z.literal(SNAPSHOT_SCHEMA_VERSION),
   kind: z.literal('snapshot'),
@@ -55,16 +42,6 @@ const SizeSnapshotSchema = z.object({
   expansions: z.record(z.string().min(1), ExpansionUnitSchema).optional(),
   aggregates: SizeAggregatesSchema,
 });
-
-/**
- * Parses one record line into a review marker, or `undefined` when it is not one, on the same terms as
- * {@link parseSnapshotLine}.
- */
-export function parseReviewMarkerLine(line: string): ReviewMarker | undefined {
-  const parsed = parseJsonLine(line);
-  const result = ReviewMarkerSchema.safeParse(parsed);
-  return result.success ? result.data : undefined;
-}
 
 /**
  * Parses one record line into a snapshot, or `undefined` when it is not one: a truncated or malformed line, a line of

@@ -4,20 +4,9 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  appendReviewMarker,
-  appendSnapshot,
-  PRUNE_THRESHOLD_BYTES,
-  pruneRecord,
-  RETAINED_LINES,
-} from '../append-snapshot.ts';
-import {
-  parseReviewMarkerLine,
-  parseSnapshotLine,
-  REVIEW_MARKER_SCHEMA_VERSION,
-  SNAPSHOT_SCHEMA_VERSION,
-} from '../schema.ts';
-import type { ReviewMarker, SizeSnapshot } from '../types.ts';
+import { appendSnapshot, PRUNE_THRESHOLD_BYTES, pruneRecord, RETAINED_LINES } from '../append-snapshot.ts';
+import { parseSnapshotLine, SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
+import type { SizeSnapshot } from '../types.ts';
 
 describe(pruneRecord, () => {
   let recordDir: string;
@@ -52,36 +41,6 @@ describe(pruneRecord, () => {
     await pruneRecord(recordPath);
 
     expect(await readTotals(recordPath)).toEqual([1, 2]);
-  });
-});
-
-describe(appendReviewMarker, () => {
-  let recordDir: string;
-  let recordPath: string;
-
-  beforeEach(async () => {
-    recordDir = await mkdtemp(path.join(tmpdir(), 'append-snapshot-'));
-    recordPath = path.join(recordDir, 'owner', 'name.jsonl');
-  });
-
-  afterEach(async () => {
-    await rm(recordDir, { recursive: true, force: true });
-  });
-
-  it('round-trips a marker through the record', async () => {
-    const marker = buildMarker(['skills/plan/SKILL.md']);
-
-    await appendReviewMarker(recordPath, marker);
-
-    expect(await readMarkers(recordPath)).toEqual([marker]);
-  });
-
-  it('writes a marker that a reader of snapshots skips', async () => {
-    await appendReviewMarker(recordPath, buildMarker(['skills/plan/SKILL.md']));
-
-    const [line] = (await readFile(recordPath, 'utf8')).split('\n', 1);
-
-    expect(parseSnapshotLine(line ?? '')).toBeUndefined();
   });
 });
 
@@ -130,16 +89,6 @@ function buildBulkySnapshot(): SizeSnapshot {
   return { ...buildSnapshot(1), files };
 }
 
-/** A review marker naming the given content-root-relative documents. */
-function buildMarker(reviewed: ReadonlyArray<string>): ReviewMarker {
-  return {
-    schemaVersion: REVIEW_MARKER_SCHEMA_VERSION,
-    kind: 'review',
-    recordedAt: '2026-09-19T08:00:00.000Z',
-    reviewed,
-  };
-}
-
 /** A snapshot whose on-invocation total identifies it within a record. */
 function buildSnapshot(onInvocation: number): SizeSnapshot {
   return {
@@ -154,15 +103,6 @@ function buildSnapshot(onInvocation: number): SizeSnapshot {
       assets: 0,
     },
   };
-}
-
-/** Every line the record holds parsed as a review marker, in the order that it holds them. */
-async function readMarkers(recordPath: string): Promise<ReadonlyArray<ReviewMarker | undefined>> {
-  const raw = await readFile(recordPath, 'utf8');
-  return raw
-    .split('\n')
-    .filter((line) => line.trim() !== '')
-    .map((line) => parseReviewMarkerLine(line));
 }
 
 /** The on-invocation total of every line the record holds, in the order that it holds them. */
