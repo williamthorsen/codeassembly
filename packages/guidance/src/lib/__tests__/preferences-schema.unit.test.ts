@@ -13,7 +13,7 @@ import { parse as parseYaml } from 'yaml';
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
-/** Three levels up from this file reaches the package root (`packages/agents/`); two more reach the repo root. */
+/** Three levels up from this file reaches the package root (`packages/guidance/`); two more reach the repo root. */
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(thisDir, '../../..');
 const repoRoot = path.resolve(packageRoot, '../..');

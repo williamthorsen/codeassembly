@@ -10,7 +10,7 @@ import { describe, expect, it } from 'vitest';
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
-/** Three levels up from this file reaches the package root (`packages/agents/`). */
+/** Three levels up from this file reaches the package root (`packages/guidance/`). */
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(thisDir, '../../..');
 
