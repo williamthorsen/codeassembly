@@ -32,17 +32,6 @@ export interface DeclinedPhrase {
   class: CutClass;
 }
 
-/** What one run reports back to `record`: the date of the run and the cuts that the user declined. */
-export interface DeclineFold {
-  declinedAt: string;
-  declined: DeclinedPhrase[];
-}
-
-/** The record of declined cuts. */
-export interface DeclineRecord {
-  declined: DeclinedCut[];
-}
-
 /** A guidance file that a run may cut, with what the skill needs to propose and commit a cut in it. */
 export interface GuidanceFile {
   /** Path relative to the repository root. */
@@ -58,8 +47,16 @@ export interface GuidanceFile {
   dirty: boolean;
   /** Line ranges that a deployment rewrites, such as an ambient region, inside which a run may not cut. */
   generatedRegions: LineRange[];
+  /** The file's most recent review in the record, absent for a file that the record does not hold a review for. */
+  lastReview?: LastReview;
   /** The path as the caller named it, when that path was a deployed copy of this file. */
   redirectedFrom?: string;
+}
+
+/** The repository's record: the cuts that the user declined, and the review of each file that a run read. */
+export interface GuidanceRecord {
+  declined: DeclinedCut[];
+  reviewed: ReviewEntry[];
 }
 
 export type HelperError = 'invalid-args' | 'invalid-input' | 'invalid-record' | 'not-a-repository';
@@ -71,28 +68,18 @@ export interface HelperFailure {
   message: string;
 }
 
+/** A file's most recent review as `resolve` reports it. */
+export interface LastReview {
+  /** ISO calendar date of the run that reviewed the file. */
+  reviewedAt: string;
+  /** The bytes that the file deployed once that run's cuts were applied, absent when they could not be measured. */
+  deployedBytes?: number;
+}
+
 /** A 1-based, inclusive range of lines. */
 export interface LineRange {
   start: number;
   end: number;
-}
-
-/** What one run reports to `mark`: when the review ran, and the repository-relative files that it read. */
-export interface MarkInput {
-  /** ISO 8601 instant at which the review ran. */
-  reviewedAt: string;
-  files: string[];
-}
-
-export interface MarkSuccess {
-  ok: true;
-  recordedAt: string;
-  /** Content-root-relative POSIX paths that the marker names. */
-  reviewed: string[];
-  /** Absolute paths of the records that the marker was appended to. */
-  records: string[];
-  /** Named files lying outside every content root, which the marker does not name. */
-  unrooted: string[];
 }
 
 /** A commit that changed how often a phrase occurs in its file. */
@@ -104,10 +91,23 @@ export interface PhraseCommit {
   body: string;
 }
 
+/**
+ * What one run reports back to `record`: the date of the run, the cuts that the user declined, and the
+ * repository-relative files that it read.
+ */
+export interface RecordFold {
+  date: string;
+  declined: DeclinedPhrase[];
+  reviewed: string[];
+}
+
 export interface RecordSuccess {
   ok: true;
   path: string;
+  /** Entries in the written record's `declined` section. */
   declined: number;
+  /** Entries in the written record's `reviewed` section. */
+  reviewed: number;
 }
 
 /** A path that `resolve` could not accept as a target, with the reason. */
@@ -132,6 +132,13 @@ export interface ResolveSuccess {
   transitive: TransitiveFile[];
   declined: DeclinedPhrase[];
   rejected: RejectedPath[];
+}
+
+/** One file's most recent review as the record stores it. */
+export interface ReviewEntry {
+  file: string;
+  'reviewed-at': string;
+  'deployed-bytes'?: number | undefined;
 }
 
 /** A test string literal that a candidate phrase contains. */

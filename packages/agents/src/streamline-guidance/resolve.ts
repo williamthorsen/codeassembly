@@ -19,8 +19,9 @@ import { listWorkingTreeFiles } from './list-working-tree-files.ts';
 import { isLive } from './record.ts';
 import type {
   DeclinedPhrase,
-  DeclineRecord,
   GuidanceFile,
+  GuidanceRecord,
+  LastReview,
   LineRange,
   RejectedPath,
   ResolveSuccess,
@@ -56,6 +57,11 @@ export function listContentRoots(root: string): string[] {
     .map((file) => path.join(root, path.dirname(file)));
 }
 
+/** Measures what each repository-relative file deploys, on the terms that `resolve` reports as `deployedBytes`. */
+export async function measureDeployedBytes(root: string, files: readonly string[]): Promise<Map<string, number>> {
+  return measureFiles(files, { contentRoots: listContentRoots(root), graphs: new Map(), root });
+}
+
 /** Raised when the helper runs somewhere git does not track. */
 export class NotARepositoryError extends Error {}
 
@@ -67,7 +73,7 @@ export async function resolveGuidance(input: {
   cwd: string;
   home: string;
   paths: readonly string[];
-  record: DeclineRecord;
+  record: GuidanceRecord;
   root: string;
 }): Promise<ResolveSuccess> {
   const context: ResolutionContext = {
@@ -101,8 +107,9 @@ export async function resolveGuidance(input: {
 
   const files = [...named.keys(), ...edges.keys()];
   const measures: FileMeasures = {
-    deployedBytes: await measureDeployedBytes(files, context),
+    deployedBytes: await measureFiles(files, context),
     dirty: listDirtyFiles(input.root, files),
+    reviews: mapLastReviews(input.record),
   };
 
   const targets = named
@@ -141,14 +148,18 @@ const HARNESS_HOME_REFERENCE_REGEX = /\{harness_home_dir\}\/((?:scripts|skills)\
 /** Output cap for one git listing, sized to exceed what a large repository produces. */
 const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
-/** The values that resolution fixes for one run. */
-interface ResolutionContext {
-  artifactBaseDir: string;
+/** The values that measuring deployed bytes fixes for one run. */
+interface MeasurementContext {
   contentRoots: readonly string[];
   /** The include graph of each content root that the run has reached, built once per root. */
   graphs: Map<string, IncludeGraph>;
-  home: string;
   root: string;
+}
+
+/** The values that resolution fixes for one run. */
+interface ResolutionContext extends MeasurementContext {
+  artifactBaseDir: string;
+  home: string;
 }
 
 /** A file accepted as a target, identified by its repository-relative path. */
@@ -162,6 +173,7 @@ interface AcceptedFile {
 interface FileMeasures {
   deployedBytes: ReadonlyMap<string, number>;
   dirty: ReadonlySet<string>;
+  reviews: ReadonlyMap<string, LastReview>;
 }
 
 /**
@@ -258,12 +270,14 @@ async function collectTransitiveEdges(
 function describeFile(file: string, context: ResolutionContext, measures: FileMeasures): GuidanceFile {
   const absolutePath = path.join(context.root, file);
   const deployedBytes = measures.deployedBytes.get(file);
+  const lastReview = measures.reviews.get(file);
   return {
     file,
     bytes: statSync(absolutePath).size,
     ...(deployedBytes !== undefined && { deployedBytes }),
     dirty: measures.dirty.has(file),
     generatedRegions: findGeneratedRegions(readFileSync(absolutePath, 'utf8')),
+    ...(lastReview !== undefined && { lastReview }),
   };
 }
 
@@ -354,7 +368,7 @@ function listMarkdownFilesUnder(root: string, directory: string): string[] {
 }
 
 /** Returns the include graph of a content root, building it on the run's first file inside that root. */
-async function loadIncludeGraph(contentRoot: string, context: ResolutionContext): Promise<IncludeGraph> {
+async function loadIncludeGraph(contentRoot: string, context: MeasurementContext): Promise<IncludeGraph> {
   const cached = context.graphs.get(contentRoot);
   if (cached !== undefined) {
     return cached;
@@ -374,10 +388,7 @@ async function loadIncludeGraph(contentRoot: string, context: ResolutionContext)
  * configuration rather than in the content root, so their bytes are not computable from the repository, and their
  * text lands in a generated region that a run may not cut. The rest add a constant of a few hundred bytes.
  */
-async function measureDeployedBytes(
-  files: readonly string[],
-  context: ResolutionContext,
-): Promise<Map<string, number>> {
+async function measureFiles(files: readonly string[], context: MeasurementContext): Promise<Map<string, number>> {
   const measured = new Map<string, number>();
   for (const file of files) {
     const absolutePath = path.join(context.root, file);
@@ -447,6 +458,19 @@ function resolveLinkTarget(
   return path.resolve(input.hostDir, target);
 }
 
+/** Maps each reviewed file to its most recent review, as `resolve` reports it. */
+function mapLastReviews(record: GuidanceRecord): Map<string, LastReview> {
+  return new Map(
+    record.reviewed.map((entry) => [
+      entry.file,
+      {
+        reviewedAt: entry['reviewed-at'],
+        ...(entry['deployed-bytes'] !== undefined && { deployedBytes: entry['deployed-bytes'] }),
+      },
+    ]),
+  );
+}
+
 /** Expands the paths that one argument names into accepted targets and rejections. */
 function resolveNamedPath(
   namedPath: string,
@@ -477,7 +501,7 @@ function resolveRealPath(candidate: string): string {
 }
 
 /** Selects the record's declined cuts that are still live in this run's files. */
-function selectLiveDeclined(record: DeclineRecord, files: ReadonlySet<string>, root: string): DeclinedPhrase[] {
+function selectLiveDeclined(record: GuidanceRecord, files: ReadonlySet<string>, root: string): DeclinedPhrase[] {
   return record.declined
     .filter((entry) => files.has(entry.file) && isLive(entry, readFileSync(path.join(root, entry.file), 'utf8')))
     .map(({ file, phrase, class: cutClass }) => ({ file, phrase, class: cutClass }));

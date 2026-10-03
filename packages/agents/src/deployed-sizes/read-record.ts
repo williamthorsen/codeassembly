@@ -1,63 +1,8 @@
 import { readFile } from 'node:fs/promises';
 
 import { isMissingFile } from '../lib/type-guards.ts';
-import { parseReviewMarkerLine, parseSnapshotLine } from './schema.ts';
-import type { ReviewMarker, SizeSnapshot } from './types.ts';
-
-/**
- * Finds the first snapshot recorded after `instant`, or `undefined` when the record holds none.
- *
- * The scan runs forward and stops at the first match, because the record's lines are in the order that they were
- * appended.
- */
-export function findSnapshotAfter(lines: ReadonlyArray<string>, instant: string): SizeSnapshot | undefined {
-  const limit = Date.parse(instant);
-  if (Number.isNaN(limit)) {
-    return undefined;
-  }
-  for (const line of lines) {
-    const snapshot = parseLine(line, parseSnapshotLine);
-    const recordedAt = snapshot === undefined ? NaN : Date.parse(snapshot.recordedAt);
-    if (!Number.isNaN(recordedAt) && recordedAt > limit) {
-      return snapshot;
-    }
-  }
-  return undefined;
-}
-
-/**
- * Finds the snapshot standing at or before `instant`, or `undefined` when the record holds none. A marker older than
- * every surviving snapshot therefore resolves to no baseline, which is the case a pruned record leaves behind.
- *
- * The scan runs backward and stops at the first match, because the record's lines are in the order that they were
- * appended.
- */
-export function findSnapshotAtOrBefore(lines: ReadonlyArray<string>, instant: string): SizeSnapshot | undefined {
-  const limit = Date.parse(instant);
-  if (Number.isNaN(limit)) {
-    return undefined;
-  }
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const snapshot = parseLine(lines[i], parseSnapshotLine);
-    const recordedAt = snapshot === undefined ? NaN : Date.parse(snapshot.recordedAt);
-    if (!Number.isNaN(recordedAt) && recordedAt <= limit) {
-      return snapshot;
-    }
-  }
-  return undefined;
-}
-
-/** The review markers that the record holds, in the order that it holds them. */
-export function listReviewMarkers(lines: ReadonlyArray<string>): ReadonlyArray<ReviewMarker> {
-  const markers: Array<ReviewMarker> = [];
-  for (const line of lines) {
-    const marker = parseLine(line, parseReviewMarkerLine);
-    if (marker !== undefined) {
-      markers.push(marker);
-    }
-  }
-  return markers;
-}
+import { parseSnapshotLine } from './schema.ts';
+import type { SizeSnapshot } from './types.ts';
 
 /**
  * Reads the non-empty lines of the record at `recordPath`, or none when the file is absent.

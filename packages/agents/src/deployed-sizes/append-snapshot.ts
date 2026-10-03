@@ -2,7 +2,7 @@ import { appendFile, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { isMissingFile } from '../lib/type-guards.ts';
-import type { ReviewMarker, SizeSnapshot } from './types.ts';
+import type { SizeSnapshot } from './types.ts';
 
 /**
  * Most lines kept when a prune runs. A deployment of a few hundred files states a line of tens of kilobytes, and
@@ -17,14 +17,6 @@ export const RETAINED_LINES = 200;
  * `RETAINED_LINES` of them to exceed this would otherwise leave every later append to prune again.
  */
 export const PRUNE_THRESHOLD_BYTES = 8 * 1_024 * 1_024;
-
-/**
- * Appends one review marker to the record at `recordPath`. A marker shares the record's retention with the
- * snapshots, so a record that prunes often loses its older reviews along with them.
- */
-export async function appendReviewMarker(recordPath: string, marker: ReviewMarker): Promise<void> {
-  await appendLine(recordPath, marker);
-}
 
 /** Appends one snapshot to the record at `recordPath`. */
 export async function appendSnapshot(recordPath: string, snapshot: SizeSnapshot): Promise<void> {
@@ -53,7 +45,7 @@ export async function pruneRecord(recordPath: string): Promise<void> {
  * machine-local telemetry, and one dropped line matters less than a file that grows without bound and that every
  * reader loads whole.
  */
-async function appendLine(recordPath: string, entry: ReviewMarker | SizeSnapshot): Promise<void> {
+async function appendLine(recordPath: string, entry: SizeSnapshot): Promise<void> {
   await mkdir(path.dirname(recordPath), { recursive: true });
   await appendFile(recordPath, `${JSON.stringify(entry)}\n`, 'utf8');
   if ((await readRecordSize(recordPath)) > PRUNE_THRESHOLD_BYTES) {

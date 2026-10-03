@@ -43,8 +43,8 @@ export interface ExpansionUnit {
  * One deployment's whole size vector, keyed by deployed path relative to the harness root. A line states a complete
  * state rather than a change, because the deltas that a report derives compare complete states.
  *
- * `kind` discriminates the line, so that a later marker written into the same record is skipped by a reader of
- * snapshots rather than misread as one.
+ * `kind` discriminates the line, so that a reader of snapshots skips a line of another kind, such as a review marker
+ * that an earlier version wrote into the same record, rather than misreading it as one.
  */
 export interface SizeSnapshot {
   readonly schemaVersion: number;
@@ -62,20 +62,4 @@ export interface SizeSnapshot {
    */
   readonly expansions?: Readonly<Record<string, ExpansionUnit>> | undefined;
   readonly aggregates: SizeAggregates;
-}
-
-/**
- * One streamlining review, naming the documents that it read. A later report compares each named document's current
- * bytes against the snapshot standing at or before `recordedAt`, which is the baseline that the review set.
- *
- * A document is named by its path relative to the content root that holds it, and carries no source name: A source's
- * name comes from the consumer's declaration rather than from the content root, so the same content root can take
- * one name in one record and another name in the next.
- */
-export interface ReviewMarker {
-  readonly schemaVersion: number;
-  readonly kind: 'review';
-  readonly recordedAt: string;
-  /** Content-root-relative POSIX paths of the documents that the review read. */
-  readonly reviewed: ReadonlyArray<string>;
 }
