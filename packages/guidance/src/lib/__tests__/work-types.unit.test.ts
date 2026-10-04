@@ -6,7 +6,6 @@ import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
 
 import embeddedTaxonomy from '../../../content/skills/_data/work-types.json' with { type: 'json' };
-
 import type { Taxonomy } from '../../change-grammar/types.ts';
 import {
   describeTaxonomyLocation,

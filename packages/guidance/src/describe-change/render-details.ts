@@ -45,7 +45,7 @@ export function renderDetails(
 
 /** Describes a list of scopes as a key that is equal for any two lists naming the same set. */
 function describeScopeSet(scopes: readonly string[]): string {
-  return JSON.stringify([...new Set(scopes)].sort());
+  return JSON.stringify([...new Set(scopes)].toSorted());
 }
 
 /** Finds the taxonomy entry that a type names, by its key or one of its aliases. */
@@ -54,6 +54,12 @@ function findWorkType(type: string, taxonomy: Taxonomy): WorkTypeEntry | undefin
     taxonomy.types.find((workType) => workType.key === type) ??
     taxonomy.types.find((workType) => workType.aliases?.includes(type) === true)
   );
+}
+
+/** Ranks a tier by its position among the declared tiers, placing an undeclared tier last. */
+function rankTier(tier: string, tiers: readonly string[]): number {
+  const rank = tiers.indexOf(tier);
+  return rank === -1 ? tiers.length : rank;
 }
 
 /** Renders one entry's bullet, with its scope tags when `tagged` and its migration nested below it. */
@@ -66,13 +72,9 @@ function renderBullet(entry: ChangeEntry, breakingPrefix: string, tagged: boolea
 
 /** Orders the taxonomy's types by tier, then by listing order. */
 function sortByRank(taxonomy: Taxonomy): WorkTypeEntry[] {
-  const tierRank = (workType: WorkTypeEntry): number => {
-    const rank = taxonomy.tiers.indexOf(workType.tier);
-    return rank === -1 ? taxonomy.tiers.length : rank;
-  };
   return taxonomy.types
-    .map((workType, index) => ({ index, workType }))
-    .sort((a, b) => tierRank(a.workType) - tierRank(b.workType) || a.index - b.index)
+    .map((workType, index) => ({ index, tier: rankTier(workType.tier, taxonomy.tiers), workType }))
+    .toSorted((a, b) => a.tier - b.tier || a.index - b.index)
     .map(({ workType }) => workType);
 }
 
