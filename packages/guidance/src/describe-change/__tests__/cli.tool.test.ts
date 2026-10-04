@@ -65,6 +65,7 @@ const SUBCOMMAND_NAMES = [
   'resolve-ticket-type',
   'resolve-effective-record',
   'render-block',
+  'render-details',
   'resolve-merge',
   'check-merge-body',
   'amend-entry',
@@ -631,6 +632,78 @@ describe('consolidate-entries', () => {
     await expect(
       runDescribe({ argv: ['consolidate-entries', '--entries-file', entriesFile], cwd, dataDir, home }),
     ).rejects.toThrow(/consolidate-entries ranks types against the taxonomy; none is readable/);
+  });
+});
+
+describe('render-details', () => {
+  it('reads the entries file', () => {
+    expect(parseArgs(['render-details', '--entries-file', 'entries.yaml'])).toEqual({
+      entriesFile: 'entries.yaml',
+      subcommand: 'render-details',
+    });
+  });
+
+  it.each([
+    ['is missing', []],
+    ['is blank', ['--entries-file', ' ']],
+  ])('if --entries-file %s, refuses the invocation', (_label, flags) => {
+    expect(() => parseArgs(['render-details', ...flags])).toThrow('render-details requires --entries-file');
+  });
+
+  it.each(['--title', '--entries-commit'])('if %s is passed, refuses it as unknown', (flag) => {
+    expect(() => parseArgs(['render-details', flag, 'value'])).toThrow(`unknown flag: ${flag}`);
+  });
+
+  it('renders the Details body from the entries file against the embedded taxonomy', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(ENTRIES_YAML);
+
+    const { output, warnings } = await runDescribe({
+      argv: ['render-details', '--entries-file', entriesFile],
+      cwd,
+      home,
+    });
+
+    expect(output).toStrictEqual({
+      details: [
+        '### 🎉 Features',
+        '',
+        '- Adds the store-qualified wikilink',
+        '',
+        '### 🐛 Bug fixes',
+        '',
+        '- Stops the sync from deleting a subagent',
+      ].join('\n'),
+    });
+    expect(warnings).toEqual([]);
+  });
+
+  it('if the entries file is malformed, refuses the invocation and names the defect', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries('- type: feat');
+
+    await expect(runDescribe({ argv: ['render-details', '--entries-file', entriesFile], cwd, home })).rejects.toThrow(
+      /is malformed: `entries\[0\]\.text` is missing/,
+    );
+  });
+
+  it('if the data directory does not contain a readable taxonomy, refuses the invocation', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(ENTRIES_YAML);
+    const dataDir = join(cwd, 'absent-data');
+
+    await expect(
+      runDescribe({ argv: ['render-details', '--entries-file', entriesFile], cwd, dataDir, home }),
+    ).rejects.toThrow(/render-details orders and heads the entries by the taxonomy; none is readable/);
+  });
+
+  it('if the taxonomy does not declare the headings, refuses the invocation', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(ENTRIES_YAML);
+
+    await expect(
+      runDescribe({ argv: ['render-details', '--entries-file', entriesFile], cwd, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(/lacks an `emoji` or `label` for `markers\.breaking` or a type/);
   });
 });
 

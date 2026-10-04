@@ -19,7 +19,7 @@ import { BREAKING_MARKER, normalizeChangeRecord } from '../change-grammar/tokens
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
-import { describeTaxonomyLocation, loadTaxonomy } from '../lib/work-types.ts';
+import { describeTaxonomyLocation, loadTaxonomy, loadWorkTypeHeadings } from '../lib/work-types.ts';
 import { amendEntry, type EntryAmendment } from './amend-entry.ts';
 import { type ChangeEntry, consolidateChangeEntries, findEntryComment, readChangeEntries } from './change-entries.ts';
 import {
@@ -35,6 +35,7 @@ import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readDeclaredScopes } from './read-declared-scopes.ts';
 import { readLabelMap, resolveLabeledRecord } from './read-label-map.ts';
+import { renderDetails } from './render-details.ts';
 import { resolveLabels } from './resolve-labels.ts';
 import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOutcome } from './resolve-merge.ts';
 import { discoverWorkspaceDirs, mergeScopeDirs, resolveScopes } from './resolve-scopes.ts';
@@ -48,6 +49,7 @@ import {
   type ParsedArgs,
   type ParseTitleOutcome,
   type RenderBlockOutcome,
+  type RenderDetailsOutcome,
   type RenderedTitles,
   type ResolveEffectiveRecordOutcome,
   type ResolveLabelsOutcome,
@@ -101,6 +103,7 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
     ],
     read: readRenderBlockArgs,
   },
+  'render-details': { flags: [{ name: 'entries-file', takesValue: true }], read: readRenderDetailsArgs },
   'resolve-merge': {
     flags: [
       { name: 'base', takesValue: true },
@@ -210,6 +213,8 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
       return runParseTitle(args.surface, args.subject, input);
     case 'render-block':
       return runRenderBlock(args, input);
+    case 'render-details':
+      return runRenderDetails(args.entriesFile, input);
     case 'render-titles':
       return runRenderTitles(args.record, input);
     case 'resolve-effective-record':
@@ -243,6 +248,7 @@ export interface DescribeResult {
     | ConsolidateEntriesOutcome
     | ParseTitleOutcome
     | RenderBlockOutcome
+    | RenderDetailsOutcome
     | RenderedTitles
     | ResolveEffectiveRecordOutcome
     | ResolveLabelsOutcome
@@ -575,6 +581,15 @@ function readRenderBlockArgs({ flags, positionals }: ScanResult): ParsedArgs {
   };
 }
 
+/** Reads the `render-details` invocation: the required entries file. */
+function readRenderDetailsArgs({ flags, positionals }: ScanResult): ParsedArgs {
+  refusePositionals(positionals);
+  return {
+    entriesFile: readRequiredValue('render-details', valueFlagMap(flags), 'entries-file'),
+    subcommand: 'render-details',
+  };
+}
+
 /**
  * Reads the `render-titles` invocation into a record. Every flag is optional, and a flag left off resolves its token to
  * empty, so an invocation without flags renders each template against an empty record.
@@ -879,6 +894,28 @@ async function runRenderBlock(
     args.entriesFile === undefined ? [] : await readEntriesFile({ cwd: input.cwd, filePath: args.entriesFile });
   const block = { ...args.block, ...(entries.length > 0 && { entries }) };
   return { output: { block: renderChangeRecordBlock(block) }, warnings: [] };
+}
+
+/**
+ * Renders the `## Details` body from the entries file, refusing when the taxonomy that orders and heads the
+ * subsections cannot be read or lacks a heading.
+ */
+async function runRenderDetails(entriesFile: string, input: DescribeInput): Promise<DescribeResult> {
+  const taxonomy = await loadTaxonomy(input.dataDir);
+  const headings = await loadWorkTypeHeadings(input.dataDir);
+  if (taxonomy === null) {
+    throw new Error(
+      `render-details orders and heads the entries by the taxonomy; none is readable ${describeTaxonomyLocation(input.dataDir)}`,
+    );
+  }
+  if (headings === null) {
+    throw new Error(
+      `render-details heads the entries by the taxonomy; the one ${describeTaxonomyLocation(input.dataDir)} lacks an \`emoji\` or \`label\` for \`markers.breaking\` or a type`,
+    );
+  }
+  const entries = await readEntriesFile({ cwd: input.cwd, filePath: entriesFile });
+  const output: RenderDetailsOutcome = { details: renderDetails(entries, taxonomy, headings) };
+  return { output, warnings: [] };
 }
 
 /**
