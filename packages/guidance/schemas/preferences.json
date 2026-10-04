@@ -65,7 +65,7 @@
       "properties": {
         "jira": {
           "type": "object",
-          "description": "Jira integration configuration. Beyond `enabled`, the keys here are read by the `create-ticket` skill's Jira creation path.",
+          "description": "Jira integration configuration. Beyond `enabled`, the keys here are read by the `manage-jira-ticket` helper, which the `create-ticket` skill runs to create a Jira work item.",
           "properties": {
             "enabled": {
               "type": "boolean",

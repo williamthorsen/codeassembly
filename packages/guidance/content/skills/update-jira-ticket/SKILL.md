@@ -30,11 +30,18 @@ If more than one is available, prefer the `contentFormat` tool: It takes Markdow
 
 Use this branch when the client is `acli`.
 
-1. **Author Markdown, then convert it to ADF.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown. Pass the converted ADF through `--description-file`.
+1. **Author Markdown, then convert it to ADF with the helper.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown and write it to a scratch file. Then run:
+
+   ```bash
+   node {harness_home_dir}/scripts/manage-jira-ticket.mjs convert-body --body-file {absolute Markdown path} --out {absolute ADF path}
+   ```
+
+   Pass both paths as literal absolute paths, unquoted; the helper refuses a missing or empty body file. It writes the ADF document to `--out` and prints `{"adfPath": "..."}`. Pass that path to `--description-file`, or to `--body-file` for a comment. Never hand-write the ADF.
+
 2. **Never pass Markdown to `--description` or `--description-file`.** `acli` parses it as Jira wiki markup, in which `#` opens an ordered list, so `## Problem` becomes a nested numbered item and every backtick, tilde, underscore, and bracket comes back backslash-escaped. Because the command reports success, only reading the work item back reveals the damage.
 3. **Reserve plain text for a body without any structure to lose**, such as a one-line comment. Submit anything containing headings, lists, or inline marks as ADF.
-4. **Keep your checkboxes**, per [Checklists](#checklists). ADF is the one format that renders them, so convert task-list syntax to `taskList` / `taskItem` here rather than flattening it to plain bullets.
-5. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`.
+4. **Keep your checkboxes**, per [Checklists](#checklists). The helper converts task-list syntax to `taskList` / `taskItem` nodes, so leave it in the Markdown rather than flattening it to plain bullets.
+5. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`, the HTML checker. `manage-jira-ticket.mjs` is the converter.
 
 ## Markdown path
 

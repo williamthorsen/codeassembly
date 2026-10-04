@@ -32,7 +32,6 @@ Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_i
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `artifact_base_dir`, and `ticket_base_url` from the manifest JSON emitted on stdout
 - From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket from which the current branch is derived (empty when the branch name does not encode a ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6. Read `branch_name` and `default_branch` too, which the step-6 guard compares.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
-- From the same file, read `integrations.jira.project_key` and `integrations.jira.issue_types`. Both are optional, and both are consumed only by step 6's Jira path, which states what each falls back to.
 
 ### 2. Write ticket content
 
@@ -143,52 +142,36 @@ Construct the ticket ID from `ticket_ref_prefix` (step 1) and `number`:
 
 #### Jira path
 
-##### Resolve the project key
+##### Resolve the target
 
-Take `integrations.jira.project_key` (step 1) when it is set. Otherwise derive the key from `project.ticket_ref_prefix` by stripping its trailing separator: `ABC-` yields `ABC`. When neither is configured, the Jira path does not have a project in which to create the work item; take the [no-remote fallback](#fallback-no-remote-platform), naming in the warning that neither `integrations.jira.project_key` nor `project.ticket_ref_prefix` is set. Never infer a key from the repository name or from a ticket reference seen elsewhere in the session.
+```bash
+node {harness_home_dir}/scripts/manage-jira-ticket.mjs resolve-target --work-type {type}
+```
 
-##### Resolve the issue type
+`{type}` is the work type decided in step 2. The helper reads `integrations.jira` and `project.ticket_ref_prefix` from the repository's `.agents/preferences.yaml`, never from the global file, and prints `{"projectKey": "...", "issueType": "..."}`. Use both values as printed: Never infer a key from the repository name or from a ticket reference seen elsewhere in the session, and never choose an issue type from the ticket's content, because a project need not define `Story` or `Bug`.
 
-Read `integrations.jira.issue_types` (step 1) and stop at the first of these that yields a name:
-
-1. The entry keyed by the work type decided in step 2, matched against both the canonical keys and the aliases in [`work-types.json`](../_data/work-types.json). A map keyed `bugfix` matches a `fix` work type, and one keyed `fix` matches a `bugfix` type.
-2. The map's `default` entry.
-3. The literal `Task`.
-
-Do not choose a type from the ticket's content. A team-managed project need not define `Story` or `Bug`, and a name that it does not define fails the creation call.
+When the preferences do not name a project, the helper prints `{"fallback": "no-project-key", "warning": "..."}` instead. Take the [no-remote fallback](#fallback-no-remote-platform) with that warning.
 
 ##### Create the work item
 
 Identify the client per {skill?:update-jira-ticket}, which ranks the three client shapes and states the description format that each one takes. If it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
 
-Every client takes `ticket_title` as the summary, the resolved project key, the resolved issue type, and the step-2 body as the description in that skill's assigned format:
-
-- **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary`, and a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
-- **HTML tool** (e.g. `create_jira_issue`): `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
-- **`acli`**: Convert the body to ADF, write the ADF to a scratch file per [gh body file](#gh-body-file), and pass the file. With an unset path, the work item is still created, but without its description.
-
-  If step 4 decided a parent, pre-flight the reference before the create call. `acli jira workitem edit` does not have a `--parent` flag, so this is the only call that can set one, and a reference rejected by Jira fails the creation of the work item, not only the relationship, unless it is checked first:
+- **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary` (`ticket_title`), and the step-2 body as a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
+- **HTML tool** (e.g. `create_jira_issue`): The same target and summary, with the body as `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
+- **`acli`**: Write the step-2 body as Markdown to a scratch file per [gh body file](#gh-body-file), naming it `jira-body-{timestamp}.md`, and run the helper once:
 
   ```bash
-  acli jira workitem view "{parent}"
+  node {harness_home_dir}/scripts/manage-jira-ticket.mjs create --summary "{ticket_title}" --body-file {absolute body path} --work-type {type} {parent_flag}
   ```
 
-  On a zero exit, add `--parent "{parent}"` to the create call below. A non-zero exit means the reference is bad: Create the work item without the flag, and report the parent as skipped per step 7.
+  `{parent_flag}` is `--parent {parent}` when step 4 decided a parent, and empty otherwise. Pass the body path as the literal absolute path, unquoted, without a shell variable or a guard: The helper refuses a missing or empty file before it calls `acli`.
 
-  ```bash
-  adf_path="{absolute path from the write step}"
-  [ -s "$adf_path" ] || { echo "Description file missing or empty: $adf_path" >&2; exit 1; }
-  output=$(acli jira workitem create \
-    --project "{project_key}" \
-    --type "{issue_type}" \
-    --summary "{ticket_title}" \
-    --description-file "$adf_path" \
-    --json)
-  printf '%s' "$output" | python3 -c "import json,sys; d=json.loads(sys.stdin.read()); print(d.get('key','') if isinstance(d,dict) else '')" 2>/dev/null
-  printf '%s\n' "$output"
-  ```
+  The helper converts the body to ADF, checks a parent with `acli jira workitem view`, and runs `acli jira workitem create` exactly once. It prints `{"key": "ABC-123", "rawOutput": "...", "parentSkipped": false}`. `parentSkipped: true` means that Jira rejected the parent reference and the work item was created without it; report the parent skipped per step 7.
 
-  Capture the create call's output before parsing it, as the snippet does, and print both the parsed key and the raw response. The parse prints the key on the first line; if it yields none, read the key out of the response printed after it, which contains everything the one invocation returned. Assigning the parse instead prints nothing, leaving neither to read. Never run the create command a second time to obtain the key: That creates a second work item.
+  On a non-zero exit, read what it printed:
+  - `{"fallback": ...}`: As under [Resolve the target](#resolve-the-target), and `acli` was not called.
+  - `"key": null`: The create call ran, and stderr says why the key is missing. Read the key from `rawOutput` when it contains one, and otherwise check Jira for the work item. Never run `create` again: A second call creates a second work item.
+  - Nothing: An argument or the body file was rejected before any `acli` call, as stderr states. Fix it and run the helper again.
 
 ##### Record the identifiers
 
@@ -240,7 +223,7 @@ These flags are native to `gh` 2.94 and later. They are not the REST dependencie
 
 **Parent.** On a connected tool the parent is set here, after the work item exists, through the update tool's `fields`, which takes it as an object rather than a bare key: `"parent": { "key": "{parent}" }`. A reference rejected by Jira then fails only the relationship, as this step's general rule intends. Report the parent skipped when the update tool does not expose a parent field.
 
-`acli` is the exception, and the only one: `acli jira workitem edit` does not have a `--parent` flag, so set the parent with the step-6 creation call instead, after the pre-flight that step 6 states. Report it skipped if that pre-flight rejected the reference.
+`acli` is the exception, and the only one: `acli jira workitem edit` does not have a `--parent` flag, so the step-6 helper sets the parent in the creation call, after checking the reference. Report the parent skipped when the helper printed `parentSkipped: true`.
 
 **blocked-by and blocking.** Both are Jira links, and the client that creates them is ranked as step 6 ranks the creation clients: a connected issue-link tool when one is available, `acli` next, a reported skip only when neither is. The link client need not be the one that created the work item, because a link call does not include a description and the creation client's format contract does not apply to it.
 

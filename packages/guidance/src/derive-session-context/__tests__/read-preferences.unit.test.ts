@@ -5,7 +5,7 @@ import process from 'node:process';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { readPreferences } from '../read-preferences.ts';
+import { readPreferences, readProjectPreferences } from '../read-preferences.ts';
 
 describe(readPreferences, () => {
   let workRoot: string;
@@ -170,6 +170,27 @@ describe(readPreferences, () => {
     await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
       /'ticket\.base_url' must be a string/,
     );
+  });
+});
+
+describe(readProjectPreferences, () => {
+  let workRoot: string;
+
+  beforeEach(async () => {
+    workRoot = await mkdtemp(path.join(tmpdir(), 'read-project-preferences-'));
+  });
+
+  afterEach(async () => {
+    await rm(workRoot, { recursive: true, force: true });
+  });
+
+  it('returns the repository file unprojected, including keys that the deriver does not consume', async () => {
+    await writeProjectYaml(workRoot, 'integrations:\n  jira:\n    project_key: ABC\n');
+    expect(await readProjectPreferences(workRoot)).toEqual({ integrations: { jira: { project_key: 'ABC' } } });
+  });
+
+  it('returns an empty object when the repository file is absent', async () => {
+    expect(await readProjectPreferences(workRoot)).toEqual({});
   });
 });
 
