@@ -40,6 +40,7 @@ The bundle does not have a shebang, so the `node` prefix is required. Each subco
 | [`resolve-ticket-type`](#resolve-ticket-type)           | The work type that a ticket's labels name               | The label map                                               |
 | [`resolve-effective-record`](#resolve-effective-record) | A record with its overrides applied, and its defects    | The taxonomy                                                |
 | [`render-block`](#render-block)                         | The `change-record` block that ends a pull-request body | Nothing                                                     |
+| [`render-details`](#render-details)                     | The `## Details` body of a change summary               | The taxonomy and the entries file                           |
 | [`resolve-merge`](#resolve-merge)                       | What a pull request merges as                           | The templates, the taxonomy, the label map, and the commits |
 | [`check-merge-body`](#check-merge-body)                 | The entry count that a composed merge body records      | The body file                                               |
 | [`amend-entry`](#amend-entry)                           | One change entry, amended in a pull-request body        | The taxonomy and the body file, which it rewrites           |
@@ -48,12 +49,12 @@ The bundle does not have a shebang, so the `node` prefix is required. Each subco
 
 ### What stops a run and what only warns
 
-- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `consolidate-entries`, `check-merge-body`, `amend-entry`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `render-details`, `consolidate-entries`, `check-merge-body`, `amend-entry`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
 - Malformed YAML in `pnpm-workspace.yaml` or in the project preferences file stops `resolve-scopes`, naming the file.
 - A `project.scopes` entry that `resolve-scopes` cannot honor causes a warning naming the entry's index and fault, and the run skips that entry and resolves the rest. See [`resolve-scopes`](#resolve-scopes).
 - A malformed `change-record` block in the body file causes a warning from `resolve-labels`, which then labels the change from the flags alone.
-- An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `resolve-effective-record`, `resolve-merge`, and `amend-entry`.
+- An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `render-details`, `resolve-effective-record`, `resolve-merge`, and `amend-entry`.
 - Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s discovery of workspace and declared scope directories.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
 
@@ -273,6 +274,47 @@ The output is JSON whose `block` contains the fenced block, fences included:
 **The run does not read the taxonomy.** The block records the entries rather than a record ranked from them; [`resolve-merge`](#resolve-merge) ranks them at merge.
 
 The run refuses a missing or blank `--title`, and a blank `--entries-file` or `--entries-commit`. It refuses `--entries-commit` without `--entries-file`, since a derivation commit with nothing derived at it records a claim about nothing, and it refuses an entries file that cannot be read, that is not valid YAML, or that is malformed, exactly as `consolidate-entries` does. `--override-type` takes a bare type and refuses one spelled with `!`; pass `--override-breaking` for a breaking override. [The `change-record` block](./change-record.md#the-change-record-block) states the block's grammar, and [The effective record](./change-record.md#the-effective-record) states how a reader applies the overrides.
+
+## `render-details`
+
+`render-details` renders the body of a change summary's `## Details` section from the change entries. Its one flag, `--entries-file`, is required and names the same YAML file that [`consolidate-entries`](#consolidate-entries) takes.
+
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs render-details --entries-file entries-20260920-223418Z.yaml
+```
+
+```yaml
+- type: fix
+  scopes: [kb]
+  breaking: true
+  text: "Stops `kb check` resolving a bare wikilink against every store."
+  migration: "Qualify each wikilink that names a note outside its own store as `[[store:Note title]]`."
+- type: feat
+  scopes: [agents, kb]
+  breaking: false
+  text: "Adds the store-qualified wikilink `[[store:Note title]]`."
+```
+
+The output is JSON whose `details` contains the body, without the `## Details` heading. Decoded, it reads:
+
+```markdown
+### 🎉 Features
+
+- Adds the store-qualified wikilink `[[store:Note title]]`. #agents, #kb
+
+### 🐛 Bug fixes
+
+- 🚨 **Breaking:** Stops `kb check` resolving a bare wikilink against every store. #kb
+    - Migration: Qualify each wikilink that names a note outside its own store as `[[store:Note title]]`.
+```
+
+- **Subsections.** One `###` subsection per distinct type among the entries, headed `{emoji} {label}` from that type's entry in [`work-types.json`](./work-types.json). An entry typed by an alias falls under its canonical type. The subsections are ordered by tier, then in the order that the taxonomy lists the types, and a type without an entry does not get one.
+- **Bullets.** One bullet per entry, in the order of the file. A breaking entry's bullet opens with the prefix rendered from `markers.breaking` as `{emoji} **{label}:** `, followed by the entry's `text`.
+- **Migration.** An entry's `migration` is nested under its bullet as `Migration: {migration}`, indented 4 spaces, which Bitbucket Cloud requires to read it as a child rather than a sibling. The scope tags stay on the bullet's own line.
+- **Scope tags.** When the entries do not all name the same set of scopes, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated and each named once. An entry without scopes does not end with a tag. When every entry names the same set, whatever its order, the bullets do not end with tags, since the consolidated record already names that scope.
+- **Empty list.** An empty list yields an empty `details`, and the caller omits the section.
+
+The run refuses an entry whose `type` the taxonomy does not declare as a key or an alias, `feat!` included, since `breaking` carries the marker; and an entry whose `text` spans more than one line, which would break its bullet. It refuses an entries file exactly as `consolidate-entries` does, and refuses outright if the taxonomy cannot be read or does not declare an `emoji` and a `label` for `markers.breaking` and every type.
 
 ## `resolve-merge`
 

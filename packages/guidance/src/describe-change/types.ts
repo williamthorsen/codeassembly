@@ -75,6 +75,7 @@ export type ParsedArgs =
   | { bodyFile?: string; record: ChangeRecord; subcommand: 'resolve-labels' }
   | { block: ChangeRecordBlock; entriesFile?: string; subcommand: 'render-block' }
   | { entriesFile: string; subcommand: 'consolidate-entries' }
+  | { entriesFile: string; subcommand: 'render-details' }
   | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
   | { overrides: RecordOverrides; record: ChangeRecord; subcommand: 'resolve-effective-record' }
   | { paths: string[]; subcommand: 'resolve-scopes' }
@@ -98,6 +99,11 @@ export type ParseTitleOutcome =
 /** The fenced `change-record` block, under the key that the JSON output names. */
 export interface RenderBlockOutcome {
   block: string;
+}
+
+/** The `## Details` body of a change summary, under the key that the JSON output names. */
+export interface RenderDetailsOutcome {
+  details: string;
 }
 
 /** The rendered title for each surface, under the `<surface>_title` key that the JSON output names. */

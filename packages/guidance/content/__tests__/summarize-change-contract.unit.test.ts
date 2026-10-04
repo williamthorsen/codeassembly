@@ -2,12 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { readContentFile } from '../test-utils/read-content-file.ts';
 
-// `## Details` renders the drafter's entries, `## What` contains the lede that the same drafter wrote, and a later
-// ticket parses the entries back out of the rendering. Three edits would defeat that quietly: under-specifying the
-// rendering, which leaves the parser reading prose that varies per run; restoring the coverage mandate, which is what
-// made `## Details` a prose re-rendering of the diff; and composing `## What` in this session, which returns the
-// weighting that the fresh-context dispatch removes. None fails at runtime -- each yields a plausible change summary
-// -- so the guard has to be here.
+// `## Details` is rendered by `describe-change render-details` from the drafter's entries, and `## What` contains the
+// lede that the same drafter wrote. Three edits would defeat that quietly: rendering `## Details` by hand, which drifts
+// from the taxonomy's headings; restoring the coverage mandate, which is what made `## Details` a prose re-rendering of
+// the diff; and composing `## What` in this session, which returns the weighting that the fresh-context dispatch
+// removes. None fails at runtime -- each yields a plausible change summary -- so the guard has to be here.
 
 /**
  * Phrases that a restored coverage mandate contains. The mandate required every fact in the lede to reappear in
@@ -18,20 +17,6 @@ const COVERAGE_MANDATE_PHRASES: ReadonlyArray<string> = [
   'appears in `## details` too',
   'neither section is trimmed',
   'the full story (implementation mechanics)',
-];
-
-/**
- * Phrases stating the rendering exactly enough to parse back out: which subsections exist and in what order, what
- * each bullet is, and when a bullet ends with its scopes. Lowercased, so that a sentence's opening capital still
- * matches.
- */
-const RENDERING_PHRASES: ReadonlyArray<string> = [
-  'one per distinct `type` among the entries',
-  'one bullet per entry of that type',
-  'order them by tier',
-  'bare `#scope` tags',
-  'when every entry names the same scopes, the bullets do not end with tags',
-  'one nested list item, `migration: {migration}`',
 ];
 
 /**
@@ -74,15 +59,13 @@ const SUBAGENT_TOKEN = /\{subagent:([a-z][a-z0-9-]*)\}/g;
 const EXPANDED = readContentFile('skills/summarize-change/SKILL.md');
 
 describe('summarize-change contract', () => {
-  it('states the `## Details` rendering', async () => {
+  it('renders `## Details` through `render-details` rather than by hand', async () => {
     const text = (await EXPANDED).toLowerCase();
-    const missing = RENDERING_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The rendering is the encoding of the entries, and a later reader parses the entries back out of it rather ' +
-      'than out of a second copy. A rendering stated loosely varies per run, so the parser has nothing fixed to ' +
-      `read. These phrases are gone:\n  ${missing.join('\n  ')}`;
-    expect(missing, message).toEqual([]);
+      'The headings come from the taxonomy only when the script renders them; a skill that states the rules for the ' +
+      'agent to apply gets headings from the agent’s own conventions.';
+    expect(text, message).toContain('render-details --entries-file');
   });
 
   it('records the entries, consolidates the record from them, and ends the body with the block', async () => {

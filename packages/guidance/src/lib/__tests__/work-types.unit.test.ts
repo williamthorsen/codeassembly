@@ -5,10 +5,12 @@ import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
 
+import embeddedTaxonomy from '../../../content/skills/_data/work-types.json' with { type: 'json' };
 import type { Taxonomy } from '../../change-grammar/types.ts';
 import {
   describeTaxonomyLocation,
   loadTaxonomy,
+  loadWorkTypeHeadings,
   loadWorkTypes,
   resolveWorkType,
   type WorkType,
@@ -22,6 +24,11 @@ const TAXONOMY = {
     { key: 'fix', tier: 'public', aliases: ['bugfix'] },
     { key: 'ci', tier: 'process', aliases: [] },
   ],
+};
+
+const HEADED_TAXONOMY = {
+  markers: { breaking: { emoji: '🚨', label: 'Breaking' } },
+  types: [{ emoji: '🎉', key: 'feat', label: 'Features', tier: 'public' }],
 };
 
 describe(describeTaxonomyLocation, () => {
@@ -112,6 +119,43 @@ describe(loadTaxonomy, () => {
 
   it('yields null for a taxonomy without a types list', async () => {
     await expect(loadTaxonomy(await writeTaxonomy({ tiers: ['public'] }))).resolves.toBeNull();
+  });
+});
+
+describe(loadWorkTypeHeadings, () => {
+  it('heads every type in the embedded taxonomy with its emoji and label', async () => {
+    const loaded = await loadWorkTypeHeadings();
+
+    expect(loaded?.headings).toEqual(
+      new Map(embeddedTaxonomy.types.map((type) => [type.key, `${type.emoji} ${type.label}`])),
+    );
+  });
+
+  it('renders the breaking marker as a bold inline prefix', async () => {
+    const loaded = await loadWorkTypeHeadings();
+
+    expect(loaded?.breakingPrefix).toBe('🚨 **Breaking:** ');
+  });
+
+  it('yields null when the breaking marker lacks a label', async () => {
+    const dataDir = await writeTaxonomy({ ...HEADED_TAXONOMY, markers: { breaking: { emoji: '🚨' } } });
+
+    await expect(loadWorkTypeHeadings(dataDir)).resolves.toBeNull();
+  });
+
+  it('yields null when a type lacks an emoji', async () => {
+    const dataDir = await writeTaxonomy({
+      ...HEADED_TAXONOMY,
+      types: [...HEADED_TAXONOMY.types, { key: 'ci', label: 'CI', tier: 'process' }],
+    });
+
+    await expect(loadWorkTypeHeadings(dataDir)).resolves.toBeNull();
+  });
+
+  it("yields null when the directory doesn't contain a taxonomy", async () => {
+    const dataDir = await mkdtemp(join(tmpdir(), 'work-types-'));
+
+    await expect(loadWorkTypeHeadings(dataDir)).resolves.toBeNull();
   });
 });
 

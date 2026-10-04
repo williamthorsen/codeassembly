@@ -21,6 +21,15 @@ export interface ResolvedWorkType {
 }
 
 /**
+ * The display text that a rendered change summary heads its parts with: each type's `{emoji} {label}`, keyed by
+ * canonical key, and the breaking marker's inline prefix.
+ */
+export interface WorkTypeHeadings {
+  breakingPrefix: string;
+  headings: ReadonlyMap<string, string>;
+}
+
+/**
  * Names where a taxonomy is read from, as a diagnostic's locative phrase: under `dataDir` when one is named, and in the
  * bundle otherwise.
  */
@@ -58,6 +67,36 @@ export async function loadTaxonomy(dataDir?: string): Promise<Taxonomy | null> {
 
   const tiers = Array.isArray(parsed.tiers) ? parsed.tiers.filter((tier) => typeof tier === 'string') : [];
   return { tiers, types };
+}
+
+/**
+ * Loads each type's heading and the breaking prefix, `{emoji} **{label}:** `, from the same file as `loadTaxonomy`.
+ * Yields `null` when the taxonomy cannot be read, or when `markers.breaking` or a declared type lacks a string `emoji`
+ * or `label`. An entry that `loadTaxonomy` skips, for lacking a key or a tier, is skipped here too.
+ */
+export async function loadWorkTypeHeadings(dataDir?: string): Promise<WorkTypeHeadings | null> {
+  const parsed = await readTaxonomy(dataDir);
+  if (parsed === null) {
+    return null;
+  }
+
+  const breaking = isRecord(parsed.markers) ? readDisplay(parsed.markers.breaking) : null;
+  if (breaking === null) {
+    return null;
+  }
+
+  const headings = new Map<string, string>();
+  for (const entry of parsed.types) {
+    if (!isRecord(entry) || typeof entry.key !== 'string' || typeof entry.tier !== 'string') {
+      continue;
+    }
+    const display = readDisplay(entry);
+    if (display === null) {
+      return null;
+    }
+    headings.set(entry.key, `${display.emoji} ${display.label}`);
+  }
+  return { breakingPrefix: `${breaking.emoji} **${breaking.label}:** `, headings };
 }
 
 /**
@@ -107,6 +146,7 @@ export function resolveWorkType(type: string, workTypes: ReadonlyMap<string, Wor
 
 /** A taxonomy document that declares a `types` list, before its entries are checked. */
 interface ParsedTaxonomy {
+  markers: unknown;
   tiers: unknown;
   types: unknown[];
 }
@@ -127,12 +167,24 @@ function parseTaxonomy(value: unknown): ParsedTaxonomy | null {
   if (!isRecord(value) || !Array.isArray(value.types)) {
     return null;
   }
-  return { tiers: value.tiers, types: value.types };
+  return { markers: value.markers, tiers: value.tiers, types: value.types };
 }
 
 /** Reads a declared `aliases` list, dropping any entry that is not a string. */
 function readAliases(value: unknown): string[] {
   return Array.isArray(value) ? value.filter((alias) => typeof alias === 'string') : [];
+}
+
+/** Reads a mapping's `emoji` and `label`, yielding `null` unless both are non-blank strings. */
+function readDisplay(value: unknown): { emoji: string; label: string } | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+  const { emoji, label } = value;
+  if (typeof emoji !== 'string' || typeof label !== 'string' || emoji.trim() === '' || label.trim() === '') {
+    return null;
+  }
+  return { emoji, label };
 }
 
 /** Reads the taxonomy under `dataDir` when one is named, and the embedded taxonomy otherwise. */
