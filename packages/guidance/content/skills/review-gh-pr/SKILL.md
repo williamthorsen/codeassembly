@@ -42,13 +42,15 @@ If `pr_id` is a URL of the form `https://github.com/{owner}/{repo}/pull/{number}
 
 ### 2. Fetch PR metadata
 
-Issue a single `gh pr view` call with all fields needed downstream:
+Issue a single `gh pr view` call with all fields needed downstream, and save its output for step 5:
 
 ```bash
-gh pr view {pr_number} --json number,title,body,url,updatedAt,headRefName,headRefOid,baseRefName,closingIssuesReferences
+pr_json=$(mktemp "${TMPDIR:-/tmp}/review-gh-pr.XXXXXX")
+gh pr view {pr_number} --json number,title,body,url,updatedAt,headRefName,headRefOid,baseRefName,closingIssuesReferences > "$pr_json"
+echo "$pr_json"
 ```
 
-Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`). Capture:
+Write the printed absolute path wherever `{pr_json}` appears below. Parse the JSON with a real parser (`python3 -c "import sys,json; ..."` or `jq`). Capture:
 
 - `number`, `title`, `body`, `url`, `updatedAt`
 - `headRefName`, `headRefOid`, `baseRefName`
@@ -90,16 +92,15 @@ git merge-base HEAD {diff_base}
 Apply this cascade in order and use the first match:
 
 1. **`ticket_override`**: If non-null, resolve per [ticket source resolution](../_data/ticket-source-resolution.md) and use it.
-2. **First entry in `closingIssuesReferences`**: If the array is non-empty, fetch the first entry's content via `gh issue view --json number,title,body,labels,updatedAt {number}` and use it.
-3. **Parse PR body for issue references**: Scan `body` for the first match of any of these patterns (case-insensitive for keywords):
-   - `closes #{n}`, `closes: #{n}`
-   - `fixes #{n}`, `fixes: #{n}`
-   - `resolves #{n}`, `resolves: #{n}`
-   - bare `#{n}`
+2. **Linked or referenced issue**: Run the bundled helper on the saved PR JSON:
 
-   Take the first match's number and fetch the issue via `gh issue view --json number,title,body,labels,updatedAt {number}`.
+   ```bash
+   node {harness_home_dir}/skills/review-gh-pr/select-pr-ticket.mjs < {pr_json}
+   ```
 
-4. **No ticket**: Proceed with the PR description as the only spec source.
+   It prints `{"number": <n or null>, "source": "<source>"}`. `source` is `closing-reference` (the first entry in `closingIssuesReferences`), `body-keyword` or `body-bare` (the earliest issue reference in the body outside code), or `none`, with `number` null. When `number` is not null, fetch the issue via `gh issue view --json number,title,body,labels,updatedAt {number}` and use it. When the helper exits non-zero, report its stderr and stop.
+
+3. **No ticket**: When `source` is `none`, proceed with the PR description as the only spec source.
 
 ### 6. Build the spec-source list
 
