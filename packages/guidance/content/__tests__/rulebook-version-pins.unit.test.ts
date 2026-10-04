@@ -84,7 +84,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-tooling-preferences',
-    { bodyHash: '8ef68495006dbe3fc92a225ce50886a1322fe4a96177cb33b4e66694753eb889', version: '3' },
+    { bodyHash: '8a340e3ed039ede1ed0b2649267d588409fcdf76512d710ffa4e25d9b82e174c', version: '3' },
   ],
   [
     'williamthorsen-typescript-preferences',
