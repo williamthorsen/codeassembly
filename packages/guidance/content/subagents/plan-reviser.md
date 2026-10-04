@@ -34,13 +34,6 @@ You will receive:
 6. **Produce the refined plan**: Write a complete plan document (not a diff) in the same format as the original, with all findings addressed.
 7. **Append the changes table**: Document what changed from the original.
 
-## Format handling
-
-Detect and preserve the original plan's format:
-
-- **Prose plans** (markdown with sections and steps): Produce a refined markdown document with the same structure.
-- **Orchestration plans** (`.md` + `.json` companion): Produce both files. Write the `.md` to the provided output path. If the original had a `.json` companion, write the updated `.json` to the same directory as the output path, using the same base name with a `.json` extension.
-
 <!-- include: ../_partials/plain-speech.md / -->
 
 <!-- include: ../_partials/concision.md / -->

@@ -10,7 +10,7 @@ dependencies:
 
 # Refine plan
 
-Perform a single review-and-revise round on a saved implementation plan, checking for completeness (decision gaps that the coder would fill) and correctness (factual accuracy against the codebase). Produces a refined plan ready for orchestrated development.
+Perform a single review-and-revise round on a saved implementation plan, checking for completeness (decision gaps that the coder would fill) and correctness (factual accuracy against the codebase). Produces a refined plan ready for implementation.
 
 ## Arguments
 
@@ -38,14 +38,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
 5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 6. `mkdir -p {artifact_dir}`
 
-### 2. Detect plan format
-
-1. Using the plan content already read in step 1, detect format:
-   - If the plan contains a JSON companion file (same base name with `.json` extension), it is an `orchestration` format plan.
-   - Otherwise, it is a `prose` format plan.
-2. Record the format for passing to the reviewer.
-
-### 3. Dispatch plan-reviewer
+### 2. Dispatch plan-reviewer
 
 Extract the slug from the original plan filename. The slug is the middle segment of `{timestamp}_{slug}_{artifact-type}.md`. If the filename doesn't follow this pattern, derive a slug from the filename.
 
@@ -60,7 +53,6 @@ Call {tool:Task} with `subagent_type: plan-reviewer`, `max_turns: 30`:
 > Review the following implementation plan for completeness and correctness.
 >
 > **Plan file:** {plan_path}
-> **Plan format:** {prose|orchestration}
 >
 > **Ticket/requirements:**
 > {ticket content}
@@ -75,7 +67,7 @@ Parse the return block:
 
 `-- Refine plan -- {AutoResolvable + UserQuestions} findings ({AutoResolvable} auto-resolvable, {UserQuestions} require user input)`
 
-### 4. Present user questions
+### 3. Present user questions
 
 Evaluate the finding counts:
 
@@ -90,7 +82,7 @@ Evaluate the finding counts:
   Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was just reviewed, and the review did not find any issues; use this as recommendation context. Use `{plan_path}` (the original plan argument, not `{revision_output_path}`; this path does not produce a revised plan) and `{ticket_source}` in each skill-invoking option line.
   </HARD-GATE>
 
-- **0 user questions** (UserQuestions = 0, AutoResolvable > 0): Skip user interaction. Proceed to step 5 with empty user answers.
+- **0 user questions** (UserQuestions = 0, AutoResolvable > 0): Skip user interaction. Proceed to step 4 with empty user answers.
 
 - **User questions present** (UserQuestions > 0): Read the review artifact. Extract all findings from the "Decision gaps" section (these may be C or X findings -- the section is organized by resolution type, not finding category). Present each finding's question using the finding's ID (e.g., `C1`, `X2`) as the question identifier. When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
@@ -116,7 +108,7 @@ Evaluate the finding counts:
 
 <!-- include: ../_partials/action-items.md / -->
 
-### 5. Dispatch plan-reviser
+### 4. Dispatch plan-reviser
 
 Generate a new UTC timestamp for the refined plan.
 
@@ -227,7 +219,7 @@ The `provenance:` block is **not** populated from the script. Construct it manua
    ---
    ```
 
-### 6. Offer ticket update if approach diverged
+### 5. Offer ticket update if approach diverged
 
 Compare the revised plan's approach/solution with the source ticket's solution section. If they materially diverge, offer to update the ticket to match the revised plan. If the approaches haven't diverged, skip this step silently.
 
@@ -235,11 +227,11 @@ Compare the revised plan's approach/solution with the source ticket's solution s
 
 On consent, write the update per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write), which resolves the platform and states how a revision confined to the solution section composes.
 
-This is a shared-state action; do not update without explicit consent. If the user declines, continue to step 7.
+This is a shared-state action; do not update without explicit consent. If the user declines, continue to step 6.
 
 <!-- include: ../../_partials/prose-line-breaks.md / -->
 
-### 7. Report completion and present next steps
+### 6. Report completion and present next steps
 
 ```
 Plan refined:

@@ -32,7 +32,7 @@ This vocabulary is consistent with the F/W/T/R/S classification (with `-L` suffi
 ### Numbering rules
 
 - **Fresh numbering per wrap-up.** IDs are assigned sequentially within each prefix, regardless of what IDs existed in source artifacts. `F1` in the wrap-up may correspond to `F3` in a review; the wrap-up is its own namespace.
-- Items may originate from orchestration runs, conversation, review artifacts, or casual observation. Fresh numbering unifies all sources.
+- Items may originate from conversation, review artifacts, or casual observation. Fresh numbering unifies all sources.
 
 ## Process
 
@@ -44,16 +44,13 @@ Gather signals to classify the session and identify actionable items.
 
 Check these signals in order to classify the session:
 
-| Signal                           | How to check                                                                                                                                                                                                                                                                                                                     | Session type             |
-| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| Orchestrated run artifacts       | Look for run subdirectories under the current ticket directory (resolve by invoking `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash for the ticket ID, then list subdirectories of `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` that contain `run-index.json`) | **Orchestrated**         |
-| Code changes on branch           | `git diff --name-only {default_branch}...HEAD` produces output                                                                                                                                                                                                                                                                   | **Interactive dev**      |
-| Review artifacts in conversation | Conversation contains review findings or `review-branch` / `review-pr` output                                                                                                                                                                                                                                                    | **Review**               |
-| None of the above                | No code changes, no run artifacts, no review artifacts                                                                                                                                                                                                                                                                           | **Research/exploration** |
+| Signal                           | How to check                                                                  | Session type             |
+| -------------------------------- | ----------------------------------------------------------------------------- | ------------------------ |
+| Code changes on branch           | `git diff --name-only {default_branch}...HEAD` produces output                | **Interactive dev**      |
+| Review artifacts in conversation | Conversation contains review findings or `review-branch` / `review-pr` output | **Review**               |
+| None of the above                | No code changes, no run artifacts, no review artifacts                        | **Research/exploration** |
 
-Check from top to bottom. Use the first match. If an orchestrated run also has interactive changes after the run, treat it as orchestrated (the run-summary already captured the orchestrated portion).
-
-When the orchestrated path matches, identify the specific run directory whose basename will be captured as `run_id` for later use. Run directory basenames begin with a `YYYYMMDD-HHMMSSZ` timestamp prefix and therefore sort chronologically; if multiple run directories exist under the ticket (restarts or separate review cycles), pick the one with the lexicographically greatest basename; that is the latest run. Phase 3 passes this `run_id` through to `{skill:create-devlog}` as `--run-id`, and Phase 4 records it in the deferred-findings artifact frontmatter, so both artifacts can link back to the run that produced the work.
+Check from top to bottom. Use the first match.
 
 #### 1b. Scan for deferred items
 
@@ -61,12 +58,11 @@ Deferred items are things that were identified during the session but intentiona
 
 **Structured sources** (high confidence):
 
-- **Run-summary artifact**: If an orchestrated run was detected, read the most recent `*_orchestrator_run-summary.md` in the run directory. Extract items from the `## Deferred items` section. Each item becomes an inventory entry.
 - **Review artifacts**: Extract unresolved T (TODO) and R (Recommendation) findings from review artifacts that were not addressed in subsequent coder responses.
 
 **Conversation scanning** (heuristic: may produce false positives):
 
-Structured sources take precedence. When scanning conversation, skip items already captured from structured sources (run-summary, review artifacts) to avoid duplicates. In Phase 6 context (invoked by the orchestrator after an orchestrated run), the conversation contains the full orchestration log. Focus heuristic scanning on items not already present in the run-summary's deferred items section.
+Structured sources take precedence. When scanning conversation, skip items already captured from structured sources (review artifacts) to avoid duplicates.
 
 Scan the conversation for items that were explicitly deferred. Look for phrases indicating deferral:
 
@@ -86,11 +82,10 @@ For each match, extract a short description of what was deferred and why (if sta
 For each deferred item found, assign a prefix from the item vocabulary based on the nature of the work:
 
 - Items from **review artifacts** retain their original classification (F/W/T/R/S). If the source used severity-tagged legacy IDs (e.g., `F3-L`), map to the corresponding prefix but assign a fresh number.
-- Items from **run-summary** `## Deferred items` section: Read the item description and classify based on severity. Work explicitly deferred by the architect/planner is typically `todo`. Bugs or failures are `fixme`. Improvements are `recommendation` or `suggestion`.
 - Items from **conversation scanning**: Classify based on the context in which they were deferred. "We should fix X" → `fixme` or `todo`. "It would be nice to Y" → `suggestion`. "Consider Z approach" → `recommendation`.
 - **Legacy items** (pre-existing issues not authored in this branch) get the `legacy` prefix and are collected into a separate section. These come from review artifacts with `-L` suffix IDs, or from conversation observations about old code.
 
-Record the source attribution for each item (e.g., "run-summary", "holistic review", "conversation").
+Record the source attribution for each item (e.g., "review artifact", "conversation").
 
 #### 1b-iii. Assess complexity
 
@@ -106,12 +101,9 @@ The complexity assessment is an input to the cost-aware disposition flow describ
 
 Insights are notable observations worth preserving: patterns learned, surprising findings, or knowledge that would benefit future work.
 
-**Structured sources** (high confidence). Which source applies is fixed by the run type detected in 1a; the two never both apply, so the agent never needs to dedup one structured source against the other:
+**Structured source** (high confidence): Read the `## Insights` section of the review artifact (`*_reviewer_review.md`).
 
-- **Orchestrated run → run-summary**: Read the `## Insights` section of the most recent `*_orchestrator_run-summary.md` in the run directory. Because it already aggregates and dedups the `I{n}` insights from every reviewer-subagent artifact in the run, reading it (rather than the per-reviewer artifacts) captures each insight exactly once.
-- **Non-orchestrated run → review artifact**: Read the `## Insights` section of the standalone review artifact (`*_reviewer_review.md`). Reviewer-subagent artifacts exist only in orchestrated runs; outside orchestration, this is the sole structured insight source.
-
-Either way, these are vetted knowledge, not heuristic guesses: Reviewers emit them under the insight gate.
+These are vetted knowledge, not heuristic guesses: Reviewers emit them under the insight gate.
 
 **Conversation scanning** (heuristic: may produce false positives):
 
@@ -195,12 +187,11 @@ The action menu offers two distinct ticket-creation actions ("Batch tickets for 
 {Summary of what was built or changed: the outcome, not the process.
 
 Derive from session type:
-- **Orchestrated**: Paraphrase the "What was built" section of the run-summary
 - **Interactive dev**: Summarize the actual code changes (`git diff` against the default branch)
 - **Review**: Summarize what was reviewed and the key outcomes (approved, changes requested, etc.)
 - **Research/exploration**: Summarize what was explored and key findings
 
-Do NOT narrate routine orchestration mechanics as the summary (e.g., "All 6 phases executed, review cycle converged after 3 rounds"). Lead with the code change itself. If a workflow event materially affected the outcome or offers a lesson for future runs (e.g., holistic review caught a late-stage regression, or strict mode prevented a flawed merge), mention it briefly after the outcome summary.}
+Do NOT narrate routine workflow mechanics as the summary (e.g., "Ran three review rounds before approval"). Lead with the code change itself. If a workflow event materially affected the outcome or offers a lesson for future work (e.g., a review caught a late-stage regression), mention it briefly after the outcome summary.}
 
 ### Findings
 
@@ -256,7 +247,6 @@ The actions menu is built dynamically based on which sections are populated:
 
 | Session type         | Findings                  | Legacy | Ticket insights | Devlog   |
 | -------------------- | ------------------------- | ------ | --------------- | -------- |
-| Orchestrated         | Yes (from run-summary)    | Yes    | If applicable   | Yes      |
 | Interactive dev      | Yes (from conversation)   | Yes    | If applicable   | Yes      |
 | Research/exploration | Rarely                    | Rarely | If applicable   | Optional |
 | Review               | Yes (unresolved findings) | Yes    | If applicable   | No       |
@@ -300,7 +290,7 @@ Process confirmed actions in this order:
    gh issue comment {number} --body-file "$body_path"
    ```
 
-5. **Save session devlog**: Invoke `{skill:create-devlog}`. When the session was detected as orchestrated in Phase 1a, pass the captured run ID through as `{skill:create-devlog} --run-id={run_id}` so that the devlog frontmatter links back to the run. Insights with `devlog` destination are automatically included in the devlog content; they do not need a separate action.
+5. **Save session devlog**: Invoke `{skill:create-devlog}`. Insights with `devlog` destination are automatically included in the devlog content; they do not need a separate action.
 
 After all actions complete, identify which findings were _not_ selected by any action (implicitly dropped) and pass that set forward to Phase 4 for inclusion in the report's `### Dropped` section and the artifact's `## Dropped` section.
 
@@ -364,8 +354,7 @@ Set these skill-specific values inline (not in the script's output):
 
 - `provenance.skill`: Always `wrap-up`.
 - `provenance.isInteractive`: Always `true`.
-- `run_id`: **Override** the script's value; reuse the run ID captured by Phase 1a (also passed to `{skill:create-devlog} --run-id` in Phase 3). Emit only when wrap-up was invoked from an orchestrated session.
-- `session_type` (deferred-findings extension): The classification produced by Phase 1a's session-type detection (`orchestrated`, `interactive-dev`, `review`, or `research`).
+- `session_type` (deferred-findings extension): The classification produced by Phase 1a's session-type detection (`interactive-dev`, `review`, or `research`).
 - `tickets_created` (deferred-findings extension): List of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs that it addresses. `items` is always a list. Omit when empty.
 
 **Body**: Emit the tickets-created cross-reference and the dropped-findings record:

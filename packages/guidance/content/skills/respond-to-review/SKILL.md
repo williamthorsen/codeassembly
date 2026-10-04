@@ -182,8 +182,6 @@ These dispositions express **pre-implementation intent**:
 - **REJECT**: Technically incorrect or intentional choice (must include justification)
 - **PARTIAL**: Some aspects accepted, others pushed back (must specify which)
 
-This is distinct from the **post-implementation** vocabulary used by the orchestrated-coder (`FIXED`/`NOT_FIXED`/`ALREADY_RESOLVED`), which reports outcomes after changes are made.
-
 ## Disposition scope
 
 Per [artifact conventions](../_data/artifact-conventions.md#disposition-rules):

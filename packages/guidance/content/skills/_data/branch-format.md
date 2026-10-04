@@ -26,7 +26,7 @@ MAC-123_add-user-profile
 
 ## Backward compatibility
 
-Old-format branch names like `MAC-123/agents/feat/add-orchestrator` still parse correctly: Everything after the ticket ID is treated as freeform description. Existing cached manifests that contain `workspace` and `work_type` fields remain valid and should be consumed as-is; those fields are simply no longer populated for new branches.
+Old-format branch names like `MAC-123/agents/feat/add-cache-layer` still parse correctly: Everything after the ticket ID is treated as freeform description. Existing cached manifests that contain `workspace` and `work_type` fields remain valid and should be consumed as-is; those fields are simply no longer populated for new branches.
 
 ## Related skills
 
