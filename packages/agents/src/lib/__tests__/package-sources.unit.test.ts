@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { findUndeclaredGuidancePackages, resolvePackageSources } from '../package-sources.ts';
+import { findUndeclaredGuidancePackages, resolvePackageSource, resolvePackageSources } from '../package-sources.ts';
 
 describe(resolvePackageSources, () => {
   let baseDir: string;
@@ -122,6 +122,33 @@ describe(resolvePackageSources, () => {
 
     await expect(resolvePackageSources(['@ca-fixture/malformed'], baseDir)).rejects.toThrow(
       /"@ca-fixture\/malformed" has an unreadable package\.json/,
+    );
+  });
+});
+
+describe(resolvePackageSource, () => {
+  let baseDir: string;
+
+  beforeEach(async () => {
+    baseDir = await makeBaseDir('pkgsrc-one');
+  });
+
+  afterEach(async () => {
+    await rm(baseDir, { recursive: true, force: true });
+  });
+
+  it('resolves a package to its declared content directory', async () => {
+    const dir = await installPackage(baseDir, '@ca-fixture/lib', { codeassembly: { content: 'content' } });
+
+    expect(await resolvePackageSource('@ca-fixture/lib', baseDir, 'Label')).toBe(path.join(dir, 'content'));
+  });
+
+  it('opens each failure with the label', async () => {
+    const label = 'Declared source "lib" (package "@ca-fixture/lib")';
+
+    await expect(resolvePackageSource('@ca-fixture/lib', baseDir, label)).rejects.toThrow(`${label} is not installed.`);
+    await expect(resolvePackageSource('./lib', baseDir, label)).rejects.toThrow(
+      `${label} is a filesystem path, not a package name.`,
     );
   });
 });

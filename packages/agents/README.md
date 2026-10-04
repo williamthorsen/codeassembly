@@ -38,6 +38,16 @@ A project declares its own sources and artifacts in `.agents/codeassembly.yaml` 
 pnpm add --save-dev codeassembly
 ```
 
+A project can also consume a guidance library as a dependency and pick from it: Install the package, name it as a source, and declare what to deploy from it (see [Sources](docs/project-declaration.md#sources)):
+
+```yaml
+sources:
+  - package: codeassembly-guidance
+collections:
+  use:
+    - recommended
+```
+
 Supported harnesses are Claude Code and Rovo Dev; `--harness` narrows a run to one.
 
 Optional: For a project whose tickets live in Jira, the deployed guidance resolves them through Atlassian's [`acli`](https://developer.atlassian.com/cloud/acli/) when it is on `PATH`, so `acli jira auth login --web` is worth running once. Without it, resolution falls back to a connected Jira read tool and then to asking for the ticket content.

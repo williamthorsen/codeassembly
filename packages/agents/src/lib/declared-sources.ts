@@ -1,20 +1,21 @@
 import path from 'node:path';
 
-import type { ResolvedDeclaration } from './codeassembly-manifest.ts';
+import type { ResolvedDeclaration, ResolvedSource } from './codeassembly-manifest.ts';
 import { assertSupportedContentFormats, type ContentRootRef } from './content-root-manifest.ts';
-import { resolvePackageSources } from './package-sources.ts';
+import { resolvePackageSource, resolvePackageSources } from './package-sources.ts';
 import type { ReportLine } from './report-line.ts';
 import { describeSourceNameProblem, findSourceProblem } from './source-validation.ts';
 
 /**
  * A resolved content source, and which declaration form introduced it. The form is recorded because it decides what a
- * reader can do about the source: A `sources:` entry names a path that they wrote, while a `packages:` entry names a
- * directory declared by the dependency's own manifest.
+ * reader can do about the source and what it deploys: A `path` source names a directory that they wrote, a package
+ * named by a `sources:` entry (`source-package`) or by `packages:` (`package`) declares its directory in its own
+ * manifest, and only a `packages:` entry adopts the package's whole catalog.
  */
 export interface DeclaredSource {
   readonly name: string;
   readonly dir: string;
-  readonly declaredAs: 'package' | 'path';
+  readonly declaredAs: 'package' | 'path' | 'source-package';
 }
 
 /** The content sources to which a declaration resolves, the subset whose directory does not exist, and the roots to read. */
@@ -46,11 +47,12 @@ export function describeContentRoot(root: ContentRootRef): string {
  * edit.
  */
 export function describeMissingSource(source: DeclaredSource): ReportLine {
+  const block = source.declaredAs === 'package' ? 'packages' : 'sources';
   const remedy =
-    source.declaredAs === 'package'
-      ? "The package's own `codeassembly.content` names that path, so create the directory if this project maintains the " +
-        'package, otherwise report the omission upstream or drop the package from `packages`.'
-      : "Create the directory, or correct the source's `path` in the declaration that names it.";
+    source.declaredAs === 'path'
+      ? "Create the directory, or correct the source's `path` in the declaration that names it."
+      : "The package's own `codeassembly.content` names that path, so create the directory if this project maintains the " +
+        `package, otherwise report the omission upstream or drop the entry from \`${block}\`.`;
   return {
     glyph: 'warning',
     level: 'warn',
@@ -77,11 +79,15 @@ export async function resolveDeclaredSources(options: {
     throw new NoContentSourceError(describeNoSource(baseDir, []));
   }
 
-  // A declared package contributes both a source and a set of seeds: The array below puts its content dir under the
-  // hand-declared sources, so a hand-pointed local directory outranks a dependency.
+  // A package declared under `packages:` contributes both a source and a set of seeds: The array below puts its
+  // content dir under every `sources:` entry, so a source named by hand outranks a dependency's catalog.
+  const handDeclared: Array<DeclaredSource> = [];
+  for (const source of declaration.sources) {
+    handDeclared.push(await resolveSourceEntry(source, baseDir));
+  }
   const packageSources = await resolvePackageSources(declaration.packages, baseDir);
   const sources: ReadonlyArray<DeclaredSource> = [
-    ...declaration.sources.map((source): DeclaredSource => ({ ...source, declaredAs: 'path' })),
+    ...handDeclared,
     ...packageSources.map((source): DeclaredSource => ({ ...source, declaredAs: 'package' })),
   ];
 
@@ -169,6 +175,22 @@ function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: str
         'harness skills dir, so it must name one.',
     );
   }
+}
+
+/**
+ * Resolves one `sources:` entry to a directory: a path entry as declared, and a package entry through the module
+ * resolver from `baseDir`.
+ */
+async function resolveSourceEntry(source: ResolvedSource, baseDir: string): Promise<DeclaredSource> {
+  if ('dir' in source) {
+    return { name: source.name, dir: source.dir, declaredAs: 'path' };
+  }
+  const label = `Declared source "${source.name}" (package "${source.package}")`;
+  return {
+    name: source.name,
+    dir: await resolvePackageSource(source.package, baseDir, label),
+    declaredAs: 'source-package',
+  };
 }
 
 /**

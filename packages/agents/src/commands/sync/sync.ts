@@ -168,8 +168,9 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
   });
   const resolver = createSourceResolver(sources);
 
-  // Everything a declared package ships seeds the closure, which makes naming the package the whole declaration. A
-  // package whose content dir is missing enumerates nothing: The walk reads through a directory listing that doesn't
+  // Everything a package under `packages:` ships seeds the closure, which makes naming the package the whole
+  // declaration; a package named by a `sources:` entry seeds nothing. A package whose content dir is missing
+  // enumerates nothing: The walk reads through a directory listing that doesn't
   // return any entries for an absent directory.
   const packageCatalogs = await Promise.all(
     sources.filter((source) => source.declaredAs === 'package').map((source) => enumerateCatalogSlugs(source.dir)),
@@ -405,7 +406,7 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
     // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This
     // is advice, not action: Nothing is deployed until the project declares the package.
     undeclaredPackages: await findUndeclaredGuidancePackages(
-      [...declaration.packages, ...declaration.declinedPackages],
+      [...declaration.packages, ...declaration.declinedPackages, ...declaration.sourcePackages],
       domain.baseDir,
     ),
     guidanceHookAdvisories: findGuidanceHookAdvisories(declaration.guidanceHooks, resolved, declaredHooks),

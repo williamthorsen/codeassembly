@@ -106,13 +106,25 @@ export async function locateInstalledPackage(
 }
 
 /**
+ * Resolves one installed package to the content directory that it ships. Resolution walks the `node_modules` chain
+ * that Node itself would search from `baseDir`, so it holds under pnpm's symlinked layout and under `workspace:*`
+ * links. Throws, opening each message with `label` so that the reader can tell which declaration to edit, when
+ * `packageName` is a filesystem path rather than a package name, when the package is not installed, or when it does
+ * not declare a content directory; whether that directory exists is left to the caller's source validation.
+ */
+export async function resolvePackageSource(packageName: string, baseDir: string, label: string): Promise<string> {
+  assertPackageName(packageName, label);
+  const installed = await findInstalledPackage(packageName, baseDir);
+  if (installed === undefined) {
+    throw new Error(`${label} is not installed. Searched: ${listCandidateDirs(packageName, baseDir).join(', ')}.`);
+  }
+  return path.join(installed.dir, readContentPath(packageName, installed.manifest));
+}
+
+/**
  * Resolves each declared package name to the content directory that it ships, in declaration order, for use as a
- * content source. Resolution walks the `node_modules` chain that Node itself would search from `baseDir`, so it holds
- * under pnpm's symlinked layout and under `workspace:*` links, which lets a producing repo consume its own guidance
- * through the same declaration that a third party writes. Throws when a declared name is a filesystem path rather
- * than a package name, when a declared package is not installed, or when it does not declare a content directory;
- * whether that directory exists is left to the caller's source validation, which covers a package source and a
- * hand-declared one alike.
+ * content source. A producing repo consumes its own guidance through a `workspace:*` link, by the same declaration
+ * that a third party writes. Throws as `resolvePackageSource` does, labelling each failure with the declared package.
  */
 export async function resolvePackageSources(
   names: ReadonlyArray<string>,
@@ -120,14 +132,7 @@ export async function resolvePackageSources(
 ): Promise<ReadonlyArray<PackageSource>> {
   const resolved: Array<PackageSource> = [];
   for (const name of names) {
-    assertPackageName(name);
-    const installed = await findInstalledPackage(name, baseDir);
-    if (installed === undefined) {
-      throw new Error(
-        `Declared package "${name}" is not installed. Searched: ${listCandidateDirs(name, baseDir).join(', ')}.`,
-      );
-    }
-    resolved.push({ name, dir: path.join(installed.dir, readContentPath(name, installed.manifest)) });
+    resolved.push({ name, dir: await resolvePackageSource(name, baseDir, `Declared package "${name}"`) });
   }
   return resolved;
 }
@@ -135,13 +140,13 @@ export async function resolvePackageSources(
 // region | Helpers
 
 /**
- * Throws when `name` is a filesystem path rather than a package name, which would otherwise make `packages` a second,
- * undocumented path-source route beside `sources`.
+ * Throws when `name` is a filesystem path rather than a package name, which would otherwise make a package declaration
+ * a second, undocumented route to a directory beside a `sources` entry's `path`.
  */
-function assertPackageName(name: string): void {
+function assertPackageName(name: string, label: string): void {
   if (isFilesystemPath(name)) {
     throw new Error(
-      `Declared package "${name}" is a filesystem path, not a package name. Point at a directory with a \`sources\` entry instead.`,
+      `${label} is a filesystem path, not a package name. Point at a directory with a \`sources\` entry's \`path\` instead.`,
     );
   }
 }

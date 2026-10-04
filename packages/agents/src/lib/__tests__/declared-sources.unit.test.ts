@@ -60,6 +60,51 @@ describe(resolveDeclaredSources, () => {
     ]);
   });
 
+  it('resolves a package-named source in its declared position, above every packages entry', async () => {
+    const first = await makeSourceDir(root, 'first');
+    const libDir = await installPackage(root, 'ca-fixture-lib');
+    const packageDir = await installPackage(root, 'ca-fixture-guidance');
+
+    const { sources } = await resolveDeclaredSources({
+      baseDir: root,
+      declaration: {
+        packages: ['ca-fixture-guidance'],
+        sources: [
+          { name: 'first', dir: first },
+          { name: 'lib', package: 'ca-fixture-lib' },
+        ],
+      },
+    });
+
+    expect(sources).toEqual([
+      { name: 'first', dir: first, declaredAs: 'path' },
+      { name: 'lib', dir: libDir, declaredAs: 'source-package' },
+      { name: 'ca-fixture-guidance', dir: packageDir, declaredAs: 'package' },
+    ]);
+  });
+
+  it('rejects a package-named source that is not installed, naming the source and the package', async () => {
+    await expect(
+      resolveDeclaredSources({
+        baseDir: root,
+        declaration: { packages: [], sources: [{ name: 'lib', package: 'ca-fixture-absent' }] },
+      }),
+    ).rejects.toThrow('Declared source "lib" (package "ca-fixture-absent") is not installed.');
+  });
+
+  it('rejects a package-named source whose package does not declare any content', async () => {
+    const packageDir = path.join(root, 'node_modules', 'ca-fixture-plain');
+    await mkdir(packageDir, { recursive: true });
+    await writeFile(path.join(packageDir, 'package.json'), JSON.stringify({ name: 'ca-fixture-plain' }), 'utf8');
+
+    await expect(
+      resolveDeclaredSources({
+        baseDir: root,
+        declaration: { packages: [], sources: [{ name: 'ca-fixture-plain', package: 'ca-fixture-plain' }] },
+      }),
+    ).rejects.toThrow(/"ca-fixture-plain" does not declare any CodeAssembly content/);
+  });
+
   it('reports a source whose directory does not exist without failing when another source is present', async () => {
     const present = await makeSourceDir(root, 'present');
     const absent = path.join(root, 'not-yet');
@@ -244,6 +289,15 @@ describe(describeMissingSource, () => {
     const source: DeclaredSource = { name: '@acme/guidance', dir: '/nowhere/acme', declaredAs: 'package' };
 
     expect(describeMissingSource(source).text).toContain('`codeassembly.content`');
+    expect(describeMissingSource(source).text).toContain('drop the entry from `packages`');
+  });
+
+  it('names the package manifest and the sources entry as the remedy for a package-named source', () => {
+    const source: DeclaredSource = { name: 'lib', dir: '/nowhere/lib', declaredAs: 'source-package' };
+    const { text } = describeMissingSource(source);
+
+    expect(text).toContain('`codeassembly.content`');
+    expect(text).toContain('drop the entry from `sources`');
   });
 });
 
