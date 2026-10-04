@@ -14,7 +14,6 @@ Create an implementation plan from a ticket or task. `plan` is the standalone pl
 ## Arguments
 
 - Task source (required): Issue URL, shorthand reference (`#99`, `issue 99`), file path, or description of what to build
-- `--role=<role>` (optional): Agent role for run artifact naming (default: `agent`)
 
 ## Resolve the task source
 
@@ -52,13 +51,6 @@ Resolve artifact directory based on context.
 The artifact frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
 Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill plan --interactive true` via Bash. Prepend the output verbatim to the artifact body.
-
-### Run context
-
-If inside an active run (`run-index.json` exists in a parent directory):
-
-- Save as run artifact: `{run-dir}/{timestamp}_{role}_plan.md`
-- Role comes from `--role` argument (default: `agent`)
 
 ### Ticket context
 

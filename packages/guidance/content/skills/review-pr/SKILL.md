@@ -82,7 +82,7 @@ Invoke `review-branch`'s [Process](../review-branch/SKILL.md#process) starting a
 
 ### 7. Save and present next steps
 
-`review-branch`'s saving and next-steps logic apply unchanged. The review artifact is saved into the active run directory for the ticket (or a new `{timestamp}-interactive` run directory if none).
+`review-branch`'s saving and next-steps logic apply unchanged. The review artifact is saved into a new `{timestamp}-interactive` run directory.
 
 Because this review covers a pull request, the next-steps Findings sub-block renders its PR variant: "Post findings on the PR" rather than the local-branch options. The Source-divergence sub-block likewise appears here whenever the PR description and ticket diverge, since both spec sources are present.
 

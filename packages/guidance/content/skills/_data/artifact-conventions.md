@@ -321,7 +321,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 ## run-index.json
 
-Machine-readable metadata for a run directory. The retired orchestration engine wrote it, and no current skill does. `run-core` parses it, and `review-branch` reads it to decide whether a run is still active for the current branch.
+Machine-readable metadata for a run directory. The retired orchestration engine wrote it, and no current skill does. `run-core` parses it.
 
 Every example and value list in this section and in [V3 format](#v3-format-event-sourced-runs) describes runs written by the retired engine, so its roles, agents, phases, and modes are historical values.
 

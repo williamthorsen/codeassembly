@@ -32,8 +32,6 @@ Save AI-generated files with standardized naming conventions.
 
 Run artifacts are saved by the skills that produce them (`review-branch`, `respond-to-review`). They handle run directory discovery and creation.
 
-> **Note:** `review-branch` reads a run directory's `run-index.json` to decide whether the run is still active for the current branch; neither skill writes the file.
-
 ## Path resolution
 
 Resolve the artifact directory before saving. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `artifact_base_dir`, `project_slug`, and `ticket_id` from the manifest JSON emitted on stdout.
