@@ -2,7 +2,7 @@
 slug: williamthorsen-tooling-preferences
 description: William Thorsen's preferences for which command-line tool an agent reaches for, how it invokes it, and how it obtains a tool or resource that is missing.
 delivery: ambient
-version: '2'
+version: '3'
 ---
 
 # William Thorsen's tooling preferences
@@ -25,9 +25,9 @@ Before reporting a tool, dependency, or service as missing, exhaust the routes t
 - Call the service's API when the CLI is only a wrapper over it.
 - Start a stopped service that the project defines, through its compose stack or its start script.
 
-A registry fetch that the sandbox allows is within what the task was given. A fetch that the sandbox denies is not a route: Ask for the resource instead.
+Never hand over a command that the sandbox refuses. When the resource that it reaches is within what the task was given, retry the command through the permission gate, which approves or refuses the retry. When the resource is not within the task, or when the retry is refused, ask once for the grant that clears it, propose the durable grant that removes the block for later sessions, with its tradeoff in one line (the grant widens what every later sandboxed command may reach), and run the command once the grant lands.
 
-Ask for the resource when none of those routes works, when the missing resource is a credential or access, or when the stopped service is one that the project does not define. Name the resource and the command that will run once it arrives, and keep the task: Never restate the task as an action item for the developer. A credential or access that is already present is the task's to use only when the task's plan or the developer names the command that reads it. Never look for or use any other: It belongs to the developer.
+Ask for the resource when none of those routes works, when the missing resource is a credential or access, or when the stopped service is one that the project does not define. Name the resource and the command that will run once it arrives, and keep the task: Never restate the task as an action item for the developer. The "Handoffs" section of William Thorsen's collaboration preferences states the ladder on which this ask is the third rung. A credential or access that is already present is the task's to use only when the task's plan or the developer names the command that reads it. Never look for or use any other: It belongs to the developer.
 
 This rule runs before any fallback that a skill names for an unavailable tool. A skill's "unavailable" means unavailable once these routes are exhausted, and the skill's fallback applies from that point.
 
