@@ -4,6 +4,7 @@ description: The vetted, generally applicable set (artifacts any project can dec
 members:
   rulebooks:
     - accessibility-conventions
+    - command-output-conventions
     - generated-content-policy
     - readme-conventions
   skills:
@@ -22,6 +23,8 @@ The skills belong here on different grounds. A rulebook of the personal collecti
 `generated-content-policy` qualifies on its own terms too: What it states is a mechanism that every consumer meets, not a preference, and the guidance that a reader needs beyond the trigger is in the linked reference rather than in the ambient body loaded by every session.
 
 `accessibility-conventions` also qualifies on its own terms. It states an external standard, WCAG 2.2 AA, and floors that do not name any author, repository, or tool. Its body does not contain any invocation token, so its closure is empty.
+
+`command-output-conventions` qualifies on its own terms too. What it states follows from a mechanism that every agent session meets, the cost of output kept in the context window, rather than from a preference, and it does not name any tool, host, or store. Its body does not contain any invocation token, so its closure is empty.
 
 `readme-conventions` qualifies on its own terms as well. It does not name any repository, tool, or path belonging to one author, and what it asks of a README follows from who reads the file rather than from a preference about how a README should read. Its body does not contain any invocation token, so its closure is empty and admitting it extends this collection's reach by nothing.
 
