@@ -7,7 +7,6 @@ import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 import { readContentFile } from '../test-utils/read-content-file.ts';
-import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
 
 // Two mechanisms put the doctrine into an agent's context, and both are checked here: A skill inlines it at install
 // time, and a subagent receives it through the skills named in its `skills:` frontmatter. So a subagent does not
