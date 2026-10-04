@@ -45,7 +45,7 @@
 
 ## Verification
 
-{How to verify the whole plan is complete: quality gates, integration checks}
+{The checks that the agent runs to verify the whole plan is complete: quality gates, integration checks}
 ```
 
 `## Dependencies` (external dependencies or blockers) is the one optional section: Insert it between `## Risks` and `## Verification` only when the plan has external blockers, and omit it otherwise.
@@ -60,7 +60,21 @@
 
 **Per-task invoked-skill guidance:** When a task invokes a skill, read that skill while planning the task and record in the task's key decisions what the skill declares under three headings: its ordering relative to other skills, its default target when the task does not pass an argument, and the preconditions that it states. Read every skill that the plan's tasks name, and record a skill declaring none of the three as declaring none, so that a reader can tell a completed check from an absent one. A skill that cannot be read is recorded as unread, never as declaring none. When an ordering constraint names a skill that the plan's tasks do not invoke, add the task rather than record the constraint alone.
 
-**Resources that the user supplies:** Check a resource's availability before naming it as a risk. When a step needs something that only the user can supply, such as a credential or a running service, the step states the ask; a plan never writes a degraded fallback as a sanctioned path.
+**Who performs a step.** Every task and every `## Verification` check names the agent as its actor. A part that only the developer can perform is written as a `**Residue:**` line under the task, after **What:** and in the same position as **Key decisions:**, in the form "**Residue:** {what the developer alone can do}: {why the agent cannot}", and the task's other parts stay the agent's. Check a resource's availability before naming it as a risk; when a step needs something that only the developer can supply, such as a credential or a running service, the step states the ask for that resource, never a degraded fallback and never the step as the developer's. A manual check is cut when an automated test or a check in `## Verification` asserts the same observable outcome, and stays, as the agent's, when it would show something that no test asserts. A check proposed against a deployed branch accounts for a `live` worktree, which runs the merged tree rather than the branch.
+
+Before (a verification task handed to the developer):
+
+> **What:** After the branch is pushed and Vercel builds the preview, the owner exercises `/lab/book-row` by keyboard and on a touch device against the checklist in Task 9. Defects found there are fixed on the branch. Once the owner confirms, delete the lab route in its own commit.
+>
+> **Acceptance criteria:** The owner has confirmed the controls on the preview.
+
+After (the agent runs the check, and the residue is the one part that emulation cannot show):
+
+> **What:** Drive `/lab/book-row` through the debug browser with keyboard input and touch emulation against the checklist in Task 9, fix what the check finds on the branch, then delete the lab route in its own commit.
+>
+> **Residue:** How the rating control feels on a physical phone: emulation does not report touch feel.
+>
+> **Acceptance criteria:** Every item of the checklist passes in the debug browser, and the lab route is gone.
 
 #### What belongs in the plan
 
