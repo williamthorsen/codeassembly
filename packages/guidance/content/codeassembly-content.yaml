@@ -37,6 +37,8 @@ helpers:
     out: scripts/select-lede-exemplars.mjs
   - entry: ../src/resolve-review-run/cli.ts
     out: scripts/resolve-review-run.mjs
+  - entry: ../src/manage-jira-ticket/cli.ts
+    out: scripts/manage-jira-ticket.mjs
   - entry: ../src/merge-gh-pr/cli.ts
     out: skills/merge-gh-pr/merge-gh-pr.mjs
   - entry: ../src/index-prototypes/cli.ts

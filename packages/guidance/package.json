@@ -53,6 +53,7 @@
     "esbuild": "catalog:",
     "eslint": "catalog:",
     "jsdom": "catalog:",
+    "marklassian": "1.2.1",
     "ulid": "3.0.2",
     "vitest": "catalog:",
     "yaml": "catalog:",
