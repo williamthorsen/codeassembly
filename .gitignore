@@ -18,6 +18,7 @@ docs/plans/
 .rovo/prompts.yml
 .rovo/skills/
 .rovo/subagents/
+.rovodev/
 .playwright-mcp/
 
 # Credentials
