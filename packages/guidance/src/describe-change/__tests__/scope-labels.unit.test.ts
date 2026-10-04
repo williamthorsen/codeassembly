@@ -9,7 +9,10 @@ import { discoverWorkspaceDirs, mergeScopeDirs, resolveScopes } from '../resolve
 /** This repository's root, from which the scope directories are discovered and the release-kit config is read. */
 const REPOSITORY_ROOT = fileURLToPath(new URL('../../../../../', import.meta.url));
 
-/** The release-kit config declaring one `scope:` label per workspace, plus `scope:root` for the residual. */
+/**
+ * The release-kit config declaring one active `scope:` label per workspace, plus `scope:root` for the residual, and an
+ * archived one per removed workspace.
+ */
 const RELEASE_KIT_CONFIG = new URL('../../../../../.config/release-kit.config.ts', import.meta.url);
 
 describe('scope vocabulary', () => {
@@ -30,7 +33,7 @@ describe('scope vocabulary', () => {
 // region | Helpers
 
 /**
- * Reads the scopes from the release-kit config's `scope:` label keys, sorted.
+ * Reads the scopes from the release-kit config's `scope:` label keys whose entries are not archived, sorted.
  *
  * The keys are read textually rather than imported: the config sits outside this package, imports
  * `@williamthorsen/release-kit/config`, and is outside the package's `tsconfig` include set, so importing it would
@@ -39,7 +42,8 @@ describe('scope vocabulary', () => {
 async function readLabelScopes(): Promise<string[]> {
   const content = await readFile(RELEASE_KIT_CONFIG, 'utf8');
   const scopes = content
-    .matchAll(/(?<=['"])scope:([\w.-]+)(?=['"])/g)
+    .matchAll(/(?<=['"])scope:([\w.-]+)['"]:\s*\{([^}]*)\}/g)
+    .filter((match) => !/\barchived:\s*true\b/.test(match[2] ?? ''))
     .map(([, scope]) => scope ?? '')
     .toArray();
   if (scopes.length === 0) {

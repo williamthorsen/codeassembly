@@ -12,10 +12,9 @@ A pnpm monorepo centered on deploying agent guidance: the `codeassembly` CLI, th
 - **factory** (`packages/factory/`): Dormant demo visualization of run data. See `packages/factory/README.md`.
 - **guidance** (`packages/guidance/`): The `codeassembly-guidance` library of rulebooks, skills, and subagents, with the helpers that its skills run. See `packages/guidance/README.md`.
 - **kb** (`packages/kb/`): Knowledge-base foundation library. See `packages/kb/README.md`.
-- **mcp** (`packages/mcp/`): MCP server exposing run management over run-core. Its five tools are described in `packages/mcp/src/server.ts`.
 - **run-core** (`packages/run-core/`): Canonical domain model, schemas, and run-data parsing. See `packages/run-core/README.md`.
 
-The dependency chain: mcp and factory depend on run-core, and guidance on agents and kb. Guidance reaches agents only through the `codeassembly` CLI and `codeassembly/api`, and agents does not read anything from guidance.
+The dependency chain: factory depends on run-core, and guidance on agents and kb. Guidance reaches agents only through the `codeassembly` CLI and `codeassembly/api`, and agents does not read anything from guidance.
 
 ## Content authoring
 
@@ -25,7 +24,7 @@ Content appearing identically in two or more skill or subagent files belongs in 
 
 ## Gotchas
 
-- `pnpm run bootstrap` builds every package, then deploys current guidance into the worktree's harness directories. The MCP server and the CLI bins do not run until it has. `pnpm run agents:sync` does the deploy half alone.
+- `pnpm run bootstrap` builds every package, then deploys current guidance into the worktree's harness directories. The CLI bins do not run until it has. `pnpm run agents:sync` does the deploy half alone.
 - The helper bundles under `packages/guidance/content/` are tracked build output, so a helper edit is committed together with its rebuilt bundle. `nmr -F codeassembly-guidance build` regenerates them, and `nmr check:strict` fails on a bundle that is stale or not produced by any helper declared in `packages/guidance/content/codeassembly-content.yaml`.
 - Deleting `dist/` does not force a rebuild. Because the `nmr-compile` cache is in `node_modules/.cache/nmr-compile/` and is keyed on inputs alone, the rebuild skips and leaves `dist/` empty. Clear the cache too. Tracked upstream at williamthorsen/node-monorepo-tools#470.
 - A package has a `vitest.config.ts` only when it configures something of its own; every other package resolves the repo-root config by walking up. nmr's Vitest factory supplies the `source` resolve conditions and the git-isolation setup file, so the configs here don't declare either. It leaves `resolve.tsconfigPaths` to the consumer; every config here declares it.

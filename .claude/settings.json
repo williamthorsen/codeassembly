@@ -1,11 +1,5 @@
 {
   "enabledPlugins": {
     "pixel-plugin@pixel-plugin": true
-  },
-  "mcpServers": {
-    "codeassembly": {
-      "command": "node",
-      "args": ["packages/mcp/bin/codeassembly-mcp.js"]
-    }
   }
 }

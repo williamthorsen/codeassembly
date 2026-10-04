@@ -14,6 +14,6 @@ The checks run the agents package's shell tests under [shellspec](https://github
 
 ```bash
 pnpm install
-pnpm run bootstrap   # Build every package and deploy current guidance; required before running the MCP server or CLI bins
+pnpm run bootstrap   # Build every package and deploy current guidance; required before running the CLI bins
 pnpm exec nmr check  # Run all checks (typecheck, format, lint, test)
 ```
