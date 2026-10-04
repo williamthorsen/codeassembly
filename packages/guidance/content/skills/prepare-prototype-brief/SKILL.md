@@ -15,7 +15,7 @@ The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_d
 
 - **The ticket**, which states the idea and whatever intent is already settled.
 - **The developer's ask**, in their own words: what the prototypes are for, what is decided, what is out of scope, and what a reviewer will look for. Take it as given and never quote it into the brief unedited: Its vocabulary is the developer's, and the rules below decide what reaches the builders.
-- **The lenses**: one name and one paragraph each. When the ask does not supply them, propose three to five that diverge on purpose (a rules reader, a world reader, an operator, an audience, a precedent reader) and ask.
+- **The lenses**: one name and one paragraph each. When the ask does not supply them, propose three to five that diverge on purpose (the primary user, an operator, a hard constraint, a precedent, an audience) and ask.
 - **The deliverable kind**: a self-contained HTML page unless the ask says otherwise.
 
 ## Rules of composition
@@ -24,7 +24,7 @@ Each rule names the failure that it prevents, because the failure is what a revi
 
 ### The brief states; the prototype argues
 
-Never ask a builder to pitch, sell, convince, persuade, or argue. The demonstration makes the case: a running mechanism, a scene played through the interface, a before and after. When the developer wants to be convinced, ask for the demonstration that would convince them, and cap any prose about purpose at one paragraph that describes what the tool does in one scene. Strike "the visuals must convince" and write what the visuals must do: work, be legible across a table, pass the accessibility floors.
+Never ask a builder to pitch, sell, convince, persuade, or argue. The demonstration makes the case: a running mechanism, a scene played through the interface, a before and after. When the developer wants to be convinced, ask for the demonstration that would convince them, and cap any prose about purpose at one paragraph that describes what the tool does in one scene. Strike "the visuals must convince" and write what the visuals must do: work, be legible at the distance from which they are viewed, pass the accessibility floors.
 
 The failure: five builders writing superlatives and refrains in a pitch-man's voice, and a reader who cannot find the work under the sales copy.
 
@@ -62,8 +62,8 @@ In this order, with these headings:
 
 1. **Context.** The ticket, quoted. The developer's motivating picture, restated in plain speech.
 2. **Settled intent.** Bullets. Each is a decision, with its reason when the reason constrains the design.
-3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; the full-screen mode for any audience view.
-4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note; one is the API list when the product has one.
+3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view.
+4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note when the product holds data; one is the API list when the product has an API.
 5. **Quality bar.** Works, legible, accessible, with the design skill to invoke before markup and the salience order required.
 6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round.
 7. **Rules of engagement.** Write no file other than the prototype; modify nothing in the repository; install nothing; publish the prototype and report its artifact URL and five lines of distinctive ideas.
