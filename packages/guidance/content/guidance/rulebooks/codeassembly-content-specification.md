@@ -1,8 +1,8 @@
 ---
 slug: codeassembly-content-specification
-description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, and how broad a guidance change goes.
+description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, how broad a guidance change goes, and when a procedure belongs in a helper.
 delivery: skill
-version: '26'
+version: '27'
 ---
 
 # CodeAssembly content specification
@@ -133,6 +133,14 @@ Correct a behavior at the fewest surfaces that plausibly account for it, deploy 
 A proposal justifies its breadth rather than assuming it. A contributing surface left unaddressed is recorded as an observation for a later pass rather than offered as an option to adopt now. Before adding exposition to a rulebook, check whether its existing examples already teach the point. _(Convention; not enforced.)_
 
 Before making any change to a guidance file, identify whether the new text makes any existing text redundant (whether in that file or any other) and trim the redundancy in the same change. If the file is larger after the change than before, offer to run {skill:streamline-guidance} against it. _(Convention; not enforced.)_
+
+## Procedures in helpers
+
+A step whose result is fixed by its inputs belongs in a helper that emits JSON, and the skill or subagent invokes the helper and reads its output. Such steps include parsing a file or a command's output, walking a fallback cascade, matching by pattern or timestamp, and converting a format. A prose description of such a step is a copy that the agent re-executes on every run, and it drifts from any helper that performs the same step. Judgment stays in prose: choosing among options, composing text, and deciding what a result means.
+
+A step that mixes the two splits at that boundary: The helper performs the deterministic part and returns its result, or the candidates among which the agent chooses, and the choice stays in the skill.
+
+When authoring or editing a skill or subagent, move such a procedure in the text being changed into a helper as part of the same change. First check whether an existing helper already performs it, and extend that helper rather than writing a second one. A procedure found outside the text being changed follows the [scope doctrine](../../skills/_data/scope-and-deferral.md) rather than prompting a sweep of the library. A content root declares its helpers under `helpers:` in its `codeassembly-content.yaml`. _(Convention; not enforced.)_
 
 ## Declaring rule ids and sweep versions
 
