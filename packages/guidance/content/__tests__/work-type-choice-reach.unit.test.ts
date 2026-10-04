@@ -28,8 +28,7 @@ const RULE_PHRASES: ReadonlyArray<string> = [
 ];
 
 // Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
-// discovered list would move with the bug. `orchestrated-coder` reads the test through its `commit-conventions`
-// injection, so it carries none directly.
+// discovered list would move with the bug.
 const CARRIERS: ReadonlyArray<string> = [
   'guidance/rulebooks/commit-conventions.md',
   'skills/create-commit/SKILL.md',

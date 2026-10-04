@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
 import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
@@ -57,14 +56,6 @@ describe('comment-discipline reach', () => {
       const expanded = await expandSkill(slug);
       expect(countOccurrences(expanded, DOCTRINE_HEADING)).toBe(1);
     });
-  });
-
-  it.each(COMMENT_AUTHORING_SUBAGENTS)('%s injects a skill that inlines the doctrine', async (slug) => {
-    const injected = await readFrontmatterList('subagent', slug, 'skills');
-    const carriers = injected.filter((skill) => CARRIER_SKILLS.includes(skill));
-
-    const message = `${slug} writes or judges comments but does not inject a skill that inlines the doctrine; injected: [${injected.join(', ')}]`;
-    expect(carriers.length, message).toBeGreaterThan(0);
   });
 
   it('content files do not reach the doctrine by reference', async () => {

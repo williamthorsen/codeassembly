@@ -48,19 +48,6 @@ describe('library invocation edges', () => {
     expect(triage.skill).toContain('capture-lede-decision');
   });
 
-  it('pulls orchestrate dispatched subagents declared in frontmatter', async () => {
-    const closure = await resolveClosure(CONTENT_ROOT, { skill: ['orchestrate'] });
-
-    expect(closure.subagent).toEqual(
-      expect.arrayContaining([
-        'aspect-code-reviewer',
-        'orchestrated-coder',
-        'orchestrated-reviewer',
-        'savings-analyzer',
-      ]),
-    );
-  });
-
   it('pulls refine-plan review subagents declared in frontmatter', async () => {
     const closure = await resolveClosure(CONTENT_ROOT, { skill: ['refine-plan'] });
 
