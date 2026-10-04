@@ -41,3 +41,5 @@ helpers:
     out: skills/merge-gh-pr/merge-gh-pr.mjs
   - entry: ../src/index-prototypes/cli.ts
     out: skills/index-prototypes/index-prototypes.mjs
+  - entry: ../src/select-pr-ticket/cli.ts
+    out: skills/review-gh-pr/select-pr-ticket.mjs
