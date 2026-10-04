@@ -981,8 +981,15 @@ describe('resolve-labels', () => {
     });
   });
 
-  it.each([[], ['--body-file', ' ']])('if --body-file is missing or blank, refuses the invocation', (...flags) => {
-    expect(() => parseArgs(['resolve-labels', ...flags])).toThrow('resolve-labels requires --body-file');
+  it('reads the record flags alone when --body-file is absent', () => {
+    expect(parseArgs(['resolve-labels', '--scope', 'agents', '--type', 'feat'])).toEqual({
+      record: { scope: 'agents', type: 'feat' },
+      subcommand: 'resolve-labels',
+    });
+  });
+
+  it('if --body-file is blank, refuses the invocation', () => {
+    expect(() => parseArgs(['resolve-labels', '--body-file', ' '])).toThrow('--body-file requires a value');
   });
 
   it('refuses --title, which resolve-labels does not take', () => {
@@ -1046,6 +1053,37 @@ describe('resolve-labels', () => {
     expect(output).toStrictEqual({ labels: ['feature'] });
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatch(/^the body’s change entries are malformed, so the entries do not add any label: /);
+  });
+
+  it.each([
+    { argv: ['--type', 'feat'], labels: ['feature'] },
+    { argv: ['--type', 'fix', '--breaking'], labels: ['fix', 'breaking'] },
+    { argv: ['--type', 'feat!'], labels: ['feature', 'breaking'] },
+    { argv: ['--scope', 'kb', '--type', 'feat'], labels: ['feature', 'scope:kb'] },
+    { argv: ['--scope', '*', '--type', 'feat'], labels: ['feature'] },
+    { argv: ['--scope', 'unmapped', '--type', 'docs'], labels: [] },
+  ])('without a body file, labels the record alone: $argv', async ({ argv, labels }) => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+
+    const { output, warnings } = await runDescribe({
+      argv: ['resolve-labels', ...argv],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toStrictEqual({ labels });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('without a body file, yields an empty label list when the repository does not configure a label map', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    const argv = ['resolve-labels', '--scope', 'agents', '--type', 'feat', '--breaking'];
+    const { output } = await runDescribe({ argv, cwd, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: [] });
   });
 
   it('yields an empty label list when the repository does not configure a label map', async () => {

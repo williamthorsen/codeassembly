@@ -72,7 +72,7 @@ export type ParsedArgs =
   | { amendment: EntryAmendment; bodyFile: string; entryIndex: number; subcommand: 'amend-entry' }
   | { baseRef: string; subcommand: 'consolidate-branch' }
   | { bodyFile: string; entryCount: number; subcommand: 'check-merge-body' }
-  | { bodyFile: string; record: ChangeRecord; subcommand: 'resolve-labels' }
+  | { bodyFile?: string; record: ChangeRecord; subcommand: 'resolve-labels' }
   | { block: ChangeRecordBlock; entriesFile?: string; subcommand: 'render-block' }
   | { entriesFile: string; subcommand: 'consolidate-entries' }
   | { merge: ResolveMergeArgs; subcommand: 'resolve-merge' }
