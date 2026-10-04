@@ -2,10 +2,7 @@
 name: prepare-prototype-brief
 description: Compose the shared brief and the lens sections for a round of competing prototypes, check the brief against the rules that builders over-apply, and dispatch one builder per lens. Use when a ticket calls for two or more prototypes of one idea built in parallel.
 user-invocable: true
-dependencies:
-  skills:
-    - index-prototypes
-    - save-artifact
+supported-harnesses: [claude]
 ---
 
 # Prepare prototype brief
@@ -69,7 +66,7 @@ In this order, with these headings:
 4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note; one is the API list when the product has one.
 5. **Quality bar.** Works, legible, accessible, with the design skill to invoke before markup and the salience order required.
 6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round.
-7. **Rules of engagement.** Write only the one file; modify nothing in the repository; install nothing; report the path and five lines of distinctive ideas.
+7. **Rules of engagement.** Write no file other than the prototype; modify nothing in the repository; install nothing; publish the prototype and report its artifact URL and five lines of distinctive ideas.
 
 The lens sections follow, one per builder, in the developer's words after a plain-speech pass.
 
@@ -116,10 +113,10 @@ output: {set_dir}/{slug}-v{n}.html
 
 followed by:
 
-> Read the brief in full and build the prototype for the lens named above. Write only the output file. Invoke the design skill that the brief names before writing markup. When done, reply with the file path, a short title, the lens, the inputs you drew on, a one-sentence description, and five lines of the system's distinctive ideas. Nothing else.
+> Read the brief in full and build the prototype for the lens named above. Write no file other than the output. Invoke the design skill that the brief names before writing markup. Publish the output with the Artifact tool. When done, reply with the artifact URL, a short title, the lens, the inputs you drew on, a one-sentence description, and five lines of the system's distinctive ideas. Nothing else.
 
-A builder that returns without the file, or with a file that does not open, is dispatched once more with the same block; a second failure is reported in the summary and the lens is left out of the round.
+A builder that returns without the file, with a file that does not open, or without an artifact URL, is dispatched once more with the same block; a second failure is reported in the summary and the lens is left out of the round.
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 7 for the screenshots, the registrations, and the index page. Then write the comparison: where the prototypes agree, where they diverge, which ideas to carry into the design, and which decisions the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 7 for the screenshots, the registrations, and the index page. Each registration takes its URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: where the prototypes agree, where they diverge, which ideas to carry into the design, and which decisions the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
