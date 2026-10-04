@@ -58,7 +58,7 @@ projects/{project-slug}/tickets/{ticket-id}/{run-id}/
 
 Example: `20260221-034100Z-interactive`
 
-Multiple runs per ticket (restarts, separate review cycles) each get their own run directory, created when the run's first artifact is written.
+A ticket's **active run** is its newest run directory of mode `interactive`, by the timestamp in its name. A review saves into the active run, and the author's response saves into the run that holds the review, so a review, the response, and a re-review share one run. A new run directory is created, when the review is written, only when the ticket directory does not contain an active run. A run of mode `orchestrated` is never active. `resolve-review-run` applies this definition.
 
 ### Persistent export destination
 
