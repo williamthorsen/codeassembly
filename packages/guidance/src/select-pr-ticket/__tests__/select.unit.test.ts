@@ -103,6 +103,12 @@ describe(selectPrTicket, () => {
       expect(selectPrTicket({ body, closingIssueNumbers: [] })).toEqual({ number: 2, source: 'body-bare' });
     });
 
+    it('reads a reference between stray backticks in different paragraphs', () => {
+      const body = ['Uses a stray ` backtick.', '', 'Closes #42', '', 'Another ` here'].join('\n');
+
+      expect(selectPrTicket({ body, closingIssueNumbers: [] })).toEqual({ number: 42, source: 'body-keyword' });
+    });
+
     it('treats an unclosed fence as running to the end of the body', () => {
       expect(selectPrTicket({ body: 'Text\n```\n#1', closingIssueNumbers: [] })).toEqual({
         number: null,

@@ -103,9 +103,12 @@ function maskFencedBlocks(markdown: string): string {
     .join('\n');
 }
 
-/** Blanks inline code spans, each opened and closed by backtick runs of equal length. */
+/**
+ * Blanks inline code spans, each opened and closed by backtick runs of equal length within one paragraph, since a code
+ * span cannot cross a blank line.
+ */
 function maskInlineCode(markdown: string): string {
-  return markdown.replaceAll(/(?<!`)(`+)(?!`)[\s\S]*?(?<!`)\1(?!`)/gu, (span) => blank(span));
+  return markdown.replaceAll(/(?<!`)(`+)(?!`)(?:(?!\n[ \t]*\n)[\s\S])*?(?<!`)\1(?!`)/gu, (span) => blank(span));
 }
 
 // endregion | Helpers
