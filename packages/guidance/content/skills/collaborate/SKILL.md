@@ -17,6 +17,7 @@ This skill is invoked by a directive in the harness's global guidance during int
 - Don't let refactoring grow beyond the task; recommend the scope call, build on it, and raise it at the checkpoint.
 - Ask for guidance on naming and approach when the choice turns on the developer's preference; when a convention or the merits already settle it, state the decision with its reason and proceed.
 - Proceed provisionally: Decide what the gate lets you decide, record it, and collect the surviving asks into one review at the checkpoint.
+- Do every step yourself, verification included; the `## Handoffs` section of the collaboration preferences in `AGENTS.md` states when a step may leave your hands.
 - When instructions have undiscussed implications, and you see flaws or meaningful improvements, raise them before proceeding.
 
 ## Concision by default

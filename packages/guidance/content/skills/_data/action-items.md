@@ -20,10 +20,12 @@ Soft offers are the hardest form to spot. Each phrases a question as a statement
 - "if you'd like…"
 - "I've not done X" (leaving the offer implicit)
 - "I couldn't run X because…" (a blocker that the user can clear, without an ask naming the action that clears it; a missing tool or dependency is not a blocker until the routes that do not need any action from the user, such as an ephemeral runner, are exhausted)
+- "is yours to run", "this one's yours", "your part is" (a step handed to the user that the agent could perform, in whole or in part)
+- a command for the user to run and paste back, or a check that a command, a test, or a browser could settle (a step the agent runs, not an ask)
 
 Each is an action item. Restate it in the block as the concrete action that it proposes, and strike the offer from the prose. The observation that prompted it may stay; that is signal. The ask may not.
 
-The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence that the agent already holds is a decision that it declined to make, and handing it back makes the user evaluate what a clause would have stated. Strike it, state the decision in the prose with its reason, and leave the block to the items that only the user can settle. A block emptied this way is a turn without an ask, which is a report rather than a failure.
+The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence that the agent already holds is a decision that it declined to make, and handing it back makes the user evaluate what a clause would have stated. Strike it, state the decision in the prose with its reason, and leave the block to the items that only the user can settle. An item that the agent could perform is a step that it declined to take: Run it, and leave in the block only the part that the agent cannot perform, named with its reason. A plan's "the owner exercises `/lab/book-row` by keyboard and on a touch device" is the counterexample: The agent drives the route through a debug browser, and the block holds at most how the control feels on a physical phone. A block emptied this way is a turn without an ask, which is a report rather than a failure.
 
 ## Items
 

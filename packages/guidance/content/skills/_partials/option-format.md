@@ -12,7 +12,7 @@ The gated class is closed. These decisions are asked whatever the markers say:
 - spend or budget
 - a preference for which you do not hold any evidence
 
-Everything else is the agent's call by default. A gated action is not decided in the agent's voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; the gated action itself waits for the developer's authorization. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you do not hold any evidence.
+Everything else is the agent's call by default. A gated action is not decided in the agent's voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; the gated action itself waits for the developer's authorization. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you do not hold any evidence. Verification is never in the gated class: A check that a command, a test, or a browser could settle is the agent's to run.
 
 **Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only where the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it provisional in the record, and ask at the checkpoint; revise if overruled. A skill without a phase structure treats its own approval gate, or the end of its work, as the checkpoint.
 
