@@ -21,7 +21,7 @@ Soft offers are the hardest form to spot. Each phrases a question as a statement
 - "I've not done X" (leaving the offer implicit)
 - "I couldn't run X because…" (a blocker that the user can clear, without an ask naming the action that clears it; a missing tool or dependency is not a blocker until the routes that do not need any action from the user, such as an ephemeral runner, are exhausted)
 - "is yours to run", "this one's yours", "your part is" (a step handed to the user that the agent could perform, in whole or in part)
-- a command for the user to run and paste back, or a check that a command, a test, or a browser could settle (a step the agent runs, not an ask)
+- a command for the user to run and paste back, or a check that a command, a test, or a browser could settle (a step that the agent runs, not an ask)
 
 Each is an action item. Restate it in the block as the concrete action that it proposes, and strike the offer from the prose. The observation that prompted it may stay; that is signal. The ask may not.
 

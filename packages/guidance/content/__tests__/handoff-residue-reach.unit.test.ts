@@ -22,7 +22,7 @@ const CARRIERS: ReadonlyMap<string, ReadonlyArray<string>> = new Map([
   [RULEBOOK, ['A sandbox denial is never by itself a reason to hand a step over', "Verification is the agent's"]],
   [
     'guidance/rulebooks/williamthorsen-tooling-preferences.md',
-    ['retried through the permission gate', 'the durable grant'],
+    ['retry the command through the permission gate', 'the durable grant'],
   ],
   ['skills/_data/action-items.md', ['is yours to run']],
   ['skills/_partials/action-items.md', ['is run, not asked']],
