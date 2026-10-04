@@ -74,7 +74,7 @@ The lens sections follow, one per builder, in the developer's words after a plai
 
 ### 1. Resolve the set
 
-Resolve the set directory per {skill:index-prototypes} step 1, and read back any verdicts from an earlier round: They say which slugs are revised (same slug, next version) and which are new.
+Resolve the set directory and the scratch directory per {skill:index-prototypes} step 1, and read back any verdicts from an earlier round: They say which slugs are revised (same slug, next version) and which are new.
 
 ### 2. Gather the inputs
 
@@ -82,7 +82,7 @@ Take the ticket and the ask. Propose lenses when the ask lacks them. Choose a sl
 
 ### 3. Compose and check the brief
 
-Write the brief to `{scratch}/brief.md`. Then check it against each rule above, by search as well as by reading:
+Write the brief to `{scratch_dir}/brief.md`. Then check it against each rule above, by search as well as by reading:
 
 - The words `pitch`, `sell`, `convince`, `persuade`, `argue`, `compelling`: none in any instruction to a builder.
 - Every criterion: in "How this round is judged" and nowhere else.
@@ -119,4 +119,4 @@ A builder that returns without the file, with a file that does not open, or with
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 7 for the screenshots, the registrations, and the index page. Each registration takes its URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: where the prototypes agree, where they diverge, which ideas to carry into the design, and which decisions the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Each registration takes its URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: where the prototypes agree, where they diverge, which ideas to carry into the design, and which decisions the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
