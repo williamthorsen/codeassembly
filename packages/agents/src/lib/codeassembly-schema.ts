@@ -18,11 +18,37 @@ export const EntrySchema = z
 const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose());
 
 /**
- * A declared content source: a named directory structured like `packages/guidance/content/`. Both `name` and `path` are
- * required; unknown keys pass through (`.loose()`) so that a later cut can add per-source config without a breaking
- * change, mirroring `EntrySchema`.
+ * A declared content source: a directory structured like `packages/guidance/content/`, named either by a `path` or by
+ * the installed `package` that ships it. A path source requires `name`; a package source's `name` is optional and
+ * defaults to the package name where the declaration is resolved. Unknown keys pass through (`.loose()`) so that a
+ * later cut can add per-source config without a breaking change, mirroring `EntrySchema`.
  */
-export const SourceSchema = z.object({ name: z.string().min(1), path: z.string().min(1) }).loose();
+export const SourceSchema = z
+  .object({
+    name: z.string().min(1).optional(),
+    path: z.string().min(1).optional(),
+    package: z.string().min(1).optional(),
+  })
+  .loose()
+  .transform((entry, context): DeclarationSource => {
+    const { name, path, package: packageName, ...rest } = entry;
+    if (path !== undefined && packageName !== undefined) {
+      context.addIssue({ code: 'custom', message: 'a source declares either `path` or `package`, not both' });
+      return z.NEVER;
+    }
+    if (packageName !== undefined) {
+      return name === undefined ? { ...rest, package: packageName } : { ...rest, name, package: packageName };
+    }
+    if (path === undefined) {
+      context.addIssue({ code: 'custom', message: 'a source declares a `path` (with a `name`) or a `package`' });
+      return z.NEVER;
+    }
+    if (name === undefined) {
+      context.addIssue({ code: 'custom', message: 'a source that declares a `path` also declares its `name`' });
+      return z.NEVER;
+    }
+    return { ...rest, name, path };
+  });
 
 /**
  * A declared reference: a path inside an installed dependency that `sync` points the agent at, with the pointer's text
@@ -94,8 +120,13 @@ export type HarnessDeclaration = z.infer<ReturnType<typeof harnessDeclarationSch
 /** A normalized declaration entry: always `{ name }`, with any unknown authoring keys preserved. */
 export type DeclarationEntry = z.infer<typeof EntrySchema>;
 
-/** A declared content source as authored: a `{ name, path }` pair with any unknown keys preserved. */
-export type DeclarationSource = z.infer<typeof SourceSchema>;
+/**
+ * A declared content source as authored: a `{ name, path }` pair, or a `{ package, name? }` entry, with any unknown keys
+ * preserved at runtime.
+ */
+export type DeclarationSource =
+  | { readonly name: string; readonly path: string; readonly package?: undefined }
+  | { readonly name?: string; readonly package: string; readonly path?: undefined };
 
 /** A declared reference as authored, with any unknown keys preserved. */
 export type DeclarationReference = z.infer<typeof ReferenceSchema>;

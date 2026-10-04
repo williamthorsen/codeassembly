@@ -24,6 +24,10 @@ export interface DeclaredReference {
   readonly declaredIn: string;
 }
 
+/** A declared source after combining the scope chain: a path resolved to a directory, or a package to locate. */
+export type ResolvedSource =
+  { readonly name: string; readonly dir: string } | { readonly name: string; readonly package: string };
+
 /** The effective slugs that a project declares per artifact type, after combining the scope chain. */
 export interface ResolvedDeclaration {
   readonly rulebooks: ReadonlyArray<string>;
@@ -31,8 +35,11 @@ export interface ResolvedDeclaration {
   readonly subagents: ReadonlyArray<string>;
   /** Dependency-only aggregates, which the caller expands into the deployable types. */
   readonly collections: ReadonlyArray<string>;
-  /** The declared content sources, each resolved to an absolute directory, in precedence order (highest first). */
-  readonly sources: ReadonlyArray<{ name: string; dir: string }>;
+  /**
+   * The declared content sources in precedence order (highest first): a path source resolved to an absolute directory,
+   * and a package source left unresolved, as `packages` is.
+   */
+  readonly sources: ReadonlyArray<ResolvedSource>;
   /**
    * The declared package names in precedence order (highest first), left unresolved: Locating one probes
    * `node_modules`, which is filesystem work that the caller does.
@@ -87,8 +94,8 @@ export async function resolveDeclaration(options: {
   const collections = new Map<string, Array<string>>();
   const packages = new Set<string>();
   const declinedPackages = new Set<string>();
-  // Sources key on `name` so that a repeated name remaps its path; the value is the resolved absolute dir.
-  const sources = new Map<string, string>();
+  // Sources key on `name` so that a repeated name remaps the entry, whatever its form.
+  const sources = new Map<string, ResolvedSource>();
   const references = new Map<string, DeclaredReference>();
   // Each hook name accumulates its own binding set, so a tier binding to one hook leaves the others untouched.
   const guidanceHooks = new Map<string, Map<string, Array<string>>>();
@@ -125,7 +132,7 @@ export async function resolveDeclaration(options: {
     // win, the precedence rule followed by every other block.
     packages: [...packages].toReversed(),
     declinedPackages: [...declinedPackages],
-    sources: [...sources].toReversed().map(([name, dir]) => ({ name, dir })),
+    sources: sources.values().toArray().toReversed(),
     references: references.values().toArray().toReversed(),
     guidanceHooks: buildGuidanceHookMap(guidanceHooks),
     declaredIn: { rulebook: rulebooks, skill: skills, subagent: subagents, collection: collections },
@@ -197,18 +204,22 @@ function accumulateReferences(
 }
 
 /**
- * Resolves each declared source's `path` against `fileDir` and accumulates it by `name`. Re-inserting after a delete
- * moves a repeated name to the end of the map, so a later (higher-precedence) declaration wins both the path and the
- * position.
+ * Accumulates each declared source by `name`, which defaults to the package name for a package source, resolving a
+ * `path` against `fileDir`. Re-inserting after a delete moves a repeated name to the end of the map, so a later
+ * (higher-precedence) declaration wins both the entry, whatever its form, and the position.
  */
 function accumulateSources(
-  sources: Map<string, string>,
+  sources: Map<string, ResolvedSource>,
   declared: ReadonlyArray<DeclarationSource>,
   fileDir: string,
 ): void {
   for (const source of declared) {
-    sources.delete(source.name);
-    sources.set(source.name, resolveSourcePath(source.path, fileDir));
+    const resolved: ResolvedSource =
+      source.package === undefined
+        ? { name: source.name, dir: resolveSourcePath(source.path, fileDir) }
+        : { name: source.name ?? source.package, package: source.package };
+    sources.delete(resolved.name);
+    sources.set(resolved.name, resolved);
   }
 }
 

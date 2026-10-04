@@ -391,6 +391,32 @@ describe(resolveDeclaration, () => {
       ]);
     });
 
+    it('names a package source after its package unless it declares a name, leaving the package unresolved', async () => {
+      await writeProject('sources:\n  - package: "@scope/lib"\n  - name: other\n    package: lib\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([
+        { name: 'other', package: 'lib' },
+        { name: '@scope/lib', package: '@scope/lib' },
+      ]);
+    });
+
+    it('lets a higher tier remap a package source to a path by repeating its name', async () => {
+      await writeProject('sources:\n  - package: lib\n  - name: other\n    path: /other\n');
+      await writeLocal('sources:\n  - name: lib\n    path: /clone\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([
+        { name: 'lib', dir: '/clone' },
+        { name: 'other', dir: '/other' },
+      ]);
+    });
+
+    it('lets a higher tier remap a path source to a package by repeating its name', async () => {
+      await writeProject('sources:\n  - name: lib\n    path: /clone\n');
+      await writeLocal('sources:\n  - name: lib\n    package: "@scope/lib"\n');
+      const declaration = await resolveDeclaration({ cwd });
+      expect(declaration?.sources).toEqual([{ name: 'lib', package: '@scope/lib' }]);
+    });
+
     it('discards a lower-tier source declaration when a higher tier declares root: true', async () => {
       await writeProject('sources:\n  - name: org\n    path: /org\n');
       await writeLocal('root: true\nsources:\n  - name: local\n    path: /local\n');

@@ -160,6 +160,37 @@ describe(parseCodeAssemblyFile, () => {
     expect(() => parseCodeAssemblyFile('sources:\n  - name: ""\n    path: ../shared\n')).toThrow(/name/);
   });
 
+  it('parses a package source, with or without a name', () => {
+    const declaration = parseCodeAssemblyFile(
+      'sources:\n  - package: codeassembly-guidance\n  - name: lib\n    package: "@scope/lib"\n',
+    );
+
+    expect(declaration.sources).toEqual([{ package: 'codeassembly-guidance' }, { name: 'lib', package: '@scope/lib' }]);
+  });
+
+  it('tolerates unknown keys on a package source', () => {
+    const declaration = parseCodeAssemblyFile('sources:\n  - package: lib\n    ref: v2\n');
+
+    expect(declaration.sources[0]).toMatchObject({ package: 'lib', ref: 'v2' });
+  });
+
+  it('throws, naming the entry, when a source declares both path and package', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: org\n    path: ../shared\n    package: lib\n')).toThrow(
+      /sources\.0: .*either `path` or `package`, not both/,
+    );
+  });
+
+  it('throws, naming the entry, when a source declares neither path nor package', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: ok\n    path: ../a\n  - name: org\n')).toThrow(
+      /sources\.1: .*`path` .* or a `package`/,
+    );
+  });
+
+  it('throws when a package source name or package is an empty string', () => {
+    expect(() => parseCodeAssemblyFile('sources:\n  - name: ""\n    package: lib\n')).toThrow(/name/);
+    expect(() => parseCodeAssemblyFile('sources:\n  - package: ""\n')).toThrow(/package/);
+  });
+
   it('throws when sources is not a list', () => {
     expect(() => parseCodeAssemblyFile('sources:\n  name: org\n  path: ../shared\n')).toThrow();
   });
