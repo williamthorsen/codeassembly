@@ -119,8 +119,8 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
    Redispatch at most twice. After a second redispatch fails, the passages still failing are the ones that you last sent. Present those to the developer with the code, and ask for a replacement or for an explicit acceptance of each passage as it stands; place the answer, then continue to step 7 with the verified entries. If you could never place a return, show the developer each passage as the fence contained it. Take a passage rejected by the audit past step 6 only after asking the developer.
 
-7. **Consolidate the change's record from the entries.** Do this before step 8, and before the frontmatter call: The `## Details` headings, the title, and the labels read the record that this step produces.
-   - **Write the verified entries** to a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `entries-{timestamp}.yaml`. The file is a top-level YAML list of mappings, one per entry, each declaring `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry has one, as the drafter returned them, with the corrections that step 6 made. Write each `text` and `migration` double-quoted, and quote any value that reached you unquoted: Unquoted, a space followed by `#` opens a YAML comment, and the parse drops the rest of the text. Write it with a file-writing tool rather than a shell heredoc: `text` and `migration` are arbitrary prose containing backticks and quotes. Keep its path; step 10 reads the same file.
+7. **Consolidate the change's record from the entries.** Do this before step 8, and before the frontmatter call: Step 8 reads the entries file that this step writes, and the title and the labels read the record that it produces.
+   - **Write the verified entries** to a scratch file, created per the path rules of [gh body file](#gh-body-file) and named `entries-{timestamp}.yaml`. The file is a top-level YAML list of mappings, one per entry, each declaring `type`, `scopes`, `breaking`, and `text`, and `migration` when the entry has one, as the drafter returned them, with the corrections that step 6 made. Write each `text` and `migration` double-quoted, and quote any value that reached you unquoted: Unquoted, a space followed by `#` opens a YAML comment, and the parse drops the rest of the text. Write it with a file-writing tool rather than a shell heredoc: `text` and `migration` are arbitrary prose containing backticks and quotes. Keep its path; steps 8 and 10 read the same file.
    - **Record the derivation commit**: `git rev-parse --short HEAD`. It is the commit at which the entries were read, and `resolve-merge` compares it against the pull request's head to tell a fresh block from a stale one.
    - **Consolidate the entries:**
 
@@ -133,7 +133,17 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
    - **Re-resolve the effective record** by running `resolve-effective-record` again, on this consolidated record and the overrides resolved in step 2. The first run in step 2 used the commit-derived record, which this one supersedes, and the title and the labels downstream read the effective record. Report each `policy-violation` in `defects` and change nothing.
 
-8. **Render `## Details` from the verified entries** per [Rendering `Details`](#rendering-details).
+8. **Render `## Details`** from the entries file that step 7 wrote:
+
+   ```bash
+   entries_path="{absolute path from step 7}"
+   node {harness_home_dir}/scripts/describe-change.mjs render-details --entries-file "$entries_path" \
+     | python3 -c "import sys,json; print(json.load(sys.stdin).get('details',''))"
+   ```
+
+   [`render-details`](../_data/title-templates.md#render-details) states the output and how it is rendered. Render and decode in one Bash invocation, as step 10 does, and write the printed body verbatim under `## Details`, composing nothing into it. Write the section only when the body is not empty, which is on every change that yields an entry.
+
+   If the helper is unavailable or the call fails, relay its error, say that the summary does not contain `## Details`, and save the body without it. Never render the section by hand: Hand-rendered headings drift from the taxonomy.
 
 9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and do not take any sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here adds this session's weighting to the merge commit, the changelog, and the release notes.
 
@@ -207,23 +217,13 @@ entries:
 ```
 ````
 
-### Rendering `Details`
-
-`## Details` is rendered from the verified entries, and nothing else is composed into it. It is present on every change that yields an entry.
-
-- **Subsections.** One per distinct `type` among the entries, headed `{emoji} {label}` from that type's [work-types.json](../_data/work-types.json) `types[]` entry. Order them by tier (public → internal → process) and, within a tier, in the order that `work-types.json` lists the types. A type without an entry does not get a subsection.
-- **Bullets.** Under each subsection, one bullet per entry of that type, in the order the drafter returned them. The bullet is `🚨 **Breaking:** ` (from `markers.breaking`, rendered as `{emoji} **{label}:** `) when the entry's `breaking` is `true`, followed by the entry's `text`. The prefix tags the entry inline rather than relocating it to a separate section.
-- **Migration.** When an entry has a `migration`, its bullet gets one nested list item, `Migration: {migration}`, and the scope tags stay on the bullet's own line. Nest it as a list item, never as an indented continuation line.
-- **Scope tags.** When the entries do not all name the same `scopes`, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated: `#agents, #kb`. When every entry names the same scopes, the bullets do not end with tags, since the consolidated record already names that scope.
-- **`## What`.** `## What` contains none of these bullets. It is the lede that the drafter wrote, composed in step 9, and the two sections therefore cover the change at different lengths rather than repeating one list.
-
 ## Guidance
 
 - When `ticket_ref` is null (the branch does not have a ticket), omit the `{ticket_ref} ` portion of the heading and the title so that they read naturally without it.
 - The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is every outcome that the change contains
 - Both `## What` and `## Details` come from the drafter, so neither is composed in this session
+- `## What` contains none of the `## Details` bullets: The two sections cover the change at different lengths rather than repeating one list
 - Ignore auto-formatter and lint-fix changes
-- The breaking prefix does not include the migration: An entry that breaks a consumer states what the consumer does in its `migration`, which `## Details` nests under the entry's bullet and the merge commit's `change-record` block records
 - `## What` and `## Why` are required
 - The rendered `change-record` block is the body's last element, per [the change record](../_data/change-record.md)
 - Never list automated checks (formatting, linting, typechecking, unit tests) in a test plan. They run automatically in CI.
