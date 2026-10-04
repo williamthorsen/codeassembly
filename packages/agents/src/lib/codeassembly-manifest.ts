@@ -50,6 +50,11 @@ export interface ResolvedDeclaration {
    * mentioned".
    */
   readonly declinedPackages: ReadonlyArray<string>;
+  /**
+   * The package names that any tier's `sources:` entries name, including one that a higher tier remaps to a path: The
+   * project still consumes that package as a source, so it is not a candidate for adoption through `packages`.
+   */
+  readonly sourcePackages: ReadonlyArray<string>;
   /** The declared references in precedence order (highest first), left unresolved against `node_modules`. */
   readonly references: ReadonlyArray<DeclaredReference>;
   /**
@@ -96,6 +101,7 @@ export async function resolveDeclaration(options: {
   const declinedPackages = new Set<string>();
   // Sources key on `name` so that a repeated name remaps the entry, whatever its form.
   const sources = new Map<string, ResolvedSource>();
+  const sourcePackages = new Set<string>();
   const references = new Map<string, DeclaredReference>();
   // Each hook name accumulates its own binding set, so a tier binding to one hook leaves the others untouched.
   const guidanceHooks = new Map<string, Map<string, Array<string>>>();
@@ -110,6 +116,7 @@ export async function resolveDeclaration(options: {
       packages.clear();
       declinedPackages.clear();
       sources.clear();
+      sourcePackages.clear();
       references.clear();
       guidanceHooks.clear();
     }
@@ -119,6 +126,11 @@ export async function resolveDeclaration(options: {
     accumulateType(collections, declaration.collections, filePath);
     accumulatePackages(packages, declinedPackages, declaration.packages);
     accumulateSources(sources, declaration.sources, path.dirname(filePath));
+    for (const source of declaration.sources) {
+      if (source.package !== undefined) {
+        sourcePackages.add(source.package);
+      }
+    }
     accumulateReferences(references, declaration.references, filePath);
     accumulateGuidanceHooks(guidanceHooks, declaration['guidance-hooks'], filePath);
   }
@@ -133,6 +145,7 @@ export async function resolveDeclaration(options: {
     packages: [...packages].toReversed(),
     declinedPackages: [...declinedPackages],
     sources: sources.values().toArray().toReversed(),
+    sourcePackages: [...sourcePackages],
     references: references.values().toArray().toReversed(),
     guidanceHooks: buildGuidanceHookMap(guidanceHooks),
     declaredIn: { rulebook: rulebooks, skill: skills, subagent: subagents, collection: collections },

@@ -404,6 +404,27 @@ describe('sync with a declared package', () => {
       expect(renderReportText(outcome)).not.toContain('has not declared');
     });
 
+    it('does not advise adopting the package when a higher tier remaps the source to a local clone', async () => {
+      await writeFile(
+        path.join(projectRoot, 'package.json'),
+        JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
+        'utf8',
+      );
+      const cloneDir = path.join(projectRoot, 'clone');
+      await writeSkill(cloneDir, 'pkg-skill');
+      await declare(`sources:\n  - package: '${PACKAGE_NAME}'\nskills:\n  use:\n    - pkg-skill\n`);
+      await writeFile(
+        path.join(projectRoot, '.agents', 'codeassembly.local.yaml'),
+        `sources:\n  - name: '${PACKAGE_NAME}'\n    path: ${cloneDir}\n`,
+        'utf8',
+      );
+
+      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+
+      expect(existsSync(skillPath('pkg-skill'))).toBe(true);
+      expect(renderReportText(outcome)).not.toContain('has not declared');
+    });
+
     it('fails the run when the package is not installed, writing nothing', async () => {
       await declare("sources:\n  - package: '@ca-fixture/absent'\n");
 

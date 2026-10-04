@@ -406,11 +406,7 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
     // Otherwise a consumer has to learn a third party's catalog by hand to discover there is anything to adopt. This
     // is advice, not action: Nothing is deployed until the project declares the package.
     undeclaredPackages: await findUndeclaredGuidancePackages(
-      [
-        ...declaration.packages,
-        ...declaration.declinedPackages,
-        ...declaration.sources.flatMap((source) => ('package' in source ? [source.package] : [])),
-      ],
+      [...declaration.packages, ...declaration.declinedPackages, ...declaration.sourcePackages],
       domain.baseDir,
     ),
     guidanceHookAdvisories: findGuidanceHookAdvisories(declaration.guidanceHooks, resolved, declaredHooks),
