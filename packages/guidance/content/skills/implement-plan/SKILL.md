@@ -52,13 +52,15 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    Raise material divergence to the user before proceeding, rather than rerouting silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach that the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation; carry on and note it in the closing summary.
 
+   A step that names the developer as its actor is yours to carry out, unless the task has a `**Residue:**` line: Perform every part that you can, and raise the residue as the one ask that it states. Such a step is not material divergence, and it is never handed back as a step for the developer to run.
+
    Commit each task's work as its own commit with the `{skill:create-commit}` skill. Everything the closing menu offers reads committed history, so work left uncommitted is work that the next step cannot see.
 
 6. **Audit the diff** per [Diff audit](#diff-audit). Because the audit runs over the work of every task, ahead of the gates, a repair that it forces is itself covered by them. A repair made once the tasks are committed, whether the audit forces it or a gate does, is committed the same way: amended into the commit that it corrects, or made as a commit of its own, composed with the `{skill:create-commit}` skill.
 
-7. **Run the plan's verification gates.** Execute the `## Verification` section's checks and report the actual results. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass.
+7. **Run the plan's verification gates.** Execute the `## Verification` section's checks yourself and report the actual results, including a browser check through a debug browser where the environment provides one. A command that the sandbox refuses is retried through the permission gate, and a check whose observable outcome a gate already asserts is cut rather than run. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass, and never turn a check into a developer action item.
 
-8. **Report completion.** Route each fact surfaced by the run per [Fact routing](#fact-routing), then summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met.
+8. **Report completion.** Route each fact surfaced by the run per [Fact routing](#fact-routing), then summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met. The report lists what was verified and never a step for the developer to run; the "Handoffs" section of the collaboration preferences states when a step may leave your hands.
 
 9. **Present next steps** following [next-steps options](#next-steps-options).
 
