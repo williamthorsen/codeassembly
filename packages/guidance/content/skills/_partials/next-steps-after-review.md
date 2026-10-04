@@ -277,7 +277,7 @@ Proposed edits to the source:
 Per the session-boundary rule, two options name a skill in the render:
 
 - **Ask the author to address the findings**: The author's disposition happens in another session. The separate line below the list names `respond-to-review` for the case in which that author is an agent.
-- **Wait for the author to address the findings, then re-review**: Names `review-branch` in the render, because the re-review runs after a wait that only the user can end. It has no "Clear context" prefix, since the reviewer's memory of what it found lets it check the fixes.
+- **Wait for the author to address the findings, then re-review**: Names `review-branch` in the render, because the re-review runs after a wait that only the user can end. It has no "Clear context" prefix: The saved review records the findings, so the re-review works the same in this session or a fresh one.
 
 #### Recommendation rules
 
