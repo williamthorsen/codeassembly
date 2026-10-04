@@ -13,7 +13,7 @@
     "dist"
   ],
   "dependencies": {
-    "@modelcontextprotocol/sdk": "1.30.0",
+    "@modelcontextprotocol/sdk": "1.30.1",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "codeassembly-run-core": "workspace:*",
     "zod": "catalog:"

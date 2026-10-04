@@ -99,7 +99,9 @@
   },
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "CHANGELOG.md",
+    ".meta/changelog.json"
   ],
   "scripts": {
     "prepublishOnly": "nmr build"

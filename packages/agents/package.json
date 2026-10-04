@@ -37,7 +37,9 @@
     ".readyup/kits/*.js",
     ".readyup/manifest.json",
     "bin",
-    "dist"
+    "dist",
+    "CHANGELOG.md",
+    ".meta/changelog.json"
   ],
   "scripts": {
     "build:post": "node scripts/add-cli-shebang.ts && rdy compile",
@@ -53,7 +55,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/toolbelt.strings": "8.0.1",
+    "@williamthorsen/toolbelt.strings": "8.0.2",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "esbuild": "catalog:",

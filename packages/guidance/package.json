@@ -28,7 +28,9 @@
   "files": [
     "content",
     "!content/**/__tests__",
-    "!content/test-utils"
+    "!content/test-utils",
+    "CHANGELOG.md",
+    ".meta/changelog.json"
   ],
   "scripts": {
     "build": "codeassembly bundle-helpers",
