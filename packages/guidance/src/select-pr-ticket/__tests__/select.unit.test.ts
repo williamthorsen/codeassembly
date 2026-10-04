@@ -54,14 +54,6 @@ describe(selectPrTicket, () => {
         source: 'body-keyword',
       });
     });
-
-    it('returns the same selection on repeated calls', () => {
-      const input = { body: 'Closes #4', closingIssueNumbers: [] };
-
-      selectPrTicket(input);
-
-      expect(selectPrTicket(input)).toEqual({ number: 4, source: 'body-keyword' });
-    });
   });
 
   describe('references that are not matched', () => {

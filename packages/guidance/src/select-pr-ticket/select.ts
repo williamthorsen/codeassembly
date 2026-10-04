@@ -15,7 +15,7 @@ export interface PrTicketSelection {
 // A closing keyword followed by `#n`, or a bare `#n` that is not part of a word, a path, a cross-repo reference, or an
 // HTML entity. The keyword alternative comes first, so a keyword reference matches as one even though it contains a
 // bare `#n`.
-const ISSUE_REFERENCE = /\b(?:closes|fixes|resolves):?\s+#(\d+)\b|(?<![\w/#&])#(\d+)\b/giu;
+const ISSUE_REFERENCE = /\b(?:closes|fixes|resolves):?\s+#(\d+)\b|(?<![\w/#&])#(\d+)\b/iu;
 
 /**
  * Validates the parsed JSON emitted by `gh pr view --json body,closingIssuesReferences`. Throws when a field has the
@@ -55,7 +55,6 @@ export function selectPrTicket(input: PrTicketInput): PrTicketSelection {
   }
 
   const match = ISSUE_REFERENCE.exec(maskCode(input.body));
-  ISSUE_REFERENCE.lastIndex = 0;
   if (match === null) {
     return { number: null, source: 'none' };
   }
