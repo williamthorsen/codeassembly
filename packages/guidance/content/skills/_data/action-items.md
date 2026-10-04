@@ -68,14 +68,14 @@ A canonical block keeps its own identifiers. When its items already have stable 
 
 **Before** (the ask opens as an aside, does not name a concrete action, and appears mid-paragraph several hundred words into a report):
 
-> Worth knowing for #977: `agents` and `mcp` will hit the same trap. A `files: ["bin", "dist"]` allowlist is not sufficient on its own, because the compiler's ignore list and the packer's allowlist don't agree about what counts as test code. I've not added that to the ticket; say the word and I will.
+> Worth knowing for #977: `agents` and `kb` will hit the same trap. A `files: ["bin", "dist"]` allowlist is not sufficient on its own, because the compiler's ignore list and the packer's allowlist don't agree about what counts as test code. I've not added that to the ticket; say the word and I will.
 
 **After** (the observation stays in the prose, where it is signal; the ask moves to the block, where it can be found and answered):
 
-> The packaging trap is not unique to this package: `agents` and `mcp` have the same shape, because the compiler's ignore list and the packer's allowlist disagree about what counts as test code.
+> The packaging trap is not unique to this package: `agents` and `kb` have the same shape, because the compiler's ignore list and the packer's allowlist disagree about what counts as test code.
 >
 > ---
 >
 > **Action items**
 >
-> Add a note to #977 recording that `agents` and `mcp` share this trap, and that a `files: ["bin", "dist"]` allowlist is not sufficient on its own? 👍🏼👎🏼
+> Add a note to #977 recording that `agents` and `kb` share this trap, and that a `files: ["bin", "dist"]` allowlist is not sufficient on its own? 👍🏼👎🏼

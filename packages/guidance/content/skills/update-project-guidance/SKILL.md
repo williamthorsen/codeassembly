@@ -217,12 +217,12 @@ Placement:
 ```
 Ledger
 
-| Claim                                      | Verdict   | Evidence                                            |
-| ------------------------------------------ | --------- | --------------------------------------------------- |
-| `.config/` holds `vitest/` and `eslint/`   | drifted   | `ls .config/`: also holds `readyup.config.ts`       |
-| The MCP server exposes five tools          | holds     | `rg -c registerTool packages/mcp/src/server.ts` → 5 |
-| `pnpm run bootstrap` builds every package  | holds     | `package.json:14`                                   |
-| The compile cache is keyed on inputs alone | unchecked | upstream behavior, not verifiable from this repo    |
+| Claim                                      | Verdict   | Evidence                                         |
+| ------------------------------------------ | --------- | ------------------------------------------------ |
+| `.config/` holds `vitest/` and `eslint/`   | drifted   | `ls .config/`: also holds `readyup.config.ts`    |
+| `packages/` holds five packages            | holds     | `ls packages/` → 5 entries                       |
+| `pnpm run bootstrap` builds every package  | holds     | `package.json:14`                                |
+| The compile cache is keyed on inputs alone | unchecked | upstream behavior, not verifiable from this repo |
 
 Not audited: the Code style section, which the window did not touch.
 
