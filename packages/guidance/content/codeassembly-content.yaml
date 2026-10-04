@@ -35,6 +35,8 @@ helpers:
     out: scripts/describe-change.mjs
   - entry: ../src/select-lede-exemplars/cli.ts
     out: scripts/select-lede-exemplars.mjs
+  - entry: ../src/resolve-review-run/cli.ts
+    out: scripts/resolve-review-run.mjs
   - entry: ../src/merge-gh-pr/cli.ts
     out: skills/merge-gh-pr/merge-gh-pr.mjs
   - entry: ../src/index-prototypes/cli.ts

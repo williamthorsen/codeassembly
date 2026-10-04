@@ -291,8 +291,8 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
 1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id); never construct a path with a literal `null` segment.
-2. Create a run directory named `{timestamp}-interactive`, where timestamp matches this review's timestamp.
-3. Save: `{run-dir}/{timestamp}_reviewer_review.md`
+2. Create the run directory: Invoke `node {harness_home_dir}/scripts/resolve-review-run.mjs create --ticket-dir <ticket-dir> --timestamp <timestamp>` via Bash, passing this review's UTC `YYYYMMDD-HHMMSSZ` timestamp. The helper prints `{ "runDir": "<path>" }`; on a malformed timestamp it exits non-zero and names the problem on stderr.
+3. Save: `{runDir}/{timestamp}_reviewer_review.md`
 
 Each review is a separate artifact in the run directory. Do not append to existing files: The chronological sequence of files is the history.
 

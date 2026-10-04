@@ -65,11 +65,9 @@ If a path argument is provided, read the review directly from that path. If the 
 If the invocation does not include a path, find the most recent `reviewer_review` in the active run:
 
 1. Resolve the ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
-2. Find the most recent run directory (highest timestamp in directory name)
-3. List files matching `*_reviewer_review.md` or `*_overseer_review.md` in the run directory
-4. Select the file with the highest timestamp
+2. Invoke `node {harness_home_dir}/scripts/resolve-review-run.mjs latest --ticket-dir <ticket-dir>` via Bash. The helper prints `{ "reviewPath": "<path>", "runDir": "<path>" }`: the newest run directory and the newest reviewer or overseer review in it.
 
-If the run directory does not contain a review artifact, stop and report the error.
+If the helper exits non-zero, the ticket directory does not contain a run or the newest run does not contain a review; stop and report the message that it printed on stderr.
 
 <!-- guidance-hook: ticketing-preferences -->
 
