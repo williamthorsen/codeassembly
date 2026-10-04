@@ -85,6 +85,7 @@
 - name: scope:mcp
   color: 00ff96
   description: ''
+  archived: true
 - name: scope:root
   color: 00ff96
   description: ''
