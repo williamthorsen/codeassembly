@@ -25,11 +25,23 @@ describe('resolve-review-run CLI', () => {
     await rm(ticketDir, { force: true, recursive: true });
   });
 
-  it('prints the created run directory as JSON', async () => {
-    const result = await runCli(['create', '--ticket-dir', ticketDir, '--timestamp', '20261004-101500Z']);
+  it('prints a null active run as JSON when none exists', async () => {
+    const result = await runCli(['active', '--ticket-dir', ticketDir]);
 
     expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout)).toEqual({ runDir: path.join(ticketDir, '20261004-101500Z-interactive') });
+    expect(JSON.parse(result.stdout)).toEqual({ runDir: null });
+  });
+
+  it('prints the opened run directory as JSON, and reuses it on the next open', async () => {
+    const expected = { runDir: path.join(ticketDir, '20261004-101500Z-interactive') };
+
+    const first = await runCli(['open', '--ticket-dir', ticketDir, '--timestamp', '20261004-101500Z']);
+    const second = await runCli(['open', '--ticket-dir', ticketDir, '--timestamp', '20261004-120000Z']);
+
+    expect(first.exitCode).toBe(0);
+    expect(JSON.parse(first.stdout)).toEqual(expected);
+    expect(second.exitCode).toBe(0);
+    expect(JSON.parse(second.stdout)).toEqual(expected);
   });
 
   it('prints the newest run and review as JSON', async () => {
@@ -51,13 +63,14 @@ describe('resolve-review-run CLI', () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe('');
-    expect(result.stderr).toContain(`no run directory found in ${ticketDir}`);
+    expect(result.stderr).toContain(`no interactive run directory found in ${ticketDir}`);
   });
 
   it.each([
-    [['create', '--ticket-dir', '/tmp/x'], '--timestamp is required'],
+    [['open', '--ticket-dir', '/tmp/x'], '--timestamp is required'],
+    [['active', '--ticket-dir', '/tmp/x', '--timestamp', '20261004-101500Z'], 'active does not take --timestamp'],
     [['latest', '--ticket-dir', '/tmp/x', '--timestamp', '20261004-101500Z'], 'latest does not take --timestamp'],
-    [['delete', '--ticket-dir', '/tmp/x'], 'unknown command: delete'],
+    [['create', '--ticket-dir', '/tmp/x'], 'unknown command: create'],
     [[], 'usage: resolve-review-run'],
   ])('rejects %j', async (argv, message) => {
     const result = await runCli(argv);

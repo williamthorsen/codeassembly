@@ -42,7 +42,7 @@ This skill is the canonical home of the shared review process. `review-pr` invok
 
    `review-pr` may pass additional sources (notably the PR description as `pr_description`). The list is the canonical input for the "Specification compliance" section regardless of who populated it.
 
-4. **Read prior artifacts**: If a run directory exists for this ticket, read all artifacts chronologically for context (including any prior dispositions).
+4. **Read prior artifacts**: When `ticket_id` is not null, invoke `node {harness_home_dir}/scripts/resolve-review-run.mjs active --ticket-dir {artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` via Bash. The helper prints `{ "runDir": <path or null> }`: the ticket's active run, per [artifact conventions](../_data/artifact-conventions.md#run-directories). When `runDir` is not null, read all artifacts in it chronologically for context (including any prior dispositions).
 5. **Analyze changes**: `git diff <merge-base-sha>..HEAD`.
 6. **Review thoroughly** following the guidelines below.
 7. **Challenge your own findings**: Re-read each finding and delete every one that you would not defend to a skeptical author asking "why does this matter?" A review may legitimately end with zero findings.
@@ -291,7 +291,7 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 The review is saved as a run artifact: `{timestamp}_reviewer_review.md`
 
 1. Resolve ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`. When `ticket_id` is null, auto-generate one in the format `{YYYYMMDD}-{4 random hex}` per [artifact conventions](../_data/artifact-conventions.md#ticket-id); never construct a path with a literal `null` segment.
-2. Create the run directory: Invoke `node {harness_home_dir}/scripts/resolve-review-run.mjs create --ticket-dir <ticket-dir> --timestamp <timestamp>` via Bash, passing this review's UTC `YYYYMMDD-HHMMSSZ` timestamp. The helper prints `{ "runDir": "<path>" }`; on a malformed timestamp it exits non-zero and names the problem on stderr.
+2. Open the run directory: Invoke `node {harness_home_dir}/scripts/resolve-review-run.mjs open --ticket-dir <ticket-dir> --timestamp <timestamp>` via Bash, passing this review's UTC `YYYYMMDD-HHMMSSZ` timestamp. The helper prints `{ "runDir": "<path>" }`: the ticket's active run, or a new `{timestamp}-interactive` run when the ticket directory does not contain one. On a malformed timestamp it exits non-zero and names the problem on stderr.
 3. Save: `{runDir}/{timestamp}_reviewer_review.md`
 
 Each review is a separate artifact in the run directory. Do not append to existing files: The chronological sequence of files is the history.
