@@ -6,17 +6,6 @@
 _defaults:
   tools: [bash, create_file, expand_code_chunks, expand_folder, grep, open_files]
 
-orchestrated-coder:
-  tools: [bash, create_file, expand_code_chunks, expand_folder, find_and_replace_code, grep, open_files]
-
-aspect-code-reviewer: {} # inherits _defaults
-
-aspect-silent-failure-reviewer: {} # inherits _defaults
-
-aspect-test-reviewer: {} # inherits _defaults
-
-code-simplification-reviewer: {} # inherits _defaults
-
 # Rovo does not read a denylist, so the read-only grant is named here.
 # `create_file` is dropped: The drafter returns text.
 entry-drafter:
