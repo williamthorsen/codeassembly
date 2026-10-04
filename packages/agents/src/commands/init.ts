@@ -31,12 +31,15 @@ rulebooks:
 # subagents:
 #   use: []
 
-# sources declares the content directories from which artifacts resolve, each a { name, path } pair. sync resolves
-# from these and from the packages declared under packages: alone, and stops when neither declares a usable source.
-# A relative path resolves against this .agents/ directory (~ and absolute paths are also allowed); a later-declared
-# source shadows an earlier one. Commit only repo-relative paths here; keep machine-specific paths in
-# codeassembly.local.yaml. Sources resolve every artifact type: rulebooks, skills, subagents, and collections.
+# sources declares the content directories from which artifacts resolve, each a { name, path } pair or a { package }
+# entry naming an installed package whose content this project picks from. sync resolves from these and from the
+# packages declared under packages: alone, and stops when neither declares a usable source. A package source deploys
+# only what this file names, while packages: deploys a package's whole catalog. A relative path resolves against this
+# .agents/ directory (~ and absolute paths are also allowed); a later-declared source shadows an earlier one. Commit
+# only repo-relative paths here; keep machine-specific paths in codeassembly.local.yaml. Sources resolve every
+# artifact type: rulebooks, skills, subagents, and collections.
 # sources:
+#   - package: codeassembly-guidance
 #   - name: org-guidance
 #     path: ../shared-guidance
 
@@ -56,11 +59,12 @@ const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt
 # harnesses:
 #   use: [claude]
 #
-# sources declares the content directories from which artifacts resolve, each a { name, path } pair. install and
-# sync --global resolve from these alone, and stop until one is declared. Clone the CodeAssembly repository, then
-# uncomment the entry below and point its path at the clone's packages/guidance/content (~ and absolute paths are
-# allowed; a relative path resolves against this .agents/ directory). A path that differs between machines belongs in
-# codeassembly.local.yaml instead. A later-declared source shadows an earlier one.
+# sources declares the content directories from which artifacts resolve, each a { name, path } pair (or a { package }
+# entry, resolved from the home directory's node_modules). install and sync --global resolve from these alone, and
+# stop until one is declared. Clone the CodeAssembly repository, then uncomment the entry below and point its path at
+# the clone's packages/guidance/content (~ and absolute paths are allowed; a relative path resolves against this
+# .agents/ directory). A path that differs between machines belongs in codeassembly.local.yaml instead. A
+# later-declared source shadows an earlier one.
 # sources:
 #   - name: codeassembly-guidance
 #     path: ~/repos/codeassembly/packages/guidance/content

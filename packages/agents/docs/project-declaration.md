@@ -196,9 +196,21 @@ rulebooks:
     - team-standards
 ```
 
-Each source is a `{ name, path }` pair (both required). A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format against which it was authored; see [Content-format version](#content-format-version). Declaration entries stay bare slugs: Resolution is transparent, so `team-standards` resolves from whichever source provides it, without a per-entry `from:` syntax.
+Each source is either a `{ name, path }` pair (both required) or a `{ package }` entry that names an installed package; an entry that declares both `path` and `package`, or neither, fails validation. A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format against which it was authored; see [Content-format version](#content-format-version). Declaration entries stay bare slugs: Resolution is transparent, so `team-standards` resolves from whichever source provides it, without a per-entry `from:` syntax.
 
-**Precedence.** A later-declared source shadows an earlier one, which lets a source override a same-slug artifact of another. `sync` warns about every artifact that a higher-precedence source shadows in a lower one, and `sync --dry-run` and `library list` name the source of each. Declare the CodeAssembly library first, so that every source declared after it can override it. A package adopted via [`packages`](#packages) is a source too, ranked below every hand-declared one. Repeating a source `name` remaps its path and moves it ahead of the sources declared before it. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
+**Package sources.** A `package` entry consumes a library from which the project picks: The package's declared content directory resolves as a [`packages`](#packages) entry's does, through the module resolver and under a `workspace:*` link, but the entry adopts nothing on its own. What deploys is what the declaration's collections, type blocks, and guidance-hook bindings name, together with their dependencies. Its `name` is optional and defaults to the package name, so its support entries deploy under the same namespace as when `packages` adopts the package. Choose `packages` for a tool that ships guidance about itself, whose whole catalog is the declaration, and a `package` source for a library such as `codeassembly-guidance`, whose consumers choose collections from it:
+
+```yaml
+sources:
+  - package: codeassembly-guidance
+collections:
+  use:
+    - recommended
+```
+
+A package source that is not installed, or whose package doesn't declare a content directory, fails the run (dry-run included) before any file is written. Naming a package here also stops `sync` from advising its adoption through `packages`.
+
+**Precedence.** A later-declared source shadows an earlier one, which lets a source override a same-slug artifact of another. `sync` warns about every artifact that a higher-precedence source shadows in a lower one, and `sync --dry-run` and `library list` name the source of each. Declare the CodeAssembly library first, so that every source declared after it can override it. A package adopted via [`packages`](#packages) is a source too, ranked below every `sources` entry, a `package` entry included. Repeating a source `name` remaps the entry and moves it ahead of the sources declared before it, whichever form either declaration takes: A `codeassembly.local.yaml` that repeats a package source's name with a `path` swaps in a local clone of the package without changing the namespace. Because paths are `.agents/`-relative, commit only repo-relative source paths in `codeassembly.yaml`; confine machine-specific and absolute paths to `codeassembly.local.yaml`. A higher-precedence tier's `root: true` discards previously-declared sources exactly as it discards `rulebooks`, `skills`, `subagents`, and `collections`.
 
 **Undeclared content.** `scripts/` and the harness guidance templates under `guidance/_harnesses/` are not named by any declaration entry, so they resolve by directory rather than by slug and `install` deploys them. Scripts merge by file name across every root: A source shipping one script leaves another root's other scripts in place. A harness's template directory is owned whole by the highest-precedence root shipping it, which keeps the `guidance/shared/AGENTS.md` that a template inlines resolving inside one root; a template file omitted by the owning source is retracted from the harness home. A file name or template directory shipped by more than one root installs from the highest-precedence one and warns. A deployed guidance file's provenance marker names its path within the source, the source's name, and the source directory.
 
@@ -225,11 +237,11 @@ packages:
     - '@williamthorsen/nmr'
 ```
 
-**Precedence.** Every `sources` entry, from any tier, outranks every package: A directory named by hand should win over a dependency's. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. Every shadow is reported by the same warning, whichever two sources it is between, and `sync --dry-run` names the source from which each artifact resolved.
+**Precedence.** Every `sources` entry, from any tier, outranks every package adopted here, including a `sources` entry that names a package: A source named by hand should win over a dependency's catalog. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. Every shadow is reported by the same warning, whichever two sources it is between, and `sync --dry-run` names the source from which each artifact resolved.
 
 **Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain searched by Node itself, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration that a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or doesn't declare a content directory, fails the run (dry-run included) before any file is written, naming what was searched. One that declares a content directory that it does not ship warns rather than failing, like any other missing source. The consumer's declaration doesn't contain a path to correct, so the remedy is to create the directory in a package that the consumer maintains, or report the omission upstream in one that they do not.
 
-**Discovery.** `sync` reports any direct dependency that ships content that the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: An undeclared dependency contributes nothing. Installing one changes nothing about what an agent reads, and `drop` silences the advice for a package that the project has turned down.
+**Discovery.** `sync` reports any direct dependency that ships content that the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: An undeclared dependency contributes nothing. Installing one changes nothing about what an agent reads, and `drop` silences the advice for a package that the project has turned down. A package that a `sources` entry names is not advised either; see [Sources](#sources).
 
 Upgrading an already-declared package is the other case. Its catalog is read from the filesystem, so a version that adds an artifact deploys it without a declaration change, the freshness property that makes the rendered guidance a function of what is installed. `sync --dry-run` prints the resolution report naming every artifact and the source from which it came, which is where that change is visible.
 
@@ -315,7 +327,7 @@ Each entry has a kebab-case `name`, the `package` to resolve, a `path` inside it
 
 ## Content-format version
 
-A content root and the tool that deploys it are released separately, so a checkout can be newer than the `codeassembly` reading it. In a `codeassembly-content.yaml` at its top level, a root states the format contract against which it was authored, a `sources:` path and a `packages:` content directory alike:
+A content root and the tool that deploys it are released separately, so a checkout can be newer than the `codeassembly` reading it. In a `codeassembly-content.yaml` at its top level, a root states the format contract against which it was authored, a `sources:` path and a package's content directory alike:
 
 ```yaml
 # content/codeassembly-content.yaml
