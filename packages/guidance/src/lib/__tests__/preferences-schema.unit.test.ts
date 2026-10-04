@@ -114,13 +114,6 @@ describe('preferences.json schema', () => {
     expect(output).toMatchObject({ valid: false });
   });
 
-  it('rejects an `orchestration.approval_threshold` outside the allowed enum', async () => {
-    // Guards the enum tightening on `orchestration.approval_threshold` and `budget_threshold`
-    // (`none` | `low` | `medium` | `high`).
-    const output = await validate(schemaId, { orchestration: { approval_threshold: 'critical' } }, FLAG);
-    expect(output).toMatchObject({ valid: false });
-  });
-
   it('accepts `project.scopes` entries with and without a `name`', async () => {
     const output = await validate(
       schemaId,

@@ -160,35 +160,6 @@ Append `!` after the type: `agents|feat!: Remove deprecated API`
 | `integrations.jira.issue_types` | object  | none                                                     | Maps work-type keys and aliases to Jira issue-type names, plus a `default` entry covering every unmapped work type. A work type matching neither falls back to the `Task` type. |
 | `integrations.jira.project_key` | string  | `project.ticket_ref_prefix` minus its trailing separator | Key of the Jira project to create work items in. Set it when the derivation is wrong or when `ticket_ref_prefix` is absent.                                                     |
 
-### `orchestration`
-
-| Key                                | Type                                 | Default  | Description                                                                                                             |
-| ---------------------------------- | ------------------------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------- |
-| `orchestration.max_review_rounds`  | integer                              | `3`      | Maximum iterative review rounds before marking `needs_manual_review`. Overridden by `--max-review-rounds` CLI argument. |
-| `orchestration.approval_threshold` | `low` \| `medium` \| `high`          | `medium` | Minimum finding severity required for code approval. Overridden by `--approval-threshold`.                              |
-| `orchestration.budget_threshold`   | `low` \| `medium` \| `high`          | `low`    | Minimum finding severity for spending remaining review-round budget. Overridden by `--budget-threshold`.                |
-| `orchestration.mcp_policy`         | `required` \| `optional` \| `prompt` | `prompt` | How to handle MCP unavailability. `required` aborts, `optional` continues with a warning, `prompt` asks the developer.  |
-
-#### Model overrides
-
-`orchestration.models.{role}` assigns a model to a specific agent role. All values are optional and fall back to engine defaults.
-
-| Key                                                   | Engine default |
-| ----------------------------------------------------- | -------------- |
-| `orchestration.models.default`                        | `sonnet`       |
-| `orchestration.models.coder`                          | `opus`         |
-| `orchestration.models.architect`                      | `sonnet`       |
-| `orchestration.models.planner`                        | `sonnet`       |
-| `orchestration.models.reviewer`                       | `sonnet`       |
-| `orchestration.models.aspect_code_reviewer`           | `sonnet`       |
-| `orchestration.models.aspect_silent_failure_reviewer` | `sonnet`       |
-| `orchestration.models.aspect_test_reviewer`           | `sonnet`       |
-| `orchestration.models.code_simplification_reviewer`   | `sonnet`       |
-| `orchestration.models.holistic_reviewer`              | `opus`         |
-| `orchestration.models.savings_analyzer`               | `haiku`        |
-
-Note: `coder`, `holistic_reviewer`, and `savings_analyzer` have their own engine defaults and do not inherit from `orchestration.models.default`.
-
 ### `editors`
 
 Optional list of editor configurations. Each entry maps file extensions to an editor command.
@@ -242,15 +213,6 @@ integrations:
       feat: Story
       fix: Bug
     project_key: MAC
-
-orchestration:
-  max_review_rounds: 3
-  approval_threshold: medium
-  budget_threshold: low
-  mcp_policy: prompt
-  models:
-    coder: sonnet
-    holistic_reviewer: opus
 
 editors:
   - name: WebStorm
