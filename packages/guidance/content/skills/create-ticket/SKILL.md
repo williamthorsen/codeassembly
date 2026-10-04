@@ -96,26 +96,15 @@ When one or more apply, state each relationship and its target in the project's 
 
 ### 5. Resolve labels (GitHub only)
 
-If the platform resolved in step 3 is GitHub, attempt to read `.meta/label-map.json` using the Read tool. If the file does not exist, skip label resolution; the create call will not apply any labels.
+If the platform resolved in step 3 is GitHub, resolve the labels from the scope and type decided in step 2:
 
-The label map has this shape:
-
-```json
-{
-  "types": { "feat": "feature", "fix": "fix", ... },
-  "scopes": { "agents": "scope:agents", "factory": "scope:factory", ... }
-}
+```bash
+node {harness_home_dir}/scripts/describe-change.mjs resolve-labels --scope "{scope}" --type "{type}"
 ```
 
-If the file exists, resolve labels from the scope and type decided in step 2:
+Read `labels` from the output, `{"labels":["feature","breaking","scope:agents"]}`; [`resolve-labels`](../_data/title-templates.md#resolve-labels) states what it contains. When the list is empty, the create call does not apply any labels. Relay any warning that the run writes to stderr.
 
-1. **Type label:** Strip any trailing `!` from the type (e.g., `feat!` → `feat`). Look up the stripped type in `label_map.types`. If found, add the mapped label name.
-2. **Breaking label:** If the original type had a `!` suffix, add `breaking` as an additional label.
-3. **Scope label:** Look up the scope in `label_map.scopes`. If found, add the mapped label name.
-
-Missing entries are silently skipped: If a type or scope is not in the map, do not add a label for that dimension.
-
-Render one `--label "{label_name}"` flag per resolved label, and write them into the create call in step 6 as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call does not apply any labels at all.
+Render one `--label "{label_name}"` flag per returned label, and write them into the create call in step 6 as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call does not apply any labels at all.
 
 ### 6. Create remote ticket
 

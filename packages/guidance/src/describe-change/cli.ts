@@ -398,6 +398,43 @@ function readAmendEntryArgs({ flags, positionals }: ScanResult): ParsedArgs {
   };
 }
 
+/**
+ * Reads the entries in the last `change-record` block of the body file, resolved against the invoking directory. A
+ * block that is absent, malformed, or without entries yields none, and a defective one is reported as a warning.
+ */
+async function readBodyEntries(
+  cwd: string,
+  bodyFile: string,
+): Promise<{ entries: readonly ChangeEntry[]; warnings: string[] }> {
+  const bodyPath = path.resolve(cwd, bodyFile);
+  let body: string;
+  try {
+    body = await readFile(bodyPath, 'utf8');
+  } catch (error) {
+    throw chainError(`--body-file ${bodyPath} cannot be read`, error);
+  }
+
+  const reading = readChangeRecordBlock(body);
+  if (reading.kind === 'malformed') {
+    return {
+      entries: [],
+      warnings: [`the body’s change-record block is malformed, so the entries do not add any label: ${reading.defect}`],
+    };
+  }
+  if (reading.kind !== 'read') {
+    return { entries: [], warnings: [] };
+  }
+  if (reading.entriesDefect !== undefined) {
+    return {
+      entries: [],
+      warnings: [
+        `the body’s change entries are malformed, so the entries do not add any label: ${reading.entriesDefect}`,
+      ],
+    };
+  }
+  return { entries: reading.block.entries ?? [], warnings: [] };
+}
+
 /** Reads the `check-merge-body` invocation: the path of the composed merge body and the entry count that it must record. */
 function readCheckMergeBodyArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
@@ -571,11 +608,18 @@ function readResolveEffectiveRecordArgs({ flags, positionals }: ScanResult): Par
   };
 }
 
-/** Reads the `resolve-labels` invocation: the path of the body whose entries are labeled, and the effective record's flags. */
+/**
+ * Reads the `resolve-labels` invocation: the effective record's flags, and the optional path of the body whose entries
+ * are labeled with it.
+ */
 function readResolveLabelsArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
+  const bodyFile = valueFlagMap(flags)['body-file']?.trim();
+  if (bodyFile === '') {
+    throw new Error('--body-file requires a value');
+  }
   return {
-    bodyFile: readRequiredValue('resolve-labels', valueFlagMap(flags), 'body-file'),
+    ...(bodyFile !== undefined && { bodyFile }),
     record: readRecordFlags(flags),
     subcommand: 'resolve-labels',
   };
@@ -891,38 +935,20 @@ async function runResolveEffectiveRecord(
 }
 
 /**
- * Resolves a change's labels through the repository's label map, from the entries in the body file's last
- * `change-record` block and from the effective record that the flags pass. A block that is absent, malformed, or
- * without entries does not contribute any entry, and a defective one is reported as a warning. The body file is read
+ * Resolves a change's labels through the repository's label map, from the effective record that the flags pass and,
+ * when the invocation names a body file, from the entries in its last `change-record` block. The body file is read
  * relative to the invoking directory, and the label map from the repository root.
  */
 async function runResolveLabels(
-  args: { bodyFile: string; record: ChangeRecord },
+  args: { bodyFile?: string; record: ChangeRecord },
   input: DescribeInput,
 ): Promise<DescribeResult> {
   const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
-  const warnings = warning === undefined ? [] : [warning];
-  const bodyPath = path.resolve(input.cwd, args.bodyFile);
-  let body: string;
-  try {
-    body = await readFile(bodyPath, 'utf8');
-  } catch (error) {
-    throw chainError(`--body-file ${bodyPath} cannot be read`, error);
-  }
-
-  const reading = readChangeRecordBlock(body);
-  if (reading.kind === 'malformed') {
-    warnings.push(
-      `the body’s change-record block is malformed, so the entries do not add any label: ${reading.defect}`,
-    );
-  } else if (reading.kind === 'read' && reading.entriesDefect !== undefined) {
-    warnings.push(
-      `the body’s change entries are malformed, so the entries do not add any label: ${reading.entriesDefect}`,
-    );
-  }
-  const entries = reading.kind === 'read' ? (reading.block.entries ?? []) : [];
+  const body =
+    args.bodyFile === undefined ? { entries: [], warnings: [] } : await readBodyEntries(input.cwd, args.bodyFile);
+  const warnings = [...(warning === undefined ? [] : [warning]), ...body.warnings];
   const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));
-  const labels = resolveLabels({ entries, labelMap, record: normalizeChangeRecord(args.record) });
+  const labels = resolveLabels({ entries: body.entries, labelMap, record: normalizeChangeRecord(args.record) });
   const output: ResolveLabelsOutcome = { labels };
   return { output, warnings };
 }

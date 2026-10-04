@@ -44,7 +44,7 @@ The bundle does not have a shebang, so the `node` prefix is required. Each subco
 | [`check-merge-body`](#check-merge-body)                 | The entry count that a composed merge body records      | The body file                                               |
 | [`amend-entry`](#amend-entry)                           | One change entry, amended in a pull-request body        | The taxonomy and the body file, which it rewrites           |
 | [`resolve-scopes`](#resolve-scopes)                     | The scope that owns each given path                     | The workspace layout and the project preferences file       |
-| [`resolve-labels`](#resolve-labels)                     | The labels for a change                                 | The body file and the label map                             |
+| [`resolve-labels`](#resolve-labels)                     | The labels for a change                                 | The label map, and the body file when given                 |
 
 ### What stops a run and what only warns
 
@@ -466,7 +466,7 @@ project:
 
 ## `resolve-labels`
 
-`resolve-labels` reports the labels for a change, from the entries in the body file's last `change-record` block and from the effective record that the flags pass. `--body-file` is required, and `--scope`, `--type`, and `--breaking` are optional.
+`resolve-labels` reports the labels for a change, from the effective record that the flags pass and, when `--body-file` names a body, from the entries in its last `change-record` block. Every flag is optional. Without `--body-file`, as for a ticket that does not have a body yet, the run labels the record alone.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs resolve-labels \
