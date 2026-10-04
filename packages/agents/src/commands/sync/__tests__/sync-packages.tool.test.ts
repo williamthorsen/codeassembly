@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -50,6 +50,15 @@ describe('sync with a declared package', () => {
   const skillPath = (slug: string): string => path.join(projectRoot, '.claude', 'skills', slug, 'SKILL.md');
   const subagentPath = (slug: string): string => path.join(projectRoot, '.claude', 'agents', `${slug}.md`);
   const localHostPath = (): string => path.join(projectRoot, 'CLAUDE.local.md');
+  const supportPath = (sourceName: string, file: string): string =>
+    path.join(projectRoot, '.claude', 'skills', '_sources', sourceName, file);
+
+  /** Writes a support file under a content root's `skills/`, outside any skill. */
+  async function writeSupportFile(root: string, file: string): Promise<void> {
+    const filePath = path.join(root, 'skills', file);
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, '# Support\n', 'utf8');
+  }
 
   /** Installs a fixture package under the project's `node_modules`, declaring `content` as its content directory. */
   async function installPackage(name: string, content: string): Promise<void> {
@@ -343,6 +352,66 @@ describe('sync with a declared package', () => {
     const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
 
     expect(renderReportText(outcome)).not.toContain('has not declared');
+  });
+
+  describe('named by a sources entry', () => {
+    it('deploys only the declared artifacts and their closure, with support under the package namespace', async () => {
+      await writeRulebook(packageContent(), 'pkg-dep', 'delivery: skill', 'Package dependency.');
+      await writeSkill(packageContent(), 'pkg-skill', 'dependencies:\n  rulebooks:\n    - pkg-dep\n');
+      await writeSkill(packageContent(), 'pkg-undeclared');
+      await writeSubagent(packageContent(), 'pkg-agent');
+      await writeSupportFile(packageContent(), path.join('_data', 'house-style.md'));
+      await declare(`sources:\n  - package: '${PACKAGE_NAME}'\nskills:\n  use:\n    - pkg-skill\n`);
+
+      await syncCommand(makeOptions(), projectRoot, homeDir);
+
+      expect(existsSync(skillPath('pkg-skill'))).toBe(true);
+      expect(await readFile(skillPath('consult-pkg-dep'), 'utf8')).toContain('Package dependency.');
+      expect(existsSync(skillPath('pkg-undeclared'))).toBe(false);
+      expect(existsSync(subagentPath('pkg-agent'))).toBe(false);
+      expect(existsSync(supportPath(PACKAGE_NAME, path.join('_data', 'house-style.md')))).toBe(true);
+    });
+
+    // Mirrors how pnpm links an external dependency or a `workspace:*` sibling: The `node_modules` entry is a symlink.
+    it('resolves a package whose node_modules entry is a symlink', async () => {
+      const realDir = path.join(projectRoot, 'workspace-packages', 'linked');
+      await mkdir(path.join(realDir, 'content'), { recursive: true });
+      await writeFile(
+        path.join(realDir, 'package.json'),
+        JSON.stringify({ name: '@ca-fixture/linked', codeassembly: { content: 'content' } }),
+        'utf8',
+      );
+      await writeSkill(path.join(realDir, 'content'), 'linked-skill');
+      await symlink(realDir, path.join(projectRoot, 'node_modules', '@ca-fixture', 'linked'), 'dir');
+      await declare("sources:\n  - package: '@ca-fixture/linked'\nskills:\n  use:\n    - linked-skill\n");
+
+      await syncCommand(makeOptions(), projectRoot, homeDir);
+
+      expect(existsSync(skillPath('linked-skill'))).toBe(true);
+    });
+
+    it('does not advise adopting the package through packages', async () => {
+      await writeFile(
+        path.join(projectRoot, 'package.json'),
+        JSON.stringify({ name: 'consumer', devDependencies: { [PACKAGE_NAME]: '1.0.0' } }),
+        'utf8',
+      );
+      await writeSkill(packageContent(), 'pkg-skill');
+      await declare(`sources:\n  - name: guide\n    package: '${PACKAGE_NAME}'\nskills:\n  use:\n    - pkg-skill\n`);
+
+      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+
+      expect(renderReportText(outcome)).not.toContain('has not declared');
+    });
+
+    it('fails the run when the package is not installed, writing nothing', async () => {
+      await declare("sources:\n  - package: '@ca-fixture/absent'\n");
+
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+        /Declared source "@ca-fixture\/absent" \(package "@ca-fixture\/absent"\) is not installed/,
+      );
+      expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
+    });
   });
 
   it('fails the run when a declared package is not installed, writing nothing', async () => {
