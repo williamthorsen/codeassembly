@@ -21,7 +21,7 @@ This skill runs between receiving a code review and implementing fixes. The agen
 
 1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `artifact_base_dir`, and `pr_url` from it.
 2. **Locate the review** per the [Locating the review](#locating-the-review) section
-3. **Read prior artifacts** in the run directory chronologically for full context
+3. **Read prior artifacts** in the review's run directory chronologically for full context
 4. **Parse findings**: Extract all numbered findings (F{n}, W{n}, T{n}, R{n}, S{n}, and legacy variants with `-L` suffix). See [finding scheme](../_data/artifact-conventions.md#finding-scheme-fwtrs--legacy-suffix) for category definitions.
 5. **Evaluate each finding** following the evaluation protocol below.
 6. **Audit the diff** per [Diff audit](#diff-audit). Every fix that you implemented is verified here, before any of it is written down.
@@ -65,9 +65,9 @@ If a path argument is provided, read the review directly from that path. If the 
 If the invocation does not include a path, find the most recent `reviewer_review` in the active run:
 
 1. Resolve the ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
-2. Invoke `node {harness_home_dir}/scripts/resolve-review-run.mjs latest --ticket-dir <ticket-dir>` via Bash. The helper prints `{ "reviewPath": "<path>", "runDir": "<path>" }`: the newest run directory and the newest reviewer or overseer review in it.
+2. Invoke `node {harness_home_dir}/scripts/resolve-review-run.mjs latest --ticket-dir <ticket-dir>` via Bash. The helper prints `{ "reviewPath": "<path>", "runDir": "<path>" }`: the ticket's active run, per [artifact conventions](../_data/artifact-conventions.md#run-directories), and the newest reviewer or overseer review in it.
 
-If the helper exits non-zero, the ticket directory does not contain a run or the newest run does not contain a review; stop and report the message that it printed on stderr.
+If the helper exits non-zero, the ticket directory does not contain an active run or the active run does not contain a review; stop and report the message that it printed on stderr.
 
 <!-- guidance-hook: ticketing-preferences -->
 

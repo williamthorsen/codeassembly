@@ -1,6 +1,6 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-// CLI entry point for the resolve-review-run helper: creates a review run directory, or finds the newest run and review.
+// CLI entry point for the resolve-review-run helper: finds or opens a ticket's active review run, or finds its newest review.
 
 import { realpathSync } from 'node:fs';
 import process from 'node:process';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
-import { createRun, findLatestReview } from './review-run.ts';
+import { findActiveRun, findLatestReview, openRun } from './review-run.ts';
 
 const FLAGS = [
   { name: 'ticket-dir', takesValue: true },
@@ -17,8 +17,9 @@ const FLAGS = [
 ] as const satisfies readonly FlagSpec[];
 
 const USAGE =
-  'usage: resolve-review-run create --ticket-dir <dir> --timestamp <YYYYMMDD-HHMMSSZ>\n' +
-  '       resolve-review-run latest --ticket-dir <dir>';
+  'usage: resolve-review-run active --ticket-dir <dir>\n' +
+  '       resolve-review-run latest --ticket-dir <dir>\n' +
+  '       resolve-review-run open --ticket-dir <dir> --timestamp <YYYYMMDD-HHMMSSZ>';
 
 /** Runs the subcommand named in `process.argv`, writing the JSON result to stdout and every diagnostic to stderr. */
 async function main(): Promise<void> {
@@ -55,6 +56,13 @@ function isEntryPoint(): boolean {
   }
 }
 
+/** Throws when `--timestamp` is passed to a subcommand that does not take it. */
+function rejectTimestamp(values: Record<string, string>, command: string): void {
+  if (values.timestamp !== undefined) {
+    throw new Error(`${command} does not take --timestamp\n${USAGE}`);
+  }
+}
+
 /** Returns the flag's value; throws when the flag is absent. */
 function requireValue(values: Record<string, string>, name: string): string {
   const value = values[name];
@@ -65,7 +73,7 @@ function requireValue(values: Record<string, string>, name: string): string {
 }
 
 /** Parses argv and runs its subcommand. Throws on an unknown subcommand or flag, or a flag that the subcommand lacks. */
-async function runCommand(argv: readonly string[]): Promise<Record<string, string>> {
+async function runCommand(argv: readonly string[]): Promise<Record<string, string | null>> {
   const { flags, positionals } = scanFlags(argv, FLAGS);
   const [command, ...extra] = positionals;
   if (extra.length > 0) {
@@ -73,16 +81,19 @@ async function runCommand(argv: readonly string[]): Promise<Record<string, strin
   }
   const values = valueFlagMap(flags);
 
-  if (command === 'create') {
-    const runDir = await createRun(requireValue(values, 'ticket-dir'), requireValue(values, 'timestamp'));
-    return { runDir };
+  if (command === 'active') {
+    rejectTimestamp(values, command);
+    const runDir = await findActiveRun(requireValue(values, 'ticket-dir'));
+    return { runDir: runDir ?? null };
   }
   if (command === 'latest') {
-    if (values.timestamp !== undefined) {
-      throw new Error(`latest does not take --timestamp\n${USAGE}`);
-    }
+    rejectTimestamp(values, command);
     const { reviewPath, runDir } = await findLatestReview(requireValue(values, 'ticket-dir'));
     return { reviewPath, runDir };
+  }
+  if (command === 'open') {
+    const runDir = await openRun(requireValue(values, 'ticket-dir'), requireValue(values, 'timestamp'));
+    return { runDir };
   }
   throw new Error(command === undefined ? USAGE : `unknown command: ${command}\n${USAGE}`);
 }
