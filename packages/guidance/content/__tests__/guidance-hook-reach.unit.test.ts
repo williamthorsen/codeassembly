@@ -1,7 +1,6 @@
 import { listCatalog } from 'codeassembly/api';
 import { describe, expect, it } from 'vitest';
 
-import { COMMENT_AUTHORING_SUBAGENTS } from '../test-utils/comment-authoring-subagents.ts';
 import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listGovernedSubagents } from '../test-utils/list-governed-subagents.ts';
 import { readContentFile } from '../test-utils/read-content-file.ts';
@@ -64,10 +63,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
   {
     hook: 'comment-preferences',
     role: 'writes or judges source comments',
-    // The prose sweep judges comment register but does not write any comment, which is why its two bodies are listed
-    // here rather than in COMMENT_AUTHORING_SUBAGENTS, whose members must also inject the comment-discipline doctrine.
     declaringBodies: [
-      ...COMMENT_AUTHORING_SUBAGENTS.map(toSubagentBody),
       { label: 'prose-reviser', relativePath: 'subagents/prose-reviser.md' },
       { label: 'revise-prose', relativePath: 'skills/revise-prose/SKILL.md' },
     ],
@@ -78,8 +74,8 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
       },
     ],
     spliceProbe: {
-      body: { label: 'code-simplification-reviewer', relativePath: 'subagents/code-simplification-reviewer.md' },
-      coexisting: ['Comment-discipline violations'],
+      body: { label: 'prose-reviser', relativePath: 'subagents/prose-reviser.md' },
+      coexisting: ['When given an exact file path, use the read tool directly'],
     },
   },
   {
@@ -87,12 +83,8 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     role: 'writes, plans, or judges code',
     declaringBodies: [
       { label: 'implement-plan', relativePath: 'skills/implement-plan/SKILL.md' },
-      { label: 'orchestrated-architect', relativePath: 'subagents/orchestrated-architect.md' },
-      { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
-      { label: 'orchestrated-planner', relativePath: 'subagents/orchestrated-planner.md' },
       { label: 'plan-reviewer', relativePath: 'subagents/plan-reviewer.md' },
       { label: 'plan-reviser', relativePath: 'subagents/plan-reviser.md' },
-      { label: 'planner', relativePath: 'subagents/planner.md' },
       { label: 'respond-to-review', relativePath: 'skills/respond-to-review/SKILL.md' },
       { label: 'review-branch', relativePath: 'skills/review-branch/SKILL.md' },
       { label: 'review-criteria', relativePath: 'skills/review-criteria/SKILL.md' },
@@ -115,7 +107,6 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     declaringBodies: [
       { label: 'create-ticket', relativePath: 'skills/create-ticket/SKILL.md' },
       { label: 'design-and-plan', relativePath: 'skills/design-and-plan/SKILL.md' },
-      { label: 'planner', relativePath: 'subagents/planner.md' },
       { label: 'respond-to-review', relativePath: 'skills/respond-to-review/SKILL.md' },
     ],
     boundRulebooks: [{ slug: 'williamthorsen-ticketing-preferences', rule: 'give each pull request its own ticket' }],
@@ -143,8 +134,8 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
       },
     ],
     spliceProbe: {
-      body: { label: 'orchestrated-coder', relativePath: 'subagents/orchestrated-coder.md' },
-      coexisting: ['No hard line breaks'],
+      body: { label: 'plan-reviser', relativePath: 'subagents/plan-reviser.md' },
+      coexisting: ['Default to current best practices'],
     },
   },
 ];
@@ -165,20 +156,6 @@ const BINDINGS: Readonly<Record<string, ReadonlyArray<string>>> = Object.fromEnt
 const AMBIENT_FILL_READERS: ReadonlyMap<string, string> = new Map([
   ['revise-prose', 'resolves its units, their versions, and its rule ids from the fills in its own body'],
 ]);
-
-/**
- * The skill preloaded by every reviewer subagent, and so the one that delivers the hooks that it declares to all of
- * them.
- */
-const REVIEWER_CARRIER = 'review-criteria';
-
-const REVIEWER_SUBAGENTS: ReadonlyArray<string> = [
-  'aspect-code-reviewer',
-  'aspect-silent-failure-reviewer',
-  'aspect-test-reviewer',
-  'code-simplification-reviewer',
-  'orchestrated-reviewer',
-];
 
 describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, hook, role, spliceProbe }) => {
   it.each(declaringBodies)('$label declares the hook', async ({ label, relativePath }) => {
@@ -210,18 +187,6 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
   // The bound render throws on an anchor that a fill leaves unresolvable, so a body that is present here resolved.
   it.each(declaringBodies)('$label resolves its anchors once filled', async ({ relativePath }) => {
     expect(await readBoundBody(relativePath)).toContain(openHookMarker(hook));
-  });
-});
-
-// The reviewer subagents reach a hook through a preloaded skill rather than a directive of their own, a route that
-// only `implementation-preferences` takes. Kept beside the table rather than in it, so that the other hooks do not
-// have an empty field for a route that they do not use.
-describe('reviewer-subagent carrier', () => {
-  it.each(REVIEWER_SUBAGENTS)('%s preloads the skill declaring the hook', async (slug) => {
-    const injected = await readFrontmatterList('subagent', slug, 'skills');
-
-    const message = `${slug} judges code but does not preload ${REVIEWER_CARRIER}; injected: [${injected.join(', ')}]`;
-    expect(injected, message).toContain(REVIEWER_CARRIER);
   });
 });
 

@@ -113,8 +113,8 @@ const IMPLEMENT_PLAN_MENU: Spec = {
     "Rule 3 is the cascade's fallthrough rather than a positive match",
     'its marker follows how squarely rules 1 and 2 failed',
     '| 2   | ✂️    | Split the branch         |',
-    // Rule 2's test. Without both halves the rule matches on size alone, which is the Orchestrated review
-    // recommendation that this option replaced, or on any seam, which cuts diffs that one pass would carry.
+    // Rule 2's test. Without both halves the rule matches on size alone, which splits a large diff that has no seam,
+    // or on any seam, which cuts diffs that one pass would carry.
     'Recommend only when the realized diff is too large for one `review-branch` pass, and its commits contain a seam',
     // The demotion of the structural triggers. Without it a multi-package diff is split on structure alone.
     'none of them matches rule 2 on its own',
@@ -175,8 +175,8 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // The obligation that makes the test structural rather than advisory: An agent with nothing to name cannot
     // render the recommendation. Without it rule 1 is only advice.
     '`➕` line naming the specific unsettled decision that the pass would raise',
-    // Rule 2's test. Without both halves the rule matches on size alone, which is the Orchestrate fallthrough that
-    // this option replaced, or on any seam, which cuts plans that one pass would carry.
+    // Rule 2's test. Without both halves the rule matches on size alone, which splits a large plan that has no
+    // independent pieces, or on any seam, which cuts plans that one pass would carry.
     'Recommend only when the plan is too large for one implement-and-review pass, and it holds two or more pieces that each ship and can be verified on their own',
     // The same demotion for rule 2. Without it a multi-package plan is split on structure alone.
     'none of them matches rule 2 on its own',
@@ -247,7 +247,6 @@ const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: Readonly
   { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU, SPLIT_TICKET] },
   { slug: 'merge-pr', specs: [OPTION_FORMAT] },
   { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
-  { slug: 'plan-orchestrable-steps', specs: [OPTION_FORMAT] },
   { slug: 'refine-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
   { slug: 'review-branch', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_REVIEW] },
   { slug: 'save-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },

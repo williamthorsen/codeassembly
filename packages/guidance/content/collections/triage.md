@@ -23,7 +23,6 @@ members:
     - create-ticket
     - design-and-plan
     - development-workflows
-    - find-orchestration-savings
     - get-ticket-id
     - groom-backlog
     - implement-plan
@@ -36,11 +35,7 @@ members:
     - kb-update-events
     - merge-gh-pr
     - merge-pr
-    - orchestrate
-    - orchestrate-dev
-    - orchestrate-review
     - plan
-    - plan-orchestrable-steps
     - prepare-prototype-brief
     - refine-plan
     - respond-to-review
@@ -64,21 +59,11 @@ members:
     - upgrade-dependencies
     - wrap-up
   subagents:
-    - aspect-code-reviewer
-    - aspect-silent-failure-reviewer
-    - aspect-test-reviewer
-    - code-simplification-reviewer
     - entry-drafter
     - handoff-reviewer
-    - orchestrated-architect
-    - orchestrated-coder
-    - orchestrated-planner
-    - orchestrated-reviewer
     - plan-reviewer
     - plan-reviser
-    - planner
     - prose-reviser
-    - savings-analyzer
     - ticket-assessor
 ---
 

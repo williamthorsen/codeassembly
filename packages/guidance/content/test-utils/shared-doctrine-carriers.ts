@@ -3,7 +3,7 @@ import { listGovernedSubagents } from './list-governed-subagents.ts';
 /**
  * Subagents whose tool grant does not name a shell, so guidance on writing a command adds weight without any benefit.
  */
-const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser', 'savings-analyzer']);
+const SHELL_LESS_SUBAGENTS: ReadonlySet<string> = new Set(['prose-reviser']);
 
 /**
  * Subagents whose genre is served by dropping true facts, which the shared concision rule forbids: It tells a writer
@@ -28,13 +28,13 @@ const LIST_RETURNING_SUBAGENTS: ReadonlySet<string> = new Set(['handoff-reviewer
  * guarded against is a subagent dropping off, and a list discovered from the bodies would move with the bug.
  */
 export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<string>>> = {
-  'code-descriptions': listCodeFacingSubagents(),
-  'code-style': listCodeFacingSubagents(),
+  'code-descriptions': [],
+  'code-style': [],
   concision: listGovernedSubagents().filter(
     (slug) => !CUTTING_SUBAGENTS.has(slug) && !LIST_RETURNING_SUBAGENTS.has(slug),
   ),
   'file-access': listGovernedSubagents(),
-  'live-repo-writes': ['orchestrated-coder'],
+  'live-repo-writes': [],
   'plain-speech': listGovernedSubagents(),
   'shell-commands': listGovernedSubagents().filter((slug) => !SHELL_LESS_SUBAGENTS.has(slug)),
   'technical-recommendations': listApproachChoosingSubagents(),
@@ -44,30 +44,7 @@ export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<str
 
 /** Returns the subagents that originate or validate a technical approach. */
 function listApproachChoosingSubagents(): ReadonlyArray<string> {
-  return [
-    'orchestrated-architect',
-    'orchestrated-coder',
-    'orchestrated-planner',
-    'plan-reviewer',
-    'plan-reviser',
-    'planner',
-  ];
-}
-
-/**
- * Returns the subagents that write code or judge it against a standard. The population coincides with
- * `COMMENT_AUTHORING_SUBAGENTS`, which selects on whether a subagent authors or judges comments; the two lists are
- * independent, and either may take a member that the other does not.
- */
-function listCodeFacingSubagents(): ReadonlyArray<string> {
-  return [
-    'aspect-code-reviewer',
-    'aspect-silent-failure-reviewer',
-    'aspect-test-reviewer',
-    'code-simplification-reviewer',
-    'orchestrated-coder',
-    'orchestrated-reviewer',
-  ];
+  return ['plan-reviewer', 'plan-reviser'];
 }
 
 // endregion | Helpers

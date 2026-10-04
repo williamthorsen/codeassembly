@@ -6,7 +6,7 @@ Use `~/`-relative paths when possible and absolute paths otherwise. Every line s
 
 **Naming a skill in the render.** Name a skill in the rendered option only when the user must carry the invocation across a session boundary: clearing context, handing off to another session, or waiting for someone else to act. When the agent runs the skill in the current session, the skill name appears in the sub-block's Options table and the rendered line is a bare action. This limits each rendered line to the step that the user performs.
 
-**Reviewer and author roles.** A review reports findings; the author disposes of them. The options below send the reviewer's output to the author or record what the review found; they never ask the reviewer to re-design, re-plan, or orchestrate a workflow, none of which is the reviewer's job.
+**Reviewer and author roles.** A review reports findings; the author disposes of them. The options below send the reviewer's output to the author or record what the review found; they never ask the reviewer to re-design, re-plan, or coordinate a workflow, none of which is the reviewer's job.
 
 ### Proposed-edit preview
 

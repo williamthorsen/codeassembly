@@ -1,6 +1,8 @@
+<!-- readme-type: monorepo-root -->
+
 # CodeAssembly
 
-Pnpm monorepo infrastructure for agentic code-orchestration flows.
+A pnpm monorepo for deploying agent guidance: the `codeassembly` CLI that installs skills, subagents, and rulebooks into agent harnesses, the guidance library that it deploys, and their supporting packages.
 
 ## For AI agents
 

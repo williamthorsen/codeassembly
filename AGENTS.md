@@ -6,10 +6,10 @@ This repository is public. Anything committed here is world-readable, so it must
 
 ## Packages
 
-A pnpm monorepo centered on agentic code-orchestration flows. Each package's own README describes its internals.
+A pnpm monorepo centered on deploying agent guidance: the `codeassembly` CLI, the guidance library that it deploys, and their supporting packages. Each package's own README describes its internals.
 
 - **agents** (`packages/agents/`): The `codeassembly` CLI, which deploys guidance from declared content sources. See `packages/agents/README.md`.
-- **factory** (`packages/factory/`): Dormant demo visualization of orchestration runs. See `packages/factory/README.md`.
+- **factory** (`packages/factory/`): Dormant demo visualization of run data. See `packages/factory/README.md`.
 - **guidance** (`packages/guidance/`): The `codeassembly-guidance` library of rulebooks, skills, and subagents, with the helpers that its skills run. See `packages/guidance/README.md`.
 - **kb** (`packages/kb/`): Knowledge-base foundation library. See `packages/kb/README.md`.
 - **mcp** (`packages/mcp/`): MCP server exposing run management over run-core. Its five tools are described in `packages/mcp/src/server.ts`.

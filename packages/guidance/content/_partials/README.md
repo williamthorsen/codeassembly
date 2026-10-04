@@ -43,7 +43,7 @@ The `<!-- children -->` placeholder is a partial-side directive. It appears at m
 
 If a host heading follows a directive and is deeper than the shallowest heading that the injection contributes, it renders as a subsection of the injected content rather than of the host body. Place every directive where the next host heading is at or above that level. The `codeassembly-content-specification` rulebook states the rule that an author follows, under "Injection-point placement"; this section explains the level computation behind it.
 
-The deciding level is what the injection contributes, not a fixed `##`. A partial contributes its headings as authored, and `##` for any guidance hook that it declares, since hooks resolve after includes expand and so are filled inside the host. For example, `subagents/_partials/review-writes-scaffold.md` opens at `###`, and the `###` sections following it are its correct siblings. A hook declared by the host contributes `##` on its own, because a bound rulebook's title is demoted one level to fit.
+The deciding level is what the injection contributes, not a fixed `##`. A partial contributes its headings as authored, and `##` for any guidance hook that it declares, since hooks resolve after includes expand and so are filled inside the host. For example, `_partials/ticket-assessment.md` opens at `###`, and the `## Key principles` heading that follows its directive in `assess-ticket` is above that level. A hook declared by the host contributes `##` on its own, because a bound rulebook's title is demoted one level to fit.
 
 Slot content is the caller's own text and contributes nothing here: A heading passed into a partial's `<!-- children -->` is authored in the host beside the section that follows it. Its nesting is already visible where it is written. `codeassembly validate` enforces the rule.
 
@@ -78,7 +78,6 @@ The `content-path-conventions` regression test flags any raw `packages/guidance/
 Partials are stored in `_partials/` directories. The directory is recognized at any depth and is excluded from the install copy:
 
 - `content/_partials/`: Cross-cutting partials shared across skills, subagents, and platform guidance.
-- `content/subagents/_partials/`: Partials shared across subagents.
 - `content/skills/_partials/`: Partials shared across skills.
 - `content/skills/{name}/_partials/`: Partials internal to a single skill.
 

@@ -19,14 +19,13 @@ You are NOT a reviser. You do not fix the plan. You identify issues with enough 
 You will receive:
 
 - **Plan file path**: Path to the implementation plan to review
-- **Plan format**: `prose` or `orchestration` (detected by the caller)
 - **Ticket content**: The requirements that the plan is supposed to implement (inline text from a ticket, issue, or requirements document)
 - **Output path**: Where to write the review artifact
 
 ## Process
 
 1. **Read project guidelines**: Read ./AGENTS.md and any relevant project-specific conventions
-2. **Read the plan**: Read the full plan file. If orchestration format, also check for a `.json` companion.
+2. **Read the plan**: Read the full plan file.
 3. **Review the ticket**: Review the ticket content provided in your task prompt to understand the requirements that the plan must satisfy.
 4. **Explore the codebase**: Use {tool:Glob}, {tool:Grep}, and {tool:Read} to verify factual claims in the plan (file existence, API shapes, utility availability, existing patterns).
 5. **Evaluate completeness**: Identify decision gaps that the coder would have to fill.

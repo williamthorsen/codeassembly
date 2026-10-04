@@ -48,16 +48,15 @@ Run directories group artifacts from a review workflow cycle:
 
 ```
 projects/{project-slug}/tickets/{ticket-id}/{run-id}/
-  {NN}_{role}_{artifact}.md              ← orchestrated runs (sequential counter)
-  {timestamp}_{role}_{artifact}.md       ← interactive runs (timestamp prefix)
+  {timestamp}_{role}_{artifact}.md
 ```
 
 **Run ID format:** `{timestamp}-{mode}`
 
 - **timestamp:** UTC, `YYYYMMDD-HHMMSSZ` (from the first artifact in the run)
-- **mode:** `interactive` or `orchestrated`, reflecting how the run was _initiated_ (immutable at creation)
+- **mode:** `interactive`. Runs written by the retired orchestration engine have the historical mode `orchestrated`.
 
-Examples: `20260221-034100Z-interactive`, `20260221-090000Z-orchestrated`
+Example: `20260221-034100Z-interactive`
 
 Multiple runs per ticket (restarts, separate review cycles) each get their own run directory, created when the run's first artifact is written.
 
@@ -129,42 +128,29 @@ When the ticket directory already contains artifacts for this change, reuse thei
 ### Run artifacts (review workflow)
 
 ```
-{NN}_{role}_{artifact}.md
+{timestamp}_{role}_{artifact}.md
 ```
 
-- **{NN}**: Two-digit zero-padded sequence number reflecting artifact creation order within the run (e.g., `01`, `02`, ... `99`)
-- **role**: `architect`, `coder`, `code-reviewer`, `code-simplification-reviewer`, `orchestrator`, `planner`, `reviewer`, `silent-failure-reviewer`, `test-reviewer` (extensible; this is a common roles list, not exhaustive)
-- **artifact**: What the document is -- `architecture`, `change-summary`, `code-review`, `code-simplification-review`, `orchestration-plan`, `plan`, `review`, `run-manifest`, `run-summary`, `silent-failure-review`, `test-review`
+- **timestamp**: UTC, `YYYYMMDD-HHMMSSZ` format
+- **role**: `coder`, `overseer`, `reviewer` (extensible; this is a common roles list, not exhaustive)
+- **artifact**: What the document is -- `change-summary`, `review`
 
 Underscore separates all structural parts. Hyphens are free for use within any part (role names, artifact names, slugs).
 
 Each role has a **roleType** classifying its workflow function. See the [roleType taxonomy](#roletype-taxonomy) in the run-index.json section below.
 
-Artifact ordering is explicit via the sequence number. Timing is captured in the `artifact_written` event's `t` field in `run-log.jsonl`, not the filename.
+Artifact ordering follows the timestamp prefix.
 
-Example run directory (full orchestrated run with iterative review):
+Example run directory (a review, the author's response, and a re-review):
 
 ```
-{base_dir}/projects/williamthorsen-configs-macos/tickets/MAC-68/20260221-034100Z-orchestrated/
-  run-index.json
-  01_orchestrator_run-manifest.md                       # Initialization
-  02_orchestrator_ticket-requirements.md                # Initialization (optional)
-  03_architect_architecture.md                          # Phase 1 (optional)
-  04_planner_orchestration-plan.md                      # Phase 2 (optional)
-  04_planner_orchestration-plan.json                    # Phase 2 (same seq: same artifact, two formats)
-  05_coder_change-summary.md                            # Phase 3
-  06_reviewer_review.md                                 # Phase 4: Iteration 1
-  07_silent-failure-reviewer_silent-failure-review.md   # Phase 4: Iteration 1
-  08_test-reviewer_test-review.md                       # Phase 4: Iteration 1
-  09_code-reviewer_code-review.md                       # Phase 4: Iteration 1
-  10_coder_change-summary.md                            # Phase 4: Coder fix
-  11_reviewer_review.md                                 # Phase 4: Re-review (iteration 2)
-  12_code-reviewer_code-review.md                       # Phase 4: Re-review (iteration 2)
-  13_code-simplification-reviewer_code-simplification-review.md # Phase 4a
-  14_coder_change-summary.md                            # Phase 4a: Coder fix
-  15_reviewer_holistic-review.md                        # Phase 4b
-  16_orchestrator_run-summary.md                        # Phase 5
+{base_dir}/projects/codeassembly/tickets/1903/20261004-080000Z-interactive/
+  20261004-080000Z_reviewer_review.md
+  20261004-091500Z_coder_change-summary.md
+  20261004-100000Z_reviewer_review.md
 ```
+
+Runs written by the retired orchestration engine name their artifacts `{NN}_{role}_{artifact}.md`, with a two-digit sequence number in place of the timestamp, and use historical roles and artifact types that only the engine wrote: the roles `architect`, `code-reviewer`, `code-simplification-reviewer`, `orchestrator`, `planner`, `silent-failure-reviewer`, and `test-reviewer`, and the artifact types listed under [Run artifacts](#run-artifacts-in-run-directories). `run-core` still parses them.
 
 ## Universal artifact frontmatter
 
@@ -176,7 +162,7 @@ provenance:
   skill: <skill-name> # required: the skill or subagent that wrote this artifact
   timestamp: <ISO 8601 UTC> # required: write time
   baseSha: <short SHA> # optional: short SHA of origin/main; omit if unresolvable
-  isInteractive: true|false # required: true for interactive flows, false for orchestrated dispatch
+  isInteractive: true|false # required: true for interactive flows, false for a dispatched subagent
   refinedBy: <skill-name> # optional: the skill that last processed/refined the artifact
   model: <model id> # optional: present when an AI model authored the body
 ticket_id: <id> # optional: omit when a ticket is not in session
@@ -186,7 +172,7 @@ commit: <short SHA of HEAD> # required: short HEAD SHA at write time
 pr: <full URL> # optional: set only by PR-aware skills; omitted elsewhere
 author: <name(s)> # optional: used by review artifacts
 commits: [<sha>, ...] # optional: used by devlogs
-run_id: <run id> # optional: set only by callers that write into, or link back to, an orchestrated run
+run_id: <run id> # optional: set only by callers that write into, or link back to, a run directory
 ---
 ```
 
@@ -196,28 +182,28 @@ The `pull-request` and `merge` records do not have frontmatter. Each opens with 
 
 ### Field naming convention
 
-Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInteractive`, `refinedBy`). All other top-level keys use **snake_case** (e.g., `ticket_id`, `ticket_ref`, `run_id`). This split preserves the existing convention used by 544+ historical artifacts and the consumers (`refine-plan`, orchestrator trust evaluation) that read them, while keeping the rest of the schema consistent with the surrounding snake_case YAML.
+Keys inside the `provenance:` block use **camelCase** (e.g., `baseSha`, `isInteractive`, `refinedBy`). All other top-level keys use **snake_case** (e.g., `ticket_id`, `ticket_ref`, `run_id`). This split preserves the existing convention used by 544+ historical artifacts and the consumer (`refine-plan`) that reads them, while keeping the rest of the schema consistent with the surrounding snake_case YAML.
 
 ### Field definitions
 
 The table below lists only the universal fields. Artifact-specific extensions (`provenance.iteration`, `session_type`, `tickets_created`, `title`, `scope`, `type`, `responding_to`, etc.) are documented in the per-artifact sections below.
 
-| Field                      | Required | Description                                                                                                                                                                                                            |
-| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `orchestrated-reviewer`).                                                                                                                        |
-| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                                               |
-| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                                                          |
-| `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for non-interactive orchestrated dispatch.                                                                                                                                       |
-| `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                                                          |
-| `provenance.model`         | no       | The identifier of the model that authored the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                                                     |
-| `ticket_id`                | no       | Ticket ID from session context. Omitted when a ticket is not in session.                                                                                                                                               |
-| `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                                                         |
-| `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                                              |
-| `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                                                        |
-| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that have the URL; omitted by every other artifact; see [PR resolution](pr-resolution.md).                               |
-| `author`                   | no       | Human author of the work. Used by review artifacts when the reviewing surface records the code author.                                                                                                                 |
-| `commits`                  | no       | List of short SHAs summarized by the artifact. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                                               |
-| `run_id`                   | no       | Orchestrated run ID. Set only by the caller: `orchestrate` and the subagents dispatched in a run, and skills whose artifacts link back to a run. `resolve-frontmatter.sh` emits it only from `--override run_id=<id>`. |
+| Field                      | Required | Description                                                                                                                                                                              |
+| -------------------------- | -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `provenance.skill`         | yes      | The skill or subagent that wrote the artifact (e.g., `create-devlog`, `plan-reviewer`).                                                                                                  |
+| `provenance.timestamp`     | yes      | ISO 8601 UTC timestamp of when the artifact was written.                                                                                                                                 |
+| `provenance.baseSha`       | no       | Short SHA of `origin/main` at write time. Omitted if unresolvable (no remote, shallow clone).                                                                                            |
+| `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for a dispatched subagent.                                                                                                                         |
+| `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                            |
+| `provenance.model`         | no       | The identifier of the model that authored the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                       |
+| `ticket_id`                | no       | Ticket ID from session context. Omitted when a ticket is not in session.                                                                                                                 |
+| `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                           |
+| `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                |
+| `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                          |
+| `pr`                       | no       | Full PR URL (e.g., `https://github.com/{owner}/{repo}/pull/{n}`). Set only by PR-aware skills that have the URL; omitted by every other artifact; see [PR resolution](pr-resolution.md). |
+| `author`                   | no       | Human author of the work. Used by review artifacts when the reviewing surface records the code author.                                                                                   |
+| `commits`                  | no       | List of short SHAs summarized by the artifact. Used by devlogs. Distinct from `commit` (HEAD short SHA).                                                                                 |
+| `run_id`                   | no       | Run ID of the run directory to which the artifact belongs. Set only by the caller; `resolve-frontmatter.sh` emits it only from `--override run_id=<id>`.                                 |
 
 ### `commit` vs. `commits`
 
@@ -229,13 +215,12 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 
 ### Bespoke frontmatter composition
 
-Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Three sites are deliberate exceptions and compose the YAML block themselves:
+Most skills and subagents produce frontmatter by running `resolve-frontmatter.sh` in its default YAML mode and prepending the output verbatim. Two sites are deliberate exceptions and compose the YAML block themselves:
 
 - `refine-plan`: The `provenance:` block is case-branched on the input artifact's existing provenance (preserving `skill`, `baseSha`, `isInteractive`, and `iteration` from the original authoring skill, with fallbacks when the input does not have provenance). The shell flag surface cannot express this conditional logic cleanly.
 - `wrap-up` (deferred-findings artifact): `tickets_created` is a list of `{id, items}` objects, a structure that does not have a clean CLI expression and is best composed in the skill's own logic.
-- `savings-analyzer`: The subagent's tool set does not include `{tool:Bash}`, so it cannot run the script at all and takes every field from its dispatch prompt.
 
-The first two read the script's JSON output and write the YAML frontmatter themselves; `savings-analyzer` composes it from its dispatch prompt. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
+Both read the script's JSON output and write the YAML frontmatter themselves. The pattern is intentional, not a workaround; keep new skills on the YAML mode path unless they have a similarly structural reason to deviate.
 
 ## Manifest creation
 
@@ -261,7 +246,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 | ---------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- |
 | `provenance.iteration` | no       | Refinement iteration counter. Absent on first authoring; set to `2` on first refinement, incremented on subsequent refinements. |
 
-Plan-specific `provenance.skill` values include `design-and-plan`, `plan`, `plan-mode`, `plan-orchestrable-steps`, `planner`, and `unknown` (when the authoring skill cannot be determined). `refinedBy` is the skill that last processed the plan (typically `refine-plan`).
+Plan-specific `provenance.skill` values include `design-and-plan`, `plan`, `plan-mode`, and `unknown` (when the authoring skill cannot be determined). `refinedBy` is the skill that last processed the plan (typically `refine-plan`).
 
 ## Devlog frontmatter
 
@@ -273,7 +258,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 | Field             | Required | Description                                                                                                                                                                                   |
 | ----------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `session_type`    | yes      | The session classification from wrap-up's Phase 1a (`orchestrated`, `interactive-dev`, `review`, or `research`).                                                                              |
+| `session_type`    | yes      | The session classification from wrap-up's Phase 1a (`interactive-dev`, `review`, or `research`).                                                                                              |
 | `tickets_created` | no       | List of `{id, items}` entries cross-referencing each created ticket to the wrap-up item IDs that it addresses. `items` is always a list (e.g., `[F1]` or `[F1, T2, R1]`). Omitted when empty. |
 
 `provenance.skill` is `wrap-up`; `provenance.isInteractive` is `true`.
@@ -336,11 +321,13 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 ## run-index.json
 
-Machine-readable metadata for orchestrated runs. Written and maintained exclusively by the orchestrator. Individual skills do not write to this file directly.
+Machine-readable metadata for a run directory. The retired orchestration engine wrote it, and no current skill does. `run-core` parses it.
+
+Every example and value list in this section and in [V3 format](#v3-format-event-sourced-runs) describes runs written by the retired engine, so its roles, agents, phases, and modes are historical values.
 
 ### Schema
 
-> **Note:** The following examples show v2 format. New orchestrated runs use v3 (event-sourced) -- see the [V3 format](#v3-format-event-sourced-runs) section below.
+> **Note:** The following examples show v2 format. The engine's last runs use v3 (event-sourced) -- see the [V3 format](#v3-format-event-sourced-runs) section below.
 
 **Initial write** (at run start):
 
@@ -595,17 +582,11 @@ Machine-readable metadata for orchestrated runs. Written and maintained exclusiv
 }
 ```
 
-### Incremental write pattern
-
-The `parallelReview` entry is first written with `status: "in_progress"` before reviewers are dispatched, then updated at each state transition (batch completion, coder fix dispatch/completion, re-review dispatch/completion, phase completion). The `iterations` array captures per-iteration data: which reviewers were dispatched, when reviews completed, and when coder fix cycles ran. Per-reviewer `startedAt`/`completedAt` timestamps track individual agent execution.
-
-The same pattern applies to all phases: `architecture`, `planning`, `implementation`, `codeSimplifier`, and `holisticReview` are each written with `status: "in_progress"` and `startedAt` before the agent is dispatched, then updated with `status: "completed"` (or `"failed"`) and `completedAt` after the agent completes. The `startedAt` and `completedAt` fields are optional on all phase objects.
-
 **Backward compatibility:** Old `run-index.json` data without top-level `status` fields on phase objects (e.g., `parallelReview` without a `status` field) is treated as completed by the factory visualization. The factory only blocks advancement past a phase when `status` is explicitly `"in_progress"`.
 
 ### roleType taxonomy
 
-Each role maps to one of five workflow-function types:
+Each role maps to one of five workflow-function types. Only the retired orchestration engine wrote the `orchestrator`, `analyst`, and `planner` types, and every `reviewer` role but `reviewer`:
 
 | roleType       | Description                                         | Example roles                                                                                           |
 | -------------- | --------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
@@ -617,21 +598,21 @@ Each role maps to one of five workflow-function types:
 
 ### Artifact entry fields
 
-| Field       | Required | Description                                                                               |
-| ----------- | -------- | ----------------------------------------------------------------------------------------- |
-| `filename`  | yes      | Artifact filename (without directory path)                                                |
-| `role`      | yes      | Filename role segment (e.g., `reviewer`, `code-reviewer`)                                 |
-| `roleType`  | yes      | Workflow function (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`)    |
-| `agent`     | yes      | {tool:Task} `subagent_type` value (e.g., `orchestrated-reviewer`, `aspect-code-reviewer`) |
-| `type`      | yes      | Artifact type (e.g., `review`, `change-summary`)                                          |
-| `phase`     | yes      | Phase that produced this artifact (camelCase, matches `phases` object keys)               |
-| `createdAt` | yes      | ISO 8601 timestamp                                                                        |
-| `iteration` | no       | Review iteration number (for `parallelReview` phase)                                      |
-| `note`      | no       | Free-text context about the artifact                                                      |
+| Field       | Required | Description                                                                            |
+| ----------- | -------- | -------------------------------------------------------------------------------------- |
+| `filename`  | yes      | Artifact filename (without directory path)                                             |
+| `role`      | yes      | Filename role segment (e.g., `reviewer`, `code-reviewer`)                              |
+| `roleType`  | yes      | Workflow function (one of: `orchestrator`, `analyst`, `planner`, `author`, `reviewer`) |
+| `agent`     | yes      | {tool:Task} `subagent_type` value (e.g., `plan-reviewer`)                              |
+| `type`      | yes      | Artifact type (e.g., `review`, `change-summary`)                                       |
+| `phase`     | yes      | Phase that produced this artifact (camelCase, matches `phases` object keys)            |
+| `createdAt` | yes      | ISO 8601 timestamp                                                                     |
+| `iteration` | no       | Review iteration number (for `parallelReview` phase)                                   |
+| `note`      | no       | Free-text context about the artifact                                                   |
 
 ### Phase values
 
-Phase values use camelCase and match the keys in the `phases` object:
+Phase values use camelCase and match the keys in the `phases` object. Only the retired orchestration engine wrote them:
 
 - `initialization`: Run setup and manifest creation
 - `architecture`: Architectural impact assessment
@@ -644,7 +625,7 @@ Phase values use camelCase and match the keys in the `phases` object:
 
 ### Version field
 
-The `version` field distinguishes schema formats: absent = v1 (`status.json` era), `2` = v2 (inline state in `run-index.json`), `3` = v3 (event-sourced). New orchestrated runs use v3. Existing v2 runs remain valid.
+The `version` field distinguishes schema formats: absent = v1 (`status.json` era), `2` = v2 (inline state in `run-index.json`), `3` = v3 (event-sourced). The engine's last runs use v3. Runs in v1 and v2 remain valid.
 
 ## V3 format: Event-sourced runs
 
@@ -664,7 +645,7 @@ Companion file in the same run directory. Each line is a JSON object (JSONL form
 
 ### Event types
 
-All 13 valid event types and their required fields. Fields suffixed with `?` are optional. Usage fields (`tokens`, `toolUses`, `durationMs`) are present on newer runs in which the orchestrator captures {tool:Task} result metrics; older runs omit them:
+All 13 valid event types and their required fields. Fields suffixed with `?` are optional. Only the retired orchestration engine wrote these events. Usage fields (`tokens`, `toolUses`, `durationMs`) are present on its later runs, which recorded {tool:Task} result metrics; older runs omit them:
 
 | Event type             | Key fields                                                                                                                                       |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -688,18 +669,18 @@ All 13 valid event types and their required fields. Fields suffixed with `?` are
 {base_dir}/projects/{projectSlug}/tickets/{ticketId}/{runId}/
   run-index.json    <- v3 header (written by init_run, completedAt stamped by complete_run)
   run-log.jsonl     <- append-only event log (one JSON object per line)
-  {NN}_{role}_{artifact}.md   <- artifact files (orchestrated runs use sequential counters)
+  {NN}_{role}_{artifact}.md   <- artifact files (sequential counter)
 ```
 
 Runs are always nested under a ticket ID directory. When the caller does not provide a ticket ID to `init_run`, one is auto-generated in the format `{YYYYMMDD}-{4 random hex}` (e.g., `20260302-a3f2`). The date prefix aids human navigation. Caller-supplied ticket IDs with a leading `#` are sanitized to bare numbers before use in file paths (e.g., `#152` becomes `152`).
 
 ### Run ID format (v3)
 
-`{yyyymmdd}-{hhmmss}Z` (generated by `init_run`). This differs from the v2 format `{yyyymmdd}-{hhmmss}Z-orchestrated`.
+`{yyyymmdd}-{hhmmss}Z` (generated by `init_run`). This differs from the historical v2 format `{yyyymmdd}-{hhmmss}Z-orchestrated`.
 
 ### Event folding
 
-Full run state (phases, artifacts, review rounds, criticalities) is reconstructed by the `foldEvents` function from `run-log.jsonl`. The `get_run_state` MCP tool performs this reconstruction and returns a `CanonicalRunStatus`. Orchestrators should call `get_run_state` for cumulative decisions instead of maintaining state in conversation memory.
+Full run state (phases, artifacts, review rounds, criticalities) is reconstructed by the `foldEvents` function from `run-log.jsonl`. The `get_run_state` MCP tool performs this reconstruction and returns a `CanonicalRunStatus`.
 
 ### Backward compatibility
 
@@ -711,20 +692,12 @@ The [Mutability](#mutability) rule applies to every type below: A saved artifact
 
 ### Run artifacts (in run directories)
 
-| Artifact                     | Purpose                                                   | Dispositions?                          |
-| ---------------------------- | --------------------------------------------------------- | -------------------------------------- |
-| `architecture`               | Architectural impact assessment and integration guidance  | No                                     |
-| `change-summary`             | What changed + dispositions on prior findings (if any)    | Yes, when responding to a prior review |
-| `code-review`                | Aspect review: CLAUDE.md compliance, bugs, logic errors   | No                                     |
-| `code-simplification-review` | Aspect review: Simplification opportunities and dead code | No                                     |
-| `holistic-review`            | Holistic review after iterative convergence               | Only for own prior findings            |
-| `orchestration-plan`         | Structured orchestration steps (.md and .json variants)   | No                                     |
-| `plan`                       | Implementation plan document                              | No                                     |
-| `review`                     | Code review findings + dispositions on own prior findings | Only for own prior findings            |
-| `run-manifest`               | Immutable record of run initial conditions                | No                                     |
-| `run-summary`                | Final summary of the orchestrated run                     | No                                     |
-| `silent-failure-review`      | Aspect review: Error handling and silent failure analysis | No                                     |
-| `test-review`                | Aspect review: Test coverage quality and behavioral gaps  | No                                     |
+| Artifact         | Purpose                                                   | Dispositions?                          |
+| ---------------- | --------------------------------------------------------- | -------------------------------------- |
+| `change-summary` | What changed + dispositions on prior findings (if any)    | Yes, when responding to a prior review |
+| `review`         | Code review findings + dispositions on own prior findings | Only for own prior findings            |
+
+Runs written by the retired orchestration engine also contain the historical types `architecture`, `code-review`, `code-simplification-review`, `holistic-review`, `orchestration-plan`, `plan`, `run-manifest`, `run-summary`, `silent-failure-review`, and `test-review`.
 
 The first `coder_change-summary` in a run does not have dispositions (nothing to respond to). Subsequent ones embed dispositions alongside the change summary.
 
@@ -736,7 +709,6 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 - `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when a ticket is not in session)
 - `devlog`: Development log entry (falls back to non-ticket path when a ticket is not in session)
 - `merge`: Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
-- `orchestration-plan`: Orchestration plan (`orchestration-plan.json` is a **mutable** artifact overwritten each planning iteration; `{timestamp}_planner_orchestration-plan.md` files are versioned human-readable snapshots)
 - `plan`: Implementation plan document
 - `plan-review`: Plan review findings (completeness and correctness analysis)
 - `plan-v2`: Refined implementation plan after review and revision
@@ -752,11 +724,10 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 
 ### Starting a run
 
-Orchestrated runs begin with `orchestrator_run-manifest` as the first artifact, recording the run's initial conditions. Interactive runs allow either role to produce the first artifact. Common patterns:
+Either role can produce a run's first artifact. Common patterns:
 
-- Orchestrated: Orchestrator produces `orchestrator_run-manifest`, then coder produces `coder_change-summary`
-- Interactive: Coder produces `coder_change-summary`, then reviewer produces `reviewer_review`
-- Interactive: Reviewer produces `reviewer_review` directly (human is the coder)
+- Coder produces `coder_change-summary`, then reviewer produces `reviewer_review`
+- Reviewer produces `reviewer_review` directly (human is the coder)
 
 ### Iteration pattern
 
@@ -766,7 +737,7 @@ Orchestrated runs begin with `orchestrator_run-manifest` as the first artifact, 
 
 ### Termination
 
-Run ends when the parties do not have any further actionable input. The last artifact can be from any role. In orchestrated runs, the orchestrator writes `orchestrator_run-summary` as the final artifact.
+Run ends when the parties do not have any further actionable input. The last artifact can be from any role.
 
 ### Stacking
 
@@ -889,7 +860,7 @@ Apply this gate **hardest** to R and S, whose low criticality bar invites filler
 | W (no F)                | `medium`    | Real issues to address     |
 | F                       | `high`      | Must fix before merge      |
 
-Criticality classifies; it does not decide what a reviewer shows the user. Legacy-only maps to `none` so that an unattended fix cycle does not touch pre-existing code, while a legacy-only review still renders the post-review findings menu with its full option pool, in which a human can weigh a drive-by. The two axes differ on purpose.
+Criticality classifies; it does not decide what a reviewer shows the user. Legacy-only maps to `none` because it does not contain any authored finding, while a legacy-only review still renders the post-review findings menu with its full option pool, in which a human can weigh a drive-by. The two axes differ on purpose.
 
 ### Re-review severity escalation
 
@@ -897,7 +868,7 @@ Criticality classifies; it does not decide what a reviewer shows the user. Legac
 
 ## Knowledge items
 
-Knowledge items capture observations and learnings worth preserving. They are not findings: They do not have a criticality and are never merge-blocking. They belong wherever knowledge is worth keeping: housekeeping artifacts (wrap-up inventories, chat summaries, devlogs), run summaries, and, when they clear the Insight gate below, review artifacts.
+Knowledge items capture observations and learnings worth preserving. They are not findings: They do not have a criticality and are never merge-blocking. They belong wherever knowledge is worth keeping: housekeeping artifacts (wrap-up inventories, chat summaries, devlogs) and, when they clear the Insight gate below, review artifacts.
 
 | ID     | Category | Icon | Kind      |
 | ------ | -------- | ---- | --------- |
@@ -926,7 +897,7 @@ A saved artifact is a point-in-time record of what its author produced at the mo
 
 The `pull-request` and `merge` records carry a marker that directs a reading agent to leave the record unedited, stated in the file rather than left to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. The other artifacts do not have one.
 
-A flow still composing its own artifact has reached nothing downstream of it: A coder's change-summary scaffold, overwritten as its dispatch proceeds, is a flow finishing its record rather than revising a finished one. `orchestration-plan.json` is not a record at all, being the planning loop's working state.
+A flow still composing its own artifact has reached nothing downstream of it, so overwriting that artifact finishes its record rather than revising a finished one.
 
 A later flow that revises a finished record writes a new artifact rather than editing the old one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan that it refines intact.
 
@@ -943,6 +914,8 @@ Every level degrades gracefully:
 
 ## Migration from status.json (v1) to run-index.json (v2)
 
+The retired orchestration engine wrote both formats. This section records how they differ, for readers of historical runs.
+
 ### File rename
 
 `status.json` → `run-index.json`. The new name reflects the file's expanded role as an artifact registry, not just a status tracker.
@@ -953,7 +926,7 @@ Every level degrades gracefully:
 - **`context` section** groups: `runId`, `projectSlug`, `ticketId`, `projectRoot`, `branch`, `task`, `startedAt`, `completedAt`, `status`, `phases`, `phaseDecisions`.
 - **`config` section** groups: `externalPlan`, `mergeBaseSha` (new), `diffBase` (new), `maxReviewRounds` (new), `effort` (new), `approvalThreshold` (new), `budgetThreshold` (new), `mode`, `model`.
 - **`phaseDecision` → `context.phaseDecisions`** (now keyed by phase name, each value is a `{ run, reason? }` object). Each entry now includes an optional `disposition` field (`executed` | `skipped` | `absent`).
-- **New `pipeline` field in `config`**. Ordered list of phase names from the wrapper skill's pipeline specification (e.g., `["architecture", "planning", "implementation", "review-cycle"]`). Records which phases were configured for the run (intent, not outcome). The `review-cycle` pipeline entry is a module that expands into sub-phase keys (`parallelReview`, `codeSimplifier`, `holisticReview`) in `context.phaseDecisions` and `context.phases` at runtime.
+- **New `pipeline` field in `config`**. Ordered list of phase names from the engine's pipeline specification (e.g., `["architecture", "planning", "implementation", "review-cycle"]`). Records which phases were configured for the run (intent, not outcome). The `review-cycle` pipeline entry is a module that expands into sub-phase keys (`parallelReview`, `codeSimplifier`, `holisticReview`) in `context.phaseDecisions` and `context.phases` at runtime.
 - **New `artifacts` array**. Each entry includes `roleType` for workflow-function classification. See [artifact entry fields](#artifact-entry-fields) for the full schema.
 
 ### Role and reviewer renames

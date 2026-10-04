@@ -2,7 +2,7 @@
 
 ## Interactive work
 
-- Invoke the `collaborate` skill when working interactively with the user (not applicable to orchestrated subagent work)
+- Invoke the `collaborate` skill when working interactively with the user (not applicable to dispatched subagent work)
 
 <!-- include: ../../_partials/code-style.md / -->
 

@@ -16,7 +16,6 @@ const ALLOWLIST: ReadonlyArray<string> = [
   'skills/_data/artifact-conventions.md',
   'skills/_data/deployed-file-provenance.md',
   'skills/_data/ticket-id-extraction.md',
-  'skills/orchestrate/_data/reviewer-context-packages.md',
 ];
 
 const FORBIDDEN_PATTERN = 'packages/guidance/content/';

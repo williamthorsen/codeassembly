@@ -39,7 +39,7 @@ type DoctrineHashOutcome = { ok: true; hash: string } | { ok: false; unreadableP
  *
  * Each lede accepts an override file, so a pull request merged outside the merge flow (which does not write a
  * `_merge.md`) can still be recorded from text fetched by the caller. Absent an override, each is read from the newest
- * artifact of its kind, searched recursively because an orchestrated run nests its artifacts in a run subdirectory.
+ * artifact of its kind, searched recursively because a review run nests its artifacts in a run subdirectory.
  * Artifact filenames open with a `YYYYMMDDD-HHMMSSZ` stamp. The lexicographically greatest basename is the newest.
  *
  * The doctrine is fingerprinted by content rather than recorded as a version, which lets records group by doctrine

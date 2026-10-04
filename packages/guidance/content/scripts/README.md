@@ -32,7 +32,6 @@ Prose mentions of script names that are not invocations (e.g., ``"the `describe-
 - `describe-change.mjs`: Renders titles for commits, tickets, PRs, and merges from declarative templates, the `{breaking}` marker included, reads a rendered title back into its parts, consolidates a commit range's entries into a consolidated record, applies overrides to a record, renders the fenced `change-record` block that ends a pull-request body, and resolves what a pull request merges as from that block and the pull request's commits. Invoke it as `node {harness_home_dir}/scripts/describe-change.mjs <subcommand>`, where [title-templates.md](../skills/_data/title-templates.md#invoking-the-bundle) names the subcommand for each; the bundle does not have a shebang.
 - `get-ticket-id.sh`: Extracts a ticket ID from a branch name.
 - `resolve-frontmatter.sh`: Emits canonical artifact frontmatter (YAML or JSON) with provenance, ticket, branch, commit, and PR fields, plus scalar and list extension keys.
-- `resolve-reviewer-context.sh`: Assembles the reviewer context block from a coder-emitted sidecar and a static lookup table.
 - `select-lede-exemplars.mjs`: Selects author-approved ledes of a given work type from the lede-decision corpus, optionally floored at a quality rating. `--with-pair` reports each record's agent lede, merged lede, and author comment alongside the approved text.
 
 ## Drift detection

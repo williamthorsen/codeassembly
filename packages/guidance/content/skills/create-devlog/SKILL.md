@@ -13,7 +13,6 @@ Summarize changes made in recent commits or the working tree.
 - No arguments: Summarize the last commit
 - `<n>`: Summarize the last N commits
 - `working-tree`: Summarize uncommitted changes
-- `--run-id={id}`: Optional. Recorded in frontmatter to link the devlog to a completed orchestrated run. Typically supplied by the `wrap-up` skill; not used in direct invocations.
 
 ## Output format
 
@@ -83,7 +82,7 @@ Follow [artifact conventions](../_data/artifact-conventions.md).
 
 The devlog frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the devlog-specific extensions listed in [Devlog frontmatter](../_data/artifact-conventions.md#devlog-frontmatter).
 
-Resolve `{run_id}` from the `--run-id={id}` argument (empty when not supplied). Resolve `{commits}` according to the mode:
+Resolve `{commits}` according to the mode:
 
 - No argument (last commit): The output of `git log -n 1 --format=%h`.
 - `<n>` (last N commits): The output of `git log -n N --format=%h | paste -sd, -`.
@@ -96,8 +95,7 @@ Run via Bash, writing each resolved value into the call as literal text:
   --skill create-devlog \
   --interactive true \
   --model "{model_id}" \
-  --extra-list "commits={commits}" \
-  --override "run_id={run_id}"
+  --extra-list "commits={commits}"
 ```
 
 Drop the `--extra-list` flag entirely in `working-tree` mode, in which `{commits}` does not have a value; passing it empty emits `commits: []`.

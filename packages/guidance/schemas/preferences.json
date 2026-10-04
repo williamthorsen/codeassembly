@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/williamthorsen/codeassembly/raw/main/packages/guidance/schemas/preferences.json",
   "title": "Preferences",
-  "description": "Configuration consumed by orchestrated agent skills. Resolved from .agents/preferences.yaml at the project level, with ~/.agents/preferences.yaml as a global fallback.",
+  "description": "Configuration read by agent skills. Resolved from .agents/preferences.yaml at the project level, with ~/.agents/preferences.yaml as a global fallback.",
   "type": "object",
   "properties": {
     "$schema": {
@@ -112,37 +112,6 @@
         "delete_branch": {
           "type": "boolean",
           "description": "Reserved key. Not yet honored by the `merge-pr` skill family — branch deletion is currently controlled by command-line flags and platform defaults. Recorded here so the schema does not flag the key as unknown when projects opt to set it in anticipation of future support."
-        }
-      }
-    },
-    "orchestration": {
-      "type": "object",
-      "description": "Configuration for the multi-phase orchestration pipeline (review rounds, severity thresholds, MCP policy, model overrides).",
-      "properties": {
-        "max_review_rounds": {
-          "type": "integer",
-          "description": "Maximum iterative review rounds before marking the run `needs_manual_review`. Overridden by `--max-review-rounds`."
-        },
-        "approval_threshold": {
-          "type": "string",
-          "description": "Minimum finding severity required for code approval. Overridden by `--approval-threshold`.",
-          "enum": ["low", "medium", "high"]
-        },
-        "budget_threshold": {
-          "type": "string",
-          "description": "Minimum finding severity for spending remaining review-round budget. Overridden by `--budget-threshold`.",
-          "enum": ["low", "medium", "high"]
-        },
-        "models": {
-          "type": "object",
-          "description": "Per-role model overrides (e.g., `coder`, `architect`, `holistic_reviewer`). Any role key is permitted; values must be strings naming a model.",
-          "additionalProperties": {
-            "type": "string"
-          }
-        },
-        "mcp_policy": {
-          "type": "string",
-          "description": "How to handle MCP unavailability: `required` aborts, `optional` continues with a warning, `prompt` asks the developer."
         }
       }
     },
