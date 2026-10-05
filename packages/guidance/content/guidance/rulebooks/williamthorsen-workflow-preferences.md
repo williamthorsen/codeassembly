@@ -41,7 +41,7 @@ When the developer starts a product, the work moves through these stages in orde
 6. MVP: The smallest product that does the product's one job. A prototype feature belongs in it when the product cannot do that job without the feature; the rest wait for increments.
 7. Increments: Features added one iteration at a time.
 
-The winning prototype is the baseline: the floor on quality and feel, and the reference for what the product does and how it is put together. The finished product is at least that good. Read the prototype as evidence of the vision rather than as its specification: Its structure informs the design doc, and a deviation that improves on it is expected.
+The winning prototype is the baseline: the floor on quality and feel against which the finished product is judged, and the reference for what the product does and how it is put together. Read the prototype as evidence of the vision rather than as its specification: Its structure informs the design doc, and a deviation that improves on it is expected.
 
 The baseline is a claim about the finished product, not about any one iteration. An iteration may omit a prototype feature or ship it in a reduced form; a reduction is remaining work, and a one-line sub-issue keeps the gap visible. Settling a feature below the prototype's bar, or retiring it, is a decision worth recording in the design doc with its reason.
 
