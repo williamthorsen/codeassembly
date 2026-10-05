@@ -1,4 +1,5 @@
 /** Shared types of the backlog-grooming helper. */
+import type { RelationTier } from './related.ts';
 import type { AssessmentRecord, AssessorReply, Marker } from './schemas.ts';
 
 /** Runs `command` with `args` in `cwd` and resolves to its stdout; rejects when the command fails. */
@@ -53,19 +54,24 @@ export interface CrossReference {
   title: string;
 }
 
-/** The per-ticket input file that `collect` writes for the assessor. */
-export interface TicketInput {
-  body: string;
-  comments: IssueComment[];
-  createdAt: string;
+/** The merge that a ripple ticket file names as evidence: the closed ticket, its closing PR, and how they relate. */
+export interface RippleEvidence {
+  closedNumber: number;
+  closedTitle: string;
+  files: string[];
+  filesTruncated: boolean;
+  /** The first eight characters of the closing PR's merge commit. */
+  mergeSha: string | null;
+  pr: number | null;
+  tiers: RelationTier[];
+}
+
+/** The per-ticket input file that `collect` writes for the assessor; a ripple adds the `ripple` field. */
+export interface TicketInput extends Issue {
   crossReferences: CrossReference[];
   inProgress: InProgress | null;
-  labels: string[];
-  number: number;
   priorMarker: Marker | null;
-  title: string;
-  updatedAt: string;
-  url: string;
+  ripple?: RippleEvidence;
 }
 
 /** The selectors that narrow the fetched backlog. */

@@ -31,6 +31,19 @@ describe(parseLedger, () => {
     expect(records[4]).toMatchObject({ rule: 'half-met' });
   });
 
+  it('accepts ripple and pull records', () => {
+    const { defects, records } = parseLedger(
+      [
+        '{"run":"ripple-20","kind":"ripple","number":20,"pr":60,"candidates":[11],"recordedAt":"2026-10-01T00:00:00Z"}',
+        '{"run":"ripple-21","kind":"ripple","number":21,"pr":null,"candidates":[],"recordedAt":"2026-10-01T00:00:00Z"}',
+        '{"run":"pull-1","kind":"pull","picked":[11],"sha":"abc1234","recordedAt":"2026-10-01T00:00:00Z"}',
+      ].join('\n'),
+    );
+
+    expect(defects).toStrictEqual([]);
+    expect(records.map((record) => record.kind)).toStrictEqual(['ripple', 'ripple', 'pull']);
+  });
+
   it('reports a damaged line by number and reads the rest', () => {
     const { defects, records } = parseLedger(`${CALIBRATION_LINES[1]}\n{oops\n{"run":"cal","kind":"unknown"}\n`);
 
