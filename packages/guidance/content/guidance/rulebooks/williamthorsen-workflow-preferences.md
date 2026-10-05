@@ -31,28 +31,28 @@ Default to upstream first. A condition can displace the default: an upstream tha
 
 ## Product development
 
-When the developer starts a product, the work moves through these stages in order, each producing one thing. A stage is skipped when the product is small enough that its output is already obvious; say which stage, and why.
+When the developer starts a product, move the work through these stages in order, each producing one thing. Skip a stage when the product is small enough that its output is already obvious, and say which stage and why.
 
-1. Idea: The idea, written back to the developer and recorded in the design doc.
-2. Opinions: Evaluations of the idea from other roles, recorded with it.
-3. Brief: The idea fleshed out into a brief for a prototype round.
-4. Prototypes: Competing prototypes of a rich feature set and a synthesis of them, built through `prepare-prototype-brief` and judged through `index-prototypes`. Prototyping a rich feature set is how the product that could emerge becomes visible, which is why the round precedes the vision.
-5. End vision: The purpose, the non-goals, the decisions with their reasons, and a rough structure, written from what the prototypes taught and approved by the developer.
-6. MVP: The smallest product that does the product's one job. A prototype feature belongs in it when the product cannot do that job without the feature; the rest wait for increments.
-7. Increments: Features added one iteration at a time.
+1. Idea: Write the idea back to the developer and record it in the design doc.
+2. Opinions: Evaluate the idea from other roles and record the evaluations with it.
+3. Brief: Flesh the idea out into a brief for a prototype round.
+4. Prototypes: Build competing prototypes of a rich feature set through `prepare-prototype-brief`, judge them through `index-prototypes`, and synthesize them. Prototyping a rich feature set is how the product that could emerge becomes visible, so run the round before writing the vision.
+5. End vision: Write the purpose, the non-goals, the decisions with their reasons, and a rough structure from what the prototypes taught, and get the developer's approval.
+6. MVP: Build the smallest product that does the product's one job. Put a prototype feature in it when the product cannot do that job without the feature, and leave the rest for increments.
+7. Increments: Add features one iteration at a time.
 
-The winning prototype is the baseline: the floor on quality and feel against which the finished product is judged, and the reference for what the product does and how it is put together. Read the prototype as evidence of the vision rather than as its specification: Its structure informs the design doc, and a deviation that improves on it is expected.
+Treat the winning prototype as the baseline: the floor on quality and feel against which the finished product is judged, and the reference for what the product does and how it is put together. Read it as evidence of the vision rather than as its specification: Let its structure inform the design doc, and expect to improve on it.
 
-The baseline is a claim about the finished product, not about any one iteration. An iteration may omit a prototype feature or ship it in a reduced form; a reduction is remaining work, and a one-line sub-issue keeps the gap visible. Settling a feature below the prototype's bar, or retiring it, is a decision worth recording in the design doc with its reason.
+Hold the finished product to the baseline, not any one iteration. An iteration may omit a prototype feature or ship it in a reduced form; treat a reduction as remaining work and give it a one-line sub-issue, which keeps the gap visible. When settling a feature below the prototype's bar or retiring it, record the decision in the design doc with its reason.
 
-Write a ticket in detail when its work is about to be implemented. Until then, each artifact holds one tier:
+Write a ticket in detail when its work is about to be implemented. Until then, keep each artifact to one tier:
 
-- The design doc in the repo is the living home of the vision: the purpose, the non-goals, the decisions with their reasons, and the rough structure. A statement earns a place there when reversing it later would invalidate completed work, or when a new session needs it to choose a direction; most other detail can wait for its iteration.
-- The epic points to the design doc, states what is out of scope, and lists the iterations as its sub-issues in order. The vision lives in the doc rather than in the epic's body, because a ticket's body is frozen once its work starts and the vision is not.
-- The milestone marks the current iteration, which `pull-from-backlog` reads as the Now set.
-- The prototype is the baseline.
-- Each iteration is a sub-issue of the epic. Specify the current iteration in detail. Write each later one as a one-line outcome, what the user can newly do, rather than as a feature, and refine it against the design doc when its iteration starts.
+- Keep the vision in a design doc in the repo: the purpose, the non-goals, the decisions with their reasons, and the rough structure. Put a statement there when reversing it later would invalidate completed work, or when a new session needs it to choose a direction, and leave most other detail to its iteration.
+- Have the epic point to the design doc, state what is out of scope, and list the iterations as its sub-issues in order. Keep the vision out of the epic's body, because a ticket's body is frozen once its work starts and the vision is not.
+- Use the milestone to mark the current iteration, which `pull-from-backlog` reads as the Now set.
+- Treat the prototype as the baseline.
+- Make each iteration a sub-issue of the epic. Specify the current iteration in detail. Write each later one as a one-line outcome, what the user can newly do, rather than as a feature, and refine it against the design doc when its iteration starts.
 
 Once the developer approves the end vision, propose that shape rather than drafting every ticket up front.
 
-The vision will change. At the end of each iteration, re-read the design doc, revise what the iteration disproved, and refine the next sub-issue against the revised doc. The documents exist so that a new session knows the vision without being told.
+Expect the vision to change. At the end of each iteration, re-read the design doc, revise what the iteration disproved, and refine the next sub-issue against the revised doc. The documents exist so that a new session knows the vision without being told.
