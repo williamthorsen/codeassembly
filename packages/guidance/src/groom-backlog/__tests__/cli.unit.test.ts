@@ -389,11 +389,16 @@ describe(runCli, () => {
     });
 
     it('lists the tickets closed since the latest groom policy record that lack a ripple record', async () => {
-      writeLedger(root, [policy('r', '2026-08-15T00:00:00Z'), ripple(21)]);
+      writeLedger(root, [
+        policy('r', '2026-08-15T00:00:00Z'),
+        policy('r-dry-run', '2026-08-16T00:00:00Z'),
+        policy('ripple-5', '2026-08-16T00:00:00Z'),
+        ripple(21),
+      ]);
 
       const result = await runCli(['pending-ripples'], context);
 
-      // #19 closed before the baseline, and #21 has rippled.
+      // The dry run and the ripple do not move the baseline; #19 closed before it, and #21 has rippled.
       expect(result).toMatchObject({ ok: true, baseline: 'policy', since: '2026-08-15T00:00:00Z' });
       expect(result.ok && result.pending).toStrictEqual([
         { number: 20, title: 'Closed ticket 20', closedAt: '2026-08-15T00:00:00Z' },

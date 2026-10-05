@@ -98,6 +98,9 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'ticket', takesValue: true },
 ];
 
+/** The suffix that the skill appends to a dry run's run id. */
+const DRY_RUN_SUFFIX = '-dry-run';
+
 /** The most touched paths that a ripple ticket file lists. */
 const RIPPLE_FILE_LIMIT = 200;
 
@@ -408,7 +411,7 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
 /**
  * Lists the closed tickets that do not have a `ripple` record in the ledger: `--ticket` alone, or every ticket closed
  * since `--since`. Without either, the baseline is the latest `pull` record, else the latest `policy` record of a run
- * that is not a ripple; without a baseline, the result is `no-baseline`.
+ * that is neither a ripple nor a dry run; without a baseline, the result is `no-baseline`.
  */
 async function runPendingRipples(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
   const ticket = readOptional(flags, 'ticket');
@@ -428,7 +431,7 @@ async function runPendingRipples(flags: ParsedFlags, context: CommandContext): P
   for (const record of ledger.records) {
     if (record.kind === 'ripple') rippled.add(record.number);
     else if (record.kind === 'pull') lastPull = record.recordedAt;
-    else if (record.kind === 'policy' && !record.run.startsWith(RIPPLE_RUN_PREFIX)) lastPolicy = record.recordedAt;
+    else if (isGroomPolicy(record)) lastPolicy = record.recordedAt;
   }
 
   if (ticket !== undefined) {
@@ -532,6 +535,14 @@ interface Selection {
 function extractReplyJson(reply: string): string {
   const blocks = reply.matchAll(/```(?:json)?\n([\s\S]*?)\n```/g).toArray();
   return blocks.at(-1)?.[1] ?? reply.trim();
+}
+
+/**
+ * Returns whether `record` is the policy of a groom that applied its decisions: neither a ripple, which assesses one
+ * ticket's related set, nor a dry run, which applies nothing.
+ */
+function isGroomPolicy(record: LedgerRecord): boolean {
+  return record.kind === 'policy' && !record.run.startsWith(RIPPLE_RUN_PREFIX) && !record.run.endsWith(DRY_RUN_SUFFIX);
 }
 
 /** Returns whether this module is the process's entry point. */
