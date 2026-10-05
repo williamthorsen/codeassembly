@@ -31,24 +31,28 @@ Default to upstream first. A condition can displace the default: an upstream tha
 
 ## Product development
 
-When the developer starts a product, the work moves through these stages in order, each producing one thing:
+When the developer starts a product, the work moves through these stages in order, each producing one thing. A stage is skipped when the product is small enough that its output is already obvious; say which stage, and why.
 
-1. Idea: The idea, written back to the developer.
-2. Opinions: The views of other perspectives, such as role-based evaluations, recorded with the idea.
-3. Brief: The fleshed-out idea, stated as a brief for a prototype round.
-4. Prototypes: Competing prototypes and a synthesis of them, built through `prepare-prototype-brief` and judged through `index-prototypes`.
-5. End vision: The functionality and a rough structure, approved by the developer.
-6. MVP: The smallest usable product that delivers value. It precedes every further feature.
+1. Idea: The idea, written back to the developer and recorded in the design doc.
+2. Opinions: Evaluations of the idea from other roles, recorded with it.
+3. Brief: The idea fleshed out into a brief for a prototype round.
+4. Prototypes: Competing prototypes of a rich feature set and a synthesis of them, built through `prepare-prototype-brief` and judged through `index-prototypes`. Prototyping a rich feature set is how the product that could emerge becomes visible, which is why the round precedes the vision.
+5. End vision: The purpose, the non-goals, the decisions with their reasons, and a rough structure, written from what the prototypes taught and approved by the developer.
+6. MVP: The smallest product that does the product's one job. A feature is in the MVP only when the product cannot do that job without it.
 7. Increments: Features added one iteration at a time.
 
-Write a ticket in detail only once its work is about to be implemented or is definitively known. Until then, each artifact holds one tier:
+The winning prototype is the baseline: the floor on quality and feel. The finished product is at least that good. The prototype is authoritative about look and interaction and about nothing else; a data model, an architecture, or an iteration's scope is never read off it.
 
-- The epic holds the vision, the decisions, and what is out of scope.
-- Milestones hold the ordering.
-- The prototype is the vision as an artifact.
-- A design doc in the repo holds the functionality and the rough structure.
-- Each iteration is a sub-issue of the epic. Specify the current iteration in detail; keep every later one to a one-line ticket, and refine it when its iteration starts.
+The baseline binds the epic's completion, not any iteration. An iteration may omit a prototype feature or ship it in a reduced form. A reduction is remaining work and gets a one-line sub-issue, which keeps the gap visible. A deviation that improves on the prototype is expected. Settling a feature below the prototype's bar, or retiring it, takes a recorded decision in the design doc, with its reason.
 
-Once the developer approves the end vision, propose that shape: an epic whose iterations are its sub-issues, with only the first iteration specified in detail. Do not draft every ticket up front, and do not treat the prototype as the plan.
+Specify a ticket in detail only when its work is about to be implemented. Until then, each artifact holds one tier:
 
-Expect the end vision to change. The documents exist so that a new session knows the vision without being told.
+- The design doc in the repo is the living home of the vision: the purpose, the non-goals, the decisions with their reasons, and the rough structure. A statement belongs in it when reversing the statement later would invalidate completed work, or when a new session needs it to choose a direction. Everything else is an iteration-time detail.
+- The epic points to the design doc, states what is out of scope, and lists the iterations as its sub-issues in order. It does not restate the vision, because a ticket's body is frozen once its work starts and the vision is not.
+- The milestone marks the current iteration, which `pull-from-backlog` reads as the Now set.
+- The prototype is the baseline.
+- Each iteration is a sub-issue of the epic. Specify the current iteration in detail. Write each later one as a one-line outcome, what the user can newly do, rather than as a feature, and refine it against the design doc when its iteration starts.
+
+Once the developer approves the end vision, propose that shape. Do not draft every ticket up front.
+
+The vision will change. At the end of each iteration, re-read the design doc, revise what the iteration disproved, and refine the next sub-issue against the revised doc. The documents exist so that a new session knows the vision without being told.
