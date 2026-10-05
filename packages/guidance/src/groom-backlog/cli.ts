@@ -176,7 +176,8 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
 
 /**
  * Selects the tickets to assess and writes one input file per ticket under `--out`: the backlog narrowed by the
- * selectors, or, with `--related-to`, the open tickets related to that closed ticket, each file with a `ripple` field.
+ * selectors, or, with `--related-to`, the open tickets related to that closed ticket, each file with a `ripple` field
+ * and the result with the `ripple` record that the skill appends once the set is assessed.
  * A ticket already assessed in this run is skipped unless it changed after both that assessment and the latest comment
  * carrying this run's marker, so that the sweep's own comment does not make a ticket look changed. A skipped ticket
  * whose latest assessment has an auto-close class and no decision after it is reported in `pendingAutomatic`, so that
@@ -244,7 +245,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   mkdirSync(outDir, { recursive: true });
   const tickets: Array<{ file: string; number: number }> = [];
   for (const issue of issues) {
-    const ripple = selection.ripple?.(issue.number);
+    const ripple = selection.ripple?.evidence(issue.number);
     const input: TicketInput = {
       ...issue,
       crossReferences: crossReferences.get(issue.number) ?? [],
@@ -275,6 +276,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
     pendingAutomatic,
     groups,
     tickets,
+    ...(selection.ripple !== undefined && { ripple: selection.ripple.record }),
   };
 }
 
@@ -519,8 +521,11 @@ interface Selection {
   fetched: number;
   limit: number | undefined;
   ordered: Issue[];
-  /** Returns a ticket's ripple evidence; absent outside a ripple. */
-  ripple?: (number: number) => RippleEvidence | undefined;
+  /** The ripple's record and each ticket's evidence; absent outside a ripple. */
+  ripple?: {
+    evidence: (number: number) => RippleEvidence | undefined;
+    record: { candidates: number[]; kind: 'ripple'; number: number; pr: number | null };
+  };
 }
 
 /** Returns the JSON text of an assessor reply: its last fenced JSON block, or the whole reply when it has none. */
@@ -724,9 +729,17 @@ async function selectRipple(
     fetched: ripple.open.length,
     limit: undefined,
     ordered: ripple.candidates.flatMap((candidate) => byNumber.get(candidate.number) ?? []),
-    ripple: (ticket) => {
-      const matched = tiers.get(ticket);
-      return matched === undefined ? undefined : { ...evidence, tiers: matched };
+    ripple: {
+      evidence: (ticket) => {
+        const matched = tiers.get(ticket);
+        return matched === undefined ? undefined : { ...evidence, tiers: matched };
+      },
+      record: {
+        candidates: ripple.candidates.map((candidate) => candidate.number),
+        kind: 'ripple',
+        number: ripple.closed.number,
+        pr: ripple.pr,
+      },
     },
   };
 }

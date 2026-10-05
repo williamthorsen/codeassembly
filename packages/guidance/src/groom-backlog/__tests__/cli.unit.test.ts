@@ -122,6 +122,7 @@ describe(runCli, () => {
         crossReferences: [{ kind: 'closing-pr', ref: '#50' }],
       });
       expect(input).not.toHaveProperty('ripple');
+      expect(result).not.toHaveProperty('ripple');
     });
 
     it('caps the tickets at --limit in sweep order, after the resume skip', async () => {
@@ -195,6 +196,7 @@ describe(runCli, () => {
 
       expect(result).toMatchObject({ ok: true, counts: { fetched: 3, selected: 2, resumed: 0, total: 2 } });
       expect(result.ok && result.groups).toMatchObject([{ scope: null, waves: [[12, 11]] }]);
+      expect(result).toMatchObject({ ripple: { kind: 'ripple', number: 20, pr: 60, candidates: [12, 11] } });
       const input: unknown = JSON.parse(readFileSync(path.join(root, 'in', '11.json'), 'utf8'));
       expect(input).toMatchObject({
         number: 11,
