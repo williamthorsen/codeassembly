@@ -56,5 +56,6 @@ Project-level values take precedence over global. An explicitly empty value at t
 
 - [Prose sweep helper](docs/revise-prose-helper.md): the sweep that the `revise-prose` skill runs.
 - [Backlog sweep helper](docs/groom-backlog-helper.md): the helper that the `groom-backlog` skill runs.
+- [Next-ticket helper](docs/pull-from-backlog-helper.md): the helper that the `pull-from-backlog` skill runs.
 - [Prototype index helper](docs/index-prototypes-helper.md): the helper that the `index-prototypes` skill runs.
 - [Guidance streamlining helper](docs/streamline-guidance-helper.md): the helper that the `streamline-guidance` skill runs.

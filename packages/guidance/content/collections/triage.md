@@ -37,6 +37,7 @@ members:
     - merge-pr
     - plan
     - prepare-prototype-brief
+    - pull-from-backlog
     - refine-plan
     - respond-to-review
     - review-branch

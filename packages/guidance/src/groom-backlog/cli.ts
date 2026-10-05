@@ -40,6 +40,7 @@ import { detectInProgress } from './in-progress.ts';
 import { appendRecords, buildReplyPath, type LedgerPaths, readLedger, resolveLedgerPaths } from './ledger.ts';
 import { findLatestMarker, findLatestRunMarkerDate } from './marker.ts';
 import { countByTier, findRelated, type RelatedCandidate } from './related.ts';
+import { readRippleLedgerState, selectPendingRipples, summarizePending } from './ripple-baseline.ts';
 import {
   type AssessmentRecord,
   AssessorReplySchema,
@@ -98,14 +99,8 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'ticket', takesValue: true },
 ];
 
-/** The suffix that the skill appends to a dry run's run id. */
-const DRY_RUN_SUFFIX = '-dry-run';
-
 /** The most touched paths that a ripple ticket file lists. */
 const RIPPLE_FILE_LIMIT = 200;
-
-/** The prefix of a ripple's run id, `ripple-{N}`. */
-const RIPPLE_RUN_PREFIX = 'ripple-';
 
 /** The flags that a command repeats; every other flag may appear once. */
 const REPEATABLE: ReadonlySet<FlagName> = new Set(['exclude-label', 'scope']);
@@ -425,14 +420,7 @@ async function runPendingRipples(flags: ParsedFlags, context: CommandContext): P
 
   const paths = await resolveLedgerPaths(context.run, context.root);
   const ledger = readLedger(paths.ledgerFile);
-  const rippled = new Set<number>();
-  let lastPull: string | undefined;
-  let lastPolicy: string | undefined;
-  for (const record of ledger.records) {
-    if (record.kind === 'ripple') rippled.add(record.number);
-    else if (record.kind === 'pull') lastPull = record.recordedAt;
-    else if (isGroomPolicy(record)) lastPolicy = record.recordedAt;
-  }
+  const { lastPolicy, lastPull, rippled } = readRippleLedgerState(ledger.records);
 
   if (ticket !== undefined) {
     const issue = await fetchIssue(context.run, context.root, parsePositiveInteger('ticket', ticket));
@@ -455,13 +443,7 @@ async function runPendingRipples(flags: ParsedFlags, context: CommandContext): P
   }
   const { baseline } = chosen;
   const closed = await fetchClosedIssuesSince(context.run, context.root, since.slice(0, 10));
-  const pending = closed
-    .filter(
-      (issue) =>
-        issue.closedAt !== null && Date.parse(issue.closedAt) >= Date.parse(since) && !rippled.has(issue.number),
-    )
-    .toSorted((a, b) => a.number - b.number)
-    .map(summarizePending);
+  const pending = selectPendingRipples(closed, since, rippled);
   return { ok: true, since, baseline, pending, ledgerDefects: ledger.defects };
 }
 
@@ -535,14 +517,6 @@ interface Selection {
 function extractReplyJson(reply: string): string {
   const blocks = reply.matchAll(/```(?:json)?\n([\s\S]*?)\n```/g).toArray();
   return blocks.at(-1)?.[1] ?? reply.trim();
-}
-
-/**
- * Returns whether `record` is the policy of a groom that applied its decisions: neither a ripple, which assesses one
- * ticket's related set, nor a dry run, which applies nothing.
- */
-function isGroomPolicy(record: LedgerRecord): record is Extract<LedgerRecord, { kind: 'policy' }> {
-  return record.kind === 'policy' && !record.run.startsWith(RIPPLE_RUN_PREFIX) && !record.run.endsWith(DRY_RUN_SUFFIX);
 }
 
 /** Returns whether this module is the process's entry point. */
@@ -753,11 +727,6 @@ async function selectRipple(
       },
     },
   };
-}
-
-/** Returns the fields by which `pending-ripples` lists a closed ticket. */
-function summarizePending(issue: Issue): { closedAt: string | null; number: number; title: string } {
-  return { closedAt: issue.closedAt, number: issue.number, title: issue.title };
 }
 
 /** Formats `date` as an ISO timestamp without milliseconds, as the calibration's records are. */

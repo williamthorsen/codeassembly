@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildIssue } from '../../test-utils/build-issue.ts';
 import { matchCrossReferences, type PullRequest } from '../cross-reference.ts';
-import { buildIssue } from '../test-utils/build-issue.ts';
 
 const REPO = 'owner/repo';
 

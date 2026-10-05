@@ -36,6 +36,7 @@ import { makeKbRetrieveEventsSmokeTest } from '../test-utils/make-kb-retrieve-ev
 import { makeKbUpdateEventsSmokeTest } from '../test-utils/make-kb-update-events-smoke-test.ts';
 import { makeManageJiraTicketSmokeTest } from '../test-utils/make-manage-jira-ticket-smoke-test.ts';
 import { makeMergeGhPrSmokeTest } from '../test-utils/make-merge-gh-pr-smoke-test.ts';
+import { makePullFromBacklogSmokeTest } from '../test-utils/make-pull-from-backlog-smoke-test.ts';
 import { makeResolveReviewRunSmokeTest } from '../test-utils/make-resolve-review-run-smoke-test.ts';
 import { makeReviseProseSmokeTest } from '../test-utils/make-revise-prose-smoke-test.ts';
 import { makeSelectLedeExemplarsSmokeTest } from '../test-utils/make-select-lede-exemplars-smoke-test.ts';
@@ -61,6 +62,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   '../src/kb-update-events/cli.ts': makeKbUpdateEventsSmokeTest(),
   '../src/manage-jira-ticket/cli.ts': makeManageJiraTicketSmokeTest(),
   '../src/merge-gh-pr/cli.ts': makeMergeGhPrSmokeTest(),
+  '../src/pull-from-backlog/cli.ts': makePullFromBacklogSmokeTest(),
   '../src/resolve-review-run/cli.ts': makeResolveReviewRunSmokeTest(),
   '../src/revise-prose/cli.ts': makeReviseProseSmokeTest(),
   '../src/select-lede-exemplars/cli.ts': makeSelectLedeExemplarsSmokeTest(),

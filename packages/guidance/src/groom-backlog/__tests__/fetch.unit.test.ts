@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildFakeRunner } from '../../test-utils/fake-runner.ts';
 import { fetchIssue, fetchMilestones, fetchPullRequest, parseIssueList } from '../fetch.ts';
-import { buildFakeRunner } from '../test-utils/fake-runner.ts';
 
 /** A `gh issue` record as gh 2.100 returns it, without any relations. */
 const PLAIN_ISSUE = {

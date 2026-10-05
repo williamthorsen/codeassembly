@@ -1,4 +1,4 @@
-import type { Issue } from '../types.ts';
+import type { Issue } from '../groom-backlog/types.ts';
 
 /** Builds an open issue without labels, comments, or relations, overridden by `overrides`. */
 export function buildIssue(overrides: Partial<Issue> = {}): Issue {
