@@ -152,6 +152,19 @@ Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' 
 
 Append `!` after the type: `agents|feat!: Remove deprecated API`
 
+### `ticket.pull`
+
+Settings of the `pull-from-backlog` skill, read from the project preferences file only. See the [next-ticket helper](pull-from-backlog-helper.md).
+
+| Key                                | Type    | Default                | Description                                                                                                                                                       |
+| ---------------------------------- | ------- | ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ticket.pull.assignOnPick`         | boolean | `false`                | Assign the user to a picked ticket without asking first.                                                                                                          |
+| `ticket.pull.now`                  | string  | Resolved by the helper | Title of the open milestone that forms the Now set. Without it, the helper falls back to the nearest due date, then the most open issues, then the whole backlog. |
+| `ticket.pull.priorityPrefix`       | string  | `priority:`            | Prefix of the priority labels. The value after it ranks `high`, `medium`, then `low`; any other value ranks as unlabelled.                                        |
+| `ticket.pull.staleBranchDays`      | integer | `14`                   | Days since an in-progress branch's last commit at which the skill warns about it.                                                                                 |
+| `ticket.pull.staleGroomDays`       | integer | `14`                   | Days since the last groom at which the skill offers `/groom-backlog`.                                                                                             |
+| `ticket.pull.staleGroomNewTickets` | integer | `10`                   | Open tickets created since the last groom at which the skill offers `/groom-backlog`.                                                                             |
+
 ### `integrations`
 
 | Key                             | Type    | Default                                                  | Description                                                                                                                                                                     |
