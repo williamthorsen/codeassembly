@@ -13,6 +13,17 @@ import { buildFakeRunner, type RunnerCall } from '../test-utils/fake-runner.ts';
 
 const NOW = new Date('2026-10-01T12:00:00Z');
 
+/** The `gh` relation fields of an issue that does not have any relations. */
+const NO_RELATIONS = {
+  state: 'OPEN',
+  closedAt: null,
+  assignees: [],
+  milestone: null,
+  parent: null,
+  blockedBy: { nodes: [], totalCount: 0 },
+  subIssuesSummary: { completed: 0, percentCompleted: 0, total: 0 },
+};
+
 /** The open issues that the fake `gh issue list` returns. */
 const ISSUES = [
   {
@@ -20,6 +31,7 @@ const ISSUES = [
     title: 'Old agents ticket',
     body: 'Body',
     url: 'https://github.com/owner/repo/issues/10',
+    ...NO_RELATIONS,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-02-01T00:00:00Z',
     labels: [{ name: 'scope:agents' }],
@@ -36,6 +48,7 @@ const ISSUES = [
     title: 'Blocked ticket',
     body: 'Body',
     url: 'https://github.com/owner/repo/issues/11',
+    ...NO_RELATIONS,
     createdAt: '2026-01-02T00:00:00Z',
     updatedAt: '2026-02-01T00:00:00Z',
     labels: [{ name: 'blocked' }],
@@ -46,6 +59,7 @@ const ISSUES = [
     title: 'Unscoped ticket',
     body: 'Body',
     url: 'https://github.com/owner/repo/issues/12',
+    ...NO_RELATIONS,
     createdAt: '2026-01-03T00:00:00Z',
     updatedAt: '2026-02-01T00:00:00Z',
     labels: [],

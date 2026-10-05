@@ -11,13 +11,21 @@ export interface IssueComment {
   createdAt: string;
 }
 
-/** An open issue as `collect` reads it from GitHub. */
+/** An issue as the helper reads it from GitHub, with each relation reduced to issue numbers. */
 export interface Issue {
+  assignees: string[];
+  /** The issues that block this one, open or closed. */
+  blockedBy: number[];
   body: string;
+  closedAt: string | null;
   comments: IssueComment[];
   createdAt: string;
   labels: string[];
+  milestone: { dueOn: string | null; title: string } | null;
   number: number;
+  parent: number | null;
+  state: 'closed' | 'open';
+  subIssues: { completed: number; total: number };
   title: string;
   updatedAt: string;
   url: string;
