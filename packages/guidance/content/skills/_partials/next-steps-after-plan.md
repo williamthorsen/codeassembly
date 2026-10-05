@@ -86,12 +86,14 @@ Each skill supplies its own recommendation context (e.g., whether the plan was d
 
 <!-- include: split-ticket-compose.md / -->
 
-**Cut the plans.** Cut a plan per piece from the approved plan, so that each piece's session starts at Implement. Keep each piece's plan in context when its ticket is created, so that `{skill:create-ticket}` saves the plan beside the ticket artifact and posts it on the ticket.
+**Cut the plans.** Cut a plan per piece from the approved plan, so that each piece's session can start at Implement. Keep each piece's plan in context when its ticket is created, so that `{skill:create-ticket}` saves the plan beside the ticket artifact and posts it on the ticket.
 
 <!-- include: split-ticket-create.md / -->
 
 **Save the first piece's plan.** With two pieces, save the first piece's plan in the originating ticket's directory per `{skill:save-artifact}`. Its timestamp is later than the approved plan's, so `implement-plan` resolves it rather than the unsplit plan.
 
-**Report.** Report the ticket references and the plan paths.
+**Report.** Report the ticket references and the plan paths. Choose each ticket's entry point from what its artifacts settle: `{skill?:design-and-plan}` when the piece's design needs a closer look; `{skill?:plan}` when the ticket is ready but does not have a plan; `{skill?:refine-plan}` when its plan leaves a decision unsettled, by the test in rule 1 above; `{skill?:implement-plan}` otherwise, which is the default for a plan cut from an approved one.
+
+<!-- include: split-launch-prompts.md / -->
 
 See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) is about work that comes up alongside the plan; rule 2 is about the plan's own work, and its seam test comes from the ticketing preferences: A piece earns a ticket when it ships and can be verified on its own.
