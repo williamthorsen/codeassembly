@@ -336,7 +336,27 @@ If the delegate stopped or failed, stop. Otherwise continue.
 
 ### 11. Report the outcome
 
-Report nothing beyond the delegate's completion report, and invoke nothing. The merge flow does not record a lede decision or offer to record one; a capture is the author's own request, made whenever they choose.
+Report nothing beyond the delegate's completion report, and invoke nothing but step 12's offer. The merge flow does not record a lede decision or offer to record one; a capture is the author's own request, made whenever they choose.
+
+### 12. Offer the ripple
+
+A merge can change the open tickets related to the ticket that it closes, so offer to assess them while the merge is fresh. Skip this step silently when `scm` is not `"github"`, since `{skill:groom-backlog}` supports GitHub alone, or when `effective_record.ticket_ref` from step 3 is null or is not a GitHub `#{N}` reference. Take the ticket from that field rather than from session context: It names the ticket that the merge commit closes, and session context names the current branch's ticket, which is another one when `--pr` merges another branch's PR. Otherwise read the related set of the merged ticket `{N}`:
+
+```bash
+node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs related --ticket {N}
+```
+
+The command writes nothing. Act on its result:
+
+- **`ok: false`**: Report its `message` in one line and offer nothing. A ticket that the merge left open is reported this way.
+- **`counts.total` is 0**: Print `No open tickets related to #{N}.` and record the empty ripple, so that `pending-ripples` does not offer the ticket again. `{pr}` is the result's `pr`, or `null`:
+
+  ```bash
+  printf '%s\n' '{"kind":"ripple","number":{N},"pr":{pr},"candidates":[]}' \
+    | node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs record --run ripple-{N}
+  ```
+
+- **Otherwise**: Offer the ripple in the closing [action-items block](../_data/action-items.md), with the result's counts by tier and the `file-overlap` tier counted apart, because a shared file is the weakest relation: "Ripple #{N}: assess {total − file-overlap} related tickets ({mention} mention, {blocked} blocked, {family} family) and {file-overlap} that name a file that the PR touched? 👍🏼👎🏼". A ripple edits tickets, which is remote shared state, so invoke nothing without consent. On consent, invoke `{skill:groom-backlog}` with `--related-to {N}`.
 
 ## Important
 
