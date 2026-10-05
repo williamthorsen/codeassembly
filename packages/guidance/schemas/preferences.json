@@ -198,7 +198,7 @@
     },
     "ticket": {
       "type": "object",
-      "description": "Ticket (issue) configuration: title rendering and the base URL used to resolve bare ticket references.",
+      "description": "Ticket (issue) configuration: title rendering, the base URL used to resolve bare ticket references, and the `pull-from-backlog` settings.",
       "properties": {
         "title_format": {
           "type": "string",
