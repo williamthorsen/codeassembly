@@ -24,6 +24,9 @@ The ticket file contains:
 - `priorMarker`: the latest `codeassembly-triage` marker found in the comments, parsed, or `null`.
 - `crossReferences`: each candidate reference to the ticket that a mechanical pass found, with its `ref` (`#123` for a pull request, a short SHA for a commit), its `kind` (`closing-pr`, `pr-mention`, or `commit-mention`), its `title`, and its `date`.
 - `inProgress`: a signal that someone is working on the ticket, or `null`.
+- `assignees`, `milestone`, `state`, and `closedAt`: the ticket's assignees, its milestone's `title` and `dueOn`, and its state.
+- `parent`, `blockedBy`, and `subIssues`: the number of the ticket's parent or `null`, the numbers of the tickets that block it, and the `total` and `completed` counts of its children.
+- `ripple`: present when the dispatching skill assesses the tickets related to a ticket that just closed. It names that ticket (`closedNumber`, `closedTitle`), its closing pull request (`pr`, or `null` when the ticket was closed by hand), the merge commit (`mergeSha`), the paths that the pull request touched (`files`, cut at 200 with `filesTruncated: true`), and how this ticket relates to it (`tiers`: `mention`, `blocked`, `family`, `file-overlap`).
 
 ## Assess the ticket
 
@@ -32,6 +35,11 @@ Assess every dimension, by the procedure in [Assessment procedure](#assessment-p
 **Verify every cross-reference.** The pass that found them matches `#N` as text, and it is wrong in both directions: A commit in this repository can name another repository's `#N`, and an external system's identifiers look the same. Read each candidate pull request with `gh pr view {number} --json title,body,files` and each commit with `git show --stat {sha}`, and decide whether it does the ticket's work. A reference is evidence only once you have verified it. Report one entry per candidate in `references`, with `verified: false` and the reason when it does not do the ticket's work.
 
 **Read a prior marker as context.** When `priorMarker` is not `null`, an earlier sweep assessed the ticket. State in `reason` what has changed since its `assessedAt`. Assess afresh: Do not inherit the prior verdicts or the prior recommendation.
+
+**Weigh a ripple's merge.** When the ticket file has a `ripple` field, the closed ticket and its pull request are the first evidence to examine. Verify the pull request as you verify a cross-reference, and add it to `references` after the `crossReferences` entries when it is not one of them. Two outcomes are specific to a ripple:
+
+- When the pull request met the ticket's motivation, the ticket is done: Progress is `complete`, the pull request is a verified reference, and the recommendation is `close-complete`.
+- When the ticket is the closed ticket's parent (`family` tier) and `subIssues.completed` equals `subIssues.total`, every child is closed: Progress is `complete` on the umbrella's "Every child is closed" criterion, and the recommendation is `close-complete`. Confirm first that the umbrella does not have any criterion besides its children.
 
 **Report an in-progress signal.** When `inProgress` is not `null`, assess as usual and recommend what the assessment supports; the dispatching skill holds the ticket for a human decision.
 
@@ -103,7 +111,7 @@ One fenced JSON block, last and alone. Do not write prose after it.
 - `markdown`: the whole assessment in the output format.
 - `reason`: one or two sentences that justify the recommendation.
 - `relatedTickets`: the other tickets that the assessment names.
-- `references`: one entry per entry of `crossReferences`, in the same order.
+- `references`: one entry per entry of `crossReferences`, in the same order, then the ripple's pull request when it is not among them.
 - `overlaps`: each entry has `tickets`, `survivor`, and `reason`.
 
 An empty list is written `[]` rather than omitted.

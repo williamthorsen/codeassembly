@@ -145,11 +145,32 @@ export const NoteRecordSchema = z.looseObject({
   recordedAt: z.string(),
 });
 
+/** A `pull` record: the tickets picked from the backlog at a commit, and the baseline of the next `pending-ripples`. */
+export const PullRecordSchema = z.looseObject({
+  ...RecordBaseShape,
+  kind: z.literal('pull'),
+  picked: z.array(z.number().int().positive()),
+  sha: z.string().min(1),
+  recordedAt: z.string(),
+});
+
+/** A `ripple` record: the closed ticket whose related set was assessed, its closing PR, and the set. */
+export const RippleRecordSchema = z.looseObject({
+  ...RecordBaseShape,
+  kind: z.literal('ripple'),
+  number: z.number().int().positive(),
+  pr: z.number().int().positive().nullable(),
+  candidates: z.array(z.number().int().positive()),
+  recordedAt: z.string(),
+});
+
 export const LedgerRecordSchema = z.discriminatedUnion('kind', [
   AssessmentRecordSchema,
   DecisionRecordSchema,
   PolicyRecordSchema,
   NoteRecordSchema,
+  PullRecordSchema,
+  RippleRecordSchema,
 ]);
 
 export type AssessmentRecord = z.infer<typeof AssessmentRecordSchema>;
@@ -180,6 +201,19 @@ export const RecordInputSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('note'),
     text: z.string().min(1),
+    recordedAt: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('pull'),
+    picked: z.array(z.number().int().positive()),
+    sha: z.string().min(1),
+    recordedAt: z.string().optional(),
+  }),
+  z.object({
+    kind: z.literal('ripple'),
+    number: z.number().int().positive(),
+    pr: z.number().int().positive().nullable(),
+    candidates: z.array(z.number().int().positive()),
     recordedAt: z.string().optional(),
   }),
 ]);

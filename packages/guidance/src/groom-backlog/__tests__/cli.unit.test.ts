@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -13,6 +13,17 @@ import { buildFakeRunner, type RunnerCall } from '../test-utils/fake-runner.ts';
 
 const NOW = new Date('2026-10-01T12:00:00Z');
 
+/** The `gh` relation fields of an issue that does not have any relations. */
+const NO_RELATIONS = {
+  state: 'OPEN',
+  closedAt: null,
+  assignees: [],
+  milestone: null,
+  parent: null,
+  blockedBy: { nodes: [], totalCount: 0 },
+  subIssuesSummary: { completed: 0, percentCompleted: 0, total: 0 },
+};
+
 /** The open issues that the fake `gh issue list` returns. */
 const ISSUES = [
   {
@@ -20,6 +31,7 @@ const ISSUES = [
     title: 'Old agents ticket',
     body: 'Body',
     url: 'https://github.com/owner/repo/issues/10',
+    ...NO_RELATIONS,
     createdAt: '2026-01-01T00:00:00Z',
     updatedAt: '2026-02-01T00:00:00Z',
     labels: [{ name: 'scope:agents' }],
@@ -36,6 +48,7 @@ const ISSUES = [
     title: 'Blocked ticket',
     body: 'Body',
     url: 'https://github.com/owner/repo/issues/11',
+    ...NO_RELATIONS,
     createdAt: '2026-01-02T00:00:00Z',
     updatedAt: '2026-02-01T00:00:00Z',
     labels: [{ name: 'blocked' }],
@@ -46,12 +59,28 @@ const ISSUES = [
     title: 'Unscoped ticket',
     body: 'Body',
     url: 'https://github.com/owner/repo/issues/12',
+    ...NO_RELATIONS,
     createdAt: '2026-01-03T00:00:00Z',
     updatedAt: '2026-02-01T00:00:00Z',
     labels: [],
     comments: [],
   },
 ];
+
+/** The closed issues that the fake `gh issue list --state closed` and `gh issue view` return. */
+const CLOSED_ISSUES = [19, 20, 21].map((number) => ({
+  number,
+  title: `Closed ticket ${number}`,
+  body: 'Body',
+  url: `https://github.com/owner/repo/issues/${number}`,
+  ...NO_RELATIONS,
+  state: 'CLOSED',
+  createdAt: '2026-08-01T00:00:00Z',
+  updatedAt: `2026-08-${number - 5}T00:00:00Z`,
+  closedAt: `2026-08-${number - 5}T00:00:00Z`,
+  labels: [],
+  comments: [],
+}));
 
 describe(runCli, () => {
   let root: string;
@@ -92,6 +121,8 @@ describe(runCli, () => {
         inProgress: { signal: 'branch', ref: '10-uploader', commitsAhead: 3 },
         crossReferences: [{ kind: 'closing-pr', ref: '#50' }],
       });
+      expect(input).not.toHaveProperty('ripple');
+      expect(result).not.toHaveProperty('ripple');
     });
 
     it('caps the tickets at --limit in sweep order, after the resume skip', async () => {
@@ -155,6 +186,41 @@ describe(runCli, () => {
       const result = await runCli(['collect', '--run', 'r', '--out', 'in'], context);
 
       expect(result).toMatchObject({ ok: true, resumed: [10] });
+    });
+
+    it('with --related-to, writes the related set in tier order, each file with its ripple evidence', async () => {
+      setBody(issues, 12, 'Follows #20.');
+      setBody(issues, 11, 'Edit `src/upload.ts`.');
+
+      const result = await runCli(['collect', '--run', 'ripple-20', '--out', 'in', '--related-to', '20'], context);
+
+      expect(result).toMatchObject({ ok: true, counts: { fetched: 3, selected: 2, resumed: 0, total: 2 } });
+      expect(result.ok && result.groups).toMatchObject([{ scope: null, waves: [[12, 11]] }]);
+      expect(result).toMatchObject({ ripple: { kind: 'ripple', number: 20, pr: 60, candidates: [12, 11] } });
+      const input: unknown = JSON.parse(readFileSync(path.join(root, 'in', '11.json'), 'utf8'));
+      expect(input).toMatchObject({
+        number: 11,
+        ripple: {
+          closedNumber: 20,
+          closedTitle: 'Closed ticket 20',
+          pr: 60,
+          mergeSha: '01234567',
+          files: ['src/upload.ts'],
+          filesTruncated: false,
+          tiers: ['file-overlap'],
+        },
+      });
+    });
+
+    it('with --related-to, refuses a backlog selector and a ticket that is still open', async () => {
+      const combined = await runCli(
+        ['collect', '--run', 'r', '--out', 'in', '--related-to', '20', '--scope', 'agents'],
+        context,
+      );
+      const open = await runCli(['collect', '--run', 'r', '--out', 'in', '--related-to', '10'], context);
+
+      expect(combined).toMatchObject({ ok: false, error: 'invalid-args', message: expect.stringContaining('--scope') });
+      expect(open).toMatchObject({ ok: false, error: 'invalid-args', message: expect.stringContaining('#10 is open') });
     });
 
     it('reports a malformed selector as invalid-args', async () => {
@@ -253,6 +319,28 @@ describe(runCli, () => {
       ]);
     });
 
+    it('appends ripple and pull records', async () => {
+      const stdin = JSON.stringify([
+        { kind: 'ripple', number: 20, pr: 60, candidates: [11, 12] },
+        { kind: 'ripple', number: 21, pr: null, candidates: [] },
+        { kind: 'pull', picked: [11], sha: 'abc1234' },
+      ]);
+
+      expect(await runCli(['record', '--run', 'ripple-20'], { ...context, stdin })).toMatchObject({ appended: 3 });
+      expect(readLedgerLines(root)).toStrictEqual([
+        {
+          run: 'ripple-20',
+          kind: 'ripple',
+          number: 20,
+          pr: 60,
+          candidates: [11, 12],
+          recordedAt: '2026-10-01T12:00:00Z',
+        },
+        { run: 'ripple-20', kind: 'ripple', number: 21, pr: null, candidates: [], recordedAt: '2026-10-01T12:00:00Z' },
+        { run: 'ripple-20', kind: 'pull', picked: [11], sha: 'abc1234', recordedAt: '2026-10-01T12:00:00Z' },
+      ]);
+    });
+
     it('appends nothing when any record is invalid', async () => {
       const stdin = JSON.stringify([
         { kind: 'note', text: 'Fine' },
@@ -264,6 +352,82 @@ describe(runCli, () => {
         error: 'invalid-record',
       });
       expect(readLedgerLines(root)).toStrictEqual([]);
+    });
+  });
+
+  describe('related', () => {
+    it('lists the related set with the counts by tier and writes nothing', async () => {
+      setBody(issues, 12, 'Follows #20.');
+      setBody(issues, 11, 'Edit src/upload.ts');
+
+      const result = await runCli(['related', '--ticket', '20'], context);
+
+      expect(result).toMatchObject({
+        ok: true,
+        ticket: 20,
+        pr: 60,
+        mergeSha: '01234567',
+        counts: { mention: 1, blocked: 0, family: 0, 'file-overlap': 1, total: 2 },
+        candidates: [
+          { number: 12, tier: 'mention' },
+          { number: 11, tier: 'file-overlap' },
+        ],
+      });
+      expect(readdirSync(root)).toStrictEqual(['.git']);
+    });
+
+    it('refuses a ticket that is still open', async () => {
+      expect(await runCli(['related', '--ticket', '10'], context)).toMatchObject({ ok: false, error: 'invalid-args' });
+    });
+  });
+
+  describe('pending-ripples', () => {
+    it('reports no-baseline when the ledger lacks a pull and a groom policy record', async () => {
+      writeLedger(root, [policy('ripple-5', '2026-08-01T00:00:00Z')]);
+
+      expect(await runCli(['pending-ripples'], context)).toMatchObject({ ok: false, error: 'no-baseline' });
+    });
+
+    it('lists the tickets closed since the latest groom policy record that lack a ripple record', async () => {
+      writeLedger(root, [
+        policy('r', '2026-08-15T00:00:00Z'),
+        policy('r-dry-run', '2026-08-16T00:00:00Z'),
+        policy('ripple-5', '2026-08-16T00:00:00Z'),
+        ripple(21),
+      ]);
+
+      const result = await runCli(['pending-ripples'], context);
+
+      // The dry run and the ripple do not move the baseline; #19 closed before it, and #21 has rippled.
+      expect(result).toMatchObject({ ok: true, baseline: 'policy', since: '2026-08-15T00:00:00Z' });
+      expect(result.ok && result.pending).toStrictEqual([
+        { number: 20, title: 'Closed ticket 20', closedAt: '2026-08-15T00:00:00Z' },
+      ]);
+      expect(calls.some((call) => call.args.includes('closed:>=2026-08-15'))).toBe(true);
+    });
+
+    it('prefers the latest pull record, and --since over both', async () => {
+      writeLedger(root, [
+        policy('r', '2026-08-01T00:00:00Z'),
+        { run: 'p', kind: 'pull', picked: [], sha: 'abc', recordedAt: '2026-08-16T00:00:00Z' },
+      ]);
+
+      expect(await runCli(['pending-ripples'], context)).toMatchObject({
+        baseline: 'pull',
+        pending: [{ number: 21 }],
+      });
+      expect(await runCli(['pending-ripples', '--since', '2026-08-01'], context)).toMatchObject({
+        baseline: 'since',
+        pending: [{ number: 19 }, { number: 20 }, { number: 21 }],
+      });
+    });
+
+    it('with --ticket, lists that ticket when it is closed and lacks a ripple record', async () => {
+      writeLedger(root, [ripple(21)]);
+
+      expect(await runCli(['pending-ripples', '--ticket', '20'], context)).toMatchObject({ pending: [{ number: 20 }] });
+      expect(await runCli(['pending-ripples', '--ticket', '21'], context)).toMatchObject({ pending: [] });
+      expect(await runCli(['pending-ripples', '--ticket', '10'], context)).toMatchObject({ pending: [] });
     });
   });
 
@@ -375,6 +539,11 @@ function assessment(run: string, number: number, assessedAt: string): Record<str
   };
 }
 
+/** Builds a groom `policy` record of `run`. */
+function policy(run: string, recordedAt: string): Record<string, unknown> {
+  return { run, kind: 'policy', decisions: {}, decidedBy: 'user', recordedAt };
+}
+
 /** Reads the fixture's ledger as parsed lines; a ledger not yet written reads as empty. */
 function readLedgerLines(root: string): unknown[] {
   const file = path.join(root, 'local', 'ticket-triage', 'ledger.jsonl');
@@ -385,7 +554,10 @@ function readLedgerLines(root: string): unknown[] {
     .map((line): unknown => JSON.parse(line));
 }
 
-/** Answers the fake runner's calls with a repository on `main`, `issues`, and one closing PR for #10. */
+/**
+ * Answers the fake runner's calls with a repository on `main`, the open `issues`, the closed issues, a closing PR for
+ * #10, and a closing PR for #20 that touches `src/upload.ts`.
+ */
 function respond(call: RunnerCall, root: string, issues: typeof ISSUES): string | undefined {
   const [first, second] = call.args;
   if (call.command === 'git') {
@@ -400,10 +572,30 @@ function respond(call: RunnerCall, root: string, issues: typeof ISSUES): string 
     if (first === 'log') return '';
     return undefined;
   }
+  return respondToGh(call, issues);
+}
+
+/** Answers the fake runner's `gh` calls for `respond`. */
+function respondToGh(call: RunnerCall, issues: typeof ISSUES): string | undefined {
+  const [first, second] = call.args;
   if (first === 'repo') return JSON.stringify({ nameWithOwner: 'owner/repo', defaultBranchRef: { name: 'main' } });
-  if (first === 'issue') return JSON.stringify(issues);
+  if (first === 'issue' && second === 'view') {
+    const issue = [...issues, ...CLOSED_ISSUES].find((candidate) => String(candidate.number) === call.args[2]);
+    return issue === undefined ? undefined : JSON.stringify(issue);
+  }
+  if (first === 'issue') return JSON.stringify(call.args.includes('closed') ? CLOSED_ISSUES : issues);
+  if (first === 'pr' && second === 'view') {
+    return JSON.stringify({ files: [{ path: 'src/upload.ts' }], mergeCommit: { oid: '0123456789abcdef' } });
+  }
   if (first === 'pr') {
     return JSON.stringify([
+      {
+        number: 60,
+        title: 'Close the closed ticket',
+        body: '',
+        mergedAt: '2026-08-15T00:00:00Z',
+        closingIssuesReferences: [{ number: 20, repository: { name: 'repo', owner: { login: 'owner' } } }],
+      },
       {
         number: 50,
         title: 'Fix the uploader',
@@ -414,6 +606,25 @@ function respond(call: RunnerCall, root: string, issues: typeof ISSUES): string 
     ]);
   }
   return undefined;
+}
+
+/** Builds the `ripple` record of closed ticket `number`. */
+function ripple(number: number): Record<string, unknown> {
+  return {
+    run: `ripple-${number}`,
+    kind: 'ripple',
+    number,
+    pr: null,
+    candidates: [],
+    recordedAt: '2026-09-01T00:00:00Z',
+  };
+}
+
+/** Sets the body of open issue `number`. */
+function setBody(issues: typeof ISSUES, number: number, body: string): void {
+  const issue = issues.find((candidate) => candidate.number === number);
+  if (issue === undefined) throw new Error(`fixture does not have #${number}`);
+  issue.body = body;
 }
 
 /** Writes `records` as the fixture's ledger. */

@@ -1,4 +1,4 @@
-/** Narrows the backlog by the caller's selectors, groups it by scope label, and packs dispatch waves. */
+/** Narrows the backlog by the caller's selectors, groups the tickets, and packs dispatch waves. */
 import type { InProgress, Issue, Selectors, TicketGroup } from './types.ts';
 
 /** The most assessors that one wave dispatches together. */
@@ -39,21 +39,18 @@ export function groupByScope(issues: readonly Issue[], inProgress: ReadonlyMap<n
   }
 
   const scopes = byScope.keys().toArray().toSorted(compareScopes);
-  return scopes.map((scope) => {
-    const members = (byScope.get(scope) ?? []).toSorted(
-      (a, b) => a.createdAt.localeCompare(b.createdAt) || a.number - b.number,
-    );
-    return {
+  return scopes.map((scope) =>
+    buildGroup(
       scope,
-      tickets: members.map((issue) => ({
-        inProgress: inProgress.get(issue.number) ?? null,
-        number: issue.number,
-        title: issue.title,
-        updatedAt: issue.updatedAt,
-      })),
-      waves: packWaves(members.map((issue) => issue.number)),
-    };
-  });
+      (byScope.get(scope) ?? []).toSorted((a, b) => a.createdAt.localeCompare(b.createdAt) || a.number - b.number),
+      inProgress,
+    ),
+  );
+}
+
+/** Puts `issues` in one unscoped group in the order given, packed into waves of up to `WAVE_SIZE`. */
+export function groupInOrder(issues: readonly Issue[], inProgress: ReadonlyMap<number, InProgress>): TicketGroup[] {
+  return issues.length === 0 ? [] : [buildGroup(null, issues, inProgress)];
 }
 
 /** Returns `issues` in sweep order: by scope as `groupByScope` orders the groups, then oldest first. */
@@ -82,6 +79,24 @@ export function readScope(issue: Issue): string | null {
 }
 
 // region | Helpers
+
+/** Builds the group of `scope` from its members, in the order given. */
+function buildGroup(
+  scope: string | null,
+  members: readonly Issue[],
+  inProgress: ReadonlyMap<number, InProgress>,
+): TicketGroup {
+  return {
+    scope,
+    tickets: members.map((issue) => ({
+      inProgress: inProgress.get(issue.number) ?? null,
+      number: issue.number,
+      title: issue.title,
+      updatedAt: issue.updatedAt,
+    })),
+    waves: packWaves(members.map((issue) => issue.number)),
+  };
+}
 
 /** Orders scopes alphabetically, with the unscoped group last. */
 function compareScopes(a: string | null, b: string | null): number {

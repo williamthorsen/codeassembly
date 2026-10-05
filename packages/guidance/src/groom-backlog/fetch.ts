@@ -1,4 +1,4 @@
-/** Reads the repository's identity and its open issues through `gh` and `git`. */
+/** Reads the repository's identity, its issues, pull requests, and milestones through `gh` and `git`. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -11,29 +11,69 @@ const execFileAsync = promisify(execFile);
 /** The most issues that one `collect` reads; a backlog past it is swept in more than one run. */
 export const ISSUE_FETCH_LIMIT = 5_000;
 
-const IssueListSchema = z.array(
-  z.object({
-    number: z.number().int().positive(),
-    title: z.string(),
-    body: z.string(),
-    url: z.string(),
-    createdAt: z.string(),
-    updatedAt: z.string(),
-    labels: z.array(z.object({ name: z.string() })),
-    comments: z.array(
-      z.object({
-        author: z.object({ login: z.string() }).nullable(),
-        body: z.string(),
-        createdAt: z.string(),
-      }),
-    ),
-  }),
+/** The `gh issue` fields that every fetch requests, relations included; `gh` 2.100 is the first to return them all. */
+const ISSUE_FIELDS =
+  'number,title,body,url,state,createdAt,updatedAt,closedAt,labels,comments,assignees,milestone,parent,blockedBy,subIssuesSummary';
+
+const IssueSchema = z.object({
+  number: z.number().int().positive(),
+  title: z.string(),
+  body: z.string(),
+  url: z.string(),
+  state: z.enum(['OPEN', 'CLOSED']),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  closedAt: z.string().nullable(),
+  labels: z.array(z.object({ name: z.string() })),
+  comments: z.array(
+    z.object({
+      author: z.object({ login: z.string() }).nullable(),
+      body: z.string(),
+      createdAt: z.string(),
+    }),
+  ),
+  assignees: z.array(z.object({ login: z.string() })),
+  milestone: z.object({ title: z.string(), dueOn: z.string().nullable() }).nullable(),
+  parent: z.object({ number: z.number().int().positive() }).nullable(),
+  blockedBy: z.object({ nodes: z.array(z.object({ number: z.number().int().positive() })) }),
+  subIssuesSummary: z.object({ completed: z.number().int().nonnegative(), total: z.number().int().nonnegative() }),
+});
+
+const PullRequestViewSchema = z.object({
+  files: z.array(z.object({ path: z.string() })),
+  mergeCommit: z.object({ oid: z.string() }).nullable(),
+});
+
+const MilestoneListSchema = z.array(
+  z.array(
+    z.object({
+      number: z.number().int().positive(),
+      title: z.string(),
+      due_on: z.string().nullable(),
+      state: z.enum(['open', 'closed']),
+    }),
+  ),
 );
 
 const RepoViewSchema = z.object({
   nameWithOwner: z.string().min(1),
   defaultBranchRef: z.object({ name: z.string() }).nullable(),
 });
+
+/** A milestone of the repository. */
+export interface Milestone {
+  dueOn: string | null;
+  number: number;
+  state: 'closed' | 'open';
+  title: string;
+}
+
+/** A pull request's touched files and merge commit. */
+export interface PullRequestDetail {
+  files: string[];
+  mergeSha: string | null;
+  number: number;
+}
 
 /** The repository's GitHub name and its default branch. */
 export interface RepositoryInfo {
@@ -47,36 +87,70 @@ export const runCommand: CommandRunner = async (command, args, cwd) => {
   return stdout;
 };
 
-/** Fetches every open issue with its labels and comments. */
-export async function fetchOpenIssues(run: CommandRunner, root: string): Promise<Issue[]> {
+/** Fetches the issues closed on or after `date` (`YYYY-MM-DD`), with their relations. */
+export async function fetchClosedIssuesSince(run: CommandRunner, root: string, date: string): Promise<Issue[]> {
   const stdout = await run(
     'gh',
     [
       'issue',
       'list',
       '--state',
-      'open',
+      'closed',
       '--limit',
       String(ISSUE_FETCH_LIMIT),
+      '--search',
+      `closed:>=${date}`,
       '--json',
-      'number,title,body,url,createdAt,updatedAt,labels,comments',
+      ISSUE_FIELDS,
     ],
     root,
   );
-  return IssueListSchema.parse(JSON.parse(stdout)).map((issue) => ({
-    body: issue.body,
-    comments: issue.comments.map((comment) => ({
-      author: comment.author?.login ?? 'ghost',
-      body: comment.body,
-      createdAt: comment.createdAt,
-    })),
-    createdAt: issue.createdAt,
-    labels: issue.labels.map((label) => label.name),
-    number: issue.number,
-    title: issue.title,
-    updatedAt: issue.updatedAt,
-    url: issue.url,
-  }));
+  return parseIssueList(JSON.parse(stdout));
+}
+
+/** Fetches one issue, open or closed, with its relations. */
+export async function fetchIssue(run: CommandRunner, root: string, number: number): Promise<Issue> {
+  const stdout = await run('gh', ['issue', 'view', String(number), '--json', ISSUE_FIELDS], root);
+  return toIssue(IssueSchema.parse(JSON.parse(stdout)));
+}
+
+/** Fetches the repository's milestones, open and closed. */
+export async function fetchMilestones(run: CommandRunner, root: string): Promise<Milestone[]> {
+  const stdout = await run(
+    'gh',
+    ['api', '--paginate', '--slurp', 'repos/{owner}/{repo}/milestones?state=all&per_page=100'],
+    root,
+  );
+  return MilestoneListSchema.parse(JSON.parse(stdout))
+    .flat()
+    .map((milestone) => ({
+      dueOn: milestone.due_on,
+      number: milestone.number,
+      state: milestone.state,
+      title: milestone.title,
+    }));
+}
+
+/** Fetches every open issue with its labels, comments, and relations. */
+export async function fetchOpenIssues(run: CommandRunner, root: string): Promise<Issue[]> {
+  const stdout = await run(
+    'gh',
+    ['issue', 'list', '--state', 'open', '--limit', String(ISSUE_FETCH_LIMIT), '--json', ISSUE_FIELDS],
+    root,
+  );
+  return parseIssueList(JSON.parse(stdout));
+}
+
+/** Fetches the files that a pull request touches and its merge commit, which is `null` until it merges. */
+export async function fetchPullRequest(run: CommandRunner, root: string, number: number): Promise<PullRequestDetail> {
+  const stdout = await run('gh', ['pr', 'view', String(number), '--json', 'files,mergeCommit'], root);
+  const view = PullRequestViewSchema.parse(JSON.parse(stdout));
+  return { files: view.files.map((file) => file.path), mergeSha: view.mergeCommit?.oid ?? null, number };
+}
+
+/** Parses `gh issue list` output into issues. */
+export function parseIssueList(json: unknown): Issue[] {
+  return z.array(IssueSchema).parse(json).map(toIssue);
 }
 
 /**
@@ -111,6 +185,31 @@ async function readOriginHead(run: CommandRunner, root: string): Promise<string 
   } catch {
     return undefined;
   }
+}
+
+/** Maps a parsed `gh` issue onto `Issue`, reducing each relation to issue numbers. */
+function toIssue(issue: z.infer<typeof IssueSchema>): Issue {
+  return {
+    assignees: issue.assignees.map((assignee) => assignee.login),
+    blockedBy: issue.blockedBy.nodes.map((node) => node.number),
+    body: issue.body,
+    closedAt: issue.closedAt,
+    comments: issue.comments.map((comment) => ({
+      author: comment.author?.login ?? 'ghost',
+      body: comment.body,
+      createdAt: comment.createdAt,
+    })),
+    createdAt: issue.createdAt,
+    labels: issue.labels.map((label) => label.name),
+    milestone: issue.milestone,
+    number: issue.number,
+    parent: issue.parent?.number ?? null,
+    state: issue.state === 'OPEN' ? 'open' : 'closed',
+    subIssues: issue.subIssuesSummary,
+    title: issue.title,
+    updatedAt: issue.updatedAt,
+    url: issue.url,
+  };
 }
 
 // endregion | Helpers
