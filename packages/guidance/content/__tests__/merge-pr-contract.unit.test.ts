@@ -59,6 +59,15 @@ describe('merge-pr contract', () => {
     expect(importantIndex).toBeGreaterThan(rippleIndex);
   });
 
+  it('ripples the ticket that the merge commit closes rather than the session ticket', async () => {
+    const text = await EXPANDED;
+
+    expect(text).toContain(
+      'when `effective_record.ticket_ref` from step 3 is null or is not a GitHub `#{N}` reference',
+    );
+    expect(text).toContain('Take the ticket from that field rather than from session context');
+  });
+
   it('reports an empty related set in one line and records the empty ripple', async () => {
     const text = await EXPANDED;
 

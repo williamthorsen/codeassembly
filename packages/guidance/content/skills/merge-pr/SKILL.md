@@ -340,7 +340,7 @@ Report nothing beyond the delegate's completion report, and invoke nothing but s
 
 ### 12. Offer the ripple
 
-A merge can change the open tickets related to the ticket that it closes, so offer to assess them while the merge is fresh. Skip this step silently when `scm` is not `"github"`, since `{skill:groom-backlog}` supports GitHub alone, or when session context does not resolve a ticket. Otherwise read the related set of the merged ticket `{N}`:
+A merge can change the open tickets related to the ticket that it closes, so offer to assess them while the merge is fresh. Skip this step silently when `scm` is not `"github"`, since `{skill:groom-backlog}` supports GitHub alone, or when `effective_record.ticket_ref` from step 3 is null or is not a GitHub `#{N}` reference. Take the ticket from that field rather than from session context: It names the ticket that the merge commit closes, and session context names the current branch's ticket, which is another one when `--pr` merges another branch's PR. Otherwise read the related set of the merged ticket `{N}`:
 
 ```bash
 node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs related --ticket {N}
