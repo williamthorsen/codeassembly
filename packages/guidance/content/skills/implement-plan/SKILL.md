@@ -155,6 +155,8 @@ The confirmation also lists each piece's commit range and boundary SHA, each bra
 
 Never push, force-push, or delete a remote branch, never create a worktree, and never check out a new branch. The resets above are the only history operations, and the recorded SHA and the new branches keep every commit reachable.
 
-**Report.** Report each ticket reference, each branch with its base, and each piece's next step. With two pieces, the first piece continues in this session at Review branch. A piece reviewed in its own worktree runs `review-branch --diff-base=<previous piece's branch>`, which reviews that piece alone because its predecessor's branch is a prefix of its own; the first piece of three or more uses the default diff base. Tell each later piece's session to rebase onto the default branch before its first push, once its predecessor has merged.
+**Report.** Report each ticket reference and each branch with its base. Every piece enters at `{skill:review-branch}`: The first piece uses the default diff base, and each later piece passes `--diff-base=<previous piece's branch>`, which reviews that piece alone because its predecessor's branch is a prefix of its own. Each heading line also names the piece's branch, and each prompt's first scope note says that the session runs in that branch's worktree. Each later piece is blocked by its predecessor's merge, and its prompt adds the scope note to rebase onto the default branch before the first push, once the predecessor has merged. With two pieces, the first piece's heading adds that this session continues with it at Review branch.
+
+<!-- include: ../_partials/split-launch-prompts.md / -->
 
 <!-- include: ../_partials/option-format.md / -->

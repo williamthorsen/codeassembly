@@ -147,6 +147,21 @@ const SPLIT_TICKET: Spec = {
   ],
 };
 
+// The launch-prompt format, included by the report of every split.
+const SPLIT_LAUNCH_PROMPTS: Spec = {
+  name: 'split-launch-prompts',
+  heading: '**Launch prompts.**',
+  rules: [
+    // Which tickets get a prompt. Without it a two-piece split omits the originating ticket, which keeps the first
+    // piece, or an umbrella gets a prompt for work that it does not hold.
+    'With two pieces, the originating ticket gets one; an umbrella does not get one',
+    // Work order. Without it the developer has to work out which prompts can run before which.
+    'A ticket comes after every ticket that blocks it',
+    // The prompt's contents. Without the blockers the developer cannot tell which prompts can run now.
+    "The ticket's blockers, by reference",
+  ],
+};
+
 const NEXT_STEPS_AFTER_PLAN: Spec = {
   name: 'next-steps-after-plan',
   heading: '## Next-steps options',
@@ -189,6 +204,9 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // the fallthrough is either capped at ■■□, demoting a trivial plan's Implement, or free to claim ■■■ unearned.
     "The selected option's marker follows how cleanly its rule matched",
     'its marker follows how squarely rules 1 and 2 failed',
+    // The entry-point rule for the split's launch prompts. Without it every prompt defaults to one skill, whatever
+    // the piece's artifacts settle.
+    "Choose each ticket's entry point from what its artifacts settle",
   ],
 };
 
@@ -242,14 +260,14 @@ const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: Readonly
   { slug: 'collaborate', specs: [OPTION_FORMAT] },
   {
     slug: 'design-and-plan',
-    specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, DESIGN_AND_PLAN_REMOTE_ISSUE, SPLIT_TICKET],
+    specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, DESIGN_AND_PLAN_REMOTE_ISSUE, SPLIT_TICKET, SPLIT_LAUNCH_PROMPTS],
   },
-  { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU, SPLIT_TICKET] },
+  { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU, SPLIT_TICKET, SPLIT_LAUNCH_PROMPTS] },
   { slug: 'merge-pr', specs: [OPTION_FORMAT] },
-  { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
-  { slug: 'refine-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
+  { slug: 'plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET, SPLIT_LAUNCH_PROMPTS] },
+  { slug: 'refine-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET, SPLIT_LAUNCH_PROMPTS] },
   { slug: 'review-branch', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_REVIEW] },
-  { slug: 'save-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET] },
+  { slug: 'save-plan', specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, SPLIT_TICKET, SPLIT_LAUNCH_PROMPTS] },
   { slug: 'update-jira-ticket', specs: [OPTION_FORMAT] },
   { slug: 'update-project-guidance', specs: [OPTION_FORMAT] },
 ];
