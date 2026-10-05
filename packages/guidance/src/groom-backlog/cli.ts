@@ -541,7 +541,7 @@ function extractReplyJson(reply: string): string {
  * Returns whether `record` is the policy of a groom that applied its decisions: neither a ripple, which assesses one
  * ticket's related set, nor a dry run, which applies nothing.
  */
-function isGroomPolicy(record: LedgerRecord): boolean {
+function isGroomPolicy(record: LedgerRecord): record is Extract<LedgerRecord, { kind: 'policy' }> {
   return record.kind === 'policy' && !record.run.startsWith(RIPPLE_RUN_PREFIX) && !record.run.endsWith(DRY_RUN_SUFFIX);
 }
 
