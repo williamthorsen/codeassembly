@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildIssue } from '../../test-utils/build-issue.ts';
 import { countByTier, findRelated, isPathLike } from '../related.ts';
-import { buildIssue } from '../test-utils/build-issue.ts';
 
 const CLOSED = buildIssue({ number: 50, parent: 40, state: 'closed', title: 'Closed ticket' });
 

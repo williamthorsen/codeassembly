@@ -207,6 +207,47 @@
         "base_url": {
           "type": "string",
           "description": "Org-stable base URL that a bare ticket id is appended to when reconstructing a ticket URL, for platforms where the URL cannot otherwise be derived (e.g. Jira `https://org.atlassian.net/browse/`). The trailing slash is optional. Surfaced into the branch manifest as `ticket_base_url`."
+        },
+        "pull": {
+          "type": "object",
+          "description": "Settings of the `pull-from-backlog` skill, read from the project preferences file only.",
+          "properties": {
+            "assignOnPick": {
+              "type": "boolean",
+              "default": false,
+              "description": "Assign the user to a picked ticket without asking first."
+            },
+            "now": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Title of the open milestone that forms the Now set. Without it, the Now set is the open milestone with the nearest due date, else the open milestone with the most open issues, else the whole backlog."
+            },
+            "priorityPrefix": {
+              "type": "string",
+              "minLength": 1,
+              "default": "priority:",
+              "description": "Prefix of the priority labels. The value after it ranks `high`, `medium`, then `low`; any other value ranks as unlabelled."
+            },
+            "staleBranchDays": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 14,
+              "description": "Days since an in-progress branch's last commit at which the skill warns about it."
+            },
+            "staleGroomDays": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 14,
+              "description": "Days since the last groom at which the skill offers `/groom-backlog`."
+            },
+            "staleGroomNewTickets": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 10,
+              "description": "Open tickets created since the last groom at which the skill offers `/groom-backlog`."
+            }
+          },
+          "additionalProperties": false
         }
       },
       "required": ["title_format"]

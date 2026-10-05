@@ -27,6 +27,8 @@ helpers:
     out: skills/migrate-feedback-memories/feedback-memories.mjs
   - entry: ../src/groom-backlog/cli.ts
     out: skills/groom-backlog/groom-backlog.mjs
+  - entry: ../src/pull-from-backlog/cli.ts
+    out: skills/pull-from-backlog/pull-from-backlog.mjs
   - entry: ../src/revise-prose/cli.ts
     out: skills/revise-prose/revise-prose.mjs
   - entry: ../src/streamline-guidance/cli.ts

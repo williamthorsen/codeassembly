@@ -1,4 +1,4 @@
-import type { CommandRunner } from '../types.ts';
+import type { CommandRunner } from '../groom-backlog/types.ts';
 
 /** One call that a fake runner received. */
 export interface RunnerCall {

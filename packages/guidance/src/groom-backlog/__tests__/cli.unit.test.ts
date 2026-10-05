@@ -5,11 +5,11 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { buildFakeRunner, type RunnerCall } from '../../test-utils/fake-runner.ts';
 import { type CommandContext, runCli } from '../cli.ts';
 import { renderMarker } from '../marker.ts';
 import type { AssessorReply } from '../schemas.ts';
 import { buildReply } from '../test-utils/build-reply.ts';
-import { buildFakeRunner, type RunnerCall } from '../test-utils/fake-runner.ts';
 
 const NOW = new Date('2026-10-01T12:00:00Z');
 

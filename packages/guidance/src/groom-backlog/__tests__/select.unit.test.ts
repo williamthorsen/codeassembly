@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { buildIssue } from '../../test-utils/build-issue.ts';
 import { applySelectors, groupByScope, parseAge, readScope } from '../select.ts';
-import { buildIssue } from '../test-utils/build-issue.ts';
 
 const NOW = new Date('2026-10-01T00:00:00Z');
 const NO_SELECTORS = { excludeLabels: [], limit: undefined, olderThanDays: undefined, scopes: [] };
