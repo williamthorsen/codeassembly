@@ -37,6 +37,14 @@ export interface Commit {
   subject: string;
 }
 
+/**
+ * Builds a pattern matching `#N` as a token: not preceded by a word character, a slash, or `#` (which would make it
+ * another repository's reference or part of a longer token), and not followed by a digit.
+ */
+export function buildTokenPattern(number: number): RegExp {
+  return new RegExp(String.raw`(?<![\w/#])#${number}(?!\d)`);
+}
+
 /** Returns each issue's candidates, closing PRs first, then mentioning PRs, then commits, each oldest first. */
 export async function findCrossReferences(input: {
   defaultBranch: string;
@@ -116,14 +124,6 @@ export function matchCrossReferences(input: {
 }
 
 // region | Helpers
-
-/**
- * Builds a pattern matching `#N` as a token: not preceded by a word character, a slash, or `#` (which would make it
- * another repository's reference or part of a longer token), and not followed by a digit.
- */
-function buildTokenPattern(number: number): RegExp {
-  return new RegExp(String.raw`(?<![\w/#])#${number}(?!\d)`);
-}
 
 /** Parses `git log` output written with unit-separated short SHA, subject, and committer date. */
 function parseCommits(output: string): Commit[] {
