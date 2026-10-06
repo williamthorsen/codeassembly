@@ -1,13 +1,14 @@
 /** Classifies an assessor's reply under the sweep's decision policy. */
+import { extractUncheckedCriteria } from './parent-status.ts';
 import type { AssessorReply } from './schemas.ts';
-import type { InProgress } from './types.ts';
+import type { InProgress, Issue } from './types.ts';
 
 /** The policy's classes, in the order in which `classify` tests them. The skill states one action per class. */
 export const CLASSES = [
+  'silent-keep',
   'escalate-in-progress',
   'auto-close-complete',
   'auto-close-half-met',
-  'silent-keep',
   'escalate',
 ] as const;
 
@@ -21,12 +22,20 @@ export const BASELINE_VERDICTS = {
   advisability: 'advisable',
 } as const;
 
+/** The ticket's state that the policy reads beside the reply. */
+export interface ClassifyContext {
+  inProgress: InProgress | null;
+  umbrella: boolean;
+}
+
 /**
- * Returns the first class in `CLASSES` whose condition the reply meets. An in-progress ticket escalates whatever its
- * assessment, so that work under way is never closed without a human decision.
+ * Returns the first class in `CLASSES` whose condition the reply meets. A silent keep neither closes nor comments, so
+ * it applies to an in-progress ticket too; every other assessment of an in-progress ticket escalates, so that work under
+ * way is never closed or commented on without a human decision.
  */
-export function classify(reply: AssessorReply, inProgress: InProgress | null): PolicyClass {
-  if (inProgress !== null) return 'escalate-in-progress';
+export function classify(reply: AssessorReply, context: ClassifyContext): PolicyClass {
+  if (reply.recommendation === 'keep' && isEffectiveBaseline(reply.verdicts, context.umbrella)) return 'silent-keep';
+  if (context.inProgress !== null) return 'escalate-in-progress';
 
   const isHigh = reply.confidence === 'high';
   if (reply.recommendation === 'close-complete' && isHigh) {
@@ -35,11 +44,25 @@ export function classify(reply: AssessorReply, inProgress: InProgress | null): P
     if (hasVerifiedReference || hasCompleteProgress) return 'auto-close-complete';
   }
   if (reply.rule === 'half-met' && isHigh) return 'auto-close-half-met';
-  if (reply.recommendation === 'keep' && isAllBaseline(reply.verdicts)) return 'silent-keep';
   return 'escalate';
 }
 
 /** Returns whether every verdict that has a baseline is at it. */
 export function isAllBaseline(verdicts: Readonly<Record<string, string | null>>): boolean {
   return Object.entries(BASELINE_VERDICTS).every(([dimension, baseline]) => verdicts[dimension] === baseline);
+}
+
+/**
+ * Returns whether the verdicts are baseline, counting an umbrella's `partial` progress as baseline: An umbrella with
+ * open children is expected to be partly done.
+ */
+export function isEffectiveBaseline(verdicts: Readonly<Record<string, string | null>>, umbrella: boolean): boolean {
+  if (umbrella && verdicts.progress === 'partial') return isAllBaseline({ ...verdicts, progress: 'none' });
+  return isAllBaseline(verdicts);
+}
+
+/** Returns whether the ticket has open children and its only unchecked criterion is "Every child is closed". */
+export function isUmbrella(ticket: Pick<Issue, 'body' | 'subIssues'>): boolean {
+  const hasOpenChildren = ticket.subIssues.total > ticket.subIssues.completed;
+  return hasOpenChildren && extractUncheckedCriteria(ticket.body).length === 0;
 }

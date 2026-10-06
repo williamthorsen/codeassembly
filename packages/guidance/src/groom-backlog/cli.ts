@@ -21,7 +21,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { z } from 'zod';
 
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
-import { classify } from './classify.ts';
+import { classify, isUmbrella } from './classify.ts';
 import { type CommentDecision, renderComment, type StoredReply } from './comment.ts';
 import { findCrossReferences } from './cross-reference.ts';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_RANGE, renderDigest } from './digest.ts';
@@ -321,9 +321,16 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
   const run = readRequired(flags, 'run');
   const ticketFile = path.resolve(context.root, readRequired(flags, 'ticket'));
   const ticket = z
-    .looseObject({ number: z.number(), updatedAt: z.string(), inProgress: InProgressSchema.nullable() })
+    .looseObject({
+      number: z.number(),
+      updatedAt: z.string(),
+      inProgress: InProgressSchema.nullable(),
+      body: z.string().default(''),
+      subIssues: z.object({ completed: z.number(), total: z.number() }).default({ completed: 0, total: 0 }),
+    })
     .parse(JSON.parse(readFileSync(ticketFile, 'utf8')));
   const inProgress = ticket.inProgress;
+  const umbrella = isUmbrella(ticket);
 
   let parsed: unknown;
   try {
@@ -341,14 +348,14 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
     throw new CommandError('invalid-reply', `the reply assesses #${reply.number}, not #${ticket.number}`);
   }
 
-  const policyClass = classify(reply, inProgress);
+  const policyClass = classify(reply, { inProgress, umbrella });
   const paths = await resolveLedgerPaths(context.run, context.root);
   const assessedAt = toSeconds(context.now);
   const sha = await resolveShortSha(context.run, context.root);
 
   const replyFile = buildReplyPath(paths, run, reply.number);
   mkdirSync(path.dirname(replyFile), { recursive: true });
-  const stored = { ...reply, assessedAt, sha, ticketUpdatedAt: ticket.updatedAt, inProgress };
+  const stored = { ...reply, assessedAt, sha, ticketUpdatedAt: ticket.updatedAt, inProgress, umbrella };
   writeFileSync(replyFile, `${JSON.stringify(stored, null, 2)}\n`, 'utf8');
 
   const record: LedgerRecord = {
