@@ -19,7 +19,7 @@ Assess a ticket against the current codebase across five dimensions: drift, rele
 
 ### 1. Resolve ticket source
 
-Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis, and the ticket's child counts (on GitHub, `subIssuesSummary`) for the umbrella case in [Baseline verdicts](#baseline-verdicts). Store the resolved metadata (platform, repo, issue number, last-updated date, child counts, ticket content). A ticket source without child counts, such as plain text or a file, is never an umbrella. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument.
+Resolve the ticket source using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for temporal analysis, and the ticket's child counts (on GitHub, `subIssuesSummary`) for the umbrella case in [Baseline verdicts](#baseline-verdicts). Store the resolved metadata (platform, repo, issue number, last-updated date, child counts, ticket content). Never treat a ticket source without child counts, such as plain text or a file, as an umbrella. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument.
 
 ### 2. Investigate
 
