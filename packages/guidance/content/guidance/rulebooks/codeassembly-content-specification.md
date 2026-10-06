@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, how broad a guidance change goes, and when a procedure belongs in a helper.
 delivery: skill
-version: '27'
+version: '28'
 ---
 
 # CodeAssembly content specification
@@ -102,7 +102,7 @@ members:
 ## Frontmatter fields
 
 - **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `hook`, `skill`, or a non-empty list of them; defaults to `ambient`), optional `skill-name`, optional `version`. A declared `version` is an opaque string, never parsed as semver, and every route that delivers the rulebook names it on a `<!-- rulebook-version: <version> -->` line directly below the marker that names the slug, so that an agent can read which version of a rulebook it has. A route omits the line for a rulebook that does not declare a version. Quote the value: YAML reads an unquoted `1.10` as the number `1.1`, and the schema rejects a non-string rather than deploying the digits that it lost. It rejects a value that the version line cannot contain on its own, which is a blank one, a multi-line one, and one containing `-->`.
-- **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all).
+- **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all). The deploy writes every other key to every harness unchanged, so a key that only one harness reads, such as Claude's `context` or `model`, reaches the others, which ignore it.
 - **Subagents:** `name`, `description`, optional `tools`, optional `disallowedTools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context), optional `rulebooks` (rulebooks injected the same way, named by slug rather than by deploy name, so that a `skill-name` override on the target stays correct). `sync` pulls both lists into the deploy closure, merges each injected rulebook's deploy name into the deployed `skills:`, and drops the `rulebooks:` key from what it writes.
 - **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.
 
