@@ -23,18 +23,12 @@ jobs:
   # its own runner. Splitting the chain stops the root `check:strict:post`
   # hook from firing, so the static leg runs it explicitly.
   code-quality:
-    name: ${{ matrix.leg }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - leg: test
-            command: pnpm exec nmr test
-          - leg: lint
-            command: pnpm exec nmr lint:strict
-          - leg: static
-            command: pnpm exec nmr typecheck && pnpm exec nmr fmt:check && pnpm run check:strict:post
-    uses: williamthorsen/.github/.github/workflows/code-quality-pnpm-workflow.yaml@v7
+    uses: williamthorsen/.github/.github/workflows/code-quality-pnpm-workflow.yaml@v8
     with:
-      check-command: ${{ matrix.command }}
+      check-commands: |
+        [
+          { "name": "test", "command": "pnpm exec nmr test" },
+          { "name": "lint", "command": "pnpm exec nmr lint:strict" },
+          { "name": "static", "command": "pnpm exec nmr typecheck && pnpm exec nmr fmt:check && pnpm run check:strict:post" }
+        ]
       shellspec-version: '0.28.1'
