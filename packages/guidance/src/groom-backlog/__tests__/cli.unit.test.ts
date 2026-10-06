@@ -251,6 +251,23 @@ describe(runCli, () => {
     });
   });
 
+  describe('parent-status', () => {
+    it('reports a closed ticket without a parent, without offering or writing', async () => {
+      expect(await runCli(['parent-status', '--ticket', '19'], context)).toStrictEqual({
+        ok: true,
+        offer: false,
+        parent: null,
+        ticket: 19,
+        ticketState: 'closed',
+      });
+      expect(existsSync(path.join(root, 'local'))).toBe(false);
+    });
+
+    it('requires --ticket', async () => {
+      expect(await runCli(['parent-status'], context)).toMatchObject({ ok: false, error: 'invalid-args' });
+    });
+  });
+
   describe('record', () => {
     it('appends the records with the run and a timestamp filled in', async () => {
       const stdin = [

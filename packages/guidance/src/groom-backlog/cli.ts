@@ -3,10 +3,11 @@
 /**
  * CLI entry for the backlog sweep.
  *
- * Five commands, each printing one JSON result: `collect` selects the open tickets and writes one assessor input file
+ * Six commands, each printing one JSON result: `collect` selects the open tickets and writes one assessor input file
  * per ticket; `ingest` validates and classifies one assessor reply; `record` appends the skill's decision, policy,
  * note, and pull records; `digest` renders the run's open escalations; `comment` renders one ticket's comment body to a
- * file. `ingest` and `record` are the only writers of the ledger.
+ * file; `parent-status` reports whether a merged ticket was its parent's last open child. `ingest` and `record` are
+ * the only writers of the ledger.
  *
  * The helper does not write anything remote. The skill posts the comments and closes the tickets, which keeps this
  * module testable without a `gh` write.
@@ -24,10 +25,11 @@ import { classify } from './classify.ts';
 import { type CommentDecision, renderComment, type StoredReply } from './comment.ts';
 import { findCrossReferences } from './cross-reference.ts';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_RANGE, renderDigest } from './digest.ts';
-import { fetchOpenIssues, resolveRepository, resolveShortSha, runCommand } from './fetch.ts';
+import { fetchIssue, fetchOpenIssues, resolveRepository, resolveShortSha, runCommand } from './fetch.ts';
 import { detectInProgress } from './in-progress.ts';
 import { appendRecords, buildReplyPath, type LedgerPaths, readLedger, resolveLedgerPaths } from './ledger.ts';
 import { findLatestMarker, findLatestRunMarkerDate } from './marker.ts';
+import { readParentStatus } from './parent-status.ts';
 import {
   type AssessmentRecord,
   AssessorReplySchema,
@@ -134,12 +136,14 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
         return await runDigest(flags, context);
       case 'ingest':
         return await runIngest(flags, context);
+      case 'parent-status':
+        return await runParentStatus(flags, context);
       case 'record':
         return await runRecord(flags, context);
       default:
         throw new CommandError(
           'invalid-args',
-          `expected a command (collect, comment, digest, ingest, record), got "${command ?? ''}"`,
+          `expected a command (collect, comment, digest, ingest, parent-status, record), got "${command ?? ''}"`,
         );
     }
   } catch (error) {
@@ -367,6 +371,13 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
   };
   appendRecords(paths.ledgerFile, [record]);
   return { ok: true, number: reply.number, class: policyClass, recommendation: reply.recommendation, replyFile };
+}
+
+/** Reports whether the merged `--ticket` was the last open child of an open parent, without writing anything. */
+async function runParentStatus(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
+  const ticket = parsePositiveInteger('ticket', readRequired(flags, 'ticket'));
+  const status = await readParentStatus(async (number) => fetchIssue(context.run, context.root, number), ticket);
+  return { ok: true, ...status };
 }
 
 /**
