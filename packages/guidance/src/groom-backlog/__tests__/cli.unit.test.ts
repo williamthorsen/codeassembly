@@ -390,12 +390,7 @@ describe(runCli, () => {
     });
 
     it('reports a baseline keep as not posted and writes no body', async () => {
-      const replyDir = path.join(root, 'local', 'ticket-triage', 'assessments', 'r');
-      await mkdir(replyDir, { recursive: true });
-      writeFileSync(
-        path.join(replyDir, '10.json'),
-        JSON.stringify({ ...buildReply(), assessedAt: '2026-10-01T00:00:00Z', sha: 'abc1234' }),
-      );
+      writeStoredReply(root, buildReply());
 
       const result = await runCli(
         ['comment', '--run', 'r', '--number', '10', '--decision', 'keep', '--decided-by', 'user', '--out', 'c.md'],
@@ -408,12 +403,7 @@ describe(runCli, () => {
 
     it('renders a policy decision from the stored reply', async () => {
       const reply: AssessorReply = buildReply({ recommendation: 'close-complete' });
-      const replyDir = path.join(root, 'local', 'ticket-triage', 'assessments', 'r');
-      await mkdir(replyDir, { recursive: true });
-      writeFileSync(
-        path.join(replyDir, '10.json'),
-        JSON.stringify({ ...reply, assessedAt: '2026-10-01T00:00:00Z', sha: 'abc1234' }),
-      );
+      writeStoredReply(root, reply);
 
       const result = await runCli(
         [
@@ -436,6 +426,15 @@ describe(runCli, () => {
       expect(readFileSync(path.join(root, 'c.md'), 'utf8')).toContain('**Disposition:** Closed as complete.');
     });
 
+    it('refuses a split without --children', async () => {
+      const result = await runCli(
+        ['comment', '--run', 'r', '--number', '10', '--decision', 'split', '--decided-by', 'user', '--out', 'c.md'],
+        context,
+      );
+
+      expect(result).toMatchObject({ ok: false, error: 'invalid-args', message: '--children is required for a split' });
+    });
+
     it('refuses a decision outside the vocabulary', async () => {
       const result = await runCli(
         ['comment', '--run', 'r', '--number', '10', '--decision', 'shelve', '--decided-by', 'bulk', '--out', 'c.md'],
@@ -443,6 +442,89 @@ describe(runCli, () => {
       );
 
       expect(result).toMatchObject({ ok: false, error: 'invalid-args' });
+    });
+  });
+
+  describe('draft', () => {
+    const CONTEXT_SECTION = { heading: 'Context', body: 'The uploader lives in `src/transport/`.' };
+    const DRAFT = { sections: [CONTEXT_SECTION, { heading: 'Notes', body: 'Appended.' }], children: [] };
+
+    beforeEach(() => {
+      const body = '## Problem\n\nIt fails.\n\n## Context\n\nOld path.\n';
+      issues = issues.map((issue) => (issue.number === 10 ? { ...issue, body, comments: [] } : issue));
+    });
+
+    it('composes the new body from the current body, replacing and appending the drafted sections', async () => {
+      writeStoredReply(root, buildReply({ recommendation: 'update', draft: DRAFT }));
+
+      const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
+
+      expect(result).toMatchObject({ ok: true, stale: false, sections: ['Context', 'Notes'], children: [] });
+      expect(readFileSync(path.join(root, 'd', 'body.md'), 'utf8')).toBe(
+        '## Problem\n\nIt fails.\n\n## Context\n\nThe uploader lives in `src/transport/`.\n\n## Notes\n\nAppended.\n',
+      );
+    });
+
+    it('writes one file per child of a split', async () => {
+      const draft = { sections: [CONTEXT_SECTION], children: [{ title: 'Add the backoff', body: 'Backoff.' }] };
+      writeStoredReply(root, buildReply({ recommendation: 'split', draft }));
+
+      const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
+
+      const child = path.join(root, 'd', 'child-1.md');
+      expect(result).toMatchObject({ ok: true, children: [{ title: 'Add the backoff', path: child }] });
+      expect(readFileSync(child, 'utf8')).toBe('Backoff.\n');
+    });
+
+    it('reports a stale draft and writes nothing when the ticket changed after the version assessed', async () => {
+      writeStoredReply(root, buildReply({ recommendation: 'update', draft: DRAFT }), {
+        ticketUpdatedAt: '2026-01-15T00:00:00Z',
+      });
+
+      const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
+
+      expect(result).toStrictEqual({ ok: true, number: 10, stale: true });
+      expect(existsSync(path.join(root, 'd'))).toBe(false);
+    });
+
+    it("does not count the run's own marker comment as a change", async () => {
+      writeStoredReply(root, buildReply({ recommendation: 'update', draft: DRAFT }), {
+        ticketUpdatedAt: '2026-01-15T00:00:00Z',
+      });
+      const comments = [
+        {
+          author: { login: 'owner' },
+          body: renderMarker({ run: 'r', decision: 'keep' }),
+          createdAt: '2026-02-01T00:00:00Z',
+        },
+      ];
+      issues = issues.map((issue) => (issue.number === 10 ? { ...issue, comments } : issue));
+
+      const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
+
+      expect(result).toMatchObject({ ok: true, stale: false });
+    });
+
+    it('refuses a reply without a draft', async () => {
+      writeStoredReply(root, buildReply());
+
+      const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
+
+      expect(result).toMatchObject({ ok: false, error: 'missing-draft' });
+    });
+
+    it('refuses a draft that replaces a frozen section of a ticket in progress', async () => {
+      const inProgress = {
+        signal: 'branch',
+        ref: '10-uploader',
+        commitsAhead: 1,
+        lastCommitAt: '2026-09-01T00:00:00Z',
+      };
+      writeStoredReply(root, buildReply({ recommendation: 'update', draft: DRAFT }), { inProgress });
+
+      const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
+
+      expect(result).toMatchObject({ ok: false, error: 'frozen-section', message: expect.stringContaining('Context') });
     });
   });
 
@@ -528,6 +610,22 @@ function writeLedger(root: string, records: ReadonlyArray<Record<string, unknown
   const dir = path.join(root, 'local', 'ticket-triage');
   mkdirSync(dir, { recursive: true });
   writeFileSync(path.join(dir, 'ledger.jsonl'), records.map((record) => `${JSON.stringify(record)}\n`).join(''));
+}
+
+/** Writes `reply` as run `r`'s stored reply file, with the provenance that `ingest` adds, overridden by `provenance`. */
+function writeStoredReply(root: string, reply: AssessorReply, provenance: Record<string, unknown> = {}): void {
+  const dir = path.join(root, 'local', 'ticket-triage', 'assessments', 'r');
+  mkdirSync(dir, { recursive: true });
+  const stored = {
+    ...reply,
+    assessedAt: '2026-10-01T00:00:00Z',
+    inProgress: null,
+    sha: 'abc1234',
+    ticketUpdatedAt: '2026-02-01T00:00:00Z',
+    umbrella: false,
+    ...provenance,
+  };
+  writeFileSync(path.join(dir, `${reply.number}.json`), JSON.stringify(stored));
 }
 
 // endregion | Helpers

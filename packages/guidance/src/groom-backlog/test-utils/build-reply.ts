@@ -23,6 +23,7 @@ export function buildReply(overrides: Partial<AssessorReply> = {}): AssessorRepl
     references: [],
     dependsOn: null,
     overlaps: [],
+    draft: null,
     ...overrides,
   };
 }

@@ -50,6 +50,35 @@ const OverlapSchema = z.object({
   reason: z.string(),
 });
 
+/** The recommendations that carry a drafted edit. */
+export const DRAFTED_RECOMMENDATIONS = ['update', 'revise', 'split'] as const;
+
+const DraftSectionSchema = z.object({
+  heading: z
+    .string()
+    .transform((heading) => heading.replace(/^##\s+/, '').trim())
+    .pipe(z.string().min(1)),
+  body: z.string().min(1),
+});
+
+/**
+ * The edit that an `update`, `revise`, or `split` recommendation drafts: the replacement `## ` sections of the ticket
+ * body, by heading, and for a split the child tickets.
+ */
+export const DraftSchema = z
+  .object({
+    sections: z.array(DraftSectionSchema).min(1),
+    children: z.array(z.object({ title: z.string().min(1), body: z.string().min(1) })),
+  })
+  .superRefine((draft, context) => {
+    const headings = draft.sections.map((section) => section.heading.toLowerCase());
+    if (new Set(headings).size !== headings.length) {
+      context.addIssue({ code: 'custom', path: ['sections'], message: 'names each heading once' });
+    }
+  });
+
+export type Draft = z.infer<typeof DraftSchema>;
+
 /** The JSON block that the `ticket-assessor` subagent returns. */
 export const AssessorReplySchema = z
   .object({
@@ -73,8 +102,24 @@ export const AssessorReplySchema = z
     references: z.array(z.object({ ref: z.string().min(1), verified: z.boolean(), note: z.string() })),
     dependsOn: z.number().int().positive().nullable(),
     overlaps: z.array(OverlapSchema),
+    draft: DraftSchema.nullable().default(null),
   })
   .superRefine((reply, context) => {
+    const isDrafted = new Set<string>(DRAFTED_RECOMMENDATIONS).has(reply.recommendation);
+    if (isDrafted !== (reply.draft !== null)) {
+      context.addIssue({
+        code: 'custom',
+        path: ['draft'],
+        message: 'is present exactly when the recommendation is update, revise, or split',
+      });
+    }
+    if (reply.draft !== null && (reply.recommendation === 'split') !== reply.draft.children.length > 0) {
+      context.addIssue({
+        code: 'custom',
+        path: ['draft', 'children'],
+        message: 'is non-empty exactly when the recommendation is split',
+      });
+    }
     if ((reply.rule === 'half-met') !== reply.remainder.length > 0) {
       context.addIssue({ code: 'custom', path: ['remainder'], message: 'is non-empty exactly when rule is half-met' });
     }

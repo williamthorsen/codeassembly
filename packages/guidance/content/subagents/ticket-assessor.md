@@ -63,6 +63,10 @@ Choose one `recommendation`:
 
 **Overlaps.** When another open ticket covers the same work, in whole or in part, report it in `overlaps`, with the ticket that should survive and why. List every ticket of the group in `tickets`, this one included.
 
+**Draft the edit.** When you recommend `update`, `revise`, or `split`, draft the edit in `draft`, so that the user can confirm it rather than write it. Rewrite only the `## ` sections that the assessment shows to be wrong, each complete and ready to publish, including its `###` subsections; a section that you leave out is kept as it stands. Name each section by its heading without the `## `. A section that the ticket does not have is appended. For `split`, list the new tickets in `children`, each with a `title` and a whole `body`, and rewrite the original in `sections`: With two pieces, the original keeps the first piece; with three or more, the original becomes an umbrella that keeps its problem and context, lists the children, and has "Every child is closed" as its acceptance criterion. For every other recommendation, `draft` is `null`.
+
+Write the draft as the ticket's own text: State the problem, the outcome, and the acceptance criteria, and leave out the assessment's evidence and your reasoning, which the comment records.
+
 **Confidence.** `high` when the evidence settles the recommendation, `medium` when it supports the recommendation and leaves room for another, and `low` when it barely tips the balance. Only a `high` recommendation can be applied without a human decision.
 
 ## What you return
@@ -96,7 +100,14 @@ One fenced JSON block, last and alone. Do not write prose after it.
   "relatedTickets": [98],
   "references": [{ "ref": "#140", "verified": true, "note": "Adds the configurable retry count" }],
   "dependsOn": null,
-  "overlaps": []
+  "overlaps": [],
+  "draft": {
+    "sections": [
+      { "heading": "Context", "body": "The uploader lives in `src/transport/upload.ts`, and the retry count is configurable." },
+      { "heading": "Acceptance criteria", "body": "### Must have\n\n- [ ] The retry backs off exponentially." }
+    ],
+    "children": []
+  }
 }
 ```
 
@@ -107,6 +118,7 @@ One fenced JSON block, last and alone. Do not write prose after it.
 - `relatedTickets`: the other tickets that the assessment names.
 - `references`: one entry per entry of `crossReferences`, in the same order.
 - `overlaps`: each entry has `tickets`, `survivor`, and `reason`.
+- `draft`: `sections` (each `heading` and `body`) and `children` (each `title` and `body`) for `update`, `revise`, and `split`, `children` non-empty only for `split`; `null` otherwise.
 
 An empty list is written `[]` rather than omitted.
 
