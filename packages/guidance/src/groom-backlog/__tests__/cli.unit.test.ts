@@ -389,6 +389,23 @@ describe(runCli, () => {
       expect(result).toMatchObject({ ok: false, error: 'missing-reply' });
     });
 
+    it('reports a baseline keep as not posted and writes no body', async () => {
+      const replyDir = path.join(root, 'local', 'ticket-triage', 'assessments', 'r');
+      await mkdir(replyDir, { recursive: true });
+      writeFileSync(
+        path.join(replyDir, '10.json'),
+        JSON.stringify({ ...buildReply(), assessedAt: '2026-10-01T00:00:00Z', sha: 'abc1234' }),
+      );
+
+      const result = await runCli(
+        ['comment', '--run', 'r', '--number', '10', '--decision', 'keep', '--decided-by', 'user', '--out', 'c.md'],
+        context,
+      );
+
+      expect(result).toStrictEqual({ ok: true, number: 10, post: false });
+      expect(existsSync(path.join(root, 'c.md'))).toBe(false);
+    });
+
     it('renders a policy decision from the stored reply', async () => {
       const reply: AssessorReply = buildReply({ recommendation: 'close-complete' });
       const replyDir = path.join(root, 'local', 'ticket-triage', 'assessments', 'r');
