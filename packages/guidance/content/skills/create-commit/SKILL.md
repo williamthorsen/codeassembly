@@ -16,7 +16,7 @@ The conventions to which the message is composed -- title format, body voice and
 ## Arguments
 
 - **Paths**: The paths that this commit records. When the arguments do not name any, the candidates are every changed path in the working tree.
-- **Purpose**: One line stating why the change was made. The diff shows what changed; the purpose is the only source of why.
+- **Purpose**: One line stating why the change was made. The diff shows what changed; the purpose is the only source of why. When the arguments do not state one, compose the body from the diff alone, and never state a reason that the diff does not show.
 
 Everything else comes from the repository: This procedure may run without the conversation that produced the change, so it never relies on anything that only that conversation contains.
 
