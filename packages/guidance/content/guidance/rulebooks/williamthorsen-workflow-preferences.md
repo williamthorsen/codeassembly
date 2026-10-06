@@ -53,6 +53,6 @@ Write a ticket in detail when its work is about to be implemented. Until then, k
 - Treat the prototype as the baseline.
 - Make each iteration a sub-issue of the epic, and create every iteration's sub-issue when the epic is created rather than as each iteration starts. Specify the current iteration in detail. Write each later one as a one-line outcome, what the user can newly do, rather than as a feature, and refine it against the design doc when its iteration starts.
 
-Once the developer approves the end vision, propose that shape rather than drafting every ticket up front.
+Once the developer approves the end vision, propose that shape rather than drafting every ticket in detail up front.
 
 Expect the vision to change. At the end of each iteration, re-read the design doc, revise what the iteration disproved, and refine the next sub-issue against the revised doc. The documents exist so that a new session knows the vision without being told.
