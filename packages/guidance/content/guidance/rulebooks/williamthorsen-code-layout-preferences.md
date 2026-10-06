@@ -2,7 +2,7 @@
 slug: williamthorsen-code-layout-preferences
 description: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order. Consult before creating a file or directory, before placing a test, helper, or fixture, and before ordering declarations in a module.'
 delivery: [hook, skill]
-version: '6'
+version: '7'
 ---
 
 # William Thorsen's code layout preferences
@@ -17,7 +17,7 @@ Never scaffold a flat `src/`; later readers would extend flatness as convention.
 
 Worked examples, not a closed set:
 
-- `integrations/`: Code that interfaces with an external library
+- `clients/<library>/`: Code that talks to a third-party service or library or maps to its data shapes, one subdirectory per third party. Code that uses a client lives in a directory named for its domain, not under `clients/`.
 - `portable/`: Generic code, potentially extractable into a package of its own
 - Domain-grouped feature directories, such as `services/`, `pages/`, and `components/`, subdivided by feature as they grow
 
