@@ -3,6 +3,7 @@
  * when a page holds two or more of them, shown once under that ticket as a hub; overlapping tickets are merged into
  * one group with a survivor.
  */
+import { proposeAction, type ProposedAction } from './propose.ts';
 import type { Escalation, InProgress } from './types.ts';
 
 /** The default number of escalations per page. */
@@ -13,7 +14,7 @@ export const PAGE_SIZE_RANGE = { max: 30, min: 20 } as const;
 
 /** One rendered digest page. */
 export interface DigestPage {
-  entries: Array<{ index: number; number: number; recommendation: string }>;
+  entries: Array<{ index: number; number: number; proposed: ProposedAction; recommendation: string }>;
   hubs: number[];
   markdown: string;
   page: number;
@@ -127,8 +128,45 @@ function describeInProgress(inProgress: InProgress): string {
   return `In progress: \`${inProgress.ref}\` (${inProgress.signal}), ${commits} ahead, last commit ${inProgress.lastCommitAt}`;
 }
 
-/** Renders one escalation as a numbered entry with its supporting bullets. */
-function renderEntry(index: number, escalation: Escalation, isUnderHub: boolean): string {
+/** Formats the proposed-action line of an entry. */
+function describeProposal(proposed: ProposedAction, isInProgress: boolean): string {
+  switch (proposed.decision) {
+    case 'leave':
+      return isInProgress ? 'Proposed: leave, because the ticket is in progress' : 'Proposed: leave';
+    case 'revise':
+    case 'split':
+    case 'update':
+      return `Proposed: \`${proposed.decision}\`, applying the draft below`;
+    default:
+      return proposed.supersededBy === undefined
+        ? `Proposed: \`${proposed.decision}\``
+        : `Proposed: \`${proposed.decision}\` by #${proposed.supersededBy}`;
+  }
+}
+
+/** Indents every non-empty line of `text` by `width` spaces, so that it continues a list item. */
+function indent(text: string, width: number): string {
+  const padding = ' '.repeat(width);
+  return text
+    .trim()
+    .split('\n')
+    .map((line) => (line === '' ? '' : `${padding}${line}`))
+    .join('\n');
+}
+
+/** Renders a reply's draft under an entry: each drafted section under its heading, then each child ticket. */
+function renderDraft(escalation: Escalation): string[] {
+  const draft = escalation.reply?.draft;
+  if (draft === null || draft === undefined) return [];
+  const blocks = draft.sections.map((section) => indent(`#### ${section.heading}\n\n${section.body}`, 5));
+  const children = draft.children.map((child, offset) =>
+    indent(`#### Child ${offset + 1}: ${child.title}\n\n${child.body}`, 5),
+  );
+  return ['   - Draft:', ...[...blocks, ...children].flatMap((block) => ['', block])];
+}
+
+/** Renders one escalation as a numbered entry with its supporting bullets, its proposal, and its draft. */
+function renderEntry(index: number, escalation: Escalation, isUnderHub: boolean, proposed: ProposedAction): string {
   const { record, reply } = escalation;
   const title = reply?.title ?? '';
   const lines = [
@@ -145,6 +183,7 @@ function renderEntry(index: number, escalation: Escalation, isUnderHub: boolean)
   if (reply !== undefined && reply.remainder.length > 0) {
     lines.push(`   - Remainder: ${reply.remainder.join('; ')}`);
   }
+  lines.push(`   - ${describeProposal(proposed, record.inProgress !== null)}`, ...renderDraft(escalation));
   return lines.join('\n');
 }
 
@@ -185,8 +224,9 @@ function renderPage(input: {
     heading = nextHeading;
 
     const index = offset + 1;
-    blocks.push(renderEntry(index, escalation, hub !== undefined && hub === record.dependsOn));
-    entries.push({ index, number: record.number, recommendation: record.recommendation });
+    const proposed = proposeAction(escalation, group);
+    blocks.push(renderEntry(index, escalation, hub !== undefined && hub === record.dependsOn, proposed));
+    entries.push({ index, number: record.number, proposed, recommendation: record.recommendation });
   }
   return { entries, hubs, markdown: `${blocks.join('\n\n')}\n`, page: input.page };
 }

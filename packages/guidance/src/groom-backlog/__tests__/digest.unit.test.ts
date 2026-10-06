@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { mergeOverlaps, renderDigest } from '../digest.ts';
 import type { AssessmentRecord } from '../schemas.ts';
+import { buildReply } from '../test-utils/build-reply.ts';
 import type { Escalation } from '../types.ts';
 
 describe(renderDigest, () => {
@@ -64,6 +65,31 @@ describe(renderDigest, () => {
 
     expect(page?.markdown).toContain(
       'In progress: `20-x` (manifest), 3 commits ahead, last commit 2026-09-01T00:00:00Z',
+    );
+  });
+
+  it("shows each entry's proposal, and the draft under an entry that has one", () => {
+    const draft = {
+      sections: [{ heading: 'Context', body: 'The uploader moved.\n\n- It lives in `src/transport/`.' }],
+      children: [],
+    };
+    const update = { ...buildEscalation(20), reply: buildReply({ number: 20, recommendation: 'update', draft }) };
+
+    const [page] = renderDigest({ escalations: [buildEscalation(10), update], pageSize: 20, titles: new Map() });
+
+    expect(page?.entries.map((entry) => entry.proposed)).toStrictEqual([{ decision: 'leave' }, { decision: 'update' }]);
+    expect(page?.markdown).toContain('   - Proposed: leave\n');
+    expect(page?.markdown).toContain(
+      [
+        '   - Proposed: `update`, applying the draft below',
+        '   - Draft:',
+        '',
+        '     #### Context',
+        '',
+        '     The uploader moved.',
+        '',
+        '     - It lives in `src/transport/`.',
+      ].join('\n'),
     );
   });
 
