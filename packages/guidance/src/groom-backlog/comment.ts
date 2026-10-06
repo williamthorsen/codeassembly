@@ -15,6 +15,7 @@ export interface StoredReply extends AssessorReply {
 
 /** The decision that the comment records. */
 export interface CommentDecision {
+  children: number[] | undefined;
   decidedBy: 'bulk' | 'policy' | 'user';
   decision: string;
   reason: string | undefined;
@@ -32,7 +33,7 @@ export function renderComment(decision: CommentDecision, reply: StoredReply | un
   const sections: string[] = [];
 
   if (reply !== undefined) sections.push(reply.markdown.trim());
-  sections.push(`**Disposition:** ${describeDisposition(decision, isHalfMet, reason)}`);
+  sections.push(`**Disposition:** ${describeDisposition(decision, isHalfMet, reason, reply)}`);
   if (isHalfMet) {
     sections.push(['**Remainder:**', '', ...reply.remainder.map((part) => `- ${part}`)].join('\n'));
   }
@@ -69,13 +70,20 @@ export function shouldPostComment(
 // region | Helpers
 
 /** Returns the disposition sentence, followed by the reason when there is one. */
-function describeDisposition(decision: CommentDecision, isHalfMet: boolean, reason: string | undefined): string {
-  const lead = describeLead(decision, isHalfMet);
+function describeDisposition(
+  decision: CommentDecision,
+  isHalfMet: boolean,
+  reason: string | undefined,
+  reply: StoredReply | undefined,
+): string {
+  const headings = reply?.draft?.sections.map((section) => section.heading) ?? [];
+  const lead = describeLead(decision, isHalfMet, headings);
   return reason === undefined || reason === '' ? lead : `${lead} ${reason}`;
 }
 
-/** Returns the sentence that states what was done with the ticket. */
-function describeLead(decision: CommentDecision, isHalfMet: boolean): string {
+/** Returns the sentence that states what was done with the ticket; `headings` names the sections that a draft rewrote. */
+function describeLead(decision: CommentDecision, isHalfMet: boolean, headings: readonly string[]): string {
+  const rewritten = headings.join(', ');
   switch (decision.decision) {
     case 'close-complete':
       return 'Closed as complete.';
@@ -89,11 +97,15 @@ function describeLead(decision: CommentDecision, isHalfMet: boolean): string {
     case 'close-not-planned':
       return 'Closed as not planned.';
     case 'update':
-      return 'Kept open, to be updated to match the codebase.';
+      return headings.length === 0
+        ? 'Kept open, to be updated to match the codebase.'
+        : `Updated to match the codebase: ${rewritten}.`;
     case 'revise':
-      return 'Kept open, to be revised.';
-    case 'split':
-      return 'Kept open, to be split.';
+      return headings.length === 0 ? 'Kept open, to be revised.' : `Revised: ${rewritten}.`;
+    case 'split': {
+      const children = (decision.children ?? []).map((child) => `#${child}`).join(', ');
+      return headings.length === 0 ? `Split into ${children}.` : `Split into ${children}; ${rewritten} rewritten.`;
+    }
     default:
       return 'Kept open.';
   }

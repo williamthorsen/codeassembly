@@ -426,6 +426,15 @@ describe(runCli, () => {
       expect(readFileSync(path.join(root, 'c.md'), 'utf8')).toContain('**Disposition:** Closed as complete.');
     });
 
+    it('refuses a split without --children', async () => {
+      const result = await runCli(
+        ['comment', '--run', 'r', '--number', '10', '--decision', 'split', '--decided-by', 'user', '--out', 'c.md'],
+        context,
+      );
+
+      expect(result).toMatchObject({ ok: false, error: 'invalid-args', message: '--children is required for a split' });
+    });
+
     it('refuses a decision outside the vocabulary', async () => {
       const result = await runCli(
         ['comment', '--run', 'r', '--number', '10', '--decision', 'shelve', '--decided-by', 'bulk', '--out', 'c.md'],

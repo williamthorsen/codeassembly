@@ -55,6 +55,7 @@ export interface CommandContext {
 export type CommandResult = { ok: false; error: string; message: string } | ({ ok: true } & Record<string, unknown>);
 
 type FlagName =
+  | 'children'
   | 'decided-by'
   | 'decision'
   | 'exclude-label'
@@ -70,6 +71,7 @@ type FlagName =
   | 'ticket';
 
 const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
+  { name: 'children', takesValue: true },
   { name: 'decided-by', takesValue: true },
   { name: 'decision', takesValue: true },
   { name: 'exclude-label', takesValue: true },
@@ -271,6 +273,11 @@ async function runComment(flags: ParsedFlags, context: CommandContext): Promise<
   }
   const out = path.resolve(context.root, readRequired(flags, 'out'));
   const supersededBy = readOptional(flags, 'superseded-by');
+  const childrenValue = readOptional(flags, 'children');
+  if (decision === 'split' && childrenValue === undefined) {
+    throw new CommandError('invalid-args', '--children is required for a split');
+  }
+  const children = childrenValue?.split(',').map((child) => parsePositiveInteger('children', child.trim()));
 
   const paths = await resolveLedgerPaths(context.run, context.root);
   const reply = decidedBy === 'bulk' ? undefined : readReply(paths, run, number);
@@ -278,6 +285,7 @@ async function runComment(flags: ParsedFlags, context: CommandContext): Promise<
     throw new CommandError('missing-reply', `run "${run}" does not have a valid reply file for #${number}`);
   }
   const commentDecision: CommentDecision = {
+    children,
     decidedBy,
     decision,
     reason: readOptional(flags, 'reason'),

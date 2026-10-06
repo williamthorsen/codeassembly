@@ -17,7 +17,14 @@ describe(renderComment, () => {
     const reply: StoredReply = { ...buildReply({ recommendation: 'close-complete' }), ...PROVENANCE };
 
     const body = renderComment(
-      { decidedBy: 'policy', decision: 'close-complete', reason: undefined, run: 'r', supersededBy: undefined },
+      {
+        children: undefined,
+        decidedBy: 'policy',
+        decision: 'close-complete',
+        reason: undefined,
+        run: 'r',
+        supersededBy: undefined,
+      },
       reply,
     );
 
@@ -47,7 +54,14 @@ describe(renderComment, () => {
     };
 
     const body = renderComment(
-      { decidedBy: 'policy', decision: 'close-superseded', reason: undefined, run: 'r', supersededBy: undefined },
+      {
+        children: undefined,
+        decidedBy: 'policy',
+        decision: 'close-superseded',
+        reason: undefined,
+        run: 'r',
+        supersededBy: undefined,
+      },
       reply,
     );
 
@@ -59,6 +73,7 @@ describe(renderComment, () => {
   it('renders a bulk decision without an assessment, with null verdicts and recommendation', () => {
     const body = renderComment(
       {
+        children: undefined,
         decidedBy: 'bulk',
         decision: 'close-not-planned',
         reason: 'The package is dormant.',
@@ -70,6 +85,35 @@ describe(renderComment, () => {
 
     expect(body.startsWith('**Disposition:** Closed as not planned. The package is dormant.')).toBe(true);
     expect(parseMarkers(body)[0]).toMatchObject({ verdicts: null, recommendation: null, decidedBy: 'bulk' });
+  });
+
+  it.each([
+    ['update', undefined, 'Updated to match the codebase: Context, Acceptance criteria.'],
+    ['revise', undefined, 'Revised: Context, Acceptance criteria.'],
+    ['split', [41, 42], 'Split into #41, #42; Context, Acceptance criteria rewritten.'],
+  ] as const)('states the sections that an applied %s rewrote', (decision, children, lead) => {
+    const draft = {
+      sections: [
+        { heading: 'Context', body: 'New.' },
+        { heading: 'Acceptance criteria', body: '- [ ] Done.' },
+      ],
+      children: decision === 'split' ? [{ title: 'Child', body: 'Body.' }] : [],
+    };
+    const reply: StoredReply = { ...buildReply({ recommendation: decision, draft }), ...PROVENANCE };
+
+    const body = renderComment(
+      {
+        children: children === undefined ? undefined : [...children],
+        decidedBy: 'user',
+        decision,
+        reason: undefined,
+        run: 'r',
+        supersededBy: undefined,
+      },
+      reply,
+    );
+
+    expect(body).toContain(`**Disposition:** ${lead}`);
   });
 });
 
