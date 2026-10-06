@@ -1,5 +1,5 @@
 /** Classifies an assessor's reply under the sweep's decision policy. */
-import { extractUncheckedCriteria } from './parent-status.ts';
+import { extractUncheckedItems, isChildCriterion } from './parent-status.ts';
 import type { AssessorReply } from './schemas.ts';
 import type { InProgress, Issue } from './types.ts';
 
@@ -64,5 +64,6 @@ export function isEffectiveBaseline(verdicts: Readonly<Record<string, string | n
 /** Returns whether the ticket has open children and its only unchecked criterion is "Every child is closed". */
 export function isUmbrella(ticket: Pick<Issue, 'body' | 'subIssues'>): boolean {
   const hasOpenChildren = ticket.subIssues.total > ticket.subIssues.completed;
-  return hasOpenChildren && extractUncheckedCriteria(ticket.body).length === 0;
+  const unchecked = extractUncheckedItems(ticket.body);
+  return hasOpenChildren && unchecked.length > 0 && unchecked.every(isChildCriterion);
 }

@@ -126,6 +126,10 @@ describe(isUmbrella, () => {
     expect(isUmbrella({ body: UMBRELLA_BODY, subIssues: { completed: 3, total: 3 } })).toBe(false);
   });
 
+  it('rejects a ticket with open children whose criteria do not include that every child is closed', () => {
+    expect(isUmbrella({ body: '- [x] The docs are written.', subIssues: { completed: 1, total: 3 } })).toBe(false);
+  });
+
   it('rejects a ticket with another unchecked criterion', () => {
     const body = `${UMBRELLA_BODY}- [ ] The docs describe the new flow.\n`;
 
