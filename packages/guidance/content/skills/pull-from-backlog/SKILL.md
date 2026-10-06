@@ -58,7 +58,7 @@ Present, in this order, and omit a section that is empty rather than reporting a
 
 Render `candidates` as a numbered gradient menu, per [Option format](#option-format), with every candidate's `reasons` as its `➕` lines and its URL. The candidate ranked first takes the strongest marker. The menu is always rendered: Which ticket the user works on next is a preference about their time, which is in the gated class. When `candidates` is empty, say so, name the counts from `counts`, and skip step 4.
 
-Close the turn with an action-items block that asks for the pick. When `groomStale.stale`, the block contains, before the pick, an offer to groom the backlog: `{skill:groom-backlog}` without arguments. When the user takes it, run it, then start again at step 1: A groom can change the candidates.
+Close the turn with an action-items block that asks for the pick. When `groomStale.stale`, the block contains, before the pick, an offer to groom the backlog: `{skill:groom-backlog}` without arguments, which assesses every open ticket, applies its recommendations after one confirmation per digest page, and asks nothing per ticket. When the user takes it, run it, then start again at step 1: A groom can change the candidates.
 
 ### 4. Record the pick
 
