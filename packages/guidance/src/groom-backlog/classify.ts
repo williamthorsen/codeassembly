@@ -53,8 +53,8 @@ export function isAllBaseline(verdicts: Readonly<Record<string, string | null>>)
 }
 
 /**
- * Returns whether the verdicts are baseline, counting an umbrella's `partial` progress as baseline: An umbrella with
- * open children is expected to be partly done.
+ * Returns whether the verdicts are baseline, counting an umbrella's `partial` progress as baseline, per the umbrella
+ * case stated in `content/_partials/ticket-assessment-baseline.md`.
  */
 export function isEffectiveBaseline(verdicts: Readonly<Record<string, string | null>>, umbrella: boolean): boolean {
   if (umbrella && verdicts.progress === 'partial')
