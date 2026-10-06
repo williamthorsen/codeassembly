@@ -52,7 +52,7 @@ The helper's `ingest` command classifies each assessment into one class, and you
 
 <!-- include: ../../_partials/ticket-assessment-baseline.md / -->
 
-An umbrella's `partial` progress also counts as baseline here: An umbrella is a ticket that has open children and whose only unchecked criterion is "Every child is closed", so it is expected to be partly done. The helper applies this, in `ingest` and in `comment`.
+The helper applies the umbrella case in `ingest` and in `comment`.
 
 **What each escalation proposes.** The helper's `digest` command proposes one action per entry, and a confirmed page applies it:
 
