@@ -115,7 +115,7 @@ If `counts.total` is 0, go to step 5 when `pendingAutomatic` is not empty, and t
 
 Without `--close-not-planned`, go to step 4: Every selected ticket is assessed.
 
-With it, list the selected tickets that do not have an in-progress signal, each with its number and title, and ask one confirmation in the action-items block before any write. On confirmation, for each listed ticket, render the bulk comment, post it, close the ticket, and record the decision, per [Writing to GitHub](#writing-to-github), with `--decision close-not-planned --decided-by bulk --reason "{reason}"`. On refusal, write nothing and stop. Either way, the in-progress tickets are not closed: Dispatch only them in step 4.
+With it, list the selected tickets that do not have an in-progress signal, each with its number and title, and ask one confirmation in the action-items block before any write. On confirmation, for each listed ticket, render the bulk comment, post it, close the ticket, and record the decision, per [Writing to GitHub](#writing-to-github), with `--decision close-not-planned --decided-by bulk --reason "{reason}"`. The in-progress tickets stay open: Dispatch only them in step 4. On refusal, write nothing and stop.
 
 Under `--dry-run`, list the tickets that would close, and write nothing.
 
