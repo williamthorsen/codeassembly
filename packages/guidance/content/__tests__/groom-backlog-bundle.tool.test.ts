@@ -35,6 +35,7 @@ const REPLY = {
   references: [],
   dependsOn: null,
   overlaps: [],
+  draft: { sections: [{ heading: 'Context', body: 'The uploader lives in `src/transport/`.' }], children: [] },
 };
 
 describe('the deployed bundle', () => {
