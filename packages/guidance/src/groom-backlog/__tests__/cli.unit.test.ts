@@ -229,6 +229,31 @@ describe(runCli, () => {
       expect(existsSync(path.join(root, 'local', 'ticket-triage', 'assessments', 'r', '10.json'))).toBe(true);
     });
 
+    it("keeps silently an umbrella's keep with partial progress, and stores the umbrella flag", async () => {
+      writeFileSync(
+        path.join(root, 'ticket.json'),
+        JSON.stringify({
+          number: 10,
+          updatedAt: '2026-02-01T00:00:00Z',
+          inProgress: null,
+          body: '- [ ] Every child is closed.',
+          subIssues: { completed: 1, total: 2 },
+        }),
+      );
+      const reply = buildReply({ verdicts: { ...buildReply().verdicts, progress: 'partial' } });
+
+      const result = await runCli(['ingest', '--run', 'r', '--ticket', 'ticket.json'], {
+        ...context,
+        stdin: JSON.stringify(reply),
+      });
+
+      expect(result).toMatchObject({ ok: true, class: 'silent-keep' });
+      const stored: unknown = JSON.parse(
+        readFileSync(path.join(root, 'local', 'ticket-triage', 'assessments', 'r', '10.json'), 'utf8'),
+      );
+      expect(stored).toMatchObject({ umbrella: true });
+    });
+
     it('refuses a reply that fails validation and does not append it', async () => {
       const reply = { ...buildReply(), rule: 'half-met' };
 
@@ -362,6 +387,23 @@ describe(runCli, () => {
       );
 
       expect(result).toMatchObject({ ok: false, error: 'missing-reply' });
+    });
+
+    it('reports a baseline keep as not posted and writes no body', async () => {
+      const replyDir = path.join(root, 'local', 'ticket-triage', 'assessments', 'r');
+      await mkdir(replyDir, { recursive: true });
+      writeFileSync(
+        path.join(replyDir, '10.json'),
+        JSON.stringify({ ...buildReply(), assessedAt: '2026-10-01T00:00:00Z', sha: 'abc1234' }),
+      );
+
+      const result = await runCli(
+        ['comment', '--run', 'r', '--number', '10', '--decision', 'keep', '--decided-by', 'user', '--out', 'c.md'],
+        context,
+      );
+
+      expect(result).toStrictEqual({ ok: true, number: 10, post: false });
+      expect(existsSync(path.join(root, 'c.md'))).toBe(false);
     });
 
     it('renders a policy decision from the stored reply', async () => {

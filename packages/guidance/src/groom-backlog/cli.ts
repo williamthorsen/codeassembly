@@ -21,8 +21,8 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { z } from 'zod';
 
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
-import { classify } from './classify.ts';
-import { type CommentDecision, renderComment, type StoredReply } from './comment.ts';
+import { classify, isUmbrella } from './classify.ts';
+import { type CommentDecision, renderComment, shouldPostComment, type StoredReply } from './comment.ts';
 import { findCrossReferences } from './cross-reference.ts';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_RANGE, renderDigest } from './digest.ts';
 import { fetchIssue, fetchOpenIssues, resolveRepository, resolveShortSha, runCommand } from './fetch.ts';
@@ -248,7 +248,10 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   };
 }
 
-/** Renders one ticket's comment body to `--out`. A bulk decision needs no reply; every other decision does. */
+/**
+ * Renders one ticket's comment body to `--out`, and reports whether to post it; a comment that is not posted is not
+ * rendered. A bulk decision needs no reply; every other decision does.
+ */
 async function runComment(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
   const run = readRequired(flags, 'run');
   const number = parsePositiveInteger('number', readRequired(flags, 'number'));
@@ -275,10 +278,11 @@ async function runComment(flags: ParsedFlags, context: CommandContext): Promise<
     run,
     supersededBy: supersededBy === undefined ? undefined : parsePositiveInteger('superseded-by', supersededBy),
   };
+  if (!shouldPostComment(commentDecision, reply)) return { ok: true, number, post: false };
   const body = renderComment(commentDecision, reply);
   mkdirSync(path.dirname(out), { recursive: true });
   writeFileSync(out, body, 'utf8');
-  return { ok: true, number, out };
+  return { ok: true, number, post: true, out };
 }
 
 /**
@@ -321,9 +325,16 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
   const run = readRequired(flags, 'run');
   const ticketFile = path.resolve(context.root, readRequired(flags, 'ticket'));
   const ticket = z
-    .looseObject({ number: z.number(), updatedAt: z.string(), inProgress: InProgressSchema.nullable() })
+    .looseObject({
+      number: z.number(),
+      updatedAt: z.string(),
+      inProgress: InProgressSchema.nullable(),
+      body: z.string().default(''),
+      subIssues: z.object({ completed: z.number(), total: z.number() }).default({ completed: 0, total: 0 }),
+    })
     .parse(JSON.parse(readFileSync(ticketFile, 'utf8')));
   const inProgress = ticket.inProgress;
+  const umbrella = isUmbrella(ticket);
 
   let parsed: unknown;
   try {
@@ -341,14 +352,14 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
     throw new CommandError('invalid-reply', `the reply assesses #${reply.number}, not #${ticket.number}`);
   }
 
-  const policyClass = classify(reply, inProgress);
+  const policyClass = classify(reply, { inProgress, umbrella });
   const paths = await resolveLedgerPaths(context.run, context.root);
   const assessedAt = toSeconds(context.now);
   const sha = await resolveShortSha(context.run, context.root);
 
   const replyFile = buildReplyPath(paths, run, reply.number);
   mkdirSync(path.dirname(replyFile), { recursive: true });
-  const stored = { ...reply, assessedAt, sha, ticketUpdatedAt: ticket.updatedAt, inProgress };
+  const stored = { ...reply, assessedAt, sha, ticketUpdatedAt: ticket.updatedAt, inProgress, umbrella };
   writeFileSync(replyFile, `${JSON.stringify(stored, null, 2)}\n`, 'utf8');
 
   const record: LedgerRecord = {
@@ -500,7 +511,9 @@ function readReply(paths: LedgerPaths, run: string, number: number): StoredReply
   try {
     const parsed: unknown = JSON.parse(readFileSync(buildReplyPath(paths, run, number), 'utf8'));
     const reply = AssessorReplySchema.safeParse(parsed);
-    const provenance = z.object({ assessedAt: z.string(), sha: z.string() }).safeParse(parsed);
+    const provenance = z
+      .object({ assessedAt: z.string(), sha: z.string(), umbrella: z.boolean().default(false) })
+      .safeParse(parsed);
     return reply.success && provenance.success ? { ...reply.data, ...provenance.data } : undefined;
   } catch {
     return undefined;

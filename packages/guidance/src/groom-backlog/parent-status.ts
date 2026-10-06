@@ -55,10 +55,17 @@ export async function readParentStatus(
 
 /** Returns the text of each unchecked `- [ ]` item in `body`, except the umbrella's "Every child is closed" criterion. */
 export function extractUncheckedCriteria(body: string): string[] {
-  return body
-    .split('\n')
-    .flatMap((line) => /^\s*[-*] \[ \] (.+?)\s*$/.exec(line)?.[1] ?? [])
-    .filter((text) => !/^every child is closed\.?$/i.test(text));
+  return extractUncheckedItems(body).filter((text) => !isChildCriterion(text));
+}
+
+/** Returns the text of each unchecked `- [ ]` item in `body`. */
+export function extractUncheckedItems(body: string): string[] {
+  return body.split('\n').flatMap((line) => /^\s*[-*] \[ \] (.+?)\s*$/.exec(line)?.[1] ?? []);
+}
+
+/** Returns whether a criterion's text is the umbrella's "Every child is closed". */
+export function isChildCriterion(text: string): boolean {
+  return /^every child is closed\.?$/i.test(text);
 }
 
 /** Returns whether the closed ticket was the last open child of an open parent. */

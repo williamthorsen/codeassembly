@@ -1,4 +1,5 @@
 /** Renders the comment that records a decision on a ticket: the assessment, the disposition, and the marker. */
+import { isEffectiveBaseline } from './classify.ts';
 import { renderMarker } from './marker.ts';
 import type { AssessorReply, Marker } from './schemas.ts';
 
@@ -6,6 +7,7 @@ import type { AssessorReply, Marker } from './schemas.ts';
 export interface StoredReply extends AssessorReply {
   assessedAt: string;
   sha: string;
+  umbrella: boolean;
 }
 
 /** The decision that the comment records. */
@@ -47,6 +49,18 @@ export function renderComment(decision: CommentDecision, reply: StoredReply | un
   };
   sections.push(renderMarker(marker));
   return `${sections.join('\n\n')}\n`;
+}
+
+/**
+ * Returns whether the decision's comment is posted. A close or a bulk decision always is; a decision that keeps the
+ * ticket open is posted only when its verdicts are not baseline, counting an umbrella's partial progress as baseline.
+ */
+export function shouldPostComment(
+  decision: Pick<CommentDecision, 'decidedBy' | 'decision'>,
+  reply: StoredReply | undefined,
+): boolean {
+  if (decision.decidedBy === 'bulk' || decision.decision.startsWith('close-') || reply === undefined) return true;
+  return !isEffectiveBaseline(reply.verdicts, reply.umbrella);
 }
 
 // region | Helpers

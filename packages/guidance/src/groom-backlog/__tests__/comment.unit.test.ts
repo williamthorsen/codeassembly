@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { renderComment, type StoredReply } from '../comment.ts';
+import { renderComment, shouldPostComment, type StoredReply } from '../comment.ts';
 import { parseMarkers } from '../marker.ts';
 import { buildReply } from '../test-utils/build-reply.ts';
 
-const PROVENANCE = { assessedAt: '2026-10-01T12:00:00Z', sha: 'abc1234' };
+const PROVENANCE = { assessedAt: '2026-10-01T12:00:00Z', sha: 'abc1234', umbrella: false };
 
 describe(renderComment, () => {
   it('posts the assessment, the disposition with the reason, and the marker', () => {
@@ -64,5 +64,26 @@ describe(renderComment, () => {
 
     expect(body.startsWith('**Disposition:** Closed as not planned. The package is dormant.')).toBe(true);
     expect(parseMarkers(body)[0]).toMatchObject({ verdicts: null, recommendation: null, decidedBy: 'bulk' });
+  });
+});
+
+describe(shouldPostComment, () => {
+  const PARTIAL: StoredReply = {
+    ...buildReply({ verdicts: { ...buildReply().verdicts, progress: 'partial' } }),
+    ...PROVENANCE,
+  };
+
+  it('posts a keep whose verdicts are not baseline', () => {
+    expect(shouldPostComment({ decidedBy: 'user', decision: 'keep' }, PARTIAL)).toBe(true);
+  });
+
+  it("does not post an umbrella's keep whose only non-baseline verdict is partial progress", () => {
+    expect(shouldPostComment({ decidedBy: 'user', decision: 'keep' }, { ...PARTIAL, umbrella: true })).toBe(false);
+  });
+
+  it('posts a close whatever the verdicts', () => {
+    expect(
+      shouldPostComment({ decidedBy: 'user', decision: 'close-not-planned' }, { ...buildReply(), ...PROVENANCE }),
+    ).toBe(true);
   });
 });

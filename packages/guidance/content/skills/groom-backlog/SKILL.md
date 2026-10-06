@@ -31,23 +31,25 @@ GitHub alone is supported, through `gh`. On any other platform, stop at step 1 a
 
 The helper's `ingest` command classifies each assessment into one class, and you apply that class's action. The classes are tested in this order, and the first match wins.
 
-| Class                  | Action                                                                                                                     | Comment                                               |
-| ---------------------- | -------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| `escalate-in-progress` | A detected signal shows work under way. Present it in a digest, and apply the user's decision.                             | As for `escalate`, once the user decides              |
-| `auto-close-complete`  | A high-confidence `close-complete` with a verified reference, or with `complete` progress and evidence. Close as complete. | Always                                                |
-| `auto-close-half-met`  | A high-confidence reply under the half-met rule. Close as superseded.                                                      | Always, with the `Remainder` section                  |
-| `silent-keep`          | A `keep` whose verdicts are all baseline. Keep it open.                                                                    | Never                                                 |
-| `escalate`             | Every other assessment. Present it in a digest, and apply the user's decision.                                             | On a close, and on a keep with a non-baseline verdict |
+| Class                  | Action                                                                                                                                | Comment                                               |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `silent-keep`          | A `keep` whose verdicts are all baseline, whether or not the ticket is in progress. Keep it open.                                     | Never                                                 |
+| `escalate-in-progress` | Any other assessment of a ticket that a detected signal shows to be under way. Present it in a digest, and apply the user's decision. | As for `escalate`, once the user decides              |
+| `auto-close-complete`  | A high-confidence `close-complete` with a verified reference, or with `complete` progress and evidence. Close as complete.            | Always                                                |
+| `auto-close-half-met`  | A high-confidence reply under the half-met rule. Close as superseded.                                                                 | Always, with the `Remainder` section                  |
+| `escalate`             | Every other assessment. Present it in a digest, and apply the user's decision.                                                        | On a close, and on a keep with a non-baseline verdict |
 
 **The half-met rule.** A ticket whose motivation other work has met, and whose remainder does not have acceptance criteria of its own, closes as superseded with a comment whose `Remainder` section lists each unmet part, so that a reader can reopen it from the comment alone.
 
 **Cross-references.** The helper's pass finds candidates by text, and only the assessor's verification makes one evidence: `auto-close-complete` counts a reference only when the assessor marked it verified.
 
-**An in-progress ticket is never closed or commented on before the user decides it in a digest**, whatever its assessment, and a bulk close leaves it out.
+**An in-progress ticket is never closed or commented on before the user decides it in a digest**, whatever its assessment, and a bulk close leaves it out. A silent keep does neither, so it applies to an in-progress ticket as to any other.
 
 **Baseline verdicts.** The silent keep and the comment rule both read the baseline:
 
 <!-- include: ../../_partials/ticket-assessment-baseline.md / -->
+
+An umbrella's `partial` progress also counts as baseline here: An umbrella is a ticket that has open children and whose only unchecked criterion is "Every child is closed", so it is expected to be partly done. The helper applies this, in `ingest` and in `comment`.
 
 **What the digest groups.** A hub is an open ticket on whose outcome two or more escalations of one digest page depend; the page shows it once, above its dependents, so that the user decides it first. Overlapping open tickets are merged into one group with the assessors' recommended survivor. Merging tickets stays the user's action, through the ticket skills.
 
@@ -151,7 +153,7 @@ Under `--dry-run`, present every page, take no decisions, and go to the summary.
 For each decided entry, per [Writing to GitHub](#writing-to-github), with `--decided-by user`:
 
 - **A close** posts the comment and closes the ticket.
-- **`keep`, `update`, `revise`, or `split`** posts the comment when any of the ticket's verdicts is not baseline, and records the decision in either case. The ticket stays open.
+- **`keep`, `update`, `revise`, or `split`** posts the comment when the `comment` result has `post: true`, and records the decision in either case. The ticket stays open.
 - **No decision** writes nothing: neither a comment nor a decision record. The next run's digest presents the ticket again.
 
 Present the next page once the current one is applied.
@@ -171,6 +173,8 @@ Every action on a ticket follows one order: render the comment, post it, close t
    ```
 
    Pass `--reason` when the user stated one, and `--superseded-by` when the decision names the superseding ticket. `--decision` is one of `keep`, `close-complete`, `close-superseded`, `close-not-planned`, `update`, `revise`, and `split`.
+
+   The result's `post` states whether the comment is posted. When it is `false`, the helper writes no body: Skip to step 4.
 
 2. **Post it**, per [gh body file](#gh-body-file):
 
