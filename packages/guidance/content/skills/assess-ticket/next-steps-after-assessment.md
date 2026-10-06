@@ -12,7 +12,7 @@ When all assessed verdicts are baseline, do not show a next-steps prompt.
 
 ## Verdict-to-actions mapping
 
-Each non-baseline verdict maps to one or more follow-up actions. Actions describe intent; the agent decides how to execute them based on the ticket platform and available tools.
+Each non-baseline verdict maps to one or more follow-up actions. A verdict that the baseline definition counts as baseline contributes no action, even when another dimension is off baseline: An umbrella's `partial` progress adds neither the update nor the close below. Actions describe intent; the agent decides how to execute them based on the ticket platform and available tools.
 
 ### ♻️ Update actions
 
