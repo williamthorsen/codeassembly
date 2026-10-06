@@ -21,9 +21,8 @@ pull-from-backlog.mjs record --ticket <N> [--ticket <N>]...
   - `candidates`: the top `--limit` (default 3) [candidates](#candidates), each with `reasons`, the ranking rules that fired.
   - `warnings`: the [warnings](#warnings).
   - `groomStale`: the [groom staleness](#groom-staleness).
-  - `pendingRipples`: the tickets closed since the baseline that do not have a `ripple` record, with `baseline` (`pull` or `policy`) and `since`, by groom-backlog's `pending-ripples` rule. Without a baseline, `baseline` is `null` and `reason` says why.
   - `assignOnPick`, `ledger`, and `ledgerDefects`.
-- **`record`** appends one `pull` record to the ledger: `picked` (the `--ticket` values), `sha` (the short `HEAD`), `recordedAt`, and the run id `pull-{YYYY-MM-DD}`. The record is the next survey's ripple baseline.
+- **`record`** appends one `pull` record to the ledger: `picked` (the `--ticket` values), `sha` (the short `HEAD`), `recordedAt`, and the run id `pull-{YYYY-MM-DD}`.
 
 ## Now set
 
@@ -63,7 +62,7 @@ In this order:
 
 ## Groom staleness
 
-The last groom is the latest `policy` record of a run whose id neither starts with `ripple-` nor ends with `-dry-run`. The groom is stale when there is none, when it is at least `staleGroomDays` old, or when at least `staleGroomNewTickets` open tickets were created after it. `reasons` lists `never`, `age`, and `new-tickets` as they apply.
+The last groom is the latest `policy` record of a run whose id neither starts with `ripple-`, which earlier ripple runs wrote, nor ends with `-dry-run`. The groom is stale when there is none, when it is at least `staleGroomDays` old, or when at least `staleGroomNewTickets` open tickets were created after it. `reasons` lists `never`, `age`, and `new-tickets` as they apply.
 
 ## Configuration
 
