@@ -2,7 +2,7 @@
 slug: williamthorsen-workflow-preferences
 description: William Thorsen's personal preferences for how work moves -- scope, branches and worktrees, guidance capture, and the arc of product development.
 delivery: ambient
-version: '7'
+version: '8'
 ---
 
 # William Thorsen's workflow preferences
@@ -51,7 +51,7 @@ Write a ticket in detail when its work is about to be implemented. Until then, k
 - Have the epic point to the design doc, state what is out of scope, and list the iterations as its sub-issues in order. Keep the vision out of the epic's body, because a ticket's body is frozen once its work starts and the vision is not.
 - Use the milestone to mark the current iteration, which `pull-from-backlog` reads as the Now set.
 - Treat the prototype as the baseline.
-- Make each iteration a sub-issue of the epic. Specify the current iteration in detail. Write each later one as a one-line outcome, what the user can newly do, rather than as a feature, and refine it against the design doc when its iteration starts.
+- Make each iteration a sub-issue of the epic, and create every iteration's sub-issue when the epic is created rather than as each iteration starts. Specify the current iteration in detail. Write each later one as a one-line outcome, what the user can newly do, rather than as a feature, and refine it against the design doc when its iteration starts.
 
 Once the developer approves the end vision, propose that shape rather than drafting every ticket up front.
 
