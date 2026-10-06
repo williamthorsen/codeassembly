@@ -4,7 +4,13 @@ import { renderComment, shouldPostComment, type StoredReply } from '../comment.t
 import { parseMarkers } from '../marker.ts';
 import { buildReply } from '../test-utils/build-reply.ts';
 
-const PROVENANCE = { assessedAt: '2026-10-01T12:00:00Z', sha: 'abc1234', umbrella: false };
+const PROVENANCE = {
+  assessedAt: '2026-10-01T12:00:00Z',
+  inProgress: null,
+  sha: 'abc1234',
+  ticketUpdatedAt: '2026-01-01T00:00:00Z',
+  umbrella: false,
+};
 
 describe(renderComment, () => {
   it('posts the assessment, the disposition with the reason, and the marker', () => {

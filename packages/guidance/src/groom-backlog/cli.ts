@@ -3,14 +3,14 @@
 /**
  * CLI entry for the backlog sweep.
  *
- * Six commands, each printing one JSON result: `collect` selects the open tickets and writes one assessor input file
+ * Seven commands, each printing one JSON result: `collect` selects the open tickets and writes one assessor input file
  * per ticket; `ingest` validates and classifies one assessor reply; `record` appends the skill's decision, policy,
  * note, and pull records; `digest` renders the run's open escalations; `comment` renders one ticket's comment body to a
- * file; `parent-status` reports whether a merged ticket was its parent's last open child. `ingest` and `record` are
- * the only writers of the ledger.
+ * file; `draft` composes one ticket's drafted edit into files; `parent-status` reports whether a merged ticket was its
+ * parent's last open child. `ingest` and `record` are the only writers of the ledger.
  *
- * The helper does not write anything remote. The skill posts the comments and closes the tickets, which keeps this
- * module testable without a `gh` write.
+ * The helper does not write anything remote. The skill posts the comments, edits and creates the tickets, and closes
+ * them, which keeps this module testable without a `gh` write.
  */
 import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { z } from 'zod';
 
+import { replaceSections } from '../lib/markdown-sections.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { classify, isUmbrella } from './classify.ts';
 import { type CommentDecision, renderComment, shouldPostComment, type StoredReply } from './comment.ts';
@@ -84,6 +85,9 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'ticket', takesValue: true },
 ];
 
+/** The sections of a ticket that are frozen once its work is under way, matched in lowercase. */
+const FROZEN_HEADINGS: ReadonlySet<string> = new Set(['context', 'problem', 'proposed solution']);
+
 /** The flags that a command repeats; every other flag may appear once. */
 const REPEATABLE: ReadonlySet<FlagName> = new Set(['exclude-label', 'scope']);
 
@@ -134,6 +138,8 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
         return await runComment(flags, context);
       case 'digest':
         return await runDigest(flags, context);
+      case 'draft':
+        return await runDraft(flags, context);
       case 'ingest':
         return await runIngest(flags, context);
       case 'parent-status':
@@ -143,7 +149,7 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
       default:
         throw new CommandError(
           'invalid-args',
-          `expected a command (collect, comment, digest, ingest, parent-status, record), got "${command ?? ''}"`,
+          `expected a command (collect, comment, digest, draft, ingest, parent-status, record), got "${command ?? ''}"`,
         );
     }
   } catch (error) {
@@ -318,6 +324,48 @@ async function runDigest(flags: ParsedFlags, context: CommandContext): Promise<C
   }
   const pages = renderDigest({ escalations, pageSize, titles });
   return { ok: true, run, total: escalations.length, pageSize, pages, ledgerDefects: ledger.defects };
+}
+
+/**
+ * Composes one ticket's drafted edit into files under `--out`: the new body, from the ticket's current body with the
+ * drafted sections replaced, and one file per child of a split. The draft is stale, and nothing is written, when the
+ * ticket changed after the version that the assessor read and after the latest comment carrying this run's marker. A
+ * ticket in progress keeps its problem, context, and proposed solution, so a draft that replaces one is refused.
+ */
+async function runDraft(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
+  const run = readRequired(flags, 'run');
+  const number = parsePositiveInteger('number', readRequired(flags, 'number'));
+  const out = path.resolve(context.root, readRequired(flags, 'out'));
+
+  const paths = await resolveLedgerPaths(context.run, context.root);
+  const reply = readReply(paths, run, number);
+  if (reply === undefined) {
+    throw new CommandError('missing-reply', `run "${run}" does not have a valid reply file for #${number}`);
+  }
+  const { draft } = reply;
+  if (draft === null) throw new CommandError('missing-draft', `the reply for #${number} does not have a draft`);
+  const frozen = draft.sections.filter((section) => FROZEN_HEADINGS.has(section.heading.toLowerCase()));
+  if (reply.inProgress !== null && frozen.length > 0) {
+    const headings = frozen.map((section) => section.heading).join(', ');
+    throw new CommandError('frozen-section', `#${number} is in progress, and the draft replaces ${headings}`);
+  }
+
+  const issue = await fetchIssue(context.run, context.root, number);
+  const commented = findLatestRunMarkerDate(issue.comments, run);
+  const updated = Date.parse(issue.updatedAt);
+  const isStale =
+    updated > Date.parse(reply.ticketUpdatedAt) && (commented === undefined || updated > Date.parse(commented));
+  if (isStale) return { ok: true, number, stale: true };
+
+  mkdirSync(out, { recursive: true });
+  const body = path.join(out, 'body.md');
+  writeFileSync(body, replaceSections({ text: issue.body, sections: draft.sections }), 'utf8');
+  const children = draft.children.map((child, offset) => {
+    const file = path.join(out, `child-${offset + 1}.md`);
+    writeFileSync(file, `${child.body.trim()}\n`, 'utf8');
+    return { title: child.title, path: file };
+  });
+  return { ok: true, number, stale: false, body, sections: draft.sections.map((section) => section.heading), children };
 }
 
 /** Validates one assessor reply, stores it, appends its `assessment` record, and reports its class. */
@@ -512,7 +560,13 @@ function readReply(paths: LedgerPaths, run: string, number: number): StoredReply
     const parsed: unknown = JSON.parse(readFileSync(buildReplyPath(paths, run, number), 'utf8'));
     const reply = AssessorReplySchema.safeParse(parsed);
     const provenance = z
-      .object({ assessedAt: z.string(), sha: z.string(), umbrella: z.boolean().default(false) })
+      .object({
+        assessedAt: z.string(),
+        inProgress: InProgressSchema.nullable().default(null),
+        sha: z.string(),
+        ticketUpdatedAt: z.string(),
+        umbrella: z.boolean().default(false),
+      })
       .safeParse(parsed);
     return reply.success && provenance.success ? { ...reply.data, ...provenance.data } : undefined;
   } catch {

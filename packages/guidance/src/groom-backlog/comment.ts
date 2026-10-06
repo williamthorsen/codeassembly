@@ -2,11 +2,14 @@
 import { isEffectiveBaseline } from './classify.ts';
 import { renderMarker } from './marker.ts';
 import type { AssessorReply, Marker } from './schemas.ts';
+import type { InProgress } from './types.ts';
 
 /** A reply file: the assessor's reply as `ingest` stored it, with the assessment's provenance. */
 export interface StoredReply extends AssessorReply {
   assessedAt: string;
+  inProgress: InProgress | null;
   sha: string;
+  ticketUpdatedAt: string;
   umbrella: boolean;
 }
 
