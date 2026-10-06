@@ -1,6 +1,5 @@
 /** Assembles the survey's picture, candidates, and warnings from data already fetched, without any I/O. */
 import type { Milestone } from '../groom-backlog/fetch.ts';
-import type { PendingRipple } from '../groom-backlog/ripple-baseline.ts';
 import type { LedgerRecord } from '../groom-backlog/schemas.ts';
 import type { InProgress, Issue } from '../groom-backlog/types.ts';
 import { daysSince } from './days.ts';
@@ -15,10 +14,6 @@ import {
   type Warning,
 } from './warnings.ts';
 
-/** The tickets closed since the baseline that lack a `ripple` record, or why they could not be listed. */
-export type PendingRipples =
-  { baseline: 'policy' | 'pull'; pending: PendingRipple[]; since: string } | { baseline: null; reason: string };
-
 /** The survey's result, less the ledger paths that the CLI adds. */
 export interface Survey {
   blocked: Array<{ blockedBy: number[]; number: number; title: string }>;
@@ -27,7 +22,6 @@ export interface Survey {
   groomStale: GroomStaleness;
   inProgress: InProgressEntry[];
   now: NowSet;
-  pendingRipples: PendingRipples;
   umbrellas: Array<{ completed: number; number: number; title: string; total: number }>;
   user: string;
   warnings: Warning[];
@@ -43,11 +37,10 @@ export function buildSurvey(input: {
   now: Date;
   nowFlag: string | undefined;
   open: readonly Issue[];
-  pendingRipples: PendingRipples;
   records: readonly LedgerRecord[];
   user: string;
 }): Survey {
-  const { config, inProgress, limit, milestones, now, nowFlag, open, pendingRipples, records, user } = input;
+  const { config, inProgress, limit, milestones, now, nowFlag, open, records, user } = input;
   const nowSet = resolveNow({ configured: pickConfiguredNow(nowFlag, config.now), issues: open, milestones });
   /** Returns whether `issue` belongs to the resolved Now set. */
   function inNow(issue: Issue): boolean {
@@ -93,7 +86,6 @@ export function buildSurvey(input: {
     groomStale,
     inProgress: inProgressEntries,
     now: nowSet,
-    pendingRipples,
     umbrellas,
     user,
     warnings: collectWarnings({

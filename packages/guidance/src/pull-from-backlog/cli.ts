@@ -15,7 +15,6 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { readProjectPreferences } from '../derive-session-context/read-preferences.ts';
 import {
-  fetchClosedIssuesSince,
   fetchMilestones,
   fetchOpenIssues,
   resolveRepository,
@@ -24,13 +23,12 @@ import {
 } from '../groom-backlog/fetch.ts';
 import { detectInProgress } from '../groom-backlog/in-progress.ts';
 import { appendRecords, readLedger, resolveLedgerPaths } from '../groom-backlog/ledger.ts';
-import { readRippleLedgerState, selectPendingRipples } from '../groom-backlog/ripple-baseline.ts';
 import type { LedgerRecord } from '../groom-backlog/schemas.ts';
 import type { CommandRunner } from '../groom-backlog/types.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { isRecord } from '../lib/type-guards.ts';
 import { type PullConfig, PullConfigSchema } from './schemas.ts';
-import { buildSurvey, type PendingRipples } from './survey.ts';
+import { buildSurvey } from './survey.ts';
 
 /** Everything a command reads from its environment, injected so that tests can supply fixtures. */
 export interface CommandContext {
@@ -143,7 +141,6 @@ async function runSurvey(flags: ParsedFlags, context: CommandContext): Promise<C
     root: context.root,
     run: context.run,
   });
-  const pendingRipples = await listPendingRipples(context, ledger.records);
 
   const survey = buildSurvey({
     config,
@@ -153,7 +150,6 @@ async function runSurvey(flags: ParsedFlags, context: CommandContext): Promise<C
     now: context.now,
     nowFlag,
     open,
-    pendingRipples,
     records: ledger.records,
     user,
   });
@@ -181,21 +177,6 @@ function isEntryPoint(): boolean {
     process.stderr.write(`pull-from-backlog: warning: could not determine entry point: ${describeError(error)}\n`);
     return false;
   }
-}
-
-/**
- * Lists the tickets closed since the latest `pull` record, else the latest groom `policy` record, that lack a `ripple`
- * record. Without either baseline, the result states the reason instead.
- */
-async function listPendingRipples(context: CommandContext, records: readonly LedgerRecord[]): Promise<PendingRipples> {
-  const { lastPolicy, lastPull, rippled } = readRippleLedgerState(records);
-  const baseline = lastPull === undefined ? 'policy' : 'pull';
-  const since = lastPull ?? lastPolicy;
-  if (since === undefined) {
-    return { baseline: null, reason: 'the ledger does not have a pull or groom policy record' };
-  }
-  const closed = await fetchClosedIssuesSince(context.run, context.root, since.slice(0, 10));
-  return { baseline, pending: selectPendingRipples(closed, since, rippled), since };
 }
 
 /** Scans the command's flags, refusing a positional argument and a repeated flag other than `--ticket`. */

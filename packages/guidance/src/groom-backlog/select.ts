@@ -48,11 +48,6 @@ export function groupByScope(issues: readonly Issue[], inProgress: ReadonlyMap<n
   );
 }
 
-/** Puts `issues` in one unscoped group in the order given, packed into waves of up to `WAVE_SIZE`. */
-export function groupInOrder(issues: readonly Issue[], inProgress: ReadonlyMap<number, InProgress>): TicketGroup[] {
-  return issues.length === 0 ? [] : [buildGroup(null, issues, inProgress)];
-}
-
 /** Returns `issues` in sweep order: by scope as `groupByScope` orders the groups, then oldest first. */
 export function orderForSweep(issues: readonly Issue[]): Issue[] {
   return groupByScope(issues, new Map()).flatMap((group) =>
