@@ -78,7 +78,7 @@ describe(shouldPostComment, () => {
   });
 
   it("does not post an umbrella's keep whose only non-baseline verdict is partial progress", () => {
-    expect(shouldPostComment({ decidedBy: 'user', decision: 'revise' }, { ...PARTIAL, umbrella: true })).toBe(false);
+    expect(shouldPostComment({ decidedBy: 'user', decision: 'keep' }, { ...PARTIAL, umbrella: true })).toBe(false);
   });
 
   it('posts a close whatever the verdicts', () => {

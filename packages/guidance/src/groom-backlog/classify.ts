@@ -57,7 +57,8 @@ export function isAllBaseline(verdicts: Readonly<Record<string, string | null>>)
  * open children is expected to be partly done.
  */
 export function isEffectiveBaseline(verdicts: Readonly<Record<string, string | null>>, umbrella: boolean): boolean {
-  if (umbrella && verdicts.progress === 'partial') return isAllBaseline({ ...verdicts, progress: 'none' });
+  if (umbrella && verdicts.progress === 'partial')
+    return isAllBaseline({ ...verdicts, progress: BASELINE_VERDICTS.progress });
   return isAllBaseline(verdicts);
 }
 
