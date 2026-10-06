@@ -39,11 +39,6 @@ const IssueSchema = z.object({
   subIssuesSummary: z.object({ completed: z.number().int().nonnegative(), total: z.number().int().nonnegative() }),
 });
 
-const PullRequestViewSchema = z.object({
-  files: z.array(z.object({ path: z.string() })),
-  mergeCommit: z.object({ oid: z.string() }).nullable(),
-});
-
 const MilestoneListSchema = z.array(
   z.array(
     z.object({
@@ -68,13 +63,6 @@ export interface Milestone {
   title: string;
 }
 
-/** A pull request's touched files and merge commit. */
-export interface PullRequestDetail {
-  files: string[];
-  mergeSha: string | null;
-  number: number;
-}
-
 /** The repository's GitHub name and its default branch. */
 export interface RepositoryInfo {
   defaultBranch: string;
@@ -86,27 +74,6 @@ export const runCommand: CommandRunner = async (command, args, cwd) => {
   const { stdout } = await execFileAsync(command, [...args], { cwd, maxBuffer: 512 * 1_024 * 1_024 });
   return stdout;
 };
-
-/** Fetches the issues closed on or after `date` (`YYYY-MM-DD`), with their relations. */
-export async function fetchClosedIssuesSince(run: CommandRunner, root: string, date: string): Promise<Issue[]> {
-  const stdout = await run(
-    'gh',
-    [
-      'issue',
-      'list',
-      '--state',
-      'closed',
-      '--limit',
-      String(ISSUE_FETCH_LIMIT),
-      '--search',
-      `closed:>=${date}`,
-      '--json',
-      ISSUE_FIELDS,
-    ],
-    root,
-  );
-  return parseIssueList(JSON.parse(stdout));
-}
 
 /** Fetches one issue, open or closed, with its relations. */
 export async function fetchIssue(run: CommandRunner, root: string, number: number): Promise<Issue> {
@@ -139,13 +106,6 @@ export async function fetchOpenIssues(run: CommandRunner, root: string): Promise
     root,
   );
   return parseIssueList(JSON.parse(stdout));
-}
-
-/** Fetches the files that a pull request touches and its merge commit, which is `null` until it merges. */
-export async function fetchPullRequest(run: CommandRunner, root: string, number: number): Promise<PullRequestDetail> {
-  const stdout = await run('gh', ['pr', 'view', String(number), '--json', 'files,mergeCommit'], root);
-  const view = PullRequestViewSchema.parse(JSON.parse(stdout));
-  return { files: view.files.map((file) => file.path), mergeSha: view.mergeCommit?.oid ?? null, number };
 }
 
 /** Parses `gh issue list` output into issues. */

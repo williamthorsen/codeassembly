@@ -227,26 +227,19 @@ What would you like to do? Reply with numbers, or 'all'.
 
 The actions menu is built dynamically based on which sections are populated:
 
-| Action                          | Offered when                                                         | Skill/tool invoked                       |
-| ------------------------------- | -------------------------------------------------------------------- | ---------------------------------------- |
-| Batch tickets for findings      | Findings section has ≥2 items                                        | `{skill:create-ticket}`                  |
-| Create tickets for findings     | Findings section non-empty                                           | `{skill:create-ticket}`                  |
-| Create tickets for legacy items | Legacy section non-empty                                             | `{skill:create-ticket}`                  |
-| Post insights to ticket #{n}    | Insights with `ticket comment` destination                           | `gh issue comment`                       |
-| Ripple merged ticket #{N}       | The session merged a PR, and `pending-ripples --ticket {N}` lists it | `{skill:groom-backlog} --related-to {N}` |
-| Save session devlog             | Always (unless trivial)                                              | `{skill:create-devlog}`                  |
+| Action                          | Offered when                               | Skill/tool invoked      |
+| ------------------------------- | ------------------------------------------ | ----------------------- |
+| Batch tickets for findings      | Findings section has ≥2 items              | `{skill:create-ticket}` |
+| Create tickets for findings     | Findings section non-empty                 | `{skill:create-ticket}` |
+| Create tickets for legacy items | Legacy section non-empty                   | `{skill:create-ticket}` |
+| Post insights to ticket #{n}    | Insights with `ticket comment` destination | `gh issue comment`      |
+| Save session devlog             | Always (unless trivial)                    | `{skill:create-devlog}` |
 
 **Batching versus per-item ticketing.** The "Batch tickets for findings" action creates a single ticket whose body is a checklist with one entry per finding (description plus source attribution); per-item complexity levels are not repeated since they were already used to reach this phase. The "Create tickets for findings" action creates one ticket per item. These are alternatives: Only one is executed for the findings pool, based on the user's selection. Recommend the batch action by default when ≥2 trivial items remain or when items share a `scope:` label or source artifact; recommend per-item ticketing when items are thematically unrelated. The "Batch tickets for findings" action implements the **batch later** lane; "Create tickets for findings" implements the **separate ticket** lane from [`_data/scope-and-deferral.md`](../_data/scope-and-deferral.md).
 
 **Dropping findings.** Findings not selected by the user for a ticket-creation action are implicitly dropped: Menu omission is the close-without-tracking signal. The agent does not prompt to confirm; the user's selection is taken at face value. Dropped findings are still recorded in the report's `### Dropped` section and the deferred-findings artifact's `## Dropped` section so that they remain discoverable.
 
 **Insight routing.** Each insight's destination determines where it appears in the action menu. Insights destined for `ticket comment` become part of the "Post insights to ticket" action; this action is independent and posts directly via `gh issue comment`. Insights destined for `devlog` are folded into the "Save session devlog" action and included automatically in the devlog content. This means devlog-bound insights only appear if the devlog action is selected, which is the correct dependency.
-
-**Ripple routing.** The ripple assesses the open tickets related to a merged ticket, and `merge-pr` offers it after the merge; this row catches a merge whose ripple did not run. For each ticket `{N}` that a PR merged in this session closed, on GitHub only, run the read-only check below. Offer the row when its `pending` list contains `{N}`, which means that the ledger does not have a `ripple` record for it:
-
-```bash
-node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs pending-ripples --ticket {N}
-```
 
 **Rendering the action menu.** Actions are numbered sequentially starting from 1. Only include actions that apply. The numbered list rendered to the user must include every applicable row from the Standard actions table. When both "Batch tickets for findings" and "Create tickets for findings" appear, annotate them as mutually exclusive alternatives so that the user cannot accidentally select both. Use the convention `1a` / `1b` for the batch and per-item entries (sharing the same primary number) and continue numbering subsequent actions from `2`. Any other action keeps a plain integer.
 
@@ -297,8 +290,7 @@ Process confirmed actions in this order:
    gh issue comment {number} --body-file "$body_path"
    ```
 
-5. **Ripple merged ticket**: Invoke `{skill:groom-backlog}` with `--related-to {N}`, once per selected ticket.
-6. **Save session devlog**: Invoke `{skill:create-devlog}`. Insights with `devlog` destination are automatically included in the devlog content; they do not need a separate action.
+5. **Save session devlog**: Invoke `{skill:create-devlog}`. Insights with `devlog` destination are automatically included in the devlog content; they do not need a separate action.
 
 After all actions complete, identify which findings were _not_ selected by any action (implicitly dropped) and pass that set forward to Phase 4 for inclusion in the report's `### Dropped` section and the artifact's `## Dropped` section.
 

@@ -1,6 +1,6 @@
 /** The warnings that a survey reports, and the staleness of the last groom. */
 import type { Milestone } from '../groom-backlog/fetch.ts';
-import { isGroomPolicy } from '../groom-backlog/ripple-baseline.ts';
+import { isGroomPolicy } from '../groom-backlog/groom-policy.ts';
 import type { LedgerRecord } from '../groom-backlog/schemas.ts';
 import type { Issue } from '../groom-backlog/types.ts';
 import { daysSince } from './days.ts';

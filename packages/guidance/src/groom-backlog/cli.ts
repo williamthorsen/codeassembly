@@ -3,12 +3,11 @@
 /**
  * CLI entry for the backlog sweep.
  *
- * Seven commands, each printing one JSON result: `collect` selects the open tickets, from the backlog or related to a
- * closed ticket, and writes one assessor input file per ticket; `ingest` validates and classifies one assessor reply;
- * `record` appends the skill's decision, policy, note, ripple, and pull records; `digest` renders the run's open
- * escalations; `comment` renders one ticket's comment body to a file; `related` lists a closed ticket's related set;
- * `pending-ripples` lists the closed tickets without a ripple record. `ingest` and `record` are the only writers of the
- * ledger.
+ * Six commands, each printing one JSON result: `collect` selects the open tickets and writes one assessor input file
+ * per ticket; `ingest` validates and classifies one assessor reply; `record` appends the skill's decision, policy,
+ * note, and pull records; `digest` renders the run's open escalations; `comment` renders one ticket's comment body to a
+ * file; `parent-status` reports whether a merged ticket was its parent's last open child. `ingest` and `record` are
+ * the only writers of the ledger.
  *
  * The helper does not write anything remote. The skill posts the comments and closes the tickets, which keeps this
  * module testable without a `gh` write.
@@ -26,21 +25,11 @@ import { classify } from './classify.ts';
 import { type CommentDecision, renderComment, type StoredReply } from './comment.ts';
 import { findCrossReferences } from './cross-reference.ts';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_RANGE, renderDigest } from './digest.ts';
-import {
-  fetchClosedIssuesSince,
-  fetchIssue,
-  fetchOpenIssues,
-  fetchPullRequest,
-  type RepositoryInfo,
-  resolveRepository,
-  resolveShortSha,
-  runCommand,
-} from './fetch.ts';
+import { fetchIssue, fetchOpenIssues, resolveRepository, resolveShortSha, runCommand } from './fetch.ts';
 import { detectInProgress } from './in-progress.ts';
 import { appendRecords, buildReplyPath, type LedgerPaths, readLedger, resolveLedgerPaths } from './ledger.ts';
 import { findLatestMarker, findLatestRunMarkerDate } from './marker.ts';
-import { countByTier, findRelated, type RelatedCandidate } from './related.ts';
-import { readRippleLedgerState, selectPendingRipples, summarizePending } from './ripple-baseline.ts';
+import { readParentStatus } from './parent-status.ts';
 import {
   type AssessmentRecord,
   AssessorReplySchema,
@@ -50,8 +39,8 @@ import {
   type LedgerRecord,
   RecordInputSchema,
 } from './schemas.ts';
-import { applySelectors, groupByScope, groupInOrder, orderForSweep, parseAge } from './select.ts';
-import type { CommandRunner, Escalation, Issue, RippleEvidence, TicketGroup, TicketInput } from './types.ts';
+import { applySelectors, groupByScope, orderForSweep, parseAge } from './select.ts';
+import type { CommandRunner, Escalation, Issue, TicketInput } from './types.ts';
 
 /** Everything a command reads from its environment, injected so that tests can supply fixtures. */
 export interface CommandContext {
@@ -74,10 +63,8 @@ type FlagName =
   | 'out'
   | 'page-size'
   | 'reason'
-  | 'related-to'
   | 'run'
   | 'scope'
-  | 'since'
   | 'superseded-by'
   | 'ticket';
 
@@ -91,16 +78,11 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'out', takesValue: true },
   { name: 'page-size', takesValue: true },
   { name: 'reason', takesValue: true },
-  { name: 'related-to', takesValue: true },
   { name: 'run', takesValue: true },
   { name: 'scope', takesValue: true },
-  { name: 'since', takesValue: true },
   { name: 'superseded-by', takesValue: true },
   { name: 'ticket', takesValue: true },
 ];
-
-/** The most touched paths that a ripple ticket file lists. */
-const RIPPLE_FILE_LIMIT = 200;
 
 /** The flags that a command repeats; every other flag may appear once. */
 const REPEATABLE: ReadonlySet<FlagName> = new Set(['exclude-label', 'scope']);
@@ -154,16 +136,14 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
         return await runDigest(flags, context);
       case 'ingest':
         return await runIngest(flags, context);
-      case 'pending-ripples':
-        return await runPendingRipples(flags, context);
+      case 'parent-status':
+        return await runParentStatus(flags, context);
       case 'record':
         return await runRecord(flags, context);
-      case 'related':
-        return await runRelated(flags, context);
       default:
         throw new CommandError(
           'invalid-args',
-          `expected a command (collect, comment, digest, ingest, pending-ripples, record, related), got "${command ?? ''}"`,
+          `expected a command (collect, comment, digest, ingest, parent-status, record), got "${command ?? ''}"`,
         );
     }
   } catch (error) {
@@ -173,9 +153,7 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
 }
 
 /**
- * Selects the tickets to assess and writes one input file per ticket under `--out`: the backlog narrowed by the
- * selectors, or, with `--related-to`, the open tickets related to that closed ticket, each file with a `ripple` field
- * and the result with the `ripple` record that the skill appends once the set is assessed.
+ * Selects the backlog narrowed by the selectors and writes one input file per ticket under `--out`.
  * A ticket already assessed in this run is skipped unless it changed after both that assessment and the latest comment
  * carrying this run's marker, so that the sweep's own comment does not make a ticket look changed. A skipped ticket
  * whose latest assessment has an auto-close class and no decision after it is reported in `pendingAutomatic`, so that
@@ -184,7 +162,6 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
 async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
   const run = readRequired(flags, 'run');
   const outDir = path.resolve(context.root, readRequired(flags, 'out'));
-  const relatedTo = readOptional(flags, 'related-to');
 
   const paths = await resolveLedgerPaths(context.run, context.root);
   const ledger = readLedger(paths.ledgerFile);
@@ -202,10 +179,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
 
   const repository = await resolveRepository(context.run, context.root);
   const sha = await resolveShortSha(context.run, context.root);
-  const selection =
-    relatedTo === undefined
-      ? await selectBacklog(flags, context)
-      : await selectRipple(flags, context, repository, parsePositiveInteger('related-to', relatedTo));
+  const selection = await selectBacklog(flags, context);
 
   const resumed: number[] = [];
   const pending = selection.ordered.filter((issue) => {
@@ -243,21 +217,18 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   mkdirSync(outDir, { recursive: true });
   const tickets: Array<{ file: string; number: number }> = [];
   for (const issue of issues) {
-    const ripple = selection.ripple?.evidence(issue.number);
     const input: TicketInput = {
       ...issue,
       crossReferences: crossReferences.get(issue.number) ?? [],
       inProgress: inProgress.get(issue.number) ?? null,
       priorMarker: findLatestMarker(issue.comments),
-      ...(ripple !== undefined && { ripple }),
     };
     const file = path.join(outDir, `${issue.number}.json`);
     writeFileSync(file, `${JSON.stringify(input, null, 2)}\n`, 'utf8');
     tickets.push({ file, number: issue.number });
   }
 
-  const groups: TicketGroup[] =
-    selection.ripple === undefined ? groupByScope(issues, inProgress) : groupInOrder(issues, inProgress);
+  const groups = groupByScope(issues, inProgress);
   return {
     ok: true,
     run,
@@ -274,7 +245,6 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
     pendingAutomatic,
     groups,
     tickets,
-    ...(selection.ripple !== undefined && { ripple: selection.ripple.record }),
   };
 }
 
@@ -403,53 +373,16 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
   return { ok: true, number: reply.number, class: policyClass, recommendation: reply.recommendation, replyFile };
 }
 
-/**
- * Lists the closed tickets that do not have a `ripple` record in the ledger: `--ticket` alone, or every ticket closed
- * since `--since`. Without either, the baseline is the latest `pull` record, else the latest `policy` record of a run
- * that is neither a ripple nor a dry run; without a baseline, the result is `no-baseline`.
- */
-async function runPendingRipples(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
-  const ticket = readOptional(flags, 'ticket');
-  const sinceFlag = readOptional(flags, 'since');
-  if (ticket !== undefined && sinceFlag !== undefined) {
-    throw new CommandError('invalid-args', '--ticket and --since may not be combined');
-  }
-  if (sinceFlag !== undefined && Number.isNaN(Date.parse(sinceFlag))) {
-    throw new CommandError('invalid-args', `--since must be an ISO date or timestamp, got "${sinceFlag}"`);
-  }
-
-  const paths = await resolveLedgerPaths(context.run, context.root);
-  const ledger = readLedger(paths.ledgerFile);
-  const { lastPolicy, lastPull, rippled } = readRippleLedgerState(ledger.records);
-
-  if (ticket !== undefined) {
-    const issue = await fetchIssue(context.run, context.root, parsePositiveInteger('ticket', ticket));
-    const pending = issue.state === 'closed' && !rippled.has(issue.number) ? [summarizePending(issue)] : [];
-    return { ok: true, since: null, baseline: null, pending, ledgerDefects: ledger.defects };
-  }
-
-  const candidates = [
-    { baseline: 'since', since: sinceFlag },
-    { baseline: 'pull', since: lastPull },
-    { baseline: 'policy', since: lastPolicy },
-  ] as const;
-  const chosen = candidates.find((candidate) => candidate.since !== undefined);
-  const since = chosen?.since;
-  if (chosen === undefined || since === undefined) {
-    throw new CommandError(
-      'no-baseline',
-      'the ledger does not have a pull or groom policy record; pass --ticket or --since',
-    );
-  }
-  const { baseline } = chosen;
-  const closed = await fetchClosedIssuesSince(context.run, context.root, since.slice(0, 10));
-  const pending = selectPendingRipples(closed, since, rippled);
-  return { ok: true, since, baseline, pending, ledgerDefects: ledger.defects };
+/** Reports whether the merged `--ticket` was the last open child of an open parent, without writing anything. */
+async function runParentStatus(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
+  const ticket = parsePositiveInteger('ticket', readRequired(flags, 'ticket'));
+  const status = await readParentStatus(async (number) => fetchIssue(context.run, context.root, number), ticket);
+  return { ok: true, ...status };
 }
 
 /**
- * Appends `decision`, `policy`, `note`, `ripple`, and `pull` records read from stdin as one JSON object, a JSON array,
- * or JSON lines.
+ * Appends `decision`, `policy`, `note`, and `pull` records read from stdin as one JSON object, a JSON array, or JSON
+ * lines.
  * Every record is validated before any is appended.
  */
 async function runRecord(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
@@ -472,45 +405,13 @@ async function runRecord(flags: ParsedFlags, context: CommandContext): Promise<C
   return { ok: true, appended: records.length, ledger: paths.ledgerFile };
 }
 
-/** Lists the open tickets related to the closed `--ticket`, with the counts by tier, without writing anything. */
-async function runRelated(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
-  const number = parsePositiveInteger('ticket', readRequired(flags, 'ticket'));
-  const repository = await resolveRepository(context.run, context.root);
-  const ripple = await resolveRipple(context, repository, number);
-  return {
-    ok: true,
-    ticket: number,
-    title: ripple.closed.title,
-    pr: ripple.pr,
-    mergeSha: ripple.mergeSha,
-    files: ripple.files.length,
-    counts: { ...countByTier(ripple.candidates), total: ripple.candidates.length },
-    candidates: ripple.candidates,
-  };
-}
-
 // region | Helpers
-
-/** A closed ticket's related set and the merge that closed it. */
-interface RippleSet {
-  candidates: RelatedCandidate[];
-  closed: Issue;
-  files: string[];
-  mergeSha: string | null;
-  open: Issue[];
-  pr: number | null;
-}
 
 /** The tickets that `collect` assesses, in assessment order, before the resume rule and the cap. */
 interface Selection {
   fetched: number;
   limit: number | undefined;
   ordered: Issue[];
-  /** The ripple's record and each ticket's evidence; absent outside a ripple. */
-  ripple?: {
-    evidence: (number: number) => RippleEvidence | undefined;
-    record: { candidates: number[]; kind: 'ripple'; number: number; pr: number | null };
-  };
 }
 
 /** Returns the JSON text of an assessor reply: its last fenced JSON block, or the whole reply when it has none. */
@@ -633,37 +534,6 @@ async function resolveLogRef(run: CommandRunner, root: string, defaultBranch: st
   }
 }
 
-/**
- * Fetches the closed ticket `number`, finds its latest closing PR and the files that the PR touched, and computes the
- * open tickets related to it. A ticket that is still open is `invalid-args`.
- */
-async function resolveRipple(context: CommandContext, repository: RepositoryInfo, number: number): Promise<RippleSet> {
-  const closed = await fetchIssue(context.run, context.root, number);
-  if (closed.state === 'open') {
-    throw new CommandError('invalid-args', `#${number} is open; a ripple follows a closed ticket`);
-  }
-  const references = await findCrossReferences({
-    defaultBranch: await resolveLogRef(context.run, context.root, repository.defaultBranch),
-    issues: [closed],
-    nameWithOwner: repository.nameWithOwner,
-    root: context.root,
-    run: context.run,
-  });
-  const closingRef = references.get(number)?.findLast((reference) => reference.kind === 'closing-pr');
-  const pr = closingRef === undefined ? null : Number(closingRef.ref.slice(1));
-  const detail = pr === null ? undefined : await fetchPullRequest(context.run, context.root, pr);
-  const files = detail?.files ?? [];
-  const open = await fetchOpenIssues(context.run, context.root);
-  return {
-    candidates: findRelated({ closed, closingPr: pr, files, open }),
-    closed,
-    files,
-    mergeSha: detail?.mergeSha?.slice(0, 8) ?? null,
-    open,
-    pr,
-  };
-}
-
 /** Selects the backlog by `--scope`, `--exclude-label`, and `--older-than`, in sweep order, capped by `--limit`. */
 async function selectBacklog(flags: ParsedFlags, context: CommandContext): Promise<Selection> {
   const olderThan = readOptional(flags, 'older-than');
@@ -685,47 +555,6 @@ async function selectBacklog(flags: ParsedFlags, context: CommandContext): Promi
     fetched: fetched.length,
     limit: selectors.limit,
     ordered: orderForSweep(applySelectors(fetched, selectors, context.now)),
-  };
-}
-
-/** Selects the open tickets related to the closed ticket `number`, in tier order; every backlog selector is refused. */
-async function selectRipple(
-  flags: ParsedFlags,
-  context: CommandContext,
-  repository: RepositoryInfo,
-  number: number,
-): Promise<Selection> {
-  const refused = (['scope', 'exclude-label', 'older-than', 'limit'] as const).find((name) => flags.has(name));
-  if (refused !== undefined) {
-    throw new CommandError('invalid-args', `--related-to may not be combined with --${refused}`);
-  }
-  const ripple = await resolveRipple(context, repository, number);
-  const byNumber = new Map(ripple.open.map((issue) => [issue.number, issue]));
-  const tiers = new Map(ripple.candidates.map((candidate) => [candidate.number, candidate.tiers]));
-  const evidence = {
-    closedNumber: ripple.closed.number,
-    closedTitle: ripple.closed.title,
-    files: ripple.files.slice(0, RIPPLE_FILE_LIMIT),
-    filesTruncated: ripple.files.length > RIPPLE_FILE_LIMIT,
-    mergeSha: ripple.mergeSha,
-    pr: ripple.pr,
-  };
-  return {
-    fetched: ripple.open.length,
-    limit: undefined,
-    ordered: ripple.candidates.flatMap((candidate) => byNumber.get(candidate.number) ?? []),
-    ripple: {
-      evidence: (ticket) => {
-        const matched = tiers.get(ticket);
-        return matched === undefined ? undefined : { ...evidence, tiers: matched };
-      },
-      record: {
-        candidates: ripple.candidates.map((candidate) => candidate.number),
-        kind: 'ripple',
-        number: ripple.closed.number,
-        pr: ripple.pr,
-      },
-    },
   };
 }
 

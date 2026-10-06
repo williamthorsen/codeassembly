@@ -8,9 +8,7 @@ user-invocable: true
 
 Sweep a repository's open GitHub issues for tickets whose motivation other work has met, whose premise the codebase has outgrown, or whose fate hinges on another ticket. A bundled helper does the mechanical half: It fetches and selects the tickets, detects which are in progress, finds candidate cross-references, keeps the ledger, classifies each assessment under the policy, and renders the digests and the comments. You do the interactive half: the bulk decisions, one `{subagent:ticket-assessor}` subagent per ticket, the escalation digests, and every write to GitHub.
 
-With `--related-to <#>`, the sweep is a ripple: It assesses the open tickets related to one closed ticket rather than the backlog, so that a merge's effect on them is weighed while it is fresh.
-
-**Announce at start:** "Using groom-backlog to sweep the open tickets of {repository} (run {run id}{, dry run})." For a ripple, say "the open tickets related to #{N}" in place of "the open tickets".
+**Announce at start:** "Using groom-backlog to sweep the open tickets of {repository} (run {run id}{, dry run})."
 
 ## Arguments
 
@@ -22,13 +20,10 @@ With `--related-to <#>`, the sweep is a ripple: It assesses the open tickets rel
 | `--model <alias>`         | The model of each assessor: `opus`, `sonnet`, or `haiku`.                                   | `opus`         |
 | `--older-than <age>`      | Keep the tickets last updated more than `<N>d` days or `<N>w` weeks ago.                    | All            |
 | `--page-size <N>`         | Escalations per digest page, from 20 to 30.                                                 | 25             |
-| `--related-to <#>`        | Assess the open tickets related to this closed ticket, in place of the backlog.             | Off            |
 | `--run <id>`              | The run id that the ledger records and the markers contain. A run resumes under its own id. | `{YYYY-MM-DD}` |
 | `--scope <name>`          | Keep the tickets that have the label `scope:<name>`; `scope:<name>` also works. Repeatable. | All            |
 
 `--run` defaults to today's date in UTC. `--dry-run` appends `-dry-run` to the run id, whether it is the default or given explicitly: A later real run then does not skip the tickets that the dry run assessed.
-
-`--related-to <#>` sets the run id to `ripple-{#}`, so that each merge is assessed afresh, and it refuses `--run`, `--scope`, `--exclude-label`, `--older-than`, and `--limit`: Stop and report the conflict. The related set has four tiers, in this order: a ticket that mentions the closed ticket or its closing pull request, a ticket that the closed ticket blocked, the closed ticket's parent and the parent's other open children, and a ticket whose text names a file that the closing pull request touched. A ripple skips step 3 and assesses the whole set.
 
 GitHub alone is supported, through `gh`. On any other platform, stop at step 1 and report that the skill does not support it.
 
@@ -58,7 +53,7 @@ The helper's `ingest` command classifies each assessment into one class, and you
 
 ## Dry-run boundary
 
-`--dry-run` runs steps 1 to 4 and renders the digests of step 6, then stops. It records the policy and every assessment in the ledger under its own run id. It does not record any decision or `ripple` record, post any comment, or close any ticket, and it reports what each auto class and each bulk close would have done.
+`--dry-run` runs steps 1 to 4 and renders the digests of step 6, then stops. It records the policy and every assessment in the ledger under its own run id. It does not record any decision, post any comment, or close any ticket, and it reports what each auto class and each bulk close would have done.
 
 ## Process
 
@@ -79,10 +74,8 @@ The ledger is `local/ticket-triage/ledger.jsonl` in the primary worktree, which 
 3. Record the run's policy. Write the record with {tool:Write} to `{scratch}/policy.json`, then pass it on stdin:
 
    ```json
-   {"kind":"policy","decidedBy":"user","decisions":{"skill":"groom-backlog","model":"{model}","dryRun":{true|false},"pageSize":{N},"scopes":[],"excludeLabels":[],"olderThan":null,"limit":null,"relatedTo":null}}
+   {"kind":"policy","decidedBy":"user","decisions":{"skill":"groom-backlog","model":"{model}","dryRun":{true|false},"pageSize":{N},"scopes":[],"excludeLabels":[],"olderThan":null,"limit":null}}
    ```
-
-   For a ripple, `relatedTo` is the closed ticket's number.
 
    ```bash
    node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs record --run {run} < {scratch}/policy.json
@@ -95,13 +88,11 @@ node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs collect --run {ru
   --scope {name} --exclude-label {label} --older-than {age} --limit {N}
 ```
 
-Pass only the selectors that the invocation names. For a ripple, pass `--related-to {#}` and no selector; the helper reports a ticket that is still open as `invalid-args`. The result contains `sha`, `counts`, `resumed` (the tickets that this run already assessed and that have not changed since), `pendingAutomatic` (the resumed tickets whose auto-close class does not have a decision yet, each with its `class`), `groups`, and `tickets`. Each group contains its `scope` (`null` for the unscoped group), its tickets oldest first with any `inProgress` signal, and its `waves`. Each ticket's input file is at `{scratch}/tickets/{number}.json`. A ripple's result also contains `ripple`, the record that step 7 appends; its one group is unscoped and lists the tickets in tier order, and each ticket file has a `ripple` field that names the merge.
+Pass only the selectors that the invocation names. The result contains `sha`, `counts`, `resumed` (the tickets that this run already assessed and that have not changed since), `pendingAutomatic` (the resumed tickets whose auto-close class does not have a decision yet, each with its `class`), `groups`, and `tickets`. Each group contains its `scope` (`null` for the unscoped group), its tickets oldest first with any `inProgress` signal, and its `waves`. Each ticket's input file is at `{scratch}/tickets/{number}.json`.
 
-If `counts.total` is 0, go to step 5 when `pendingAutomatic` is not empty, and to step 6 otherwise: A resumed run can still have pending closes and open escalations. A ripple whose set is empty goes to step 7, which records it.
+If `counts.total` is 0, go to step 5 when `pendingAutomatic` is not empty, and to step 6 otherwise: A resumed run can still have pending closes and open escalations.
 
 ### 3. Ask for the bulk decisions
-
-A ripple skips this step, and dispatches its group in step 4.
 
 Ask one question per group, all in one action-items block, before dispatching anything. State the group's scope, its ticket count, its oldest ticket with its date, and the count of in-progress tickets, then offer:
 
@@ -164,12 +155,6 @@ For each decided entry, per [Writing to GitHub](#writing-to-github), with `--dec
 - **No decision** writes nothing: neither a comment nor a decision record. The next run's digest presents the ticket again.
 
 Present the next page once the current one is applied.
-
-For a ripple, append the `ripple` record from step 2's result once every page is applied, whether or not the set was empty and whether or not every escalation was decided. Write it verbatim with {tool:Write} to `{scratch}/ripple.json`, then:
-
-```bash
-node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs record --run {run} < {scratch}/ripple.json
-```
 
 Then summarize the run: the counts per class, the tickets closed, kept, and commented on, the escalations left undecided, the tickets whose replies failed validation, and the ledger's path.
 

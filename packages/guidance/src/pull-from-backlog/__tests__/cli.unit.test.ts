@@ -25,22 +25,14 @@ const OPEN = [
   ghIssue({ number: 20, title: 'Later blocker', milestone: 'Sprint 2' }),
 ];
 
-/** The closed issues that the fake `gh issue list --state closed` returns. */
-const CLOSED = [
-  { ...ghIssue({ number: 30, title: 'Merged before' }), state: 'CLOSED', closedAt: '2026-09-01T00:00:00Z' },
-  { ...ghIssue({ number: 31, title: 'Merged after' }), state: 'CLOSED', closedAt: '2026-09-25T00:00:00Z' },
-];
-
 describe(runCli, () => {
   let root: string;
   let context: CommandContext;
-  let calls: RunnerCall[];
 
   beforeEach(async () => {
     root = mkdtempSync(path.join(tmpdir(), 'pull-cli-'));
     await mkdir(path.join(root, '.git'));
     const runner = buildFakeRunner((call) => respond(call, root));
-    calls = runner.calls;
     context = { now: NOW, root, run: runner.run };
   });
 
@@ -62,7 +54,6 @@ describe(runCli, () => {
         counts: { open: 6, inNow: 5, candidates: 2 },
         blocked: [{ number: 14, blockedBy: [20] }],
         groomStale: { stale: false, daysSince: 7 },
-        pendingRipples: { baseline: 'policy', since: '2026-09-24T00:00:00Z', pending: [{ number: 31 }] },
       });
       expect(result.ok && result.candidates).toMatchObject([
         { number: 11, reasons: ['priority:high', expect.stringMatching(/^opened/)] },
@@ -98,7 +89,7 @@ describe(runCli, () => {
       ]);
     });
 
-    it('reports pending ripples since the latest pull record over a groom policy record', async () => {
+    it('does not count a pull record as a groom', async () => {
       writeLedger(root, [
         policy('2026-08-01T00:00:00Z'),
         { run: 'pull-2026-09-24', kind: 'pull', picked: [10], sha: 'abc', recordedAt: '2026-09-24T00:00:00Z' },
@@ -106,20 +97,17 @@ describe(runCli, () => {
 
       expect(await runCli(['survey'], context)).toMatchObject({
         groomStale: { stale: true, reasons: ['age'] },
-        pendingRipples: { baseline: 'pull', pending: [{ number: 31 }] },
       });
     });
 
-    it('reports a null baseline and a never-groomed backlog when the ledger is empty', async () => {
+    it('reports a never-groomed backlog when the ledger is empty', async () => {
       const result = await runCli(['survey'], context);
 
       expect(result).toMatchObject({
         ok: true,
         groomStale: { stale: true, reasons: ['never'] },
-        pendingRipples: { baseline: null, reason: expect.stringContaining('does not have') },
       });
       expect(result.ok && result.warnings).toContainEqual({ kind: 'groom-stale', reasons: ['never'] });
-      expect(calls.some((call) => call.args.includes('closed'))).toBe(false);
       expect(existsSync(ledgerFile(root))).toBe(false);
     });
 
@@ -227,7 +215,7 @@ function respond(call: RunnerCall, root: string): string | undefined {
   if (first === 'repo') return JSON.stringify({ nameWithOwner: 'owner/repo', defaultBranchRef: { name: 'main' } });
   if (first === 'api' && second === 'user') return 'me\n';
   if (first === 'api') return JSON.stringify([MILESTONES]);
-  if (first === 'issue') return JSON.stringify(call.args.includes('closed') ? CLOSED : OPEN);
+  if (first === 'issue') return JSON.stringify(OPEN);
   return undefined;
 }
 

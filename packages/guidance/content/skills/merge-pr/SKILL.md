@@ -336,27 +336,25 @@ If the delegate stopped or failed, stop. Otherwise continue.
 
 ### 11. Report the outcome
 
-Report nothing beyond the delegate's completion report, and invoke nothing but step 12's offer. The merge flow does not record a lede decision or offer to record one; a capture is the author's own request, made whenever they choose.
+Report nothing beyond the delegate's completion report, and invoke nothing but step 12's offer to close the parent. The merge flow does not record a lede decision or offer to record one; a capture is the author's own request, made whenever they choose.
 
-### 12. Offer the ripple
+### 12. Offer to close the parent
 
-A merge can change the open tickets related to the ticket that it closes, so offer to assess them while the merge is fresh. Skip this step silently when `scm` is not `"github"`, since `{skill:groom-backlog}` supports GitHub alone, or when `effective_record.ticket_ref` from step 3 is null or is not a GitHub `#{N}` reference. Take the ticket from that field rather than from session context: It names the ticket that the merge commit closes, and session context names the current branch's ticket, which is another one when `--pr` merges another branch's PR. Otherwise read the related set of the merged ticket `{N}`:
+A parent ticket stays open when its last child closes, so offer to close it when this merge closed that child. Skip this step silently when `scm` is not `"github"`, since the check reads GitHub's sub-issues, or when `effective_record.ticket_ref` from step 3 is null or is not a GitHub `#{N}` reference. Take the ticket from that field rather than from session context: It names the ticket that the merge commit closes, and session context names the current branch's ticket, which is another one when `--pr` merges another branch's PR. Otherwise read the merged ticket's parent:
 
 ```bash
-node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs related --ticket {N}
+node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs parent-status --ticket {N}
 ```
 
 The command writes nothing. Act on its result:
 
-- **`ok: false`**: Report its `message` in one line and offer nothing. A ticket that the merge left open is reported this way.
-- **`counts.total` is 0**: Print `No open tickets related to #{N}.` and record the empty ripple, so that `pending-ripples` does not offer the ticket again. `{pr}` is the result's `pr`, or `null`:
+- **`ok: false`**: Report its `message` in one line and offer nothing.
+- **`offer` is false**: Say nothing. The ticket does not have a parent, the parent is closed, another child is open, or the merge left the ticket open.
+- **`offer` is true**: Ask in the closing [action-items block](../_data/action-items.md): "Close parent #{P} ({title}), whose children are all closed? 👍🏼👎🏼", with `{P}` and `{title}` from the result's `parent`. When `parent.uncheckedCriteria` is not empty, list each criterion beneath the question, so that the user does not close a parent whose own criteria are unmet. Closing a ticket is remote shared state, so close nothing without a clear yes. On a clear yes, close it with a comment that names the last child and `effective_record.pr_number`:
 
   ```bash
-  printf '%s\n' '{"kind":"ripple","number":{N},"pr":{pr},"candidates":[]}' \
-    | node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs record --run ripple-{N}
+  gh issue close {P} --reason completed --comment "Every child is closed; #{N} closed last, merged in #{pr_number}."
   ```
-
-- **Otherwise**: Offer the ripple in the closing [action-items block](../_data/action-items.md), with the result's counts by tier and the `file-overlap` tier counted apart, because a shared file is the weakest relation: "Ripple #{N}: assess {total − file-overlap} related tickets ({mention} mention, {blocked} blocked, {family} family) and {file-overlap} that name a file that the PR touched? 👍🏼👎🏼". A ripple edits tickets, which is remote shared state, so invoke nothing without consent. On consent, invoke `{skill:groom-backlog}` with `--related-to {N}`.
 
 ## Important
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildFakeRunner } from '../../test-utils/fake-runner.ts';
-import { fetchIssue, fetchMilestones, fetchPullRequest, parseIssueList } from '../fetch.ts';
+import { fetchIssue, fetchMilestones, parseIssueList } from '../fetch.ts';
 
 /** A `gh issue` record as gh 2.100 returns it, without any relations. */
 const PLAIN_ISSUE = {
@@ -90,20 +90,6 @@ describe(fetchIssue, () => {
 
     await expect(fetchIssue(runner.run, '/repo', 10)).resolves.toMatchObject({ number: 10, state: 'closed' });
     expect(runner.calls[0]?.args.slice(0, 3)).toStrictEqual(['issue', 'view', '10']);
-  });
-});
-
-describe(fetchPullRequest, () => {
-  it('returns the touched paths and the merge SHA', async () => {
-    const runner = buildFakeRunner(() =>
-      JSON.stringify({ files: [{ path: 'src/a.ts', additions: 1 }], mergeCommit: { oid: 'bb8d6dc0fb03' } }),
-    );
-
-    await expect(fetchPullRequest(runner.run, '/repo', 50)).resolves.toStrictEqual({
-      files: ['src/a.ts'],
-      mergeSha: 'bb8d6dc0fb03',
-      number: 50,
-    });
   });
 });
 
