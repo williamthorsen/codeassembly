@@ -108,27 +108,32 @@ export function createSyncFixture(): SyncFixture {
     await writeFile(path.join(fixture.projectRoot, '.agents', 'codeassembly.local.yaml'), content, 'utf8');
   }
 
+  /** Returns the path of the project-scope codeassembly.yaml. */
   function declarationPath(): string {
     return path.join(fixture.projectRoot, '.agents', 'codeassembly.yaml');
   }
 
+  /** Returns the path of the project-local codeassembly.local.yaml. */
   function localDeclarationPath(): string {
     return path.join(fixture.projectRoot, '.agents', 'codeassembly.local.yaml');
   }
 
+  /** Returns the path of the project's PROJECT.md. */
   function projectMdPath(): string {
     return path.join(fixture.projectRoot, '.agents', 'PROJECT.md');
   }
 
+  /** Returns the path of the project's AGENTS.md. */
   function agentsMdPath(): string {
     return path.join(fixture.projectRoot, 'AGENTS.md');
   }
 
-  /** The project-local ambient host for a harness, which `sync` owns and creates. */
+  /** Returns the path of the project-local ambient host for a harness, which `sync` owns and creates. */
   function localHostPath(name = 'CLAUDE.local.md'): string {
     return path.join(fixture.projectRoot, name);
   }
 
+  /** Returns the path of a deployed skill's SKILL.md under the harness directory. */
   function skillPath(slug: string, dotDir = '.claude'): string {
     return path.join(fixture.projectRoot, dotDir, 'skills', slug, 'SKILL.md');
   }
