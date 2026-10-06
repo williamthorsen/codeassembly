@@ -42,46 +42,40 @@ describe('merge-pr contract', () => {
     expect(text).toContain('a type that the developer named, through `--type` or in an answer at the gate, stands');
   });
 
-  it('invokes nothing after the merge but the ripple offer', async () => {
+  it('invokes nothing after the merge but the offer to close the parent', async () => {
     const text = (await EXPANDED).toLowerCase();
 
-    expect(text).toContain("invoke nothing but step 12's offer");
+    expect(text).toContain("invoke nothing but step 12's offer to close the parent");
+    expect(text).not.toContain('ripple');
   });
 
-  it('offers the ripple after reporting the outcome and before the closing notes', async () => {
+  it('offers to close the parent after reporting the outcome and before the closing notes', async () => {
     const text = await EXPANDED;
     const reportIndex = text.indexOf('### 11. Report the outcome');
-    const rippleIndex = text.indexOf('### 12. Offer the ripple');
+    const parentIndex = text.indexOf('### 12. Offer to close the parent');
     const importantIndex = text.indexOf('## Important');
 
     expect(reportIndex).toBeGreaterThan(-1);
-    expect(rippleIndex).toBeGreaterThan(reportIndex);
-    expect(importantIndex).toBeGreaterThan(rippleIndex);
+    expect(parentIndex).toBeGreaterThan(reportIndex);
+    expect(importantIndex).toBeGreaterThan(parentIndex);
+    expect(text.slice(parentIndex, importantIndex)).not.toMatch(/^### 13\./m);
   });
 
-  it('ripples the ticket that the merge commit closes rather than the session ticket', async () => {
+  it('reads the parent of the ticket that the merge commit closes rather than the session ticket', async () => {
     const text = await EXPANDED;
 
     expect(text).toContain(
       'when `effective_record.ticket_ref` from step 3 is null or is not a GitHub `#{N}` reference',
     );
     expect(text).toContain('Take the ticket from that field rather than from session context');
+    expect(text).toContain('groom-backlog.mjs parent-status --ticket {N}');
   });
 
-  it('reports an empty related set in one line and records the empty ripple', async () => {
+  it('closes the parent only on a clear yes, listing its unmet criteria', async () => {
     const text = await EXPANDED;
 
-    expect(text).toContain('groom-backlog.mjs related --ticket {N}');
-    expect(text).toContain('No open tickets related to #{N}.');
-    expect(text).toContain('"candidates":[]');
-    expect(text).toContain('record --run ripple-{N}');
-  });
-
-  it('offers a non-empty ripple with the counts by tier and runs it only on consent', async () => {
-    const text = (await EXPANDED).toLowerCase();
-
-    expect(text).toContain('{file-overlap} that name a file that the pr touched');
-    expect(text).toContain('invoke nothing without consent');
-    expect(text).toContain('with `--related-to {n}`');
+    expect(text).toContain('close nothing without a clear yes');
+    expect(text).toContain('`parent.uncheckedCriteria`');
+    expect(text).toContain('gh issue close {P} --reason completed');
   });
 });
