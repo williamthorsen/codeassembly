@@ -100,7 +100,7 @@ cleanup_missing_manifest() {
 BeforeEach "setup_missing_manifest"
 AfterEach "cleanup_missing_manifest"
 
-It "derives and writes the manifest on cache miss, then succeeds"
+It "derives and writes the manifest when none exists, then succeeds"
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 When run main --skill foo --interactive true
 The status should be success
@@ -128,9 +128,6 @@ The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.jso
 End
 
 It "recovers when the cached manifest contains corrupt JSON"
-# Seed a corrupt `.branch-manifest.json`; `read_manifest`'s `jq empty` guard treats it
-# as a cache miss and falls through to `derive_manifest`, which recomposes the manifest
-# from preferences + git state.
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 mkdir -p .agents
 printf '{ "ticket_id": "broken' >.agents/main.branch-manifest.json
@@ -138,8 +135,6 @@ When run main --skill foo --interactive true
 The status should be success
 The output should include "skill: foo"
 The output should include "branch: main"
-# The deriver emits a stderr diagnostic when it overwrites the corrupt file so that an operator can
-# distinguish a normal cache miss from recurring corruption.
 The stderr should include "manifest"
 The stderr should include "is corrupt"
 The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
@@ -150,23 +145,18 @@ Describe "main end-to-end"
 setup_main_e2e() {
   enter_tmpdir || return 1
   # Initialize a minimal git repository so that `current_branch` and `git rev-parse --short HEAD` succeed.
-  git init --quiet --initial-branch=main .
+  git init --quiet --initial-branch=537 .
   git config user.email "test@example.com"
   git config user.name "Test"
   git commit --allow-empty --quiet -m "initial"
-  # Write the branch manifest that the script reads for session-level fields.
   mkdir -p .agents
-  cat >.agents/main.branch-manifest.json <<'JSON'
-{
-  "platform": "github",
-  "ticket_id": "537",
-  "ticket_ref": "#537",
-  "default_branch": "HEAD"
-}
-JSON
+  printf "project:\n  ticket_ref_prefix: '#'\n" >.agents/preferences.yaml
+  export RESOLVE_FRONTMATTER_BUNDLE_PATH="$PROJECT_ROOT/content/skills/derive-session-context/derive-session-context.mjs"
+  export RESOLVE_FRONTMATTER_BUNDLE_ARGS="--home $tmpdir"
 }
 
 cleanup_main_e2e() {
+  unset RESOLVE_FRONTMATTER_BUNDLE_PATH RESOLVE_FRONTMATTER_BUNDLE_ARGS
   leave_tmpdir
 }
 
@@ -257,9 +247,12 @@ The variable result should include "skill: foo"
 The variable result should include "ticket_id: 537"
 End
 
-It "resolves a legacy manifest 'platform' key to 'scm' in json output"
-When run main --format json
+It "stamps ticket values derived from the current preferences over a manifest already on disk"
+printf '{ "ticket_id": "537", "ticket_ref": "#537" }\n' >.agents/537.branch-manifest.json
+printf "project:\n  ticket_ref_prefix: 'ABC-'\n" >.agents/preferences.yaml
+When run main --skill foo --interactive true
 The status should be success
-The output should include '"scm": "github"'
+The output should include "ticket_id: ABC-537"
+The output should include "ticket_ref: ABC-537"
 End
 End
