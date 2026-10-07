@@ -125,7 +125,7 @@ A test file runs in one test worker, and a file that keeps its fixtures makes an
 - **Ceiling.** The `max-lines` setting that the project's lint configuration applies to test files. Where the lint does not set one, 500 lines, counting every line.
 - **Aspect.** A group of the subject's behaviors that shares setup and reads without the rest of the file. Each split file contains one aspect.
 - **Naming.** Each split file keeps the subject's name and adds the aspect after it, followed by any segment that the project's naming requires: `sync.test.ts` becomes `sync.retirement.test.ts`, and `sync.tool.test.ts` becomes `sync.retirement.tool.test.ts`.
-- **Fixtures.** Move the fixture builders that the split files share out of the test files, into a module in a `test-utils/` directory beside the tests, so that a new aspect file costs one import.
+- **Fixtures.** Move the fixture builders that the split files share out of the test files, into a module in a `test-utils/` directory beside the tests (beside `__tests__/` when the tests live in one, never inside it), so that a new aspect file costs one import.
 
 ## Mocking principles
 
