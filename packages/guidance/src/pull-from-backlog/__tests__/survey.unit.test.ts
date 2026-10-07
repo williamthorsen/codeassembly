@@ -36,6 +36,7 @@ describe(buildSurvey, () => {
 
     expect(survey.counts).toStrictEqual({ candidates: 1, excluded: 2, inNow: 1, open: 3 });
     expect(survey.candidates.map((candidate) => candidate.number)).toStrictEqual([1]);
+    expect(survey.candidates.every((candidate) => candidate.inNow)).toBe(true);
   });
 
   it('offers a status-labelled ticket when excludeLabels is empty', () => {
@@ -43,6 +44,39 @@ describe(buildSurvey, () => {
 
     expect(survey.counts.excluded).toBe(0);
     expect(survey.candidates.map((candidate) => candidate.number)).toStrictEqual([1]);
+  });
+
+  it('fills a short Now menu from the rest of the backlog, ranked after every Now candidate', () => {
+    const survey = surveyBacklog([
+      buildIssue({ number: 1, milestone: SOONER, createdAt: '2026-09-01T00:00:00Z' }),
+      buildIssue({ number: 2, milestone: LATER, createdAt: '2026-03-01T00:00:00Z' }),
+      buildIssue({ number: 3, createdAt: '2026-01-01T00:00:00Z', labels: ['priority:high'] }),
+      buildIssue({ number: 4, createdAt: '2026-02-01T00:00:00Z', labels: ['status:blocked'] }),
+    ]);
+
+    expect(survey.candidates.map(({ inNow, number }) => ({ inNow, number }))).toStrictEqual([
+      { inNow: true, number: 1 },
+      { inNow: false, number: 3 },
+      { inNow: false, number: 2 },
+    ]);
+    expect(survey.counts.candidates).toBe(1);
+  });
+
+  it('does not fill the menu when Now has --limit candidates', () => {
+    const survey = surveyBacklog([buildIssue({ number: 1, milestone: SOONER }), buildIssue({ number: 2 })], {}, 1);
+
+    expect(survey.candidates.map(({ inNow, number }) => ({ inNow, number }))).toStrictEqual([
+      { inNow: true, number: 1 },
+    ]);
+  });
+
+  it('does not fill the menu when Now is the whole backlog', () => {
+    const survey = surveyBacklog([buildIssue({ number: 1 })]);
+
+    expect(survey.now.milestone).toBeNull();
+    expect(survey.candidates.map(({ inNow, number }) => ({ inNow, number }))).toStrictEqual([
+      { inNow: true, number: 1 },
+    ]);
   });
 });
 

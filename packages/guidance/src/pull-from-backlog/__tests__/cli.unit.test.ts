@@ -56,8 +56,9 @@ describe(runCli, () => {
         groomStale: { stale: false, daysSince: 7 },
       });
       expect(result.ok && result.candidates).toMatchObject([
-        { number: 11, reasons: ['priority:high', expect.stringMatching(/^opened/)] },
-        { number: 10 },
+        { number: 11, inNow: true, reasons: ['priority:high', expect.stringMatching(/^opened/)] },
+        { number: 10, inNow: true },
+        { number: 20, inNow: false },
       ]);
       expect(result.ok && result.inProgress).toMatchObject([
         { number: 12, assignees: ['me'], ref: null },
@@ -85,7 +86,9 @@ describe(runCli, () => {
       );
       expect(flagged).toMatchObject({ ok: true, now: { source: 'flag', milestone: { title: 'Sprint 2' } } });
       expect(flagged.ok && flagged.candidates).toMatchObject([
-        { number: 20, reasons: ['unblocks #14', expect.any(String)] },
+        { number: 20, inNow: true, reasons: ['unblocks #14', expect.any(String)] },
+        { number: 11, inNow: false },
+        { number: 10, inNow: false },
       ]);
     });
 

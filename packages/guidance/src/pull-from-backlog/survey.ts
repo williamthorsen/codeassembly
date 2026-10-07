@@ -14,10 +14,13 @@ import {
   type Warning,
 } from './warnings.ts';
 
+/** A ranked candidate, marked by whether it belongs to the Now set or fills the menu from outside it. */
+export type SurveyCandidate = RankedCandidate & { inNow: boolean };
+
 /** The survey's result, less the ledger paths that the CLI adds. */
 export interface Survey {
   blocked: Array<{ blockedBy: number[]; number: number; title: string }>;
-  candidates: RankedCandidate[];
+  candidates: SurveyCandidate[];
   counts: { candidates: number; excluded: number; inNow: number; open: number };
   groomStale: GroomStaleness;
   inProgress: InProgressEntry[];
@@ -59,12 +62,22 @@ export function buildSurvey(input: {
     .map((issue) => toInProgressEntry(issue, inProgress.get(issue.number), now));
   const busy = new Set(inProgressEntries.map((entry) => entry.number));
 
-  const candidates = rankCandidates({
-    candidates: selectCandidates({ inNow, inProgress: busy, isExcluded, open }),
-    now,
-    open,
-    priorityPrefix: config.priorityPrefix,
-  });
+  /** Returns the ranked candidates that `scope` admits. */
+  function rankScope(scope: (issue: Issue) => boolean): RankedCandidate[] {
+    return rankCandidates({
+      candidates: selectCandidates({ inNow: scope, inProgress: busy, isExcluded, open }),
+      now,
+      open,
+      priorityPrefix: config.priorityPrefix,
+    });
+  }
+  const candidates = rankScope(inNow);
+  const menu: SurveyCandidate[] = candidates.slice(0, limit).map((candidate) => ({ ...candidate, inNow: true }));
+  // Fill the menu from outside Now only when Now is a milestone; a whole-backlog Now leaves nothing outside it.
+  if (menu.length < limit && nowSet.milestone !== null) {
+    const outside = rankScope((issue) => !inNow(issue)).slice(0, limit - menu.length);
+    menu.push(...outside.map((candidate) => ({ ...candidate, inNow: false })));
+  }
 
   const groomStale = assessGroomStaleness({
     now,
@@ -86,7 +99,7 @@ export function buildSurvey(input: {
 
   return {
     blocked,
-    candidates: candidates.slice(0, limit),
+    candidates: menu,
     counts: {
       candidates: candidates.length,
       excluded: open.length - eligible.length,
