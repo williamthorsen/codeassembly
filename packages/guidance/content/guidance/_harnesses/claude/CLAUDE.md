@@ -2,7 +2,7 @@ Read AGENTS.md (if it exists) in the working directory and treat it as fully equ
 
 <!-- include: ../../shared/AGENTS.md / -->
 
-## Subagent models
+# Subagent models
 
 When dispatching a subagent through the Agent tool or a workflow's `agent()` call, choose its model by what its task produces:
 
