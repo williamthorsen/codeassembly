@@ -6,7 +6,7 @@ import { captureError } from '@williamthorsen/toolbelt.testing/candidate';
 import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { generateLabelMap, printGenerateUsage, readReleaseKitVersion } from '../generate-label-map.ts';
+import { generateLabelMap, printGenerateUsage, readChangeGrammarVersion } from '../generate-label-map.ts';
 
 interface LabelMap {
   readonly $schema: string;
@@ -37,19 +37,19 @@ describe(generateLabelMap, () => {
     const parsed = parseLabelMap(result);
 
     expect(parsed.$schema).toMatch(
-      /^https:\/\/github\.com\/williamthorsen\/node-monorepo-tools\/raw\/release-kit-v[\d.]+\/packages\/release-kit\/schemas\/label-map\.json$/,
+      /^https:\/\/github\.com\/williamthorsen\/node-monorepo-tools\/raw\/change-grammar-v[\d.]+\/packages\/change-grammar\/schemas\/label-map\.json$/,
     );
     expect(parsed.types).toBeDefined();
     expect(parsed.scopes).toEqual({});
   });
 
-  it('embeds the installed release-kit version in the $schema URL', async () => {
-    const releaseKitVersion = await readReleaseKitVersion();
+  it('embeds the change-grammar version that release-kit resolves in the $schema URL', async () => {
+    const changeGrammarVersion = await readChangeGrammarVersion();
 
     const result = await readGeneratedFile({ force: false }, tempDir);
     const parsed = parseLabelMap(result);
 
-    expect(parsed.$schema).toContain(`release-kit-v${releaseKitVersion}`);
+    expect(parsed.$schema).toContain(`change-grammar-v${changeGrammarVersion}`);
   });
 
   it('includes all canonical type mappings', async () => {
