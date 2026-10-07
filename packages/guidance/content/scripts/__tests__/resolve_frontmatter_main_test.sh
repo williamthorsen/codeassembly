@@ -127,7 +127,7 @@ The path "$resolved_tmpdir/.agents/main.branch-manifest.json" should be exist
 The path "$resolved_tmpdir/packages/nested/deep/.agents/main.branch-manifest.json" should not be exist
 End
 
-It "recovers when the cached manifest contains corrupt JSON"
+It "recovers when the existing manifest contains corrupt JSON"
 resolved_tmpdir=$(cd "$tmpdir" && pwd -P)
 mkdir -p .agents
 printf '{ "ticket_id": "broken' >.agents/main.branch-manifest.json
