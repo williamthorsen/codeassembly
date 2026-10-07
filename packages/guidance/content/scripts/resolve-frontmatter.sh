@@ -1,9 +1,8 @@
 #!/usr/bin/env bash
 # Emits canonical artifact-frontmatter fields as YAML (default) or JSON.
 #
-# Reads `.agents/{sanitized-branch}.branch-manifest.json` (produced on demand by the bundled `derive-session-context`
-# helper) for session-level fields and runs git for the rest. When the manifest is absent, the script invokes the
-# bundled deriver to create it, so a caller does not need to meet any precondition.
+# Takes session-level fields from the branch manifest emitted by the bundled `derive-session-context` helper, which
+# composes it from the current preferences on every call, and runs git for the rest.
 #
 # Flags:
 #   --skill NAME              provenance.skill value (required in yaml mode).
@@ -158,23 +157,14 @@ main() {
     fail "git could not resolve the current branch: $git_err"
   fi
 
-  local manifest_path
-  manifest_path=$(resolve_manifest_path "$branch") || fail "could not resolve repo root for manifest lookup"
-
   local manifest
-  if ! manifest=$(read_manifest "$branch"); then
-    if ! manifest=$(derive_manifest); then
-      fail "could not read or derive branch manifest"
-    fi
-  fi
+  manifest=$(derive_manifest) || fail "could not derive branch manifest"
 
   local commit
   commit=$(git rev-parse --short HEAD 2>/dev/null) || fail "could not resolve HEAD commit"
 
   local scm ticket_id ticket_ref default_branch
-  # The `platform` fallback resolves the VCS host from a manifest written before the key was renamed.
-  # `read_manifest` validates JSON well-formedness alone, so such a manifest never triggers a recompose.
-  scm=$(jq -r '.scm // .platform // "github"' <<<"$manifest")
+  scm=$(jq -r '.scm // "github"' <<<"$manifest")
   ticket_id=$(jq -r '.ticket_id // ""' <<<"$manifest")
   ticket_ref=$(jq -r '.ticket_ref // ""' <<<"$manifest")
   default_branch=$(jq -r '.default_branch // "origin/main"' <<<"$manifest")
@@ -295,33 +285,7 @@ current_branch() {
   git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
-# Resolves the absolute path to the branch manifest for the given branch.
-# Anchors at the repo root via `git rev-parse --show-toplevel`, so the lookup is independent of the caller's cwd.
-# Inside a git worktree, this returns the worktree's `.agents/` path, matching where the bundled
-# `derive-session-context` helper writes the manifest. Returns non-zero outside a git repository.
-resolve_manifest_path() {
-  local branch="$1"
-  local sanitized repo_root
-  sanitized=$(sanitize_branch "$branch")
-  repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || return 1
-  printf '%s/.agents/%s.branch-manifest.json' "$repo_root" "$sanitized"
-}
-
-# Reads the branch manifest for the given branch. Echoes the JSON content.
-# Returns non-zero when the manifest is missing, the path cannot be resolved, or the file content
-# is not valid JSON. Treating corrupt content as a cache miss lets the caller fall through to
-# `derive_manifest`, which recomposes from scratch.
-read_manifest() {
-  local branch="$1"
-  local path content
-  path=$(resolve_manifest_path "$branch") || return 1
-  [[ -r "$path" ]] || return 1
-  content=$(cat "$path")
-  jq empty <<<"$content" 2>/dev/null || return 1
-  printf '%s\n' "$content"
-}
-
-# Invokes the bundled `derive-session-context` helper to compose the branch manifest on demand.
+# Invokes the bundled `derive-session-context` helper to compose the branch manifest.
 # Echoes the JSON manifest emitted on the helper's stdout. On failure, the helper's stderr is
 # passed through verbatim to the caller's stderr and the function returns non-zero.
 derive_manifest() {
@@ -335,9 +299,8 @@ derive_manifest() {
     echo "$PROG: 'node' command not found on PATH; cannot run bundled deriver at $bundle_path" >&2
     return 1
   fi
-  # Anchor the deriver's cwd at the repo root so that its manifest write goes to the same path that
-  # `read_manifest` reads. A call from a subdirectory would otherwise write to `{subdir}/.agents/`,
-  # re-invoking the deriver on every call and leaving stale manifests behind.
+  # Anchor the deriver's cwd at the repo root. A call from a subdirectory would otherwise write a second manifest to
+  # `{subdir}/.agents/`.
   local repo_root
   repo_root=$(git rev-parse --show-toplevel 2>/dev/null) || {
     echo "$PROG: could not resolve repo root for deriver invocation" >&2
@@ -366,18 +329,6 @@ resolve_bundle_path() {
   source_path="${BASH_SOURCE[0]:-$0}"
   script_dir="$(cd "$(dirname "$source_path")" && pwd)"
   printf '%s/../skills/derive-session-context/derive-session-context.mjs' "$script_dir"
-}
-
-# Sanitizes a branch name for filesystem use: Replaces `/` with `-` and trims any trailing `-` characters.
-# Mirrors the sanitization performed by the bundled `derive-session-context` helper; the two must agree
-# on the manifest filename.
-sanitize_branch() {
-  local branch="$1"
-  branch="${branch//\//-}"
-  while [[ "$branch" == *- ]]; do
-    branch="${branch%-}"
-  done
-  printf '%s' "$branch"
 }
 
 # Constructs the JSON output from resolved values.

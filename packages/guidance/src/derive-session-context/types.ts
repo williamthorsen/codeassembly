@@ -69,4 +69,14 @@ export interface BranchManifest {
    * initializes it from a `PR-<n>` branch identity, or to `null` otherwise.
    */
   readonly pr_url?: string | null;
+  /**
+   * The `ticket_url` and `pr_url` values written by the mutation flags. A present key overrides the composed value,
+   * `null` included; an absent one leaves the field to composition.
+   */
+  readonly explicit_urls?: ExplicitUrls;
+}
+
+export interface ExplicitUrls {
+  readonly ticket_url?: string | null;
+  readonly pr_url?: string | null;
 }

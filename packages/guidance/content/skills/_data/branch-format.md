@@ -26,9 +26,9 @@ MAC-123_add-user-profile
 
 ## Backward compatibility
 
-Old-format branch names like `MAC-123/agents/feat/add-cache-layer` still parse correctly: Everything after the ticket ID is treated as freeform description. Existing cached manifests that contain `workspace` and `work_type` fields remain valid and should be consumed as-is; those fields are simply no longer populated for new branches.
+Old-format branch names like `MAC-123/agents/feat/add-cache-layer` still parse correctly: Everything after the ticket ID is treated as freeform description. The deriver no longer populates `workspace` and `work_type`, and it drops them from an existing manifest when it recomposes that manifest.
 
 ## Related skills
 
-- `derive-session-context`: Bundled TypeScript helper (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) that parses the branch name and caches all derived metadata (ticket ID, branch name, artifact paths, and other metadata) in `.agents/{sanitized-branch}.branch-manifest.json` for single-lookup access. Preferred when multiple metadata fields are needed.
+- `derive-session-context`: Bundled TypeScript helper (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) that parses the branch name and composes all derived metadata (ticket ID, branch name, artifact paths, and other metadata) into one manifest, emitted on stdout and written to `.agents/{sanitized-branch}.branch-manifest.json`. Preferred when multiple metadata fields are needed.
 - `get-ticket-id`: Extracts the ticket ID segment.

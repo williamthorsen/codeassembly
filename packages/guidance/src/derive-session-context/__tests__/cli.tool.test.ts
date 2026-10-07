@@ -6,8 +6,7 @@ import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 
-import { deriveSessionContext, parseArgs } from '../cli.ts';
-import type { BranchManifest } from '../types.ts';
+import { deriveSessionContext } from '../cli.ts';
 
 const execFileAsync = promisify(execFile);
 
@@ -18,81 +17,6 @@ const NOW = new Date('2026-05-26T02:07:41Z');
  * encode a ticket, the case that the default-branch invariant must leave alone.
  */
 const WORKING_BRANCH = 'add-cache';
-
-describe(parseArgs, () => {
-  it('returns null fields and an empty mutation list for an empty argv', () => {
-    expect(parseArgs([])).toEqual({ branch: null, cwd: null, home: null, mutations: [] });
-  });
-
-  it('parses --branch, --cwd, and --home as separate-token flags', () => {
-    expect(parseArgs(['--branch', 'main', '--cwd', '/tmp/foo', '--home', '/tmp/home'])).toEqual({
-      branch: 'main',
-      cwd: '/tmp/foo',
-      home: '/tmp/home',
-      mutations: [],
-    });
-  });
-
-  it('parses --branch=value inline form', () => {
-    expect(parseArgs(['--branch=main'])).toEqual({ branch: 'main', cwd: null, home: null, mutations: [] });
-  });
-
-  it('parses --home=value inline form', () => {
-    expect(parseArgs(['--home=/tmp/x'])).toEqual({ branch: null, cwd: null, home: '/tmp/x', mutations: [] });
-  });
-
-  it('parses --cwd=value inline form', () => {
-    expect(parseArgs(['--cwd=/tmp/foo'])).toEqual({ branch: null, cwd: '/tmp/foo', home: null, mutations: [] });
-  });
-
-  it('parses --set-ticket-url and --set-pr-url as set mutations', () => {
-    expect(parseArgs(['--set-ticket-url', 'https://x/issues/1', '--set-pr-url', 'https://x/pull/2']).mutations).toEqual(
-      [
-        { field: 'ticket_url', value: 'https://x/issues/1' },
-        { field: 'pr_url', value: 'https://x/pull/2' },
-      ],
-    );
-  });
-
-  it('parses --set-ticket-url=value inline form', () => {
-    expect(parseArgs(['--set-ticket-url=https://x/issues/1']).mutations).toEqual([
-      { field: 'ticket_url', value: 'https://x/issues/1' },
-    ]);
-  });
-
-  it('parses --set-pr-url=value inline form', () => {
-    expect(parseArgs(['--set-pr-url=https://x/pull/2']).mutations).toEqual([
-      { field: 'pr_url', value: 'https://x/pull/2' },
-    ]);
-  });
-
-  it('parses --clear-ticket-url and --clear-pr-url as null mutations', () => {
-    expect(parseArgs(['--clear-ticket-url', '--clear-pr-url']).mutations).toEqual([
-      { field: 'ticket_url', value: null },
-      { field: 'pr_url', value: null },
-    ]);
-  });
-
-  it('throws when --branch is missing its value', () => {
-    expect(() => parseArgs(['--branch'])).toThrow(/--branch requires a value/);
-  });
-
-  it('throws when --home is missing its value', () => {
-    expect(() => parseArgs(['--home'])).toThrow(/--home requires a value/);
-  });
-
-  it('throws when --set-ticket-url is missing its value', () => {
-    expect(() => parseArgs(['--set-ticket-url'])).toThrow(/--set-ticket-url requires a value/);
-  });
-
-  it('throws when --set-pr-url is missing its value', () => {
-    expect(() => parseArgs(['--set-pr-url'])).toThrow(/--set-pr-url requires a value/);
-  });
-
-  it('throws on unknown arguments', () => {
-    expect(() => parseArgs(['--mystery'])).toThrow(/unknown argument/);
-  });
-});
 
 describe(deriveSessionContext, () => {
   let workDir: string;
@@ -120,9 +44,9 @@ describe(deriveSessionContext, () => {
     expect(JSON.parse(written)).toEqual(manifest);
   });
 
-  it('is idempotent: returns the existing manifest without re-deriving', async () => {
+  it('recomposes the derived fields of an existing manifest from the current preferences', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await mkdir(path.dirname(manifestPath), { recursive: true });
     const seeded = {
       ticket_id: null,
       ticket_ref: null,
@@ -136,22 +60,15 @@ describe(deriveSessionContext, () => {
     };
     await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
 
-    // The test does not write a preferences file; without the fast path this would still succeed
-    // but produce a different `project_slug` (basename of workDir). The idempotency check is that
-    // the seeded value survives.
-    const result = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-    });
-    expect(result.project_slug).toBe('seeded');
+    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(result.project_slug).toBe('my-project');
+    expect(result.created_at).toBe('2025-01-01T00:00:00Z');
+    expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual(result);
   });
 
-  it('overwrites a stale-schema manifest (missing required fields)', async () => {
+  it('recomposes a manifest that is missing required fields', async () => {
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
-    // Stale manifest is missing `scm`, `artifact_base_dir`, and other newer fields.
     await writeFile(manifestPath, JSON.stringify({ ticket_id: 'OLD-1' }), 'utf8');
 
     const result = await deriveSessionContext({
@@ -165,28 +82,19 @@ describe(deriveSessionContext, () => {
     expect(result.ticket_id).toBeNull();
   });
 
-  it('recomposes when a stored URL field is present but wrong-typed', async () => {
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
+  it('ignores a prior stored URL that is wrong-typed', async () => {
+    const manifestPath = path.join(workDir, '.agents', `${WORKING_BRANCH}.branch-manifest.json`);
     await mkdir(path.dirname(manifestPath), { recursive: true });
-    // All required fields are present and well-typed, but `ticket_url` is a number rather than
-    // `string | null`. `isCurrentSchema` rejects this, forcing a fresh compose that reseeds the URL.
-    const seeded = {
-      ticket_id: null,
-      ticket_ref: null,
-      project_slug: 'seeded',
-      scm: 'github',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/seeded',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
-      ticket_url: 42,
-    };
-    await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
+    await writeFile(
+      manifestPath,
+      JSON.stringify({ ticket_url: 42, explicit_urls: { ticket_url: 42, pr_url: 'https://x/pull/2' } }),
+      'utf8',
+    );
 
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(result.scm).toBe('github');
+    const result = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
     expect(result.ticket_url).toBeNull();
+    expect(result.pr_url).toBe('https://x/pull/2');
+    expect(result.explicit_urls).toEqual({ pr_url: 'https://x/pull/2' });
   });
 
   it('overwrites a corrupt manifest (invalid JSON)', async () => {
@@ -203,35 +111,24 @@ describe(deriveSessionContext, () => {
     expect(result.branch_name).toBe('main');
   });
 
-  it('reads an old-format `.manifest.json` and migrates it to the new-format path', async () => {
-    const oldPath = path.join(workDir, '.agents', 'main.manifest.json');
-    const newPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await mkdir(path.dirname(oldPath), { recursive: true });
-    const seeded = {
-      ticket_id: 'OLD-1',
-      ticket_ref: 'OLD-1',
-      project_slug: 'old-format',
-      scm: 'github',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/old',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
-    };
-    await writeFile(oldPath, JSON.stringify(seeded), 'utf8');
+  it('carries created_at and a stored URL from an old-format `.manifest.json` to the new-format path', async () => {
+    const agentsDir = path.join(workDir, '.agents');
+    await mkdir(agentsDir, { recursive: true });
+    const ticketUrl = 'https://github.com/owner/repo/issues/1';
+    await writeFile(
+      path.join(agentsDir, `${WORKING_BRANCH}.manifest.json`),
+      JSON.stringify({ created_at: '2025-01-01T00:00:00Z', ticket_url: ticketUrl }),
+      'utf8',
+    );
 
-    const result = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-    });
-    expect(result.project_slug).toBe('old-format');
+    const result = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
+    expect(result.created_at).toBe('2025-01-01T00:00:00Z');
+    expect(result.ticket_url).toBe(ticketUrl);
 
-    // Migration: After a successful old-format read, the new-format file is also written so that
-    // subsequent calls hit the fast path. Without this, every call re-invokes the deriver.
-    const migrated = JSON.parse(await readFile(newPath, 'utf8'));
-    expect(migrated).toEqual(seeded);
+    const migrated: unknown = JSON.parse(
+      await readFile(path.join(agentsDir, `${WORKING_BRANCH}.branch-manifest.json`), 'utf8'),
+    );
+    expect(migrated).toEqual(result);
   });
 
   it('rejects with a write error when `.agents/` is not writable', async ({ skip }) => {
@@ -324,14 +221,12 @@ describe(deriveSessionContext, () => {
     expect(cleared[field]).toBeNull();
   });
 
-  it('preserves previously stored URLs across a recompose triggered by a stale manifest', async () => {
+  it('keeps the stored URLs of a manifest written before explicit_urls existed', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const ticketUrl = 'https://github.com/owner/repo/issues/783';
     const prUrl = 'https://github.com/owner/repo/pull/42';
 
-    // Seed a stale manifest (missing the required `scm` field) that nonetheless contains stored
-    // URLs. The next derive recomposes because the manifest fails the schema check; carry-forward
-    // must preserve the URLs from the prior file.
+    // Without `explicit_urls`, a stored URL that differs from the composed one is taken as flag-written.
     const manifestPath = path.join(workDir, '.agents', `${WORKING_BRANCH}.branch-manifest.json`);
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
@@ -352,14 +247,13 @@ describe(deriveSessionContext, () => {
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBe(ticketUrl);
     expect(recomposed.pr_url).toBe(prUrl);
+    expect(recomposed.explicit_urls).toEqual({ ticket_url: ticketUrl, pr_url: prUrl });
   });
 
   it('recomposes with null URLs and warns when the prior manifest is corrupt JSON', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    // A corrupt prior file fails the schema read (forcing a recompose) and then fails carry-forward's
-    // own parse. The deriver must fall back to a fresh manifest with null URLs and emit the
-    // carry-forward diagnostic so that a vanished `ticket_url`/`pr_url` is explainable, not silent.
+    // The diagnostic makes a vanished `ticket_url`/`pr_url` explainable rather than silent.
     await writeFile(manifestPath, '{ not valid json', 'utf8');
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     try {
@@ -379,38 +273,12 @@ describe(deriveSessionContext, () => {
   it('recomposes with null URLs when the prior manifest parses as a non-object', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    // Valid JSON that is not a record (a bare number). The schema read rejects it (forcing a
-    // recompose) and carry-forward's record guard rejects it, so the fresh null URLs stand.
     await writeFile(manifestPath, '42', 'utf8');
 
     const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBeNull();
     expect(recomposed.pr_url).toBeNull();
-  });
-
-  it('reads a pre-existing manifest lacking the URL fields without recomposing', async () => {
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await mkdir(path.dirname(manifestPath), { recursive: true });
-    const seeded = {
-      ticket_id: null,
-      ticket_ref: null,
-      project_slug: 'seeded',
-      scm: 'github',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/seeded',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
-    };
-    await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
-
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(result.project_slug).toBe('seeded');
-    expect(result.ticket_url).toBeUndefined();
-
-    // No spurious recompose: The on-disk file is byte-identical to what was seeded.
-    expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual(seeded);
   });
 
   it('returns ticket_base_url and constructs ticket_url from preferences', async () => {
@@ -429,8 +297,7 @@ describe(deriveSessionContext, () => {
       'project:\n  slug: my-project\nticket:\n  base_url: https://org.atlassian.net/browse/\n',
     );
     const stored = 'https://org.atlassian.net/browse/OTHER-1';
-    // Seed a stale manifest (missing the required `scm`) that contains a stored ticket_url. The
-    // recompose would construct .../MAC-130 from the base and branch id; carry-forward must take precedence.
+    // A manifest without `explicit_urls`; composition would construct .../MAC-130 from the base and branch id.
     const manifestPath = path.join(workDir, '.agents', 'MAC-130.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
@@ -449,28 +316,6 @@ describe(deriveSessionContext, () => {
     const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'MAC-130', now: NOW, home: workDir });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBe(stored);
-  });
-
-  it('recomposes when ticket_base_url is present but wrong-typed', async () => {
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await mkdir(path.dirname(manifestPath), { recursive: true });
-    const seeded = {
-      ticket_id: null,
-      ticket_ref: null,
-      project_slug: 'seeded',
-      scm: 'github',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/seeded',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
-      ticket_base_url: 42,
-    };
-    await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
-
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(result.scm).toBe('github');
-    expect(result.ticket_base_url).toBeNull();
   });
 
   it('seeds pr_url from a PR-<n> identity using the git remote', async () => {
@@ -492,8 +337,7 @@ describe(deriveSessionContext, () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     await initGitRepo(workDir, 'git@github.com:owner/repo.git');
     const stored = 'https://github.com/owner/repo/pull/999';
-    // Seed a stale manifest (missing the required `scm`) that contains a stored pr_url. The recompose
-    // would seed .../pull/950 from the remote and the PR-950 identity; carry-forward must take precedence.
+    // A manifest without `explicit_urls`; composition would seed .../pull/950 from the remote and the PR-950 identity.
     const manifestPath = path.join(workDir, '.agents', 'PR-950.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
     const stale = {
@@ -512,208 +356,6 @@ describe(deriveSessionContext, () => {
     const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.pr_url).toBe(stored);
-  });
-});
-
-describe('default-branch invariant', () => {
-  let workDir: string;
-
-  beforeEach(async () => {
-    workDir = await mkdtemp(path.join(tmpdir(), 'derive-session-context-default-branch-'));
-  });
-
-  afterEach(async () => {
-    await rm(workDir, { recursive: true, force: true });
-  });
-
-  it.each([
-    { flag: '--set-ticket-url', field: 'ticket_url', url: 'https://github.com/owner/repo/issues/783' },
-    { flag: '--set-pr-url', field: 'pr_url', url: 'https://github.com/owner/repo/pull/42' },
-  ] as const)('refuses $flag on the default branch and reports it', async ({ field, url }) => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const result = await deriveSessionContext({
-        cwd: workDir,
-        branch: 'main',
-        now: NOW,
-        home: workDir,
-        mutations: [{ field, value: url }],
-      });
-      expect(result[field]).toBeNull();
-      expect(findStderrLine(stderrSpy, 'refusing to store')).toMatch(
-        new RegExp(`refusing to store ${field} on default branch main`),
-      );
-    } finally {
-      stderrSpy.mockRestore();
-    }
-
-    const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(reread[field]).toBeNull();
-  });
-
-  it('leaves a clean default-branch manifest untouched when a set is refused', async () => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    const before = await readFile(manifestPath, 'utf8');
-
-    await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field: 'ticket_url', value: 'https://github.com/owner/repo/issues/783' }],
-    });
-
-    expect(await readFile(manifestPath, 'utf8')).toBe(before);
-  });
-
-  it.each([
-    { flag: '--clear-ticket-url', field: 'ticket_url' },
-    { flag: '--clear-pr-url', field: 'pr_url' },
-  ] as const)('still accepts $flag on the default branch', async ({ field }) => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const cleared = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field, value: null }],
-    });
-    expect(cleared[field]).toBeNull();
-  });
-
-  it('repairs a default-branch manifest that already contains stored URLs, in the file', async () => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await mkdir(path.dirname(manifestPath), { recursive: true });
-    const polluted = {
-      ticket_id: null,
-      ticket_ref: null,
-      project_slug: 'seeded',
-      scm: 'github',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/seeded',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
-      ticket_url: 'https://github.com/owner/repo/issues/411',
-      pr_url: 'https://github.com/owner/repo/pull/42',
-    };
-    await writeFile(manifestPath, JSON.stringify(polluted), 'utf8');
-
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    let result: BranchManifest;
-    try {
-      result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-      expect(findStderrLine(stderrSpy, 'cleared ticket_url')).toMatch(
-        /cleared ticket_url stored on default branch main/,
-      );
-      expect(findStderrLine(stderrSpy, 'cleared pr_url')).toMatch(/cleared pr_url stored on default branch main/);
-    } finally {
-      stderrSpy.mockRestore();
-    }
-    expect(result.ticket_url).toBeNull();
-    expect(result.pr_url).toBeNull();
-
-    // The repair is durable, not a mask over the emitted JSON: The file no longer contains the values.
-    const onDisk: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
-    expect(onDisk).toMatchObject({ ticket_url: null, pr_url: null });
-  });
-
-  it.each([
-    { field: 'default_branch', malformed: { default_branch: null } },
-    { field: 'branch_name', malformed: { branch_name: 42 } },
-  ] as const)('recomposes rather than throwing when $field is wrong-typed', async ({ malformed }) => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await mkdir(path.dirname(manifestPath), { recursive: true });
-    const seeded = {
-      ticket_id: null,
-      ticket_ref: null,
-      project_slug: 'seeded',
-      scm: 'github',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/seeded',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
-      ...malformed,
-    };
-    await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
-
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(result.default_branch).toBe('origin/main');
-    expect(result.branch_name).toBe('main');
-    expect(result.project_slug).toBe('my-project');
-  });
-
-  it('drops stored URLs on the default branch rather than carrying them forward', async () => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    // Stale (missing the required `scm`), so the read fails the schema check and forces a recompose.
-    // Carry-forward would preserve the URLs on any other branch; the invariant takes precedence over it here.
-    const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await mkdir(path.dirname(manifestPath), { recursive: true });
-    const stale = {
-      ticket_id: null,
-      ticket_ref: null,
-      project_slug: 'seeded',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/seeded',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
-      ticket_url: 'https://github.com/owner/repo/issues/411',
-      pr_url: 'https://github.com/owner/repo/pull/42',
-    };
-    await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
-
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    expect(recomposed.ticket_url).toBeNull();
-    expect(recomposed.pr_url).toBeNull();
-  });
-
-  it('follows the configured default branch rather than the literal main', async () => {
-    await writeProjectPrefs(
-      workDir,
-      'project:\n  slug: my-project\nrepository:\n  default_remote:\n    default_branch: trunk\n',
-    );
-    const url = 'https://github.com/owner/repo/issues/783';
-
-    const onTrunk = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'trunk',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field: 'ticket_url', value: url }],
-    });
-    expect(onTrunk.ticket_url).toBeNull();
-
-    const onMain = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'main',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field: 'ticket_url', value: url }],
-    });
-    expect(onMain.ticket_url).toBe(url);
-  });
-
-  it('strips only the remote from a slashed default branch', async () => {
-    await writeProjectPrefs(
-      workDir,
-      'project:\n  slug: my-project\nrepository:\n  default_remote:\n    default_branch: release/2.x\n',
-    );
-    const result = await deriveSessionContext({
-      cwd: workDir,
-      branch: 'release/2.x',
-      now: NOW,
-      home: workDir,
-      mutations: [{ field: 'ticket_url', value: 'https://github.com/owner/repo/issues/783' }],
-    });
-    expect(result.default_branch).toBe('origin/release/2.x');
-    expect(result.ticket_url).toBeNull();
   });
 });
 

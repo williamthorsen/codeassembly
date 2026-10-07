@@ -66,9 +66,9 @@ Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored pat
 
 ## Path resolution
 
-Skills resolve artifact directories by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `artifact_base_dir` and `project_slug` from the manifest JSON that it emits on stdout. This is the canonical method for all artifact path resolution. The deriver writes the manifest to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect; subsequent invocations short-circuit by reading the cached manifest.
+Skills resolve artifact directories by invoking the bundled session-context deriver (`node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs`) and reading `artifact_base_dir` and `project_slug` from the manifest JSON that it emits on stdout. This is the canonical method for all artifact path resolution. The deriver composes the manifest from the current preferences on every invocation and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect.
 
-When neither the deriver nor a cached manifest is available (e.g., standalone scripts without Node.js), the manual fallback is:
+When the deriver is not available (e.g., standalone scripts without Node.js), the manual fallback is:
 
 1. Read `artifacts.base_dir` from `.agents/preferences.yaml`
 2. If not found there, read from `~/.agents/preferences.yaml`
@@ -226,7 +226,7 @@ Both read the script's JSON output and write the YAML frontmatter themselves. Th
 
 Frontmatter artifacts depend on `.agents/{sanitized-branch}.branch-manifest.json`. The manifest is composed by a bundled TypeScript helper at `{harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` (built from `packages/guidance/src/derive-session-context/` and deployed as a self-contained `.mjs`). Any caller can invoke it: main agents, subagents (whose tool set includes `{tool:Bash}`), and shell scripts like `resolve-frontmatter.sh`.
 
-The manifest is not a dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on cache miss, so subagents that need a manifest do not depend on the dispatcher having run anything first. The manifest remains the fast path, and when it is missing, `resolve-frontmatter.sh` recovers rather than stopping.
+The manifest is not a dispatch-time precondition. `resolve-frontmatter.sh` invokes the bundled deriver itself on every call, so subagents that need a manifest do not depend on the dispatcher having run anything first.
 
 Invocation surface:
 
@@ -234,7 +234,7 @@ Invocation surface:
 node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs
 ```
 
-The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect (idempotent: Re-invocations short-circuit to a cached read when the file exists with a current-schema manifest). In one case the deriver rewrites the file on a cached read: A default-branch manifest containing a `ticket_url` or `pr_url` is repaired, once, per [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
+The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect. Every invocation recomposes the derived fields from the current preferences and git state, so a preference change takes effect on the next call. The file keeps `created_at` and the URLs written by the mutation flags (recorded in `explicit_urls`), and the deriver rewrites it only when its content changes. On the default branch, the deriver drops any stored `ticket_url` or `pr_url` per [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
 
 When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first: The deriver is the single derivation surface and is safe to call from any context.
 

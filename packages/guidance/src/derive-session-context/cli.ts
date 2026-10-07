@@ -6,10 +6,13 @@
  * The CLI writes every diagnostic to stderr, so stdout contains the JSON manifest alone. When the derivation throws an
  * error, the CLI exits 1.
  *
+ * Every invocation composes the manifest from the current preferences and git state. The manifest file keeps only what
+ * composition cannot reproduce: `created_at` and the URLs written by the mutation flags, recorded in `explicit_urls`.
+ * The file is rewritten only when its content changes.
+ *
  * - Default-branch invariant: A manifest whose branch is the default branch does not store a `ticket_url`
  *   or a `pr_url`. Because the default branch is not derived from any ticket and does not belong to any pull
- *   request, a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`. Only this invariant
- *   causes a write on a no-mutation cache hit: An already-stored value is cleared, once.
+ *   request, a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`.
  */
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -27,22 +30,9 @@ import { resolveCurrentBranch, sanitizeBranch } from '../shared/branch-helpers.t
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
 import { composeManifest, DEFAULT_REMOTE_NAME } from './compose-manifest.ts';
 import { readPreferences } from './read-preferences.ts';
-import type { BranchManifest } from './types.ts';
+import type { BranchManifest, ExplicitUrls } from './types.ts';
 
 const execFileAsync = promisify(execFile);
-
-/** Required-field set used to detect stale manifests written under an older schema. */
-const REQUIRED_MANIFEST_FIELDS: readonly string[] = [
-  'ticket_id',
-  'ticket_ref',
-  'project_slug',
-  'scm',
-  'default_branch',
-  'branch_name',
-  'artifact_base_dir',
-  'artifact_paths',
-  'created_at',
-];
 
 /** The manifest fields written by the mutation flags, and the ones that the default-branch invariant governs. */
 const STORED_URL_FIELDS = ['ticket_url', 'pr_url'] as const;
@@ -60,6 +50,13 @@ interface ParsedArgs {
   readonly cwd: string | null;
   readonly home: string | null;
   readonly mutations: readonly ManifestMutation[];
+}
+
+/** A manifest file read from disk: its text, and its parsed content when that is an object. */
+interface PriorManifest {
+  readonly path: string;
+  readonly text: string;
+  readonly record: Record<string, unknown> | undefined;
 }
 
 /** Executes the deriver from `process.argv`, writing the JSON manifest to stdout. */
@@ -85,8 +82,8 @@ async function main(): Promise<void> {
 }
 
 /**
- * Derives the manifest for `branch` idempotently, applying any mutations to the manifest that the read-or-compose path
- * produced. The default-branch invariant is enforced last, over whatever the earlier steps produced.
+ * Composes the manifest for `branch` from the current preferences, carrying `created_at` and the flag-written URLs
+ * forward from the prior manifest file and applying any mutations. The default-branch invariant is enforced last.
  *
  * @internal Exported for testing.
  */
@@ -107,58 +104,71 @@ export async function deriveSessionContext(input: {
   const oldPath = path.join(input.cwd, '.agents', `${sanitizedBranch}.manifest.json`);
   const mutations = input.mutations ?? [];
 
-  const base = await resolveBaseManifest({
-    cwd: input.cwd,
-    home,
-    branch: input.branch,
-    now: input.now,
-    newPath,
-    oldPath,
-  });
+  const prior = (await readPriorManifest(newPath)) ?? (await readPriorManifest(oldPath));
+  const composed = await composeFromPreferences({ cwd: input.cwd, home, branch: input.branch, now: input.now });
 
-  const mutated = mutations.length === 0 ? base.manifest : applyMutations(base.manifest, mutations);
-  const final = enforceDefaultBranchInvariant(mutated, mutations);
+  const carried = prior?.record === undefined ? {} : readExplicitUrls(prior.record, composed);
+  const { seeded, explicitUrls } = enforceDefaultBranchInvariant(
+    composed,
+    applyMutations(carried, mutations),
+    mutations,
+  );
+  const manifest = buildManifest(seeded, explicitUrls, prior?.record);
 
-  // For a refused mutation, the result is a new object containing the values already stored, so comparing object
-  // identity would report a change that did not happen.
-  if (base.needsWrite || !hasSameStoredUrls(base.manifest, final)) {
-    await writeManifest(newPath, final);
+  const content = `${JSON.stringify(manifest, null, 2)}\n`;
+  const priorText = prior?.path === newPath ? prior.text : undefined;
+  if (content !== priorText) {
+    await writeManifest(newPath, content);
   }
-  return final;
+  return manifest;
 }
 
-/** Reads the manifest at `filePath`, or returns `null` when a current-schema manifest isn't found at that path. */
-async function tryReadManifest(filePath: string): Promise<BranchManifest | null> {
-  let text: string;
-  try {
-    text = await readFile(filePath, 'utf8');
-  } catch (error) {
-    if (isEnoent(error)) {
-      return null;
-    }
-    throw error;
-  }
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(text);
-  } catch {
-    // Warn so that an operator can distinguish a normal cache miss from a file that keeps becoming corrupt.
-    process.stderr.write(`derive-session-context: warning: manifest at ${filePath} is corrupt; recomposing\n`);
-    return null;
-  }
-  if (!isCurrentSchema(parsed)) {
-    return null;
-  }
-  return parsed;
-}
-
-/** Returns a copy of `manifest` with each mutation applied in order. */
-function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMutation[]): BranchManifest {
-  let result = manifest;
+/** Returns a copy of `explicitUrls` with each mutation applied in order. */
+function applyMutations(explicitUrls: ExplicitUrls, mutations: readonly ManifestMutation[]): ExplicitUrls {
+  let result = explicitUrls;
   for (const mutation of mutations) {
     result = { ...result, [mutation.field]: mutation.value };
   }
   return result;
+}
+
+/**
+ * Builds the emitted manifest: the composed fields, the prior `created_at` when one is recorded, and each stored-URL
+ * field taken from `explicitUrls` when a flag wrote it, else from composition.
+ */
+function buildManifest(
+  composed: BranchManifest,
+  explicitUrls: ExplicitUrls,
+  prior: Record<string, unknown> | undefined,
+): BranchManifest {
+  const createdAt = typeof prior?.created_at === 'string' ? prior.created_at : composed.created_at;
+  return {
+    ...composed,
+    created_at: createdAt,
+    ticket_url: resolveStoredUrl('ticket_url', composed, explicitUrls),
+    pr_url: resolveStoredUrl('pr_url', composed, explicitUrls),
+    explicit_urls: explicitUrls,
+  };
+}
+
+/** Composes a fresh manifest from the preferences files and the git remote. */
+async function composeFromPreferences(input: {
+  cwd: string;
+  home: string;
+  branch: string;
+  now: Date;
+}): Promise<BranchManifest> {
+  const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
+  const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
+  const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
+  return composeManifest({
+    preferences: readResult.preferences,
+    branchName: input.branch,
+    cwd: input.cwd,
+    home: input.home,
+    now: input.now,
+    remoteUrl,
+  });
 }
 
 /**
@@ -167,31 +177,30 @@ function applyMutations(manifest: BranchManifest, mutations: readonly ManifestMu
  * not the branch's association but whichever one the last session happened to resolve, and a later session
  * auto-resolving from it would proceed against an arbitrary ticket or PR.
  *
- * A field without a value is left exactly as found, absent or null alike. Both a refused `--set-*` and the repair of
- * a value already stored are reported, since a silently vanishing URL is the harder of the two to explain.
+ * On that branch, the composed URLs are nulled and every flag-written URL is dropped. Both a refused `--set-*` and the
+ * repair of a value already stored are reported, since a silently vanishing URL is the harder of the two to explain.
  */
 function enforceDefaultBranchInvariant(
-  manifest: BranchManifest,
+  composed: BranchManifest,
+  explicitUrls: ExplicitUrls,
   mutations: readonly ManifestMutation[],
-): BranchManifest {
-  if (!isOnDefaultBranch(manifest)) {
-    return manifest;
+): { seeded: BranchManifest; explicitUrls: ExplicitUrls } {
+  if (!isOnDefaultBranch(composed)) {
+    return { seeded: composed, explicitUrls };
   }
-  let result = manifest;
   for (const field of STORED_URL_FIELDS) {
-    const stored = result[field];
+    const stored = explicitUrls[field];
     if (stored === undefined || stored === null) {
       continue;
     }
     const refused = mutations.some((mutation) => mutation.field === field && mutation.value !== null);
     process.stderr.write(
       refused
-        ? `derive-session-context: refusing to store ${field} on default branch ${manifest.branch_name}\n`
-        : `derive-session-context: cleared ${field} stored on default branch ${manifest.branch_name}\n`,
+        ? `derive-session-context: refusing to store ${field} on default branch ${composed.branch_name}\n`
+        : `derive-session-context: cleared ${field} stored on default branch ${composed.branch_name}\n`,
     );
-    result = { ...result, [field]: null };
   }
-  return result;
+  return { seeded: { ...composed, ticket_url: null, pr_url: null }, explicitUrls: {} };
 }
 
 /**
@@ -207,103 +216,84 @@ function isOnDefaultBranch(manifest: BranchManifest): boolean {
   return defaultBranchName === branchName;
 }
 
-/** True when both manifests have the same value in every stored-URL field. */
-function hasSameStoredUrls(a: BranchManifest, b: BranchManifest): boolean {
-  return STORED_URL_FIELDS.every((field) => a[field] === b[field]);
+/** True when `value` is a string or `null`. */
+function isStringOrNull(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
 }
 
 /**
- * Overlays previously stored `ticket_url`/`pr_url` from the prior on-disk manifest onto a freshly composed one. The
- * prior file is read at the raw-JSON level, so it still yields its stored URLs when a change to the
- * required-field set has made it stale.
+ * Reads the flag-written URLs from a prior manifest, skipping any entry whose value is not `string | null`. A manifest
+ * written before `explicit_urls` existed does not record provenance, so each of its stored URL strings that differs
+ * from the fresh composition is taken as flag-written.
  */
-async function carryForwardStoredUrls(composed: BranchManifest, priorPath: string): Promise<BranchManifest> {
+function readExplicitUrls(prior: Record<string, unknown>, composed: BranchManifest): ExplicitUrls {
+  let result: ExplicitUrls = {};
+  if (Object.hasOwn(prior, 'explicit_urls')) {
+    const stored = prior.explicit_urls;
+    if (!isRecord(stored)) {
+      return result;
+    }
+    for (const field of STORED_URL_FIELDS) {
+      const value = stored[field];
+      if (Object.hasOwn(stored, field) && isStringOrNull(value)) {
+        result = { ...result, [field]: value };
+      }
+    }
+    return result;
+  }
+  for (const field of STORED_URL_FIELDS) {
+    const value = prior[field];
+    if (typeof value === 'string' && value !== composed[field]) {
+      result = { ...result, [field]: value };
+    }
+  }
+  return result;
+}
+
+/**
+ * Reads the manifest file at `filePath`, or returns `null` when the file does not exist. Content that is not valid JSON
+ * or not an object yields an undefined `record`.
+ */
+async function readPriorManifest(filePath: string): Promise<PriorManifest | null> {
   let text: string;
   try {
-    text = await readFile(priorPath, 'utf8');
+    text = await readFile(filePath, 'utf8');
   } catch (error) {
     if (isEnoent(error)) {
-      return composed;
+      return null;
     }
     throw error;
   }
-  let prior: unknown;
+  let parsed: unknown;
   try {
-    prior = JSON.parse(text);
+    parsed = JSON.parse(text);
   } catch {
     // Warn so that an operator can explain a vanished `ticket_url` or `pr_url`.
     process.stderr.write(
-      `derive-session-context: warning: prior manifest at ${priorPath} is corrupt; stored URLs not carried forward\n`,
+      `derive-session-context: warning: prior manifest at ${filePath} is corrupt; stored URLs not carried forward\n`,
     );
-    return composed;
+    return { path: filePath, text, record: undefined };
   }
-  if (!isRecord(prior)) {
-    return composed;
+  return { path: filePath, text, record: isRecord(parsed) ? parsed : undefined };
+}
+
+/** Returns the flag-written value of `field` when one is recorded, else the composed one. */
+function resolveStoredUrl(field: StoredUrlField, composed: BranchManifest, explicitUrls: ExplicitUrls): string | null {
+  if (Object.hasOwn(explicitUrls, field)) {
+    return explicitUrls[field] ?? null;
   }
-  return {
-    ...composed,
-    ...(typeof prior.ticket_url === 'string' && { ticket_url: prior.ticket_url }),
-    ...(typeof prior.pr_url === 'string' && { pr_url: prior.pr_url }),
-  };
+  return composed[field] ?? null;
 }
 
 /**
- * Result of obtaining the manifest before any mutation: the manifest itself and whether the read-or-compose path that
- * produced it requires a write to disk.
+ * Writes `content` to `targetPath` atomically: writes a sibling temp file, then renames it over the target with
+ * `rename()` so that a concurrent reader never observes a half-written file. The temp file shares the target's
+ * directory so that the rename stays within one filesystem.
  */
-interface BaseManifestResult {
-  readonly manifest: BranchManifest;
-  readonly needsWrite: boolean;
-}
-
-/**
- * Obtains the base manifest by cascade: a fast-path read of the canonical file, an old-format read with migration,
- * then a fresh compose.
- */
-async function resolveBaseManifest(input: {
-  cwd: string;
-  home: string;
-  branch: string;
-  now: Date;
-  newPath: string;
-  oldPath: string;
-}): Promise<BaseManifestResult> {
-  const cached = await tryReadManifest(input.newPath);
-  if (cached !== null) {
-    return { manifest: cached, needsWrite: false };
-  }
-
-  const cachedOld = await tryReadManifest(input.oldPath);
-  if (cachedOld !== null) {
-    return { manifest: cachedOld, needsWrite: true };
-  }
-
-  const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
-  // Resolve the git remote only on this path, so that a cache hit does not run any git command.
-  const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
-  const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
-  const composed = composeManifest({
-    preferences: readResult.preferences,
-    branchName: input.branch,
-    cwd: input.cwd,
-    home: input.home,
-    now: input.now,
-    remoteUrl,
-  });
-  const carried = await carryForwardStoredUrls(composed, input.newPath);
-  return { manifest: carried, needsWrite: true };
-}
-
-/**
- * Writes `manifest` to `targetPath` atomically: serializes to a sibling temp file, then renames it over the target
- * with `rename()` so that a concurrent reader never observes a half-written file. The temp file shares
- * the target's directory so that the rename stays within one filesystem.
- */
-async function writeManifest(targetPath: string, manifest: BranchManifest): Promise<void> {
+async function writeManifest(targetPath: string, content: string): Promise<void> {
   const dir = path.dirname(targetPath);
   await mkdir(dir, { recursive: true });
   const tempPath = path.join(dir, `.${path.basename(targetPath)}.${process.pid}.${Date.now()}.tmp`);
-  const content = `${JSON.stringify(manifest, null, 2)}\n`;
   try {
     await writeFile(tempPath, content, 'utf8');
     await rename(tempPath, targetPath);
@@ -311,49 +301,6 @@ async function writeManifest(targetPath: string, manifest: BranchManifest): Prom
     await rm(tempPath, { force: true });
     throw error;
   }
-}
-
-/**
- * True when `value` is an object containing every required manifest field with the right type. A field dereferenced by
- * a consumer belongs in the checks below, so that a corrupt value makes the deriver recompose the manifest instead of
- * making the consumer throw.
- */
-function isCurrentSchema(value: unknown): value is BranchManifest {
-  if (!isRecord(value)) {
-    return false;
-  }
-  for (const field of REQUIRED_MANIFEST_FIELDS) {
-    if (!Object.hasOwn(value, field)) {
-      return false;
-    }
-  }
-  if (!isStringOrNull(value.ticket_id) || !isStringOrNull(value.ticket_ref)) {
-    return false;
-  }
-  if (!isRecord(value.artifact_paths)) {
-    return false;
-  }
-  if (value.scm !== 'github' && value.scm !== 'bitbucket') {
-    return false;
-  }
-  if (typeof value.default_branch !== 'string' || typeof value.branch_name !== 'string') {
-    return false;
-  }
-  if ('ticket_url' in value && !isStringOrNull(value.ticket_url)) {
-    return false;
-  }
-  if ('ticket_base_url' in value && !isStringOrNull(value.ticket_base_url)) {
-    return false;
-  }
-  if ('pr_url' in value && !isStringOrNull(value.pr_url)) {
-    return false;
-  }
-  return true;
-}
-
-/** True when `value` is a string or `null`. */
-function isStringOrNull(value: unknown): value is string | null {
-  return value === null || typeof value === 'string';
 }
 
 /**
