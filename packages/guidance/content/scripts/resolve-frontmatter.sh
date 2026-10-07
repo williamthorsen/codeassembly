@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Emits canonical artifact-frontmatter fields as YAML (default) or JSON.
 #
-# Takes session-level fields from the branch manifest emitted by the bundled `derive-session-context` helper, which
-# composes it from the current preferences on every call, and runs git for the rest.
+# Takes session-level fields from the branch manifest emitted by the deployed `derive-session-context` helper, which
+# composes it from the current preferences on every call, and runs git for the rest. `resolve_bundle_path` locates the
+# helper.
 #
 # Flags:
 #   --skill NAME              provenance.skill value (required in yaml mode).
@@ -43,7 +44,7 @@
 # Exit codes:
 #   0  Success.
 #   1  Git could not read the repository or resolve the branch, missing required commands (`jq`, `git`),
-#      required-arg violation in yaml mode, or the bundled `derive-session-context` helper itself failed.
+#      required-arg violation in yaml mode, or the `derive-session-context` helper could not be found or itself failed.
 
 set -euo pipefail
 
@@ -285,14 +286,14 @@ current_branch() {
   git rev-parse --abbrev-ref HEAD 2>/dev/null
 }
 
-# Invokes the bundled `derive-session-context` helper to compose the branch manifest.
+# Invokes the `derive-session-context` helper to compose the branch manifest.
 # Echoes the JSON manifest emitted on the helper's stdout. On failure, the helper's stderr is
 # passed through verbatim to the caller's stderr and the function returns non-zero.
 derive_manifest() {
   local bundle_path
-  bundle_path="$(resolve_bundle_path)"
+  bundle_path="$(resolve_bundle_path)" || return 1
   if [[ ! -r "$bundle_path" ]]; then
-    echo "$PROG: bundled deriver not found at $bundle_path" >&2
+    echo "$PROG: RESOLVE_FRONTMATTER_BUNDLE_PATH names $bundle_path, which is not readable" >&2
     return 1
   fi
   if ! command -v node >/dev/null 2>&1; then
@@ -316,19 +317,34 @@ derive_manifest() {
   fi
 }
 
-# Resolves the absolute path to the bundled `derive-session-context.mjs`.
-# Honors `RESOLVE_FRONTMATTER_BUNDLE_PATH` when set; otherwise computes the path relative to this
-# script's own install location, where the install layout puts the bundle at
-# `../skills/derive-session-context/derive-session-context.mjs`.
+# Resolves the absolute path to the `derive-session-context.mjs` helper.
+# Honors `RESOLVE_FRONTMATTER_BUNDLE_PATH` when set. Otherwise searches the layout into which this script is installed:
+# `install` places the script in `<harness home>/scripts/`, and `sync` deploys the helper, a support entry of its source,
+# to `<harness home>/skills/_sources/<source-name>/derive-session-context/`. The source name is whatever the declaration
+# gives it, so every namespace is searched, and exactly one must contain the helper.
 resolve_bundle_path() {
   if [[ -n "${RESOLVE_FRONTMATTER_BUNDLE_PATH:-}" ]]; then
     printf '%s' "$RESOLVE_FRONTMATTER_BUNDLE_PATH"
     return 0
   fi
-  local source_path script_dir
+  local source_path harness_home pattern
   source_path="${BASH_SOURCE[0]:-$0}"
-  script_dir="$(cd "$(dirname "$source_path")" && pwd)"
-  printf '%s/../skills/derive-session-context/derive-session-context.mjs' "$script_dir"
+  # Use the path as invoked: Its directory is the installed `scripts/`, whether `install` copied or linked the script.
+  harness_home="$(cd "$(dirname "$source_path")/.." && pwd)"
+  pattern="$harness_home/skills/_sources/*/derive-session-context/derive-session-context.mjs"
+  local -a matches=()
+  mapfile -t matches < <(compgen -G "$pattern" || true)
+  if [[ "${#matches[@]}" -eq 1 ]]; then
+    printf '%s' "${matches[0]}"
+    return 0
+  fi
+  if [[ "${#matches[@]}" -eq 0 ]]; then
+    echo "$PROG: deployed deriver not found at $pattern; set RESOLVE_FRONTMATTER_BUNDLE_PATH to its path" >&2
+  else
+    echo "$PROG: several deployed derivers match $pattern; set RESOLVE_FRONTMATTER_BUNDLE_PATH to the one to run:" >&2
+    printf '  %s\n' "${matches[@]}" >&2
+  fi
+  return 1
 }
 
 # Constructs the JSON output from resolved values.
