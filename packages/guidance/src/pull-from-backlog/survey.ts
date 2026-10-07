@@ -4,7 +4,7 @@ import type { LedgerRecord } from '../groom-backlog/schemas.ts';
 import type { InProgress, Issue } from '../groom-backlog/types.ts';
 import { daysSince } from './days.ts';
 import { isInNow, type NowSet, resolveNow } from './now.ts';
-import { rankCandidates, type RankedCandidate, selectCandidates } from './rank.ts';
+import { hasExcludedLabel, rankCandidates, type RankedCandidate, selectCandidates } from './rank.ts';
 import type { PullConfig } from './schemas.ts';
 import {
   assessGroomStaleness,
@@ -14,11 +14,14 @@ import {
   type Warning,
 } from './warnings.ts';
 
+/** A ranked candidate, marked by whether it belongs to the Now set or fills the menu from outside it. */
+export type SurveyCandidate = RankedCandidate & { inNow: boolean };
+
 /** The survey's result, less the ledger paths that the CLI adds. */
 export interface Survey {
   blocked: Array<{ blockedBy: number[]; number: number; title: string }>;
-  candidates: RankedCandidate[];
-  counts: { candidates: number; inNow: number; open: number };
+  candidates: SurveyCandidate[];
+  counts: { candidates: number; excluded: number; inNow: number; open: number };
   groomStale: GroomStaleness;
   inProgress: InProgressEntry[];
   now: NowSet;
@@ -41,7 +44,12 @@ export function buildSurvey(input: {
   user: string;
 }): Survey {
   const { config, inProgress, limit, milestones, now, nowFlag, open, records, user } = input;
-  const nowSet = resolveNow({ configured: pickConfiguredNow(nowFlag, config.now), issues: open, milestones });
+  /** Returns whether `issue` carries a `ticket.pull.excludeLabels` label. */
+  function isExcluded(issue: Issue): boolean {
+    return hasExcludedLabel(issue, config.excludeLabels);
+  }
+  const eligible = open.filter((issue) => !isExcluded(issue));
+  const nowSet = resolveNow({ configured: pickConfiguredNow(nowFlag, config.now), issues: eligible, milestones });
   /** Returns whether `issue` belongs to the resolved Now set. */
   function inNow(issue: Issue): boolean {
     return isInNow(issue, nowSet);
@@ -54,12 +62,22 @@ export function buildSurvey(input: {
     .map((issue) => toInProgressEntry(issue, inProgress.get(issue.number), now));
   const busy = new Set(inProgressEntries.map((entry) => entry.number));
 
-  const candidates = rankCandidates({
-    candidates: selectCandidates({ inNow, inProgress: busy, open }),
-    now,
-    open,
-    priorityPrefix: config.priorityPrefix,
-  });
+  /** Returns the ranked candidates that `scope` admits. */
+  function rankScope(scope: (issue: Issue) => boolean): RankedCandidate[] {
+    return rankCandidates({
+      candidates: selectCandidates({ inNow: scope, inProgress: busy, isExcluded, open }),
+      now,
+      open,
+      priorityPrefix: config.priorityPrefix,
+    });
+  }
+  const candidates = rankScope(inNow);
+  const menu: SurveyCandidate[] = candidates.slice(0, limit).map((candidate) => ({ ...candidate, inNow: true }));
+  // Fill the menu from outside Now only when Now is a milestone; a whole-backlog Now leaves nothing outside it.
+  if (menu.length < limit && nowSet.milestone !== null) {
+    const outside = rankScope((issue) => !inNow(issue)).slice(0, limit - menu.length);
+    menu.push(...outside.map((candidate) => ({ ...candidate, inNow: false })));
+  }
 
   const groomStale = assessGroomStaleness({
     now,
@@ -81,8 +99,13 @@ export function buildSurvey(input: {
 
   return {
     blocked,
-    candidates: candidates.slice(0, limit),
-    counts: { candidates: candidates.length, inNow: nowIssues.length, open: open.length },
+    candidates: menu,
+    counts: {
+      candidates: candidates.length,
+      excluded: open.length - eligible.length,
+      inNow: eligible.filter(inNow).length,
+      open: open.length,
+    },
     groomStale,
     inProgress: inProgressEntries,
     now: nowSet,

@@ -14,11 +14,11 @@ pull-from-backlog.mjs record --ticket <N> [--ticket <N>]...
 - **`survey`** reports the backlog and writes nothing. The result contains:
   - `user`: the `gh` user's login.
   - `now`: the [Now set](#now-set), with `source` and `notFound`.
-  - `counts`: the open tickets, those in Now, and the candidates before `--limit`.
+  - `counts`: the open tickets (`open`), the [excluded](#excluded-tickets) ones (`excluded`), the eligible ones in Now (`inNow`), and the Now candidates before `--limit` (`candidates`).
   - `umbrellas`: each open ticket with sub-issues that is in Now or is the parent of a Now ticket, with `completed` and `total`.
   - `inProgress`: each open ticket with an [in-progress signal](groom-backlog-helper.md#in-progress-signals) or an assignee, with `ref`, `lastCommitAt`, `daysSinceLastCommit`, and `assignees`; `yours` lists those assigned to `user`.
   - `blocked`: each Now ticket with its open blockers.
-  - `candidates`: the top `--limit` (default 3) [candidates](#candidates), each with `reasons`, the ranking rules that fired.
+  - `candidates`: the top `--limit` (default 3) [candidates](#candidates), each with `reasons`, the ranking rules that fired, and `inNow`, which is `false` for a candidate that [fills the menu](#filling-the-menu) from outside Now.
   - `warnings`: the [warnings](#warnings).
   - `groomStale`: the [groom staleness](#groom-staleness).
   - `assignOnPick`, `ledger`, and `ledgerDefects`.
@@ -30,14 +30,18 @@ The Now set is a milestone, resolved in this order:
 
 1. `--now`, then `ticket.pull.now`, when it names an open milestone. Otherwise `notFound` names it and resolution continues.
 2. The open milestone with the nearest due date, overdue ones included.
-3. The open milestone with the most open issues.
+3. The open milestone with the most open eligible issues.
 4. The whole backlog, with `milestone: null`.
 
-Steps 2 and 3 skip a milestone that does not have any open issue.
+Steps 2 and 3 skip a milestone that does not have any open eligible issue.
+
+## Excluded tickets
+
+An open ticket that carries one of the `excludeLabels` labels, compared trimmed and without regard to case, is excluded: It is never a candidate, and it does not count toward resolving Now or toward `counts.inNow`. It still appears in `umbrellas`, `inProgress`, `blocked`, and `warnings`, and it still blocks the tickets whose `blockedBy` names it.
 
 ## Candidates
 
-A candidate is an open ticket in Now whose `blockedBy` tickets are all closed, that has neither an in-progress signal nor an assignee, and that does not have open sub-issues of its own. Candidates rank by these keys, in order:
+A candidate is an open, non-excluded ticket in Now whose `blockedBy` tickets are all closed, that has neither an in-progress signal nor an assignee, and that does not have open sub-issues of its own. Candidates rank by these keys, in order:
 
 | Key      | Ranks first                                                                                                                          |
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------ |
@@ -47,6 +51,10 @@ A candidate is an open ticket in Now whose `blockedBy` tickets are all closed, t
 | Age      | The older `createdAt`, then the lower number.                                                                                        |
 
 A repository that does not use sub-issues or blockers ranks by priority and age alone.
+
+### Filling the menu
+
+When Now is a milestone and yields fewer than `--limit` candidates, the remaining places are filled with the tickets outside Now, unmilestoned or in another milestone, that would otherwise be candidates. They are ranked by the same keys and placed after every Now candidate, with `inNow: false`.
 
 ## Warnings
 

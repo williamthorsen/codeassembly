@@ -24,6 +24,12 @@ export interface RankedCandidate {
   url: string;
 }
 
+/** Returns whether `issue` carries one of `excludeLabels`, compared trimmed and without regard to case. */
+export function hasExcludedLabel(issue: Issue, excludeLabels: readonly string[]): boolean {
+  const excluded = new Set(excludeLabels.map(normalizeLabel));
+  return issue.labels.some((label) => excluded.has(normalizeLabel(label)));
+}
+
 /** Ranks `candidates` against the open tickets, best first. */
 export function rankCandidates(input: {
   candidates: readonly Issue[];
@@ -85,20 +91,22 @@ export function rankCandidates(input: {
 }
 
 /**
- * Returns the open tickets that can be pulled: in the Now set, every blocker closed, without an in-progress signal or
- * an assignee, and without open sub-issues of their own.
+ * Returns the open tickets that can be pulled: in the Now set, not excluded, every blocker closed, without an
+ * in-progress signal or an assignee, and without open sub-issues of their own.
  */
 export function selectCandidates(input: {
   inNow: (issue: Issue) => boolean;
   inProgress: ReadonlySet<number>;
+  isExcluded: (issue: Issue) => boolean;
   open: readonly Issue[];
 }): Issue[] {
-  const { inNow, inProgress, open } = input;
+  const { inNow, inProgress, isExcluded, open } = input;
   const openNumbers = new Set(open.map((issue) => issue.number));
   return open.filter(
     (issue) =>
       issue.state === 'open' &&
       inNow(issue) &&
+      !isExcluded(issue) &&
       issue.blockedBy.every((blocker) => !openNumbers.has(blocker)) &&
       !inProgress.has(issue.number) &&
       issue.assignees.length === 0 &&
@@ -136,6 +144,11 @@ function findPriority(labels: readonly string[], prefix: string): { label: strin
 /** Returns whether `issue` has some completed sub-issues and some open ones. */
 function isPartiallyDone(issue: Issue): boolean {
   return issue.subIssues.completed > 0 && issue.subIssues.completed < issue.subIssues.total;
+}
+
+/** Returns `label` trimmed and lower-cased, as label matching compares it. */
+function normalizeLabel(label: string): string {
+  return label.trim().toLowerCase();
 }
 
 // endregion | Helpers

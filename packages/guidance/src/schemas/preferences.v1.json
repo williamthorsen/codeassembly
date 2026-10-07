@@ -216,10 +216,16 @@
               "default": false,
               "description": "Assign the user to a picked ticket without asking first."
             },
+            "excludeLabels": {
+              "type": "array",
+              "items": { "type": "string", "minLength": 1 },
+              "default": ["status:blocked", "status:on-hold"],
+              "description": "Labels that make a ticket ineligible to be pulled, matched without regard to case. An ineligible ticket is never a candidate and does not count toward picking the Now milestone. An empty list disables exclusion."
+            },
             "now": {
               "type": "string",
               "minLength": 1,
-              "description": "Title of the open milestone that forms the Now set. Without it, the Now set is the open milestone with the nearest due date, else the open milestone with the most open issues, else the whole backlog."
+              "description": "Title of the open milestone that forms the Now set. Without it, the Now set is the open milestone with the nearest due date, else the open milestone with the most open eligible issues (see `excludeLabels`), else the whole backlog."
             },
             "priorityPrefix": {
               "type": "string",

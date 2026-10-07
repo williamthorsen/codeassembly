@@ -2,9 +2,19 @@ import { describe, expect, it } from 'vitest';
 
 import type { Issue } from '../../groom-backlog/types.ts';
 import { buildIssue } from '../../test-utils/build-issue.ts';
-import { rankCandidates, selectCandidates } from '../rank.ts';
+import { hasExcludedLabel, rankCandidates, selectCandidates } from '../rank.ts';
 
 const NOW = new Date('2026-10-01T00:00:00Z');
+
+describe(hasExcludedLabel, () => {
+  it('matches an excluded label trimmed and without regard to case', () => {
+    const issue = buildIssue({ labels: ['bug', 'Status:Blocked '] });
+
+    expect(hasExcludedLabel(issue, ['status:blocked'])).toBe(true);
+    expect(hasExcludedLabel(issue, ['status:on-hold'])).toBe(false);
+    expect(hasExcludedLabel(issue, [])).toBe(false);
+  });
+});
 
 describe(selectCandidates, () => {
   const open = [
@@ -22,11 +32,27 @@ describe(selectCandidates, () => {
     const selected = selectCandidates({
       inNow: (issue) => issue.milestone === null,
       inProgress: new Set([4]),
+      isExcluded: () => false,
       open,
     });
 
     // #2 has an open blocker, #4 is in progress, #5 is assigned, #6 is outside Now, and #7 has an open sub-issue.
     expect(selected.map((issue) => issue.number)).toStrictEqual([1, 3, 8]);
+  });
+
+  it('drops an excluded ticket, and keeps a ticket blocked by an open excluded one out', () => {
+    const shelved = buildIssue({ number: 1, labels: ['status:on-hold'] });
+    const blockedByShelved = buildIssue({ number: 2, blockedBy: [1] });
+    const free = buildIssue({ number: 3 });
+
+    const selected = selectCandidates({
+      inNow: () => true,
+      inProgress: new Set(),
+      isExcluded: (issue) => hasExcludedLabel(issue, ['status:on-hold']),
+      open: [shelved, blockedByShelved, free],
+    });
+
+    expect(selected.map((issue) => issue.number)).toStrictEqual([3]);
   });
 });
 
