@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -53,6 +53,22 @@ describe(generateLabelMap, () => {
     const parsed = parseLabelMap(result);
 
     expect(parsed.$schema).toContain(`change-grammar-v${CHANGE_GRAMMAR_VERSION}`);
+  });
+
+  it("finds change-grammar beside release-kit's real directory under a pnpm layout", async () => {
+    await rm(path.join(tempDir, 'node_modules'), { recursive: true, force: true });
+    const storeModules = path.join(tempDir, 'node_modules', '.pnpm', 'release-kit@13.0.0', 'node_modules');
+    await installFixturePackage(path.dirname(storeModules), '@williamthorsen/release-kit', '13.0.0');
+    await installFixturePackage(path.dirname(storeModules), '@williamthorsen/change-grammar', '0.2.0');
+    await mkdir(path.join(tempDir, 'node_modules', '@williamthorsen'), { recursive: true });
+    await symlink(
+      path.join(storeModules, '@williamthorsen', 'release-kit'),
+      path.join(tempDir, 'node_modules', '@williamthorsen', 'release-kit'),
+    );
+
+    const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+    expect(parsed.$schema).toContain('change-grammar-v0.2.0');
   });
 
   it('throws an error naming release-kit when the project does not install it', async () => {

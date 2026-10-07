@@ -1,8 +1,8 @@
-import { mkdir, readdir, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, realpath, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { findInstalledPackage } from '../lib/find-installed-package.ts';
-import { isEnoent } from '../lib/type-guards.ts';
+import { findInstalledPackage, type InstalledPackage } from '../lib/find-installed-package.ts';
+import { isEnoent, isRecord } from '../lib/type-guards.ts';
 
 /** Canonical mapping from commit type keys to the label names that a tracker uses. */
 const TYPE_MAP: Readonly<Record<string, string>> = {
@@ -69,6 +69,15 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
   return scopes;
 }
 
+/** Finds the installed package `name` from `baseDir`, throwing when no candidate directory contains it. */
+async function findRequiredPackage(name: string, baseDir: string): Promise<InstalledPackage> {
+  const installed = await findInstalledPackage(name, baseDir);
+  if (installed === undefined) {
+    throw new Error(`Could not locate package.json for ${name}`);
+  }
+  return installed;
+}
+
 /**
  * Reads the version of `@williamthorsen/change-grammar` that the installed release-kit depends on.
  *
@@ -76,9 +85,13 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
  * resolves: release-kit is found from the project at `startDir`, and `change-grammar` from release-kit's real location.
  */
 export async function readChangeGrammarVersion(startDir: string): Promise<string> {
-  const releaseKit = await findInstalledPackage(RELEASE_KIT_PACKAGE_NAME, startDir);
-  const changeGrammar = await findInstalledPackage(CHANGE_GRAMMAR_PACKAGE_NAME, releaseKit.directory);
-  return changeGrammar.version;
+  const releaseKit = await findRequiredPackage(RELEASE_KIT_PACKAGE_NAME, startDir);
+  const changeGrammar = await findRequiredPackage(CHANGE_GRAMMAR_PACKAGE_NAME, await realpath(releaseKit.directory));
+  const version = isRecord(changeGrammar.manifest) ? changeGrammar.manifest.version : undefined;
+  if (typeof version !== 'string') {
+    throw new TypeError(`package.json for ${CHANGE_GRAMMAR_PACKAGE_NAME} does not declare a string version`);
+  }
+  return version;
 }
 
 /**

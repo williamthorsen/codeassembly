@@ -4,7 +4,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { findInstalledPackage } from '../find-installed-package.ts';
+import { findInstalledPackage, listCandidateDirs } from '../find-installed-package.ts';
 
 describe(findInstalledPackage, () => {
   let root: string;
@@ -17,51 +17,53 @@ describe(findInstalledPackage, () => {
     await rm(root, { recursive: true, force: true });
   });
 
-  it('finds a package in an ancestor node_modules and reports its version', async () => {
-    const packageDir = await writePackage(path.join(root, 'node_modules', '@scope', 'alpha'), '@scope/alpha', '1.2.3');
+  it('finds a package in an ancestor node_modules and returns its parsed manifest', async () => {
+    const packageDir = await writePackage(path.join(root, 'node_modules', '@scope', 'alpha'), '{"version":"1.2.3"}');
     const startDir = path.join(root, 'packages', 'consumer', 'src');
     await mkdir(startDir, { recursive: true });
 
     await expect(findInstalledPackage('@scope/alpha', startDir)).resolves.toEqual({
       directory: packageDir,
-      version: '1.2.3',
+      manifest: { version: '1.2.3' },
     });
   });
 
-  it('follows a pnpm symlink so that a search from the result finds its sibling dependency', async () => {
-    const storeModules = path.join(root, 'node_modules', '.pnpm', '@scope+alpha@1.0.0', 'node_modules');
-    const alphaDir = await writePackage(path.join(storeModules, '@scope', 'alpha'), '@scope/alpha', '1.0.0');
-    await writePackage(path.join(storeModules, '@scope', 'beta'), '@scope/beta', '0.4.0');
+  it('returns the probed path of a symlinked package, not its real path', async () => {
+    const realDir = await writePackage(path.join(root, 'store', 'alpha'), '{}');
     await mkdir(path.join(root, 'node_modules', '@scope'), { recursive: true });
-    await symlink(alphaDir, path.join(root, 'node_modules', '@scope', 'alpha'));
+    const linkDir = path.join(root, 'node_modules', '@scope', 'alpha');
+    await symlink(realDir, linkDir);
 
-    const alpha = await findInstalledPackage('@scope/alpha', root);
-    const beta = await findInstalledPackage('@scope/beta', alpha.directory);
+    const found = await findInstalledPackage('@scope/alpha', root);
 
-    expect(alpha.directory).toBe(alphaDir);
-    expect(beta.version).toBe('0.4.0');
+    expect(found?.directory).toBe(linkDir);
   });
 
-  it('skips a package.json that names another package', async () => {
-    await writePackage(path.join(root, 'a', 'node_modules', '@scope', 'alpha'), '@scope/impostor', '9.9.9');
-    await writePackage(path.join(root, 'node_modules', '@scope', 'alpha'), '@scope/alpha', '2.0.0');
-
-    const found = await findInstalledPackage('@scope/alpha', path.join(root, 'a'));
-
-    expect(found.version).toBe('2.0.0');
+  it('returns undefined when no candidate directory contains the package', async () => {
+    await expect(findInstalledPackage('@scope/absent', root)).resolves.toBeUndefined();
   });
 
-  it('throws an error naming the package when no ancestor contains it', async () => {
-    await expect(findInstalledPackage('@scope/absent', root)).rejects.toThrow('@scope/absent');
+  it('names the package when its package.json does not parse', async () => {
+    await writePackage(path.join(root, 'node_modules', '@scope', 'broken'), '{');
+
+    await expect(findInstalledPackage('@scope/broken', root)).rejects.toThrow('"@scope/broken"');
+  });
+});
+
+describe(listCandidateDirs, () => {
+  it('lists the nearest node_modules first', () => {
+    const candidates = listCandidateDirs('@scope/alpha', path.join(path.sep, 'a', 'b'));
+
+    expect(candidates[0]).toBe(path.join(path.sep, 'a', 'b', 'node_modules', '@scope', 'alpha'));
   });
 });
 
 // region | Helpers
 
-/** Writes a minimal `package.json` into `packageDir` and returns the directory. */
-async function writePackage(packageDir: string, name: string, version: string): Promise<string> {
+/** Writes `manifest` as the `package.json` of `packageDir` and returns the directory. */
+async function writePackage(packageDir: string, manifest: string): Promise<string> {
   await mkdir(packageDir, { recursive: true });
-  await writeFile(path.join(packageDir, 'package.json'), JSON.stringify({ name, version }), 'utf8');
+  await writeFile(path.join(packageDir, 'package.json'), manifest, 'utf8');
   return packageDir;
 }
 
