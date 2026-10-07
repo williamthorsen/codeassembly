@@ -1,5 +1,5 @@
-import { readdirSync, statSync } from 'node:fs';
-import { join } from 'node:path';
+import { readdirSync, realpathSync, statSync } from 'node:fs';
+import { dirname, join } from 'node:path';
 
 import { defineRdyKit } from 'readyup';
 import { isRecord, readFile, readJsonFile, readJsonValue } from 'readyup/check-utils';
@@ -8,12 +8,14 @@ import {
   deriveExpectedScopeKeys,
   describeScopeDrift,
   diffScopeKeys,
+  isReleaseKitSchemaUrl,
   isSchemaVersionBehind,
-  parseReleaseKitVersion,
+  parseChangeGrammarVersion,
 } from '../lib/label-map-drift.ts';
 
 const LABEL_MAP_PATH = '.meta/label-map.json';
-const RELEASE_KIT_PACKAGE_JSON = 'node_modules/@williamthorsen/release-kit/package.json';
+const CHANGE_GRAMMAR_PACKAGE_NAME = '@williamthorsen/change-grammar';
+const RELEASE_KIT_DIR = 'node_modules/@williamthorsen/release-kit';
 const REGENERATE_FIX = 'Run `codeassembly generate label-map --force` to regenerate the label map';
 
 /**
@@ -57,20 +59,28 @@ export default defineRdyKit({
           fix: REGENERATE_FIX,
         },
         {
-          name: '.meta/label-map.json $schema matches the installed release-kit',
+          name: '.meta/label-map.json $schema matches the installed change-grammar',
           severity: 'warn',
           skip: () => {
-            if (readInstalledReleaseKitVersion() === undefined) {
-              return 'release-kit version could not be determined';
+            if (readInstalledChangeGrammarVersion() === undefined) {
+              return 'change-grammar version could not be determined';
             }
-            if (readPinnedReleaseKitVersion() === undefined) {
-              return '$schema does not pin a release-kit version';
+            const schema = readSchemaUrl();
+            if (
+              schema === undefined ||
+              (!isReleaseKitSchemaUrl(schema) && parseChangeGrammarVersion(schema) === undefined)
+            ) {
+              return '$schema does not pin a change-grammar version';
             }
             return false;
           },
           check: () => {
-            const installed = readInstalledReleaseKitVersion();
-            const pinned = readPinnedReleaseKitVersion();
+            const schema = readSchemaUrl();
+            if (schema !== undefined && isReleaseKitSchemaUrl(schema)) {
+              return { ok: false, detail: 'pins the release-kit schema, which moved to change-grammar' };
+            }
+            const installed = readInstalledChangeGrammarVersion();
+            const pinned = schema === undefined ? undefined : parseChangeGrammarVersion(schema);
             if (installed === undefined || pinned === undefined) {
               return true;
             }
@@ -101,14 +111,32 @@ function listPackageDirNames(): string[] {
   return entries.filter((entry) => statSync(join('packages', entry)).isDirectory());
 }
 
-/** Reads the installed `@williamthorsen/release-kit` version, or undefined when it cannot be resolved. */
-function readInstalledReleaseKitVersion(): string | undefined {
-  const packageJson = readJsonFile(RELEASE_KIT_PACKAGE_JSON);
-  return typeof packageJson?.version === 'string' ? packageJson.version : undefined;
+/**
+ * Reads the version of `@williamthorsen/change-grammar` that the installed release-kit resolves, by walking up
+ * from release-kit's real directory as Node's resolver does, or undefined when either package cannot be found.
+ */
+function readInstalledChangeGrammarVersion(): string | undefined {
+  let dir: string;
+  try {
+    dir = realpathSync(RELEASE_KIT_DIR);
+  } catch {
+    return undefined;
+  }
+  for (;;) {
+    const packageJson = readJsonFile(join(dir, 'node_modules', CHANGE_GRAMMAR_PACKAGE_NAME, 'package.json'));
+    if (packageJson?.name === CHANGE_GRAMMAR_PACKAGE_NAME && typeof packageJson.version === 'string') {
+      return packageJson.version;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return undefined;
+    }
+    dir = parent;
+  }
 }
 
-/** Reads the release-kit version pinned in the label map's `$schema`, or undefined when absent. */
-function readPinnedReleaseKitVersion(): string | undefined {
+/** Reads the label map's `$schema` URL, or undefined when absent. */
+function readSchemaUrl(): string | undefined {
   const schema = readJsonValue(LABEL_MAP_PATH, '$schema');
-  return typeof schema === 'string' ? parseReleaseKitVersion(schema) : undefined;
+  return typeof schema === 'string' ? schema : undefined;
 }

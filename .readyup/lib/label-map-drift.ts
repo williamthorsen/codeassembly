@@ -12,7 +12,8 @@
 import { compareVersions } from 'readyup/check-utils';
 
 const ROOT_SCOPE_KEY = 'root';
-const RELEASE_KIT_VERSION_PATTERN = /release-kit-v(\d+\.\d+\.\d+)/;
+const CHANGE_GRAMMAR_VERSION_PATTERN = /change-grammar-v(\d+\.\d+\.\d+)/;
+const RELEASE_KIT_SCHEMA_PATTERN = /\/release-kit-v[^/]+\/packages\/release-kit\/schemas\//;
 
 /** Missing and extra scope keys between an expected set and an actual set. */
 export interface ScopeDrift {
@@ -54,12 +55,17 @@ export function diffScopeKeys(expected: ReadonlyArray<string>, actual: ReadonlyA
   };
 }
 
-/** Reports whether the pinned release-kit version is older than the installed one. */
+/** Reports whether a label-map `$schema` URL points at the schema's former location in the release-kit package. */
+export function isReleaseKitSchemaUrl(schemaUrl: string): boolean {
+  return RELEASE_KIT_SCHEMA_PATTERN.test(schemaUrl);
+}
+
+/** Reports whether the pinned schema version is older than the installed one. */
 export function isSchemaVersionBehind(pinnedVersion: string, installedVersion: string): boolean {
   return compareVersions(pinnedVersion, installedVersion) < 0;
 }
 
-/** Extracts the release-kit version pinned in a label-map `$schema` URL, or undefined when absent. */
-export function parseReleaseKitVersion(schemaUrl: string): string | undefined {
-  return RELEASE_KIT_VERSION_PATTERN.exec(schemaUrl)?.[1];
+/** Extracts the change-grammar version pinned in a label-map `$schema` URL, or undefined when absent. */
+export function parseChangeGrammarVersion(schemaUrl: string): string | undefined {
+  return CHANGE_GRAMMAR_VERSION_PATTERN.exec(schemaUrl)?.[1];
 }

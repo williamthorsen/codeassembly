@@ -4,9 +4,15 @@ import {
   deriveExpectedScopeKeys,
   describeScopeDrift,
   diffScopeKeys,
+  isReleaseKitSchemaUrl,
   isSchemaVersionBehind,
-  parseReleaseKitVersion,
+  parseChangeGrammarVersion,
 } from '../label-map-drift.ts';
+
+const CHANGE_GRAMMAR_SCHEMA_URL =
+  'https://github.com/williamthorsen/node-monorepo-tools/raw/change-grammar-v0.1.0/packages/change-grammar/schemas/label-map.json';
+const RELEASE_KIT_SCHEMA_URL =
+  'https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v8.0.1/packages/release-kit/schemas/label-map.json';
 
 describe(deriveExpectedScopeKeys, () => {
   it('appends the synthetic root scope when packages exist', () => {
@@ -79,14 +85,26 @@ describe(isSchemaVersionBehind, () => {
   });
 });
 
-describe(parseReleaseKitVersion, () => {
-  it('extracts the pinned version from a $schema URL', () => {
-    const url =
-      'https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v8.0.1/packages/release-kit/schemas/label-map.json';
-    expect(parseReleaseKitVersion(url)).toBe('8.0.1');
+describe(isReleaseKitSchemaUrl, () => {
+  it('recognizes the former release-kit schema location', () => {
+    expect(isReleaseKitSchemaUrl(RELEASE_KIT_SCHEMA_URL)).toBe(true);
   });
 
-  it('returns undefined when the URL does not pin a release-kit version', () => {
-    expect(parseReleaseKitVersion('https://example.com/schema.json')).toBeUndefined();
+  it('does not match the change-grammar schema location', () => {
+    expect(isReleaseKitSchemaUrl(CHANGE_GRAMMAR_SCHEMA_URL)).toBe(false);
+  });
+});
+
+describe(parseChangeGrammarVersion, () => {
+  it('extracts the pinned version from a $schema URL', () => {
+    expect(parseChangeGrammarVersion(CHANGE_GRAMMAR_SCHEMA_URL)).toBe('0.1.0');
+  });
+
+  it('returns undefined when the URL pins a release-kit version', () => {
+    expect(parseChangeGrammarVersion(RELEASE_KIT_SCHEMA_URL)).toBeUndefined();
+  });
+
+  it('returns undefined when the URL does not pin a version', () => {
+    expect(parseChangeGrammarVersion('https://example.com/schema.json')).toBeUndefined();
   });
 });
