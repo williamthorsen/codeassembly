@@ -72,6 +72,10 @@ Every test that you recommend clears the bar in the `testing-conventions` skill,
 
 The commonest instance is a test asserting that deleted code, text, or behavior is absent (a `not.toContain` guard, a `.toBe(false)` on a removed variant). The assertion is noise, not a guard: It encodes history and fails only on a verbatim revert, and such assertions accumulate without limit. The deletion is the fix; the positive assertion describing the replacement behavior is the behavioral guard. This extends the [comment discipline](#comment-discipline) ban on change-history artifacts from comments to test assertions.
 
+## Grown test files
+
+A test file that the change adds to and leaves past the ceiling in the `testing-conventions` skill is a Warning, and its proposed change is a split by aspect as that skill describes. The diff does not show a file's length, so measure each test file that the change adds to. Where the project's lint applies `max-lines` to test files, the lint is the guard, and this is not a finding. A file past the ceiling that the change does not add to is Legacy.
+
 ## Finding references
 
 Conventions for how findings reference files and code locations.
