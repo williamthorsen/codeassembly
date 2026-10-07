@@ -1,6 +1,5 @@
 import { mkdir, readdir, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 import { findInstalledPackage } from '../lib/find-installed-package.ts';
 import { isEnoent } from '../lib/type-guards.ts';
@@ -74,11 +73,9 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
  * Reads the version of `@williamthorsen/change-grammar` that the installed release-kit depends on.
  *
  * The label map is consumed by release-kit, so the schema must match the `change-grammar` that release-kit
- * resolves, which is found by searching from release-kit's real location rather than from this package.
+ * resolves: release-kit is found from the project at `startDir`, and `change-grammar` from release-kit's real location.
  */
-export async function readChangeGrammarVersion(
-  startDir: string = path.dirname(fileURLToPath(import.meta.url)),
-): Promise<string> {
+export async function readChangeGrammarVersion(startDir: string): Promise<string> {
   const releaseKit = await findInstalledPackage(RELEASE_KIT_PACKAGE_NAME, startDir);
   const changeGrammar = await findInstalledPackage(CHANGE_GRAMMAR_PACKAGE_NAME, releaseKit.directory);
   return changeGrammar.version;
@@ -106,7 +103,7 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
     }
   }
 
-  const version = await readChangeGrammarVersion();
+  const version = await readChangeGrammarVersion(cwd);
   const scopes = await deriveScopes(cwd);
 
   const labelMap = {

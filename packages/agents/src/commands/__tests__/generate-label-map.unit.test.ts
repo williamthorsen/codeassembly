@@ -6,7 +6,9 @@ import { captureError } from '@williamthorsen/toolbelt.testing/candidate';
 import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { generateLabelMap, printGenerateUsage, readChangeGrammarVersion } from '../generate-label-map.ts';
+import { generateLabelMap, printGenerateUsage } from '../generate-label-map.ts';
+
+const CHANGE_GRAMMAR_VERSION = '7.8.9';
 
 interface LabelMap {
   readonly $schema: string;
@@ -26,6 +28,8 @@ describe(generateLabelMap, () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-generate-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(tempDir, { recursive: true });
+    await writePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
+    await writePackage(tempDir, '@williamthorsen/change-grammar', CHANGE_GRAMMAR_VERSION);
   });
 
   afterEach(async () => {
@@ -43,13 +47,17 @@ describe(generateLabelMap, () => {
     expect(parsed.scopes).toEqual({});
   });
 
-  it('embeds the change-grammar version that release-kit resolves in the $schema URL', async () => {
-    const changeGrammarVersion = await readChangeGrammarVersion();
-
+  it("embeds the change-grammar version that the project's release-kit resolves in the $schema URL", async () => {
     const result = await readGeneratedFile({ force: false }, tempDir);
     const parsed = parseLabelMap(result);
 
-    expect(parsed.$schema).toContain(`change-grammar-v${changeGrammarVersion}`);
+    expect(parsed.$schema).toContain(`change-grammar-v${CHANGE_GRAMMAR_VERSION}`);
+  });
+
+  it('throws an error naming release-kit when the project does not install it', async () => {
+    await rm(path.join(tempDir, 'node_modules'), { recursive: true, force: true });
+
+    await expect(readGeneratedFile({ force: false }, tempDir)).rejects.toThrow('@williamthorsen/release-kit');
   });
 
   it('includes all canonical type mappings', async () => {
@@ -158,4 +166,11 @@ async function readGeneratedFile(options: { force: boolean }, workingDir: string
   using _silent = silenceConsole(['info']);
   await generateLabelMap(options, workingDir);
   return await readFile(path.join(workingDir, '.meta', 'label-map.json'), 'utf8');
+}
+
+/** Writes a minimal `package.json` for `name` into the project's `node_modules`. */
+async function writePackage(projectDir: string, name: string, version: string): Promise<void> {
+  const packageDir = path.join(projectDir, 'node_modules', name);
+  await mkdir(packageDir, { recursive: true });
+  await writeFile(path.join(packageDir, 'package.json'), JSON.stringify({ name, version }), 'utf8');
 }

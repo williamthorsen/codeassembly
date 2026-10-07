@@ -1,4 +1,4 @@
-import { mkdir, rm } from 'node:fs/promises';
+import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -24,6 +24,8 @@ describe('generateLabelMap error paths', () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-errors-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(tempDir, { recursive: true });
+    await writePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
+    await writePackage(tempDir, '@williamthorsen/change-grammar', '0.1.0');
   });
 
   afterEach(async () => {
@@ -59,3 +61,14 @@ describe('generateLabelMap error paths', () => {
     await expect(generateLabelMap({ force: false }, tempDir)).rejects.toThrow('permission denied');
   });
 });
+
+// region | Helpers
+
+/** Writes a minimal `package.json` for `name` into the project's `node_modules`. */
+async function writePackage(projectDir: string, name: string, version: string): Promise<void> {
+  const packageDir = path.join(projectDir, 'node_modules', name);
+  await mkdir(packageDir, { recursive: true });
+  await writeFile(path.join(packageDir, 'package.json'), JSON.stringify({ name, version }), 'utf8');
+}
+
+// endregion | Helpers
