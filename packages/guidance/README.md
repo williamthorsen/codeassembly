@@ -52,6 +52,8 @@ Agent behavior is configured through `.agents/preferences.yaml` files. The resol
 
 Project-level values take precedence over global. An explicitly empty value at the project level (e.g., `title_format: ''`) overrides a non-empty global value.
 
+The package publishes a JSON Schema for the file; [Schemas](docs/schemas.md) gives its identifier and versioning.
+
 ## Helper reference
 
 - [Prose sweep helper](docs/revise-prose-helper.md): the sweep that the `revise-prose` skill runs.
