@@ -118,6 +118,15 @@ The smell is shared _setup with one variable_, not shared _shape with different 
 
 - **Use function/class reference as describe argument**: `describe(myFunction, ...)` instead of `describe('myFunction', ...)`
 
+### Test file length
+
+A test file runs in one test worker, and a file that keeps its fixtures makes an append cheaper than a split, so a file grows until it is the slowest unit in the suite. Before an addition carries a test file past the ceiling, split the file by aspect, then add the tests to the file that their aspect names.
+
+- **Ceiling.** The `max-lines` setting that the project's lint configuration applies to test files. Where the lint does not set one, 500 lines, counting every line.
+- **Aspect.** A group of the subject's behaviors that shares setup and reads without the rest of the file. Each split file contains one aspect.
+- **Naming.** Each split file keeps the subject's name and adds the aspect after it, followed by any segment that the project's naming requires: `sync.test.ts` becomes `sync.retirement.test.ts`, and `sync.tool.test.ts` becomes `sync.retirement.tool.test.ts`.
+- **Fixtures.** Move the fixture builders that the split files share out of the test files, into a module in a `test-utils/` directory beside the tests, so that a new aspect file costs one import.
+
 ## Mocking principles
 
 Mock only what matters in component tests. Don't forward irrelevant props or replicate complex implementation details.
