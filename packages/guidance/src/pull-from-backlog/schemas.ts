@@ -5,6 +5,7 @@ import { z } from 'zod';
 export const PullConfigSchema = z.strictObject({
   now: z.string().min(1).optional(),
   assignOnPick: z.boolean().default(false),
+  excludeLabels: z.array(z.string().min(1)).default(['status:blocked', 'status:on-hold']),
   priorityPrefix: z.string().min(1).default('priority:'),
   staleGroomDays: z.number().int().positive().default(14),
   staleGroomNewTickets: z.number().int().positive().default(10),
