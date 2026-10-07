@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { act, renderHook } from '@testing-library/react';
 import type { CanonicalRunStatus } from 'codeassembly-run-core';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';

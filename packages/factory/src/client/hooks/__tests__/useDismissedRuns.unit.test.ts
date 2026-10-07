@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
