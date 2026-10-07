@@ -38,6 +38,8 @@ Always present under `projects/`, even when `{base_dir}/` is inside the project.
 
 Always present under `tickets/` within the project directory. If the work does not have a real ticket, auto-generate one: `{YYYYMMDD}-{4 random hex}` (e.g., `20260221-a3f2`).
 
+A `project.ticket_ref_prefix` other than `#` is part of the ticket ID, so it names the directory: Under `ABC-`, branch `100` resolves to `tickets/ABC-100/`, the same directory as a branch containing the key `ABC-100`. A `#` prefix is dropped, because a GitHub issue's ID is its number, and branch `100` resolves to `tickets/100/`, as it does when the preference is not set. Changing the prefix sends later artifacts to a different directory; merge the two by moving the existing directory.
+
 ### Prototype sets
 
 `prototypes/` holds the ticket's one prototype set: the sources, the stored screenshots, and the manifest from which `index-prototypes` renders the set's index page. The page itself is rendered into the session's scratch directory for publishing and is not kept here.
@@ -90,7 +92,7 @@ The reader does still hard-fail on malformed YAML, missing git state, and shape 
 {base_dir}/projects/{project-slug}/tickets/{ticket-id}/
 ```
 
-Ticket-level artifacts and run directories are both stored here. Invoke the bundled session-context deriver to obtain `ticket_id`.
+Ticket-level artifacts and run directories are both stored here. Invoke the bundled session-context deriver to obtain `ticket_id`, which includes any prefix other than `#` (see [Ticket ID](#ticket-id)).
 
 ### Run paths
 
@@ -196,7 +198,7 @@ The table below lists only the universal fields. Artifact-specific extensions (`
 | `provenance.isInteractive` | yes      | `true` for interactive flows; `false` for a dispatched subagent.                                                                                                                         |
 | `provenance.refinedBy`     | no       | The skill that last processed/refined the artifact (e.g., `refine-plan`). Records processing, not authorship.                                                                            |
 | `provenance.model`         | no       | The identifier of the model that authored the body (e.g., `claude-opus-4-7`). Omitted for human-authored or co-authored artifacts.                                                       |
-| `ticket_id`                | no       | Ticket ID from session context. Omitted when a ticket is not in session.                                                                                                                 |
+| `ticket_id`                | no       | Ticket ID from session context, including any prefix other than `#` (see [Ticket ID](#ticket-id)). Omitted when a ticket is not in session.                                              |
 | `ticket_ref`               | no       | Human-readable ticket reference (e.g., `#537`, `MAC-68`). Omitted when `ticket_id` is omitted.                                                                                           |
 | `branch`                   | yes      | Current branch name from session context. Written as-is: no sanitization.                                                                                                                |
 | `commit`                   | yes      | Short SHA of HEAD at write time. Resolved via `git rev-parse --short HEAD`. Distinct from `commits` (the devlog-specific list).                                                          |
