@@ -1,8 +1,8 @@
 ---
 slug: codeassembly-repo-conventions
-description: Conventions for authoring content in the CodeAssembly repository itself -- the library's own tests, collection dispositions, sweep doctrine, skill-local reinforcement, and artifact naming.
+description: Conventions for authoring content in the CodeAssembly repository itself -- the library's own tests, collection dispositions, sweep doctrine, skill-local reinforcement, model declarations, and artifact naming.
 delivery: skill
-version: '1'
+version: '2'
 ---
 
 # CodeAssembly repository conventions
@@ -76,6 +76,10 @@ Because a sweeper applies the doctrine deployed to its harness, deploy the conte
 Behavioral rules for an agent's output -- such as the recommendation gradient and the action-items block -- are stated once in `AGENTS.md` and the shared `_data` specs. When the boundary below requires a restatement, put it at the step that produces the output: as a pointer in the skill body, or as a rendered example inlined from `_partials/`. An agent follows a rule more reliably when the rule appears next to the action to which it applies than when the agent must follow a link to read it, and it imitates a nearby concrete example more reliably still than it follows a directive.
 
 Treat that restatement as necessary redundancy, not duplication, when the rule specifies an output shape that the agent must reproduce: Stripping the skill-local pointers there leaves the agent to improvise the block instead of copying it. If the agent can follow the rule from a single statement, extend it to skill-local surfaces after that statement has been seen to fail, not in anticipation. _(Enforced for the specs named above by `action-item-reinforcement.unit.test.ts` and `spec-inlining.unit.test.ts`.)_
+
+## Model declarations
+
+A skill declares `model` only together with `context: fork`. Without the fork, the skill's model replaces the session's for the rest of the turn, including the caller's work after the skill returns, and the first call on that model reads the context without the prompt cache. Every model declared by a skill, a subagent, or `subagents/_data/claude.yaml` is a Claude Code alias or a full `claude-` model ID. _(Enforced by `model-declarations.unit.test.ts`.)_
 
 ## Naming
 
