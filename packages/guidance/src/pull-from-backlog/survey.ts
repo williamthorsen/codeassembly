@@ -4,7 +4,7 @@ import type { LedgerRecord } from '../groom-backlog/schemas.ts';
 import type { InProgress, Issue } from '../groom-backlog/types.ts';
 import { daysSince } from './days.ts';
 import { isInNow, type NowSet, resolveNow } from './now.ts';
-import { rankCandidates, type RankedCandidate, selectCandidates } from './rank.ts';
+import { hasExcludedLabel, rankCandidates, type RankedCandidate, selectCandidates } from './rank.ts';
 import type { PullConfig } from './schemas.ts';
 import {
   assessGroomStaleness,
@@ -18,7 +18,7 @@ import {
 export interface Survey {
   blocked: Array<{ blockedBy: number[]; number: number; title: string }>;
   candidates: RankedCandidate[];
-  counts: { candidates: number; inNow: number; open: number };
+  counts: { candidates: number; excluded: number; inNow: number; open: number };
   groomStale: GroomStaleness;
   inProgress: InProgressEntry[];
   now: NowSet;
@@ -41,7 +41,12 @@ export function buildSurvey(input: {
   user: string;
 }): Survey {
   const { config, inProgress, limit, milestones, now, nowFlag, open, records, user } = input;
-  const nowSet = resolveNow({ configured: pickConfiguredNow(nowFlag, config.now), issues: open, milestones });
+  /** Returns whether `issue` carries a `ticket.pull.excludeLabels` label. */
+  function isExcluded(issue: Issue): boolean {
+    return hasExcludedLabel(issue, config.excludeLabels);
+  }
+  const eligible = open.filter((issue) => !isExcluded(issue));
+  const nowSet = resolveNow({ configured: pickConfiguredNow(nowFlag, config.now), issues: eligible, milestones });
   /** Returns whether `issue` belongs to the resolved Now set. */
   function inNow(issue: Issue): boolean {
     return isInNow(issue, nowSet);
@@ -55,7 +60,7 @@ export function buildSurvey(input: {
   const busy = new Set(inProgressEntries.map((entry) => entry.number));
 
   const candidates = rankCandidates({
-    candidates: selectCandidates({ inNow, inProgress: busy, open }),
+    candidates: selectCandidates({ inNow, inProgress: busy, isExcluded, open }),
     now,
     open,
     priorityPrefix: config.priorityPrefix,
@@ -82,7 +87,12 @@ export function buildSurvey(input: {
   return {
     blocked,
     candidates: candidates.slice(0, limit),
-    counts: { candidates: candidates.length, inNow: nowIssues.length, open: open.length },
+    counts: {
+      candidates: candidates.length,
+      excluded: open.length - eligible.length,
+      inNow: eligible.filter(inNow).length,
+      open: open.length,
+    },
     groomStale,
     inProgress: inProgressEntries,
     now: nowSet,
