@@ -13,7 +13,7 @@ plan-reviewer:
   model: sonnet
 
 plan-reviser:
-  model: sonnet
+  model: inherit
 
 prose-reviser:
   model: inherit
