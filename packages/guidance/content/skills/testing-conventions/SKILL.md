@@ -120,7 +120,7 @@ The smell is shared _setup with one variable_, not shared _shape with different 
 
 ### Test file length
 
-A test file runs in one test worker, and a file that keeps its fixtures makes an append cheaper than a split, so a file grows until it is the slowest unit in the suite. Before an addition carries a test file past the ceiling, split the file by aspect, then add the tests to the file that their aspect names.
+A test file runs in one test worker, and a file that keeps its fixtures makes an append cheaper than a split, so a file grows until it is the slowest unit in the suite. Before adding tests to a file that the addition would leave past the ceiling, split the file by aspect, then add the tests to the file that their aspect names.
 
 - **Ceiling.** The `max-lines` setting that the project's lint configuration applies to test files. Where the lint does not set one, 500 lines, counting every line.
 - **Aspect.** A group of the subject's behaviors that shares setup and reads without the rest of the file. Each split file contains one aspect.
