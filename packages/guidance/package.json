@@ -23,20 +23,23 @@
   "sideEffects": false,
   "type": "module",
   "exports": {
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./schemas/*.json": "./schemas/*.json"
   },
   "files": [
     "content",
     "!content/**/__tests__",
     "!content/test-utils",
     "CHANGELOG.md",
-    ".meta/changelog.json"
+    ".meta/changelog.json",
+    "schemas"
   ],
   "scripts": {
     "build": "codeassembly bundle-helpers",
     "check:content": "codeassembly validate && codeassembly bundle-helpers --check",
     "check:post": "pnpm run check:content",
     "check:strict:post": "pnpm run check:content",
+    "prepack": "node scripts/generate-schemas.ts",
     "test:post": "pnpm run test:sh && pnpm run test:smoke",
     "test:sh": "bash scripts/test-sh.sh",
     "test:smoke": "node scripts/__tests__/smoke-test-skill-helpers.ts"

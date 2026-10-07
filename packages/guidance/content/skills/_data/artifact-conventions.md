@@ -82,7 +82,7 @@ When the deriver is not available (e.g., standalone scripts without Node.js), th
 
 The session-context deriver reads only the fields that it consumes (`artifacts.base_dir`, `artifacts.paths`, `project.slug`, `project.ticket_ref_prefix`, `scm`, `repository.slug`, `repository.default_remote.{name,default_branch}`). Unknown top-level keys, unknown nested keys, and keys for other tooling that shares `.agents/preferences.yaml` are silently tolerated: This file is a multi-tool surface (analogous to `.editorconfig` or `package.json`), not a codeassembly-owned namespace.
 
-Schema validation against `schemas/preferences.json` is an authoring-time concern: Editor LSPs validate through the `$schema` reference at the top of the YAML, and `preferences-schema.unit.test.ts` validates the project-checked-in `.agents/preferences.yaml`. The reader does not validate against the schema at runtime; doing so would fail on legitimate keys owned by other tools.
+Schema validation against the `preferences.v1.json` schema is an authoring-time concern: Editor LSPs validate through the `$schema` reference at the top of the YAML, and `preferences-schema.unit.test.ts` validates the project-checked-in `.agents/preferences.yaml`. The reader does not validate against the schema at runtime; doing so would fail on legitimate keys owned by other tools.
 
 The reader does still hard-fail on malformed YAML, missing git state, and shape problems on the fields that it consumes (e.g., `artifacts.base_dir` set to a non-string, `scm` set to a value outside the `github | bitbucket` enum). Per-field errors name the offending key path so that the user can locate the issue without reading the whole file.
 

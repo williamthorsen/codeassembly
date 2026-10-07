@@ -1,5 +1,4 @@
 {
-  "$id": "https://github.com/williamthorsen/codeassembly/raw/main/packages/guidance/schemas/work-types.schema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "additionalProperties": false,
   "description": "Canonical work-types taxonomy consumed by skill content and downstream changelog/release-notes tooling. Defines the work-type vocabulary, tier grouping, breaking-change policy, changelog-eligibility flags, and cross-cutting section markers (e.g., the breaking-changes indicator).",
@@ -36,9 +35,18 @@
       "maxItems": 3,
       "minItems": 3,
       "prefixItems": [
-        { "const": "public", "type": "string" },
-        { "const": "internal", "type": "string" },
-        { "const": "process", "type": "string" }
+        {
+          "const": "public",
+          "type": "string"
+        },
+        {
+          "const": "internal",
+          "type": "string"
+        },
+        {
+          "const": "process",
+          "type": "string"
+        }
       ],
       "type": "array"
     },

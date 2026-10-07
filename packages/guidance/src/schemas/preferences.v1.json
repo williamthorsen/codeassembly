@@ -1,6 +1,5 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/williamthorsen/codeassembly/raw/main/packages/guidance/schemas/preferences.json",
   "title": "Preferences",
   "description": "Configuration read by agent skills. Resolved from .agents/preferences.yaml at the project level, with ~/.agents/preferences.yaml as a global fallback.",
   "type": "object",
