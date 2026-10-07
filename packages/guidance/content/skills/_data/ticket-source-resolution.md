@@ -29,17 +29,13 @@ When the invocation does not provide a ticket source, attempt to derive the tick
 
 4. **Determine the platform and construct the fetch identifier:**
 
-   a. Read `project.ticket_ref_prefix` from `.agents/preferences.yaml`.
+   a. **If `ticket_id` is purely numeric** (e.g., `357`): The ID is a platform issue number. Determine the platform using the [platform resolution cascade](#platform-resolution-cascade). For GitHub, fetch issue `357`.
 
-   b. **If `ticket_id` is purely numeric** (e.g., `357`):
-   - If `ticket_ref_prefix` is `#` or absent: The ID is a platform issue number. Determine the platform using the [platform resolution cascade](#platform-resolution-cascade). For GitHub, fetch issue `357`.
-   - If `ticket_ref_prefix` is a Jira-style prefix (e.g., `MAC-`): The full Jira key is `{prefix}{number}` (e.g., `MAC-357`). The platform is Jira (or whichever platform hosts that project).
+   b. **If `ticket_id` contains a prefix** (e.g., `MAC-42`): The ID is a Jira-style key. The platform is Jira (or whichever platform hosts that project). The deriver includes a configured `ticket_ref_prefix` other than `#` in `ticket_id`, so a bare-number branch under `MAC-` arrives here as `MAC-357`.
 
-   c. **If `ticket_id` contains a prefix** (e.g., `MAC-42`): The ID is a Jira-style key. The platform is Jira (or whichever platform hosts that project).
+   c. If the platform still cannot be determined, ask the user.
 
-   d. If the platform still cannot be determined, ask the user.
-
-   e. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for a Jira-style key: It yields the URL consumed by a URL-taking Jira read tool, and the URL to present and persist when the content cannot be fetched.
+   d. **Construct the URL from a base when one is available.** If a base URL is known (`ticket_base_url` from the manifest, or `ticket.base_url` from `.agents/preferences.yaml`), the ticket URL is the base joined to `ticket_id` with a single `/` (e.g. `https://org.atlassian.net/browse/` + `MAC-42` → `https://org.atlassian.net/browse/MAC-42`). This is the reconstruction path for a Jira-style key: It yields the URL consumed by a URL-taking Jira read tool, and the URL to present and persist when the content cannot be fetched.
 
 5. **Fetch the ticket** per [platform-specific fetch](#platform-specific-fetch).
 
@@ -94,7 +90,7 @@ When a skill needs structured metadata, such as the `updated` timestamp for a st
 - **Takes an issue URL**: Pass the ticket URL. Prefer this shape when both are connected, since it does not need site resolution.
 - **Takes an issue key and a cloud ID**: Resolve the cloud ID first, from the same server's tool listing accessible Atlassian sites. It is the `id` of the site whose URL matches the ticket URL's host, or of the sole site listed when the ticket URL is not known. If neither settles it, ask the user which site hosts the ticket. Resolve it once and reuse it for the rest of the session.
 
-**Last resort.** When neither is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4e), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
+**Last resort.** When neither is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4d), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
 
 The stored URL applies throughout: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
 
