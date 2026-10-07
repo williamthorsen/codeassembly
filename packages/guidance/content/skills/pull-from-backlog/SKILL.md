@@ -48,7 +48,7 @@ The ledger is `local/ticket-triage/ledger.jsonl` in the primary worktree, shared
 
 Present, in this order, and omit a section that is empty rather than reporting a zero:
 
-1. **Now**: the milestone and its due date, with how it was resolved (`now.source`). For `backlog`, say in one line that the repository does not have an open milestone with open issues, so the whole backlog is the Now set.
+1. **Now**: the milestone and its due date, with how it was resolved (`now.source`). For `backlog`, say in one line that the repository does not have an open milestone with open eligible issues, so the whole backlog is the Now set. When the milestone is not null and `counts.inNow` is 0, say that it has no eligible open tickets left, and suggest closing it or planning a new one; do not offer to change any ticket's milestone. When `counts.excluded` is not 0, add one line stating how many open tickets carry a `ticket.pull.excludeLabels` label and are not offered.
 2. **Umbrellas**: each as `#N title: completed/total done`.
 3. **In progress**: each ticket with its branch (`ref`) and the days since its last commit, or its assignees when it does not have a branch. List the user's own (`yours`) first, under their own heading.
 4. **Blocked**: each blocked Now ticket with its open blockers.
@@ -56,7 +56,7 @@ Present, in this order, and omit a section that is empty rather than reporting a
 
 ### 3. Present the candidates
 
-Render `candidates` as a numbered gradient menu, per [Option format](#option-format), with every candidate's `reasons` as its `➕` lines and its URL. The candidate ranked first takes the strongest marker. The menu is always rendered: Which ticket the user works on next is a preference about their time, which is in the gated class. When `candidates` is empty, say so, name the counts from `counts`, and skip step 4.
+Render `candidates` as a numbered gradient menu, per [Option format](#option-format), with every candidate's `reasons` as its `➕` lines and its URL. The candidate ranked first takes the strongest marker. When a candidate has `inNow: false`, say in one line above the menu that Now was exhausted and the menu includes backlog tickets, and append `(outside Now)` to each such candidate's title. The menu is always rendered: Which ticket the user works on next is a preference about their time, which is in the gated class. When `candidates` is empty, say so, name the counts from `counts`, and skip step 4.
 
 Close the turn with an action-items block that asks for the pick. When `groomStale.stale`, the block contains, before the pick, an offer to groom the backlog: `{skill:groom-backlog}` without arguments, which assesses every open ticket, applies its recommendations after one confirmation per digest page, and asks nothing per ticket. When the user takes it, run it, then start again at step 1: A groom can change the candidates.
 
