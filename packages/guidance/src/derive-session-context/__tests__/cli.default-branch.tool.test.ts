@@ -143,29 +143,27 @@ describe('default-branch invariant', () => {
     expect(result.project_slug).toBe('my-project');
   });
 
-  it('drops stored URLs on the default branch rather than carrying them forward', async () => {
+  it('drops flag-written URLs recorded in explicit_urls on the default branch', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    // Stale (missing the required `scm`), so the read fails the schema check and forces a recompose.
-    // Carry-forward would preserve the URLs on any other branch; the invariant takes precedence over it here.
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     await mkdir(path.dirname(manifestPath), { recursive: true });
-    const stale = {
-      ticket_id: null,
-      ticket_ref: null,
-      project_slug: 'seeded',
-      default_branch: 'origin/main',
-      branch_name: 'main',
-      artifact_base_dir: '/tmp/seeded',
-      artifact_paths: { chats: 'chats', devlogs: 'devlogs', plans: 'plans' },
-      created_at: '2025-01-01T00:00:00Z',
+    const explicitUrls = {
       ticket_url: 'https://github.com/owner/repo/issues/411',
       pr_url: 'https://github.com/owner/repo/pull/42',
     };
-    await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
+    await writeFile(manifestPath, JSON.stringify({ ...explicitUrls, explicit_urls: explicitUrls }), 'utf8');
 
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    let recomposed: BranchManifest;
+    try {
+      recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    } finally {
+      stderrSpy.mockRestore();
+    }
     expect(recomposed.ticket_url).toBeNull();
     expect(recomposed.pr_url).toBeNull();
+    expect(recomposed.explicit_urls).toEqual({});
+    expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual(recomposed);
   });
 
   it('follows the configured default branch rather than the literal main', async () => {
