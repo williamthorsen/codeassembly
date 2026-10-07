@@ -293,7 +293,7 @@ derive_manifest() {
   local bundle_path
   bundle_path="$(resolve_bundle_path)" || return 1
   if [[ ! -r "$bundle_path" ]]; then
-    echo "$PROG: bundled deriver not found at $bundle_path" >&2
+    echo "$PROG: RESOLVE_FRONTMATTER_BUNDLE_PATH names $bundle_path, which is not readable" >&2
     return 1
   fi
   if ! command -v node >/dev/null 2>&1; then
