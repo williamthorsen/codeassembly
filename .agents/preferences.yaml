@@ -1,4 +1,4 @@
-# yaml-language-server: $schema=https://github.com/williamthorsen/codeassembly/raw/main/packages/guidance/schemas/preferences.json
+# yaml-language-server: $schema=../packages/guidance/src/schemas/preferences.v1.json
 artifacts:
   base_dir: ~/ai-artifacts
 commit:
