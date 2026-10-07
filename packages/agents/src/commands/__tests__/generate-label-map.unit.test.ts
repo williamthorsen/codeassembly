@@ -7,6 +7,7 @@ import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamth
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { generateLabelMap, printGenerateUsage } from '../generate-label-map.ts';
+import { installFixturePackage } from '../test-utils/install-fixture-package.ts';
 
 const CHANGE_GRAMMAR_VERSION = '7.8.9';
 
@@ -28,8 +29,8 @@ describe(generateLabelMap, () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-generate-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(tempDir, { recursive: true });
-    await writePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
-    await writePackage(tempDir, '@williamthorsen/change-grammar', CHANGE_GRAMMAR_VERSION);
+    await installFixturePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
+    await installFixturePackage(tempDir, '@williamthorsen/change-grammar', CHANGE_GRAMMAR_VERSION);
   });
 
   afterEach(async () => {
@@ -166,11 +167,4 @@ async function readGeneratedFile(options: { force: boolean }, workingDir: string
   using _silent = silenceConsole(['info']);
   await generateLabelMap(options, workingDir);
   return await readFile(path.join(workingDir, '.meta', 'label-map.json'), 'utf8');
-}
-
-/** Writes a minimal `package.json` for `name` into the project's `node_modules`. */
-async function writePackage(projectDir: string, name: string, version: string): Promise<void> {
-  const packageDir = path.join(projectDir, 'node_modules', name);
-  await mkdir(packageDir, { recursive: true });
-  await writeFile(path.join(packageDir, 'package.json'), JSON.stringify({ name, version }), 'utf8');
 }

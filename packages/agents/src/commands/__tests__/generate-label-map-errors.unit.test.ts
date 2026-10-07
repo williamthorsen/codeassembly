@@ -1,9 +1,11 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { installFixturePackage } from '../test-utils/install-fixture-package.ts';
 
 const { mockedReaddir, mockedStat } = vi.hoisted(() => {
   return { mockedReaddir: vi.fn(), mockedStat: vi.fn() };
@@ -24,8 +26,8 @@ describe('generateLabelMap error paths', () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-errors-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(tempDir, { recursive: true });
-    await writePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
-    await writePackage(tempDir, '@williamthorsen/change-grammar', '0.1.0');
+    await installFixturePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
+    await installFixturePackage(tempDir, '@williamthorsen/change-grammar', '0.1.0');
   });
 
   afterEach(async () => {
@@ -61,14 +63,3 @@ describe('generateLabelMap error paths', () => {
     await expect(generateLabelMap({ force: false }, tempDir)).rejects.toThrow('permission denied');
   });
 });
-
-// region | Helpers
-
-/** Writes a minimal `package.json` for `name` into the project's `node_modules`. */
-async function writePackage(projectDir: string, name: string, version: string): Promise<void> {
-  const packageDir = path.join(projectDir, 'node_modules', name);
-  await mkdir(packageDir, { recursive: true });
-  await writeFile(path.join(packageDir, 'package.json'), JSON.stringify({ name, version }), 'utf8');
-}
-
-// endregion | Helpers
