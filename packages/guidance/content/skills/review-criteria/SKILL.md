@@ -15,6 +15,7 @@ Evaluation criteria for code review. Apply proportionally: Match depth to risk.
 ## Examine
 
 - **Correctness**: Logic errors, unhandled error paths, data loss risks
+- **Data changes**: A change that removes or renames data that deployed code still reads, or that depends on a migration run before merge (see {rulebook:shared-data-conventions})
 - **Conventions**: Adherence to codebase patterns and project standards
 - **Edge cases**: Boundary conditions, empty collections, zero values, undefined states
 - **Test coverage**: Adequate tests for new functionality; tests that verify behavior and earn their place, not just coverage
