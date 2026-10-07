@@ -7,6 +7,7 @@
     "__tests__/**/*.ts",
     // Content-convention suites sit beside the content tree they cover.
     "content/__tests__/**/*.ts",
+    "content/scripts/__tests__/**/*.ts",
     "content/test-utils/**/*.ts",
     "scripts/",
     "src/",
