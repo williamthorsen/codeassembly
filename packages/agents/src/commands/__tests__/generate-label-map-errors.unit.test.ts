@@ -5,6 +5,8 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { installFixturePackage } from '../test-utils/install-fixture-package.ts';
+
 const { mockedReaddir, mockedStat } = vi.hoisted(() => {
   return { mockedReaddir: vi.fn(), mockedStat: vi.fn() };
 });
@@ -24,6 +26,8 @@ describe('generateLabelMap error paths', () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-errors-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(tempDir, { recursive: true });
+    await installFixturePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
+    await installFixturePackage(tempDir, '@williamthorsen/change-grammar', '0.1.0');
   });
 
   afterEach(async () => {

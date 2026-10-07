@@ -1,6 +1,6 @@
 /** Shared types for the session-context deriver. */
 
-/** A narrow projection of `schemas/preferences.json` covering the fields that the deriver consumes. */
+/** A narrow projection of `src/schemas/preferences.v1.json` covering the fields that the deriver consumes. */
 export interface ResolvedPreferences {
   /** The VCS host. */
   readonly scm?: 'github' | 'bitbucket';

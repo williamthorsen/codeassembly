@@ -1,7 +1,7 @@
-import { mkdir, readdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, realpath, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 
+import { findInstalledPackage, type InstalledPackage } from '../lib/find-installed-package.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 
 /** Canonical mapping from commit type keys to the label names that a tracker uses. */
@@ -23,17 +23,16 @@ const TYPE_MAP: Readonly<Record<string, string>> = {
   tooling: 'tooling',
 };
 
+const CHANGE_GRAMMAR_PACKAGE_NAME = '@williamthorsen/change-grammar';
 const RELEASE_KIT_PACKAGE_NAME = '@williamthorsen/release-kit';
 
 interface GenerateLabelMapOptions {
   readonly force: boolean;
 }
 
-/**
- * Builds the `$schema` URL for the label-map JSON file using the installed release-kit version.
- */
+/** Builds the `$schema` URL of the label-map schema published with `change-grammar` at `version`. */
 function buildSchemaUrl(version: string): string {
-  return `https://github.com/williamthorsen/node-monorepo-tools/raw/release-kit-v${version}/packages/release-kit/schemas/label-map.json`;
+  return `https://github.com/williamthorsen/node-monorepo-tools/raw/change-grammar-v${version}/packages/change-grammar/schemas/label-map.json`;
 }
 
 /**
@@ -70,46 +69,29 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
   return scopes;
 }
 
-/**
- * Reads the installed `@williamthorsen/release-kit` version by walking up from this
- * module's location, looking for `node_modules/@williamthorsen/release-kit/package.json`
- * at each level: the same algorithm that Node's own module resolver uses.
- *
- * A direct `require.resolve` is unsuitable because release-kit's `exports` map does not
- * expose `./package.json` and only declares the `import` condition for its main entry.
- * The walk handles pnpm hoisting (release-kit may live at the workspace root rather than
- * as a sibling of the agents package) and works in both dev (`src/`) and built
- * (`dist/esm/`) layouts.
- */
-export async function readReleaseKitVersion(): Promise<string> {
-  const thisDir = path.dirname(fileURLToPath(import.meta.url));
-
-  let dir = thisDir;
-  for (;;) {
-    const candidate = path.join(dir, 'node_modules', '@williamthorsen', 'release-kit', 'package.json');
-    let raw = '';
-    try {
-      raw = await readFile(candidate, 'utf8');
-    } catch {
-      // Treat an unreadable candidate as absent and keep walking up.
-    }
-    if (raw !== '') {
-      const parsed: unknown = JSON.parse(raw);
-      if (isReleaseKitPackageJson(parsed)) {
-        return parsed.version;
-      }
-    }
-    const parent = path.dirname(dir);
-    if (parent === dir) {
-      throw new Error(`Could not locate package.json for ${RELEASE_KIT_PACKAGE_NAME}`);
-    }
-    dir = parent;
+/** Finds the installed package `name` from `baseDir`, throwing when no candidate directory contains it. */
+async function findRequiredPackage(name: string, baseDir: string): Promise<InstalledPackage> {
+  const installed = await findInstalledPackage(name, baseDir);
+  if (installed === undefined) {
+    throw new Error(`Could not locate package.json for ${name}`);
   }
+  return installed;
 }
 
-/** Reports whether `value` is release-kit's `package.json`. */
-function isReleaseKitPackageJson(value: unknown): value is { readonly name: string; readonly version: string } {
-  return isRecord(value) && value.name === RELEASE_KIT_PACKAGE_NAME && typeof value.version === 'string';
+/**
+ * Reads the version of `@williamthorsen/change-grammar` that the installed release-kit depends on.
+ *
+ * The label map is consumed by release-kit, so the schema must match the `change-grammar` that release-kit
+ * resolves: release-kit is found from the project at `startDir`, and `change-grammar` from release-kit's real location.
+ */
+export async function readChangeGrammarVersion(startDir: string): Promise<string> {
+  const releaseKit = await findRequiredPackage(RELEASE_KIT_PACKAGE_NAME, startDir);
+  const changeGrammar = await findRequiredPackage(CHANGE_GRAMMAR_PACKAGE_NAME, await realpath(releaseKit.directory));
+  const version = isRecord(changeGrammar.manifest) ? changeGrammar.manifest.version : undefined;
+  if (typeof version !== 'string') {
+    throw new TypeError(`package.json for ${CHANGE_GRAMMAR_PACKAGE_NAME} does not declare a string version`);
+  }
+  return version;
 }
 
 /**
@@ -134,7 +116,7 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
     }
   }
 
-  const version = await readReleaseKitVersion();
+  const version = await readChangeGrammarVersion(cwd);
   const scopes = await deriveScopes(cwd);
 
   const labelMap = {

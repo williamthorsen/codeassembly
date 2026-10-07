@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -6,7 +6,10 @@ import { captureError } from '@williamthorsen/toolbelt.testing/candidate';
 import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { generateLabelMap, printGenerateUsage, readReleaseKitVersion } from '../generate-label-map.ts';
+import { generateLabelMap, printGenerateUsage } from '../generate-label-map.ts';
+import { installFixturePackage } from '../test-utils/install-fixture-package.ts';
+
+const CHANGE_GRAMMAR_VERSION = '7.8.9';
 
 interface LabelMap {
   readonly $schema: string;
@@ -26,6 +29,8 @@ describe(generateLabelMap, () => {
   beforeEach(async () => {
     tempDir = path.join(tmpdir(), `agents-test-generate-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(tempDir, { recursive: true });
+    await installFixturePackage(tempDir, '@williamthorsen/release-kit', '13.0.0');
+    await installFixturePackage(tempDir, '@williamthorsen/change-grammar', CHANGE_GRAMMAR_VERSION);
   });
 
   afterEach(async () => {
@@ -37,19 +42,39 @@ describe(generateLabelMap, () => {
     const parsed = parseLabelMap(result);
 
     expect(parsed.$schema).toMatch(
-      /^https:\/\/github\.com\/williamthorsen\/node-monorepo-tools\/raw\/release-kit-v[\d.]+\/packages\/release-kit\/schemas\/label-map\.json$/,
+      /^https:\/\/github\.com\/williamthorsen\/node-monorepo-tools\/raw\/change-grammar-v[\d.]+\/packages\/change-grammar\/schemas\/label-map\.json$/,
     );
     expect(parsed.types).toBeDefined();
     expect(parsed.scopes).toEqual({});
   });
 
-  it('embeds the installed release-kit version in the $schema URL', async () => {
-    const releaseKitVersion = await readReleaseKitVersion();
-
+  it("embeds the change-grammar version that the project's release-kit resolves in the $schema URL", async () => {
     const result = await readGeneratedFile({ force: false }, tempDir);
     const parsed = parseLabelMap(result);
 
-    expect(parsed.$schema).toContain(`release-kit-v${releaseKitVersion}`);
+    expect(parsed.$schema).toContain(`change-grammar-v${CHANGE_GRAMMAR_VERSION}`);
+  });
+
+  it("finds change-grammar beside release-kit's real directory under a pnpm layout", async () => {
+    await rm(path.join(tempDir, 'node_modules'), { recursive: true, force: true });
+    const storeModules = path.join(tempDir, 'node_modules', '.pnpm', 'release-kit@13.0.0', 'node_modules');
+    await installFixturePackage(path.dirname(storeModules), '@williamthorsen/release-kit', '13.0.0');
+    await installFixturePackage(path.dirname(storeModules), '@williamthorsen/change-grammar', '0.2.0');
+    await mkdir(path.join(tempDir, 'node_modules', '@williamthorsen'), { recursive: true });
+    await symlink(
+      path.join(storeModules, '@williamthorsen', 'release-kit'),
+      path.join(tempDir, 'node_modules', '@williamthorsen', 'release-kit'),
+    );
+
+    const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+    expect(parsed.$schema).toContain('change-grammar-v0.2.0');
+  });
+
+  it('throws an error naming release-kit when the project does not install it', async () => {
+    await rm(path.join(tempDir, 'node_modules'), { recursive: true, force: true });
+
+    await expect(readGeneratedFile({ force: false }, tempDir)).rejects.toThrow('@williamthorsen/release-kit');
   });
 
   it('includes all canonical type mappings', async () => {

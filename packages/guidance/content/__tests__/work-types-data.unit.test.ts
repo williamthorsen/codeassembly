@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest';
 
 import { findDefects } from '../../src/describe-change/find-defects.ts';
 import { loadTaxonomy } from '../../src/lib/work-types.ts';
+import { buildSchemaUrl } from '../../src/schemas/build-schema-documents.ts';
 
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
@@ -47,15 +48,11 @@ interface WorkTypesDocument {
 
 /** The live taxonomy's directory, and the schema that the tool publishes for it. */
 const DATA_DIR = path.join(import.meta.dirname, '..', 'skills', '_data');
-const schemaPath = path.join(import.meta.dirname, '..', '..', 'schemas', 'work-types.schema.json');
+const schemaPath = path.join(import.meta.dirname, '..', '..', 'src', 'schemas', 'work-types.v1.json');
 const liveDataPath = path.join(DATA_DIR, 'work-types.json');
 
-const schema = parseJsonFile<JsonSchemaDraft202012Object>(schemaPath, 'schema');
-
-const schemaId = schema.$id;
-if (typeof schemaId !== 'string') {
-  throw new TypeError(`Schema at ${schemaPath} is missing a string \`$id\` field`);
-}
+const schemaId = buildSchemaUrl('work-types.v1.json', '0.0.0-test');
+const schema = { ...parseJsonFile<JsonSchemaDraft202012Object>(schemaPath, 'schema'), $id: schemaId };
 
 // Register once at module load. `registerSchema` only stores the schema in-memory keyed by `$id`;
 // structural compilation (and any well-formedness errors) happens at the first `validate()` call.

@@ -1,10 +1,9 @@
 import { readFile, stat } from 'node:fs/promises';
-import { createRequire } from 'node:module';
 import path from 'node:path';
 
-import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { z } from 'zod';
 
+import { findInstalledPackage, listCandidateDirs } from './find-installed-package.ts';
 import { isMissingFile } from './type-guards.ts';
 
 /**
@@ -118,7 +117,7 @@ export async function resolvePackageSource(packageName: string, baseDir: string,
   if (installed === undefined) {
     throw new Error(`${label} is not installed. Searched: ${listCandidateDirs(packageName, baseDir).join(', ')}.`);
   }
-  return path.join(installed.dir, readContentPath(packageName, installed.manifest));
+  return path.join(installed.directory, readContentPath(packageName, installed.manifest));
 }
 
 /**
@@ -151,49 +150,12 @@ function assertPackageName(name: string, label: string): void {
   }
 }
 
-/**
- * Locates the installed directory of `name`, with its parsed `package.json`, by probing each candidate directory that
- * Node's resolver would search. Probes the filesystem rather than resolving a package subpath: A modern `exports` map
- * does not expose `./package.json`, so `require.resolve` cannot reach it, and a guidance-only package does not
- * have an importable entry to resolve instead.
- */
-async function findInstalledPackage(
-  name: string,
-  baseDir: string,
-): Promise<{ dir: string; manifest: unknown } | undefined> {
-  for (const dir of listCandidateDirs(name, baseDir)) {
-    const raw = await readFileIfPresent(path.join(dir, 'package.json'));
-    if (raw !== undefined) {
-      return { dir, manifest: parsePackageManifest(name, raw) };
-    }
-  }
-  return;
-}
-
-/** Lists the candidate installed directories for `name`, in the order Node's resolver searches them from `baseDir`. */
-function listCandidateDirs(name: string, baseDir: string): ReadonlyArray<string> {
-  // `createRequire` needs only a path to anchor resolution; the file itself need not exist.
-  const requireFromBase = createRequire(path.join(baseDir, 'package.json'));
-  // `resolve.paths` returns null for a core module, which a garbage declaration can produce; an empty candidate list
-  // reports it as not installed.
-  return (requireFromBase.resolve.paths(name) ?? []).map((nodeModules) => path.join(nodeModules, name));
-}
-
 /** Parses JSON, resolving to `undefined` rather than throwing, for the advisory scan that must not fail a run. */
 function parseJsonOrUndefined(raw: string): unknown {
   try {
     return JSON.parse(raw);
   } catch {
     return undefined;
-  }
-}
-
-/** Parses a package's `package.json` text, naming the package so that a syntax error is attributable. */
-function parsePackageManifest(name: string, raw: string): unknown {
-  try {
-    return JSON.parse(raw);
-  } catch (error: unknown) {
-    throw chainError(`Package "${name}" has an unreadable package.json`, error);
   }
 }
 

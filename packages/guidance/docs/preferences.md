@@ -1,6 +1,6 @@
 # Preferences
 
-The reference for the keys of `.agents/preferences.yaml`. The [README](../README.md#preferences) describes the resolution cascade that applies to every key.
+The reference for the keys of `.agents/preferences.yaml`. The [README](../README.md#preferences) describes the resolution cascade that applies to every key, and [Schemas](schemas.md) describes the published schema that validates the file.
 
 ## Schema
 

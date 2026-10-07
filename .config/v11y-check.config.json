@@ -1,5 +1,5 @@
 {
-  "$schema": "https://github.com/williamthorsen/node-monorepo-tools/raw/audit-deps-v0.4.0/packages/audit-deps/schemas/config.json",
+  "$schema": "https://github.com/williamthorsen/node-monorepo-tools/raw/v11y-check-v0.19.0/packages/v11y-check/schemas/config.json",
   "dev": {
     "severityThreshold": "moderate",
     "allowlist": []

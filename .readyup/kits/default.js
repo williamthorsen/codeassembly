@@ -4,15 +4,16 @@ export const __readyupVersion = "0.39.0";
 
 
 // .readyup/kits/default.ts
-import { readdirSync, statSync } from "node:fs";
-import { join } from "node:path";
+import { readdirSync, realpathSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
 import { defineRdyKit } from "readyup";
 import { isRecord, readFile, readJsonFile, readJsonValue } from "readyup/check-utils";
 
 // .readyup/lib/label-map-drift.ts
 import { compareVersions } from "readyup/check-utils";
 var ROOT_SCOPE_KEY = "root";
-var RELEASE_KIT_VERSION_PATTERN = /release-kit-v(\d+\.\d+\.\d+)/;
+var CHANGE_GRAMMAR_VERSION_PATTERN = /change-grammar-v(\d+\.\d+\.\d+)/;
+var RELEASE_KIT_SCHEMA_PATTERN = /\/release-kit-v[^/]+\/packages\/release-kit\/schemas\//;
 function deriveExpectedScopeKeys(packageDirNames) {
   if (packageDirNames.length === 0) {
     return [];
@@ -37,16 +38,20 @@ function diffScopeKeys(expected, actual) {
     extra: actual.filter((key) => !expectedSet.has(key))
   };
 }
+function isReleaseKitSchemaUrl(schemaUrl) {
+  return RELEASE_KIT_SCHEMA_PATTERN.test(schemaUrl);
+}
 function isSchemaVersionBehind(pinnedVersion, installedVersion) {
   return compareVersions(pinnedVersion, installedVersion) < 0;
 }
-function parseReleaseKitVersion(schemaUrl) {
-  return RELEASE_KIT_VERSION_PATTERN.exec(schemaUrl)?.[1];
+function parseChangeGrammarVersion(schemaUrl) {
+  return CHANGE_GRAMMAR_VERSION_PATTERN.exec(schemaUrl)?.[1];
 }
 
 // .readyup/kits/default.ts
 var LABEL_MAP_PATH = ".meta/label-map.json";
-var RELEASE_KIT_PACKAGE_JSON = "node_modules/@williamthorsen/release-kit/package.json";
+var CHANGE_GRAMMAR_PACKAGE_NAME = "@williamthorsen/change-grammar";
+var RELEASE_KIT_DIR = "node_modules/@williamthorsen/release-kit";
 var REGENERATE_FIX = "Run `codeassembly generate label-map --force` to regenerate the label map";
 var default_default = defineRdyKit({
   checklists: [
@@ -80,20 +85,25 @@ var default_default = defineRdyKit({
           fix: REGENERATE_FIX
         },
         {
-          name: ".meta/label-map.json $schema matches the installed release-kit",
+          name: ".meta/label-map.json $schema matches the installed change-grammar",
           severity: "warn",
           skip: () => {
-            if (readInstalledReleaseKitVersion() === void 0) {
-              return "release-kit version could not be determined";
+            if (readInstalledChangeGrammarVersion() === void 0) {
+              return "change-grammar version could not be determined";
             }
-            if (readPinnedReleaseKitVersion() === void 0) {
-              return "$schema does not pin a release-kit version";
+            const schema = readSchemaUrl();
+            if (schema === void 0 || !isReleaseKitSchemaUrl(schema) && parseChangeGrammarVersion(schema) === void 0) {
+              return "$schema does not pin a change-grammar version";
             }
             return false;
           },
           check: () => {
-            const installed = readInstalledReleaseKitVersion();
-            const pinned = readPinnedReleaseKitVersion();
+            const schema = readSchemaUrl();
+            if (schema !== void 0 && isReleaseKitSchemaUrl(schema)) {
+              return { ok: false, detail: "pins the release-kit schema, which moved to change-grammar" };
+            }
+            const installed = readInstalledChangeGrammarVersion();
+            const pinned = schema === void 0 ? void 0 : parseChangeGrammarVersion(schema);
             if (installed === void 0 || pinned === void 0) {
               return true;
             }
@@ -120,13 +130,28 @@ function listPackageDirNames() {
   }
   return entries.filter((entry) => statSync(join("packages", entry)).isDirectory());
 }
-function readInstalledReleaseKitVersion() {
-  const packageJson = readJsonFile(RELEASE_KIT_PACKAGE_JSON);
-  return typeof packageJson?.version === "string" ? packageJson.version : void 0;
+function readInstalledChangeGrammarVersion() {
+  let dir;
+  try {
+    dir = realpathSync(RELEASE_KIT_DIR);
+  } catch {
+    return void 0;
+  }
+  for (; ; ) {
+    const packageJson = readJsonFile(join(dir, "node_modules", CHANGE_GRAMMAR_PACKAGE_NAME, "package.json"));
+    if (packageJson?.name === CHANGE_GRAMMAR_PACKAGE_NAME && typeof packageJson.version === "string") {
+      return packageJson.version;
+    }
+    const parent = dirname(dir);
+    if (parent === dir) {
+      return void 0;
+    }
+    dir = parent;
+  }
 }
-function readPinnedReleaseKitVersion() {
+function readSchemaUrl() {
   const schema = readJsonValue(LABEL_MAP_PATH, "$schema");
-  return typeof schema === "string" ? parseReleaseKitVersion(schema) : void 0;
+  return typeof schema === "string" ? schema : void 0;
 }
 export {
   default_default as default

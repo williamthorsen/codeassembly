@@ -7,6 +7,8 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { describe, expect, it } from 'vitest';
 
+import { buildSchemaUrl } from '../../schemas/build-schema-documents.ts';
+
 /** Recursive shape of any JSON-decoded value, matching the validator's `Json` parameter. */
 type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: JsonValue } | null;
 
@@ -14,14 +16,10 @@ type JsonValue = string | number | boolean | JsonValue[] | { [key: string]: Json
 const thisDir = path.dirname(fileURLToPath(import.meta.url));
 const packageRoot = path.resolve(thisDir, '../../..');
 
-const schemaPath = path.join(packageRoot, 'schemas/work-types.schema.json');
+const schemaPath = path.join(packageRoot, 'src/schemas/work-types.v1.json');
 
-const schema = parseJsonFile<JsonSchemaDraft202012Object>(schemaPath, 'schema');
-
-const schemaId = schema.$id;
-if (typeof schemaId !== 'string') {
-  throw new TypeError(`Schema at ${schemaPath} is missing a string \`$id\` field`);
-}
+const schemaId = buildSchemaUrl('work-types.v1.json', '0.0.0-test');
+const schema = { ...parseJsonFile<JsonSchemaDraft202012Object>(schemaPath, 'schema'), $id: schemaId };
 
 // Register once at module load. `registerSchema` only stores the schema in-memory keyed by `$id`;
 // structural compilation (and any well-formedness errors) happens at the first `validate()` call.
@@ -30,7 +28,7 @@ if (typeof schemaId !== 'string') {
 // while letting any other error propagate.
 registerSchemaIdempotent(schema, schemaId);
 
-describe('work-types.schema.json', () => {
+describe('work-types.v1.json', () => {
   it('compiles as a well-formed JSON Schema', async () => {
     // `validate()` triggers compilation. A structurally invalid schema would throw `InvalidSchemaError`.
     // Validating the empty object suffices because compilation is the assertion target, not the result.
