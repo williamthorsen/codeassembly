@@ -30,7 +30,7 @@ The Now set is a milestone, resolved in this order:
 
 1. `--now`, then `ticket.pull.now`, when it names an open milestone. Otherwise `notFound` names it and resolution continues.
 2. The open milestone with the nearest due date, overdue ones included.
-3. The open milestone with the most open issues.
+3. The open milestone with the most open eligible issues.
 4. The whole backlog, with `milestone: null`.
 
 Steps 2 and 3 skip a milestone that does not have any open eligible issue.
