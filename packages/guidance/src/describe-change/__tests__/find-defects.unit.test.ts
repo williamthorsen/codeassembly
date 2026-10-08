@@ -1,6 +1,6 @@
+import type { Taxonomy } from '@williamthorsen/change-grammar';
 import { describe, expect, it } from 'vitest';
 
-import type { Taxonomy } from '../../change-grammar/types.ts';
 import type { ChangeEntry } from '../change-entries.ts';
 import { findDefects, findEntryDefects } from '../find-defects.ts';
 

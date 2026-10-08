@@ -1,7 +1,7 @@
+import type { Taxonomy } from '@williamthorsen/change-grammar';
 import { describe, expect, it } from 'vitest';
 import { parse as parseYaml, parseDocument } from 'yaml';
 
-import type { Taxonomy } from '../../change-grammar/types.ts';
 import { type ChangeEntry, consolidateChangeEntries, findEntryComment, readChangeEntries } from '../change-entries.ts';
 
 const TAXONOMY: Taxonomy = {

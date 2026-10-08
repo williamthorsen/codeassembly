@@ -1,7 +1,6 @@
+import { type ChangeRecord, consolidate, type Taxonomy } from '@williamthorsen/change-grammar';
 import { isMap, isScalar, isSeq } from 'yaml';
 
-import { consolidate } from '../change-grammar/consolidate.ts';
-import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
 import { isRecord } from '../lib/type-guards.ts';
 
 /**

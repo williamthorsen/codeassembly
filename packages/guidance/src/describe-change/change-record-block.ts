@@ -1,8 +1,6 @@
+import { type ChangeRecord, normalizeChangeRecord, type Overrides } from '@williamthorsen/change-grammar';
 import { Document, isMap, isSeq, parseDocument } from 'yaml';
 
-import type { Overrides } from '../change-grammar/apply-overrides.ts';
-import { normalizeChangeRecord } from '../change-grammar/tokens.ts';
-import type { ChangeRecord } from '../change-grammar/types.ts';
 import { isRecord } from '../lib/type-guards.ts';
 import { type ChangeEntry, findEntryComment, readChangeEntries } from './change-entries.ts';
 

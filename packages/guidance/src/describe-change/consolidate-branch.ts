@@ -1,8 +1,12 @@
-import type { TemplateNode } from '../change-grammar/compile-template.ts';
-import { consolidate } from '../change-grammar/consolidate.ts';
-import { parse } from '../change-grammar/parse.ts';
-import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
-import { validate } from '../change-grammar/validate.ts';
+import {
+  type ChangeRecord,
+  consolidate,
+  parse,
+  type Taxonomy,
+  type TemplateNode,
+  validate,
+} from '@williamthorsen/change-grammar';
+
 import type { RawCommit } from './read-commits.ts';
 
 /**

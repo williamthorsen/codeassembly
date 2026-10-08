@@ -1,8 +1,13 @@
-import { applyOverrides, type Overrides } from '../change-grammar/apply-overrides.ts';
-import { compileTemplate } from '../change-grammar/compile-template.ts';
-import { parse } from '../change-grammar/parse.ts';
-import { render } from '../change-grammar/render.ts';
-import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
+import {
+  applyOverrides,
+  type ChangeRecord,
+  compileTemplate,
+  type Overrides,
+  parse,
+  render,
+  type Taxonomy,
+} from '@williamthorsen/change-grammar';
+
 import { extractSection } from '../lib/markdown-sections.ts';
 import { type ChangeEntry, consolidateChangeEntries } from './change-entries.ts';
 import {

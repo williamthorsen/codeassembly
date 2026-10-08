@@ -7,17 +7,22 @@ import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 
+import {
+  applyOverrides,
+  BREAKING_MARKER,
+  type ChangeRecord,
+  compileTemplate,
+  findLossyRenders,
+  normalizeChangeRecord,
+  parse,
+  render,
+  type Taxonomy,
+  verify,
+} from '@williamthorsen/change-grammar';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parseDocument } from 'yaml';
 
-import { applyOverrides } from '../change-grammar/apply-overrides.ts';
-import { compileTemplate } from '../change-grammar/compile-template.ts';
-import { parse } from '../change-grammar/parse.ts';
-import { render } from '../change-grammar/render.ts';
-import { BREAKING_MARKER, normalizeChangeRecord } from '../change-grammar/tokens.ts';
-import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
-import { findLossyRenders, verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { describeTaxonomyLocation, loadTaxonomy, loadWorkTypeHeadings } from '../lib/work-types.ts';
 import { amendEntry, type EntryAmendment } from './amend-entry.ts';
