@@ -1,9 +1,9 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { readPreferences, readProjectPreferences } from '../read-preferences.ts';
 
@@ -118,25 +118,23 @@ describe(readPreferences, () => {
   });
 
   it('falls back to the legacy `platform` key and warns when `scm` is absent', async () => {
-    const writeSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    using stdio = captureStdio();
     await writeProjectYaml(projectDir, 'platform: bitbucket\n');
 
     const result = await readPreferences({ cwd: projectDir, home: homeDir });
 
     expect(result.preferences.scm).toBe('bitbucket');
-    expect(writeSpy).toHaveBeenCalledWith(expect.stringContaining("'platform' key is deprecated"));
-    writeSpy.mockRestore();
+    expect(stdio.stderr).toContain("'platform' key is deprecated");
   });
 
   it('prefers `scm` over the legacy `platform` key and does not warn', async () => {
-    const writeSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    using stdio = captureStdio();
     await writeProjectYaml(projectDir, 'scm: bitbucket\nplatform: github\n');
 
     const result = await readPreferences({ cwd: projectDir, home: homeDir });
 
     expect(result.preferences.scm).toBe('bitbucket');
-    expect(writeSpy).not.toHaveBeenCalled();
-    writeSpy.mockRestore();
+    expect(stdio.stderr).toBe('');
   });
 
   it('throws with the offending key path when a consumed string field has the wrong type', async () => {

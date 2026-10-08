@@ -1,7 +1,7 @@
 import { join } from 'node:path';
-import process from 'node:process';
 
-import { describe, expect, it, vi } from 'vitest';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { describe, expect, it } from 'vitest';
 
 import { resolveWritableKb } from '../resolve-writable-kb.ts';
 
@@ -125,23 +125,19 @@ describe(resolveWritableKb, () => {
 
   it('includes the registry error when @default names an unresolvable default_kb', async () => {
     // The unresolvable default_kb makes tryLoadKbRegistry report an error, which resolveWritableKb also logs to
-    // stderr; spy on it so that the warning does not appear in test output.
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const result = await resolveWritableKb({
-        startDir: '/',
-        explicitKb: '@default',
-        home: HOME_UNRESOLVABLE_DEFAULT,
-      });
+    // stderr; capture it so that the warning does not appear in test output.
+    using _stdio = captureStdio();
+    const result = await resolveWritableKb({
+      startDir: '/',
+      explicitKb: '@default',
+      home: HOME_UNRESOLVABLE_DEFAULT,
+    });
 
-      expect(result).toEqual({
-        ok: false,
-        reason: 'no-default',
-        registryError: expect.stringMatching(/default_kb "ghost" does not match any registered KB/),
-      });
-    } finally {
-      stderrSpy.mockRestore();
-    }
+    expect(result).toEqual({
+      ok: false,
+      reason: 'no-default',
+      registryError: expect.stringMatching(/default_kb "ghost" does not match any registered KB/),
+    });
   });
 
   it('returns the explicit KB when --kb names a registered entry, overriding discovery and default', async () => {
@@ -196,24 +192,16 @@ describe(resolveWritableKb, () => {
 
   it('degrades a malformed user-global registry to an empty config rather than throwing', async () => {
     // HOME_MALFORMED contains a syntactically invalid `.agents/kb.yaml`, and `/` does not contain a `.kb/` marker.
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });
+    using stdio = captureStdio();
+    const result = await resolveWritableKb({ startDir: '/', explicitKb: null, home: HOME_MALFORMED });
 
-      expect(result).toEqual({
-        ok: false,
-        reason: 'missing-destination',
-        registeredKbs: [],
-        registryError: expect.any(String),
-      });
-
-      const warningLine = stderrSpy.mock.calls
-        .map((call) => call[0])
-        .find((arg): arg is string => typeof arg === 'string' && arg.includes('could not load kb.yaml registry:'));
-      expect(warningLine).toMatch(/could not load kb\.yaml registry:/);
-    } finally {
-      stderrSpy.mockRestore();
-    }
+    expect(result).toEqual({
+      ok: false,
+      reason: 'missing-destination',
+      registeredKbs: [],
+      registryError: expect.any(String),
+    });
+    expect(stdio.stderr).toContain('could not load kb.yaml registry:');
   });
 
   it('degrades a malformed user-global registry while still using a discovered KB', async () => {

@@ -52,6 +52,7 @@
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.terminal": "catalog:",
+    "@williamthorsen/toolbelt.testing": "catalog:",
     "codeassembly": "workspace:*",
     "esbuild": "catalog:",
     "eslint": "catalog:",

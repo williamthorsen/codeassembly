@@ -5,7 +5,8 @@ import { dirname, join } from 'node:path';
 import process from 'node:process';
 import { Readable } from 'node:stream';
 
-import { describe, expect, it, vi } from 'vitest';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runAdd } from '../cli.ts';
 import type { WriteArgs } from '../types.ts';
@@ -421,32 +422,23 @@ describe(runAdd, () => {
       join(kbPath, '.kb', 'tag-aliases.yaml'),
     );
 
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const result = await runAdd({
-        argv: ['--diataxis', 'howto', '--title', 'Aliases fallback', '--tags', 'node.js,react'],
-        stdin: bodyStream('Body.\n'),
-        startDir: kbPath,
-        now: NOW,
-        home: kbPath,
-      });
+    using stdio = captureStdio();
+    const result = await runAdd({
+      argv: ['--diataxis', 'howto', '--title', 'Aliases fallback', '--tags', 'node.js,react'],
+      stdin: bodyStream('Body.\n'),
+      startDir: kbPath,
+      now: NOW,
+      home: kbPath,
+    });
 
-      expect(result.ok).toBe(true);
-      if (result.ok && result.mode === 'write') {
-        expect(result.originalTags).toEqual(['node.js', 'react']);
-        expect(result.canonicalTags).toEqual(['node.js', 'react']);
-        expect(result.record.tags).toEqual(['node.js', 'react']);
-      }
-
-      const stderrCalls = stderrSpy.mock.calls
-        .map((call) => call[0])
-        .filter((arg): arg is string => typeof arg === 'string');
-      const warningLine = stderrCalls.find((line) => line.includes('could not load tag aliases'));
-      expect(warningLine).toBeDefined();
-      expect(warningLine).toMatch(/^kb-add: warning: could not load tag aliases: /);
-    } finally {
-      stderrSpy.mockRestore();
+    expect(result.ok).toBe(true);
+    if (result.ok && result.mode === 'write') {
+      expect(result.originalTags).toEqual(['node.js', 'react']);
+      expect(result.canonicalTags).toEqual(['node.js', 'react']);
+      expect(result.record.tags).toEqual(['node.js', 'react']);
     }
+
+    expect(stdio.stderrChunks).toContainEqual(expect.stringMatching(/^kb-add: warning: could not load tag aliases: /));
   });
 
   it('declares the note folder from --domain-description and reports the placement', async () => {

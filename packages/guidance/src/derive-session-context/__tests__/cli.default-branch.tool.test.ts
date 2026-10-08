@@ -2,10 +2,10 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { deriveSessionContext } from '../cli.ts';
-import type { BranchManifest } from '../types.ts';
 
 const NOW = new Date('2026-05-26T02:07:41Z');
 
@@ -25,8 +25,8 @@ describe('default-branch invariant', () => {
     { flag: '--set-pr-url', field: 'pr_url', url: 'https://github.com/owner/repo/pull/42' },
   ] as const)('refuses $flag on the default branch and reports it', async ({ field, url }) => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
+    {
+      using stdio = captureStdio();
       const result = await deriveSessionContext({
         cwd: workDir,
         branch: 'main',
@@ -35,11 +35,7 @@ describe('default-branch invariant', () => {
         mutations: [{ field, value: url }],
       });
       expect(result[field]).toBeNull();
-      expect(findStderrLine(stderrSpy, 'refusing to store')).toMatch(
-        new RegExp(`refusing to store ${field} on default branch main`),
-      );
-    } finally {
-      stderrSpy.mockRestore();
+      expect(stdio.stderr).toMatch(new RegExp(`refusing to store ${field} on default branch main`));
     }
 
     const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
@@ -97,17 +93,10 @@ describe('default-branch invariant', () => {
     };
     await writeFile(manifestPath, JSON.stringify(polluted), 'utf8');
 
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    let result: BranchManifest;
-    try {
-      result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-      expect(findStderrLine(stderrSpy, 'cleared ticket_url')).toMatch(
-        /cleared ticket_url stored on default branch main/,
-      );
-      expect(findStderrLine(stderrSpy, 'cleared pr_url')).toMatch(/cleared pr_url stored on default branch main/);
-    } finally {
-      stderrSpy.mockRestore();
-    }
+    using stdio = captureStdio();
+    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(stdio.stderr).toMatch(/cleared ticket_url stored on default branch main/);
+    expect(stdio.stderr).toMatch(/cleared pr_url stored on default branch main/);
     expect(result.ticket_url).toBeNull();
     expect(result.pr_url).toBeNull();
 
@@ -153,13 +142,8 @@ describe('default-branch invariant', () => {
     };
     await writeFile(manifestPath, JSON.stringify({ ...explicitUrls, explicit_urls: explicitUrls }), 'utf8');
 
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    let recomposed: BranchManifest;
-    try {
-      recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-    } finally {
-      stderrSpy.mockRestore();
-    }
+    using _stdio = captureStdio();
+    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
     expect(recomposed.ticket_url).toBeNull();
     expect(recomposed.pr_url).toBeNull();
     expect(recomposed.explicit_urls).toEqual({});
@@ -210,13 +194,6 @@ describe('default-branch invariant', () => {
 });
 
 // region | Helpers
-
-/** Returns the first line that a stderr spy captured and that contains `needle`, or undefined when none does. */
-function findStderrLine(spy: MockInstance<typeof process.stderr.write>, needle: string): string | undefined {
-  return spy.mock.calls
-    .map((call) => call[0])
-    .find((arg): arg is string => typeof arg === 'string' && arg.includes(needle));
-}
 
 /** Writes `body` as the project's `.agents/preferences.yaml` under `workDir`. */
 async function writeProjectPrefs(workDir: string, body: string): Promise<void> {
