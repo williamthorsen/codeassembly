@@ -1016,102 +1016,12 @@ rules:
       - vitest.config.ts
       - vitest.root.config.ts
   plain-speech:
-    version: '7'
-    swept-at: 2026-09-25
+    version: '9'
+    swept-at: 2026-10-08
     detected: false
     roots:
-      - .agents
-      - .claude
-      - .config
-      - .editorconfig
-      - .envrc
-      - .gitattributes
-      - .github
-      - .gitignore
-      - .meta
-      - .prettierignore
-      - .prettierrc.js
-      - .readyup
-      - .tool-versions
-      - AGENTS.md
-      - LICENSE
-      - README.md
-      - demos
-      - docs/pixel-agents-analysis.md
-      - eslint.config.ts
-      - lefthook.yml
-      - package.json
-      - packages/fleet/.prettierignore
-      - packages/fleet/README.md
-      - packages/fleet/eslint.config.ts
-      - packages/fleet/package.json
-      - packages/fleet/src
-      - packages/fleet/tsconfig.json
-      - packages/foreman/README.md
-      - packages/foreman/eslint.config.ts
-      - packages/foreman/index.html
-      - packages/foreman/package.json
-      - packages/foreman/postcss.config.cjs
-      - packages/foreman/src
-      - packages/foreman/tsconfig.json
-      - packages/foreman/vite.config.ts
-      - packages/foreman/vitest.config.ts
-      - packages/foreman/vitest.setup.ts
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/merge-pr/SKILL.md
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
-      - packages/lifecycle/.meta
-      - packages/lifecycle/LICENSE
-      - packages/lifecycle/README.md
-      - packages/lifecycle/eslint.config.ts
-      - packages/lifecycle/package.json
-      - packages/lifecycle/src
-      - packages/lifecycle/tsconfig.json
-      - packages/mcp/.meta
-      - packages/mcp/.prettierignore
-      - packages/mcp/bin
-      - packages/mcp/eslint.config.ts
-      - packages/mcp/package.json
-      - packages/mcp/src
-      - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - scripts
-      - taze.config.ts
-      - tsconfig.json
-      - vite.config.ts
-      - vitest.config.ts
-      - vitest.root.config.ts
+      - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/subagents/entry-drafter.md
   reduced-object-relative:
     version: '1'
     swept-at: 2026-09-25
@@ -3787,11 +3697,6 @@ rejections:
     rule-version: '6'
     file: packages/guidance/content/subagents/aspect-test-reviewer.md
     phrase: the bar that a proposed test must clear to earn its place
-    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/subagents/entry-drafter.md
-    phrase: earns its place after a compiler-target bump
     ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
   - rule: plain-speech
     rule-version: '6'

@@ -4,7 +4,7 @@ These rules govern the text of a title: the string that an author composes for a
 
 The rules apply to both authored strings: the ticket string, which becomes the issue title, and the change string, which becomes the commit, pull-request, and squash-merge title.
 
-- **72 characters, hard.** Count the authored string, not a rendering of it. The bound is a ceiling, not a target.
+- **72 characters, hard.** Count the authored string, not a rendering of it. The bound is a maximum, not a length to aim for.
 - **Imperative, task-oriented.** The verb names the task: "Add…", "Fix…", "Prevent…", "Enable…", not "Adds…". A title states the task, not the topic: "Enable playback at different speeds", not "Different playback speeds".
 - **The bug-ticket exception.** A bug's ticket string states the symptom, declaratively; its change string still states the fix.
   - Ticket: Playback stutters at speeds higher than 32x
