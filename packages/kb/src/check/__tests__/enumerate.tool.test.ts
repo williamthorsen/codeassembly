@@ -1,6 +1,7 @@
 import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultKbConfig, type KbConfig } from '../../config/config-schema.ts';
@@ -156,16 +157,12 @@ describe(enumerateNotes, () => {
     const root = await makeTree({ 'content/top.md': VALID, 'content/restricted/inside.md': VALID });
     const blockedDir = join(root, 'content', 'restricted');
     unreadableDirs.add(blockedDir);
-    const warnings: string[] = [];
-    vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-      warnings.push(String(chunk));
-      return true;
-    });
+    using stdio = captureStdio();
 
     const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig });
 
     expect(notes.map((entry) => entry.relativePath)).toEqual(['content/top.md']);
-    expect(warnings.join('')).toContain(`kb: warning: could not read directory ${blockedDir}`);
+    expect(stdio.stderr).toContain(`kb: warning: could not read directory ${blockedDir}`);
   });
 });
 
@@ -210,12 +207,12 @@ describe(`${enumerateNotePaths.name} under git`, () => {
     const root = await makeTree({ '.gitignore': 'content/\n', 'content/Scratch.md': VALID });
     initGitRepo(root);
     commitAll(root, 'base');
-    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    using stdio = captureStdio();
 
     const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
 
     expect(paths).toEqual([]);
-    expect(stderr).toHaveBeenCalledWith(expect.stringContaining('git ignores every note'));
+    expect(stdio.stderr).toContain('git ignores every note');
   });
 
   it('keeps every note under a directory that is not a git working tree', async () => {
