@@ -51,10 +51,10 @@ const DATA_DIR = fileURLToPath(new URL('fixtures/data', import.meta.url));
 const DEFECTIVE_TEMPLATES = "commit:\n  title_format: '{scope}{type}: {title}'";
 
 const HOUSE_TEMPLATES = [
-  "commit:\n  title_format: '[{scope}|{type}: ]{title}'",
+  "commit:\n  title_format: '[[{scope}|]{type}: ]{title}'",
   "ticket:\n  title_format: '{title}'",
   "pr:\n  title_format: '[{ticket_ref} ]{title}'",
-  "merge:\n  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'",
+  "merge:\n  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'",
 ].join('\n');
 
 const SUBCOMMAND_NAMES = [
@@ -253,7 +253,31 @@ describe('render-titles', () => {
       home,
     });
 
+    expect(output).toMatchObject({ commit_title: 'feat: Add foo' });
+  });
+
+  it('warns of a configured template whose render drops the type with an absent scope, and still renders', async () => {
+    const { cwd, home } = await makeRepo("commit:\n  title_format: '[{scope}|{type}: ]{title}'");
+
+    const { output, warnings } = await runDescribe({
+      argv: ['render-titles', '--scope', '*', '--type', 'feat', '--title', 'Add foo'],
+      cwd,
+      dataDir: DATA_DIR,
+      home,
+    });
+
     expect(output).toMatchObject({ commit_title: 'Add foo' });
+    expect(warnings).toContain(
+      'commit.title_format: Template "[{scope}|{type}: ]{title}" renders a record without {scope} as "Add foo", which reads back as unmatched.',
+    );
+  });
+
+  it('does not warn of the house templates', async () => {
+    const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    const { warnings } = await runDescribe({ argv: ['render-titles'], cwd, dataDir: DATA_DIR, home });
+
+    expect(warnings).toStrictEqual([]);
   });
 
   it('stops the run on a template the engine cannot round-trip, naming the surface and the defect', async () => {
@@ -1643,7 +1667,7 @@ describe('resolve-merge', () => {
       [
         "commit:\n  title_format: ''",
         "pr:\n  title_format: '[{ticket_ref} ]{title}'",
-        "merge:\n  title_format: '[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]'",
+        "merge:\n  title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'",
       ].join('\n'),
     );
     const bodyFile = await writeBody('## What\n\n- Adds the parser.\n');

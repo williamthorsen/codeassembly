@@ -17,7 +17,7 @@ import { parse } from '../change-grammar/parse.ts';
 import { render } from '../change-grammar/render.ts';
 import { BREAKING_MARKER, normalizeChangeRecord } from '../change-grammar/tokens.ts';
 import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
-import { verify } from '../change-grammar/verify.ts';
+import { findLossyRenders, verify } from '../change-grammar/verify.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { describeTaxonomyLocation, loadTaxonomy, loadWorkTypeHeadings } from '../lib/work-types.ts';
 import { amendEntry, type EntryAmendment } from './amend-entry.ts';
@@ -309,6 +309,13 @@ async function consolidatePullRequestCommits(input: {
   }
 }
 
+/** Reports each configured template whose render some record shape cannot read back, naming the surface. */
+function findLossyTemplates(templates: Record<Surface, string>, taxonomy: Taxonomy): string[] {
+  return SURFACES.filter((surface) => templates[surface] !== '').flatMap((surface) =>
+    findLossyRenders(templates[surface], taxonomy).map((warning) => `${surface}.title_format: ${warning}`),
+  );
+}
+
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
@@ -334,7 +341,8 @@ function isSubcommand(value: string): value is Subcommand {
 
 /**
  * Resolves the project root and the templates configured by its preferences files, then refuses any configured
- * template that the engine cannot round-trip, when a taxonomy is readable to verify against.
+ * template that the engine cannot round-trip and warns of any whose render loses a token, when a taxonomy is readable
+ * to verify against.
  */
 async function loadTemplates(input: DescribeInput): Promise<LoadedTemplates> {
   const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
@@ -346,6 +354,7 @@ async function loadTemplates(input: DescribeInput): Promise<LoadedTemplates> {
   const taxonomy = await loadTaxonomy(input.dataDir);
   if (taxonomy !== null) {
     refuseUnverifiableTemplates(templates, taxonomy);
+    warnings.push(...findLossyTemplates(templates, taxonomy));
   }
   return { projectRoot, taxonomy, templates, warnings };
 }
