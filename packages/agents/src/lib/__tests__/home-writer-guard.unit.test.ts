@@ -2,7 +2,7 @@ import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { assertDesignatedWriter } from '../home-writer-guard.ts';
@@ -124,11 +124,11 @@ describe(assertDesignatedWriter, () => {
   it('proceeds under --override-writer and reports the override', async () => {
     const designated = path.join(path.dirname(homeDir), 'designated');
     await writeDeclaration(`home-writer: ${designated}\n`);
-    using silent = silenceConsole(['warn']);
+    using stdio = captureStdio({ includeConsole: true });
 
     await expect(
       assertDesignatedWriter({ command: 'install', homeDir, packageRoot, shouldOverrideWriter: true }),
     ).resolves.toBeUndefined();
-    expect(silent.warn.mock.calls.flat().join('\n')).toContain(designated);
+    expect(stdio.stderr).toContain(designated);
   });
 });

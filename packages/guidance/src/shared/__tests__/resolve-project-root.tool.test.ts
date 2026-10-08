@@ -4,6 +4,7 @@ import { mkdir, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { resolveProjectRoot } from '../resolve-project-root.ts';
@@ -16,7 +17,6 @@ describe(resolveProjectRoot, () => {
   });
 
   afterEach(async () => {
-    vi.restoreAllMocks();
     vi.unstubAllEnvs();
     await rm(scratch, { recursive: true, force: true });
   });
@@ -45,21 +45,21 @@ describe(resolveProjectRoot, () => {
   });
 
   it('falls back to the start directory and quotes git when the root cannot be resolved', () => {
-    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    using stdio = captureStdio();
 
     expect(resolveProjectRoot({ startDir: scratch })).toBe(scratch);
-    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/git could not resolve the repository root/));
-    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/fatal:/));
+    expect(stdio.stderr).toMatch(/git could not resolve the repository root/);
+    expect(stdio.stderr).toMatch(/fatal:/);
   });
 
   it('names the unreadable repository rather than an absent one', () => {
     execFileSync('git', ['-C', scratch, 'init', '--quiet']);
-    const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
+    using stdio = captureStdio();
     // `GIT_DIR` points nowhere while `scratch` is a healthy repository, which is the shape produced by
     // a sandboxed nested `git`: The repository is present and git refuses to read it.
     vi.stubEnv('GIT_DIR', '/nonexistent/x');
 
     expect(resolveProjectRoot({ startDir: scratch })).toBe(scratch);
-    expect(stderr).toHaveBeenCalledWith(expect.stringMatching(/not a git repository: '\/nonexistent\/x'/));
+    expect(stdio.stderr).toMatch(/not a git repository: '\/nonexistent\/x'/);
   });
 });

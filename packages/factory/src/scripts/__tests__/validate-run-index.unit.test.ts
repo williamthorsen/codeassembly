@@ -1,3 +1,4 @@
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -341,25 +342,23 @@ describe('main', () => {
     setArgs('/path/run-index.json');
     mockedStat.mockResolvedValue(makeStats(false));
     mockedReadFile.mockResolvedValue('not valid json');
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
 
     await main();
 
     expect(process.exitCode).toBe(1);
-    const allCalls = silent.info.mock.calls.flat().join(' ');
-    expect(allCalls).toContain('Invalid JSON');
+    expect(stdio.stdout).toContain('Invalid JSON');
   });
 
   it('reports Read error prefix when readFile throws a non-JSON error', async () => {
     setArgs('/path/run-index.json');
     mockedStat.mockResolvedValue(makeStats(false));
     mockedReadFile.mockRejectedValue(new Error('EACCES: permission denied'));
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
 
     await main();
 
     expect(process.exitCode).toBe(1);
-    const allCalls = silent.info.mock.calls.flat().join(' ');
-    expect(allCalls).toContain('Read error');
+    expect(stdio.stdout).toContain('Read error');
   });
 });

@@ -36,6 +36,7 @@
     "@types/react-dom": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "@williamthorsen/nmr": "catalog:",
+    "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-react": "catalog:",

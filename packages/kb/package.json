@@ -116,6 +116,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@types/picomatch": "4.0.3",
+    "@williamthorsen/toolbelt.testing": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
     "vitest": "catalog:"

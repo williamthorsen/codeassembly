@@ -2,6 +2,7 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -98,14 +99,14 @@ describe(libraryListCommand, () => {
     it('skips an artifact with invalid frontmatter and keeps listing the rest', async () => {
       const { output, warnings } = await captureList({ global: false }, projectDir, homeDir);
 
-      expect(warnings.some((warning) => warning.includes('bad.md'))).toBe(true);
+      expect(warnings).toContain('bad.md');
       expect(output).toContain('sample-rulebook');
     });
 
     it('skips a subagent with malformed YAML frontmatter rather than aborting the listing', async () => {
       const { output, warnings } = await captureList({ global: false }, projectDir, homeDir);
 
-      expect(warnings.some((warning) => warning.includes('broken.md'))).toBe(true);
+      expect(warnings).toContain('broken.md');
       expect(output).toContain('yankee-agent');
     });
   });
@@ -283,13 +284,10 @@ async function captureList(
   options: { global: boolean },
   cwd: string,
   homeDir: string,
-): Promise<{ output: string; warnings: Array<string> }> {
-  using silent = silenceConsole(['info', 'warn']);
+): Promise<{ output: string; warnings: string }> {
+  using stdio = captureStdio({ includeConsole: true });
   await libraryListCommand(options, cwd, homeDir);
-  return {
-    output: silent.info.mock.calls.map((call) => String(call[0])).join('\n'),
-    warnings: silent.warn.mock.calls.map((call) => String(call[0])),
-  };
+  return { output: stdio.stdout, warnings: stdio.stderr };
 }
 
 /** Builds a `LibraryRow` with sensible defaults, overriding only the fields that a test cares about. */

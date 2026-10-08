@@ -2,7 +2,8 @@ import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, expect, it, vi } from 'vitest';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { describe, expect, it } from 'vitest';
 
 import { resolveBaseDir } from '../resolve-base-dir.ts';
 
@@ -123,18 +124,12 @@ describe('resolveBaseDir', () => {
     // Use YAML that causes yaml's parse to throw a YAMLParseError (malformed flow sequence)
     await writeFile(join(agentsDir, 'preferences.yaml'), 'key: [unclosed\n');
 
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
-      expect(result).toBe(join(fakeHome, '.ai'));
-      expect(stderrSpy).toHaveBeenCalledOnce();
-      const callArg = stderrSpy.mock.calls[0]?.[0];
-      if (typeof callArg !== 'string') throw new Error('Expected stderr.write to receive a string');
-      expect(callArg).toContain('Warning: failed to read preferences file');
-      expect(callArg).toContain('preferences.yaml');
-    } finally {
-      stderrSpy.mockRestore();
-    }
+    using stdio = captureStdio();
+    const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
+    expect(result).toBe(join(fakeHome, '.ai'));
+    expect(stdio.stderrChunks).toHaveLength(1);
+    expect(stdio.stderrChunks[0]).toContain('Warning: failed to read preferences file');
+    expect(stdio.stderrChunks[0]).toContain('preferences.yaml');
   });
 
   it('handles a preferences file without an artifacts key: falls back', async () => {
@@ -179,17 +174,11 @@ describe('resolveBaseDir', () => {
     await mkdir(agentsDir, { recursive: true });
     await mkdir(join(agentsDir, 'preferences.yaml'), { recursive: true });
 
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
-      expect(result).toBe(join(fakeHome, '.ai'));
-      expect(stderrSpy).toHaveBeenCalledOnce();
-      const callArg = stderrSpy.mock.calls[0]?.[0];
-      if (typeof callArg !== 'string') throw new Error('Expected stderr.write to receive a string');
-      expect(callArg).toContain('Warning: failed to read preferences file');
-      expect(callArg).toContain('preferences.yaml');
-    } finally {
-      stderrSpy.mockRestore();
-    }
+    using stdio = captureStdio();
+    const result = await resolveBaseDir(projectRoot, undefined, { home: fakeHome });
+    expect(result).toBe(join(fakeHome, '.ai'));
+    expect(stdio.stderrChunks).toHaveLength(1);
+    expect(stdio.stderrChunks[0]).toContain('Warning: failed to read preferences file');
+    expect(stdio.stderrChunks[0]).toContain('preferences.yaml');
   });
 });

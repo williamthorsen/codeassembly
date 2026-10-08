@@ -3,7 +3,9 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type CapturedStdio, captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { disposeOnTestFinished } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
@@ -100,15 +102,14 @@ describe(renderSizesReport, () => {
 
 describe(sizesCommand, () => {
   let homeDir: string;
-  let info: { text: () => string };
+  let stdio: CapturedStdio;
 
   beforeEach(async () => {
     homeDir = await mkdtemp(path.join(tmpdir(), 'sizes-command-'));
-    info = spyOnInfo();
+    stdio = disposeOnTestFinished(captureStdio({ includeConsole: true }));
   });
 
   afterEach(async () => {
-    vi.restoreAllMocks();
     await rm(homeDir, { recursive: true, force: true });
   });
 
@@ -120,13 +121,13 @@ describe(sizesCommand, () => {
 
     await sizesCommand({ global: true }, process.cwd(), homeDir);
 
-    expect(info.text()).toContain('claude/skills/home-only/SKILL.md');
+    expect(stdio.stdout).toContain('claude/skills/home-only/SKILL.md');
   });
 
   it('prints guidance rather than failing when a deployment has not been recorded', async () => {
     await expect(sizesCommand({ global: true }, process.cwd(), homeDir)).resolves.toBeUndefined();
 
-    expect(info.text()).toContain("A deployment hasn't been recorded here.");
+    expect(stdio.stdout).toContain("A deployment hasn't been recorded here.");
   });
 });
 
@@ -167,12 +168,6 @@ function renderText(snapshot: SizeSnapshot | undefined, global = false): string 
   return renderSizesReport(snapshot, global)
     .map((line) => line.text)
     .join('\n');
-}
-
-/** Captures what the command writes to the info stream. */
-function spyOnInfo(): { text: () => string } {
-  const spy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
-  return { text: () => spy.mock.calls.map((call) => String(call[0])).join('\n') };
 }
 
 // endregion | Helpers

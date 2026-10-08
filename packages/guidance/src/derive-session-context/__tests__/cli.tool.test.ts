@@ -4,7 +4,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { promisify } from 'node:util';
 
-import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { deriveSessionContext } from '../cli.ts';
 
@@ -255,19 +256,13 @@ describe(deriveSessionContext, () => {
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     // The diagnostic makes a vanished `ticket_url`/`pr_url` explainable rather than silent.
     await writeFile(manifestPath, '{ not valid json', 'utf8');
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
-      expect(recomposed.scm).toBe('github');
-      expect(recomposed.ticket_url).toBeNull();
-      expect(recomposed.pr_url).toBeNull();
+    using stdio = captureStdio();
+    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    expect(recomposed.scm).toBe('github');
+    expect(recomposed.ticket_url).toBeNull();
+    expect(recomposed.pr_url).toBeNull();
 
-      expect(findStderrLine(stderrSpy, 'stored URLs not carried forward')).toMatch(
-        /prior manifest at .* is corrupt; stored URLs not carried forward/,
-      );
-    } finally {
-      stderrSpy.mockRestore();
-    }
+    expect(stdio.stderr).toMatch(/prior manifest at .* is corrupt; stored URLs not carried forward/);
   });
 
   it('recomposes with null URLs when the prior manifest parses as a non-object', async () => {
@@ -360,13 +355,6 @@ describe(deriveSessionContext, () => {
 });
 
 // region | Helpers
-
-/** Returns the first line that a stderr spy captured and that contains `needle`, or undefined when none does. */
-function findStderrLine(spy: MockInstance<typeof process.stderr.write>, needle: string): string | undefined {
-  return spy.mock.calls
-    .map((call) => call[0])
-    .find((arg): arg is string => typeof arg === 'string' && arg.includes(needle));
-}
 
 /** Writes `body` as the project's `.agents/preferences.yaml` under `workDir`. */
 async function writeProjectPrefs(workDir: string, body: string): Promise<void> {

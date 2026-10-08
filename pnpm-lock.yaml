@@ -441,6 +441,9 @@ importers:
       '@williamthorsen/nmr':
         specifier: 'catalog:'
         version: 0.41.0(prettier@3.9.9)(typescript@6.0.3)(vite@8.3.1(@types/node@24.19.0)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@4.1.11)
+      '@williamthorsen/toolbelt.testing':
+        specifier: 'catalog:'
+        version: 0.6.2
       '@williamthorsen/toolbelt.vitest':
         specifier: 'catalog:'
         version: 0.10.2(vitest@4.1.11)
@@ -483,6 +486,9 @@ importers:
       '@williamthorsen/toolbelt.terminal':
         specifier: 'catalog:'
         version: 0.2.1
+      '@williamthorsen/toolbelt.testing':
+        specifier: 'catalog:'
+        version: 0.6.2
       codeassembly:
         specifier: workspace:*
         version: link:../agents
@@ -535,6 +541,9 @@ importers:
       '@types/picomatch':
         specifier: 4.0.3
         version: 4.0.3
+      '@williamthorsen/toolbelt.testing':
+        specifier: 'catalog:'
+        version: 0.6.2
       eslint:
         specifier: 'catalog:'
         version: 10.11.0(jiti@2.7.0)(supports-color@7.2.0)
@@ -560,6 +569,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.0
+      '@williamthorsen/toolbelt.testing':
+        specifier: 'catalog:'
+        version: 0.6.2
       '@williamthorsen/toolbelt.vitest':
         specifier: 'catalog:'
         version: 0.10.2(vitest@4.1.11)

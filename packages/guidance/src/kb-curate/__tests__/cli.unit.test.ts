@@ -1,10 +1,10 @@
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import process from 'node:process';
 
 import { check } from '@williamthorsen/kb/check';
 import { defaultKbConfig, KbLoaderError } from '@williamthorsen/kb/config';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { parseArgs, runCurate } from '../cli.ts';
@@ -121,19 +121,15 @@ describe(runCurate, () => {
       'utf8',
     );
     const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
-    // resolveWritableKb logs the unresolvable-default registry error to stderr; spy so that it does not appear in the
-    // test output.
-    const stderrSpy = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
-    try {
-      const result = await runCurate({ argv: ['--kb', '@default'], startDir, now: NOW, home });
+    // resolveWritableKb logs the unresolvable-default registry error to stderr; capture it so that it does not appear
+    // in the test output.
+    using _stdio = captureStdio();
+    const result = await runCurate({ argv: ['--kb', '@default'], startDir, now: NOW, home });
 
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.error).toBe('no-kb-resolvable');
-        expect(result.message).toContain('could not resolve the default');
-      }
-    } finally {
-      stderrSpy.mockRestore();
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toBe('no-kb-resolvable');
+      expect(result.message).toContain('could not resolve the default');
     }
   });
 
