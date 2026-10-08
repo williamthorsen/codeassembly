@@ -1,6 +1,9 @@
 pnpm-lock.yaml
 **/.readyup/manifest.json
 
+# Written by the guidance build from the change-grammar package; its staleness check compares bytes.
+packages/guidance/content/skills/_data/work-types.json
+
 # Test fixtures no parser can read, marked by a `.malformed` infix. Prettier cannot parse
 # them, and reformatting would erase the defect they exist to test.
 **/__tests__/**/fixtures/**/*.malformed/
