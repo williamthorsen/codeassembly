@@ -50,11 +50,12 @@ The bundle does not have a shebang, so the `node` prefix is required. Each subco
 ### What stops a run and what only warns
 
 - A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `render-details`, `consolidate-entries`, `check-merge-body`, `amend-entry`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
+- A configured template that renders a subject it cannot read back, for some record shape that carries a type, causes a warning on stderr from every subcommand that reads the templates, naming the surface, the template, and the record shape. The run continues and its output is unchanged. See [Optional groups](#optional-groups).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
 - Malformed YAML in `pnpm-workspace.yaml` or in the project preferences file stops `resolve-scopes`, naming the file.
 - A `project.scopes` entry that `resolve-scopes` cannot honor causes a warning naming the entry's index and fault, and the run skips that entry and resolves the rest. See [`resolve-scopes`](#resolve-scopes).
 - A malformed `change-record` block in the body file causes a warning from `resolve-labels`, which then labels the change from the flags alone.
-- An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `render-details`, `resolve-effective-record`, `resolve-merge`, and `amend-entry`.
+- An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified or checked for a lost token, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `render-details`, `resolve-effective-record`, `resolve-merge`, and `amend-entry`.
 - Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s discovery of workspace and declared scope directories.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
 
@@ -543,7 +544,7 @@ A template that omits `{title}` produces a title without the bare title text: Th
 
 A `[...]` group renders verbatim when every token directly inside it resolves non-empty. When one is empty, the whole group drops, literals included.
 
-A group containing both `{scope}` and `{type}` therefore drops the type along with an absent scope, and a `*` scope is absent by the time the group decides. When the type should stay in the title of a change without a scope, nest the scope in a group of its own, as the piped-scope convention does.
+A group containing both `{scope}` and `{type}` therefore drops the type along with an absent scope, and a `*` scope is absent by the time the group decides. When preferences load, the bundle warns of such a template, naming the record shape that loses the type; it warns in the same way of a group that drops `{breaking}`. When the type should stay in the title of a change without a scope, nest the scope in a group of its own, as the piped-scope convention does.
 
 `{breaking}` never decides a group. A non-breaking change would otherwise drop the very prefix that contains the marker.
 
@@ -596,6 +597,8 @@ The bundle checks each configured template when preferences load, and a template
 - **An indistinguishable marker.** `{breaking}` placed beside free text, or beside a literal that spells `!`, leaves the marker unrecognizable.
 
 A render-and-parse pass over well-formed values then acts as a fallback for the four checks, so that it catches a defect that a later extension to the grammar introduces and the checks miss.
+
+A template that round-trips every well-formed record but loses a token for some record shape, such as a flat `[{scope}|{type}: ]` prefix for a change without a scope, is not refused. The bundle warns of it instead; see [Optional groups](#optional-groups).
 
 ## What the grammar does not support
 
