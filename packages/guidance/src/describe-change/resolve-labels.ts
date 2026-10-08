@@ -1,5 +1,5 @@
-import { dropIncidentalRoot, splitScopes } from '../change-grammar/tokens.ts';
-import type { ChangeRecord } from '../change-grammar/types.ts';
+import { type ChangeRecord, dropIncidentalRoot, splitScopes } from '@williamthorsen/change-grammar';
+
 import type { ChangeEntry } from './change-entries.ts';
 import { BREAKING_LABEL, type LabelMap, type LabelSection } from './read-label-map.ts';
 

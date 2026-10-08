@@ -2,11 +2,9 @@ import { createHash } from 'node:crypto';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
+import { applyOverrides, type ChangeRecord, normalizeChangeRecord } from '@williamthorsen/change-grammar';
 import { readNoteContent } from '@williamthorsen/kb/note-io';
 
-import { applyOverrides } from '../change-grammar/apply-overrides.ts';
-import { normalizeChangeRecord } from '../change-grammar/tokens.ts';
-import type { ChangeRecord } from '../change-grammar/types.ts';
 import { stripChangeRecordBlocks } from '../describe-change/change-record-block.ts';
 import { extractString } from '../kb-shared/note-helpers.ts';
 import { extractSection } from '../lib/markdown-sections.ts';

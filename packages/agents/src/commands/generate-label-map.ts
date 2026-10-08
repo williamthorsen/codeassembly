@@ -1,27 +1,10 @@
 import { mkdir, readdir, realpath, stat, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
+import { CANONICAL_TAXONOMY, deriveLabelMap } from '@williamthorsen/change-grammar';
+
 import { findInstalledPackage, type InstalledPackage } from '../lib/find-installed-package.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
-
-/** Canonical mapping from commit type keys to the label names that a tracker uses. */
-const TYPE_MAP: Readonly<Record<string, string>> = {
-  ai: 'ai',
-  ci: 'ci',
-  deprecate: 'deprecation',
-  deps: 'dependencies',
-  docs: 'documentation',
-  drop: 'removal',
-  feat: 'feature',
-  fix: 'fix',
-  fmt: 'formatting',
-  internal: 'internal',
-  perf: 'performance',
-  refactor: 'refactoring',
-  sec: 'security',
-  tests: 'tests',
-  tooling: 'tooling',
-};
 
 const CHANGE_GRAMMAR_PACKAGE_NAME = '@williamthorsen/change-grammar';
 const RELEASE_KIT_PACKAGE_NAME = '@williamthorsen/release-kit';
@@ -35,11 +18,8 @@ function buildSchemaUrl(version: string): string {
   return `https://github.com/williamthorsen/node-monorepo-tools/raw/change-grammar-v${version}/packages/change-grammar/schemas/label-map.json`;
 }
 
-/**
- * Derives scope entries from `packages/` subdirectories in the given working directory.
- * Returns an empty record if `packages/` does not exist.
- */
-async function deriveScopes(workingDir: string): Promise<Record<string, string>> {
+/** Lists the names of the directories under `packages/` in `workingDir`, sorted, or none when `packages/` is absent. */
+async function listWorkspaceNames(workingDir: string): Promise<string[]> {
   const packagesDir = path.join(workingDir, 'packages');
 
   let entries: ReadonlyArray<string>;
@@ -47,26 +27,19 @@ async function deriveScopes(workingDir: string): Promise<Record<string, string>>
     entries = await readdir(packagesDir);
   } catch (error: unknown) {
     if (isEnoent(error)) {
-      return {};
+      return [];
     }
     throw error;
   }
 
-  const scopes: Record<string, string> = {};
-
+  const names: string[] = [];
   for (const entry of entries) {
-    const entryPath = path.join(packagesDir, entry);
-    const entryStat = await stat(entryPath);
+    const entryStat = await stat(path.join(packagesDir, entry));
     if (entryStat.isDirectory()) {
-      scopes[entry] = `scope:${entry}`;
+      names.push(entry);
     }
   }
-
-  if (Object.keys(scopes).length > 0) {
-    scopes.root = 'scope:root';
-  }
-
-  return scopes;
+  return names.toSorted();
 }
 
 /** Finds the installed package `name` from `baseDir`, throwing when no candidate directory contains it. */
@@ -117,11 +90,11 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
   }
 
   const version = await readChangeGrammarVersion(cwd);
-  const scopes = await deriveScopes(cwd);
+  const { scopes, types } = deriveLabelMap(CANONICAL_TAXONOMY, await listWorkspaceNames(cwd));
 
   const labelMap = {
     $schema: buildSchemaUrl(version),
-    types: { ...TYPE_MAP },
+    types,
     scopes,
   };
 

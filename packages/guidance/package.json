@@ -35,8 +35,8 @@
     "schemas"
   ],
   "scripts": {
-    "build": "codeassembly bundle-helpers",
-    "check:content": "codeassembly validate && codeassembly bundle-helpers --check",
+    "build": "codeassembly bundle-helpers && node scripts/generate-work-types.ts",
+    "check:content": "codeassembly validate && codeassembly bundle-helpers --check && node scripts/generate-work-types.ts --check",
     "check:post": "pnpm run check:content",
     "check:strict:post": "pnpm run check:content",
     "prepack": "node scripts/generate-schemas.ts",
@@ -48,6 +48,7 @@
     "@hyperjump/json-schema": "1.17.8",
     "@types/jsdom": "30.0.0",
     "@types/node": "catalog:",
+    "@williamthorsen/change-grammar": "catalog:",
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.errors": "catalog:",

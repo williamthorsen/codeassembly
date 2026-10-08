@@ -1,4 +1,5 @@
-import type { ChangeRecord } from '../change-grammar/types.ts';
+import type { ChangeRecord } from '@williamthorsen/change-grammar';
+
 import type { EntryAmendment } from './amend-entry.ts';
 import type { ChangeEntry } from './change-entries.ts';
 import type { ChangeRecordBlock, RecordOverrides } from './change-record-block.ts';

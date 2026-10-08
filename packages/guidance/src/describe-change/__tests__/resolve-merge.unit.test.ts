@@ -1,6 +1,6 @@
+import type { ChangeRecord, Taxonomy } from '@williamthorsen/change-grammar';
 import { describe, expect, it } from 'vitest';
 
-import type { ChangeRecord, Taxonomy } from '../../change-grammar/types.ts';
 import { type ChangeEntry, consolidateChangeEntries } from '../change-entries.ts';
 import {
   type ChangeRecordBlockReading,

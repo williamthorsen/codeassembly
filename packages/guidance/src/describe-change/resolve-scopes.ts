@@ -1,8 +1,7 @@
 import path from 'node:path';
 
+import { ROOT_SCOPE } from '@williamthorsen/change-grammar';
 import { getWorkspacePackageDirs, isMonorepoRoot } from '@williamthorsen/nmr/workspace';
-
-import { ROOT_SCOPE } from '../change-grammar/tokens.ts';
 
 /**
  * Discovers the workspace directories that `projectRoot` declares, as absolute paths.

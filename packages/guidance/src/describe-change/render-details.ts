@@ -1,4 +1,5 @@
-import type { Taxonomy, WorkTypeEntry } from '../change-grammar/types.ts';
+import type { Taxonomy, WorkTypeEntry } from '@williamthorsen/change-grammar';
+
 import type { WorkTypeHeadings } from '../lib/work-types.ts';
 import type { ChangeEntry } from './change-entries.ts';
 

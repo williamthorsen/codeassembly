@@ -1,7 +1,6 @@
+import { compileTemplate, type Taxonomy } from '@williamthorsen/change-grammar';
 import { describe, expect, it } from 'vitest';
 
-import { compileTemplate } from '../../change-grammar/compile-template.ts';
-import type { Taxonomy } from '../../change-grammar/types.ts';
 import { consolidateBranch } from '../consolidate-branch.ts';
 import type { RawCommit } from '../read-commits.ts';
 

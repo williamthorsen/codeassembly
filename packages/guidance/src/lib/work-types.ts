@@ -1,8 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import embeddedTaxonomy from '../../content/skills/_data/work-types.json' with { type: 'json' };
-import type { BreakingPolicy, Taxonomy, WorkTypeEntry } from '../change-grammar/types.ts';
+import type { BreakingPolicy, Taxonomy, WorkTypeEntry } from '@williamthorsen/change-grammar';
+
+import { buildWorkTypesDocument } from './build-work-types-document.ts';
 import { isMissingFile, isRecord } from './type-guards.ts';
 
 /** A declared work type: its canonical key and the tier to which its changes belong. */
@@ -187,9 +188,9 @@ function readDisplay(value: unknown): { emoji: string; label: string } | null {
   return { emoji, label };
 }
 
-/** Reads the taxonomy under `dataDir` when one is named, and the embedded taxonomy otherwise. */
+/** Reads the taxonomy under `dataDir` when one is named, and the change-grammar package's taxonomy otherwise. */
 async function readTaxonomy(dataDir: string | undefined): Promise<ParsedTaxonomy | null> {
-  return dataDir === undefined ? parseTaxonomy(embeddedTaxonomy) : await readTaxonomyFile(dataDir);
+  return dataDir === undefined ? parseTaxonomy(buildWorkTypesDocument()) : await readTaxonomyFile(dataDir);
 }
 
 /** Reads and parses `work-types.json` under `dataDir`, yielding `null` when the file is absent or unparseable. */

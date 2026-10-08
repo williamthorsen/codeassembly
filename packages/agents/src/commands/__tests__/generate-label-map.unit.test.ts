@@ -2,6 +2,7 @@ import { mkdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
+import { CANONICAL_TAXONOMY, deriveLabelMap } from '@williamthorsen/change-grammar';
 import { captureError } from '@williamthorsen/toolbelt.testing/candidate';
 import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -77,27 +78,11 @@ describe(generateLabelMap, () => {
     await expect(readGeneratedFile({ force: false }, tempDir)).rejects.toThrow('@williamthorsen/release-kit');
   });
 
-  it('includes all canonical type mappings', async () => {
+  it("takes the type labels from change-grammar's canonical taxonomy", async () => {
     const result = await readGeneratedFile({ force: false }, tempDir);
     const parsed = parseLabelMap(result);
 
-    expect(parsed.types).toEqual({
-      ai: 'ai',
-      ci: 'ci',
-      deprecate: 'deprecation',
-      deps: 'dependencies',
-      docs: 'documentation',
-      drop: 'removal',
-      feat: 'feature',
-      fix: 'fix',
-      fmt: 'formatting',
-      internal: 'internal',
-      perf: 'performance',
-      refactor: 'refactoring',
-      sec: 'security',
-      tests: 'tests',
-      tooling: 'tooling',
-    });
+    expect(parsed.types).toStrictEqual(deriveLabelMap(CANONICAL_TAXONOMY, []).types);
   });
 
   it('derives scopes from packages/ subdirectories', async () => {

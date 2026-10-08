@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
-import type { ChangeRecord } from '../change-grammar/types.ts';
+import type { ChangeRecord } from '@williamthorsen/change-grammar';
+
 import { isMissingFile, isRecord } from '../lib/type-guards.ts';
 
 /**

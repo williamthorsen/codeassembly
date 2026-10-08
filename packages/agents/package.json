@@ -47,6 +47,7 @@
     "prepublishOnly": "nmr build"
   },
   "dependencies": {
+    "@williamthorsen/change-grammar": "catalog:",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.terminal": "catalog:",
     "yaml": "catalog:",

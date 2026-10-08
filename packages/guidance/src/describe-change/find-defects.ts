@@ -1,5 +1,5 @@
-import type { ChangeRecord, Taxonomy } from '../change-grammar/types.ts';
-import { validate } from '../change-grammar/validate.ts';
+import { type ChangeRecord, type Taxonomy, validate } from '@williamthorsen/change-grammar';
+
 import type { ChangeEntry } from './change-entries.ts';
 
 /** Reports the defect that blocks approval of an effective record, if any. */

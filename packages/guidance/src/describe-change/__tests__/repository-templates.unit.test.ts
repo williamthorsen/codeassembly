@@ -3,12 +3,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { compileTemplate, render, type Taxonomy, verify } from '@williamthorsen/change-grammar';
 import { describe, expect, it } from 'vitest';
 
-import { compileTemplate } from '../../change-grammar/compile-template.ts';
-import { render } from '../../change-grammar/render.ts';
-import type { Taxonomy } from '../../change-grammar/types.ts';
-import { verify } from '../../change-grammar/verify.ts';
 import { loadPreferences } from '../load-preferences.ts';
 import { SURFACES } from '../types.ts';
 

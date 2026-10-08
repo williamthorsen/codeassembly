@@ -1,4 +1,5 @@
-import type { Taxonomy } from '../change-grammar/types.ts';
+import type { Taxonomy } from '@williamthorsen/change-grammar';
+
 import type { ChangeEntry } from './change-entries.ts';
 import { readChangeRecordBlock, renderChangeRecordBlock, replaceLastChangeRecordBlock } from './change-record-block.ts';
 import { findDefects, type RecordDefect } from './find-defects.ts';

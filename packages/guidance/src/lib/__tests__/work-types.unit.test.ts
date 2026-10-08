@@ -3,10 +3,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import type { Taxonomy } from '@williamthorsen/change-grammar';
 import { describe, expect, it } from 'vitest';
 
 import embeddedTaxonomy from '../../../content/skills/_data/work-types.json' with { type: 'json' };
-import type { Taxonomy } from '../../change-grammar/types.ts';
 import {
   describeTaxonomyLocation,
   loadTaxonomy,

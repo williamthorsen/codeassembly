@@ -185,6 +185,9 @@ catalogs:
     '@vitejs/plugin-react':
       specifier: 6.1.1
       version: 6.1.1
+    '@williamthorsen/change-grammar':
+      specifier: 0.2.0
+      version: 0.2.0
     '@williamthorsen/nmr':
       specifier: 0.42.0
       version: 0.42.0
@@ -337,6 +340,9 @@ importers:
 
   packages/agents:
     dependencies:
+      '@williamthorsen/change-grammar':
+        specifier: 'catalog:'
+        version: 0.2.0
       '@williamthorsen/toolbelt.errors':
         specifier: 'catalog:'
         version: 0.8.2
@@ -474,6 +480,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.19.0
+      '@williamthorsen/change-grammar':
+        specifier: 'catalog:'
+        version: 0.2.0
       '@williamthorsen/kb':
         specifier: workspace:*
         version: link:../kb
@@ -1639,6 +1648,10 @@ packages:
 
   '@williamthorsen/change-grammar@0.1.0':
     resolution: {integrity: sha512-OuCCTFC+5CCLpfKD6et93kOxefgRCexJxNUaC6aduey1Gzvk3MfEqGiKoFqPrFhGMyzXWurGIoACJM65Sem1kw==}
+    engines: {node: '>=24.16.0'}
+
+  '@williamthorsen/change-grammar@0.2.0':
+    resolution: {integrity: sha512-WzkkQNqMyjrWCtRNcBtnrYQpOHzM1QWXv+ViIfqHlSJIGRwc+G6hocngS/hQJ7l9tPQEonq/PUFCzOtLPRcXeg==}
     engines: {node: '>=24.16.0'}
 
   '@williamthorsen/eslint-config-typescript@18.0.0':
@@ -5040,6 +5053,8 @@ snapshots:
       tinyrainbow: 3.2.0
 
   '@williamthorsen/change-grammar@0.1.0': {}
+
+  '@williamthorsen/change-grammar@0.2.0': {}
 
   ? '@williamthorsen/eslint-config-typescript@18.0.0(@typescript-eslint/utils@8.71.0(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@vitest/eslint-plugin@1.6.27(@typescript-eslint/eslint-plugin@8.71.0(@typescript-eslint/parser@8.71.0(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)(vitest@4.1.11))(eslint-plugin-jest-dom@5.10.1(@testing-library/dom@10.4.2)(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-react-hooks@7.1.1(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-testing-library@7.16.2(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.11.0(jiti@2.7.0)(supports-color@7.2.0))(readyup@0.39.0(esbuild@0.28.2))(supports-color@7.2.0)(typescript@6.0.3)'
   : dependencies:
