@@ -5,7 +5,7 @@ import { isAbsolute, join, resolve } from 'node:path';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
 
-import { isRecord } from './type-guards.ts';
+import { isEnoent, isRecord } from './type-guards.ts';
 
 /** Expands `~` or a leading `~/` to the home directory. */
 function expandTilde(value: string, home: string): string {
@@ -43,7 +43,7 @@ async function readBaseDirFromYaml(filePath: string): Promise<string | undefined
     }
     return baseDir;
   } catch (error: unknown) {
-    if (isRecord(error) && error.code === 'ENOENT') {
+    if (isEnoent(error)) {
       return undefined;
     }
     process.stderr.write(`Warning: failed to read preferences file ${filePath}: ${describeError(error)}\n`);
