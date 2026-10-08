@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { extractAmbientRegionContent, hasAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
@@ -151,11 +151,10 @@ describe('guidance installation', () => {
       await setupClaudeHome();
       const retiredPath = await seedRetiredSharedGuidance();
 
-      using silent = silenceConsole(['info']);
+      using stdio = captureStdio({ includeConsole: true });
       await installCommand(makeOptions({ dryRun: true }), tempDir);
 
-      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-      expect(output).toContain('Would remove stale item: AGENTS.md');
+      expect(stdio.stdout).toContain('Would remove stale item: AGENTS.md');
       expect(existsSync(retiredPath)).toBe(true);
     });
   });
@@ -386,11 +385,10 @@ describe('guidance installation', () => {
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');
       await fillAmbientRegion(claudeMd);
 
-      using silent = silenceConsole(['info']);
+      using stdio = captureStdio({ includeConsole: true });
       await statusCommand({ harness: 'claude' }, tempDir);
 
-      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-      expect(output).not.toContain('modified: CLAUDE.md');
+      expect(stdio.stdout).not.toContain('modified: CLAUDE.md');
     });
 
     it('still reports a hand edit outside the region as drift', async () => {
@@ -436,12 +434,11 @@ describe('guidance installation', () => {
 
       await installCommand(makeOptions(), tempDir);
 
-      using silent = silenceConsole(['info']);
+      using stdio = captureStdio({ includeConsole: true });
       await statusCommand({ harness: 'claude' }, tempDir);
 
-      const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-      expect(output).toContain('claude:');
-      expect(output).toMatch(/\d+ current/);
+      expect(stdio.stdout).toContain('claude:');
+      expect(stdio.stdout).toMatch(/\d+ current/);
     });
   });
 

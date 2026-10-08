@@ -2,20 +2,22 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { disposeOnTestFinished, silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { type CapturedStdio, captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { disposeOnTestFinished } from '@williamthorsen/toolbelt.vitest/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { validateCommand } from '../validate.ts';
 
 describe(validateCommand, () => {
   let projectDir: string;
+  let stdio: CapturedStdio;
 
   beforeEach(async () => {
     // Under the OS temp dir, never the repo tree: This repo contains `.agents/codeassembly.yaml` at its root, so an
     // in-tree fixture would be below a declaration and could not show that the command consults none.
     projectDir = path.join(tmpdir(), `agents-test-validate-cmd-${Date.now()}-${Math.random().toString(36).slice(2)}`);
     await mkdir(projectDir, { recursive: true });
-    disposeOnTestFinished(silenceConsole(['error', 'info']));
+    stdio = disposeOnTestFinished(captureStdio({ includeConsole: true }));
   });
 
   afterEach(async () => {
@@ -32,10 +34,9 @@ describe(validateCommand, () => {
     await writeSkill(path.join(projectDir, 'content'), 'alpha', 'Invoke {tool:NoSuchTool}.');
 
     expect(await validateCommand({ content: 'content', harness: 'all' }, projectDir)).toBe(false);
-    const report = reportedText();
-    expect(report).toContain('skills/alpha/SKILL.md');
-    expect(report).toContain('NoSuchTool');
-    expect(report).toContain('[render]');
+    expect(stdio.stderr).toContain('skills/alpha/SKILL.md');
+    expect(stdio.stderr).toContain('NoSuchTool');
+    expect(stdio.stderr).toContain('[render]');
   });
 
   it('reports a skill declaring the same guidance hook twice, naming the offending file', async () => {
@@ -46,9 +47,8 @@ describe(validateCommand, () => {
     );
 
     expect(await validateCommand({ content: 'content', harness: 'all' }, projectDir)).toBe(false);
-    const report = reportedText();
-    expect(report).toContain('skills/alpha/SKILL.md');
-    expect(report).toContain('reason=duplicate-hook');
+    expect(stdio.stderr).toContain('skills/alpha/SKILL.md');
+    expect(stdio.stderr).toContain('reason=duplicate-hook');
   });
 
   it("falls back to the content root declared by the working directory's package.json", async () => {
@@ -66,25 +66,9 @@ describe(validateCommand, () => {
     await writeSkill(path.join(projectDir, 'content'), 'alpha');
 
     expect(await validateCommand({ content: 'content', harness: 'rovo' }, projectDir)).toBe(true);
-    expect(loggedText()).toContain('against rovo');
+    expect(stdio.stdout).toContain('against rovo');
   });
 });
-
-/** The joined text of every `console.info` call, for asserting on the run header. */
-function loggedText(): string {
-  return vi
-    .mocked(console.info)
-    .mock.calls.map((call) => String(call[0]))
-    .join('\n');
-}
-
-/** The joined text of every `console.error` call, which is where the command writes the defect report. */
-function reportedText(): string {
-  return vi
-    .mocked(console.error)
-    .mock.calls.map((call) => String(call[0]))
-    .join('\n');
-}
 
 /** Writes a `package.json` containing the given manifest object. */
 async function writeManifest(dir: string, manifest: Record<string, unknown>): Promise<void> {

@@ -2,10 +2,10 @@ import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import process from 'node:process';
 import { promisify } from 'node:util';
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveRepoRoot } from '../resolve-repo-root.ts';
 
@@ -19,7 +19,6 @@ describe(resolveRepoRoot, () => {
   });
 
   afterEach(async () => {
-    vi.restoreAllMocks();
     await rm(scratch, { recursive: true, force: true });
   });
 
@@ -39,10 +38,10 @@ describe(resolveRepoRoot, () => {
   });
 
   it('answers with nothing, and no diagnostic, for a directory in no repository', async () => {
-    const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    using stdio = captureStdio();
 
     expect(await resolveRepoRoot(scratch)).toBeUndefined();
-    expect(stderr).not.toHaveBeenCalled();
+    expect(stdio.stderr).toBe('');
   });
 
   it('answers with nothing for a directory that does not exist', async () => {

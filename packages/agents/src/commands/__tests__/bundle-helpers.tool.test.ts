@@ -3,8 +3,9 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-import { disposeOnTestFinished, silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
-import { beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
+import { type CapturedStdio, captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { disposeOnTestFinished } from '@williamthorsen/toolbelt.vitest/candidate';
+import { beforeEach, describe, expect, it, onTestFinished } from 'vitest';
 
 import { bundleHelpersCommand } from '../bundle-helpers.ts';
 
@@ -13,9 +14,10 @@ const DEMO_HELPER = 'helpers:\n  - entry: ../src/demo/cli.ts\n    out: skills/de
 
 describe(bundleHelpersCommand, () => {
   let packageDir: string;
+  let stdio: CapturedStdio;
 
   beforeEach(() => {
-    disposeOnTestFinished(silenceConsole(['error', 'info']));
+    stdio = disposeOnTestFinished(captureStdio({ includeConsole: true }));
     packageDir = makeProducer({
       [MANIFEST]: `format: 2\n${DEMO_HELPER}`,
       'src/demo/cli.ts': "console.log('demo');\n",
@@ -39,9 +41,10 @@ describe(bundleHelpersCommand, () => {
     writeFileSync(join(packageDir, 'src/demo/cli.ts'), "console.log('changed');\n", 'utf8');
 
     expect(await bundleHelpersCommand({ check: true, content: 'content' }, packageDir)).toBe(false);
-    const report = reportedText();
-    expect(report).toContain('skills/demo/demo.mjs differs from a fresh build.');
-    expect(report).toContain('Run `codeassembly bundle-helpers --content content` and commit the regenerated bundles.');
+    expect(stdio.stderr).toContain('skills/demo/demo.mjs differs from a fresh build.');
+    expect(stdio.stderr).toContain(
+      'Run `codeassembly bundle-helpers --content content` and commit the regenerated bundles.',
+    );
   });
 
   it('fails the check on a declared helper whose bundle is not recorded at HEAD', async () => {
@@ -50,7 +53,7 @@ describe(bundleHelpersCommand, () => {
     writeFile(packageDir, MANIFEST, `${DEMO_HELPER}  - entry: ../src/other/cli.ts\n    out: scripts/other.mjs\n`);
 
     expect(await bundleHelpersCommand({ check: true, content: 'content' }, packageDir)).toBe(false);
-    expect(reportedText()).toContain('scripts/other.mjs is not recorded at HEAD.');
+    expect(stdio.stderr).toContain('scripts/other.mjs is not recorded at HEAD.');
   });
 
   it('fails the check on a tracked bundle that no helper produces', async () => {
@@ -59,7 +62,7 @@ describe(bundleHelpersCommand, () => {
     commitAll(packageDir);
 
     expect(await bundleHelpersCommand({ check: true, content: 'content' }, packageDir)).toBe(false);
-    expect(reportedText()).toContain('scripts/stray.mjs is tracked but not produced by any helper.');
+    expect(stdio.stderr).toContain('scripts/stray.mjs is tracked but not produced by any helper.');
   });
 
   it('fails naming the directory when the content root does not exist', async () => {
@@ -95,14 +98,6 @@ function makeProducer(files: Record<string, string>): string {
   }
   commitAll(packageDir);
   return packageDir;
-}
-
-/** The joined text of every `console.error` call, which is where the check writes its drift report. */
-function reportedText(): string {
-  return vi
-    .mocked(console.error)
-    .mock.calls.map((call) => String(call[0]))
-    .join('\n');
 }
 
 /** Writes `contents` at `relativePath` under `packageDir`, creating its directory. */

@@ -2,7 +2,7 @@ import { mkdir, rm, unlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { recordFailedHomeAttempt } from '../../lib/home-provenance.ts';
@@ -40,12 +40,11 @@ describe('statusCommand', () => {
 
     await installCommand(makeInstallOptions(), tempDir);
 
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain(`Home domain last written by ${readRunningPackageVersion()}`);
-    expect(output).toContain('via `install`');
+    expect(stdio.stdout).toContain(`Home domain last written by ${readRunningPackageVersion()}`);
+    expect(stdio.stdout).toContain('via `install`');
   });
 
   it('leads with a failed last attempt and dates the guidance still in effect', async () => {
@@ -55,36 +54,31 @@ describe('statusCommand', () => {
     await installCommand(makeInstallOptions(), tempDir);
     await recordFailedHomeAttempt('sync --global', { summary: 'two rulebooks rejected', defectCount: 2 }, tempDir);
 
-    using silent = silenceConsole(['info', 'warn']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const warned = silent.warn.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(warned).toContain('The last home-domain write attempt failed');
-    expect(warned).toContain('`sync --global`');
-    expect(warned).toContain('2 defect(s)');
-    const info = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(info).toContain('Home domain last written by');
-    expect(info).toContain('day(s) old');
+    expect(stdio.stderr).toContain('The last home-domain write attempt failed');
+    expect(stdio.stderr).toContain('`sync --global`');
+    expect(stdio.stderr).toContain('2 defect(s)');
+    expect(stdio.stdout).toContain('Home domain last written by');
+    expect(stdio.stdout).toContain('day(s) old');
   });
 
   it('reports a machine with a failed attempt and without a recorded write', async () => {
     await recordFailedHomeAttempt('install', { summary: 'rejected' }, tempDir);
 
-    using silent = silenceConsole(['info', 'warn']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const warned = silent.warn.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(warned).toContain('The last home-domain write attempt failed');
-    const info = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(info).toContain("The home domain doesn't have a recorded write.");
+    expect(stdio.stderr).toContain('The last home-domain write attempt failed');
+    expect(stdio.stdout).toContain("The home domain doesn't have a recorded write.");
   });
 
   it('stays silent about provenance when nothing has written the home domain', async () => {
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).not.toContain('Home domain last written');
+    expect(stdio.stdout).not.toContain('Home domain last written');
   });
 
   it('should report all entries as current after install', async () => {
@@ -94,24 +88,22 @@ describe('statusCommand', () => {
 
     await installCommand(makeInstallOptions(), tempDir);
 
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('current');
-    expect(output).not.toContain('modified:');
-    expect(output).not.toContain('missing:');
+    expect(stdio.stdout).toContain('current');
+    expect(stdio.stdout).not.toContain('modified:');
+    expect(stdio.stdout).not.toContain('missing:');
   });
 
   it('should report not installed for a harness without a manifest', async () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(claudeHome, { recursive: true });
 
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('Not installed');
+    expect(stdio.stdout).toContain('Not installed');
   });
 
   it('reports missing when an installed file is deleted', async () => {
@@ -123,11 +115,10 @@ describe('statusCommand', () => {
 
     await unlink(path.join(claudeHome, 'CLAUDE.md'));
 
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('missing:');
+    expect(stdio.stdout).toContain('missing:');
   });
 
   it('reports modified when an installed file is overwritten', async () => {
@@ -139,10 +130,9 @@ describe('statusCommand', () => {
 
     await writeFile(path.join(claudeHome, 'CLAUDE.md'), 'tampered content', 'utf8');
 
-    using silent = silenceConsole(['info']);
+    using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
 
-    const output = silent.info.mock.calls.map((call) => call.join(' ')).join('\n');
-    expect(output).toContain('modified:');
+    expect(stdio.stdout).toContain('modified:');
   });
 });

@@ -3,7 +3,7 @@ import { mkdir, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
@@ -63,10 +63,10 @@ describe('install (designated-writer guard)', () => {
 
   it('proceeds from a mismatched installation under --override-writer', async () => {
     await designateWriter(path.join(tempDir, 'designated'));
-    using silent = silenceConsole(['warn']);
+    using stdio = captureStdio({ includeConsole: true });
 
     await installCommand(makeOptions({ shouldOverrideWriter: true }), tempDir);
-    expect(silent.warn.mock.calls.flat().join('\n')).toContain('--override-writer');
+    expect(stdio.stderr).toContain('--override-writer');
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
   });
 });
