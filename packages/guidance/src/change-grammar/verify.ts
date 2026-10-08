@@ -286,7 +286,11 @@ const FREE_TEXT_TOKENS: ReadonlySet<TokenName> = new Set<TokenName>(['scope', 't
 
 /** Lists every subset of `items`, the empty subset first, each in the order of `items`. */
 function listSubsets<T>(items: readonly T[]): T[][] {
-  return items.reduce<T[][]>((subsets, item) => [...subsets, ...subsets.map((subset) => [...subset, item])], [[]]);
+  let subsets: T[][] = [[]];
+  for (const item of items) {
+    subsets = [...subsets, ...subsets.map((subset) => [...subset, item])];
+  }
+  return subsets;
 }
 
 /** Maps each token that an optional group can drop to every token that vanishes when that group drops. */
