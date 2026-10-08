@@ -48,6 +48,7 @@
     "@hyperjump/json-schema": "1.17.8",
     "@types/jsdom": "30.0.0",
     "@types/node": "catalog:",
+    "@williamthorsen/change-grammar": "catalog:",
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.errors": "catalog:",

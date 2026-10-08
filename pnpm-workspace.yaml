@@ -9,6 +9,7 @@ catalog:
   '@types/react': '19.3.0'
   '@types/react-dom': '19.3.0'
   '@vitejs/plugin-react': '6.1.1'
+  '@williamthorsen/change-grammar': '0.2.0'
   '@williamthorsen/nmr': '0.42.0'
   '@williamthorsen/toolbelt.errors': '0.8.2'
   '@williamthorsen/toolbelt.terminal': '0.2.1'
