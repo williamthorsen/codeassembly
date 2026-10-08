@@ -1,6 +1,7 @@
 import { readdir } from 'node:fs/promises';
 import path from 'node:path';
 
+import { isEnoent } from '../../src/lib/type-guards.ts';
 import { isTestDirectory } from './test-directories.ts';
 
 /**
@@ -12,7 +13,7 @@ export async function listMarkdownFiles(root: string): Promise<ReadonlyArray<str
   try {
     entries = await readdir(root, { recursive: true, withFileTypes: true });
   } catch (error) {
-    if (typeof error === 'object' && error !== null && 'code' in error && error.code === 'ENOENT') {
+    if (isEnoent(error)) {
       return [];
     }
     throw error;
