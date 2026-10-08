@@ -58,19 +58,19 @@ Quote `title_format` values in YAML (single or double quotes are both fine). Quo
 
 #### Optional groups
 
-A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group (literals included) drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would include the marker. Groups nest, and a nested group is kept or dropped on its own: Under `[[{scope}|]{type}: ]{title}`, a change without a scope still renders `feat: Add foo`. A flat group holding both tokens takes the type down with an absent scope instead, and a `*` scope is absent by the time the group decides. A template that should keep its type nests the scope in a group of its own. Write `\[` and `\]` for a literal bracket.
+A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group (literals included) drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would include the marker. Groups nest, and a nested group is kept or dropped on its own: Under `[[{scope}|]{type}: ]{title}`, a change without a scope still renders `feat: Add foo`. A flat group holding both tokens takes the type down with an absent scope instead, and a `*` scope is absent by the time the group decides; `describe-change.mjs` warns of such a template when preferences load. A template that should keep its type nests the scope in a group of its own. Write `\[` and `\]` for a literal bracket.
 
 `describe-change.mjs` doesn't run a whitespace pass after substitution, so each group contains its own separators: `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That lets `describe-change.mjs` read a rendered title back into the record that produced it, and read a whole commit range back through `commit.title_format`. See [title-templates.md](../content/skills/_data/title-templates.md) for how to invoke `describe-change.mjs` and what each of its subcommands reports, and [change-record.md](../content/skills/_data/change-record.md) for how a consolidated record is written down and read back.
 
-A template that cannot round-trip is refused when preferences load, naming the surface, the template, and the defect: two adjacent tokens without a literal between them, a token named twice, an optional group whose opening literal repeats the text before it, or a `{breaking}` placed where the `!` cannot be told from its neighbour.
+A template that cannot round-trip is refused when preferences load, naming the surface, the template, and the defect: two adjacent tokens without a literal between them, a token named twice, an optional group whose opening literal repeats the text before it, or a `{breaking}` placed where the `!` cannot be told from its neighbour. A template that round-trips but loses a token for some record shape that carries a type, such as a flat scope group that drops the type, draws a warning on stderr naming the surface, the template, and the record shape, and the run continues.
 
-Example template: `[{ticket_ref} ][{scope}|{type}: ]{title}[ (#{pr_number})]`
+Example template: `[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]`
 
 | Inputs                    | Output                              |
 | ------------------------- | ----------------------------------- |
 | All five tokens populated | `#466 agents\|feat: Add foo (#470)` |
 | No `{ticket_ref}`         | `agents\|feat: Add foo (#470)`      |
-| No `{scope}`              | `#466 Add foo (#470)`               |
+| No `{scope}`              | `#466 feat: Add foo (#470)`         |
 | No `{pr_number}`          | `#466 agents\|feat: Add foo`        |
 | Only `{title}`            | `Add foo`                           |
 
@@ -109,7 +109,7 @@ commit:
   title_format: '[[{scope}|]{type}: ]{title}'
 ```
 
-Produces: `agents|feat: Add script installer` with both present, `feat: Add script installer` without a scope, and `Add script installer` without a type. Nesting the scope in a group of its own keeps the type when the scope drops; a flat `[{scope}|{type}: ]` takes the type down with it.
+Produces: `agents|feat: Add script installer` with both present, `feat: Add script installer` without a scope, and `Add script installer` without a type. Nesting the scope in a group of its own keeps the type when the scope drops; a flat `[{scope}|{type}: ]` takes the type down with it, and `describe-change.mjs` warns of it.
 
 Conventional commits with scope in parentheses:
 
