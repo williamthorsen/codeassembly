@@ -16,7 +16,7 @@ Answer one question: **What changed?**
 Who is asking is selected by the `tier` that the taxonomy assigns to the entry's own type. A change that touches several tiers has several readers, and each entry is written for the reader that its own type names.
 
 - **`public`**: Someone who uses the package and does not work on it. They are scanning release notes, they will give your entry a few seconds, and they are deciding whether to upgrade and what changes for them. The documentation, the API, and the tool itself are one click away. Nothing they can click through to says what they must change in their own code, so an entry that breaks a consumer declares a `migration` whatever else you drop.
-- **`internal`** or **`process`**: Someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff is one click away, and anything they would find there is theirs to click for.
+- **`internal`** or **`process`**: Someone who works in this codebase. They are scanning the changelog to place a change, and they are deciding which part of the codebase it changed and whether it touches the code in front of them. The diff is one click away, and they open it for anything that it would show them.
 
 The lede has a reader of its own: whoever meets the change without its entries. That is the reviewer opening the pull request and the developer reading `git log`, and what they want is an answer to "what is this change about?" before they decide whether to read further. Write the lede for the tier that the `tier` scalar in your dispatch names, which is the branch's reader.
 
@@ -24,7 +24,7 @@ For the `internal` and `process` reader, the operation performed -- a rename, an
 
 Both readers already assume that inputs are validated, that the code is tested, and that the documentation matches. Reporting one of those tells them that you found it remarkable, and their answer is "of course": It belongs in your answer only when it is what the pull request is about.
 
-An assurance behaves the same way. An invariant asserted against a harm that the reader had not suspected creates the doubt that it means to remove, so an entry states one only when the change gives real grounds to fear it broke: "Published output is unchanged" earns its place after a compiler-target bump and nowhere else.
+An assurance behaves the same way. An invariant asserted against a harm that the reader had not suspected creates the doubt that it is meant to remove, so an entry states one only when the change gives real grounds to fear it broke: "Published output is unchanged" belongs in an entry after a compiler-target bump and nowhere else.
 
 **The lede stands alone.** You write the lede; nothing selects it from your entries afterwards. It is the text that the merge commit, the changelog, and the release notes contain, and a reader meets it without reading anything else, so it states what the change does whether or not a title above it names the same thing. Each entry states the change on the same terms, for the same reason.
 
@@ -50,7 +50,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
 3. **The change itself.** `git diff {default_branch}...HEAD`.
 
-   Read the whole diff. Your question is what changed, and the outcomes are in the hunks; the granularity rule in "The form that your answer takes" is what keeps the diff from becoming an inventory of edits.
+   Read the whole diff. Your question is what changed, and the outcomes are in the hunks; the granularity rule in "The form that your answer takes" keeps the entries from becoming an inventory of the diff's edits.
 
 4. **The taxonomy.** Read `{harness_home_dir}/skills/_data/work-types.json` and assign each outcome the `key` of the type whose `description` the outcome meets. That key is the entry's `type`, and its `tier` names the entry's reader.
 
@@ -70,7 +70,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
    Calibrate each entry against the exemplars drawn for its own type. One type's exemplars miscalibrate every other type, because each was written for the reader that its own tier names.
 
-   Each record's text is a whole approved lede, so the sets you drew also calibrate the lede that you write. Read them together for it, since the lede answers for the change rather than for one of its types.
+   Each record's text is a whole approved lede, so the sets you drew also calibrate the lede that you write. Read them together for it, since the lede describes the change as a whole rather than one of its types.
 
    When you cannot resolve an outcome's type against the taxonomy, put `--tier {tier}` in place of `--type {type}` for that outcome, keep `--min-quality strong`, and name the omission in your report. `{tier}` is the `tier` scalar in your dispatch, which names the branch's reader: The outcome did not resolve to any type, so the taxonomy does not name a tier for it either. Never supply a `type` that the taxonomy does not declare: A guessed type selects exemplars written for the wrong reader.
 
@@ -78,11 +78,11 @@ Writing follows.
 
 ## What to leave out
 
-An entry list drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much it cost to establish.
+An entry list drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much effort it took to establish.
 
 Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and an entry that you write never includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it does not get an entry.
 
-The general concision rule does not govern here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: The facts that you leave out are actionable ones, and the reader has the diff one click away.
+The general concision rule does not apply here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: The facts that you leave out are actionable ones, and the reader has the diff one click away.
 
 ## What your type must state
 
@@ -111,15 +111,15 @@ The lede summarizes the change, and the entries enumerate it. The same reader re
 
 These fix what an entry contains and how its `text` is written. None of them ranks the facts; the question and the reader above do that.
 
-- **One entry per outcome**: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one entry, and a second outcome is a second entry. A supporting edit is not an outcome of its own: It belongs to the outcome that it supports, as a commit touching several scopes takes the one that fits it closest, and it does not get an entry, in another workspace as much as in this one. An entry never enumerates members whose count tracks the changed-file list; the count is the tell that the diff is being inventoried rather than read.
+- **One entry per outcome**: what the reader acts on, not the edit that produced it. Several edits serving one outcome are one entry, and a second outcome is a second entry. A supporting edit is not an outcome of its own: It belongs to the outcome that it supports, as a commit touching several scopes takes the one that fits it closest, and it does not get an entry, in another workspace as much as in this one. An entry never enumerates members whose count tracks the changed-file list; the count is the sign that the diff is being inventoried rather than read.
 - `text` is one sentence. An outcome that needs two is either two outcomes or one that you have not finished reducing.
 - `text` opens with its verb, third-person indicative present: "Adds", never "Add" or "Added". Passive voice is fine when natural.
 - The subject is the pull request, and it stays unwritten. Read a `text` with "This pull request" in front of it: When that sentence is false, the verb names what the system does rather than what the change did, and the entry fails. "This pull request ends quietly when the reader closes the pipe" is false; "This pull request stops `foo` from crashing with an unhandled `EPIPE`" is true.
 - When the change adds something that itself acts, a command, a check, a rule, a hook, that thing's behavior is the interesting content, so a drafter is tempted to give it the main verb. The change keeps the main verb, and the artifact's behavior goes in a subordinate clause.
 - The verb is whichever one names the act plainly. This document does not prescribe an opener or a connective phrase, and it does not offer a menu of verbs to choose from.
-- `text` names the artifact consumed by the reader, backticked: the package, command, flag, file, or rule that the reader uses. What the reader consumes decides the marking rather than the kind, so a token that the entry merely names, such as a heading inside a file or a value that the change's own code passes internally, is quoted instead. `text` names what that artifact does for the reader, never the internal call that the change edited. An enumeration of the instances touched is not that artifact. Never talk around a name that the reader needs: "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. At `public` tier, define any term that the audience may not share.
+- `text` names the artifact consumed by the reader, backticked: the package, command, flag, file, or rule that the reader uses. What the reader consumes decides the marking rather than the kind, so a token that the entry merely names, such as a heading inside a file or a value that the change's own code passes internally, is quoted instead. `text` names what that artifact does for the reader, never the internal call that the change edited. An enumeration of the instances touched is not that artifact. Never replace a name that the reader needs with a description of it: "An assertion dependency that nothing imported" withholds `@sindresorhus/is`. At `public` tier, define any term that the audience may not share.
 - When `text` names an operation whose benefit the operation does not make evident, it states the benefit.
-- A claim is no stronger than what the change delivers. A mitigation is not a fix, and the true actor keeps the agency: Violations fail the build, and rules only classify. A promise that holds on one version or configuration alone names that condition, and a first increment is framed as initial, since unframed placeholder behavior reads as a bug.
+- A claim is no stronger than what the change delivers. A mitigation is not a fix, and the sentence gives each action to the actor that performs it: Violations fail the build, and rules only classify. A promise that holds on one version or configuration alone names that condition, and a first increment is framed as initial, since unframed placeholder behavior reads as a bug.
 - A pull request that repeats a recognized routine operation, a deferred-lint cleanup or a fleet-wide upgrade, reuses the series' established text rather than fresh prose; the change summary or the repository's changelog supplies it.
 - A repo-wide change reports the repo-level operation, and names individual packages only when they are few and load-bearing.
 - Never address the reader as "you".
@@ -174,7 +174,7 @@ Three sections, in this order. Return nothing else, and do not write any file.
 {One line per source that you could not read, naming the source and what you drafted from instead. `None.` when you read them all.}
 ````
 
-Every entry declares `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are always double-quoted, with each `"` and `\` inside escaped by a backslash: Unquoted, a colon followed by a space mis-parses the value, and a space followed by `#` opens a comment that drops the rest of the text without an error.
+Every entry declares `type`, `scopes`, `breaking`, and `text`, in that order, and `migration` last when the entry calls for one. `text` and `migration` are always double-quoted, with each `"` and `\` inside escaped by a backslash: Unquoted, a colon followed by a space makes the parser misread the value, and a space followed by `#` opens a comment that drops the rest of the text without an error.
 
 On a redispatch, return plain text rather than YAML: one replacement per passage in the `rejected` fence, one per line, in the order the fence listed them, under a `## Entries` heading. That heading contains every replacement, whether its passage was an entry's `text`, an entry's `migration`, or the lede, and a redispatch does not return a `## Lede` section: It replaces the passages that failed, and the caller holds the rest of the draft. The fence contains an entry's `text`, an entry's `migration`, or the lede and nothing else, and a replacement is the same kind of passage as the one that it replaces; the caller places each one and keeps every other field.
 
