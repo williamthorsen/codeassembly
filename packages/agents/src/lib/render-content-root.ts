@@ -20,7 +20,7 @@ import {
 } from './guidance-template.ts';
 import { artifactTargetsHarness, HARNESSES } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
-import type { RulebookInvocationCatalog } from './invocation-tokens.ts';
+import { buildRulebookInvocationCatalog } from './invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts';
 import {
   createContentRootLinkAnchor,
@@ -137,9 +137,7 @@ export async function renderResolvedContentRoot(
     supportNamespace: rootRef.name,
   };
   // One catalog for every render, so that a `{rulebook:<slug>}` token resolves here exactly as it will under `sync`.
-  const rulebooks: RulebookInvocationCatalog = new Map(
-    artifacts.rulebooks.map((book) => [book.slug, { skillName: book.skillName, skill: book.skill }]),
-  );
+  const rulebooks = buildRulebookInvocationCatalog(artifacts.rulebooks, harnessId);
   const rulebookContext: RulebookRenderContext = {
     anchor: createContentRootLinkAnchor(anchorContext),
     guidanceFileName: config.guidanceFileName,

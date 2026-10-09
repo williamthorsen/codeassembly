@@ -18,9 +18,9 @@ import { ToolNameRewriteError } from '../tool-name-rewriter.ts';
 
 // `shell-conventions` declares a `skill-name` override, so its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
-  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
-  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
-  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false, deploysHere: true }],
+  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true, deploysHere: true }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true, deploysHere: true }],
 ]);
 
 describe(renderSkillDirectory, () => {

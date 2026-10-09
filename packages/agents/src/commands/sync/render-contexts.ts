@@ -1,7 +1,7 @@
 import type { GuidanceHookFills } from '../../lib/guidance-hooks.ts';
 import { artifactTargetsHarness, HARNESSES, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
-import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
+import { buildRulebookInvocationCatalog, type RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { createContentRootLinkAnchor, type LinkAnchorContext } from '../../lib/link-anchor.ts';
 import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
 import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
@@ -10,15 +10,6 @@ import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import type { SkillDeployContext } from '../../lib/skill-transform.ts';
 import type { SubagentDeployContext } from '../../lib/subagent-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
-
-/**
- * Indexes the deployed rulebooks by slug, so that a `{rulebook:<slug>}` token renders the skill name under which its
- * target deploys. Harness-invariant, unlike the render contexts that contain it: What a rulebook deploys as does not
- * vary by harness.
- */
-export function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedRulebook>): RulebookInvocationCatalog {
-  return new Map(resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]));
-}
 
 /**
  * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` names the skill
@@ -190,7 +181,7 @@ function buildRulebookRenderContext(
     harnessId: config.id,
     skillSigil: config.skillSigil,
     subagentSigil: config.subagentSigil,
-    rulebooks: buildRulebookInvocationCatalog(resolved),
+    rulebooks: buildRulebookInvocationCatalog(resolved, harnessId),
   };
 }
 

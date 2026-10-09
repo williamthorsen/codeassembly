@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  buildRulebookInvocationCatalog,
   extractInvocationEdges,
   extractOptionalInvocationTargets,
   type InvocationSigils,
@@ -9,6 +10,7 @@ import {
   rewriteInvocationTokens,
   type RulebookInvocationCatalog,
 } from '../invocation-tokens.ts';
+import type { ResolvedRulebook } from '../rulebook-deploy.ts';
 
 const CLAUDE_SIGILS: InvocationSigils = { skillSigil: '/', subagentSigil: '' };
 const ROVO_SIGILS: InvocationSigils = { skillSigil: '!', subagentSigil: '' };
@@ -21,10 +23,43 @@ const SUPPORT_HOST = 'skills/_data/artifact-conventions.md';
 
 // `shell-conventions` declares a `skill-name` override, so its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
-  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
-  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
-  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false, deploysHere: true }],
+  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true, deploysHere: true }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true, deploysHere: true }],
+  [
+    'claude-models',
+    { skillName: 'consult-claude-models', skill: true, deploysHere: false, targetHarnesses: ['claude'] },
+  ],
+  [
+    'claude-cheatsheet',
+    { skillName: 'consult-claude-cheatsheet', skill: false, deploysHere: false, targetHarnesses: ['claude'] },
+  ],
 ]);
+
+describe(buildRulebookInvocationCatalog, () => {
+  const resolved = [
+    buildResolvedRulebook('claude-models', ['claude']),
+    buildResolvedRulebook('shell-conventions', undefined),
+  ];
+
+  it('marks a rulebook that narrows its harnesses as deploying only to the harnesses that it names', () => {
+    expect(buildRulebookInvocationCatalog(resolved, 'claude').get('claude-models')).toEqual({
+      skillName: 'consult-claude-models',
+      skill: true,
+      deploysHere: true,
+      targetHarnesses: ['claude'],
+    });
+    expect(buildRulebookInvocationCatalog(resolved, 'rovo').get('claude-models')).toMatchObject({ deploysHere: false });
+  });
+
+  it('marks a rulebook that does not narrow its harnesses as deploying to every harness', () => {
+    expect(buildRulebookInvocationCatalog(resolved, 'rovo').get('shell-conventions')).toEqual({
+      skillName: 'consult-shell-conventions',
+      skill: true,
+      deploysHere: true,
+    });
+  });
+});
 
 describe(extractInvocationEdges, () => {
   it('returns empty groups when the content does not contain any tokens', () => {
@@ -141,6 +176,18 @@ describe(resolveRulebookToken, () => {
       rulebooks: RULEBOOKS,
       reason: /ambient-only rulebook[\s\S]*`dependencies:`/,
     },
+    {
+      name: 'when the target excludes the harness, rejects and names the harnesses to which it deploys',
+      slug: 'claude-models',
+      rulebooks: RULEBOOKS,
+      reason: /^names a rulebook that deploys only to claude$/,
+    },
+    {
+      name: 'when an ambient-only target excludes the harness, reports the harness restriction',
+      slug: 'claude-cheatsheet',
+      rulebooks: RULEBOOKS,
+      reason: /^names a rulebook that deploys only to claude$/,
+    },
   ])('$name', ({ slug, rulebooks, reason }) => {
     const resolution = resolveRulebookToken(slug, rulebooks);
 
@@ -199,6 +246,7 @@ describe(rewriteInvocationTokens, () => {
     { name: 'when the caller does not supply a catalog', rulebooks: undefined, slug: 'nmr-scripts' },
     { name: 'when the slug does not name a deployed rulebook', rulebooks: RULEBOOKS, slug: 'never-declared' },
     { name: 'when the target is ambient-only', rulebooks: RULEBOOKS, slug: 'nmr-cheatsheet' },
+    { name: 'when the target excludes the harness', rulebooks: RULEBOOKS, slug: 'claude-models' },
   ])('throws naming the offending token and its host $name', ({ rulebooks, slug }) => {
     expect(() => rewriteInvocationTokens(`See {rulebook:${slug}}.`, CLAUDE_SIGILS, HOST, rulebooks)).toThrow(
       new RegExp(String.raw`\{rulebook:${slug}\} in skills/wrap-up/SKILL\.md`),
@@ -265,3 +313,25 @@ describe(rewriteInvocationTokens, () => {
     expect(rewriteInvocationTokens(content, CLAUDE_SIGILS, HOST)).toBe(content);
   });
 });
+
+// region | Helpers
+
+/** Builds a skill-delivered resolved rulebook, narrowed to `targetHarnesses` when it is defined. */
+function buildResolvedRulebook(slug: string, targetHarnesses: ResolvedRulebook['targetHarnesses']): ResolvedRulebook {
+  const rulebook: ResolvedRulebook = {
+    slug,
+    srcPath: `/content/guidance/rulebooks/${slug}.md`,
+    contentRoot: '/content',
+    skillName: `consult-${slug}`,
+    body: 'Body.\n',
+    ambient: false,
+    hook: false,
+    skill: true,
+    description: undefined,
+    source: 'codeassembly',
+    version: undefined,
+  };
+  return targetHarnesses === undefined ? rulebook : { ...rulebook, targetHarnesses };
+}
+
+// endregion | Helpers

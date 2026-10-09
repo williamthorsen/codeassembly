@@ -14,6 +14,7 @@ import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-
 import { buildGuidanceHookFills } from '../../lib/guidance-hook-fills.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
+import { buildRulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from '../../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
 import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
@@ -54,7 +55,6 @@ import {
 import { refreshPromptsYml, resolvePromptsYmlPaths } from './prompts-index.ts';
 import { recordDeployedSizes } from './record-deployed-sizes.ts';
 import {
-  buildRulebookInvocationCatalog,
   createAnchorContextResolver,
   createOverlayLoader,
   createRulebookContextResolver,
@@ -250,10 +250,6 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
     resolved.filter((rulebook) => rulebook.skill).map((rulebook) => [rulebook.slug, rulebook.skillName] as const),
   );
 
-  // One catalog for every body that addresses a rulebook by token (rulebook, skill, and subagent alike), so that two
-  // passes cannot disagree about what is addressable. The closure that it indexes already contains a rulebook named
-  // only by a skill's or subagent's token, since those tokens are dependency edges.
-  const rulebookCatalog = buildRulebookInvocationCatalog(resolved);
   const declaredSkillSet = new Set(resolvedSkills.map((skill) => skill.slug));
 
   // Rulebook skills and declared skills share the project-local skills dirs. A directory name claimed by both
@@ -286,15 +282,29 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
     ]),
   );
 
+  // Every body that addresses a rulebook by token (rulebook, skill, and subagent alike) resolves it through the same
+  // per-harness catalog, built from the one closure, so that two passes cannot disagree about what is addressable on a
+  // harness. The closure already contains a rulebook named only by a skill's or subagent's token, since those tokens
+  // are dependency edges.
   const harnessSkillTargets = harnessIds.map((harnessId) =>
-    resolveSkillTarget(harnessId, domain.baseDir, rulebookCatalog, fillsByHarness.get(harnessId)),
+    resolveSkillTarget(
+      harnessId,
+      domain.baseDir,
+      buildRulebookInvocationCatalog(resolved, harnessId),
+      fillsByHarness.get(harnessId),
+    ),
   );
 
   // Subagent delivery targets each harness's project-local subagents dir. Resolved separately from skills because the
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = harnessIds.map((harnessId) =>
-    resolveSubagentTarget(harnessId, domain.baseDir, rulebookCatalog, fillsByHarness.get(harnessId)),
+    resolveSubagentTarget(
+      harnessId,
+      domain.baseDir,
+      buildRulebookInvocationCatalog(resolved, harnessId),
+      fillsByHarness.get(harnessId),
+    ),
   );
 
   // Memoized, so that the pre-write render gate and the write that follows it read one overlay per (harness, source)

@@ -1,3 +1,7 @@
+import { artifactTargetsHarness } from './harness.ts';
+import type { ResolvedRulebook } from './rulebook-deploy.ts';
+import type { HarnessId } from './types.ts';
+
 /**
  * Matches `{rulebook:<slug>}`, `{skill:<slug>}`, and `{subagent:<slug>}` invocation tokens, each in a required form and
  * an optional one marked `?` before the colon. The slug is kebab-case and letter-led (`[a-z][a-z0-9-]*`). The pattern
@@ -19,21 +23,48 @@ const INVOCATION_TOKEN_RE = /\{(rulebook|skill|subagent)(\?)?:([a-z][a-z0-9-]*)\
 const TOKEN_KINDS: ReadonlySet<string> = new Set(['rulebook', 'skill', 'subagent']);
 
 /**
- * How a rulebook is addressed by an invocation token: the skill name under which it deploys, and whether it deploys as
- * one.
+ * How a rulebook is addressed by an invocation token on one harness: the skill name under which it deploys, whether it
+ * deploys as one, whether it deploys to the harness for which the catalog was built, and the harnesses to which it
+ * deploys when it narrows them.
  */
 export interface RulebookInvocationTarget {
   readonly skillName: string;
   readonly skill: boolean;
+  readonly deploysHere: boolean;
+  readonly targetHarnesses?: ReadonlyArray<HarnessId>;
 }
 
 /**
- * The rulebooks that a body may address by token, keyed by slug. Supplied by every host that resolves a declaration
- * and so knows the deployed set -- a rulebook, skill, or subagent body under `sync` or `validate`. A support entry
- * under `skills/` renders without one, because `install` ships it without resolving any declaration, which makes a
- * `{rulebook:<slug>}` token there fail rather than pass through.
+ * The rulebooks that a body deployed to one harness may address by token, keyed by slug. Supplied by every host that
+ * resolves a declaration and so knows the deployed set -- a rulebook, skill, or subagent body under `sync` or
+ * `validate`. A support entry under `skills/` renders without one, because `install` ships it without resolving any
+ * declaration, which makes a `{rulebook:<slug>}` token there fail rather than pass through.
  */
 export type RulebookInvocationCatalog = ReadonlyMap<string, RulebookInvocationTarget>;
+
+/**
+ * Indexes the deployed rulebooks by slug for one harness, so that a `{rulebook:<slug>}` token renders the skill name
+ * under which its target deploys. A rulebook that excludes the harness stays in the catalog, marked as not deploying
+ * here, so that a token naming it is rejected with the harnesses to which it does deploy.
+ */
+export function buildRulebookInvocationCatalog(
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  harnessId: HarnessId,
+): RulebookInvocationCatalog {
+  return new Map(
+    resolved.map((rulebook) => {
+      const target: RulebookInvocationTarget = {
+        skillName: rulebook.skillName,
+        skill: rulebook.skill,
+        deploysHere: artifactTargetsHarness(rulebook, harnessId),
+      };
+      return [
+        rulebook.slug,
+        rulebook.targetHarnesses === undefined ? target : { ...target, targetHarnesses: rulebook.targetHarnesses },
+      ];
+    }),
+  );
+}
 
 /** What a `{rulebook:<slug>}` token renders to, or the reason it cannot render. */
 export type RulebookTokenResolution =
@@ -159,6 +190,12 @@ export function resolveRulebookToken(
   const target = rulebooks.get(slug);
   if (target === undefined) {
     return { kind: 'rejected', reason: 'does not name any rulebook in the deployed set' };
+  }
+  if (!target.deploysHere) {
+    return {
+      kind: 'rejected',
+      reason: `names a rulebook that deploys only to ${(target.targetHarnesses ?? []).join(', ')}`,
+    };
   }
   if (!target.skill) {
     return {

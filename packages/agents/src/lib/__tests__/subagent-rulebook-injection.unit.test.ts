@@ -8,9 +8,13 @@ const SOURCE_LABEL = 'subagents/demo-agent.md';
 
 // `shell-conventions` declares a `skill-name` override, so its deployed name is not `consult-<slug>`.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
-  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
-  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
-  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false, deploysHere: true }],
+  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true, deploysHere: true }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true, deploysHere: true }],
+  [
+    'claude-models',
+    { skillName: 'consult-claude-models', skill: true, deploysHere: false, targetHarnesses: ['claude'] },
+  ],
 ]);
 
 describe(injectDeclaredRulebooks, () => {
@@ -141,6 +145,14 @@ describe(injectDeclaredRulebooks, () => {
 
     expect(() => injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toThrow(
       /subagents\/demo-agent\.md declares 2 unusable rulebook injection\(s\):[\s\S]*nmr-cheatsheet -- it names an ambient-only rulebook[\s\S]*never-declared -- it does not name any rulebook in the deployed set/,
+    );
+  });
+
+  it('throws when an entry names a rulebook that excludes the harness, naming the harnesses to which it deploys', () => {
+    const source = '---\nname: demo-agent\nrulebooks:\n  - claude-models\n---\n\nBody.\n';
+
+    expect(() => injectDeclaredRulebooks(source, RULEBOOKS, SOURCE_LABEL)).toThrow(
+      'claude-models -- it names a rulebook that deploys only to claude',
     );
   });
 });

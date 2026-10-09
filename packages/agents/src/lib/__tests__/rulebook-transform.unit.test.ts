@@ -9,10 +9,10 @@ const ROVO_HOME = HARNESSES.rovo.homeDir;
 
 // `shell-conventions` declares a `skill-name` override; `nmr-cheatsheet` is ambient-only, so it doesn't deploy a skill.
 const RULEBOOKS: RulebookInvocationCatalog = new Map([
-  ['a-rulebook', { skillName: 'consult-a-rulebook', skill: true }],
-  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false }],
-  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true }],
-  ['shell-conventions', { skillName: 'shell-rules', skill: true }],
+  ['a-rulebook', { skillName: 'consult-a-rulebook', skill: true, deploysHere: true }],
+  ['nmr-cheatsheet', { skillName: 'consult-nmr-cheatsheet', skill: false, deploysHere: true }],
+  ['nmr-scripts', { skillName: 'consult-nmr-scripts', skill: true, deploysHere: true }],
+  ['shell-conventions', { skillName: 'shell-rules', skill: true, deploysHere: true }],
 ]);
 
 const CLAUDE_CONTEXT: RulebookRenderContext = {
