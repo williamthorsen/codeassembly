@@ -1,6 +1,6 @@
 ---
 name: typescript-testing-conventions
-description: TypeScript testing patterns with proper assertions and type narrowing for Jest-based projects
+description: TypeScript testing patterns with proper assertions and type narrowing for Vitest- and Jest-based projects
 user-invocable: false
 ---
 
