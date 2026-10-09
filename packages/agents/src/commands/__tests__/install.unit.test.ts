@@ -482,6 +482,34 @@ describe(installCommand, () => {
       }
     });
 
+    it('re-links a linked script whose source changed, without --force', async () => {
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions({ link: true }), tempDir);
+      await writeFile(path.join(contentDir, 'scripts', 'demo.sh'), '#!/bin/bash\necho changed\n', 'utf8');
+
+      using silent = silenceConsole(['info', 'warn']);
+      await installCommand(makeOptions({ link: true }), tempDir);
+      const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
+
+      expect(warnLines.some((line) => line.includes('Skipping modified'))).toBe(false);
+      expect(lstatSync(path.join(claudeHome, 'scripts', 'demo.sh')).isSymbolicLink()).toBe(true);
+    });
+
+    it('skips a regular file that replaced a linked script, without --force', async () => {
+      const claudeHome = await setupClaudeHome();
+      await installCommand(makeOptions({ link: true }), tempDir);
+      const deployedPath = path.join(claudeHome, 'scripts', 'demo.sh');
+      await rm(deployedPath);
+      await writeFile(deployedPath, '#!/bin/bash\necho mine\n', 'utf8');
+
+      using silent = silenceConsole(['info', 'warn']);
+      await installCommand(makeOptions({ link: true }), tempDir);
+      const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
+
+      expect(warnLines.some((line) => line.includes('Skipping modified item: scripts/demo.sh'))).toBe(true);
+      expect(await readFile(deployedPath, 'utf8')).toBe('#!/bin/bash\necho mine\n');
+    });
+
     it('does not create a scripts directory in dry-run mode', async () => {
       const claudeHome = await setupClaudeHome();
 
