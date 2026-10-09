@@ -82,11 +82,8 @@ export async function linkItem(src: string, dest: string): Promise<void> {
  * through the link into an unrelated directory (e.g. a dotfiles repo).
  */
 export async function unlinkIfSymlink(destPath: string): Promise<void> {
-  if (!existsSync(destPath)) {
-    return;
-  }
-  const stats = lstatSync(destPath);
-  if (stats.isSymbolicLink()) {
+  const stats = await lstatIfPresent(destPath);
+  if (stats?.isSymbolicLink() === true) {
     await rm(destPath);
   }
 }
