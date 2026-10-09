@@ -1,6 +1,8 @@
-import { existsSync, lstatSync, readdirSync } from 'node:fs';
+import { existsSync, lstatSync, readdirSync, type Stats } from 'node:fs';
 import { cp, lstat, mkdir, readlink, rm, symlink } from 'node:fs/promises';
 import path from 'node:path';
+
+import { isMissingFile } from './type-guards.ts';
 
 /** Checks whether a directory path is a symlink, throwing a message that names what to resolve before installing. */
 export function checkSymlinkSafety(dirPath: string): void {
@@ -58,8 +60,9 @@ export async function copyItem(src: string, dest: string): Promise<void> {
 export async function linkItem(src: string, dest: string): Promise<void> {
   await mkdir(path.dirname(dest), { recursive: true });
 
-  if (existsSync(dest)) {
-    const stats = await lstat(dest);
+  // Inspect the path without following it, so that a dangling link is replaced rather than left to collide
+  const stats = await lstatIfPresent(dest);
+  if (stats !== undefined) {
     if (stats.isSymbolicLink()) {
       const currentTarget = await readlink(dest);
       const expectedTarget = path.relative(path.dirname(dest), src);
@@ -79,11 +82,8 @@ export async function linkItem(src: string, dest: string): Promise<void> {
  * through the link into an unrelated directory (e.g. a dotfiles repo).
  */
 export async function unlinkIfSymlink(destPath: string): Promise<void> {
-  if (!existsSync(destPath)) {
-    return;
-  }
-  const stats = lstatSync(destPath);
-  if (stats.isSymbolicLink()) {
+  const stats = await lstatIfPresent(destPath);
+  if (stats?.isSymbolicLink() === true) {
     await rm(destPath);
   }
 }
@@ -95,3 +95,19 @@ export async function unlinkIfSymlink(destPath: string): Promise<void> {
 export async function removeItem(destPath: string): Promise<void> {
   await rm(destPath, { recursive: true, force: true });
 }
+
+// region | Helpers
+
+/** Returns the path's own stats without following a link, or `undefined` when nothing is at the path. */
+async function lstatIfPresent(filePath: string): Promise<Stats | undefined> {
+  try {
+    return await lstat(filePath);
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return undefined;
+    }
+    throw error;
+  }
+}
+
+// endregion | Helpers

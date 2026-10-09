@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { existsSync } from 'node:fs';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 
 import { hasAmbientRegion, stripAmbientRegionContent } from './ambient-region.ts';
-import { isRecord } from './type-guards.ts';
+import { isMissingFile, isRecord } from './type-guards.ts';
 import type { AgentsManifest, ManifestEntry } from './types.ts';
 
 /** Home of the retired cross-harness guidance tier, relative to the user's home. */
@@ -83,12 +83,19 @@ export async function computeContentHash(filePath: string): Promise<string> {
   return `sha256:${hash}`;
 }
 
-/** Detects whether an installed file has drifted from its manifest entry. */
+/**
+ * Detects whether an installed file has drifted from its manifest entry. A linked entry is judged by what is at its
+ * path rather than by content: Any symlink is current, and anything else that replaced the link is modified.
+ */
 export async function detectDrift(
   entry: ManifestEntry,
   harnessHome: string,
 ): Promise<'current' | 'modified' | 'missing'> {
   const filePath = path.join(harnessHome, entry.relativePath);
+
+  if (entry.linked) {
+    return detectLinkDrift(filePath);
+  }
 
   if (!existsSync(filePath)) {
     return 'missing';
@@ -103,3 +110,19 @@ export async function detectDrift(
   const currentHash = await computeContentHash(filePath);
   return currentHash === entry.contentHash ? 'current' : 'modified';
 }
+
+// region | Helpers
+
+/** Classifies a linked entry's path without following the link, so that a dangling link still reads as current. */
+async function detectLinkDrift(filePath: string): Promise<'current' | 'modified' | 'missing'> {
+  try {
+    return (await lstat(filePath)).isSymbolicLink() ? 'current' : 'modified';
+  } catch (error: unknown) {
+    if (isMissingFile(error)) {
+      return 'missing';
+    }
+    throw error;
+  }
+}
+
+// endregion | Helpers

@@ -5,7 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { checkSymlinkSafety, copyItem, linkItem, removeItem } from '../installer.ts';
+import { checkSymlinkSafety, copyItem, linkItem, removeItem, unlinkIfSymlink } from '../installer.ts';
 
 describe('installer', () => {
   let tempDir: string;
@@ -136,6 +136,40 @@ describe('installer', () => {
 
       const stats = lstatSync(dest);
       expect(stats.isSymbolicLink()).toBe(true);
+    });
+
+    it('should replace a dangling symlink', async () => {
+      const src = path.join(tempDir, 'src-dangling');
+      const dest = path.join(tempDir, 'dest-dangling', 'link');
+      await mkdir(src, { recursive: true });
+      await mkdir(path.dirname(dest), { recursive: true });
+      await symlink(path.join(tempDir, 'gone'), dest);
+
+      await linkItem(src, dest);
+
+      expect(readlinkSync(dest)).toBe(path.relative(path.dirname(dest), src));
+    });
+  });
+
+  describe('unlinkIfSymlink', () => {
+    it('should remove a dangling symlink', async () => {
+      const dest = path.join(tempDir, 'unlink-dangling', 'CLAUDE.md');
+      await mkdir(path.dirname(dest), { recursive: true });
+      await symlink(path.join(tempDir, 'gone.md'), dest);
+
+      await unlinkIfSymlink(dest);
+
+      expect(() => lstatSync(dest)).toThrow();
+    });
+
+    it('should keep a regular file', async () => {
+      const dest = path.join(tempDir, 'unlink-file', 'CLAUDE.md');
+      await mkdir(path.dirname(dest), { recursive: true });
+      await writeFile(dest, 'content', 'utf8');
+
+      await unlinkIfSymlink(dest);
+
+      expect(await readFile(dest, 'utf8')).toBe('content');
     });
   });
 

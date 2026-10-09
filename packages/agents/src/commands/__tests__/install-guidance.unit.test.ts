@@ -1,5 +1,5 @@
 import { existsSync, lstatSync } from 'node:fs';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -55,7 +55,7 @@ describe('guidance installation', () => {
   /**
    * Recreates what a previous version left behind: a `~/.agents/AGENTS.md` and the `shared` manifest tier tracking it.
    * `contentOnDisk` writes different bytes than the tracked hash records, which is how a hand-modified copy is staged;
-   * `linked` records the entry as a `--link` symlink, whose fate isn't governed by any drift check.
+   * `linked` stages the entry as a `--link` symlink, which drift detection reads as current whatever its target holds.
    */
   async function seedRetiredSharedGuidance(
     options: { contentOnDisk?: string; linked?: boolean } = {},
@@ -67,6 +67,13 @@ describe('guidance installation', () => {
     const contentHash = await computeContentHash(retiredPath);
     if (options.contentOnDisk !== undefined) {
       await writeFile(retiredPath, options.contentOnDisk, 'utf8');
+    }
+    if (options.linked === true) {
+      const sourcePath = path.join(tempDir, 'source', 'AGENTS.md');
+      await mkdir(path.dirname(sourcePath), { recursive: true });
+      await writeFile(sourcePath, deployed, 'utf8');
+      await rm(retiredPath);
+      await symlink(sourcePath, retiredPath);
     }
 
     const manifestPath = getManifestPath(tempDir);
