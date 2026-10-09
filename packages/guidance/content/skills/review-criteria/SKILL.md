@@ -77,6 +77,10 @@ The commonest instance is a test asserting that deleted code, text, or behavior 
 
 A test file that the change adds to and leaves past the ceiling in the `testing-conventions` skill is a Warning, and its proposed change is a split by aspect as that skill describes. The diff does not show a file's length, so measure each test file that the change adds to. Where the project's lint applies `max-lines` to test files, the lint is the guard, and this is not a finding. A file past the ceiling that the change does not add to is Legacy.
 
+## Noisy tests
+
+A test that the change adds and that writes output on a passing run is a Suggestion, and its proposed change is the interception that the `testing-conventions` skill describes. The diff does not show runtime output: Read the test run's output when one is available, and otherwise read for logging calls on the paths that the test exercises. A noisy test that the change does not add is Legacy.
+
 ## Finding references
 
 Conventions for how findings reference files and code locations.
