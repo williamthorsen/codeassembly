@@ -30,20 +30,15 @@ export interface PruneResult {
 }
 
 /**
- * Decides an owned manifest entry's fate during removal. A symlink (without user-modifiable content) or
- * an unmodified-or-forced file is removed; a user-modified file without `force` is retained; an entry
- * already gone from disk is absent. Checking `linked` before drift detection lets a dangling symlink --
- * which `detectDrift` reports as `missing` -- be removed rather than treated as already gone.
+ * Decides an owned manifest entry's fate during removal. An unmodified or forced entry is removed, a user-modified one
+ * without `force` is retained, and one already gone from disk is absent. `detectDrift` reports any symlink, dangling
+ * or not, as unmodified, so a link is removed and a file that replaced it is retained.
  */
 export async function classifyOwnedEntry(
   entry: ManifestEntry,
   home: string,
   force: boolean,
 ): Promise<OwnedEntryVerdict> {
-  if (entry.linked) {
-    return 'remove';
-  }
-
   const drift = await detectDrift(entry, home);
   if (drift === 'missing') {
     return 'absent';

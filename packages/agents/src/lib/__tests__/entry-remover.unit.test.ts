@@ -184,6 +184,28 @@ describe(classifyOwnedEntry, () => {
     expect(await classifyOwnedEntry(entry, home, false)).toBe('remove');
   });
 
+  it('returns retain for a linked entry replaced by a regular file when force is unset', async () => {
+    const entry: ManifestEntry = { relativePath: 'scripts/linked.sh', contentHash: 'sha256:linked', linked: true };
+    await mkdir(path.join(home, 'scripts'), { recursive: true });
+    await writeFile(path.join(home, entry.relativePath), 'my own script', 'utf8');
+
+    expect(await classifyOwnedEntry(entry, home, false)).toBe('retain');
+  });
+
+  it('returns remove for a linked entry replaced by a regular file when force is set', async () => {
+    const entry: ManifestEntry = { relativePath: 'scripts/linked.sh', contentHash: 'sha256:linked', linked: true };
+    await mkdir(path.join(home, 'scripts'), { recursive: true });
+    await writeFile(path.join(home, entry.relativePath), 'my own script', 'utf8');
+
+    expect(await classifyOwnedEntry(entry, home, true)).toBe('remove');
+  });
+
+  it('returns absent for a linked entry that is gone from disk', async () => {
+    const entry: ManifestEntry = { relativePath: 'scripts/linked.sh', contentHash: 'sha256:linked', linked: true };
+
+    expect(await classifyOwnedEntry(entry, home, false)).toBe('absent');
+  });
+
   it('returns absent for an unlinked entry that is gone from disk', async () => {
     const entry: ManifestEntry = { relativePath: 'skills/never/SKILL.md', contentHash: 'sha256:absent', linked: false };
 

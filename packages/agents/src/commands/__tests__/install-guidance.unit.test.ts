@@ -1,5 +1,5 @@
 import { existsSync, lstatSync } from 'node:fs';
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -67,6 +67,13 @@ describe('guidance installation', () => {
     const contentHash = await computeContentHash(retiredPath);
     if (options.contentOnDisk !== undefined) {
       await writeFile(retiredPath, options.contentOnDisk, 'utf8');
+    }
+    if (options.linked === true) {
+      const sourcePath = path.join(tempDir, 'source', 'AGENTS.md');
+      await mkdir(path.dirname(sourcePath), { recursive: true });
+      await writeFile(sourcePath, deployed, 'utf8');
+      await rm(retiredPath);
+      await symlink(sourcePath, retiredPath);
     }
 
     const manifestPath = getManifestPath(tempDir);
