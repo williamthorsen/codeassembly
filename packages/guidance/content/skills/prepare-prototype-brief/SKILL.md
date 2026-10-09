@@ -55,7 +55,7 @@ The failure that this prevents: a page in one colour, in which the operator hunt
 
 The brief is documentation, so apply the plain-speech rules to it. Test each sentence by asking whether a builder would reproduce the phrase: A builder reproduces a figure as a figure, and a loaded word (cost, price, free, cheap) as a theme. Write the literal statement.
 
-### List the settled intent and close it
+### List the settled intent as final
 
 List the decisions already taken under "Settled intent," and state that they are not to be reconsidered. A builder that spends its budget re-deciding the platform or the scope delivers less of the thing that the round exists to compare.
 
