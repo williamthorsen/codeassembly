@@ -44,7 +44,7 @@ export function collectOwnedTargets(
   const targets: Array<OwnedTarget> = [];
   for (const { skillsDir, harnessId } of harnessSkillTargets) {
     for (const rulebook of resolved) {
-      if (rulebook.skill) {
+      if (rulebook.skill && artifactTargetsHarness(rulebook, harnessId)) {
         targets.push({
           filePath: path.join(skillsDir, rulebook.skillName, 'SKILL.md'),
           isOwned: (content) => extractRulebookSkillSlug(content) !== undefined,
@@ -288,7 +288,7 @@ export async function findForeignOwnedTargetDefects(
 }
 
 /**
- * Renders every resolved rulebook against every targeted harness, discarding the output, so that a link target that
+ * Renders every resolved rulebook against every targeted harness that it targets, discarding the output, so that a link target that
  * the delivery pipeline cannot honor is reported before any file is written. Both delivery passes re-render at write
  * time; this pass exists only to fail the run closed, including under `--dry-run`.
  */
@@ -300,6 +300,9 @@ export function findRulebookRenderDefects(
   const raised: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
     for (const rulebook of resolved) {
+      if (!artifactTargetsHarness(rulebook, harnessId)) {
+        continue;
+      }
       try {
         renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source));
       } catch (error: unknown) {

@@ -34,7 +34,12 @@ import { reconcileDeclaredSkills, reconcileDeclaredSubagents, reconcileRulebookS
 import { planDroppedHarnessRetractions, retractDroppedHarnesses } from './harness-retraction.ts';
 import { findGuidanceHookAdvisories } from './hook-bindings.ts';
 import { retireAmbientHost, type Retirement, retireRetiredOutputs } from './legacy-retirement.ts';
-import { findDeclaredSkillOrphans, findRulebookSkillOrphans, findSubagentOrphans } from './owned-artifacts.ts';
+import {
+  buildDesiredRulebookSkillDirs,
+  findDeclaredSkillOrphans,
+  findRulebookSkillOrphans,
+  findSubagentOrphans,
+} from './owned-artifacts.ts';
 import {
   collectOwnedTargets,
   createDefectCollector,
@@ -244,22 +249,26 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
   const resolvedSubagents = subagentResolution.resolved;
   defects.add(subagentResolution.defects);
 
-  // Maps each skill-delivery rulebook's stable slug to the directory in which its skill currently belongs. Retraction
-  // compares this against what each owned directory's marker reports, so it retracts the old dir of a renamed skill.
-  const desiredSkillDirs = new Map(
-    resolved.filter((rulebook) => rulebook.skill).map((rulebook) => [rulebook.slug, rulebook.skillName] as const),
-  );
-
   const declaredSkillSet = new Set(resolvedSkills.map((skill) => skill.slug));
 
   // Rulebook skills and declared skills share the project-local skills dirs. A directory name claimed by both
   // delivery namespaces would clobber, so reject the overlap before any write.
-  defects.add(findCrossNamespaceCollisionDefects(desiredSkillDirs.values().toArray(), declaredSkillSet));
+  defects.add(
+    findCrossNamespaceCollisionDefects(
+      resolved.filter((rulebook) => rulebook.skill).map((rulebook) => rulebook.skillName),
+      declaredSkillSet,
+    ),
+  );
 
   // Because every delivery pass below targets this one set of harnesses, and each renders its content for the harness
   // to which it writes, the set is resolved once and threaded rather than re-derived per pass.
   const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
   const harnessIds = targets.harnessIds;
+
+  // Maps each harness to its skill-delivery rulebooks, each by stable slug to the directory in which its skill currently
+  // belongs. Retraction compares this against what each owned directory's marker reports, so it retracts the old dir of
+  // a renamed skill and the dir of a rulebook that no longer targets the harness.
+  const desiredSkillDirs = buildDesiredRulebookSkillDirs(resolved, harnessIds);
 
   // Resolved before every render gate, so that the gates and the writes that they guard cannot disagree about where a
   // link target lands. The deployed skill dirs that it reads are settled above: `resolvedSkills` and
@@ -267,7 +276,7 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
   // proven them disjoint.
   const resolveAnchorContext = createAnchorContextResolver(
     resolvedSkills,
-    desiredSkillDirs.values().toArray(),
+    desiredSkillDirs,
     domain.anchorBase,
     await listSupportEntriesBySource(sources),
   );

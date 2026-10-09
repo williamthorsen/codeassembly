@@ -73,8 +73,8 @@ export async function reconcileDeclaredSubagents(
 }
 
 /**
- * Retracts sync-owned skill dirs that are no longer current, then writes every skill-delivery rulebook into each
- * targeted harness's skills dir. Orphans were computed against the pre-write filesystem, so retracting before writing
+ * Retracts sync-owned skill dirs that are no longer current, then writes every skill-delivery rulebook into the skills
+ * dir of each targeted harness that it targets. Orphans were computed against the pre-write filesystem, so retracting before writing
  * lets a skill name freed by one rulebook be recreated for another in the same sync, instead of the write being
  * clobbered by a later retract.
  */
@@ -88,7 +88,7 @@ export async function reconcileRulebookSkills(
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
     for (const rulebook of resolved) {
-      if (!rulebook.skill) {
+      if (!rulebook.skill || !artifactTargetsHarness(rulebook, harnessId)) {
         continue;
       }
       const skillDir = path.join(skillsDir, rulebook.skillName);

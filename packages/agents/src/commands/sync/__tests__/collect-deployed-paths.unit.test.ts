@@ -117,6 +117,28 @@ describe(collectDeployedPaths, () => {
     expect(set.files).toEqual([]);
   });
 
+  it('leaves out a rulebook skill on a harness that the rulebook excludes', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', baseDir);
+    await writeDeployedFile(path.join(skillsDir, 'consult-rovo-only', 'SKILL.md'), 'body');
+    const sources = {
+      ...buildSources({ skillsDir }),
+      resolved: [
+        {
+          skill: true,
+          skillName: 'consult-rovo-only',
+          source: DEFAULT_SOURCE,
+          srcPath: path.join(DEFAULT_SOURCE_DIR, 'guidance', 'rulebooks', 'rovo-only.md'),
+          contentRoot: DEFAULT_SOURCE_DIR,
+          targetHarnesses: ['rovo' as const],
+        },
+      ],
+    };
+
+    const set = await collectDeployedPaths(sources, projectDomain(baseDir), baseDir, resolveSourceRoot);
+
+    expect(set.files).toEqual([]);
+  });
+
   it('collects each delivered support entry named by a source support plan', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', baseDir);
     const destDir = path.join(skillsDir, '_sources', 'acme');

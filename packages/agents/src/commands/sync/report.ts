@@ -212,7 +212,11 @@ function describeDamagedRegion(hostPath: string): string {
 
 /** The closing summary: what the run resolved, what it delivered across the targeted harnesses, and what it retracted. */
 function describeDeliveries(plan: SyncPlan): string {
-  const skillFilesWritten = plan.resolved.filter((rulebook) => rulebook.skill).length * plan.harnessSkillTargets.length;
+  const skillFilesWritten = plan.harnessSkillTargets.reduce(
+    (total, { harnessId }) =>
+      total + plan.resolved.filter((rulebook) => rulebook.skill && artifactTargetsHarness(rulebook, harnessId)).length,
+    0,
+  );
   const declaredSkillsDeployed = plan.harnessSkillTargets.reduce(
     (total, { harnessId }) =>
       total + plan.resolvedSkills.filter((skill) => artifactTargetsHarness(skill, harnessId)).length,
@@ -403,8 +407,10 @@ function describePlannedWrites(plan: SyncPlan): ReadonlyArray<ReportLine> {
   }
   for (const rulebook of plan.resolved) {
     if (rulebook.skill) {
-      for (const { skillsDir } of plan.harnessSkillTargets) {
-        lines.push({ level: 'info', text: `  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}` });
+      for (const { skillsDir, harnessId } of plan.harnessSkillTargets) {
+        if (artifactTargetsHarness(rulebook, harnessId)) {
+          lines.push({ level: 'info', text: `  write ${path.join(skillsDir, rulebook.skillName, 'SKILL.md')}` });
+        }
       }
     }
   }

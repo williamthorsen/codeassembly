@@ -82,6 +82,7 @@ export interface DeployedPathSources {
     readonly source: string;
     readonly srcPath: string;
     readonly contentRoot: string;
+    readonly targetHarnesses?: ReadonlyArray<HarnessId>;
   }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
   readonly resolvedSubagents: ReadonlyArray<{
@@ -140,9 +141,6 @@ export async function collectDeployedPaths(
   const base = domain.ambient === 'harness-home' ? homeDir : domain.baseDir;
   const collected = new Map<string, DeployedPath>();
 
-  const rulebookSkillDirs = plan.resolved
-    .filter((rulebook) => rulebook.skill)
-    .map((rulebook) => ({ dir: rulebook.skillName, authored: describeAuthoredSource(rulebook) }));
   for (const target of plan.harnessSkillTargets) {
     const { harnessId, skillsDir } = target;
     const skillDirs = [
@@ -152,7 +150,9 @@ export async function collectDeployedPaths(
           dir: skill.slug,
           authored: describeAuthoredSource({ ...skill, srcPath: path.join(skill.srcDir, SKILL_FILENAME) }),
         })),
-      ...rulebookSkillDirs,
+      ...plan.resolved
+        .filter((rulebook) => rulebook.skill && artifactTargetsHarness(rulebook, harnessId))
+        .map((rulebook) => ({ dir: rulebook.skillName, authored: describeAuthoredSource(rulebook) })),
     ];
     for (const { dir, authored } of skillDirs) {
       const context = { harnessId, base, sourceRoot: resolveSourceRoot(authored.sourceName), authored };

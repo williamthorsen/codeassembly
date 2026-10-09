@@ -166,4 +166,113 @@ describe(syncCommand, () => {
 
     expect(output).toContain('Targeting claude, rovo (detected in ~).');
   });
+
+  describe('a rulebook that declares supported-harnesses', () => {
+    it('deploys its ambient block and its skill only to the harnesses that it names', async () => {
+      await writeFixtureRulebook(
+        'claude-models',
+        'delivery: [ambient, skill]\nsupported-harnesses: claude',
+        'Use the latest model.',
+      );
+      await declareRulebooks('claude-models');
+      await installBothHarnesses();
+
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+
+      expect(existsSync(skillPath('consult-claude-models', '.claude'))).toBe(true);
+      expect(existsSync(skillPath('consult-claude-models', ROVO_HOME))).toBe(false);
+      expect(await readFile(localHostPath(), 'utf8')).toContain('Use the latest model.');
+      expect(existsSync(localHostPath('AGENTS.local.md'))).toBe(false);
+    });
+
+    it('retracts its skill and its ambient block from a harness that it newly excludes', async () => {
+      await writeFixtureRulebook('claude-models', 'delivery: [ambient, skill]', 'Use the latest model.');
+      await writeFixtureRulebook('shared', 'delivery: ambient', 'Shared rules.');
+      await declareRulebooks('claude-models', 'shared');
+      await installBothHarnesses();
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      expect(existsSync(skillPath('consult-claude-models', ROVO_HOME))).toBe(true);
+
+      await writeFixtureRulebook(
+        'claude-models',
+        'delivery: [ambient, skill]\nsupported-harnesses: claude',
+        'Use the latest model.',
+      );
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+
+      expect(existsSync(skillPath('consult-claude-models', '.claude'))).toBe(true);
+      expect(existsSync(skillPath('consult-claude-models', ROVO_HOME))).toBe(false);
+      const rovoHost = await readFile(localHostPath('AGENTS.local.md'), 'utf8');
+      expect(rovoHost).toContain('Shared rules.');
+      expect(rovoHost).not.toContain('Use the latest model.');
+    });
+
+    it('reports under --dry-run only the skill writes that the run makes', async () => {
+      await writeFixtureRulebook(
+        'claude-models',
+        'delivery: skill\nsupported-harnesses: claude',
+        'Use the latest model.',
+      );
+      await declareRulebooks('claude-models');
+      await installBothHarnesses();
+
+      const output = renderReportText(
+        await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, homeDir),
+        { dryRun: true, level: 'info' },
+      );
+
+      expect(output).toContain(`write ${skillPath('consult-claude-models', '.claude')}`);
+      expect(output).not.toContain(skillPath('consult-claude-models', ROVO_HOME));
+    });
+
+    it('counts in the closing summary only the skill files that the run writes', async () => {
+      await writeFixtureRulebook(
+        'claude-models',
+        'delivery: skill\nsupported-harnesses: claude',
+        'Use the latest model.',
+      );
+      await declareRulebooks('claude-models');
+      await installBothHarnesses();
+
+      const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir), {
+        level: 'info',
+      });
+
+      expect(output).toContain('delivered 1 rulebook-skill file(s)');
+    });
+
+    it('fails the run when a body deployed to an excluded harness names it by token', async () => {
+      await writeFixtureRulebook(
+        'claude-models',
+        'delivery: skill\nsupported-harnesses: claude',
+        'Use the latest model.',
+      );
+      await writeFixtureRulebook('dispatch', 'delivery: skill', 'See {rulebook:claude-models}.');
+      await declareRulebooks('claude-models', 'dispatch');
+      await installBothHarnesses();
+
+      await expect(syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir)).rejects.toThrow(
+        /names a rulebook that deploys only to claude/,
+      );
+    });
+
+    it('renders a token naming it in a body that deploys only where it does', async () => {
+      await writeFixtureRulebook(
+        'claude-models',
+        'delivery: skill\nsupported-harnesses: claude',
+        'Use the latest model.',
+      );
+      await writeFixtureRulebook(
+        'dispatch',
+        'delivery: skill\nsupported-harnesses: claude',
+        'See {rulebook:claude-models}.',
+      );
+      await declareRulebooks('claude-models', 'dispatch');
+      await installBothHarnesses();
+
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+
+      expect(await readFile(skillPath('consult-dispatch', '.claude'), 'utf8')).toContain('See /consult-claude-models.');
+    });
+  });
 });

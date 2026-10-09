@@ -10,6 +10,7 @@ import path from 'node:path';
 
 import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
 import { artifactTargetsHarness } from '../../lib/harness.ts';
+import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
 import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import { isEnoent, isMissingFile } from '../../lib/type-guards.ts';
@@ -40,20 +41,40 @@ export async function findDeclaredSkillOrphans(
 }
 
 /**
+ * Maps each targeted harness to the skill-delivery rulebooks that target it, each by its stable slug to the directory
+ * in which its skill currently belongs.
+ */
+export function buildDesiredRulebookSkillDirs(
+  resolved: ReadonlyArray<ResolvedRulebook>,
+  harnessIds: ReadonlyArray<HarnessId>,
+): ReadonlyMap<HarnessId, ReadonlyMap<string, string>> {
+  return new Map(
+    harnessIds.map((harnessId) => [
+      harnessId,
+      new Map(
+        resolved
+          .filter((rulebook) => rulebook.skill && artifactTargetsHarness(rulebook, harnessId))
+          .map((rulebook) => [rulebook.slug, rulebook.skillName]),
+      ),
+    ]),
+  );
+}
+
+/**
  * Lists the owned rulebook-skill dirs that each targeted harness no longer wants, keyed against the directory in
- * which each stable slug currently belongs. A dir is an orphan once its marker slug no longer maps to it, because the
- * rulebook is no longer skill-delivered, or because its resolved skill name changed.
+ * which each stable slug currently belongs on that harness. A dir is an orphan once its marker slug no longer maps to
+ * it, because the rulebook is no longer skill-delivered, no longer targets the harness, or has a new skill name.
  */
 export async function findRulebookSkillOrphans(
   targets: ReadonlyArray<{ harnessId: HarnessId; skillsDir: string }>,
-  desiredSkillDirs: ReadonlyMap<string, string>,
+  desiredSkillDirs: ReadonlyMap<HarnessId, ReadonlyMap<string, string>>,
 ): Promise<ReadonlyArray<{ harnessId: HarnessId; skillsDir: string; orphans: ReadonlyArray<string> }>> {
   return Promise.all(
     targets.map(async ({ harnessId, skillsDir }) => ({
       harnessId,
       skillsDir,
       orphans: (await listOwnedSkills(skillsDir))
-        .filter(({ dir, slug }) => desiredSkillDirs.get(slug) !== dir)
+        .filter(({ dir, slug }) => desiredSkillDirs.get(harnessId)?.get(slug) !== dir)
         .map(({ dir }) => dir),
     })),
   );

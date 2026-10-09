@@ -127,7 +127,9 @@ export async function renderResolvedContentRoot(
   const supportEntries = await listSupportEntries(skillsDir);
   const anchorContext: LinkAnchorContext = {
     deployedSkillDirs: new Set([
-      ...artifacts.rulebooks.filter((book) => book.skill).map((book) => book.skillName),
+      ...artifacts.rulebooks
+        .filter((book) => book.skill && artifactTargetsHarness(book, harnessId))
+        .map((book) => book.skillName),
       ...artifacts.skills.filter((skill) => artifactTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
     ]),
     domainBase: '~',
@@ -182,6 +184,9 @@ export async function renderResolvedContentRoot(
 
   const renderedAmbient: Array<ResolvedRulebook> = [];
   for (const rulebook of artifacts.rulebooks) {
+    if (!artifactTargetsHarness(rulebook, harnessId)) {
+      continue;
+    }
     const didRender = await collect(artifactFrontmatterPath('rulebook', rulebook.slug), () => {
       const body = renderRulebookBody(rulebook.body, rulebook.slug, rulebookContext);
       if (!rulebook.skill) {

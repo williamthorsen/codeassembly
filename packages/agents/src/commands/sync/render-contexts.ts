@@ -12,14 +12,14 @@ import type { SubagentDeployContext } from '../../lib/subagent-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
 
 /**
- * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` names the skill
- * directories that the rulebook-delivery pass writes, which are delivered to every targeted harness;
- * `resolvedSkills` is filtered per harness instead, because a declared skill may target only some.
- * `supportEntriesBySource` maps each declared source's name to the support entries that it ships.
+ * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` maps each harness to
+ * the skill directories that the rulebook-delivery pass writes there, keyed by slug; `resolvedSkills` is filtered per
+ * harness, because a declared skill may target only some. `supportEntriesBySource` maps each declared source's name to
+ * the support entries that it ships.
  */
 export function createAnchorContextResolver(
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
-  rulebookSkillDirs: ReadonlyArray<string>,
+  rulebookSkillDirs: ReadonlyMap<HarnessId, ReadonlyMap<string, string>>,
   domainBase: string,
   supportEntriesBySource: ReadonlyMap<string, ReadonlySet<string>>,
 ): ResolveAnchorContext {
@@ -30,7 +30,7 @@ export function createAnchorContextResolver(
       supportNamespace,
       deployedSkillDirs: new Set([
         ...resolvedSkills.filter((skill) => artifactTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
-        ...rulebookSkillDirs,
+        ...(rulebookSkillDirs.get(harnessId)?.values() ?? []),
       ]),
       domainBase,
       guidanceFileName: config.guidanceFileName,
