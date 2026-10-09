@@ -1,4 +1,4 @@
-import { mkdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -214,6 +214,45 @@ describe('manifest', () => {
 
       const result = await detectDrift(entry, harnessHome);
       expect(result).toBe('modified');
+    });
+
+    it('should return current for a linked entry whose source changed after install', async () => {
+      const harnessHome = path.join(tempDir, 'harness');
+      const sourcePath = path.join(tempDir, 'source', 'tool.sh');
+      await mkdir(path.dirname(sourcePath), { recursive: true });
+      await writeFile(sourcePath, 'original', 'utf8');
+      const hash = await computeContentHash(sourcePath);
+      await mkdir(path.join(harnessHome, 'scripts'), { recursive: true });
+      await symlink(sourcePath, path.join(harnessHome, 'scripts', 'tool.sh'));
+
+      await writeFile(sourcePath, 'changed upstream', 'utf8');
+
+      const entry: ManifestEntry = { relativePath: 'scripts/tool.sh', contentHash: hash, linked: true };
+      expect(await detectDrift(entry, harnessHome)).toBe('current');
+    });
+
+    it('should return current for a dangling linked entry', async () => {
+      const harnessHome = path.join(tempDir, 'harness');
+      await mkdir(path.join(harnessHome, 'scripts'), { recursive: true });
+      await symlink(path.join(tempDir, 'gone.sh'), path.join(harnessHome, 'scripts', 'tool.sh'));
+
+      const entry: ManifestEntry = { relativePath: 'scripts/tool.sh', contentHash: 'sha256:x', linked: true };
+      expect(await detectDrift(entry, harnessHome)).toBe('current');
+    });
+
+    it('should return modified for a linked entry replaced by a regular file', async () => {
+      const harnessHome = path.join(tempDir, 'harness');
+      await mkdir(path.join(harnessHome, 'scripts'), { recursive: true });
+      await writeFile(path.join(harnessHome, 'scripts', 'tool.sh'), 'my own script', 'utf8');
+
+      const entry: ManifestEntry = { relativePath: 'scripts/tool.sh', contentHash: 'sha256:x', linked: true };
+      expect(await detectDrift(entry, harnessHome)).toBe('modified');
+    });
+
+    it('should return missing for a linked entry whose path is empty', async () => {
+      const harnessHome = path.join(tempDir, 'harness');
+      const entry: ManifestEntry = { relativePath: 'scripts/tool.sh', contentHash: 'sha256:x', linked: true };
+      expect(await detectDrift(entry, harnessHome)).toBe('missing');
     });
   });
 });
