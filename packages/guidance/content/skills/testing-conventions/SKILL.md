@@ -127,6 +127,19 @@ A test file runs in one test worker, and a file that keeps its fixtures makes an
 - **Naming.** Each split file keeps the subject's name and adds the aspect after it, followed by any segment that the project's naming requires: `sync.test.ts` becomes `sync.retirement.test.ts`, and `sync.tool.test.ts` becomes `sync.retirement.tool.test.ts`.
 - **Fixtures.** Move the fixture builders that the split files share out of the test files, into a module in a `test-utils/` directory beside the tests (beside `__tests__/` when the tests live in one, never inside it), so that a new aspect file costs one import.
 
+## Keep passing tests quiet
+
+A passing test prints nothing beyond the runner's report. Output that the code under test writes to the console, stdout, or stderr during a passing run sits between the results, and it hides the warning or stack trace that matters when a run fails.
+
+When the code under test writes output, intercept it in the test that triggers it, and restore it when that test ends:
+
+- **Capture** the output when it is the behavior, such as a CLI's report or a warning on which a caller relies, and assert on a durable fragment of it, as [What a test is for](#what-a-test-is-for) states for wording.
+- **Silence** the output when it is incidental to the behavior under test.
+
+Intercept only the channels that the test expects to fire. A silencer installed for a whole file or suite, or one that covers every channel, hides the unexpected output that this rule exists to surface.
+
+The `typescript-testing-conventions` skill names the TypeScript techniques.
+
 ## Mocking principles
 
 Mock only what matters in component tests. Don't forward irrelevant props or replicate complex implementation details.
