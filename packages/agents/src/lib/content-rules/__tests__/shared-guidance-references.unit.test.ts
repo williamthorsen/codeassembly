@@ -56,6 +56,21 @@ describe(findSharedGuidanceReferenceDefects, () => {
     expect(await findSharedGuidanceReferenceDefects(buildRuleContext(root))).toEqual([]);
   });
 
+  it('reports a name under which a rulebook narrowed to some harnesses deploys', async () => {
+    await writeFileAt(
+      root,
+      'guidance/rulebooks/claude-models.md',
+      '---\nslug: claude-models\ndescription: Fixture.\ndelivery: skill\nsupported-harnesses: claude\n---\n\n# Models\n',
+    );
+    await writeShared('Consult the `consult-claude-models` skill.\n');
+
+    const defects = await findSharedGuidanceReferenceDefects(buildRuleContext(root));
+
+    expect(defects.map((defect) => defect.detail)).toEqual([
+      expect.stringContaining('`consult-claude-models`, which deploys only to claude'),
+    ]);
+  });
+
   it('ignores a backticked identifier that is not adjacent to the word "skill"', async () => {
     await writeShared('Name functions with a leading verb (`show_usage`, not `usage`).\n');
 
