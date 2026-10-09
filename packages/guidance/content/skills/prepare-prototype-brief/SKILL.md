@@ -14,7 +14,7 @@ The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_d
 ## Inputs
 
 - **The ticket**, which states the idea and whatever intent is already settled.
-- **The developer's ask**, in their own words: what the prototypes are for, what is decided, what is out of scope, and what a reviewer will look for. Take it as given, and never quote it into the brief unedited: Its vocabulary is the developer's, and the rules below decide what reaches the builders.
+- **The developer's ask**, in their own words: what the prototypes are for, what is decided, what is out of scope, and what a reviewer will look for. Take it as given, and never quote it into the brief unedited: Its vocabulary is the developer's, and the rules below decide what the builders read.
 - **The lenses**: one name and one paragraph each. When the ask does not supply them, propose three to five that diverge on purpose (the primary user, an operator, a hard constraint, a precedent, an audience) and ask.
 - **The deliverable kind**: a self-contained HTML page unless the ask says otherwise.
 - **The write allowance**: the files that a builder may write. By default, the output file alone. When the ask allows more, such as a directory in the repository when the repository keeps its prototypes, or a dependency to install, take the allowance from the ask and state it in the brief.
@@ -47,7 +47,7 @@ A builder draws every noun in the brief. Say what the viewer must be able to lea
 
 ### Require a salience order
 
-Require a salience order in every working view: the current state in one place, the next thing to happen louder than the rest, and every action visibly an action. Name {rulebook:accessibility-conventions} as the floor, and state that usability outranks restraint. Require that a status repeated on every row be a mark, a column, or a style, not a sentence.
+Require a salience order in every working view: the current state in one place, the next thing to happen more prominent than the rest, and every action visibly an action. Name {rulebook:accessibility-conventions} as the floor, and state that usability outranks restraint. Require that a status repeated on every row be a mark, a column, or a style, not a sentence.
 
 The failure that this prevents: a page in one colour, in which the operator hunts for the control, and "Hidden from the players." written out on every hidden row.
 
@@ -57,7 +57,7 @@ The brief is documentation, so apply the plain-speech rules to it. Test each sen
 
 ### List the settled intent and close it
 
-List the decisions already taken under "Settled intent," and state that they are not for re-litigation. A builder that spends its budget re-deciding the platform or the scope delivers less of the thing that the round exists to compare.
+List the decisions already taken under "Settled intent," and state that they are not to be reconsidered. A builder that spends its budget re-deciding the platform or the scope delivers less of the thing that the round exists to compare.
 
 ## Structure of the brief
 
@@ -66,10 +66,10 @@ Write the brief in this order, with these headings:
 1. **Context.** The ticket, quoted. The developer's motivating picture, restated in plain speech.
 2. **Settled intent.** Bullets. Each is a decision, with its reason when the reason constrains the design.
 3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view.
-4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note when the product holds data; one is the API list when the product has an API.
+4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note when the product stores data; one is the API list when the product has an API.
 5. **Quality bar.** Works, legible, accessible, with the design skill to invoke before markup and the salience order required.
 6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round.
-7. **Rules of engagement.** The write allowance from the inputs. The default: write the output file and nothing else, modify nothing in the repository, install nothing. When the ask allows more, state what it allows. Then: publish the prototype and report its artifact URL and five lines of distinctive ideas.
+7. **Rules of engagement.** The write allowance from the inputs. The default: Write the output file and nothing else, modify nothing in the repository, install nothing. When the ask allows more, state what it allows. Then: Publish the prototype and report its artifact URL and five lines of distinctive ideas.
 
 Then add the lens sections, one per builder, in the developer's words after a plain-speech pass.
 
@@ -99,7 +99,7 @@ Report what the check changed, in one line per rule that fired.
 
 ### 4. Checkpoint
 
-Save the brief with {skill:save-artifact} as a ticket-level `brief` artifact, and show it to the developer. Do not post it to the ticket without their word: Posting is remote state. Ask in one action-items block: approve the brief, and post it as a ticket comment or not.
+Save the brief with {skill:save-artifact} as a ticket-level `brief` artifact, and show it to the developer. Do not post it to the ticket without their approval: Posting is remote state. Ask in one action-items block: approve the brief, and post it as a ticket comment or not.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -123,4 +123,4 @@ Dispatch a builder once more with the same block when it returns without the fil
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the ideas to carry into the design, and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the ideas to adopt in the design, and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
