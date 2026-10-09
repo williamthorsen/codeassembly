@@ -6,6 +6,7 @@ members:
     - williamthorsen-code-layout-preferences
     - williamthorsen-collaboration-preferences
     - williamthorsen-comment-preferences
+    - williamthorsen-subagent-model-preferences
     - williamthorsen-ticketing-preferences
     - williamthorsen-tooling-preferences
     - williamthorsen-typescript-preferences
@@ -17,7 +18,7 @@ members:
 
 # William Thorsen
 
-The personal collection. Membership claims that an artifact was examined and found deliberately fitted to one author rather than generally applicable. What disqualifies each member from `recommended` is the reason it belongs here: The eight rulebooks state one author's preferences as rules that another team would answer differently, and `people-report` serves a domain in which one author works rather than one that every project shares.
+The personal collection. Membership claims that an artifact was examined and found deliberately fitted to one author rather than generally applicable. What disqualifies each member from `recommended` is the reason it belongs here: The nine rulebooks state one author's preferences as rules that another team would answer differently, and `people-report` serves a domain in which one author works rather than one that every project shares.
 
 Its closure contains `capture-feedback` and `capture-event` in `recommended` and nothing else, which makes declaring it safe alongside the public collection.
 
