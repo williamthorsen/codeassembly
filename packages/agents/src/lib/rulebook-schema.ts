@@ -2,6 +2,8 @@ import { parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
 import { parseFrontmatter } from './frontmatter-merger.ts';
+import { ALL_HARNESS_IDS, isHarnessId, SUPPORTED_HARNESSES_KEY } from './harness.ts';
+import type { HarnessId } from './types.ts';
 
 /** Lowercase kebab-case, the shape required of any token that becomes a directory or `/` command. */
 const KEBAB_CASE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -33,7 +35,8 @@ const VERSION_SHAPE_ERROR = "version must be a non-blank single line that does n
  * `delivery` is normalized to an array, and `version` is an opaque string, never parsed as semver, accepted only in
  * the shape that fits the deployed version line.
  * `skill-name` overrides the rendered skill's name (and directory) for `skill` delivery; absent it, the name
- * is derived from the slug.
+ * is derived from the slug. `supported-harnesses` is normalized to a list of harness ids, or to `undefined` when the
+ * rulebook targets every harness.
  */
 export const RulebookFrontmatterSchema = z.object({
   slug: z.string().regex(KEBAB_CASE, 'slug must be lowercase kebab-case (e.g. shell-conventions)'),
@@ -49,6 +52,7 @@ export const RulebookFrontmatterSchema = z.object({
     .default('ambient')
     .transform((value) => (typeof value === 'string' ? [value] : value)),
   version: z.string({ error: VERSION_TYPE_ERROR }).refine(isRenderableVersion, VERSION_SHAPE_ERROR).optional(),
+  [SUPPORTED_HARNESSES_KEY]: z.unknown().transform(normalizeSupportedHarnesses).optional(),
 });
 
 /** A validated rulebook's operational frontmatter. */
@@ -75,6 +79,33 @@ export function parseRulebookFile(content: string, sourceLabel?: string): { rule
 }
 
 // region | Helpers
+
+/**
+ * Normalizes a `supported-harnesses` value, a harness id or a list of them, to a list. Returns `undefined` for an absent,
+ * null, or empty value, which targets every harness, and reports an issue for any value that is not a known harness id.
+ */
+function normalizeSupportedHarnesses(
+  declared: unknown,
+  context: z.RefinementCtx,
+): ReadonlyArray<HarnessId> | undefined {
+  if (declared === undefined || declared === null) {
+    return undefined;
+  }
+
+  const values: ReadonlyArray<unknown> = Array.isArray(declared) ? declared : [declared];
+  const harnesses: Array<HarnessId> = [];
+  for (const value of values) {
+    if (typeof value === 'string' && isHarnessId(value)) {
+      harnesses.push(value);
+    } else {
+      context.addIssue({
+        code: 'custom',
+        message: `unknown harness "${String(value)}"; known harnesses are ${ALL_HARNESS_IDS.join(', ')}`,
+      });
+    }
+  }
+  return harnesses.length === 0 ? undefined : harnesses;
+}
 
 /**
  * Whether a version can occupy its own `<!-- rulebook-version: ... -->` line: non-blank, one line, not closing a

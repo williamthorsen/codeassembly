@@ -3,9 +3,11 @@ import path from 'node:path';
 import { artifactFrontmatterPath } from './artifact-types.ts';
 import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import { expandIncludes } from './directive-expander.ts';
+import { SUPPORTED_HARNESSES_KEY } from './harness.ts';
 import { parseRulebookFile } from './rulebook-schema.ts';
 import { resolveSkillName } from './rulebook-skill.ts';
 import { isEnoent } from './type-guards.ts';
+import type { HarnessId } from './types.ts';
 
 /** Indexes resolved rulebooks by slug, so that a lookup finds a body without rescanning the list per call. */
 export function indexRulebooksBySlug(resolved: ReadonlyArray<ResolvedRulebook>): ReadonlyMap<string, ResolvedRulebook> {
@@ -33,6 +35,8 @@ export interface ResolvedRulebook {
   readonly source: string;
   /** The version declared by the rulebook, named in its deployed output so that an agent can read which version it holds. */
   readonly version: string | undefined;
+  /** The harnesses to which the rulebook deploys; absent when it does not narrow them, meaning all harnesses. */
+  readonly targetHarnesses?: ReadonlyArray<HarnessId>;
 }
 
 /**
@@ -65,7 +69,8 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
   }
 
   const { rulebook, body } = parseRulebookFile(content, `${slug}.md`);
-  return {
+  const targetHarnesses = rulebook[SUPPORTED_HARNESSES_KEY];
+  const base: ResolvedRulebook = {
     slug,
     srcPath,
     contentRoot: resolved.dir,
@@ -78,4 +83,5 @@ export async function resolveRulebook(slug: string, resolver: SourceResolver): P
     source: resolved.source,
     version: rulebook.version,
   };
+  return targetHarnesses === undefined ? base : { ...base, targetHarnesses };
 }

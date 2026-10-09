@@ -10,11 +10,12 @@ import { describeSearchedLocations, type SourceResolver } from '../../lib/conten
 import type { DirectArtifacts } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
+import { artifactTargetsHarness } from '../../lib/harness.ts';
 import { createContentRootLinkAnchor, createSkillLinkAnchor } from '../../lib/link-anchor.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
 import { renderRulebookBody, type ResolveRulebookContext } from '../../lib/rulebook-transform.ts';
-import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import { renderSkillDirectory } from '../../lib/skill-transform.ts';
 import { renderSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import { isMissingFile } from '../../lib/type-guards.ts';
@@ -51,7 +52,7 @@ export function collectOwnedTargets(
       }
     }
     for (const skill of resolvedSkills) {
-      if (!skillTargetsHarness(skill, harnessId)) {
+      if (!artifactTargetsHarness(skill, harnessId)) {
         continue;
       }
       targets.push({
@@ -204,7 +205,7 @@ export async function findDeclaredSkillRenderDefects(
   const raised: Array<HarnessDefect> = [];
   for (const target of targets) {
     for (const skill of resolvedSkills) {
-      if (!skillTargetsHarness(skill, target.harnessId)) {
+      if (!artifactTargetsHarness(skill, target.harnessId)) {
         continue;
       }
       try {

@@ -128,6 +128,26 @@ describe(parseRulebookFile, () => {
     expect(() => parseRulebookFile(rulebookFile('slug: Shell_Conventions'))).toThrow(/slug/);
   });
 
+  it.each([
+    ['a single harness id', 'supported-harnesses: claude', ['claude']],
+    ['a list of harness ids', 'supported-harnesses: [claude, rovo]', ['claude', 'rovo']],
+    ['an empty list', 'supported-harnesses: []', undefined],
+    ['an empty value, which YAML reads as null', 'supported-harnesses:', undefined],
+    ['an absent key', '', undefined],
+  ])('normalizes %s in supported-harnesses', (_label, declaration, expected) => {
+    const { rulebook } = parseRulebookFile(rulebookFile(`slug: x\n${declaration}`));
+
+    expect(rulebook['supported-harnesses']).toEqual(expected);
+  });
+
+  it('throws on an unknown harness id, naming the file, the value, and the known ids', () => {
+    expect(() =>
+      parseRulebookFile(rulebookFile('slug: x\nsupported-harnesses: [claude, codex]'), 'rulebooks/x.md'),
+    ).toThrow(
+      'Invalid rulebook frontmatter in rulebooks/x.md: supported-harnesses: unknown harness "codex"; known harnesses are claude, rovo',
+    );
+  });
+
   it('names the source in the error when validation fails', () => {
     expect(() => parseRulebookFile(rulebookFile('description: no slug'), 'rulebooks/bad.md')).toThrow(
       /rulebooks\/bad\.md/,

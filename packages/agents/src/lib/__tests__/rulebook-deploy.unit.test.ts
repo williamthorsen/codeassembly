@@ -63,6 +63,28 @@ describe(resolveRulebook, () => {
     expect(resolved.body).not.toContain('The lower rule.');
   });
 
+  it('reads the harnesses to which the rulebook deploys', async () => {
+    await writeRulebook(contentDir, 'claude-models', 'Use the latest model.', 'supported-harnesses: claude');
+
+    const resolved = await resolveRulebook(
+      'claude-models',
+      createSourceResolver([{ name: 'codeassembly', dir: contentDir }]),
+    );
+
+    expect(resolved.targetHarnesses).toEqual(['claude']);
+  });
+
+  it('when supported-harnesses is absent, leaves targetHarnesses undefined', async () => {
+    await writeRulebook(contentDir, 'comment-rules', 'Every comment pays rent.');
+
+    const resolved = await resolveRulebook(
+      'comment-rules',
+      createSourceResolver([{ name: 'codeassembly', dir: contentDir }]),
+    );
+
+    expect(resolved).not.toHaveProperty('targetHarnesses');
+  });
+
   it('reports the file and line when an include target is missing', async () => {
     await writeRulebook(contentDir, 'comment-rules', '<!-- include: _partials/ghost.md / -->');
 
@@ -86,11 +108,15 @@ function buildAlwaysResolvingResolver(dir: string): SourceResolver {
   };
 }
 
-/** Writes a rulebook frontmatter file under `contentDir`, with `body` following its frontmatter. */
-async function writeRulebook(contentDir: string, slug: string, body: string): Promise<void> {
+/**
+ * Writes a rulebook frontmatter file under `contentDir`, with `body` following its frontmatter and `extraFrontmatter`
+ * appended to the slug line.
+ */
+async function writeRulebook(contentDir: string, slug: string, body: string, extraFrontmatter = ''): Promise<void> {
   const filePath = path.join(contentDir, 'guidance', 'rulebooks', `${slug}.md`);
   await mkdir(path.dirname(filePath), { recursive: true });
-  await writeFile(filePath, `---\nslug: ${slug}\n---\n\n${body}\n`, 'utf8');
+  const frontmatter = extraFrontmatter === '' ? `slug: ${slug}` : `slug: ${slug}\n${extraFrontmatter}`;
+  await writeFile(filePath, `---\n${frontmatter}\n---\n\n${body}\n`, 'utf8');
 }
 
 /** Writes a partial beside the rulebooks, where a rulebook body's relative include resolves it. */

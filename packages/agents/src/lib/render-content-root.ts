@@ -18,7 +18,7 @@ import {
   renderGuidanceTemplateFile,
   resolveGuidanceTemplateDir,
 } from './guidance-template.ts';
-import { HARNESSES } from './harness.ts';
+import { artifactTargetsHarness, HARNESSES } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
 import type { RulebookInvocationCatalog } from './invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts';
@@ -31,7 +31,7 @@ import {
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
 import { renderSkillFile } from './rulebook-skill.ts';
 import { renderRulebookBody, type RulebookRenderContext } from './rulebook-transform.ts';
-import { renderDeployedSkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from './skill-deploy.ts';
+import { renderDeployedSkill, resolveDeclaredSkill, type ResolvedSkill } from './skill-deploy.ts';
 import { type RenderedSkillEntry, renderSupportEntry, type SkillDeployContext } from './skill-transform.ts';
 import {
   renderDeployedSubagent,
@@ -128,7 +128,7 @@ export async function renderResolvedContentRoot(
   const anchorContext: LinkAnchorContext = {
     deployedSkillDirs: new Set([
       ...artifacts.rulebooks.filter((book) => book.skill).map((book) => book.skillName),
-      ...artifacts.skills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+      ...artifacts.skills.filter((skill) => artifactTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
     ]),
     domainBase: '~',
     homeDir: config.homeDir,
@@ -204,7 +204,7 @@ export async function renderResolvedContentRoot(
   }
 
   for (const skill of artifacts.skills) {
-    if (!skillTargetsHarness(skill, harnessId)) {
+    if (!artifactTargetsHarness(skill, harnessId)) {
       continue;
     }
     await collect(artifactFrontmatterPath('skill', skill.slug), async () =>

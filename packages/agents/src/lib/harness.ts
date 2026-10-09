@@ -58,6 +58,12 @@ export const HARNESSES: Record<HarnessId, HarnessConfig> = {
   },
 };
 
+/**
+ * The frontmatter key by which a skill or a rulebook narrows itself to specific harnesses. Qualified rather than a bare
+ * `harnesses`, which a declaration file uses for the unrelated job of choosing which harnesses a sync run targets.
+ */
+export const SUPPORTED_HARNESSES_KEY = 'supported-harnesses';
+
 /** Every known harness identifier. */
 export const ALL_HARNESS_IDS: ReadonlyArray<HarnessId> = ['claude', 'rovo'];
 
@@ -67,6 +73,16 @@ const HARNESS_ID_SET: ReadonlySet<string> = new Set(ALL_HARNESS_IDS);
 /** Narrows an arbitrary string to a known harness identifier. */
 export function isHarnessId(value: string): value is HarnessId {
   return HARNESS_ID_SET.has(value);
+}
+
+/**
+ * True when an artifact targets `harnessId`: Either it doesn't name any harness (so all of them) or it lists this one.
+ */
+export function artifactTargetsHarness(
+  artifact: { readonly targetHarnesses?: ReadonlyArray<HarnessId> },
+  harnessId: HarnessId,
+): boolean {
+  return artifact.targetHarnesses === undefined || artifact.targetHarnesses.includes(harnessId);
 }
 
 /**

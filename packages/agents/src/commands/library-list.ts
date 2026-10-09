@@ -13,10 +13,10 @@ import { describeMissingSource, resolveDeclaredSources } from '../lib/declared-s
 import { emitReport, printLine, readOutputStyle } from '../lib/emit-report.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
+import { SUPPORTED_HARNESSES_KEY } from '../lib/harness.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
 import { resolveTerminalWidth } from '../lib/resolve-terminal-width.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { SUPPORTED_HARNESSES_KEY } from '../lib/skill-deploy.ts';
 import { isRecord } from '../lib/type-guards.ts';
 
 /** A single artifact's normalized listing fields, before its type is attached. */

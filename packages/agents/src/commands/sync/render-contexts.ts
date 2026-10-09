@@ -1,12 +1,12 @@
 import type { GuidanceHookFills } from '../../lib/guidance-hooks.ts';
-import { HARNESSES, resolveHarnessPaths } from '../../lib/harness.ts';
+import { artifactTargetsHarness, HARNESSES, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
 import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { createContentRootLinkAnchor, type LinkAnchorContext } from '../../lib/link-anchor.ts';
 import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
 import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import type { ResolveRulebookContext, RulebookRenderContext } from '../../lib/rulebook-transform.ts';
-import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import type { SkillDeployContext } from '../../lib/skill-transform.ts';
 import type { SubagentDeployContext } from '../../lib/subagent-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
@@ -38,7 +38,7 @@ export function createAnchorContextResolver(
       supportEntries: supportEntriesBySource.get(supportNamespace) ?? new Set(),
       supportNamespace,
       deployedSkillDirs: new Set([
-        ...resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+        ...resolvedSkills.filter((skill) => artifactTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
         ...rulebookSkillDirs,
       ]),
       domainBase,

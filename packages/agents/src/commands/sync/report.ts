@@ -13,8 +13,8 @@ import { formatBytes, formatDelta } from '../../deployed-sizes/format-bytes.ts';
 import { renderAggregates } from '../../deployed-sizes/render-aggregates.ts';
 import type { ArtifactType } from '../../lib/artifact-types.ts';
 import { describeMissingSource } from '../../lib/declared-sources.ts';
+import { artifactTargetsHarness } from '../../lib/harness.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
-import { skillTargetsHarness } from '../../lib/skill-deploy.ts';
 import { describeHarnessTargeting } from '../../lib/target-harnesses.ts';
 import type { AmbientHostPlan, AmbientSkipReason } from './ambient-hosts.ts';
 import type { DroppedHarnessRetraction, HostRetraction } from './harness-retraction.ts';
@@ -215,7 +215,7 @@ function describeDeliveries(plan: SyncPlan): string {
   const skillFilesWritten = plan.resolved.filter((rulebook) => rulebook.skill).length * plan.harnessSkillTargets.length;
   const declaredSkillsDeployed = plan.harnessSkillTargets.reduce(
     (total, { harnessId }) =>
-      total + plan.resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).length,
+      total + plan.resolvedSkills.filter((skill) => artifactTargetsHarness(skill, harnessId)).length,
     0,
   );
   const subagentsDeployed = plan.resolvedSubagents.length * plan.harnessSubagentTargets.length;
@@ -410,7 +410,7 @@ function describePlannedWrites(plan: SyncPlan): ReadonlyArray<ReportLine> {
   }
   for (const skill of plan.resolvedSkills) {
     for (const { skillsDir, harnessId } of plan.harnessSkillTargets) {
-      if (skillTargetsHarness(skill, harnessId)) {
+      if (artifactTargetsHarness(skill, harnessId)) {
         lines.push({ level: 'info', text: `  deploy declared skill ${path.join(skillsDir, skill.slug)}` });
       }
     }

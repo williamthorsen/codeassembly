@@ -9,8 +9,9 @@ import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
 import { makeArtifactMarker } from '../../lib/artifact-marker.ts';
+import { artifactTargetsHarness } from '../../lib/harness.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
-import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import { isEnoent, isMissingFile } from '../../lib/type-guards.ts';
 import type { HarnessId } from '../../lib/types.ts';
 
@@ -26,7 +27,7 @@ export async function findDeclaredSkillOrphans(
   return Promise.all(
     targets.map(async ({ harnessId, skillsDir }) => {
       const targetedSlugs = new Set(
-        resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+        resolvedSkills.filter((skill) => artifactTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
       );
       return {
         skillsDir,

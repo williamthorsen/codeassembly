@@ -7,19 +7,13 @@ import { makeArtifactMarker } from './artifact-marker.ts';
 import { artifactFrontmatterPath } from './artifact-types.ts';
 import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
-import { ALL_HARNESS_IDS, isHarnessId } from './harness.ts';
+import { ALL_HARNESS_IDS, isHarnessId, SUPPORTED_HARNESSES_KEY } from './harness.ts';
 import { writeRenderedTree } from './rendered-tree.ts';
 import { type RenderedSkillEntry, renderSkillDirectory, type SkillDeployContext } from './skill-transform.ts';
 import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';
 
 const skillMarker = makeArtifactMarker('skill');
-
-/**
- * The frontmatter key by which a skill narrows itself to specific harnesses. Qualified rather than a bare `harnesses`,
- * which a declaration file uses for the unrelated job of choosing which harnesses a sync run targets.
- */
-export const SUPPORTED_HARNESSES_KEY = 'supported-harnesses';
 
 /**
  * Matches the key's own frontmatter line. Anchored at line start, which keeps it from also matching a longer
@@ -122,11 +116,6 @@ export function readTargetHarnesses(skillContent: string, slug: string): Readonl
     harnesses.push(value);
   }
   return harnesses;
-}
-
-/** True when a skill targets `harnessId`; either it doesn't name any harness (so all of them) or lists this one. */
-export function skillTargetsHarness(skill: ResolvedSkill, harnessId: HarnessId): boolean {
-  return skill.targetHarnesses === undefined || skill.targetHarnesses.includes(harnessId);
 }
 
 // region | Helpers
