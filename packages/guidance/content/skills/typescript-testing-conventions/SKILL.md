@@ -102,3 +102,28 @@ it('processes user data correctly', () => {
   expect(user.name).toBe('John Doe');
 });
 ```
+
+## Console and stream output
+
+The `testing-conventions` skill states the rule: A passing test prints nothing beyond the runner's report. These are the TypeScript techniques for applying it. Each helper restores what it replaced when its `using` scope ends.
+
+- **Console calls under Vitest:** `silenceConsole` from `@williamthorsen/toolbelt.vitest/candidate` silences the named console methods and returns a spy for each one. To assert on the output, pass a spy to `listConsoleLines` from the same module, which returns one line per call.
+- **Rendered stream output:** `captureStdio` from `@williamthorsen/toolbelt.testing/candidate` buffers what is written to stdout and stderr, including format specifiers and inspected objects. Pass `includeConsole: true` when the code reports through `console`.
+
+```typescript
+import { listConsoleLines, silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+
+it('if a deprecated option is passed, warns once', () => {
+  using silent = silenceConsole(['warn']);
+  parseOptions({ legacy: true });
+  expect(listConsoleLines(silent.warn)).toStrictEqual([expect.stringContaining('deprecated')]);
+});
+```
+
+Where the project does not depend on these packages, spy on the method with the runner, and restore the spy in `afterEach` or through the runner's `restoreMocks` option:
+
+```typescript
+const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+```
+
+Under Jest, `jest.spyOn` takes the same form.
