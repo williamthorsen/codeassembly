@@ -1,34 +1,25 @@
 import type { GuidanceHookFills } from '../../lib/guidance-hooks.ts';
-import { HARNESSES, resolveHarnessPaths } from '../../lib/harness.ts';
+import { artifactTargetsHarness, HARNESSES, resolveHarnessPaths } from '../../lib/harness.ts';
 import { loadHarnessOverlay } from '../../lib/harness-overlay.ts';
-import type { RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
+import { buildRulebookInvocationCatalog, type RulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { createContentRootLinkAnchor, type LinkAnchorContext } from '../../lib/link-anchor.ts';
 import type { ResolveLinkAnchor } from '../../lib/path-rewriter.ts';
 import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import type { ResolveRulebookContext, RulebookRenderContext } from '../../lib/rulebook-transform.ts';
-import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import type { SkillDeployContext } from '../../lib/skill-transform.ts';
 import type { SubagentDeployContext } from '../../lib/subagent-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
 
 /**
- * Indexes the deployed rulebooks by slug, so that a `{rulebook:<slug>}` token renders the skill name under which its
- * target deploys. Harness-invariant, unlike the render contexts that contain it: What a rulebook deploys as does not
- * vary by harness.
- */
-export function buildRulebookInvocationCatalog(resolved: ReadonlyArray<ResolvedRulebook>): RulebookInvocationCatalog {
-  return new Map(resolved.map((rulebook) => [rulebook.slug, { skillName: rulebook.skillName, skill: rulebook.skill }]));
-}
-
-/**
- * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` names the skill
- * directories that the rulebook-delivery pass writes, which are delivered to every targeted harness;
- * `resolvedSkills` is filtered per harness instead, because a declared skill may target only some.
- * `supportEntriesBySource` maps each declared source's name to the support entries that it ships.
+ * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` maps each harness to
+ * the skill directories that the rulebook-delivery pass writes there, keyed by slug; `resolvedSkills` is filtered per
+ * harness, because a declared skill may target only some. `supportEntriesBySource` maps each declared source's name to
+ * the support entries that it ships.
  */
 export function createAnchorContextResolver(
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
-  rulebookSkillDirs: ReadonlyArray<string>,
+  rulebookSkillDirs: ReadonlyMap<HarnessId, ReadonlyMap<string, string>>,
   domainBase: string,
   supportEntriesBySource: ReadonlyMap<string, ReadonlySet<string>>,
 ): ResolveAnchorContext {
@@ -38,8 +29,8 @@ export function createAnchorContextResolver(
       supportEntries: supportEntriesBySource.get(supportNamespace) ?? new Set(),
       supportNamespace,
       deployedSkillDirs: new Set([
-        ...resolvedSkills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
-        ...rulebookSkillDirs,
+        ...resolvedSkills.filter((skill) => artifactTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+        ...(rulebookSkillDirs.get(harnessId)?.values() ?? []),
       ]),
       domainBase,
       guidanceFileName: config.guidanceFileName,
@@ -190,7 +181,7 @@ function buildRulebookRenderContext(
     harnessId: config.id,
     skillSigil: config.skillSigil,
     subagentSigil: config.subagentSigil,
-    rulebooks: buildRulebookInvocationCatalog(resolved),
+    rulebooks: buildRulebookInvocationCatalog(resolved, harnessId),
   };
 }
 

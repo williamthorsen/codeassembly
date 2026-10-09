@@ -18,9 +18,9 @@ import {
   renderGuidanceTemplateFile,
   resolveGuidanceTemplateDir,
 } from './guidance-template.ts';
-import { HARNESSES } from './harness.ts';
+import { artifactTargetsHarness, HARNESSES } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
-import type { RulebookInvocationCatalog } from './invocation-tokens.ts';
+import { buildRulebookInvocationCatalog } from './invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from './library-catalog.ts';
 import {
   createContentRootLinkAnchor,
@@ -31,7 +31,7 @@ import {
 import { type ResolvedRulebook, resolveRulebook } from './rulebook-deploy.ts';
 import { renderSkillFile } from './rulebook-skill.ts';
 import { renderRulebookBody, type RulebookRenderContext } from './rulebook-transform.ts';
-import { renderDeployedSkill, resolveDeclaredSkill, type ResolvedSkill, skillTargetsHarness } from './skill-deploy.ts';
+import { renderDeployedSkill, resolveDeclaredSkill, type ResolvedSkill } from './skill-deploy.ts';
 import { type RenderedSkillEntry, renderSupportEntry, type SkillDeployContext } from './skill-transform.ts';
 import {
   renderDeployedSubagent,
@@ -127,8 +127,10 @@ export async function renderResolvedContentRoot(
   const supportEntries = await listSupportEntries(skillsDir);
   const anchorContext: LinkAnchorContext = {
     deployedSkillDirs: new Set([
-      ...artifacts.rulebooks.filter((book) => book.skill).map((book) => book.skillName),
-      ...artifacts.skills.filter((skill) => skillTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
+      ...artifacts.rulebooks
+        .filter((book) => book.skill && artifactTargetsHarness(book, harnessId))
+        .map((book) => book.skillName),
+      ...artifacts.skills.filter((skill) => artifactTargetsHarness(skill, harnessId)).map((skill) => skill.slug),
     ]),
     domainBase: '~',
     homeDir: config.homeDir,
@@ -137,9 +139,7 @@ export async function renderResolvedContentRoot(
     supportNamespace: rootRef.name,
   };
   // One catalog for every render, so that a `{rulebook:<slug>}` token resolves here exactly as it will under `sync`.
-  const rulebooks: RulebookInvocationCatalog = new Map(
-    artifacts.rulebooks.map((book) => [book.slug, { skillName: book.skillName, skill: book.skill }]),
-  );
+  const rulebooks = buildRulebookInvocationCatalog(artifacts.rulebooks, harnessId);
   const rulebookContext: RulebookRenderContext = {
     anchor: createContentRootLinkAnchor(anchorContext),
     guidanceFileName: config.guidanceFileName,
@@ -184,6 +184,9 @@ export async function renderResolvedContentRoot(
 
   const renderedAmbient: Array<ResolvedRulebook> = [];
   for (const rulebook of artifacts.rulebooks) {
+    if (!artifactTargetsHarness(rulebook, harnessId)) {
+      continue;
+    }
     const didRender = await collect(artifactFrontmatterPath('rulebook', rulebook.slug), () => {
       const body = renderRulebookBody(rulebook.body, rulebook.slug, rulebookContext);
       if (!rulebook.skill) {
@@ -204,7 +207,7 @@ export async function renderResolvedContentRoot(
   }
 
   for (const skill of artifacts.skills) {
-    if (!skillTargetsHarness(skill, harnessId)) {
+    if (!artifactTargetsHarness(skill, harnessId)) {
       continue;
     }
     await collect(artifactFrontmatterPath('skill', skill.slug), async () =>

@@ -2,7 +2,7 @@
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, how broad a guidance change goes, and when a procedure belongs in a helper.
 delivery: skill
-version: '28'
+version: '29'
 ---
 
 # CodeAssembly content specification
@@ -55,7 +55,7 @@ Rulebooks, skills, and subagents all support tokens; collections do not have a b
 
 That boundary decides what a shared partial may contain. A partial inlined by both a skill body and a support entry cannot contain a `{rulebook:<slug>}` token: It renders in the skill but breaks the support entry's delivery.
 
-Only `{rulebook:<slug>}` is checked for deployability. A `{skill:<slug>}` or `{subagent:<slug>}` token renders on every harness to which the body deploys, including one to which its target does not deploy: A token naming a skill that narrows itself with `supported-harnesses:` still renders an invocation elsewhere. Name such a skill only where the surrounding text already scopes it to that harness. _(Convention; not enforced.)_
+Only `{rulebook:<slug>}` is checked for deployability, and the check covers the target's `supported-harnesses:`: A token in a body that deploys to a harness that the target excludes fails the run, naming the harnesses to which the target deploys. A subagent's `rulebooks:` entry is checked the same way. A `{skill:<slug>}` or `{subagent:<slug>}` token renders on every harness to which the body deploys, including one to which its target does not deploy: A token naming a skill that narrows itself with `supported-harnesses:` still renders an invocation elsewhere. Name such a skill only where the surrounding text already scopes it to that harness. _(Convention; not enforced.)_
 
 Reserve a `dependencies:` entry for a non-inline edge; use a token for any invocation that appears in the body. _(Convention; not enforced.)_
 
@@ -101,7 +101,7 @@ members:
 
 ## Frontmatter fields
 
-- **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `hook`, `skill`, or a non-empty list of them; defaults to `ambient`), optional `skill-name`, optional `version`. A declared `version` is an opaque string, never parsed as semver, and every route that delivers the rulebook names it on a `<!-- rulebook-version: <version> -->` line directly below the marker that names the slug, so that an agent can read which version of a rulebook it has. A route omits the line for a rulebook that does not declare a version. Quote the value: YAML reads an unquoted `1.10` as the number `1.1`, and the schema rejects a non-string rather than deploying the digits that it lost. It rejects a value that the version line cannot contain on its own, which is a blank one, a multi-line one, and one containing `-->`.
+- **Rulebooks:** `slug`, optional `description`, optional `delivery` (`ambient`, `hook`, `skill`, or a non-empty list of them; defaults to `ambient`), optional `skill-name`, optional `supported-harnesses` (a harness id or list restricting every delivery mode to those harnesses; absent deploys to all), optional `version`. A declared `version` is an opaque string, never parsed as semver, and every route that delivers the rulebook names it on a `<!-- rulebook-version: <version> -->` line directly below the marker that names the slug, so that an agent can read which version of a rulebook it has. A route omits the line for a rulebook that does not declare a version. Quote the value: YAML reads an unquoted `1.10` as the number `1.1`, and the schema rejects a non-string rather than deploying the digits that it lost. It rejects a value that the version line cannot contain on its own, which is a blank one, a multi-line one, and one containing `-->`.
 - **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all). The deploy writes every other key to every harness unchanged, so a key that only one harness reads, such as Claude's `context` or `model`, reaches the others, which ignore it.
 - **Subagents:** `name`, `description`, optional `tools`, optional `disallowedTools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context), optional `rulebooks` (rulebooks injected the same way, named by slug rather than by deploy name, so that a `skill-name` override on the target stays correct). `sync` pulls both lists into the deploy closure, merges each injected rulebook's deploy name into the deployed `skills:`, and drops the `rulebooks:` key from what it writes.
 - **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.

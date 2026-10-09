@@ -25,11 +25,10 @@ import { findSupportEntryTokenDefects } from './content-rules/support-entry-toke
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
 import { listMarkdownFilesRecursively } from './fs-helpers.ts';
-import { HARNESSES } from './harness.ts';
+import { HARNESSES, SUPPORTED_HARNESSES_KEY } from './harness.ts';
 import { loadHarnessOverlay } from './harness-overlay.ts';
 import { locateInvocationTokens } from './invocation-tokens.ts';
 import { renderResolvedContentRoot, resolveContentRoot, type ResolvedRootArtifacts } from './render-content-root.ts';
-import { SUPPORTED_HARNESSES_KEY } from './skill-deploy.ts';
 import { findSourceProblem } from './source-validation.ts';
 import { isRecord } from './type-guards.ts';
 import type { HarnessId } from './types.ts';

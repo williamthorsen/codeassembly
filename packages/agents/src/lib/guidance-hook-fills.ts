@@ -1,4 +1,5 @@
 import type { GuidanceHookFill, GuidanceHookFills } from './guidance-hooks.ts';
+import { artifactTargetsHarness } from './harness.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook } from './rulebook-deploy.ts';
 import { renderRulebookBody, type ResolveRulebookContext } from './rulebook-transform.ts';
 import type { HarnessId } from './types.ts';
@@ -21,9 +22,9 @@ export function buildGuidanceHookFills(
       hook,
       slugs.flatMap((slug) => {
         // A bound rulebook rejected by resolution or by its own render is left out rather than raised again here: Its
-        // own defect names it.
+        // own defect names it. One that excludes this harness is left out too, because it does not deploy here.
         const rulebook = bySlug.get(slug);
-        if (rulebook === undefined) {
+        if (rulebook === undefined || !artifactTargetsHarness(rulebook, harnessId)) {
           return [];
         }
         try {

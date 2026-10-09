@@ -3,10 +3,10 @@ import path from 'node:path';
 
 import type { DeployedFileKind } from '../../deployed-sizes/types.ts';
 import { readDirEntriesRecursively } from '../../lib/fs-helpers.ts';
-import { resolveHarnessPaths } from '../../lib/harness.ts';
+import { artifactTargetsHarness, resolveHarnessPaths } from '../../lib/harness.ts';
 import { SOURCE_SUPPORT_DIR } from '../../lib/link-anchor.ts';
 import { getManifestPath, readManifest } from '../../lib/manifest.ts';
-import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
 import type { SyncDomain } from './sync-domain.ts';
 
@@ -82,6 +82,7 @@ export interface DeployedPathSources {
     readonly source: string;
     readonly srcPath: string;
     readonly contentRoot: string;
+    readonly targetHarnesses?: ReadonlyArray<HarnessId>;
   }>;
   readonly resolvedSkills: ReadonlyArray<ResolvedSkill>;
   readonly resolvedSubagents: ReadonlyArray<{
@@ -140,19 +141,18 @@ export async function collectDeployedPaths(
   const base = domain.ambient === 'harness-home' ? homeDir : domain.baseDir;
   const collected = new Map<string, DeployedPath>();
 
-  const rulebookSkillDirs = plan.resolved
-    .filter((rulebook) => rulebook.skill)
-    .map((rulebook) => ({ dir: rulebook.skillName, authored: describeAuthoredSource(rulebook) }));
   for (const target of plan.harnessSkillTargets) {
     const { harnessId, skillsDir } = target;
     const skillDirs = [
       ...plan.resolvedSkills
-        .filter((skill) => skillTargetsHarness(skill, harnessId))
+        .filter((skill) => artifactTargetsHarness(skill, harnessId))
         .map((skill) => ({
           dir: skill.slug,
           authored: describeAuthoredSource({ ...skill, srcPath: path.join(skill.srcDir, SKILL_FILENAME) }),
         })),
-      ...rulebookSkillDirs,
+      ...plan.resolved
+        .filter((rulebook) => rulebook.skill && artifactTargetsHarness(rulebook, harnessId))
+        .map((rulebook) => ({ dir: rulebook.skillName, authored: describeAuthoredSource(rulebook) })),
     ];
     for (const { dir, authored } of skillDirs) {
       const context = { harnessId, base, sourceRoot: resolveSourceRoot(authored.sourceName), authored };

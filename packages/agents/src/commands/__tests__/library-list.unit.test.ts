@@ -89,6 +89,14 @@ describe(libraryListCommand, () => {
       expect(lines.find((line) => line.includes('charlie-skill'))).toContain('rovo');
     });
 
+    it("appends a harness-restricted rulebook's target harnesses to its delivery modes", async () => {
+      const { output } = await captureList({ global: false }, projectDir, homeDir);
+      const lines = output.split('\n');
+
+      expect(lines.find((line) => line.includes('restricted-rulebook'))).toContain('ambient, skill (claude)');
+      expect(lines.find((line) => line.includes('sample-rulebook'))).not.toContain('(');
+    });
+
     it('lists a subagent with an em-dash delivery, since a subagent does not have a delivery mode', async () => {
       const { output } = await captureList({ global: false }, projectDir, homeDir);
       const lines = output.split('\n');
@@ -321,6 +329,15 @@ async function writeLibraryFixture(contentDir: string): Promise<void> {
   await writeFile(
     path.join(rulebooks, 'sample.md'),
     renderFrontmatter({ slug: 'sample-rulebook', description: 'Sample rulebook.', delivery: '[ambient, skill]' }),
+  );
+  await writeFile(
+    path.join(rulebooks, 'restricted.md'),
+    renderFrontmatter({
+      slug: 'restricted-rulebook',
+      description: 'Restricted rulebook.',
+      delivery: '[ambient, skill]',
+      'supported-harnesses': 'claude',
+    }),
   );
   await writeFile(path.join(rulebooks, '_hidden.md'), renderFrontmatter({ slug: 'hidden-rulebook' }));
   await writeFile(path.join(rulebooks, 'bad.md'), renderFrontmatter({ slug: 'Not A Valid Slug' }));

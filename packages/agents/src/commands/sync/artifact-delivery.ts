@@ -2,11 +2,12 @@ import { mkdir, rm } from 'node:fs/promises';
 import path from 'node:path';
 
 import { writeIfChanged } from '../../lib/fs-helpers.ts';
+import { artifactTargetsHarness } from '../../lib/harness.ts';
 import { createContentRootLinkAnchor, createSkillLinkAnchor } from '../../lib/link-anchor.ts';
 import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { renderSkillFile } from '../../lib/rulebook-skill.ts';
 import { renderRulebookBody, type ResolveRulebookContext } from '../../lib/rulebook-transform.ts';
-import { deploySkill, type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import { deploySkill, type ResolvedSkill } from '../../lib/skill-deploy.ts';
 import { deploySubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import type { HarnessId } from '../../lib/types.ts';
 import type {
@@ -33,7 +34,7 @@ export async function reconcileDeclaredSkills(
       await rm(path.join(target.skillsDir, dir), { recursive: true, force: true });
     }
     for (const skill of resolvedSkills) {
-      if (!skillTargetsHarness(skill, target.harnessId)) {
+      if (!artifactTargetsHarness(skill, target.harnessId)) {
         continue;
       }
       await deploySkill(skill, path.join(target.skillsDir, skill.slug), {
@@ -72,10 +73,10 @@ export async function reconcileDeclaredSubagents(
 }
 
 /**
- * Retracts sync-owned skill dirs that are no longer current, then writes every skill-delivery rulebook into each
- * targeted harness's skills dir. Orphans were computed against the pre-write filesystem, so retracting before writing
- * lets a skill name freed by one rulebook be recreated for another in the same sync, instead of the write being
- * clobbered by a later retract.
+ * Retracts sync-owned skill dirs that are no longer current, then writes every skill-delivery rulebook into the skills
+ * dir of each targeted harness that the rulebook targets. Orphans were computed against the pre-write filesystem, so
+ * retracting before writing lets a skill name freed by one rulebook be recreated for another in the same sync, instead
+ * of the write being clobbered by a later retract.
  */
 export async function reconcileRulebookSkills(
   orphansByDir: ReadonlyArray<{ harnessId: HarnessId; skillsDir: string; orphans: ReadonlyArray<string> }>,
@@ -87,7 +88,7 @@ export async function reconcileRulebookSkills(
       await rm(path.join(skillsDir, dir), { recursive: true, force: true });
     }
     for (const rulebook of resolved) {
-      if (!rulebook.skill) {
+      if (!rulebook.skill || !artifactTargetsHarness(rulebook, harnessId)) {
         continue;
       }
       const skillDir = path.join(skillsDir, rulebook.skillName);

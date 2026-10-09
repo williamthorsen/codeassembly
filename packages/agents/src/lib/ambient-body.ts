@@ -1,3 +1,4 @@
+import { artifactTargetsHarness } from './harness.ts';
 import type { ResolvedRulebook } from './rulebook-deploy.ts';
 import { renderRulebookBody, type ResolveRulebookContext } from './rulebook-transform.ts';
 import { injectRulebook, injectSentinelBlock } from './sentinel-inliner.ts';
@@ -11,10 +12,10 @@ export interface AmbientReference {
 }
 
 /**
- * Renders the ambient rulebooks, then the references, as concatenated sentinel blocks beneath the generated-region
- * note: the wholesale content of one harness's ambient region. The context is one harness's, so the same rulebook
- * yields that harness's own absolute paths. An empty result stays empty: The note belongs to generated content, and
- * callers read emptiness as "nothing to deliver here".
+ * Renders the ambient rulebooks that target the harness, then the references, as concatenated sentinel blocks beneath
+ * the generated-region note: the wholesale content of one harness's ambient region. The context is one harness's, so
+ * the same rulebook yields that harness's own absolute paths. An empty result stays empty: The note belongs to
+ * generated content, and callers read emptiness as "nothing to deliver here".
  */
 export function renderAmbientBody(
   resolved: ReadonlyArray<ResolvedRulebook>,
@@ -24,7 +25,7 @@ export function renderAmbientBody(
 ): string {
   let body = '';
   for (const rulebook of resolved) {
-    if (!rulebook.ambient) {
+    if (!rulebook.ambient || !artifactTargetsHarness(rulebook, harnessId)) {
       continue;
     }
     const context = resolveRulebookContext(harnessId, rulebook.source);

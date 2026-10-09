@@ -10,11 +10,12 @@ import { describeSearchedLocations, type SourceResolver } from '../../lib/conten
 import type { DirectArtifacts } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
+import { artifactTargetsHarness } from '../../lib/harness.ts';
 import { createContentRootLinkAnchor, createSkillLinkAnchor } from '../../lib/link-anchor.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
 import { renderRulebookBody, type ResolveRulebookContext } from '../../lib/rulebook-transform.ts';
-import { type ResolvedSkill, skillTargetsHarness } from '../../lib/skill-deploy.ts';
+import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
 import { renderSkillDirectory } from '../../lib/skill-transform.ts';
 import { renderSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import { isMissingFile } from '../../lib/type-guards.ts';
@@ -43,7 +44,7 @@ export function collectOwnedTargets(
   const targets: Array<OwnedTarget> = [];
   for (const { skillsDir, harnessId } of harnessSkillTargets) {
     for (const rulebook of resolved) {
-      if (rulebook.skill) {
+      if (rulebook.skill && artifactTargetsHarness(rulebook, harnessId)) {
         targets.push({
           filePath: path.join(skillsDir, rulebook.skillName, 'SKILL.md'),
           isOwned: (content) => extractRulebookSkillSlug(content) !== undefined,
@@ -51,7 +52,7 @@ export function collectOwnedTargets(
       }
     }
     for (const skill of resolvedSkills) {
-      if (!skillTargetsHarness(skill, harnessId)) {
+      if (!artifactTargetsHarness(skill, harnessId)) {
         continue;
       }
       targets.push({
@@ -204,7 +205,7 @@ export async function findDeclaredSkillRenderDefects(
   const raised: Array<HarnessDefect> = [];
   for (const target of targets) {
     for (const skill of resolvedSkills) {
-      if (!skillTargetsHarness(skill, target.harnessId)) {
+      if (!artifactTargetsHarness(skill, target.harnessId)) {
         continue;
       }
       try {
@@ -287,9 +288,9 @@ export async function findForeignOwnedTargetDefects(
 }
 
 /**
- * Renders every resolved rulebook against every targeted harness, discarding the output, so that a link target that
- * the delivery pipeline cannot honor is reported before any file is written. Both delivery passes re-render at write
- * time; this pass exists only to fail the run closed, including under `--dry-run`.
+ * Renders every resolved rulebook against each targeted harness that the rulebook targets, discarding the output, so
+ * that a link target that the delivery pipeline cannot honor is reported before any file is written. Both delivery
+ * passes re-render at write time; this pass exists only to fail the run closed, including under `--dry-run`.
  */
 export function findRulebookRenderDefects(
   harnessIds: ReadonlyArray<HarnessId>,
@@ -299,6 +300,9 @@ export function findRulebookRenderDefects(
   const raised: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
     for (const rulebook of resolved) {
+      if (!artifactTargetsHarness(rulebook, harnessId)) {
+        continue;
+      }
       try {
         renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source));
       } catch (error: unknown) {

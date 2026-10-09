@@ -9,6 +9,7 @@ import { listMarkdownFilesRecursively } from '../fs-helpers.ts';
 import { enumerateCatalogSlugs } from '../library-catalog.ts';
 import { resolveRulebook } from '../rulebook-deploy.ts';
 import { resolveDeclaredSkill } from '../skill-deploy.ts';
+import type { HarnessId } from '../types.ts';
 import { type RuleContext, toRootRelative } from './rule-context.ts';
 
 /**
@@ -23,7 +24,7 @@ const SKILL_REFERENCE_PATTERNS: ReadonlyArray<RegExp> = [
 /**
  * Reports each skill named in prose by a file under `guidance/shared/` that does not deploy to every harness: one that
  * the root does not contain, or one whose `supported-harnesses:` narrows it. A name under which a
- * `delivery: skill` rulebook deploys passes, since rulebook frontmatter does not narrow harnesses.
+ * `delivery: skill` rulebook deploys is held to the same test against the rulebook's own `supported-harnesses:`.
  *
  * Shared guidance is inlined into every harness guidance file, a route that does not rewrite any invocation token, so
  * a skill is named in prose and no parse gate sees the name. An agent following a dead pointer finds nothing, treats
@@ -34,7 +35,7 @@ export async function findSharedGuidanceReferenceDefects({
   resolver,
 }: RuleContext): Promise<ReadonlyArray<ContentDefect>> {
   const defects: Array<ContentDefect> = [];
-  let rulebookSkillNames: ReadonlySet<string> | undefined;
+  let rulebookSkills: ReadonlyMap<string, ReadonlyArray<HarnessId> | undefined> | undefined;
 
   const files = await listMarkdownFilesRecursively(path.join(root, 'guidance', 'shared'));
   for (const file of files) {
@@ -49,11 +50,10 @@ export async function findSharedGuidanceReferenceDefects({
 
     for (const [index, line] of body.split('\n').entries()) {
       for (const slug of collectSkillReferences(line)) {
-        rulebookSkillNames ??= await listRulebookSkillNames(root, resolver);
-        if (rulebookSkillNames.has(slug)) {
-          continue;
-        }
-        const problem = await findSkillProblem(slug, resolver);
+        rulebookSkills ??= await listRulebookSkills(root, resolver);
+        const problem = rulebookSkills.has(slug)
+          ? describeNarrowing(rulebookSkills.get(slug))
+          : await findSkillProblem(slug, resolver);
         if (problem !== undefined) {
           defects.push({
             file: relativePath,
@@ -83,33 +83,39 @@ export function collectSkillReferences(content: string): ReadonlySet<string> {
 
 // region | Helpers
 
+/** Describes the narrowing of an artifact to `targetHarnesses`, or returns `undefined` when it deploys to every one. */
+function describeNarrowing(targetHarnesses: ReadonlyArray<HarnessId> | undefined): string | undefined {
+  return targetHarnesses === undefined ? undefined : `which deploys only to ${targetHarnesses.join(', ')}`;
+}
+
 /** Describes why `slug` fails to deploy to every harness, or returns `undefined` when it does. */
 async function findSkillProblem(slug: string, resolver: SourceResolver): Promise<string | undefined> {
   if ((await resolver.resolve('skill', slug)) === undefined) {
     return 'which the content root does not contain';
   }
   try {
-    const skill = await resolveDeclaredSkill(slug, resolver);
-    return skill.targetHarnesses === undefined
-      ? undefined
-      : `which deploys only to ${skill.targetHarnesses.join(', ')}`;
+    return describeNarrowing((await resolveDeclaredSkill(slug, resolver)).targetHarnesses);
   } catch (error: unknown) {
     return `which cannot be resolved: ${describeError(error)}`;
   }
 }
 
 /**
- * Lists the names under which the root's `delivery: skill` rulebooks deploy. A rulebook that fails to resolve
- * contributes nothing; the resolution pass reports it.
+ * Maps each name under which the root's `delivery: skill` rulebooks deploy to the harnesses that the rulebook names,
+ * or to `undefined` when it deploys to every harness. A rulebook that fails to resolve contributes nothing; the
+ * resolution pass reports it.
  */
-async function listRulebookSkillNames(root: string, resolver: SourceResolver): Promise<ReadonlySet<string>> {
+async function listRulebookSkills(
+  root: string,
+  resolver: SourceResolver,
+): Promise<ReadonlyMap<string, ReadonlyArray<HarnessId> | undefined>> {
   const { rulebook: slugs = [] } = await enumerateCatalogSlugs(root);
-  const names = new Set<string>();
+  const names = new Map<string, ReadonlyArray<HarnessId> | undefined>();
   for (const slug of slugs) {
     try {
       const rulebook = await resolveRulebook(slug, resolver);
       if (rulebook.skill) {
-        names.add(rulebook.skillName);
+        names.set(rulebook.skillName, rulebook.targetHarnesses);
       }
     } catch {
       continue;

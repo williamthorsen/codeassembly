@@ -180,6 +180,34 @@ describe('syncCommand with guidance-hook bindings', () => {
     expect(await readFile(deployedPath, 'utf8')).toBe(first);
   });
 
+  it('leaves a bound rulebook out of the fill on a harness that it excludes', async () => {
+    await writeLibrarySkill(contentDir, 'implement-plan', 'Prose.\n\n<!-- guidance-hook: impl -->\n');
+    await writeLibraryRulebook(
+      contentDir,
+      'claude-models',
+      '# Claude models\n\nUse the latest model.\n',
+      'hook\nsupported-harnesses: claude',
+    );
+    await declare(projectRoot, contentDir, [
+      'skills:',
+      '  use:',
+      '    - implement-plan',
+      'guidance-hooks:',
+      '  impl:',
+      '    use:',
+      '      - claude-models',
+    ]);
+    await mkdir(path.join(homeDir, '.claude'), { recursive: true });
+    await mkdir(path.join(homeDir, '.rovo'), { recursive: true });
+
+    await syncCommand({ ...makeOptions(), harness: 'all' }, projectRoot, homeDir);
+
+    const readDeployed = (dotDir: string) =>
+      readFile(path.join(projectRoot, dotDir, 'skills', 'implement-plan', 'SKILL.md'), 'utf8');
+    expect(await readDeployed('.claude')).toContain('Use the latest model.');
+    expect(await readDeployed('.rovo')).not.toContain('Use the latest model.');
+  });
+
   describe('advisories', () => {
     it('reports a bound rulebook whose delivery never claims the hook route', async () => {
       await writeLibrarySkill(contentDir, 'implement-plan', '<!-- guidance-hook: impl -->\n');

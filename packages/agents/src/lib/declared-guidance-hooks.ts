@@ -3,7 +3,8 @@ import path from 'node:path';
 
 import { expandIncludes } from './directive-expander.ts';
 import { listGuidanceHooks } from './guidance-hooks.ts';
-import { type ResolvedSkill, skillTargetsHarness } from './skill-deploy.ts';
+import { artifactTargetsHarness } from './harness.ts';
+import type { ResolvedSkill } from './skill-deploy.ts';
 import { isSkippedSkillEntry } from './skill-transform.ts';
 import type { ResolvedSubagent } from './subagent-deploy.ts';
 import type { HarnessId } from './types.ts';
@@ -31,7 +32,7 @@ export async function listDeclaredGuidanceHooks(
   const declaredHooks = new Set<string>();
 
   for (const skill of resolvedSkills) {
-    if (harnessIds.every((harnessId) => !skillTargetsHarness(skill, harnessId))) {
+    if (harnessIds.every((harnessId) => !artifactTargetsHarness(skill, harnessId))) {
       continue;
     }
     const files = await listDeployedMarkdownFiles(skill.srcDir);

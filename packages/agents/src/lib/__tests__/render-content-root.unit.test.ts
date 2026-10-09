@@ -104,6 +104,55 @@ describe(renderContentRoot, () => {
     expect(unbound.get('skills/alpha/SKILL.md')).not.toContain('guidance-hook');
   });
 
+  it('leaves a rulebook out of every delivery mode on a harness that it excludes', async () => {
+    for (const harnessId of ['claude', 'rovo']) {
+      const fileName = harnessId === 'claude' ? 'CLAUDE.md' : 'AGENTS.md';
+      await writeFileAt(
+        root,
+        `guidance/_harnesses/${harnessId}/${fileName}`,
+        ['# Guidance', '', AMBIENT_OPEN_MARKER, AMBIENT_CLOSE_MARKER, ''].join('\n'),
+      );
+    }
+    await writeFileAt(
+      root,
+      'skills/alpha/SKILL.md',
+      '---\nname: alpha\ndescription: Alpha.\n---\n\n# Alpha\n\n<!-- guidance-hook: models -->\n',
+    );
+    await writeRulebook(
+      root,
+      'claude-models',
+      '[ambient, hook, skill]\nsupported-harnesses: claude',
+      'Use the latest model.',
+    );
+    const bindings = new Map([['models', ['claude-models']]]);
+
+    const claude = indexByPath(await renderContentRoot(root, 'claude', bindings));
+    const rovo = indexByPath(await renderContentRoot(root, 'rovo', bindings));
+
+    expect(claude.has('skills/consult-claude-models/SKILL.md')).toBe(true);
+    expect(claude.get('CLAUDE.md')).toContain('Use the latest model.');
+    expect(claude.get('skills/alpha/SKILL.md')).toContain('Use the latest model.');
+    expect(rovo.has('skills/consult-claude-models/SKILL.md')).toBe(false);
+    expect(rovo.get('AGENTS.md')).not.toContain('Use the latest model.');
+    expect(rovo.get('skills/alpha/SKILL.md')).not.toContain('Use the latest model.');
+  });
+
+  it('rejects a token that names a rulebook excluding the harness of the body that contains it', async () => {
+    await writeRulebook(root, 'claude-models', 'skill\nsupported-harnesses: claude');
+    await writeRulebook(root, 'dispatch', 'skill', 'See {rulebook:claude-models}.');
+
+    const claude = await renderContentRoot(root, 'claude');
+    const rovo = await renderContentRoot(root, 'rovo');
+
+    expect(claude.failures).toEqual([]);
+    expect(rovo.failures).toEqual([
+      {
+        file: 'guidance/rulebooks/dispatch.md',
+        error: expect.objectContaining({ message: expect.stringContaining('deploys only to claude') }),
+      },
+    ]);
+  });
+
   it('reports a binding to a rulebook that the root does not contain as a defect', async () => {
     await writeFileAt(
       root,

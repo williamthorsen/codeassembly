@@ -13,10 +13,10 @@ import { describeMissingSource, resolveDeclaredSources } from '../lib/declared-s
 import { emitReport, printLine, readOutputStyle } from '../lib/emit-report.ts';
 import { parseFrontmatter } from '../lib/frontmatter-merger.ts';
 import { listVisibleMarkdownFiles } from '../lib/fs-helpers.ts';
+import { SUPPORTED_HARNESSES_KEY } from '../lib/harness.ts';
 import { listSkillDirectories } from '../lib/library-catalog.ts';
 import { resolveTerminalWidth } from '../lib/resolve-terminal-width.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
-import { SUPPORTED_HARNESSES_KEY } from '../lib/skill-deploy.ts';
 import { isRecord } from '../lib/type-guards.ts';
 
 /** A single artifact's normalized listing fields, before its type is attached. */
@@ -234,7 +234,7 @@ async function listRulebooks(contentDir: string): Promise<Array<ArtifactEntry>> 
       const { rulebook } = parseRulebookFile(content, file);
       return {
         slug: rulebook.slug,
-        delivery: rulebook.delivery.join(', '),
+        delivery: formatRulebookDelivery(rulebook.delivery, rulebook[SUPPORTED_HARNESSES_KEY]),
         description: rulebook.description ?? '',
       };
     });
@@ -315,6 +315,18 @@ function readHarnessAffinity(content: string): string {
   const values = Array.isArray(declared) ? declared : [declared];
   const harnesses = values.filter((value): value is string => typeof value === 'string');
   return harnesses.length === 0 ? NO_DELIVERY_MODE : harnesses.join(', ');
+}
+
+/**
+ * Formats a rulebook's delivery cell: its delivery modes, followed by the harnesses to which it deploys in parentheses
+ * when it narrows them.
+ */
+function formatRulebookDelivery(
+  modes: ReadonlyArray<string>,
+  targetHarnesses: ReadonlyArray<string> | undefined,
+): string {
+  const delivery = modes.join(', ');
+  return targetHarnesses === undefined ? delivery : `${delivery} (${targetHarnesses.join(', ')})`;
 }
 
 /** Extracts the `name` and `description` strings from a markdown file's frontmatter, when present. */

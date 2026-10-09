@@ -14,6 +14,7 @@ import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-
 import { buildGuidanceHookFills } from '../../lib/guidance-hook-fills.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
+import { buildRulebookInvocationCatalog } from '../../lib/invocation-tokens.ts';
 import { enumerateCatalogSlugs, listSupportEntries } from '../../lib/library-catalog.ts';
 import { findUndeclaredGuidancePackages } from '../../lib/package-sources.ts';
 import { type ResolvedRulebook, resolveRulebook } from '../../lib/rulebook-deploy.ts';
@@ -33,7 +34,12 @@ import { reconcileDeclaredSkills, reconcileDeclaredSubagents, reconcileRulebookS
 import { planDroppedHarnessRetractions, retractDroppedHarnesses } from './harness-retraction.ts';
 import { findGuidanceHookAdvisories } from './hook-bindings.ts';
 import { retireAmbientHost, type Retirement, retireRetiredOutputs } from './legacy-retirement.ts';
-import { findDeclaredSkillOrphans, findRulebookSkillOrphans, findSubagentOrphans } from './owned-artifacts.ts';
+import {
+  buildDesiredRulebookSkillDirs,
+  findDeclaredSkillOrphans,
+  findRulebookSkillOrphans,
+  findSubagentOrphans,
+} from './owned-artifacts.ts';
 import {
   collectOwnedTargets,
   createDefectCollector,
@@ -54,7 +60,6 @@ import {
 import { refreshPromptsYml, resolvePromptsYmlPaths } from './prompts-index.ts';
 import { recordDeployedSizes } from './record-deployed-sizes.ts';
 import {
-  buildRulebookInvocationCatalog,
   createAnchorContextResolver,
   createOverlayLoader,
   createRulebookContextResolver,
@@ -244,26 +249,26 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
   const resolvedSubagents = subagentResolution.resolved;
   defects.add(subagentResolution.defects);
 
-  // Maps each skill-delivery rulebook's stable slug to the directory in which its skill currently belongs. Retraction
-  // compares this against what each owned directory's marker reports, so it retracts the old dir of a renamed skill.
-  const desiredSkillDirs = new Map(
-    resolved.filter((rulebook) => rulebook.skill).map((rulebook) => [rulebook.slug, rulebook.skillName] as const),
-  );
-
-  // One catalog for every body that addresses a rulebook by token (rulebook, skill, and subagent alike), so that two
-  // passes cannot disagree about what is addressable. The closure that it indexes already contains a rulebook named
-  // only by a skill's or subagent's token, since those tokens are dependency edges.
-  const rulebookCatalog = buildRulebookInvocationCatalog(resolved);
   const declaredSkillSet = new Set(resolvedSkills.map((skill) => skill.slug));
 
   // Rulebook skills and declared skills share the project-local skills dirs. A directory name claimed by both
   // delivery namespaces would clobber, so reject the overlap before any write.
-  defects.add(findCrossNamespaceCollisionDefects(desiredSkillDirs.values().toArray(), declaredSkillSet));
+  defects.add(
+    findCrossNamespaceCollisionDefects(
+      resolved.filter((rulebook) => rulebook.skill).map((rulebook) => rulebook.skillName),
+      declaredSkillSet,
+    ),
+  );
 
   // Because every delivery pass below targets this one set of harnesses, and each renders its content for the harness
   // to which it writes, the set is resolved once and threaded rather than re-derived per pass.
   const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
   const harnessIds = targets.harnessIds;
+
+  // Maps each harness to its skill-delivery rulebooks, each by stable slug to the directory in which its skill currently
+  // belongs. Retraction compares this against what each owned directory's marker reports, so it retracts the old dir of
+  // a renamed skill and the dir of a rulebook that no longer targets the harness.
+  const desiredSkillDirs = buildDesiredRulebookSkillDirs(resolved, harnessIds);
 
   // Resolved before every render gate, so that the gates and the writes that they guard cannot disagree about where a
   // link target lands. The deployed skill dirs that it reads are settled above: `resolvedSkills` and
@@ -271,7 +276,7 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
   // proven them disjoint.
   const resolveAnchorContext = createAnchorContextResolver(
     resolvedSkills,
-    desiredSkillDirs.values().toArray(),
+    desiredSkillDirs,
     domain.anchorBase,
     await listSupportEntriesBySource(sources),
   );
@@ -286,15 +291,29 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
     ]),
   );
 
+  // Every body that addresses a rulebook by token (rulebook, skill, and subagent alike) resolves it through the same
+  // per-harness catalog, built from the one closure, so that two passes cannot disagree about what is addressable on a
+  // harness. The closure already contains a rulebook named only by a skill's or subagent's token, since those tokens
+  // are dependency edges.
   const harnessSkillTargets = harnessIds.map((harnessId) =>
-    resolveSkillTarget(harnessId, domain.baseDir, rulebookCatalog, fillsByHarness.get(harnessId)),
+    resolveSkillTarget(
+      harnessId,
+      domain.baseDir,
+      buildRulebookInvocationCatalog(resolved, harnessId),
+      fillsByHarness.get(harnessId),
+    ),
   );
 
   // Subagent delivery targets each harness's project-local subagents dir. Resolved separately from skills because the
   // transform is harness-specific, and subagents live in a distinct flat dir from skills.
   const declaredSubagentSet = new Set(resolvedSubagents.map((subagent) => subagent.slug));
   const harnessSubagentTargets = harnessIds.map((harnessId) =>
-    resolveSubagentTarget(harnessId, domain.baseDir, rulebookCatalog, fillsByHarness.get(harnessId)),
+    resolveSubagentTarget(
+      harnessId,
+      domain.baseDir,
+      buildRulebookInvocationCatalog(resolved, harnessId),
+      fillsByHarness.get(harnessId),
+    ),
   );
 
   // Memoized, so that the pre-write render gate and the write that follows it read one overlay per (harness, source)
