@@ -20,7 +20,7 @@ const scriptSource = path.join(import.meta.dirname, '..', 'codeassembly-sync-liv
 const expectedSteps = [
   'pnpm install --frozen-lockfile',
   'pnpm exec nmr build',
-  'codeassembly install --link --force',
+  'codeassembly install --link',
   'codeassembly sync --global',
 ];
 

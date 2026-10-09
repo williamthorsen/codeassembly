@@ -93,7 +93,7 @@ main() {
   local bin="$live_dir/packages/agents/bin/codeassembly.js"
   run_deploy_step "install dependencies" "$live_dir" pnpm install --frozen-lockfile
   run_deploy_step "build" "$live_dir" pnpm exec nmr build
-  run_deploy_step "codeassembly install" "$live_dir" node "$bin" install --link --force
+  run_deploy_step "codeassembly install" "$live_dir" node "$bin" install --link
   run_deploy_step "codeassembly sync --global" "$live_dir" node "$bin" sync --global
   echo "Deployed guidance from live at ${sha:0:8}."
 }
@@ -149,7 +149,7 @@ Options:
 
 Fetches origin, resolves <ref> to one commit, and fast-forwards live to it.
 Then, in the live worktree, runs pnpm install --frozen-lockfile, nmr build,
-and the worktree's own codeassembly binary for install --link --force and
+and the worktree's own codeassembly binary for install --link and
 sync --global. It deploys even when live is already at the commit.
 
 Exit status:
