@@ -83,6 +83,10 @@ const PINS = new Map<string, RulebookPin>([
     { bodyHash: 'bf4d7b051fb0ebd70dc1e71a5d4897f592357a6c235793d32ac17dd3a0231988', version: '4' },
   ],
   [
+    'williamthorsen-subagent-model-preferences',
+    { bodyHash: '65d4576cb005121c93ae403f47c5c79828119b23abfb1062c21a76c8d43170ae', version: '1' },
+  ],
+  [
     'williamthorsen-ticketing-preferences',
     { bodyHash: 'f2ace0fd6d1b7e15079ae0f7903f1eb80d015801e8bbdd5179268db793a4dc8b', version: '5' },
   ],
