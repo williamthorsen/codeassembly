@@ -74,9 +74,9 @@ export async function reconcileDeclaredSubagents(
 
 /**
  * Retracts sync-owned skill dirs that are no longer current, then writes every skill-delivery rulebook into the skills
- * dir of each targeted harness that it targets. Orphans were computed against the pre-write filesystem, so retracting before writing
- * lets a skill name freed by one rulebook be recreated for another in the same sync, instead of the write being
- * clobbered by a later retract.
+ * dir of each targeted harness that the rulebook targets. Orphans were computed against the pre-write filesystem, so
+ * retracting before writing lets a skill name freed by one rulebook be recreated for another in the same sync, instead
+ * of the write being clobbered by a later retract.
  */
 export async function reconcileRulebookSkills(
   orphansByDir: ReadonlyArray<{ harnessId: HarnessId; skillsDir: string; orphans: ReadonlyArray<string> }>,

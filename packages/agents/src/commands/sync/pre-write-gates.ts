@@ -288,9 +288,9 @@ export async function findForeignOwnedTargetDefects(
 }
 
 /**
- * Renders every resolved rulebook against every targeted harness that it targets, discarding the output, so that a link target that
- * the delivery pipeline cannot honor is reported before any file is written. Both delivery passes re-render at write
- * time; this pass exists only to fail the run closed, including under `--dry-run`.
+ * Renders every resolved rulebook against each targeted harness that the rulebook targets, discarding the output, so
+ * that a link target that the delivery pipeline cannot honor is reported before any file is written. Both delivery
+ * passes re-render at write time; this pass exists only to fail the run closed, including under `--dry-run`.
  */
 export function findRulebookRenderDefects(
   harnessIds: ReadonlyArray<HarnessId>,
