@@ -17,3 +17,5 @@ pnpm install
 pnpm run bootstrap   # Build every package and deploy current guidance; required before running the CLI bins
 pnpm exec nmr check  # Run all checks (typecheck, format, lint, test)
 ```
+
+To deploy guidance on a developer machine from the `live` worktree, see [Deploying guidance from the live worktree](docs/live-deployment.md).
