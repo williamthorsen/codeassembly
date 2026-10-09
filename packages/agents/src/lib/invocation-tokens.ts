@@ -214,10 +214,10 @@ export function resolveRulebookToken(
  * invocation reads. A `{rulebook:<slug>}` token renders the skill sigil and the target's deployed skill name, resolved
  * through `rulebooks` -- so a rulebook is addressed by the name under which it actually deploys, not by its slug.
  *
- * Throws when a rulebook token cannot render: the optional form, a missing catalog (the host did not resolve a
- * declaration), an unknown slug, or an ambient-only target. `sourceLabel` names the host in that error, showing an
- * author which file to fix. Skill and subagent tokens do not have such a failure path -- their sigils are fixed
- * properties of the typed harness config. Non-token text passes through unchanged.
+ * Throws when a rulebook token cannot render: in the optional form, or whenever `resolveRulebookToken` rejects it.
+ * `sourceLabel` names the host in that error, showing an author which file to fix. Skill and subagent tokens do not
+ * have such a failure path -- their sigils are fixed properties of the typed harness config. Non-token text passes
+ * through unchanged.
  */
 export function rewriteInvocationTokens(
   content: string,
