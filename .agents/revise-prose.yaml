@@ -1,7 +1,13 @@
 rules:
+  apostrophes:
+    version: '1'
+    swept-at: 2026-10-09
+    detected: true
+    roots:
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
   capitalization-after-colon:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: false
     roots:
       - .agents
@@ -130,6 +136,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -223,7 +230,7 @@ rules:
       - vitest.root.config.ts
   doc-descriptions:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: false
     roots:
       - .agents
@@ -352,6 +359,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -445,7 +453,7 @@ rules:
       - vitest.root.config.ts
   em-dash:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: true
     roots:
       - .agents
@@ -574,6 +582,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -667,7 +676,7 @@ rules:
       - vitest.root.config.ts
   inline-comments:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: false
     roots:
       - .agents
@@ -796,6 +805,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -887,9 +897,15 @@ rules:
       - vite.config.ts
       - vitest.config.ts
       - vitest.root.config.ts
+  line-wrapping:
+    version: '1'
+    swept-at: 2026-10-09
+    detected: false
+    roots:
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
   negative-quantifier:
     version: '2'
-    swept-at: 2026-09-28
+    swept-at: 2026-10-09
     detected: true
     roots:
       - .agents
@@ -1017,14 +1033,15 @@ rules:
       - vitest.root.config.ts
   plain-speech:
     version: '9'
-    swept-at: 2026-10-08
+    swept-at: 2026-10-09
     detected: false
     roots:
       - packages/guidance/content/skills/_data/title-voice.md
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/subagents/entry-drafter.md
   reduced-object-relative:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: true
     roots:
       - .agents
@@ -1153,6 +1170,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -1246,7 +1264,7 @@ rules:
       - vitest.root.config.ts
   second-person:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: true
     roots:
       - .agents
@@ -1375,6 +1393,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -1468,7 +1487,7 @@ rules:
       - vitest.root.config.ts
   sentence-case:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: false
     roots:
       - .agents
@@ -1597,6 +1616,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -1690,7 +1710,7 @@ rules:
       - vitest.root.config.ts
   so:
     version: '1'
-    swept-at: 2026-09-25
+    swept-at: 2026-10-09
     detected: true
     roots:
       - .agents
@@ -1819,6 +1839,7 @@ rules:
       - packages/guidance/content/skills/people-report
       - packages/guidance/content/skills/plan
       - packages/guidance/content/skills/plan-orchestrable-steps
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/skills/refine-plan
       - packages/guidance/content/skills/respond-to-review
       - packages/guidance/content/skills/review-bb-pr
@@ -1911,227 +1932,11 @@ rules:
       - vitest.config.ts
       - vitest.root.config.ts
   where:
-    version: '1'
-    swept-at: 2026-09-25
+    version: '2'
+    swept-at: 2026-10-09
     detected: true
     roots:
-      - .agents
-      - .claude
-      - .config
-      - .editorconfig
-      - .envrc
-      - .gitattributes
-      - .github
-      - .gitignore
-      - .meta
-      - .prettierignore
-      - .prettierrc.js
-      - .readyup
-      - .tool-versions
-      - AGENTS.md
-      - LICENSE
-      - README.md
-      - demos
-      - docs/pixel-agents-analysis.md
-      - eslint.config.ts
-      - lefthook.yml
-      - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
-      - packages/fleet/.prettierignore
-      - packages/fleet/README.md
-      - packages/fleet/eslint.config.ts
-      - packages/fleet/package.json
-      - packages/fleet/src
-      - packages/fleet/tsconfig.json
-      - packages/foreman/README.md
-      - packages/foreman/eslint.config.ts
-      - packages/foreman/index.html
-      - packages/foreman/package.json
-      - packages/foreman/postcss.config.cjs
-      - packages/foreman/src
-      - packages/foreman/tsconfig.json
-      - packages/foreman/vite.config.ts
-      - packages/foreman/vitest.config.ts
-      - packages/foreman/vitest.setup.ts
-      - packages/guidance/.prettierignore
-      - packages/guidance/.shellspec
-      - packages/guidance/LICENSE
-      - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
-      - packages/guidance/docs
-      - packages/guidance/eslint.config.ts
-      - packages/guidance/schemas
-      - packages/guidance/scripts
-      - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
-      - packages/lifecycle/.meta
-      - packages/lifecycle/LICENSE
-      - packages/lifecycle/README.md
-      - packages/lifecycle/eslint.config.ts
-      - packages/lifecycle/package.json
-      - packages/lifecycle/src
-      - packages/lifecycle/tsconfig.json
-      - packages/mcp/.meta
-      - packages/mcp/.prettierignore
-      - packages/mcp/bin
-      - packages/mcp/eslint.config.ts
-      - packages/mcp/package.json
-      - packages/mcp/src
-      - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
-      - pnpm-lock.yaml
-      - pnpm-workspace.yaml
-      - scripts
-      - taze.config.ts
-      - tsconfig.json
-      - vite.config.ts
-      - vitest.config.ts
-      - vitest.root.config.ts
+      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
 rejections:
   - rule: capitalization-after-colon
     rule-version: '1'
@@ -5678,6 +5483,36 @@ rejections:
     file: packages/guidance/content/skills/plan-orchestrable-steps/SKILL.md
     phrase: Write the updated plan
     ground: 'not the construction: an imperative verb and its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: build the prototype for the lens named above
+    ground: 'not the construction: "build" is an imperative verb and "named" is a participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: let the builder choose the instrument
+    ground: 'not the construction: "let" is an imperative verb with a bare-infinitive complement'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: The round's artifacts follow
+    ground: 'not the construction: "follow" is the sentence''s own main verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: Then add the lens sections
+    ground: 'not the construction: "add" is an imperative verb and "the lens sections" is its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: Then check it against each rule above
+    ground: 'not the construction: "check" is an imperative verb and "it" is its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: unless the ask says otherwise
+    ground: 'not the construction: "says" is the main verb of the "unless" clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/refine-plan/SKILL.md
