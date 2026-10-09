@@ -55,7 +55,7 @@ describe('guidance installation', () => {
   /**
    * Recreates what a previous version left behind: a `~/.agents/AGENTS.md` and the `shared` manifest tier tracking it.
    * `contentOnDisk` writes different bytes than the tracked hash records, which is how a hand-modified copy is staged;
-   * `linked` records the entry as a `--link` symlink, whose fate isn't governed by any drift check.
+   * `linked` stages the entry as a `--link` symlink, which drift detection reads as current whatever its target holds.
    */
   async function seedRetiredSharedGuidance(
     options: { contentOnDisk?: string; linked?: boolean } = {},
