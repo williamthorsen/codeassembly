@@ -137,6 +137,18 @@ describe('installer', () => {
       const stats = lstatSync(dest);
       expect(stats.isSymbolicLink()).toBe(true);
     });
+
+    it('should replace a dangling symlink', async () => {
+      const src = path.join(tempDir, 'src-dangling');
+      const dest = path.join(tempDir, 'dest-dangling', 'link');
+      await mkdir(src, { recursive: true });
+      await mkdir(path.dirname(dest), { recursive: true });
+      await symlink(path.join(tempDir, 'gone'), dest);
+
+      await linkItem(src, dest);
+
+      expect(readlinkSync(dest)).toBe(path.relative(path.dirname(dest), src));
+    });
   });
 
   describe('removeItem', () => {
