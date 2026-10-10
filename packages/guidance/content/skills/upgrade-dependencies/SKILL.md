@@ -28,6 +28,7 @@ Identify the environment before assessing:
 
 Before touching anything:
 
+- **Check for in-progress upgrades.** Look for uncommitted manifest or lockfile changes in the working tree before reading the outdated report, which reflects that state: An upgrade already applied there is absent from the report. Verify such changes through the quality gate before planning new upgrades.
 - **Read the full outdated report.** Run the PM's recursive outdated report (e.g. `pnpm outdated --recursive`) and read every row. Never truncate, page, or sample it; a hidden row is an upgrade that resurfaces as a surprise at final verification.
 - **Check vulnerabilities, and verify the check ran.** Run the PM's audit command and confirm it actually returned results. Audit endpoints are sometimes retired while PMs still call them (pnpm's audit endpoint, for one), so a failing audit channel is a lookup problem, not a reason to skip: Fall back to the project's own audit tooling, the registry's advisory API, or an independent vulnerability scanner. Prioritize whatever the working channel reports.
 - **Inspect ceilings before installing.** For each planned upgrade, read the registry metadata first: `<pm> view <pkg> peerDependencies engines peerDependenciesMeta`. A ceiling is anything that caps a package below latest: a transitive peer pin on a foundation package, an `engines.node` requirement above the project's floor, or the project's own support policy. Finding ceilings now shapes the plan; finding them mid-install produces thrash.
@@ -38,16 +39,17 @@ Before touching anything:
 
 | Category                     | Risk   | Action                                           |
 | ---------------------------- | ------ | ------------------------------------------------ |
-| **Security** (advisory hits) | Urgent | Fast-track in dedicated PR                       |
+| **Security** (advisory hits) | Urgent | Fast-track the actionable ones in a dedicated PR |
 | **Patch** (x.y.Z)            | Low    | Batch together                                   |
 | **Minor** (x.Y.0)            | Medium | Check changelog first, then batch with patches   |
 | **Major** (X.0.0)            | High   | Individual evaluation: Research before upgrading |
 
 Check changelogs for ALL updates, not just majors. Minor bumps can contain behavioral changes.
 
-Three triage judgments go beyond the version-number table:
+Four triage judgments go beyond the version-number table:
 
-- **Ceilings are policy, not just conflicts.** The target for each package is the highest version compatible with the project's support policy, not merely the highest that installs without a dependency-vs-dependency conflict. A pin can be forced by the Node floor, by a transitive peer cap, or by a single package's `engines`; each is a deliberate ceiling, and a ceiling that would move the project's own support policy (e.g. raising the Node floor) is a consumer-facing breaking change to decide, not a technicality to absorb.
+- **Not every advisory is actionable.** For a transitive advisory, check whether re-resolving it within its parent's range, or upgrading the direct dependency that pulls it in, resolves it. When a fix does not exist upstream, record the advisory as a known issue in the PR body rather than force a version with an override.
+- **Ceilings are policy, not just conflicts.** The target for each package is the highest version compatible with the project's support policy, not merely the highest that installs without a dependency-vs-dependency conflict. A pin can be forced by the Node floor, by a transitive peer cap, or by a single package's `engines`; each is a deliberate ceiling, and a ceiling that would move the project's own support policy (e.g. raising the Node floor) is a consumer-facing breaking change to decide, not a technicality to absorb. The `@types/node` major tracks the Node major, so its target is the major of the Node floor, whatever the outdated report lists as latest.
 - **Identify cohorts.** Interdependent majors whose peer constraints reference each other (a linter major and its plugin majors, a framework and its adapter) cannot be upgraded separately: Any split leaves an uninstallable intermediate state. Treat such a cohort as a single unit through planning, execution, and commit.
 - **Watch for abandoned-at-latest packages.** The outdated report cannot reveal a package that is simultaneously "latest" and broken under the new major of its host (it calls an API removed by the host). Only running the target major reveals these: After any major runtime, framework, or linter bump, run the tool and watch for removed-API errors, and expect the remedy to be migrating to a maintained fork rather than any version bump.
 
@@ -55,7 +57,7 @@ Three triage judgments go beyond the version-number table:
 
 **Scope:**
 
-- Security fixes: Always a dedicated fast-track PR.
+- Actionable security fixes: Always a dedicated fast-track PR.
 - Patches/minors: Batch in one PR.
 - Majors: If 2 or fewer, include in the same PR as sequential commits; if more, separate PR per major.
 
@@ -79,7 +81,7 @@ For each dependency or batch, install with the PM's add command at an explicit v
 
 1. Read the migration guide and changelog.
 2. Check for official codemods and run them before making manual changes.
-3. Verify downstream packages support the new major (registry metadata, changelogs).
+3. Verify that downstream packages support the new major (registry metadata, changelogs), including shared configs and the plugins that they pull in transitively: Read each one's peer range and changelog. When one of them does not support the new major and a maintained fork does not exist, hold the upgrade at its ceiling.
 
 **Peer dependency conflicts** come in two kinds; distinguish them before acting:
 
@@ -98,13 +100,13 @@ A green signal is only as good as what it exercised. Each check below exists bec
 - **Rebuild before self-hosted checks.** When a repo checks itself with its own compiled output (a config package linting itself with its own config), rebuild first or the check runs against stale output.
 - **Smoke-test opt-in surfaces.** A self-linting config package exercises only its default config path; instantiate each optionally-loaded config under the new major, since the configs not used by the host repo are the ones most at risk.
 - **Re-run the outdated report and enumerate the pins.** The end state is exactly N intentional pins, each with its recorded rationale and its matching update-tooling cap. Anything below latest without both is unfinished work, not an acceptable remainder.
-- **Re-run the vulnerability check** through the channel verified in Assess.
+- **Re-run the vulnerability check** through the channel verified in Assess. The end state is every advisory either resolved or recorded as a known issue.
 - **Check root↔workspace alignment** in a monorepo: A root-only bump leaves workspaces on the old version; confirm the same dependency resolves to aligned versions across workspaces.
 - **Assess consumer impact for published packages.** If an upgrade raised the package's effective engine or peer requirements, that narrowing is a breaking change for consumers: Plan a major release with matching `peerDependencies` updates, marked per the project's breaking-change convention.
 
 ### 7. Commit and capture
 
-One commit per logical change (a cohort is one logical change), each leaving the repo green. Compose each message per `{rulebook:commit-conventions}` with the `deps` work type, and put each pin's rationale in the body of the commit that introduces it.
+One commit per logical change (a cohort is one logical change, and so is a major together with the code and config adaptations that it requires), each leaving the repo green. Compose each message per `{rulebook:commit-conventions}` with the `deps` work type, and put each pin's rationale in the body of the commit that introduces it.
 
 If a knowledge store is registered, invoke `{skill:capture-event}` for each ecosystem fact discovered the hard way (a retired endpoint, a shim that clears an unmet-peer false positive, a fork swap, a ceiling and its reason) so that the next upgrade recalls it instead of rediscovering it. Skip when a knowledge store is not configured.
 
@@ -131,6 +133,7 @@ Ecosystem facts go stale; these channels do not. When guidance in this skill dis
 | Use interactive flags                         | Requires human input; breaks autonomous operation                      |
 | Suppress peer warnings with overrides         | Verify shim-vs-break, then use the PM's sanctioned allowance mechanism |
 | Pin without capping the update tooling        | The next automated bump silently reverts an uncapped pin               |
+| Take the latest `@types/node` major           | Match its major to the project's Node floor                            |
 | Trust a cached green run                      | Force a clean run; confirm the gate exercised the new versions         |
 | Blanket-adopt or blanket-suppress new rules   | Decide adopt vs disable per rule against the project's philosophy      |
 | Assume generic script names (`pnpm build`)    | Read `package.json` for the project's actual script names              |
