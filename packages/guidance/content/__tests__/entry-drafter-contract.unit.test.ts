@@ -4,16 +4,31 @@ import { describe, expect, it } from 'vitest';
 
 import { readContentFile } from '../test-utils/read-content-file.ts';
 
-// The drafter answers "What changed?" from the diff and the commit log, in a form that the author rates, and returns
-// a lede and one entry per outcome. Two edits would defeat that quietly: taking the diff away, which leaves the
-// inventory grounded in the diffstat alone, and loosening the granularity rule, whose entry unit is what keeps the
-// diff from being catalogued edit by edit. The form is defeated by a prescribed phrase, which the model emits wherever
-// guidance names one, by an exemplar below the floor, every one of which is paragraph-form, and by an entry unit that
-// reads as one edit, whose split entries the caller's audit may not merge. None of these failures shows up at runtime
-// -- each yields a plausible entry list -- so the guard has to be here.
+// The drafter answers "What changed?" from the diff against the default branch, in a form that the author rates, and
+// returns a lede and one entry per outcome. Three edits would defeat that quietly: taking the diff away, which leaves
+// the inventory grounded in the diffstat alone; admitting the commit log or the ticket as evidence of what changed,
+// which retells the branch's steps and the ticket's backstory as the change; and loosening the granularity rule, whose
+// entry unit is what keeps the diff from being catalogued edit by edit. The form is defeated by a prescribed phrase,
+// which the model emits wherever guidance names one, by an exemplar below the floor, every one of which is
+// paragraph-form, and by an entry unit that reads as one edit, whose split entries the caller's audit may not merge.
+// None of these failures shows up at runtime -- each yields a plausible entry list -- so the guard has to be here.
 
 /** The drafter's assignment, which selects what it reports. */
 const ASSIGNMENT_QUESTION = 'What changed?';
+
+/**
+ * Phrases making the diff against the default branch the evidence of what changed, and confining the commit log and
+ * the ticket to grouping and purpose. Lowercased, so that a sentence's opening capital still matches.
+ */
+const CHANGE_EVIDENCE_PHRASES: ReadonlyArray<string> = [
+  "what changed is the difference between the default branch and this branch's head",
+  'which edits form one outcome and what each is for',
+  'the diff says what the change did',
+  "how the need for it arose, the branch's own steps",
+];
+
+/** The grounding that let a claim resting on the commit log alone pass as supported. */
+const COMMIT_LOG_GROUNDING_PHRASE = 'what the commit log and the diff show';
 
 /** The heading under which the drafter returns its entries, which each caller parses as YAML. */
 const ENTRIES_HEADING = '## Entries';
@@ -345,6 +360,24 @@ describe('entry-drafter contract', () => {
       'A commit body contains review mechanics, ticket and finding numbers, and CI runs, and the drafter reads the ' +
       'commit log. Without this the drafter reads them as facts of the change and writes them into a bullet.';
     expect(await EXPANDED, message).toContain(PROCESS_NARRATION_PHRASE);
+  });
+
+  it('takes what changed from the diff against the default branch', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = CHANGE_EVIDENCE_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The commit log records the branch’s steps, and a ticket’s `## Problem` can record how the need arose. A ' +
+      'drafter that reads either as a statement of what changed describes a copy, a false start, or a state that the ' +
+      `default branch never held, and every such sentence is true. These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('grounds an unsupported-claim repair in the diff alone', async () => {
+    const message =
+      'A repair bounded by the commit log as well as the diff lets the redispatch restore the history that the ' +
+      'audit rejected.';
+    expect((await EXPANDED).toLowerCase(), message).not.toContain(COMMIT_LOG_GROUNDING_PHRASE);
   });
 
   it('states that the lede stands alone', async () => {

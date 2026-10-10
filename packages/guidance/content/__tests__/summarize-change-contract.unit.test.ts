@@ -3,10 +3,17 @@ import { describe, expect, it } from 'vitest';
 import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // `## Details` is rendered by `describe-change render-details` from the drafter's entries, and `## What` contains the
-// lede that the same drafter wrote. Three edits would defeat that quietly: rendering `## Details` by hand, which drifts
+// lede that the same drafter wrote. Four edits would defeat that quietly: rendering `## Details` by hand, which drifts
 // from the taxonomy's headings; restoring the coverage mandate, which is what made `## Details` a prose re-rendering of
-// the diff; and composing `## What` in this session, which returns the weighting that the fresh-context dispatch
-// removes. None fails at runtime -- each yields a plausible change summary -- so the guard has to be here.
+// the diff; composing `## What` in this session, which returns the weighting that the fresh-context dispatch removes;
+// and accepting evidence other than the diff, which lets the summary retell how the change came about. None fails at
+// runtime -- each yields a plausible change summary -- so the guard has to be here.
+
+/**
+ * Phrases that the backstory form of the `## Why` guidance contains, which pointed the session at how the need arose.
+ * Lowercased, so that a sentence's opening capital still matches.
+ */
+const BACKSTORY_WHY_PHRASES: ReadonlyArray<string> = ['motivation and background', 'what was wrong, what was missing'];
 
 /**
  * Phrases that a restored coverage mandate contains. The mandate required every fact in the lede to reappear in
@@ -49,6 +56,12 @@ const LEDE_SOURCE_PHRASES: ReadonlyArray<string> = [
  * capital still matches.
  */
 const TYPE_ASK_PHRASES: ReadonlyArray<string> = ['ask the developer only when', 'genuinely close'];
+
+/** The phrase stating `## Why` as the purpose that the change serves. Lowercased, like the text it is matched against. */
+const PURPOSE_WHY_PHRASE = 'the _purpose_ that the change serves in this repository';
+
+/** The phrase that counts a claim supported by any source but the diff as unsupported. */
+const UNSUPPORTED_SOURCE_PHRASE = 'only the commit log, the ticket, or this session supports';
 
 /** Every subagent that this skill may dispatch, matched against the tokens that the installer rewrites. */
 const PERMITTED_SUBAGENTS: ReadonlyArray<string> = ['entry-drafter'];
@@ -105,6 +118,24 @@ describe('summarize-change contract', () => {
       'the reader who meets the change without the entries. A skill left free to compose it writes a ' +
       `plausible one weighted by this session's judgment. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
+  });
+
+  it('verifies each passage against the diff alone', async () => {
+    const message =
+      'The commit log, the ticket, and the session each support a sentence about how the change came about, which ' +
+      'the diff does not contradict. An audit that counts them as support passes the history as the change.';
+    expect((await EXPANDED).toLowerCase(), message).toContain(UNSUPPORTED_SOURCE_PHRASE);
+  });
+
+  it('states `## Why` as purpose rather than backstory', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const found = BACKSTORY_WHY_PHRASES.filter((phrase) => text.includes(phrase));
+
+    const message =
+      'Guidance that asks for motivation and background points the session at how the need arose, which the ' +
+      `repository's readers never met. These phrases are back:\n  ${found.join('\n  ')}`;
+    expect(text).toContain(PURPOSE_WHY_PHRASE);
+    expect(found, message).toEqual([]);
   });
 
   it('decides each type rather than asking the developer', async () => {
