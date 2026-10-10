@@ -108,7 +108,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
 6. **Audit the lede and the entries.** The first three checks apply to the lede, to each entry's `text`, and to each entry's `migration` alike, except as the subject check states, and each names the rejection code that its failure raises, for which a redispatch is the repair rather than an edit of your own. The type check applies to each entry. `scopes` and `breaking` are not prose and are never rejected; `type` is corrected by the type check and never rejected.
 
-   - **Verification.** Read the lede, each entry's `text`, and each `migration` against the diff from step 2. Strike a claim that the diff contradicts, and correct one that it states differently. Never add: A fact omitted from the draft was left out by the reader of the change, and supplying it here restores the weighting that the fresh-context dispatch removed. The drafter read the diff, so this check no longer supplies the draft's grounding; it catches a sentence claiming more than the diff supports, which the diff does not contradict and which is not one to strike: `rejection: unsupported-claim`.
+   - **Verification.** Read the lede, each entry's `text`, and each `migration` against the diff from step 2. Strike a claim that the diff contradicts, and correct one that it states differently. Never add: A fact omitted from the draft was left out by the reader of the change, and supplying it here restores the weighting that the fresh-context dispatch removed. The drafter read the diff, so this check no longer supplies the draft's grounding; it catches a sentence claiming more than the diff supports, such as one that only the commit log, the ticket, or this session supports, which the diff does not contradict and which is not one to strike: `rejection: unsupported-claim`.
    - **Subject.** Read the lede's each sentence, and each entry's `text`, with "This pull request" in front of it. If that sentence is false, the verb names what the system does rather than what the change did: `rejection: subject`. This check fails most often on a change that adds something which itself acts, such as a command, a check, a rule, or a hook, because the added thing's behavior is true, interesting, and reads as a correct entry while standing in for the change. A `migration` is exempt: It is an imperative addressed to the consumer, not a sentence whose subject is the pull request.
    - **Voice.** A figurative verb, or an invented term when a plain one exists: `rejection: voice`.
    - **Type.** Apply [Work type test](#work-type-test) to the entry's outcome. When the test's type differs from the drafted `type`, or the drafted `type` does not name a key in [work-types.json](../_data/work-types.json), set `type` to the test's result and state the correction in one line with its reason. A type is a determination by a test that you hold, not prose, so the correction is never a redispatch and never an ask.
@@ -190,7 +190,7 @@ The body following the frontmatter has this structure:
 
 ## Why
 
-{1-3 sentences describing the _motivation_: what was wrong, what was missing, or what new capability is needed. Frame in terms of consequences (for users, the codebase, future work), not mechanism.
+{1-3 sentences stating the _purpose_ that the change serves in this repository: the consequence that it produces or removes, for users, the codebase, or future work. Frame it in terms of that consequence, not mechanism or how the need arose.
 
 Bad: "The retry helper used a fixed backoff schedule with no shared state, so concurrent requests stacked up against the upstream rate limiter."
 Good: "Heavy-upload sessions were intermittently failing as users hit the upstream API's rate limit."}
@@ -220,7 +220,7 @@ entries:
 ## Guidance
 
 - When `ticket_ref` is null (the branch does not have a ticket), omit the `{ticket_ref} ` portion of the heading and the title so that they read naturally without it.
-- The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the context (motivation and background), `## Details` is every outcome that the change contains
+- The change summary follows **newspaper style**, progressive disclosure from most to least essential: `## What` is the lede, `## Why` is the purpose that the change serves, `## Details` is every outcome that the change contains
 - Both `## What` and `## Details` come from the drafter, so neither is composed in this session
 - `## What` contains none of the `## Details` bullets: The two sections cover the change at different lengths rather than repeating one list
 - Ignore auto-formatter and lint-fix changes
