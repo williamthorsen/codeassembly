@@ -2,7 +2,7 @@
 slug: williamthorsen-workflow-preferences
 description: William Thorsen's personal preferences for how work moves -- scope, branches and worktrees, guidance capture, and the arc of product development.
 delivery: ambient
-version: '8'
+version: '9'
 ---
 
 # William Thorsen's workflow preferences
@@ -36,8 +36,8 @@ When the developer starts a product, move the work through these stages in order
 1. Idea: Write the idea back to the developer and record it in the design doc.
 2. Opinions: Evaluate the idea from other roles and record the evaluations with it.
 3. Brief: Flesh the idea out into a brief for a prototype round.
-4. Prototypes: Build competing prototypes of a rich feature set through `prepare-prototype-brief`, judge them through `index-prototypes`, and synthesize them. Prototyping a rich feature set is how the product that could emerge becomes visible, so run the round before writing the vision.
-5. End vision: Write the purpose, the non-goals, the decisions with their reasons, and a rough structure from what the prototypes taught, and get the developer's approval.
+4. Prototypes: Build competing prototypes of a rich feature set through `prepare-prototype-brief`, judge them through `index-prototypes`, decide every idea in the round's idea table through `prepare-prototype-brief`, and synthesize the prototypes. A verdict on a prototype does not decide its ideas: Each idea is kept, adapted, deferred, or dropped by the developer's answer. Prototyping a rich feature set is how the product that could emerge becomes visible, so run the round before writing the vision.
+5. End vision: Write the purpose, the non-goals, the decisions with their reasons, and a rough structure from what the prototypes taught, citing the round's `idea-decisions` artifact, and get the developer's approval. Record every decision on an idea in the design doc, so that a later session sees why an idea is absent.
 6. MVP: Build the smallest product that does the product's one job. Put a prototype feature in it when the product cannot do that job without the feature, and leave the rest for increments.
 7. Increments: Add features one iteration at a time.
 

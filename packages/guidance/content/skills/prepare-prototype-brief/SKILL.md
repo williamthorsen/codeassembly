@@ -1,6 +1,6 @@
 ---
 name: prepare-prototype-brief
-description: Compose the shared brief and the lens sections for a round of competing prototypes, check the brief against the rules that builders over-apply, and dispatch one builder per lens. Use when a ticket calls for two or more prototypes of one idea built in parallel.
+description: Compose the shared brief and the lens sections for a round of competing prototypes, check the brief against the rules that builders over-apply, dispatch one builder per lens, and once the round is judged, take the developer through a decision on every prototype idea. Use when a ticket calls for two or more prototypes of one idea built in parallel, or when the developer has judged such a round.
 user-invocable: true
 supported-harnesses: [claude]
 ---
@@ -9,7 +9,7 @@ supported-harnesses: [claude]
 
 Write the brief that a round of prototype builders receives, from the idea, the settled intent, and the lenses that the developer supplies. Every builder reads the brief and follows its words literally: A criterion written into a section's instruction becomes a refrain in every entry, a request to convince becomes a sales pitch, "show the view" becomes a paragraph about the view, and "a large clock" becomes a digital readout. Apply the rules below yourself, so that the developer states the ask and never has to police their own wording.
 
-The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_dir}/{slug}-v{n}.html`, one index page with screenshots and verdicts, and a comparison afterwards.
+The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_dir}/{slug}-v{n}.html`, one index page with screenshots and verdicts, and a comparison afterwards. Once the developer has judged the round, an `idea-decisions` artifact records the decision on each of the round's ideas.
 
 ## Inputs
 
@@ -73,6 +73,27 @@ Write the brief in this order, with these headings:
 
 Then add the lens sections, one per builder, in the developer's words after a plain-speech pass.
 
+## The idea table
+
+The idea table lists every distinctive idea of the round, so that each one is kept or let go by the developer's decision rather than by default. The comparison contains it with the Decision column empty, because it is written before any verdict exists.
+
+| Column   | Contents                                                                                                                                                            |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #        | The row's number, starting at 1 in each comparison                                                                                                                  |
+| Idea     | One line                                                                                                                                                            |
+| Source   | The slug of every prototype that has the idea, or `developer` for an idea that the developer states                                                                 |
+| Answers  | The ticket criterion, the settled intent, or the audit finding or requirement in the ticket or the product's design doc that the idea answers; blank when none does |
+| Decision | Empty in the comparison                                                                                                                                             |
+
+Take the rows from every builder's five lines of distinctive ideas, the builders of rejected and losing prototypes included, and add a row for a distinctive idea visible in a prototype whose builder did not list it. An idea that two prototypes share is one row that names both. Never invent an entry for the Answers column.
+
+A decision is one of four:
+
+- **Keep**: The idea goes into the design as it is.
+- **Adapt**: The idea goes into the design changed; the decision states how.
+- **Defer**: The idea waits; the decision states what unblocks it.
+- **Drop**: The idea is let go; the decision states the reason.
+
 ## Process
 
 ### 1. Resolve the set
@@ -123,4 +144,16 @@ Dispatch a builder once more with the same block when it returns without the fil
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the ideas to adopt in the design, and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+
+### 7. Decide the ideas
+
+Run this step once the developer says that they have judged the round, in this session or a later one. A verdict on a prototype is never a decision on its ideas: Do not drop a row because its prototype lost or was rejected, and do not keep a row because its prototype won, without the developer's answer.
+
+1. Resolve the set directory per {skill:index-prototypes} step 1, and read back the verdicts per its "Read back the verdicts".
+2. Read the latest `comparison` artifact in the ticket directory. When an `idea-decisions` artifact is newer than it, resume from that artifact and walk only its open rows. When the latest comparison does not contain an idea table, report that the round does not have one and stop.
+3. Present every row in one action-items block, per the convention included at step 4: its number, idea, source, answers, the verdict of each source prototype (winner, rank, or rejected), and a recommended decision with its reason in a clause. After a revised round, a row matching a row of the previous `idea-decisions` artifact takes that row's decision as its recommendation. A row for which you do not have a basis shows "no recommendation".
+4. Take the developer's answer by row number: `3 keep`, `5 adapt: {how}`, `7 defer: {what unblocks it}`, `9 drop: {reason}`. An explicit `accept the rest` decides every remaining row that has a recommendation with that recommendation. A row that the answer does not cover, and an adapt, defer, or drop that lacks its how, its condition, or its reason, stays open. When the developer states an idea that none of the rows contains, such as a combination of two prototypes, add it as a row whose source is `developer`.
+5. Present the open rows again, until none remain.
+
+Save the table with {skill:save-artifact} as a ticket-level `idea-decisions` artifact that reuses the comparison's slug: the table with every decision filled, the index URL, and the comparison's path. When the developer stops before every row is answered, save it with `open` as each unanswered row's decision; the end vision does not cite an `idea-decisions` artifact that contains an open row. Give the developer the artifact's path.

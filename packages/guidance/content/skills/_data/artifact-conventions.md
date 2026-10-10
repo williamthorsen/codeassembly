@@ -707,9 +707,10 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 
 - `brief`: The shared brief that a round of prototype builders receives; `prepare-prototype-brief` saves it at its checkpoint
 - `change-summary`: Branch change summary for PRs
-- `comparison`: Findings across a round of prototypes: where they agree, where they diverge, which ideas to carry forward, and which decisions the round leaves open; `prepare-prototype-brief` saves it after the index
+- `comparison`: Findings across a round of prototypes: where they agree, where they diverge, a table of every distinctive idea with an empty decision, and which decisions the round leaves open; `prepare-prototype-brief` saves it after the index
 - `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when a ticket is not in session)
 - `devlog`: Development log entry (falls back to non-ticket path when a ticket is not in session)
+- `idea-decisions`: The idea table of a round of prototypes with the decision on each idea filled; `prepare-prototype-brief` saves it after the developer decides each idea, and the end vision cites it
 - `merge`: Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
 - `plan`: Implementation plan document
 - `plan-review`: Plan review findings (completeness and correctness analysis)
