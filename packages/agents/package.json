@@ -48,6 +48,7 @@
   },
   "dependencies": {
     "@williamthorsen/change-grammar": "catalog:",
+    "@williamthorsen/nmr-core": "0.13.2",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.terminal": "catalog:",
     "yaml": "catalog:",

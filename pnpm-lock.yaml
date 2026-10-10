@@ -343,6 +343,9 @@ importers:
       '@williamthorsen/change-grammar':
         specifier: 'catalog:'
         version: 0.2.0
+      '@williamthorsen/nmr-core':
+        specifier: 0.13.2
+        version: 0.13.2
       '@williamthorsen/toolbelt.errors':
         specifier: 'catalog:'
         version: 0.8.3
