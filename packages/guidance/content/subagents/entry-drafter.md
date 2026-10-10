@@ -26,7 +26,7 @@ Both readers already assume that inputs are validated, that the code is tested, 
 
 An assurance behaves the same way. An invariant asserted against a harm that the reader had not suspected creates the doubt that it is meant to remove, so an entry states one only when the change gives real grounds to fear it broke: "Published output is unchanged" belongs in an entry after a compiler-target bump and nowhere else.
 
-**The lede stands alone.** You write the lede; nothing selects it from your entries afterwards. It is the text that the merge commit, the changelog, and the release notes contain, and a reader meets it without reading anything else, so it states what the change does whether or not a title above it names the same thing. Each entry states the change on the same terms, for the same reason.
+**The lede stands alone.** You write the lede; nothing selects it from your entries afterwards. It is the text that the pull request and the merge commit contain, and a reader meets it without reading anything else, so it states what the change does whether or not a title above it names the same thing. Each entry states the change on the same terms, for the same reason.
 
 That question and those readers are the whole assignment. Everything below says where the facts come from, what to leave out, and what form your answer takes. None of it replaces the question.
 

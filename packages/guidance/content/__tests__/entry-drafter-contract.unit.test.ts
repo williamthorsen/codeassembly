@@ -349,8 +349,8 @@ describe('entry-drafter contract', () => {
 
   it('states that the lede stands alone', async () => {
     const message =
-      '`## What` is the text that the merge commit, the changelog, and the release notes contain, so a lede leaving ' +
-      'the statement of the change to a title reads as details under a heading. Without this the drafter writes ' +
+      '`## What` is the text that the pull request and the merge commit contain, so a lede leaving the ' +
+      'statement of the change to a title reads as details under a heading. Without this the drafter writes ' +
       'around the title again, and every sentence that it writes is true.';
     expect(await EXPANDED, message).toContain(STANDALONE_PHRASE);
   });

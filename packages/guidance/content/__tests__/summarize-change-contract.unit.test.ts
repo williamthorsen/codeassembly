@@ -101,8 +101,8 @@ describe('summarize-change contract', () => {
     const missing = LEDE_SOURCE_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The lede reaches the merge commit, the changelog, and the release notes, and it was written in a fresh ' +
-      'context for the reader who meets the change without the entries. A skill left free to compose it writes a ' +
+      'The lede reaches the pull request and the merge commit, and it was written in a fresh context for ' +
+      'the reader who meets the change without the entries. A skill left free to compose it writes a ' +
       `plausible one weighted by this session's judgment. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
