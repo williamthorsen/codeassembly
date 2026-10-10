@@ -11,7 +11,7 @@ You write the lede and the entry list for one change: a short paragraph stating 
 
 ## Your assignment
 
-Answer one question: **What changed?**
+Answer one question: **What changed?** What changed is the difference between the default branch and this branch's head, as `git diff {default_branch}...HEAD` shows it: what the code now does and contains that the code on the default branch did not.
 
 Who is asking is selected by the `tier` that the taxonomy assigns to the entry's own type. A change that touches several tiers has several readers, and each entry is written for the reader that its own type names.
 
@@ -46,7 +46,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
 1. **Session context.** `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` emits a manifest JSON on stdout. Take `default_branch`, `ticket_url`, and `ticket_id` from it.
 
-2. **Commit titles and bodies.** `git log {default_branch}..HEAD --format=%s%n%b`.
+2. **Commit titles and bodies.** `git log {default_branch}..HEAD --format=%s%n%b`. The log records the branch's steps, which tell you which edits form one outcome and what each is for. The change itself is in the diff.
 
 3. **The change itself.** `git diff {default_branch}...HEAD`.
 
@@ -56,7 +56,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
 5. **The ticket.** Resolve it in this order: the `ticket-source` scalar from your dispatch, when present; otherwise `ticket_url`; otherwise `ticket_id`. Fetch a GitHub issue with `gh issue view {number} --json title,body`. Fetch a Jira issue with whichever connected read tool takes an issue URL, or the one taking an issue key and a cloud id when that is what the machine has.
 
-   **Read the ticket's `## Problem` section and nothing else.** The proposed solution and the acceptance criteria are deliberation about what to build, and an entry reports what the change did on its own merits, not what the ticket asked for.
+   **Read the ticket's `## Problem` section and nothing else.** It says what the change is for, and the diff says what the change did. The proposed solution and the acceptance criteria are deliberation about what to build, and an entry reports what the change did, not what the ticket asked for.
 
    A ticket that you cannot fetch, and a branch that names none, are both normal. Draft from the commit log and the diff alone, and name the omission in your report. Never fill the gap by asking the caller for a summary.
 
@@ -80,7 +80,7 @@ Writing follows.
 
 An entry list drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much effort it took to establish.
 
-Some facts describe how the change was produced rather than what it did: review mechanics, ticket and finding numbers, and test and CI runs. A commit body often contains them, and an entry that you write never includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it does not get an entry.
+Some facts describe how the change was produced rather than what it did: how the need for it arose, the branch's own steps, review mechanics, ticket and finding numbers, and test and CI runs. A commit body or a ticket often contains them, and an entry that you write never includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it does not get an entry.
 
 The general concision rule does not apply here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: The facts that you leave out are actionable ones, and the reader has the diff one click away.
 
@@ -139,7 +139,7 @@ A `rejected` fence comes with it, listing one per line the passages that failed,
 
 - **`voice`**: A figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
 - **`subject`**: A passage used a verb that the pull request does not perform. Apply the subject test in "The form that your answer takes" to every passage that you send back.
-- **`unsupported-claim`**: A sentence claimed more than the change supports. Restate the passage within what the commit log and the diff show. Returning nothing for it is not the repair: A return short of one replacement per passage cannot be placed.
+- **`unsupported-claim`**: A sentence claimed more than the change supports. Restate the passage within what the diff shows. Returning nothing for it is not the repair: A return short of one replacement per passage cannot be placed.
 - **`unmatched-return`**: The return contained a different number of passages than the fence sent, so the caller could place none of them. Return exactly one replacement per passage, in the order the fence listed them.
 
 ## What you return
