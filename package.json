@@ -37,7 +37,7 @@
     "@williamthorsen/eslint-config-typescript": "18.0.0",
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/release-kit": "13.1.0",
+    "@williamthorsen/release-kit": "14.0.0",
     "@williamthorsen/strict-lint": "14.1.0",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.testing": "catalog:",
@@ -50,7 +50,7 @@
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-testing-library": "7.16.2",
     "glob": "13.0.6",
-    "lefthook": "2.1.14",
+    "lefthook": "2.1.16",
     "prettier": "catalog:",
     "readyup": "catalog:",
     "tsx": "4.23.15",
@@ -60,7 +60,7 @@
     "vite": "catalog:",
     "vitest": "catalog:"
   },
-  "packageManager": "pnpm@12.8.2",
+  "packageManager": "pnpm@12.9.0",
   "engines": {
     "node": ">=24"
   }

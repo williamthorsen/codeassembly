@@ -4,14 +4,15 @@ export default defineRdyConfig({
   internal: {
     infix: 'internal',
   },
-  packages: [
-    '@williamthorsen/eslint-config-typescript',
-    '@williamthorsen/nmr',
-    '@williamthorsen/release-kit',
-    '@williamthorsen/toolbelt.errors',
-    '@williamthorsen/toolbelt.vitest',
-    'codeassembly',
-    'readyup',
-    'v11y-check',
+  sources: [
+    'github:williamthorsen/.github',
+    'npm:@williamthorsen/eslint-config-typescript',
+    'npm:@williamthorsen/nmr',
+    'npm:@williamthorsen/release-kit',
+    'npm:@williamthorsen/toolbelt.errors',
+    'npm:@williamthorsen/toolbelt.vitest',
+    'npm:codeassembly',
+    'npm:readyup',
+    'npm:v11y-check',
   ],
 });
