@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.13 — 2026-10-10
+
+### 🧪 Tests
+
+- Changes the default Vitest environment in `factory` from jsdom to `node`, which starts faster, and adds a `// @vitest-environment jsdom` pragma to each test file that renders into a DOM. (#1990)
+- Replaces the hand-rolled `process.stderr` spies and the console output rebuilt from spy call records in the repo's tests with `captureStdio` from `@williamthorsen/toolbelt.testing`, which restores the stream when the test scope exits and buffers console output into `stdout` and `stderr`. (#2003)
+
 ## 0.2.10 — 2026-09-08
 
 ### ⚙️ Tooling
@@ -162,10 +169,6 @@ All notable changes to this project will be documented in this file.
 
 ### 🎉 Features
 
-- Scaffold orchestration visualizer foundation (Phases 0–3) (#1)
-
-  Scaffolds the CodeAssembly Factory package — a retro-styled orchestration visualizer built with Excalibur.js, React, and Express. Removes all template packages from the monorepo and replaces them with a single `factory` workspace that reads `status.json` run data from `~/.ai/projects/`, serves it via an Express API, and renders it as an interactive game scene with stations, agents, artifacts, and gates.
-
 - Support run-index.json (v2) in status adapter (#4)
 
   Add parseRunData unified entry point that tries v2 (run-index.json) first, falls back to v1 (status.json). Normalize both formats to flat CanonicalRunStatus shape with new fields: mode, model, artifacts. Add ArtifactEntry type with v2 validation covering context, config, and artifact entries. Convert completedAt null to undefined for v1/v2 consistency.
@@ -176,25 +179,13 @@ All notable changes to this project will be documented in this file.
 
   Introduces a `RoleType` abstraction layer (5 visual types: orchestrator, analyst, planner, author, reviewer) that decouples agent appearance from individual role names, and extends the mapper to create agents for all 7 orchestration phases. Also adds v2 `run-index.json` support to the status adapter with proper validation and v1 backward compatibility.
 
-- Implement sprite infrastructure and basic animations (#9)
-
-  Replaces the flat colored rectangles used for agent actors with sprite-based character animations. Introduces a new `sprites` module containing animation definitions, an SVG placeholder sprite generator, and a caching sprite loader that integrates with Excalibur's `ImageSource`, `SpriteSheet`, and `Animation` APIs. Agents now render as color-coded stick figures (circle head, rectangle body, line arm) with idle bobbing animation.
-
 - Add agent movement and status-driven animation transitions (#14)
 
   Adds incremental agent lifecycle management to the factory scene: agents are dynamically added, removed (with fade-out), and repositioned as run status changes. Each agent's animation state (idle, walking, working, celebrating, concerned) is resolved from the run phase status. Agents at the same station are arranged in a grid layout, and the camera auto-zooms to fit all 7 stations within the viewport.
 
-- Persist URL selections and reorder status bar (#15)
-
-  Add a `useSelectionParams` hook that persists project/ticket/run dropdown selections as URL query parameters via `history.replaceState`. `RunSelector` initializes its state from URL params on mount, validates them against loaded data, and syncs changes back on every dropdown interaction. The status bar field order is also corrected from Run/Status/Branch/Duration to Project/Ticket/Run/Status/Duration.
-
 - Add RunList component with clickable run list in sidebar (#29)
 
   Adds a `RunList` component to the Factory sidebar that displays all orchestration runs in a flat, scrollable list sorted by most recent. Each item shows a CGA-16 color-coded status indicator, is clickable to select the run for viewing, and has a dismiss button. A "Clear all" button dismisses all visible runs at once. The `fetchProjects` call is lifted from `RunSelector` to `App.tsx` so both components share the same `ProjectIndex` data.
-
-- Multi-level platforms and agent positioning (#31)
-
-  Replaces the single-platform horizontal layout with a multi-level assembly line where parallel reviewers occupy separate vertical floors connected by ladders. Introduces a pure layout engine that computes all scene geometry, add orchestrator positioning at the active phase station, and make agent diffing level-aware.
 
 - Auto-refresh projects list with file watching (#32)
 
@@ -224,18 +215,6 @@ All notable changes to this project will be documented in this file.
 
   New schemas: run-index-schema.ts (13 exported validators), status-json-schema.ts (V1 reusing shared enums). New tests: 161 tests covering all enum values, nullable/optional fields, forward-compatible phase entries, artifact entries, CLI directory scanning, and error differentiation.
 
-- Show agents as soon as their phase is current (#45)
-
-  Adds phase inference to the Factory visualization so agents appear at their stations as soon as their phase becomes current, rather than waiting until phase data is written to `run-index.json`. A new `findCurrentPhase` utility infers the active phase from sequential phase ordering and `phaseDecisions`, then threads the result through station activation, agent creation, orchestrator positioning, and animation state resolution.
-
-- Persist local user settings (#47)
-
-  Adds server-side persistence for dismissed-run state in the Factory sidebar. A new `SettingsStore` service reads and writes `settings.json` to a configurable directory, exposed via `GET/PATCH /api/settings` endpoints. The `useDismissedRuns` hook is rewritten to sync with the server using optimistic updates, and dismissals now record the run's status so that re-executed runs automatically reappear.
-
-- Add agent spawning and artifact-carrying visuals (#48)
-
-  Agents now spawn at their station only when their phase begins (not from run start), the orchestrator displays a colored artifact indicator while walking between stations, and a brief 300ms hand-off pause occurs upon arrival. Null-safety guards (`isPresent()`) replace `!== undefined` checks throughout phase evaluation, fixing a runtime bug where Zod's `null` phase values slipped past TypeScript's `| undefined` type.
-
 - Improve run listing readability in sidebar (#50)
 
   Restructures the Factory sidebar's `RunList` component to prioritize project/ticket identity over raw run IDs, adds human-readable timestamps, improves color legibility, and adds timing tooltips. Threads `completedAt` from the server-side scanner through to the client UI.
@@ -251,10 +230,6 @@ All notable changes to this project will be documented in this file.
   Remove the now-unused `agents` parameter from `buildOrchestratorAgent` and the `existingAtStation` computation since the orchestrator always uses `stackOffset: 0` when approaching. Extract a `leftmostSlotOffset` intermediate in the layout for geometric clarity.
 
   Follow-up: CODY-55 tracks directional sprite facing (`scaleX = -1`) so the orchestrator and delegatee visually face each other.
-
-- Add directional sprite facing for approaching orchestrator (#61)
-
-  Adds a `setFacing(direction)` method to `AgentActor` using Excalibur's `graphics.flipHorizontal` property, and calls it from `FactoryScene` when agents are added or after the orchestrator finishes walking. When the orchestrator approaches a delegatee (`approaching: true`), its sprite now faces right toward the delegatee instead of facing left like all other agents.
 
 - Improve representational quality of gates (#64)
 
@@ -465,7 +440,6 @@ All notable changes to this project will be documented in this file.
 
   Lifts selection state (project, ticket, run) from `RunSelector` to `App`, establishing a single source of truth that both `RunSelector` and `RunList` share. `RunSelector` is converted from an uncontrolled component with internal state to a controlled component that receives selection values as props. A `useEffect` in `App` drives URL param updates whenever selection changes.
 
-- Fix avatar & artifact positions and left-align labels
 - Handle newer parallelReview schema shapes in scene mapper (#102)
 
   The orchestrate skill evolved its run-index.json format, producing three

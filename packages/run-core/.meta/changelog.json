@@ -1,5 +1,44 @@
 [
   {
+    "version": "0.4.2",
+    "date": "2026-10-10",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces the inline `ENOENT` checks in `run-core`'s `resolve-base-dir.ts` and in `read-dir-entries.ts` and `list-markdown-files.ts` under `packages/guidance/content/test-utils/` with each package's existing `isEnoent`, and removes the private copy of the guard from the test utilities. (#2004)",
+            "hash": "14fc1b8c3c1c54968967880cc1021f1541daf597",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces the hand-rolled `process.stderr` spies and the console output rebuilt from spy call records in the repo's tests with `captureStdio` from `@williamthorsen/toolbelt.testing`, which restores the stream when the test scope exits and buffers console output into `stdout` and `stderr`. (#2003)",
+            "hash": "8b207257e1c1fbaed9467677ee84dc04717c01cd",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Rewrites \"no\" used as a determiner in comments, READMEs, and test titles across the repository. (#1889)",
+            "hash": "2bf7a691d8bb265cb6c0a1eff6e29aa36dfd6026",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.4.1",
     "date": "2026-09-21",
     "sections": [
@@ -346,7 +385,7 @@
   },
   {
     "version": "0.1.0",
-    "date": "2026-03-02",
+    "date": "2026-03-17",
     "sections": [
       {
         "title": "🎉 Features",

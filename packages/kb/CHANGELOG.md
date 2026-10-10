@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.9.0 — 2026-10-10
+
+### 🎉 Features
+
+- Adds an optional `feedback_kb` key to the `kb.yaml` registry, which names the KB that receives feedback about agent guidance and follows the `default_kb` rules for validation and project-over-user precedence. (#1868)
+- Replaces the `✓` that leads the `kb check` clean-run line with ✅ on a terminal and `PASS` elsewhere, and adds an `--output-style <auto|plain|rich>` option to every `kb` command and a `KB_OUTPUT_STYLE` variable to force either style. (#1897)
+
+### 🐛 Bug fixes
+
+- Rewords the messages and errors printed by `codeassembly`, `kb`, and the skill helpers that used "no" as a determiner, such as `no notes matched` and `no .kb/ was discovered`, which did not say whether the thing was missing or failed to match; the error codes are unchanged. (#1889)
+
+### 🧪 Tests
+
+- Replaces the hand-rolled `process.stderr` spies and the console output rebuilt from spy call records in the repo's tests with `captureStdio` from `@williamthorsen/toolbelt.testing`, which restores the stream when the test scope exits and buffers console output into `stdout` and `stderr`. (#2003)
+
+### 📚 Documentation
+
+- Rewrites "no" used as a determiner in comments, READMEs, and test titles across the repository. (#1889)
+
 ## 0.8.1 — 2026-09-21
 
 ### 🐛 Bug fixes

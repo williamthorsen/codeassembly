@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.2.13",
+    "date": "2026-10-10",
+    "sections": [
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Changes the default Vitest environment in `factory` from jsdom to `node`, which starts faster, and adds a `// @vitest-environment jsdom` pragma to each test file that renders into a DOM. (#1990)",
+            "hash": "106f6ac77eb460a96fd6be290a64beaf33562229",
+            "entry": 3
+          },
+          {
+            "description": "Replaces the hand-rolled `process.stderr` spies and the console output rebuilt from spy call records in the repo's tests with `captureStdio` from `@williamthorsen/toolbelt.testing`, which restores the stream when the test scope exits and buffers console output into `stdout` and `stderr`. (#2003)",
+            "hash": "8b207257e1c1fbaed9467677ee84dc04717c01cd",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.10",
     "date": "2026-09-08",
     "sections": [
@@ -31,7 +53,7 @@
           },
           {
             "description": "Retire factory's run-core re-exports and their duplicated tests (#1451)",
-            "body": "Deletes the modules in `packages/factory` that re-exported `codeassembly-run-core` symbols under factory-local paths, and strips the same forwards from the two modules holding local content besides. Consumers import `codeassembly-run-core` directly, and `role-types.ts` becomes `role-type-colors.ts`.\r\n\r\nAlso deletes the factory test files whose subject is run-core behavior. Run-core's own tests cover every case they did.",
+            "body": "Deletes the modules in `packages/factory` that re-exported `codeassembly-run-core` symbols under factory-local paths, and strips the same forwards from the two modules holding local content besides. Consumers import `codeassembly-run-core` directly, and `role-types.ts` becomes `role-type-colors.ts`.\n\nAlso deletes the factory test files whose subject is run-core behavior. Run-core's own tests cover every case they did.",
             "hash": "24fe82ee59faca713cb884c3b784ca04e610c612"
           }
         ]
@@ -278,11 +300,6 @@
         "audience": "all",
         "items": [
           {
-            "description": "Scaffold orchestration visualizer foundation (Phases 0–3) (#1)",
-            "body": "Scaffolds the CodeAssembly Factory package — a retro-styled orchestration visualizer built with Excalibur.js, React, and Express. Removes all template packages from the monorepo and replaces them with a single `factory` workspace that reads `status.json` run data from `~/.ai/projects/`, serves it via an Express API, and renders it as an interactive game scene with stations, agents, artifacts, and gates.",
-            "hash": "e10f2e44ddc0e9c30edf83a618fa72706a037052"
-          },
-          {
             "description": "Support run-index.json (v2) in status adapter (#4)",
             "body": "Add parseRunData unified entry point that tries v2 (run-index.json) first, falls back to v1 (status.json). Normalize both formats to flat CanonicalRunStatus shape with new fields: mode, model, artifacts. Add ArtifactEntry type with v2 validation covering context, config, and artifact entries. Convert completedAt null to undefined for v1/v2 consistency.\n\nRename phaseDecision to phaseDecisions across all types, consumers, and test fixtures. Update project scanner and route handlers to use parseRunData instead of hardcoded status.json paths. Deduplicate shared validators and simplify normalizeV1 with destructure-and-spread.",
             "hash": "43c31eff30bae132f8a5e0d12488ac7c3b7fcc18"
@@ -293,29 +310,14 @@
             "hash": "6d00fc23ad0957434a7e844a40281ac3cdb4900d"
           },
           {
-            "description": "Implement sprite infrastructure and basic animations (#9)",
-            "body": "Replaces the flat colored rectangles used for agent actors with sprite-based character animations. Introduces a new `sprites` module containing animation definitions, an SVG placeholder sprite generator, and a caching sprite loader that integrates with Excalibur's `ImageSource`, `SpriteSheet`, and `Animation` APIs. Agents now render as color-coded stick figures (circle head, rectangle body, line arm) with idle bobbing animation.",
-            "hash": "1babee9ba9d46eba9d7caf0db3448a8cb52d29eb"
-          },
-          {
             "description": "Add agent movement and status-driven animation transitions (#14)",
             "body": "Adds incremental agent lifecycle management to the factory scene: agents are dynamically added, removed (with fade-out), and repositioned as run status changes. Each agent's animation state (idle, walking, working, celebrating, concerned) is resolved from the run phase status. Agents at the same station are arranged in a grid layout, and the camera auto-zooms to fit all 7 stations within the viewport.",
             "hash": "22e689273462a32bec6f4ba561602789b98c6f1e"
           },
           {
-            "description": "Persist URL selections and reorder status bar (#15)",
-            "body": "Add a `useSelectionParams` hook that persists project/ticket/run dropdown selections as URL query parameters via `history.replaceState`. `RunSelector` initializes its state from URL params on mount, validates them against loaded data, and syncs changes back on every dropdown interaction. The status bar field order is also corrected from Run/Status/Branch/Duration to Project/Ticket/Run/Status/Duration.",
-            "hash": "de4db354a806d0c2b8b9fb4d885bf23cf97c4a1d"
-          },
-          {
             "description": "Add RunList component with clickable run list in sidebar (#29)",
             "body": "Adds a `RunList` component to the Factory sidebar that displays all orchestration runs in a flat, scrollable list sorted by most recent. Each item shows a CGA-16 color-coded status indicator, is clickable to select the run for viewing, and has a dismiss button. A \"Clear all\" button dismisses all visible runs at once. The `fetchProjects` call is lifted from `RunSelector` to `App.tsx` so both components share the same `ProjectIndex` data.",
             "hash": "e13855a5450e4272e97d53ee9e9ad636d5329c88"
-          },
-          {
-            "description": "Multi-level platforms and agent positioning (#31)",
-            "body": "Replaces the single-platform horizontal layout with a multi-level assembly line where parallel reviewers occupy separate vertical floors connected by ladders. Introduces a pure layout engine that computes all scene geometry, add orchestrator positioning at the active phase station, and make agent diffing level-aware.",
-            "hash": "f5ff8a3999367ccb6725f78f4c9ca37f13852903"
           },
           {
             "description": "Auto-refresh projects list with file watching (#32)",
@@ -333,21 +335,6 @@
             "hash": "9c01eb3e97d9962f68346b626cdd3e2ea0a8f691"
           },
           {
-            "description": "Show agents as soon as their phase is current (#45)",
-            "body": "Adds phase inference to the Factory visualization so agents appear at their stations as soon as their phase becomes current, rather than waiting until phase data is written to `run-index.json`. A new `findCurrentPhase` utility infers the active phase from sequential phase ordering and `phaseDecisions`, then threads the result through station activation, agent creation, orchestrator positioning, and animation state resolution.",
-            "hash": "71d6e6270bbb229336fcc89d5aa7d5404f2ad72c"
-          },
-          {
-            "description": "Persist local user settings (#47)",
-            "body": "Adds server-side persistence for dismissed-run state in the Factory sidebar. A new `SettingsStore` service reads and writes `settings.json` to a configurable directory, exposed via `GET/PATCH /api/settings` endpoints. The `useDismissedRuns` hook is rewritten to sync with the server using optimistic updates, and dismissals now record the run's status so that re-executed runs automatically reappear.",
-            "hash": "8612f165b6b873939d4ac0da770497f826ddea80"
-          },
-          {
-            "description": "Add agent spawning and artifact-carrying visuals (#48)",
-            "body": "Agents now spawn at their station only when their phase begins (not from run start), the orchestrator displays a colored artifact indicator while walking between stations, and a brief 300ms hand-off pause occurs upon arrival. Null-safety guards (`isPresent()`) replace `!== undefined` checks throughout phase evaluation, fixing a runtime bug where Zod's `null` phase values slipped past TypeScript's `| undefined` type.",
-            "hash": "69296de1278a9d752d77a752ec6d1e70a1b7b465"
-          },
-          {
             "description": "Improve run listing readability in sidebar (#50)",
             "body": "Restructures the Factory sidebar's `RunList` component to prioritize project/ticket identity over raw run IDs, adds human-readable timestamps, improves color legibility, and adds timing tooltips. Threads `completedAt` from the server-side scanner through to the client UI.",
             "hash": "1c18ba7f378c0f15d0a99d06850c38faddb61895"
@@ -361,11 +348,6 @@
             "description": "Position orchestrator to left of delegatee (#56)",
             "body": "Add `approaching?: boolean` to `AgentConfig` so the orchestrator stands one agent-spacing (36px) to the left of the leftmost agent at the target station instead of occupying a grid slot past the delegatee. Propagate the flag through the layout system (`agentPosition` early-return for level-0 and upper-level approach positions), the agent differ (`hasPositionChanged` helper with `?? false` coalescing), and both `FactoryScene` call sites.\n\nRemove the now-unused `agents` parameter from `buildOrchestratorAgent` and the `existingAtStation` computation since the orchestrator always uses `stackOffset: 0` when approaching. Extract a `leftmostSlotOffset` intermediate in the layout for geometric clarity.\n\nFollow-up: CODY-55 tracks directional sprite facing (`scaleX = -1`) so the orchestrator and delegatee visually face each other.",
             "hash": "cbad2ba10629a7b9bb278c6e612dd50826e6d5f9"
-          },
-          {
-            "description": "Add directional sprite facing for approaching orchestrator (#61)",
-            "body": "Adds a `setFacing(direction)` method to `AgentActor` using Excalibur's `graphics.flipHorizontal` property, and calls it from `FactoryScene` when agents are added or after the orchestrator finishes walking. When the orchestrator approaches a delegatee (`approaching: true`), its sprite now faces right toward the delegatee instead of facing left like all other agents.",
-            "hash": "c63d3e126d9ece239a1559304562707f2b7dd2d2"
           },
           {
             "description": "Improve representational quality of gates (#64)",
@@ -572,10 +554,6 @@
             "description": "Sync RunList selection with URL params and RunSelector dropdowns (#51)",
             "body": "Lifts selection state (project, ticket, run) from `RunSelector` to `App`, establishing a single source of truth that both `RunSelector` and `RunList` share. `RunSelector` is converted from an uncontrolled component with internal state to a controlled component that receives selection values as props. A `useEffect` in `App` drives URL param updates whenever selection changes.",
             "hash": "2afd3f0aaacc9836be0ac9e1c423d5ffc8a6ba50"
-          },
-          {
-            "description": "Fix avatar & artifact positions and left-align labels",
-            "hash": "e6e15f0a44babe823879674a274c71648b53c72c"
           },
           {
             "description": "Handle newer parallelReview schema shapes in scene mapper (#102)",

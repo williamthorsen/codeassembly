@@ -2,6 +2,219 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.17.0 — 2026-10-10
+
+### 🎉 Features
+
+- Write Change trailers into the merge commit and admit scope lists (#1818)
+
+  - Adds one `Change:` trailer per change entry to the squash-merge body that `merge-pr` publishes, so that a pull request's recorded entries reach the default branch as records rather than as prose.
+  - Admits a comma-separated list in the commit grammar's `{scope}` token, so that one change entry belonging to two workspaces renders as one title or trailer: `agents,kb|feat: Add the store-qualified wikilink`.
+
+- Report and repair a pull request that carries no change record (#1824)
+
+  - Adds the `add-change-record` skill, which drafts the change entries through `summarize-change` and, on the author's consent, appends a `change-record` block to a GitHub pull request whose body has none, while on Bitbucket it shows the block for the author to paste by hand.
+  - Extends `merge-pr` to offer `add-change-record` when the pull request carries no change record and the checkout stands at its head commit, resolving the merge again over the updated body so that the block's entries reach the merge commit as `Change:` trailers.
+
+- Replace the lede cutter with a prose lede that the drafter writes (#1829)
+
+  - Replaces the selected bullets in a change summary's `## What` and in `merge-pr`'s merge-commit lede with two or three sentences of prose that the `entry-drafter` subagent now writes above its entry list.
+  - Removes the `lede-cutter` subagent, leaving one subagent dispatch on the lede path where `summarize-change` and `merge-pr` each made two.
+
+- Add migration to a change entry (#1839)
+
+  Adds an optional one-line `migration` to a change entry, which `entry-drafter` writes on an entry that breaks a consumer or drops or deprecates published surface and `summarize-change` renders under that entry's bullet in `## Details`, so that an upgrade instruction stays with the entry that needs it rather than with the whole change.
+
+- Changes `merge-pr` to write the change entries into the merge-commit body as a `change-record` block, in place of `Change:` trailers, recording each entry's `scopes` as a list and its `migration` together with the pull-request number and the ticket reference, and to write no block when the pull request records no entries. (#1840)
+- Adds a check that stops `merge-pr` before merging when the approved body does not yield the block's entry count under the rules that release-kit applies. (#1840)
+- Makes `capture-lede-decision` remove every `change-record` block from a merged body before it records the lede, and keeps it removing the trailing `Change:` trailers of earlier merges. (#1840)
+- Stops `summarize-change` and `entry-drafter` from writing a `Migration:` paragraph below the lede, since `## Details` and the merge commit's block already contain each entry's `migration`. (#1840)
+- Makes `create-pr` label a pull request with every type and scope that its change entries or its effective record name, plus `breaking` when either is breaking, in place of the effective record's type and scope alone. (#1844)
+- Adds the `describe-change resolve-labels` subcommand, which reads the entries in a body file's last `change-record` block and returns the labels that `.meta/label-map.json` maps their types and scopes to, together with the labels for the record passed by `--type`, `--scope`, and `--breaking`. (#1844)
+- Makes `describe-change resolve-merge` rank the `change-record` block's entries into the merge title's scope, type, and breaking marker, instead of reading the block's stored `consolidated_record`. (#1845)
+- Makes `resolve-merge` resolve the record for a block with no entries, including one with an unreadable entry list, from the labels and the commits, as it does when no block exists, while still applying the block's overrides; previously the block's stored `consolidated_record` supplied that record. (#1845)
+- Makes `describe-change resolve-merge` report a defect for each change entry whose type `work-types.json` does not declare or whose breaking marker breaks its type's policy, naming the entry by its 0-based index in the defect's `entry` field. (#1846)
+- Adds the `describe-change amend-entry` subcommand, which sets the type or breaking marker of one change entry in a pull-request body file and refuses any amendment that would leave the entry defective. (#1846)
+- Makes `merge-pr` settle each defective change entry before the merge by asking for a corrected type or marker, amending the entry in a fresh read of the pull-request body, and writing the body back to the pull request; on Bitbucket, which documents no way to write a description, the skill stops and shows the amended block for the author to paste. (#1846)
+- Requires in the `williamthorsen-collaboration-preferences` rulebook that an environment blocker that the user can clear appear in the action-items block as an ask naming the action that clears it, and that the agent not report the blocked step as done until that action is taken. (#1848)
+- Adds a blocked-step option group to the `review-branch` next-steps block, which offers to clear the blocker and re-run the step or to accept the review without it, and which appears even on a review with no findings. (#1848)
+- Directs the plans written by `plan` and `design-and-plan` to check a resource's availability before naming it as a risk and to ask for a resource that only the user can supply rather than accept a degraded fallback, and adds a matching check to `plan-reviewer`. (#1848)
+- Adds `project.scopes` to the project's `.agents/preferences.yaml`, a list of directories, each with a `path` and an optional `name`, that `describe-change resolve-scopes` treats as scopes without making them workspaces, giving the longest containing directory the path and letting a declared name override a package directory's basename. (#1851)
+- Makes `resolve-scopes` skip with a warning a `project.scopes` entry whose path is absolute, outside the repository, missing, or not a directory, and ignore `project.scopes` in the global `~/.agents/preferences.yaml`, while malformed YAML in the project preferences file stops the run. (#1851)
+- Directs `entry-drafter` to write no entry for an update to a bookkeeping record, such as a sweep ledger under `.agents/`. (#1854)
+- Adds a rule to the `williamthorsen-code-layout-preferences` rulebook that directs agents to put a non-secret value in a config file whose stem is not `.env`, such as `settings.yaml`, and a machine-local one in a gitignored file with a `.local` segment, such as `settings.local.yaml`, unless instructed otherwise. (#1858)
+- Adds a line-wrapping rule to the `williamthorsen-comment-preferences` rulebook, which directs an agent to reflow a wrapped comment paragraph from the line that an edit pushed past the width of the paragraph's other lines, changing only whitespace and without asking first. (#1860)
+- Adds a handoff pass to `design-and-plan` and `plan`, which now write the ticket and plan as drafts, dispatch `handoff-reviewer` on them after the main-session completeness sweep, fold in what it returns, ask the user any question that the conversation never settled, and save once. (#1861)
+- Adds the `handoff-reviewer` subagent, which reads a ticket and a plan with no session context, verifies their paths and claims against the repository, and returns the questions that it would ask the author, the decisions left to it to invent, and the claims that the repository does not confirm. (#1861)
+- Adds a sentence to the plain-speech rule that rejects a negative quantifier as the subject of a relative clause ("a condition that no user could observe") and directs the writer to name the actor and negate the verb, and raises the `plain-speech` unit to version 8, which marks files swept at version 7 for a new `revise-prose` sweep. (#1866)
+- Adds a `negative-quantifier` detector to `revise-prose`, which reports a relative clause whose subject opens with `no`, and binds the rule to the `plain-speech` unit with a sweep version of its own. (#1866)
+- Adds `--store @feedback` to `capture-event` and `kb-update-events`, which resolves to the registry's `feedback_kb` as `@default` resolves to `default_kb` and fails with `no-feedback-store` when that key is unset. (#1868)
+- Adds a "Missing tools and resources" section to `williamthorsen-tooling-preferences`, which directs an agent to exhaust the routes that need no developer action, such as an ephemeral runner, a redirected cache path, or a service that the project defines, before reporting a tool, dependency, or service as missing, and to ask for an unobtainable resource while keeping the task. (#1872)
+- Limits the same section so that it licenses no write that mutates shared state, such as a global install or a widened sandbox grant, and permits using a credential already present only when the task's plan or the developer names the command that reads it. (#1872)
+- Changes the environment-blocker clause in `williamthorsen-collaboration-preferences` to count a blocker as an ask only once the new section's routes are exhausted, and to ask for the missing resource rather than name an action for the developer. (#1872)
+- Changes the action-items spec and the post-review blocked-step options to treat a missing tool as a blocker only after those routes fail, and makes the first blocked-step option name the action that supplies the resource, such as a login, rather than the blocked step for the developer to run. (#1872)
+- Skips the handoff pass in `design-and-plan` and `plan` for a plan that the session classifies at complexity level 1–2, and reports the skip in one line that names the level. (#1876)
+- Replaces the flat 20-round verification budget of `handoff-reviewer` with 4 rounds plus 2 per plan task, capped at 20, and limits its checks to the claims on which a task's outcome depends. (#1876)
+- Replaces the judgment gate in the `option-format` partial with a marker gate, which directs the agent to render a menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision falls in a closed gated class (public API or contract shape, remote shared state, irreversible action, spend, or a preference without evidence), and to take and record every other decision; a gated action still waits for the developer's authorization. (#1877)
+- Adds a `## Decisions taken` section to the feature and spike plan templates, in which the agent records each call that it took in place of an ask, with a one-line reason and a `(provisional)` mark when the call awaits a checkpoint. (#1877)
+- Reduces `design-and-plan` to two checkpoints, ticket approval and plan approval, by merging its design and ticket phases and replacing its one-question-per-message clarifying step with a single review of the remaining asks at the ticket checkpoint. (#1877)
+- Removes the directives in `collaborate` and `update-project-guidance` that put asks to the developer one per turn, and directs both skills to decide what the gate allows and to collect the remaining asks into one review. (#1877)
+- Rewrites the collaboration-preferences and workflow-preferences rulebooks and `scope-and-deferral.md` to pair each decision that they previously handed to the developer with the agent's recommendation and the developer's veto, and restates the marker gate in the collaboration rulebook. (#1877)
+- Adds a repeatable `--rule <id>` argument to `/revise-prose` that limits a run to the named rules, so that checking one changed rule no longer sweeps every other rule that the sweep record does not cover, and stops the run on an id that the skill's documents do not declare. (#1882)
+- Extends the `negative-quantifier` rule of the plain-speech guidance, now at version 2, to every determiner "no" and directs the writer to negate the verb and name where the absence was observed, rather than swap in another negative quantifier such as "none of the tests". (#1883)
+- Makes `revise-prose` report every determiner "no" as a `negative-quantifier` candidate, tagged by position as `existential`, `relative`, or `other`, and skip fixed idioms such as "no longer" and "no stronger than", the pronoun "no one", and hyphenated compounds. (#1883)
+- Adds a `Branch deletion` line to the `merge-gh-pr` completion output, which reports a branch already removed by the repository or with its fork as `already-deleted` rather than as a failed deletion. (#1887)
+- Has `revise-prose` decide each questionable site from the surrounding code, the tests and docs that quote it, and other batches' repairs of the same wording, and record a verdict and reason for it in the summary and, for a rejection, in the sweep record's `rejections`. (#1888)
+- Limits the questionables that `revise-prose` presents to the user to sites that need information outside the repository or that fall in the gated class, and gives each row a recommendation that applies unless the user names the row. (#1888)
+- Adds an "asserted text" questionable ground to `prose-reviser` for a site quoted by a file outside its batch, such as a test expectation, and has `revise-prose` update the quoting files in the closing commit when it applies the repair. (#1888)
+- Replaces Orchestrate with Split the ticket in the next-steps menu of `design-and-plan`, `plan`, `refine-plan`, and `save-plan`, and recommends it only when a plan is too large for one implement-and-review pass and contains two or more pieces that each ship and can be verified on their own, naming the size and the pieces on the option's `➕` line. (#1890)
+- Makes Implement the menu's recommendation for every plan that matches neither Refine plan nor Split the ticket, whatever the number of modules or packages that it touches, because the closing menu of `implement-plan` chooses the review depth from the diff that the implementation produced. (#1890)
+- Adds the procedure for a selected Split the ticket, which directs the agent to confirm the composed ticket bodies once, create the pieces through `create-ticket` with parent and blocker links, rewrite the originating ticket to the first piece or to an umbrella, and save a plan for each piece so that its session starts at Implement. (#1890)
+- Has `summarize-change` decide the change's work type and correct each drafted entry's type by the work-type test, stating each decision in one line, where it previously asked the developer to choose between two close types. (#1891)
+- Has `merge-pr` settle each type and breaking-marker defect by the work-type test and the type's `breakingPolicy` rather than by asking which type to take, and asks once to authorize every amendment that rewrites the pull-request body. (#1891)
+- Adds the `accessibility-conventions` rulebook, delivered ambient and as `consult-accessibility-conventions` in the `recommended` collection, which puts usability before style and sets WCAG 2.2 AA contrast for text, minimum sizes of 14px for body text and 12px for secondary text, a limit of two text colour tiers, and a contrast check to run whenever colour tokens change. (#1892)
+- Adds an instruction to the plan template used by `plan` and `design-and-plan` that points a task which defines colour tokens, styles text, or builds a page, prototype, or UI component to `consult-accessibility-conventions`, and that requires the task's key decisions to state the contrast and size requirements and the contrast check. (#1892)
+- Adds a rule to the `williamthorsen-ticketing-preferences` rulebook that directs an agent splitting a ticket in two to keep the first piece in the originating ticket, alongside the existing rule that a split into three or more makes the originating ticket an umbrella. (#1894)
+- Adds a section to the `williamthorsen-ticketing-preferences` rulebook that admits a figure in a ticket body only when it defines the work, such as a budget, a threshold, or a value checked by an acceptance criterion, and directs a reader not to re-measure, report, or correct a count that has since drifted. (#1895)
+- Directs the drift check in `assess-ticket` to leave a measured count out of the assumptions that it compares against the codebase, so that a figure that has changed since the ticket was written does not produce a drift verdict. (#1895)
+- Adds a top-level `references` list to `codeassembly.yaml`, whose entries each name a `package`, a `path` inside it, a `summary`, and an optional `resolve-from` directory, and which `codeassembly sync` writes into each targeted harness's ambient region as the summary followed by the resolved `node_modules` path. (#1896)
+- Makes `codeassembly sync` fail before writing any file, dry run included, when a declared reference's package is not installed, its `resolve-from` is not a directory, or its `path` is absolute, leaves the package, or does not exist. (#1896)
+- Adds a line to the `codeassembly sync --dry-run` report that names the resolved path of each declared reference. (#1896)
+- Adds a plain output style to `codeassembly`, which prints status glyphs as words such as `PASS`, `WARN`, and `HINT` to a stream that is not a terminal, in CI, or under `TERM=linux`, and adds `--output-style <auto|plain|rich>` and `CODEASSEMBLY_OUTPUT_STYLE` to force either style. (#1897)
+- Replaces the ⚠️ warning and 🗑️ removal glyphs in `codeassembly` output with 🟠 and 🧹, because terminals disagree on the width of an emoji that ends in U+FE0F. (#1897)
+- Makes `codeassembly library list` show each artifact type as its label alone in plain style, with the columns still aligned. (#1897)
+- Adds an `apostrophes` rule to the `williamthorsen-writing-preferences` rulebook, which requires a possessive or a contraction to keep its apostrophe and directs content that a command's quoting cannot hold through a file or a quoted heredoc. (#1898)
+- Adds an `apostrophes` detector to `revise-prose`, which reports two shapes of dropped apostrophe for `prose-reviser` to repair or reject: `own` used as an adjective without a possessive before it (`the rule own example`), and an apostrophe-less contraction that is not also a word (`dont`, `isnt`). (#1898)
+- Extends the `gh-body-file` contract from a fixed list of `gh`, `git`, and `acli` commands to every command that takes composed content, and names a second hazard: An agent drops an apostrophe that a single-quoted argument cannot hold. (#1898)
+- Replaces Orchestrated review in `implement-plan`'s closing menu with Split the branch, which the menu recommends only when the realized diff is too large for one `review-branch` pass and a prefix of its commits ships on its own, and which names the diff's size and each piece's commit range. (#1901)
+- Adds the procedure that Split the branch runs in the session after one confirmation: It runs the plan's verification gates at each seam, creates a ticket and a local branch for each new piece without pushing, and changes only the acceptance criteria of the originating ticket. (#1901)
+- Makes `codeassembly validate` report each relative Markdown link whose target file exists in neither the content root nor the library, and each `#fragment` that matches zero or several headings in its target file. (#1905)
+- Makes `codeassembly validate` report a non-breaking space in an authored file, a helper-script invocation that lacks the `{harness_home_dir}/scripts/` prefix, and an include or guidance-hook directive followed by a heading that would render nested under the injected content. (#1905)
+- Makes `codeassembly validate` report a `{skill:…}` or `{subagent:…}` token in a support entry that resolves from neither the root nor the library or whose target a linking skill or subagent does not declare, and, under `guidance/shared/`, any relative link and a skill named in prose that does not deploy to every harness. (#1905)
+- Adds the `groom-backlog` skill, which asks one bulk decision per `scope:` label, closes the tickets that its policy resolves at high confidence, presents the remaining escalations in digest pages for the user to decide, and posts each outcome as a ticket comment with a `codeassembly-triage` marker. (#1906)
+- Adds the `ticket-assessor` subagent, which assesses one ticket non-interactively by the same five-dimension procedure as `assess-ticket` and returns its verdicts, a recommended disposition, and the ticket's dependency and overlaps as one JSON block. (#1906)
+- Adds the `codeassembly bundle-helpers` command, which bundles each helper listed under `helpers:` in a content root's `codeassembly-content.yaml` into a self-contained `.mjs` file with esbuild options that the tool fixes for every repository. (#1908)
+- Adds the `--check` flag to `bundle-helpers`, which writes nothing and fails on a bundle that differs from a fresh build, isn't recorded at `HEAD`, or is a tracked `.mjs` under the content root that isn't produced by any helper. (#1908)
+- Declares `esbuild` `^0.28.2` as an optional peer of `codeassembly`, which a repository that runs `bundle-helpers` must install and a repository that only runs `sync` or `install` doesn't need. (#1908)
+- Adds the `codeassembly/api` subpath, whose `renderContentRoot`, `listCatalog`, `resolveClosure`, `readArtifact`, and `validateContentRoot` functions let the tests of a content root, a directory that ships rulebooks, skills, and subagents, read that content as each harness deploys it without importing anything from the tool's internals. (#1912)
+- Extends `codeassembly validate` to render each harness's guidance file, so that the command reports a defect in that file as a `render` defect. (#1912)
+- 🚨 **Breaking:** Makes `sync`, `sync --global`, `install`, and `library list` resolve every artifact only from the `sources:` and `packages:` entries in `codeassembly.yaml`, instead of from a built-in library, and stop with `NoContentSourceError` before writing anything, `--dry-run` included, when those entries do not name a content source whose directory exists. (#1921)
+- 🚨 **Breaking:** Moves the CodeAssembly library's support files, such as `skills/_data/`, from the flat slot that `install` deployed to `skills/_sources/<name>/`, which `sync` populates for every source, and makes `install` retract the flat copies that earlier installs deployed. (#1921)
+- Resolves a `{harness_home_dir}/skills/<path>` reference in inline code or a command to the place where `<path>` deploys, in the same way as a Markdown link, so that content can name a support file without naming its source's namespace. (#1921)
+- Adds a `validate` check that reports a `{harness_home_dir}/skills/` or `{harness_home_dir}/scripts/` reference whose file the content root does not contain, and skips a reference that contains a placeholder. (#1921)
+- 🚨 **Breaking:** Makes `validate` and the `codeassembly/api` functions resolve a content root alone, so that a link, a dependency edge, or an invocation token naming an artifact outside the root is a defect instead of resolving from the built-in library. (#1921)
+- Extends `library list` to list the artifacts of every declared source in a `source` column that marks a row shadowed by a higher-precedence source, and adds `--global` to read the home declaration instead of the project's. (#1921)
+- Extends the `sync` shadow warning to every artifact that a higher-precedence source shadows in a lower one, naming both sources, instead of only an artifact that shadows the built-in library. (#1921)
+- Adds a commented `sources:` entry naming a clone of the CodeAssembly library to the `~/.agents/codeassembly.yaml` that `init --global` scaffolds. (#1921)
+- Makes `streamline-guidance` record each run in `.agents/streamline-guidance.yaml`, with the run's date and the deployed size in bytes of each file that the run read, measured after the run's cuts, and adds each file's last review date and its growth since that review to the skill's summary. (#1929)
+- Adds the Claude-only `index-prototypes` skill, which publishes a ticket's prototypes on one artifact page as cards that each show a screenshot linking to the prototype, and which keeps the sources and screenshots under `prototypes/` in the ticket's artifact directory for a later session to revise. (#1931)
+- Adds reject, rank, and winner controls to the index page, whose verdicts the page saves through its `db` capability for every viewer to see and the skill reads back to report the winner and ranking. (#1931)
+- Adds keyboard control to the index page: The arrow keys move between cards, `x` rejects a card, `w` marks the winner, and `1`–`9` set the rank. (#1931)
+- Moves the CodeAssembly library and its helpers from the `codeassembly` package into the new `codeassembly-guidance` package at `packages/guidance`, whose support files deploy under `_sources/codeassembly-guidance/`. (#1933)
+- Adds `expandIncludes`, `buildIncludeGraph`, and `isHarnessDeployPath` to `codeassembly/api`, so that a content root's helpers can expand includes, traverse the include graph, and skip a harness's deployed copies without importing the tool's internals. (#1933)
+- Adds a `package:` form of the `sources:` entry, which resolves an installed package through the module resolver and contributes only the artifacts that the declaration names, rather than the whole catalog that `packages:` adopts. (#1937)
+- Lets `codeassembly.local.yaml` replace a package source with a local clone of the package by repeating the source's name with a `path`. (#1937)
+- Adds the `supported-harnesses:` rulebook frontmatter field, which restricts the rulebook's ambient region, rulebook skill, and hook fill to the named harnesses under both `sync` and content-root rendering, and makes `sync` retract what it previously deployed to a harness that the rulebook now excludes. (#2009)
+- Makes a `{rulebook:<slug>}` token or a subagent `rulebooks:` entry fail the run when its body deploys to a harness that the rulebook excludes, with an error that names the harnesses to which the rulebook deploys. (#2009)
+- Extends the shared-guidance reference rule to report a shared file that names the skill of a rulebook narrowed to a subset of harnesses, as the rule already does for a narrowed skill. (#2009)
+- Adds a harness-restricted rulebook's supported harnesses to its delivery cell in `library list`, for example `ambient, skill (claude)`. (#2009)
+- Derives the scopes that `codeassembly generate label-map` writes to `.meta/label-map.json` from the workspaces matched by the `packages` globs in `pnpm-workspace.yaml`, with `!` exclusions applied, and names each scope after its workspace directory. (#2025)
+- Makes `codeassembly generate label-map` exit with an error that names the cause and the declared patterns, without writing `.meta/label-map.json`, when the globs in `pnpm-workspace.yaml` do not match any workspace. (#2025)
+
+### 🪦 Removed
+
+- 🚨 **Breaking:** Removes `consolidated_record` from the `change-record` block and from the `sources.block` report of `resolve-merge`, while a block rendered before this change still reads with the key ignored. (#1849)
+- 🚨 **Breaking:** Removes the `--scope`, `--type`, and `--breaking` flags from `describe-change.mjs render-block`, which now refuses them as unknown flags. (#1849)
+- 🚨 **Breaking:** Removes the `divergence` notice from `resolve-merge` and lets the record ranked from the block's entries stand when the entries are stale, instead of replacing it with the commits' record. (#1849)
+- Removes `required` from the `breakingPolicy` values that the `work-types.json` schema accepts, since no type declares it any longer. (#1857)
+- 🚨 **Breaking:** Removes the content library from the published `codeassembly` package, which no longer contains `dist/content/`. (#1921)
+- 🚨 **Breaking:** Removes the session-lifecycle hooks from `codeassembly install`, which now deletes the hook entries that earlier installs wrote into the Claude and Rovo configs instead of writing them, together with the `configure-hooks` command, the `--print` and `--skip-hooks` options, and the hook report in `codeassembly status`. (#1925)
+- 🚨 **Breaking:** Removes the `emit-event` skill and the lifecycle-event instructions from the skills that called it, such as `create-pr`, `merge-pr`, and `orchestrate`; the `emit_event` tool of the CodeAssembly MCP server is a separate system and remains. (#1925)
+- Removes the "Grown since last streamlined" block from the report that a live `sync` prints, and keeps the growth-ceiling warning. (#1929)
+
+### 🐛 Bug fixes
+
+- Stop narrating a declined record write to the user (#1835)
+
+  Fixes the issue that agents were invited by the artifact doctrine to tell the user about a record write that they had declined. `guidance/shared/AGENTS.md` now says that such a write is not a skipped step and produces no user-facing text, and that a user's request for one gets a one-line decline naming the alternative. The marker that opens each `pull-request` and `merge` record now tells the reading agent what to do. Previously it warned of the damage that an edit causes.
+
+- Make the drafted lede summarize the change rather than restate entries (#1836)
+
+  Stops `entry-drafter` from writing a lede, the summary paragraph that heads a pull-request description, that retells each of the change's entries, which its lede rule caused by directing the drafter to restate an entry at more length. Directs the drafter to include a fact from the entries only when the lede needs it to say what the change is about, and admits a one-sentence lede in place of the fixed two or three sentences.
+
+- Stop narrating clean state at the merge approval gate (#1837)
+
+  Stops `merge-pr` from reporting a clean state at its approval gate, so that the gate shows a line between the proposed merge and the confirmation only when that line names a condition that blocks or complicates the merge. The change also removes rationale and maintainer notes from `merge-pr` and revises the wording of `merge-pr` and `create-pr` for plain speech.
+
+- Rewrites sentences in the `scope-and-deferral` and `complexity-classification` references that assigned an action to something that does not perform it or used a figure in place of a literal phrase, naming the agent as the actor instead. (#1852)
+- Stops one `root` entry, such as a sweep-ledger update, from erasing the scope that `describe-change` consolidates for a branch that is otherwise one workspace's work, which left the merge title unscoped. (#1854)
+- Stops `describe-change` from adding the `scope:root` label to a pull request whose entries also name a workspace. (#1854)
+- Corrects "Scope values" in `title-templates.md` and the `agents` README to give a change to root and exactly one workspace that workspace's scope rather than `*`, which contradicted `commit-conventions.md`. (#1854)
+- Stops `describe-change` from consolidating a branch to no scope when a process-tier entry (such as `deps`, `docs`, or `tooling`) names a workspace beyond the one that the branch's public- or internal-tier entries agree on. (#1856)
+- Stops `entry-drafter` from scoping an entry by the paths of an edit that only supports its outcome, or from giving that edit an entry of its own, which let a catalog move in another workspace add that workspace to the branch's scopes. (#1856)
+- Stops `describe-change` from reporting a `policy-violation` on a `drop` that omits the breaking marker, which `entry-drafter` prescribes for removing surface that was never published. (#1857)
+- Removes the negative-quantifier construction from the library's skills, collections, and partials, including the reduced-object-relative rule's worst-shape exhibit and preferred repair, which modeled the construction for any agent that followed the rule. (#1866)
+- Stops `handoff-reviewer` from spending its whole turn limit on verification and returning no report, by raising its `maxTurns` from 15 to 30 and capping verification at 20 self-counted rounds, after which it reports each unreached claim as not checked. (#1867)
+- Adds the instruction that the completeness sweep lacked for a handoff reviewer that returns no report: Resume it once for its report, and when that fails or the harness cannot resume a subagent, save the drafts without the pass and report that it returned nothing. (#1867)
+- Fixes `capture-feedback` sending feedback about agent guidance to `@default`, where the pass that refines that guidance does not read it, by routing every capture from `capture-feedback` and `migrate-feedback-memories` through `--store @feedback`. (#1868)
+- Fixes the option-format contract and the `williamthorsen-collaboration-preferences` rulebook, which let a `➖` state a trivial cost without its size and left a leader ■■□ when every alternative was disqualified, by requiring each con to state its consequence and adding a leader check that runs before the gate. (#1878)
+- Makes the option-format contract state a two-sided tradeoff once above the list, rather than as a `➖` on one option and a matching `➕` on another that the reader counts as separate reasons. (#1878)
+- Removes the claim in `recommendation-gradient.md` that markers leave nothing to override, and states instead that the gate is only as reliable as the markers that it reads. (#1878)
+- Rewrites the option examples in `recommendation-gradient.md`, the `option-format` and `action-items` partials, and the `collaborate` and `update-jira-ticket` skills, which showed menus that the gate would have decided and cons on every option, and adds an example whose recommended option has no `➖`. (#1878)
+- Stops `entry-drafter` and `summarize-change` from recording an entry's `text` or `migration` unquoted, which let YAML read a space followed by `#` as the start of a comment and drop the rest of the text. (#1880)
+- Makes `consolidate-entries`, `render-block`, and the reader of a pull request's `change-record` block refuse an entry whose `text` or `migration` a YAML comment cuts short, naming the entry, the field, and the dropped text, where they previously accepted the shortened value without an error. (#1880)
+- Rewrites each determiner "no" in the skills, subagents, rulebooks, and partials under `packages/agents/content`, which broke the plain-speech rule that the same guidance states. (#1883)
+- Stops `merge-gh-pr` from asking for permission after `merge-pr` has already obtained approval, by replacing a shell command that contained a `gh api -X DELETE` call and a brace-group guard with a single `node` call to a helper bundled with the skill. (#1887)
+- Stops the shell from expanding backticks and `$(…)` in a squash-merge title by passing the title to `gh` through a file. (#1887)
+- Stops `merge-gh-pr` from deleting the head branch of a pull request that `gh pr merge` accepted but did not merge, such as one placed in a merge queue. (#1887)
+- Rewords the messages and errors printed by `codeassembly`, `kb`, and the skill helpers that used "no" as a determiner, such as `no notes matched` and `no .kb/ was discovered`, which did not say whether the thing was missing or failed to match; the error codes are unchanged. (#1889)
+- Stops `summarize-change` from replacing a type passed as `--type` with the work-type test's type, which left the developer unable to override the test. (#1891)
+- Stops the `option-format` gate and the `williamthorsen-collaboration-preferences` rulebook from permitting a menu for a close call that a governing document decides, such as a change's work type under the work-type test. (#1891)
+- Fixes the issue that the `where` rule of `williamthorsen-writing-preferences` did not name the eventive frame "Fixes an issue where ...", because its only repair example used `whose`, which does not apply to an abstract noun; the rule now repairs the frame to "Fixes the issue that ...", and its sweep version rises to 2 so that a `revise-prose` sweep re-examines text that passed under the old wording. (#1893)
+- Fixes the issue that `entry-drafter` wrote "Fixes an issue where ..." or the fused participle "Stops `foo` crashing ..." in a fix entry and in the lede; its `fix` bullet now states that a defect-naming entry opens "Fixes the issue that ...". (#1893)
+- Fixes the issue that the next-steps menu of `design-and-plan`, `plan`, `refine-plan`, and `save-plan` said that the planning conversation contained the plan's design decisions, which agents relayed to the user as a warning that the saved ticket and plan were incomplete. (#1922)
+- Fixes the issue that the published `codeassembly-content-specification` rulebook gave every consumer doctrine that applies only to the CodeAssembly repository, such as its collection dispositions, the rule that a collection enumerates every member, and the markers that name the library's own test suites as enforcing a rule. (#1926)
+- Fixes the issue that `codeassembly generate label-map` wrote a `$schema` URL that returns 404, by building the URL from the label-map schema in `@williamthorsen/change-grammar` at the version that the installed release-kit resolves. (#2000)
+- Fixes the issue that `codeassembly generate label-map` searched for release-kit from the CLI's own install location rather than from the target project, and could therefore read a release-kit other than the one that the project uses, or none. (#2000)
+- Fixes the issue that `codeassembly install` reported a linked script as modified once the script's source changed, and skipped it with "Skipping modified item" unless `--force` was set. (#2014)
+- Fixes the issue that `codeassembly uninstall` and the pruning of orphaned entries deleted a regular file that had replaced a linked entry, even without `--force`. (#2014)
+- Fixes the issue that `codeassembly install --link` failed with `EEXIST` when a dangling link was at the destination. (#2014)
+- Fixes the issue that `codeassembly install` wrote a copied file through a dangling link at the destination into the link's former target, instead of replacing the link. (#2014)
+
+### ⚡ Performance
+
+- Removes from the `scope-and-deferral` reference the passages that restate one of its rules or direct nothing, such as a second statement that the branch signals are starting points rather than gates, and removes two such sentences from `complexity-classification`, leaving each instruction stated once. (#1852)
+- Shortens the `handoff-reviewer` body that each dispatch loads by removing the `writing-preferences` rulebook and the concision guidance, which governed no text that the dispatching session keeps. (#1876)
+
+### ♻️ Refactoring
+
+- Embeds `work-types.json` in the `describe-change`, `select-lede-exemplars`, and `capture-lede-decision` bundles at build time, so that each helper resolves work types without a `_data` directory beside its deployed location. (#1914)
+- Moves the installed-package lookup from `package-sources.ts` into `lib/find-installed-package.ts`, which `generate-label-map` now uses as well. (#2000)
+- Replaces the hardcoded `TYPE_MAP` in `codeassembly generate label-map` with types derived from `CANONICAL_TAXONOMY` by `deriveLabelMap`, and regenerates `.meta/label-map.json`, which lists the same types in taxonomy order. (#2007)
+
+### 🧪 Tests
+
+- Moves the assertions about the real content library, from the full-catalog install and the sync canaries to the live `work-types.json` invariants, out of the tool's suites into `packages/agents/content/__tests__/`. (#1902)
+- Replaces the library reads in the tool's suites under `packages/agents/src/` with synthetic fixtures: a hand-written taxonomy under `describe-change/__tests__/fixtures/`, a mocked `existsSync` for the content-directory resolver, and a temp library for the declared-source sync. (#1902)
+- Adds synthetic cases for the tool behaviors that only the moved suites had exercised: a link-mode install rewriting a relative link in a support file, an all-harness install writing each harness its own guidance file, and the defect check admitting a record with or without the breaking marker under an optional policy. (#1902)
+- Adds `library-validation.unit.test.ts`, which runs `validate` over `packages/agents/content/` against every harness, and deletes the content tests whose checks `validate` now performs. (#1905)
+- Rewrites the library's content tests against `codeassembly/api`, so that they import nothing from the tool's internals except helper source that moves with the content. (#1912)
+- Splits the 2,700-line `sync.tool.test.ts` into one file per topic so that Vitest can schedule them across workers, and moves their shared setup into `test-utils/create-sync-fixture.ts`. (#1990)
+- Replaces the hand-rolled `process.stderr` spies and the console output rebuilt from spy call records in the repo's tests with `captureStdio` from `@williamthorsen/toolbelt.testing`, which restores the stream when the test scope exits and buffers console output into `stdout` and `stderr`. (#2003)
+
+### ⚙️ Tooling
+
+- Switches the build and the bundle check of this package's helpers from the deleted `scripts/bundle-skill-helpers.ts` to `codeassembly bundle-helpers` and the `helpers:` list in `content/codeassembly-content.yaml`, leaving every tracked bundle byte-identical. (#1908)
+
+### 📦 Dependencies
+
+- Removes `@williamthorsen/kb` and `ulid` from the runtime dependencies of `codeassembly`, since only the moved helpers used them. (#1933)
+
+### 📚 Documentation
+
+- Rewrites "no" used as a determiner in comments, READMEs, and test titles across the repository. (#1889)
+- Moves the subsections of "Project declaration" to `docs/project-declaration.md` and the preferences schema and full example to `docs/preferences.md`, which cuts `packages/agents/README.md` to about 16,000 characters so that the npm package page no longer truncates it. (#1909)
+
 ## 0.16.0 — 2026-09-21
 
 ### 🎉 Features
@@ -2309,10 +2522,6 @@ All notable changes to this project will be documented in this file.
 
   Replace the checklist format with an inventory of prefixed, numbered items (fixme F1, todo T1, insight I1, etc.) and a numbered action menu, making it easy to see proposed actions and give per-item instructions.
 
-- Add mode system and two-threshold model to orchestrate-dev (#123)
-
-  Adds a `--mode=<vibe|strict>` argument to `/orchestrate-dev` and replaces the boolean `--fix-low`/`--no-fix-low` flag with a two-threshold model (`--approval-threshold` and `--budget-threshold`). Each mode is a preset bundle that configures pipeline phases, review thresholds, model assignments, and review round limits. The threshold model gives finer-grained control over which findings block approval versus which consume review budget opportunistically.
-
 - Migrate orchestrator to MCP and v3 events (#133)
 
   Rewrite orchestrate SKILL.md and review-cycle module to drive run state via MCP tool calls (init_run, emit_event, register_artifact, complete_run, get_run_state) instead of direct JSON file reads/writes. Replace all run-index.json state writes with emit_event calls, replace artifact array management with register_artifact calls, and replace final status write with complete_run.
@@ -2790,7 +2999,7 @@ All notable changes to this project will be documented in this file.
 
   Add `tokens?`,` toolUses?`, `durationMs?` to the event types table for `phase_completed`, `reviewer_completed`, `coder_fix_completed`, and `re_review_completed`. These optional fields are populated by the orchestrator when capturing Task result metrics; older runs omit them.
 
-## 0.1.0 — 2026-03-01
+## 0.1.0 — 2026-03-17
 
 ### 🎉 Features
 

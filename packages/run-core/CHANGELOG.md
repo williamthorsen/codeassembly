@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.2 — 2026-10-10
+
+### ♻️ Refactoring
+
+- Replaces the inline `ENOENT` checks in `run-core`'s `resolve-base-dir.ts` and in `read-dir-entries.ts` and `list-markdown-files.ts` under `packages/guidance/content/test-utils/` with each package's existing `isEnoent`, and removes the private copy of the guard from the test utilities. (#2004)
+
+### 🧪 Tests
+
+- Replaces the hand-rolled `process.stderr` spies and the console output rebuilt from spy call records in the repo's tests with `captureStdio` from `@williamthorsen/toolbelt.testing`, which restores the stream when the test scope exits and buffers console output into `stdout` and `stderr`. (#2003)
+
+### 📚 Documentation
+
+- Rewrites "no" used as a determiner in comments, READMEs, and test titles across the repository. (#1889)
+
 ## 0.4.1 — 2026-09-21
 
 ### 📚 Documentation
@@ -245,7 +259,7 @@ All notable changes to this project will be documented in this file.
 
   Removes the noisy boxed and rulered comment separators that had accumulated across the codebase and replaces every occurrence with simpler forms or folding-region markers. Introduces a reusable sweep script to automate this process. Documents the convention in the `code-patterns` skill so future agent-generated TypeScript follows the same rule.
 
-## 0.1.0 — 2026-03-02
+## 0.1.0 — 2026-03-17
 
 ### 🎉 Features
 

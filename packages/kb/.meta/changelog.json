@@ -1,5 +1,60 @@
 [
   {
+    "version": "0.9.0",
+    "date": "2026-10-10",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds an optional `feedback_kb` key to the `kb.yaml` registry, which names the KB that receives feedback about agent guidance and follows the `default_kb` rules for validation and project-over-user precedence. (#1868)",
+            "hash": "32e2b5e839e4cca550d40272d6733c2054845d0d",
+            "entry": 3
+          },
+          {
+            "description": "Replaces the `✓` that leads the `kb check` clean-run line with ✅ on a terminal and `PASS` elsewhere, and adds an `--output-style <auto|plain|rich>` option to every `kb` command and a `KB_OUTPUT_STYLE` variable to force either style. (#1897)",
+            "hash": "b11132fd6e5dcd4702789463fb3c1e7a84884951",
+            "entry": 4
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Rewords the messages and errors printed by `codeassembly`, `kb`, and the skill helpers that used \"no\" as a determiner, such as `no notes matched` and `no .kb/ was discovered`, which did not say whether the thing was missing or failed to match; the error codes are unchanged. (#1889)",
+            "hash": "2bf7a691d8bb265cb6c0a1eff6e29aa36dfd6026",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces the hand-rolled `process.stderr` spies and the console output rebuilt from spy call records in the repo's tests with `captureStdio` from `@williamthorsen/toolbelt.testing`, which restores the stream when the test scope exits and buffers console output into `stdout` and `stderr`. (#2003)",
+            "hash": "8b207257e1c1fbaed9467677ee84dc04717c01cd",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Rewrites \"no\" used as a determiner in comments, READMEs, and test titles across the repository. (#1889)",
+            "hash": "2bf7a691d8bb265cb6c0a1eff6e29aa36dfd6026",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.8.1",
     "date": "2026-09-21",
     "sections": [
