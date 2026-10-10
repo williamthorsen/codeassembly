@@ -145,7 +145,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
 
    If the helper is unavailable or the call fails, relay its error, say that the summary does not contain `## Details`, and save the body without it. Never render the section by hand: Hand-rendered headings drift from the taxonomy.
 
-9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and do not take any sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here adds this session's weighting to the merge commit, the changelog, and the release notes.
+9. **Compose `## What`** from the drafter's lede: the `## Lede` section as step 6 left it. Write nothing of your own into it, and do not take any sentence from the entries: The lede was written in a fresh context for the reader who meets the change without them, and a sentence added here adds this session's weighting to the pull request and the merge commit.
 
 10. **Render the `change-record` block** and make it the body's last element:
 
