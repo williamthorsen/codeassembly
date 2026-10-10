@@ -67,7 +67,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `validate`          | Check a content root for defects that reach a consumer; writes nothing                                     |
 | `bundle-helpers`    | Bundle the helpers that a content root declares; `--check` fails on a stale bundle                         |
 | `library list`      | List each declared source's artifacts, marking those that a higher-precedence source shadows               |
-| `generate <target>` | Generate a configuration file (e.g., `label-map`)                                                          |
+| `generate <target>` | Generate a configuration file (e.g., `label-map`, whose scopes come from `pnpm-workspace.yaml`)            |
 
 Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, `--output-style <auto\|plain\|rich>`, and `--help`. `--output-style` prints status glyphs as emoji (`rich`) or as words (`plain`); `auto`, the default, prints plain to a stream that is not a terminal or in CI, and `CODEASSEMBLY_OUTPUT_STYLE` sets it when the flag is absent. `--content <dir>` applies to `validate` and `bundle-helpers`, and `--check` to `bundle-helpers` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](docs/project-declaration.md#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
 

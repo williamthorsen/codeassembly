@@ -116,6 +116,94 @@ describe(generateLabelMap, () => {
     expect(parsed.scopes).toEqual({});
   });
 
+  describe('with pnpm-workspace.yaml', () => {
+    it('derives scopes from every directory that the globs match', async () => {
+      await writeWorkspaceManifest(tempDir, ['apps/*', 'packages/*']);
+      await createWorkspace(tempDir, 'apps/web');
+      await createWorkspace(tempDir, 'packages/core');
+
+      const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+      expect(parsed.scopes).toEqual({ core: 'scope:core', root: 'scope:root', web: 'scope:web' });
+    });
+
+    it('omits the workspaces that a `!` pattern excludes', async () => {
+      await writeWorkspaceManifest(tempDir, ['packages/*', '!packages/legacy']);
+      await createWorkspace(tempDir, 'packages/core');
+      await createWorkspace(tempDir, 'packages/legacy');
+
+      const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+      expect(parsed.scopes).toEqual({ core: 'scope:core', root: 'scope:root' });
+    });
+
+    it('produces the same label map as the packages/ listing when only packages/* is declared', async () => {
+      await createWorkspace(tempDir, 'packages/alpha');
+      await createWorkspace(tempDir, 'packages/beta');
+      const withoutManifest = await readGeneratedFile({ force: false }, tempDir);
+
+      await writeWorkspaceManifest(tempDir, ['packages/*']);
+      const withManifest = await readGeneratedFile({ force: true }, tempDir);
+
+      expect(withManifest).toBe(withoutManifest);
+    });
+
+    it('skips a matched directory that does not contain a package.json', async () => {
+      await writeWorkspaceManifest(tempDir, ['packages/*']);
+      await createWorkspace(tempDir, 'packages/core');
+      await mkdir(path.join(tempDir, 'packages', 'notes'), { recursive: true });
+
+      const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+      expect(parsed.scopes).toEqual({ core: 'scope:core', root: 'scope:root' });
+    });
+
+    it('produces one scope for workspaces that share a directory name', async () => {
+      await writeWorkspaceManifest(tempDir, ['apps/*', 'packages/*']);
+      await createWorkspace(tempDir, 'apps/web');
+      await createWorkspace(tempDir, 'packages/web');
+
+      const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+      expect(parsed.scopes).toEqual({ root: 'scope:root', web: 'scope:web' });
+    });
+
+    it('does not list the workspace root as a scope', async () => {
+      await writeWorkspaceManifest(tempDir, ['.', 'packages/*']);
+      await writeFile(path.join(tempDir, 'package.json'), JSON.stringify({ name: 'monorepo' }), 'utf8');
+      await createWorkspace(tempDir, 'packages/core');
+
+      const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+      expect(parsed.scopes).toEqual({ core: 'scope:core', root: 'scope:root' });
+    });
+
+    it('falls back to the packages/ listing when the manifest does not declare a packages list', async () => {
+      await writeFile(path.join(tempDir, 'pnpm-workspace.yaml'), 'catalog:\n  zod: 4.0.0\n', 'utf8');
+      await mkdir(path.join(tempDir, 'packages', 'alpha'), { recursive: true });
+
+      const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+      expect(parsed.scopes).toEqual({ alpha: 'scope:alpha', root: 'scope:root' });
+    });
+
+    it('exits with an error naming the cause and the patterns, without writing the file, when the globs match no workspace', async () => {
+      await writeWorkspaceManifest(tempDir, ['apps/*']);
+
+      using _exit = throwOnProcessExit();
+      using silent = silenceConsole(['error']);
+
+      const error = await captureError(ProcessExitError, () => generateLabelMap({ force: false }, tempDir));
+
+      expect(error.code).toBe(1);
+      expect(silent.error).toHaveBeenCalledWith(
+        expect.stringContaining('no matched directory contains a package.json'),
+      );
+      expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('`apps/*`'));
+      await expect(readFile(path.join(tempDir, '.meta', 'label-map.json'), 'utf8')).rejects.toThrow('ENOENT');
+    });
+  });
+
   it('exits with error when file exists and --force is not set', async () => {
     const metaDir = path.join(tempDir, '.meta');
     await mkdir(metaDir, { recursive: true });
@@ -163,9 +251,30 @@ describe(printGenerateUsage, () => {
   });
 });
 
+// region | Helpers
+
+/** Creates a workspace at `relativeDir` under `rootDir`, with a minimal `package.json`. */
+async function createWorkspace(rootDir: string, relativeDir: string): Promise<void> {
+  const workspaceDir = path.join(rootDir, relativeDir);
+  await mkdir(workspaceDir, { recursive: true });
+  await writeFile(
+    path.join(workspaceDir, 'package.json'),
+    JSON.stringify({ name: path.basename(workspaceDir) }),
+    'utf8',
+  );
+}
+
 /** Runs the generator and returns the file contents. */
 async function readGeneratedFile(options: { force: boolean }, workingDir: string): Promise<string> {
   using _silent = silenceConsole(['info']);
   await generateLabelMap(options, workingDir);
   return await readFile(path.join(workingDir, '.meta', 'label-map.json'), 'utf8');
 }
+
+/** Writes a `pnpm-workspace.yaml` declaring `patterns` to `rootDir`. */
+async function writeWorkspaceManifest(rootDir: string, patterns: readonly string[]): Promise<void> {
+  const lines = patterns.map((pattern) => `  - '${pattern}'`);
+  await writeFile(path.join(rootDir, 'pnpm-workspace.yaml'), ['packages:', ...lines, ''].join('\n'), 'utf8');
+}
+
+// endregion | Helpers
