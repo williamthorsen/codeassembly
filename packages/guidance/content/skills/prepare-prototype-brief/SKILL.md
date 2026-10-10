@@ -73,6 +73,27 @@ Write the brief in this order, with these headings:
 
 Then add the lens sections, one per builder, in the developer's words after a plain-speech pass.
 
+## The ledger
+
+The ledger lists every distinctive idea of the round, so that each one is kept or let go by the developer's decision rather than by default. The comparison contains it with the dispositions empty, because it is written before any verdict exists.
+
+| Column      | Contents                                                                                                                                                            |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #           | The row's number, starting at 1 in each comparison                                                                                                                  |
+| Idea        | One line                                                                                                                                                            |
+| Source      | The slug of every prototype that has the idea                                                                                                                       |
+| Answers     | The ticket criterion, the settled intent, or the audit finding or requirement in the ticket or the product's design doc that the idea answers; blank when none does |
+| Disposition | Empty in the comparison                                                                                                                                             |
+
+Take the rows from every builder's five lines of distinctive ideas, the builders of rejected and losing prototypes included, and add a row for a distinctive idea visible in a prototype whose builder did not list it. An idea that two prototypes share is one row that names both. Never invent an entry for the Answers column.
+
+A disposition is one of four:
+
+- **Keep**: The idea goes into the design as it is.
+- **Adapt**: The idea goes into the design changed; the disposition states how.
+- **Defer**: The idea waits; the disposition states what unblocks it.
+- **Drop**: The idea is let go; the disposition states the reason.
+
 ## Process
 
 ### 1. Resolve the set
@@ -123,4 +144,4 @@ Dispatch a builder once more with the same block when it returns without the fil
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the ideas to adopt in the design, and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the [ledger](#the-ledger), and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
