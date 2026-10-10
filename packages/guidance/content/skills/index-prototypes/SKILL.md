@@ -128,7 +128,7 @@ Report:
 
 When the collection is empty, report that nothing has been decided yet.
 
-When the ticket directory contains a `comparison` artifact written by {skill?:prepare-prototype-brief}, the verdicts do not end the round: Once the developer says that they have decided, continue with that skill's step 7, which takes them through a disposition of every idea in the round.
+When the ticket directory contains a `comparison` artifact written by {skill?:prepare-prototype-brief} that contains an idea table, the verdicts do not end the round: Once the developer says that they have decided, continue with that skill's step 7, which takes them through a decision on every idea in the round.
 
 ## Helper results
 
