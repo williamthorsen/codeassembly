@@ -1,6 +1,6 @@
 ---
 name: prepare-prototype-brief
-description: Compose the shared brief and the lens sections for a round of competing prototypes, check the brief against the rules that builders over-apply, and dispatch one builder per lens. Use when a ticket calls for two or more prototypes of one idea built in parallel.
+description: Compose the shared brief and the lens sections for a round of competing prototypes, check the brief against the rules that builders over-apply, dispatch one builder per lens, and once the round is judged, take the developer through a disposition of every prototype idea. Use when a ticket calls for two or more prototypes of one idea built in parallel, or when the developer has judged such a round.
 user-invocable: true
 supported-harnesses: [claude]
 ---
@@ -9,7 +9,7 @@ supported-harnesses: [claude]
 
 Write the brief that a round of prototype builders receives, from the idea, the settled intent, and the lenses that the developer supplies. Every builder reads the brief and follows its words literally: A criterion written into a section's instruction becomes a refrain in every entry, a request to convince becomes a sales pitch, "show the view" becomes a paragraph about the view, and "a large clock" becomes a digital readout. Apply the rules below yourself, so that the developer states the ask and never has to police their own wording.
 
-The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_dir}/{slug}-v{n}.html`, one index page with screenshots and verdicts, and a comparison afterwards.
+The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_dir}/{slug}-v{n}.html`, one index page with screenshots and verdicts, and a comparison afterwards. Once the developer has judged the round, a ledger records the disposition of each of the round's ideas.
 
 ## Inputs
 
@@ -145,3 +145,15 @@ Dispatch a builder once more with the same block when it returns without the fil
 ### 6. Index and compare
 
 Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the [ledger](#the-ledger), and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+
+### 7. Dispose the ideas
+
+Run this step once the developer says that they have judged the round, in this session or a later one. A verdict on a prototype is never a disposition of its ideas: Do not drop a row because its prototype lost or was rejected, and do not keep a row because its prototype won, without the developer's answer.
+
+1. Resolve the set directory per {skill:index-prototypes} step 1, and read back the verdicts per its "Read back the verdicts".
+2. Read the latest `comparison` artifact in the ticket directory. When a `ledger` artifact is newer than it, resume from that ledger and walk only its open rows. When the ticket directory does not contain a comparison, report that the round does not have a ledger and stop.
+3. Present every row in one action-items block, per the convention included at step 4: its number, idea, source, answers, the verdict of each source prototype (winner, rank, or rejected), and a recommended disposition with its reason in a clause. After a revised round, a row matching a row of the previous `ledger` artifact takes that row's disposition as its recommendation. A row for which you do not have a basis shows "no recommendation".
+4. Take the developer's answer by row number: `3 keep`, `5 adapt: {how}`, `7 defer: {what unblocks it}`, `9 drop: {reason}`. An explicit `accept the rest` disposes every remaining row that has a recommendation with that recommendation. A row that the answer does not cover, and an adapt, defer, or drop that lacks its how, its condition, or its reason, stays open.
+5. Present the open rows again, until none remain.
+
+Save the ledger with {skill:save-artifact} as a ticket-level `ledger` artifact that reuses the comparison's slug: the table with every disposition filled, the index URL, and the comparison's path. When the developer stops before every row is answered, save it with `open` as each unanswered row's disposition; the end vision does not cite a ledger that contains an open row. Give the developer the ledger path.
