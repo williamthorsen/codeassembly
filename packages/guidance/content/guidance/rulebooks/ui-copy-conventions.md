@@ -1,7 +1,7 @@
 ---
 slug: ui-copy-conventions
 description: 'Text in a product surface: written for the person who returns to the page, with rules for labels, helper text, errors, and empty states, and a copy budget. Consult before writing labels, helper text, messages, or empty states for a page, a prototype, or a UI component.'
-delivery: [ambient, skill]
+delivery: [skill]
 version: '1'
 ---
 
