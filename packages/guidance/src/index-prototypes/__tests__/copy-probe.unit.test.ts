@@ -36,6 +36,14 @@ describe('copy probe', () => {
     expect(strings).toEqual(['Choose a preset to begin.', 'Each preset grants read access only.']);
   });
 
+  it('keeps sibling divs inside a list item apart', () => {
+    const strings = probe(
+      `<ul><li><div>CI deploy token for main</div><div>Created three days ago by admin</div></li></ul>`,
+    );
+
+    expect(strings).toEqual(['CI deploy token for main', 'Created three days ago by admin']);
+  });
+
   it('skips the demo band, scripts, styles, and templates', () => {
     const strings = probe(`
       <div data-demo><p>Scene one: the developer opens the page.</p><input placeholder="Demo scene name here"></div>

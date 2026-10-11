@@ -3,10 +3,11 @@ export const COPY_MIN_WORDS = 4;
 
 /**
  * A function, as source for the Playwright MCP's `browser_evaluate`, that returns a page's product-surface strings in
- * document order without duplicates. A string is the text gathered under one container: the nearest block container,
- * else the nearest inline one, else the nearest `div`, else the parent element; a `placeholder` value is a string of
- * its own. Text inside `[data-demo]`, `script`, `style`, or `template` is skipped, and so is a string under
- * `COPY_MIN_WORDS` words. Hidden elements count, because a hidden state is still product copy.
+ * document order without duplicates. A string is the text gathered under one container: the nearest block container or
+ * `div`, except that an inline container nested inside that `div` wins, else the nearest inline container, else the
+ * parent element; a `placeholder` value is a string of its own. Text inside `[data-demo]`, `script`, `style`, or
+ * `template` is skipped, and so is a string under `COPY_MIN_WORDS` words. Hidden elements count, because a hidden
+ * state is still product copy.
  */
 export const COPY_PROBE_SCRIPT = String.raw`() => {
   const BLOCK = 'p, li, h1, h2, h3, h4, h5, h6, td, th, dt, dd, legend, caption, figcaption, summary';
@@ -29,7 +30,14 @@ export const COPY_PROBE_SCRIPT = String.raw`() => {
     if (parent === null || parent.closest(SKIPPED) !== null) {
       continue;
     }
-    const container = parent.closest(BLOCK) ?? parent.closest(INLINE) ?? parent.closest('div') ?? parent;
+    const nearest = parent.closest(BLOCK + ', div');
+    const inline = parent.closest(INLINE);
+    const container =
+      nearest !== null && nearest.matches(BLOCK)
+        ? nearest
+        : inline !== null && (nearest === null || nearest.contains(inline))
+          ? inline
+          : (nearest ?? parent);
     let parts = byContainer.get(container);
     if (parts === undefined) {
       parts = [];
