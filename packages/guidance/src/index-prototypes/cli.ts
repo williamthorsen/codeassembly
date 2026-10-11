@@ -397,7 +397,7 @@ async function render(setDir: string, outPath: string): Promise<IndexPrototypesR
     cards.push({ entry, shot });
   }
 
-  const page = renderIndexPage({ title: manifest.title, cards });
+  const page = renderIndexPage({ title: manifest.title, summary: manifest.summary, cards });
   const bytes = Buffer.byteLength(page, 'utf8');
   if (bytes > PAGE_LIMIT_BYTES) {
     return fail('page-too-large', `the page is ${bytes} bytes, over the ${PAGE_LIMIT_BYTES}-byte artifact cap`);
