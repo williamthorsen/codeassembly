@@ -64,7 +64,7 @@ The helper applies the umbrella case in `ingest` and in `comment`.
 | A `keep`                                                  | `keep`                       |
 | Anything else, including a close below high confidence    | `leave`                      |
 
-`leave` writes nothing; the entry still shows the recommendation, so that the user can name it. The assessor drafts the edit behind every `update`, `revise`, and `split`: the replacement sections of the body and, for a split, the child tickets. The digest shows each draft under its entry.
+`leave` writes nothing; the entry still shows the recommendation, so that the user can name it. The assessor drafts the edit behind every `update`, `revise`, and `split`: the replacement sections of the body, a replacement title when the current one no longer describes the ticket, and, for a split, the child tickets. The digest shows each draft under its entry.
 
 **What the digest groups.** A hub is an open ticket on whose outcome two or more escalations of one digest page depend; the page shows it once, above its dependents, so that the user decides it first. Overlapping open tickets are merged into one group with the assessors' recommended survivor. Merging tickets stays the user's action, through the ticket skills.
 
@@ -196,13 +196,15 @@ Every action on a ticket follows one order: apply the drafted edit when the deci
    gh issue edit {child number} --parent {number}
    ```
 
-   Then replace the ticket's body:
+   Then replace the ticket's body, adding `--title "{title}"` when the result's `title` is not `null`:
 
    ```bash
    body_path="{body path}"
    [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
    gh issue edit {number} --body-file "$body_path"
    ```
+
+   Edit a ticket only through this step: A title or label edited after the decision is recorded makes the ticket look changed, and the next `collect` selects it again.
 
 2. **Render the comment** to a file:
 

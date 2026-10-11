@@ -97,6 +97,7 @@ describe(renderComment, () => {
         { heading: 'Context', body: 'New.' },
         { heading: 'Acceptance criteria', body: '- [ ] Done.' },
       ],
+      title: null,
       children: decision === 'split' ? [{ title: 'Child', body: 'Body.' }] : [],
     };
     const reply: StoredReply = { ...buildReply({ recommendation: decision, draft }), ...PROVENANCE };

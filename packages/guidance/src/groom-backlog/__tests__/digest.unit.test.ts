@@ -71,6 +71,7 @@ describe(renderDigest, () => {
   it("shows each entry's proposal, and the draft under an entry that has one", () => {
     const draft = {
       sections: [{ heading: 'Context', body: 'The uploader moved.\n\n- It lives in `src/transport/`.' }],
+      title: null,
       children: [],
     };
     const update = { ...buildEscalation(20), reply: buildReply({ number: 20, recommendation: 'update', draft }) };
@@ -90,6 +91,17 @@ describe(renderDigest, () => {
         '',
         '     - It lives in `src/transport/`.',
       ].join('\n'),
+    );
+  });
+
+  it("shows a draft's title ahead of its sections", () => {
+    const draft = { sections: [{ heading: 'Context', body: 'Moved.' }], children: [], title: 'Retry the upload' };
+    const revise = { ...buildEscalation(20), reply: buildReply({ number: 20, recommendation: 'revise', draft }) };
+
+    const [page] = renderDigest({ escalations: [revise], pageSize: 20, titles: new Map() });
+
+    expect(page?.markdown).toContain(
+      ['   - Draft:', '', '     #### Title', '', '     Retry the upload', '', '     #### Context'].join('\n'),
     );
   });
 

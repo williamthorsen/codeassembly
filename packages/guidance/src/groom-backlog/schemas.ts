@@ -63,11 +63,13 @@ const DraftSectionSchema = z.object({
 
 /**
  * The edit that an `update`, `revise`, or `split` recommendation drafts: the replacement `## ` sections of the ticket
- * body, by heading, and for a split the child tickets.
+ * body, by heading, the replacement title when the current one no longer describes the ticket, and for a split the
+ * child tickets.
  */
 export const DraftSchema = z
   .object({
     sections: z.array(DraftSectionSchema).min(1),
+    title: z.string().trim().min(1).nullable().default(null),
     children: z.array(z.object({ title: z.string().min(1), body: z.string().min(1) })),
   })
   .superRefine((draft, context) => {

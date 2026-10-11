@@ -339,9 +339,10 @@ async function runDigest(flags: ParsedFlags, context: CommandContext): Promise<C
 
 /**
  * Composes one ticket's drafted edit into files under `--out`: the new body, from the ticket's current body with the
- * drafted sections replaced, and one file per child of a split. The draft is stale, and nothing is written, when the
- * ticket changed after the version that the assessor read and after the latest comment carrying this run's marker. A
- * ticket in progress keeps its problem, context, and proposed solution, so a draft that replaces one is refused.
+ * drafted sections replaced, and one file per child of a split. The result names the drafted title, if any. The draft is
+ * stale, and nothing is written, when the ticket changed after the version that the assessor read and after the latest
+ * comment carrying this run's marker. A ticket in progress keeps its problem, context, and proposed solution, so a
+ * draft that replaces one is refused.
  */
 async function runDraft(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
   const run = readRequired(flags, 'run');
@@ -376,7 +377,15 @@ async function runDraft(flags: ParsedFlags, context: CommandContext): Promise<Co
     writeFileSync(file, `${child.body.trim()}\n`, 'utf8');
     return { title: child.title, path: file };
   });
-  return { ok: true, number, stale: false, body, sections: draft.sections.map((section) => section.heading), children };
+  return {
+    ok: true,
+    number,
+    stale: false,
+    body,
+    title: draft.title,
+    sections: draft.sections.map((section) => section.heading),
+    children,
+  };
 }
 
 /** Validates one assessor reply, stores it, appends its `assessment` record, and reports its class. */
