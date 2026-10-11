@@ -12,7 +12,7 @@ index-prototypes.mjs record-index --set-dir <dir> --url <url>
 index-prototypes.mjs render --set-dir <dir> --out <file>
 ```
 
-- **`register`** appends an entry to the set's manifest, creating the manifest on the set's first registration, which requires `--set-title`. A later `--set-title` renames the set. The entry's `version` is 1 for a new slug and one past the slug's highest version otherwise, and `registeredAt` is the UTC time of the call. `--inputs` is split on commas, and each item is trimmed. `--source` is recorded as given, not copied. `--url` must be an http or https URL. The result contains `manifestPath` and the new `entry`.
+- **`register`** appends an entry to the set's manifest, creating the manifest on the set's first registration, which requires `--set-title`. A later `--set-title` renames the set. The entry's `version` is 1 for a new slug and one past the slug's highest version otherwise. Its `number` is one past the set's highest number for a new slug and the slug's existing number otherwise, so every version of a slug shares one number. The entry's `registeredAt` is the UTC time of the call. `--inputs` is split on commas, and each item is trimmed. `--source` is recorded as given, not copied. `--url` must be an http or https URL. The result contains `manifestPath` and the new `entry`.
 - **`record-index`** stores the published index page's URL as the manifest's `indexUrl`, which later registrations keep. The result contains `manifestPath` and `indexUrl`.
 - **`render`** writes the index page to `--out`. The result contains `path`, `bytes`, `cards`, `title`, `indexUrl`, `missingShots` (slugs whose recorded screenshot is missing from disk), and a `warning` when the page exceeds 12,000,000 bytes. Above 16,000,000 bytes, the artifact page cap, `render` writes nothing and returns `page-too-large`.
 
@@ -33,6 +33,7 @@ A slug matches `[a-z0-9][a-z0-9-]{0,39}`, so that it serves as a file stem and a
   "entries": [
     {
       "slug": "dense",
+      "number": 1,
       "version": 1,
       "registeredAt": "2026-10-03T01:19:36.000Z",
       "title": "Dense header",
@@ -47,7 +48,9 @@ A slug matches `[a-z0-9][a-z0-9-]{0,39}`, so that it serves as a file stem and a
 }
 ```
 
-`indexUrl`, `source`, `lens`, `description`, and `shot` are `null` when absent. Every registration stays in `entries`; the page shows the highest version of each slug, in order of the slug's first registration. A registration without `--screenshot` renders the placeholder even when an earlier version had a screenshot, since that screenshot shows the earlier version.
+`indexUrl`, `source`, `lens`, `description`, and `shot` are `null` when absent. Every registration stays in `entries`; the page shows the highest version of each slug, in order of the slug's first registration. A manifest whose entries lack `number`, written before numbers existed, reads as numbered in order of each slug's first registration; `register` and `record-index` write the numbers at their next write, and `render` writes nothing. A `number` that is present must be a positive integer, or the manifest is `invalid-manifest`.
+
+A registration without `--screenshot` renders the placeholder even when an earlier version had a screenshot, since that screenshot shows the earlier version.
 
 ## Screenshots
 
@@ -72,4 +75,4 @@ One document per slug, with the slug as its id:
 
 Rejecting a prototype clears its rank and its winner flag; ranking it or marking it the winner clears its rejection. Marking a winner writes the new winner's document first, then clears the previous winner's, so for a moment two documents can claim the win; the page and the skill both take the later `updatedAt`. The page ignores a document whose id is not a slug on the page.
 
-Cards sort winner first, then by rank, then by registration time, with rejected cards last. Controls are hidden when `can("data.write")` is `false` and when `db` is unavailable, and disabled after a refused write. Each card takes focus with Tab. On a focused card, the left and right arrow keys move to the previous and next card and the up and down arrow keys move by one row; elsewhere the arrow keys keep their usual behavior. Within a card, `x` toggles the rejection, `w` toggles the winner, and `1` to `9` set the rank.
+Each card's title leads with the prototype's number (`3. Catalog first`), and the summary line names the winner the same way. Cards sort winner first, then by rank, then by registration time, with rejected cards last. Controls are hidden when `can("data.write")` is `false` and when `db` is unavailable, and disabled after a refused write. Each card takes focus with Tab. On a focused card, the left and right arrow keys move to the previous and next card and the up and down arrow keys move by one row; elsewhere the arrow keys keep their usual behavior. Within a card, `x` toggles the rejection, `w` toggles the winner, and `1` to `9` set the rank.
