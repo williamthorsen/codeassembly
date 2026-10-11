@@ -10,12 +10,13 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent } from '../lib/type-guards.ts';
+import { COPY_PROBE_SCRIPT } from './copy-probe.ts';
 import { intakeScreenshot } from './intake-screenshot.ts';
 import { isValidSlug, listLatestEntries, nextVersion, readManifest, resolveNumber, writeManifest } from './manifest.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
 import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry } from './types.ts';
 
-const COMMANDS = ['record-index', 'register', 'render'] as const;
+const COMMANDS = ['copy-probe', 'record-index', 'register', 'render'] as const;
 
 type Command = (typeof COMMANDS)[number];
 
@@ -36,6 +37,7 @@ const FLAGS: readonly FlagSpec[] = [
 ];
 
 const COMMAND_FLAGS: Record<Command, { required: readonly string[]; optional: readonly string[] }> = {
+  'copy-probe': { required: [], optional: [] },
   'record-index': { required: ['set-dir', 'url'], optional: [] },
   register: {
     required: ['set-dir', 'slug', 'title', 'url'],
@@ -85,14 +87,15 @@ export async function runIndexPrototypes(input: {
     return fail('invalid-args', describeError(error));
   }
 
-  const setDir = path.resolve(requireFlag(args.values, 'set-dir'));
   switch (args.command) {
+    case 'copy-probe':
+      return { ok: true, command: 'copy-probe', function: COPY_PROBE_SCRIPT };
     case 'record-index':
-      return recordIndex(setDir, requireFlag(args.values, 'url'));
+      return recordIndex(resolveSetDir(args.values), requireFlag(args.values, 'url'));
     case 'register':
-      return register(setDir, args.values, input.now);
+      return register(resolveSetDir(args.values), args.values, input.now);
     case 'render':
-      return render(setDir, path.resolve(requireFlag(args.values, 'out')));
+      return render(resolveSetDir(args.values), path.resolve(requireFlag(args.values, 'out')));
     default: {
       const _exhaustive: never = args.command;
       throw new Error(`unhandled command: ${String(_exhaustive)}`);
@@ -328,6 +331,11 @@ function requireFlag(values: Record<string, string>, name: string): string {
     throw new Error(`--${name} is missing after parsing`);
   }
   return value;
+}
+
+/** Resolves the required `--set-dir` value to an absolute path. */
+function resolveSetDir(values: Record<string, string>): string {
+  return path.resolve(requireFlag(values, 'set-dir'));
 }
 
 // endregion | Helpers

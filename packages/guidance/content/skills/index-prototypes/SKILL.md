@@ -132,6 +132,16 @@ When the collection is empty, report that nothing has been decided yet.
 
 When the ticket directory contains a `comparison` artifact written by {skill?:prepare-prototype-brief} that contains an idea table, the verdicts do not end the round: Once the developer says that they have decided, continue with that skill's step 7, which takes them through a decision on every idea in the round.
 
+## List the product copy
+
+When a caller needs each prototype's product copy, get the probe once per round:
+
+```bash
+node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs copy-probe
+```
+
+Then, in step 3, after each screenshot, pass the result's `function` to `browser_evaluate`. It returns the page's strings of four or more words in document order, without duplicates, and it leaves out everything inside an element that carries `data-demo`.
+
 ## Helper results
 
 Every command prints one JSON object. A success has `ok: true`. A failure has `ok: false`, an `error` code, and a `message`, and the command exits 1:
