@@ -11,7 +11,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import { intakeScreenshot } from './intake-screenshot.ts';
-import { isValidSlug, listLatestEntries, nextVersion, readManifest, writeManifest } from './manifest.ts';
+import { isValidSlug, listLatestEntries, nextVersion, readManifest, resolveNumber, writeManifest } from './manifest.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
 import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry } from './types.ts';
 
@@ -254,6 +254,7 @@ async function register(setDir: string, values: Record<string, string>, now: Dat
 
   const entry: ManifestEntry = {
     slug,
+    number: resolveNumber(existing, slug),
     version,
     registeredAt: now.toISOString(),
     title: requireFlag(values, 'title'),

@@ -1,6 +1,8 @@
 /** One registration of a prototype; a re-registered slug adds an entry with the next version. */
 export interface ManifestEntry {
   slug: string;
+  /** The prototype's number in the set, shared by every version of its slug. */
+  number: number;
   version: number;
   /** ISO-8601 UTC timestamp of the registration. */
   registeredAt: string;

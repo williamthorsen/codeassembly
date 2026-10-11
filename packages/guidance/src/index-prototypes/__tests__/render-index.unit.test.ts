@@ -181,6 +181,7 @@ describe('render command', () => {
 /** Builds a manifest entry, overriding the fixed defaults with `fields`. */
 function buildEntry(fields: Partial<ManifestEntry> & { slug: string }): ManifestEntry {
   return {
+    number: 1,
     version: 1,
     registeredAt: NOW.toISOString(),
     title: `Prototype ${fields.slug}`,

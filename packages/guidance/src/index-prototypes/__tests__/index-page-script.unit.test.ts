@@ -203,6 +203,7 @@ describe('index page script', () => {
 function buildEntry(slug: string, minute: number): ManifestEntry {
   return {
     slug,
+    number: minute + 1,
     version: 1,
     registeredAt: `2026-10-03T01:${String(minute).padStart(2, '0')}:00.000Z`,
     title: `Prototype ${slug}`,

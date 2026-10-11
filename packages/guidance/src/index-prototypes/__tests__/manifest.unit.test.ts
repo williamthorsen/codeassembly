@@ -4,7 +4,14 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { isValidSlug, listLatestEntries, nextVersion, readManifest, writeManifest } from '../manifest.ts';
+import {
+  isValidSlug,
+  listLatestEntries,
+  nextVersion,
+  readManifest,
+  resolveNumber,
+  writeManifest,
+} from '../manifest.ts';
 import type { Manifest, ManifestEntry } from '../types.ts';
 
 describe(isValidSlug, () => {
@@ -25,6 +32,20 @@ describe(nextVersion, () => {
 
   it('increments past the highest version of the slug', () => {
     expect(nextVersion(buildManifest([buildEntry('a', 1), buildEntry('a', 2)]), 'a')).toBe(3);
+  });
+});
+
+describe(resolveNumber, () => {
+  it('starts an empty set at 1', () => {
+    expect(resolveNumber(null, 'a')).toBe(1);
+  });
+
+  it("returns a registered slug's number", () => {
+    expect(resolveNumber(buildManifest([buildEntry('a', 1, 1), buildEntry('b', 1, 2)]), 'a')).toBe(1);
+  });
+
+  it("gives a new slug one past the set's highest number", () => {
+    expect(resolveNumber(buildManifest([buildEntry('a', 1, 1), buildEntry('b', 1, 4)]), 'c')).toBe(5);
   });
 });
 
@@ -65,6 +86,54 @@ describe(readManifest, () => {
     await expect(readManifest(setDir)).resolves.toMatchObject({ kind: 'invalid' });
   });
 
+  it('numbers a manifest without numbers in first-registration order', async () => {
+    const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
+    const entries = [buildEntry('b', 1), buildEntry('a', 1), buildEntry('b', 2)].map(stripNumber);
+    await writeFile(
+      path.join(setDir, 'manifest.json'),
+      JSON.stringify({ title: 'T', indexUrl: null, entries }),
+      'utf8',
+    );
+
+    const read = await readManifest(setDir);
+
+    expect(read.kind === 'ok' && read.manifest.entries.map((entry) => [entry.slug, entry.number])).toEqual([
+      ['b', 1],
+      ['a', 2],
+      ['b', 1],
+    ]);
+  });
+
+  it("numbers unnumbered slugs past the highest number and takes each slug's highest numbered version", async () => {
+    const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
+    const entries = [buildEntry('a', 1, 3), stripNumber(buildEntry('b', 1)), buildEntry('a', 2, 5)];
+    await writeFile(
+      path.join(setDir, 'manifest.json'),
+      JSON.stringify({ title: 'T', indexUrl: null, entries }),
+      'utf8',
+    );
+
+    const read = await readManifest(setDir);
+
+    expect(read.kind === 'ok' && read.manifest.entries.map((entry) => [entry.slug, entry.number])).toEqual([
+      ['a', 5],
+      ['b', 6],
+      ['a', 5],
+    ]);
+  });
+
+  it.each([0, -1, 1.5, '1'])('reports an entry whose number is %j', async (number) => {
+    const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
+    const entries = [{ ...buildEntry('a', 1), number }];
+    await writeFile(
+      path.join(setDir, 'manifest.json'),
+      JSON.stringify({ title: 'T', indexUrl: null, entries }),
+      'utf8',
+    );
+
+    await expect(readManifest(setDir)).resolves.toMatchObject({ kind: 'invalid' });
+  });
+
   it('round-trips a written manifest without leaving a temporary file', async () => {
     const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
     const manifest = buildManifest([buildEntry('a', 1)]);
@@ -80,9 +149,10 @@ describe(readManifest, () => {
 // region | Helpers
 
 /** Builds a manifest entry with fixed metadata. */
-function buildEntry(slug: string, version: number): ManifestEntry {
+function buildEntry(slug: string, version: number, number = 1): ManifestEntry {
   return {
     slug,
+    number,
     version,
     registeredAt: '2026-10-03T01:00:00.000Z',
     title: `Prototype ${slug}`,
@@ -98,6 +168,12 @@ function buildEntry(slug: string, version: number): ManifestEntry {
 /** Builds a manifest around `entries`. */
 function buildManifest(entries: ManifestEntry[]): Manifest {
   return { title: 'Set', indexUrl: null, entries };
+}
+
+/** Returns `entry` without its number, as a manifest written before numbers existed stores it. */
+function stripNumber(entry: ManifestEntry): Omit<ManifestEntry, 'number'> {
+  const { number: _omitted, ...rest } = entry;
+  return rest;
 }
 
 // endregion | Helpers
