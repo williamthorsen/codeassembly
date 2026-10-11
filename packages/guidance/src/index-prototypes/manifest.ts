@@ -42,7 +42,23 @@ export function nextVersion(manifest: Manifest | null, slug: string): number {
   return highest + 1;
 }
 
-/** Reads and validates the manifest in `setDir`. */
+/** Returns the number that a registration of `slug` takes: the slug's existing number, or one past the set's highest. */
+export function resolveNumber(manifest: Manifest | null, slug: string): number {
+  const entries = manifest?.entries ?? [];
+  let highest = 0;
+  for (const entry of entries) {
+    if (entry.slug === slug) {
+      return entry.number;
+    }
+    highest = Math.max(highest, entry.number);
+  }
+  return highest + 1;
+}
+
+/**
+ * Reads and validates the manifest in `setDir`. A manifest whose entries lack numbers, written before numbers existed,
+ * reads with numbers assigned in order of each slug's first registration.
+ */
 export async function readManifest(setDir: string): Promise<ManifestRead> {
   const manifestPath = resolveManifestPath(setDir);
   let text: string;
@@ -60,10 +76,10 @@ export async function readManifest(setDir: string): Promise<ManifestRead> {
   } catch {
     return { kind: 'invalid', message: `${manifestPath} is not valid JSON` };
   }
-  if (!isManifest(parsed)) {
+  if (!isStoredManifest(parsed)) {
     return { kind: 'invalid', message: `${manifestPath} does not have the manifest layout` };
   }
-  return { kind: 'ok', manifest: parsed };
+  return { kind: 'ok', manifest: numberEntries(parsed) };
 }
 
 /** Returns the path of the manifest file in `setDir`. */
@@ -88,8 +104,14 @@ export async function writeManifest(setDir: string, manifest: Manifest): Promise
 
 // region | Helpers
 
+/** A manifest entry as stored on disk, whose number is absent in a manifest written before numbers existed. */
+type StoredEntry = Omit<ManifestEntry, 'number'> & { number?: number };
+
+/** A manifest as stored on disk. */
+type StoredManifest = Omit<Manifest, 'entries'> & { entries: StoredEntry[] };
+
 /** Returns true when `value` has the manifest layout. */
-function isManifest(value: unknown): value is Manifest {
+function isStoredManifest(value: unknown): value is StoredManifest {
   if (!isRecord(value)) {
     return false;
   }
@@ -97,17 +119,19 @@ function isManifest(value: unknown): value is Manifest {
     typeof value.title === 'string' &&
     (value.indexUrl === null || typeof value.indexUrl === 'string') &&
     Array.isArray(value.entries) &&
-    value.entries.every((entry) => isManifestEntry(entry))
+    value.entries.every((entry) => isStoredEntry(entry))
   );
 }
 
-/** Returns true when `value` has the layout of one manifest entry. */
-function isManifestEntry(value: unknown): value is ManifestEntry {
+/** Returns true when `value` has the layout of one stored manifest entry. */
+function isStoredEntry(value: unknown): value is StoredEntry {
   if (!isRecord(value)) {
     return false;
   }
   return (
     typeof value.slug === 'string' &&
+    (value.number === undefined ||
+      (typeof value.number === 'number' && Number.isSafeInteger(value.number) && value.number > 0)) &&
     typeof value.version === 'number' &&
     Number.isSafeInteger(value.version) &&
     typeof value.registeredAt === 'string' &&
@@ -120,6 +144,40 @@ function isManifestEntry(value: unknown): value is ManifestEntry {
     isNullableString(value.description) &&
     isNullableString(value.shot)
   );
+}
+
+/**
+ * Gives every entry its slug's number: the number on the slug's highest numbered version, or, for a slug that has none,
+ * the next number past the set's highest, in order of first registration.
+ */
+function numberEntries(manifest: StoredManifest): Manifest {
+  const numbered = new Map<string, { version: number; number: number }>();
+  for (const entry of manifest.entries) {
+    const current = numbered.get(entry.slug);
+    if (entry.number !== undefined && (current === undefined || entry.version > current.version)) {
+      numbered.set(entry.slug, { version: entry.version, number: entry.number });
+    }
+  }
+  const numbers = new Map(numbered.entries().map(([slug, { number }]) => [slug, number]));
+  let highest = Math.max(0, ...numbers.values());
+  for (const entry of manifest.entries) {
+    if (numbers.has(entry.slug)) {
+      continue;
+    }
+
+    highest += 1;
+    numbers.set(entry.slug, highest);
+  }
+  return {
+    ...manifest,
+    entries: manifest.entries.map((entry) => {
+      const number = numbers.get(entry.slug);
+      if (number === undefined) {
+        throw new Error(`slug "${entry.slug}" was not numbered`);
+      }
+      return { ...entry, number };
+    }),
+  };
 }
 
 /** Returns true when `value` is a string or null. */

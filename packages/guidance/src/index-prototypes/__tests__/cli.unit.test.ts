@@ -84,6 +84,7 @@ describe(runIndexPrototypes, () => {
       manifestPath: path.join(setDir, 'manifest.json'),
       entry: {
         slug: 'dense',
+        number: 1,
         version: 1,
         registeredAt: '2026-10-03T01:19:36.000Z',
         title: 'Dense header',
@@ -111,6 +112,40 @@ describe(runIndexPrototypes, () => {
       entries: [
         { slug: 'dense', version: 1 },
         { slug: 'dense', version: 2, title: 'Dense header, revised' },
+      ],
+    });
+  });
+
+  it('numbers each new slug in registration order and keeps the number across versions', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'dense', NOW, ['--set-title', 'Set']);
+    await register(setDir, 'airy', NOW, []);
+
+    const result = await register(setDir, 'dense', LATER, []);
+
+    expect(result).toMatchObject({ ok: true, entry: { slug: 'dense', number: 1, version: 2 } });
+    expect(await readManifestFile(setDir)).toMatchObject({
+      entries: [
+        { slug: 'dense', number: 1 },
+        { slug: 'airy', number: 2 },
+        { slug: 'dense', number: 1 },
+      ],
+    });
+  });
+
+  it('writes numbers into a manifest that lacks them at the next registration', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'dense', NOW, ['--set-title', 'Set']);
+    await register(setDir, 'airy', NOW, []);
+    await stripManifestNumbers(setDir);
+
+    await register(setDir, 'bold', NOW, []);
+
+    expect(await readManifestFile(setDir)).toMatchObject({
+      entries: [
+        { slug: 'dense', number: 1 },
+        { slug: 'airy', number: 2 },
+        { slug: 'bold', number: 3 },
       ],
     });
   });
@@ -252,6 +287,13 @@ async function makeSetDir(): Promise<string> {
 /** Reads the set's manifest file as parsed JSON. */
 async function readManifestFile(setDir: string): Promise<unknown> {
   return JSON.parse(await readFile(path.join(setDir, 'manifest.json'), 'utf8'));
+}
+
+/** Rewrites the set's manifest without entry numbers, as a manifest written before numbers existed stores it. */
+async function stripManifestNumbers(setDir: string): Promise<void> {
+  const manifestPath = path.join(setDir, 'manifest.json');
+  const text = await readFile(manifestPath, 'utf8');
+  await writeFile(manifestPath, text.replaceAll(/\n\s*"number": \d+,/g, ''), 'utf8');
 }
 
 /** Registers `slug` with fixed title and URL, adding `extra` flags. */

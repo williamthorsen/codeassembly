@@ -26,7 +26,7 @@ describe('index page script', () => {
     expect(page.badges('b')).toEqual(['Winner']);
     expect(page.badges('a')).toEqual(['Rank 2']);
     expect(page.badges('c')).toEqual(['Rejected']);
-    expect(page.text('#summary')).toBe('3 prototypes · winner: Prototype b · 1 ranked · 1 rejected');
+    expect(page.text('#summary')).toBe('3 prototypes · winner: 2. Prototype b · 1 ranked · 1 rejected');
   });
 
   it('treats the later of two winner claims as the winner', async () => {
@@ -203,6 +203,7 @@ describe('index page script', () => {
 function buildEntry(slug: string, minute: number): ManifestEntry {
   return {
     slug,
+    number: minute + 1,
     version: 1,
     registeredAt: `2026-10-03T01:${String(minute).padStart(2, '0')}:00.000Z`,
     title: `Prototype ${slug}`,
