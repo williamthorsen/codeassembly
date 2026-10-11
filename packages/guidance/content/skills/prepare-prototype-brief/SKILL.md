@@ -81,7 +81,7 @@ The idea table lists every distinctive idea of the round, so that each one is ke
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | #        | The row's number, starting at 1 in each comparison                                                                                                                  |
 | Idea     | One line                                                                                                                                                            |
-| Source   | The slug of every prototype that has the idea, or `developer` for an idea that the developer states                                                                 |
+| Source   | Every prototype that has the idea, as `{number}. {title}`, or `developer` for an idea that the developer states                                                     |
 | Answers  | The ticket criterion, the settled intent, or the audit finding or requirement in the ticket or the product's design doc that the idea answers; blank when none does |
 | Decision | Empty in the comparison                                                                                                                                             |
 
@@ -98,7 +98,7 @@ A decision is one of four:
 
 ### 1. Resolve the set
 
-Resolve the set directory and the scratch directory per {skill:index-prototypes} step 1, and read back any verdicts from an earlier round: They say which slugs are revised (same slug, next version) and which are new.
+Resolve the set directory and the scratch directory per {skill:index-prototypes} step 1, and read back any verdicts from an earlier round: They say which slugs are revised (same slug, next version) and which are new. When the developer names a prototype to revise by its number, resolve it to its slug per {skill:index-prototypes} "The set".
 
 ### 2. Gather the inputs
 
@@ -144,7 +144,7 @@ Dispatch a builder once more with the same block when it returns without the fil
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link and the comparison path, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Register the prototypes in the order of the lens sections in the brief, so that the numbers that the helper assigns follow it. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison, naming each prototype as `{number}. {title}`: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link, the comparison path, and one line per prototype as `{number}. {title}`, and nothing else.
 
 ### 7. Decide the ideas
 
@@ -152,8 +152,8 @@ Run this step once the developer says that they have judged the round, in this s
 
 1. Resolve the set directory per {skill:index-prototypes} step 1, and read back the verdicts per its "Read back the verdicts".
 2. Read the latest `comparison` artifact in the ticket directory. When an `idea-decisions` artifact is newer than it, resume from that artifact and walk only its open rows. When the latest comparison does not contain an idea table, report that the round does not have one and stop.
-3. Present every row in one action-items block, per the convention included at step 4: its number, idea, source, answers, the verdict of each source prototype (winner, rank, or rejected), and a recommended decision with its reason in a clause. After a revised round, a row matching a row of the previous `idea-decisions` artifact takes that row's decision as its recommendation. A row for which you do not have a basis shows "no recommendation".
-4. Take the developer's answer by row number: `3 keep`, `5 adapt: {how}`, `7 defer: {what unblocks it}`, `9 drop: {reason}`. An explicit `accept the rest` decides every remaining row that has a recommendation with that recommendation. A row that the answer does not cover, and an adapt, defer, or drop that lacks its how, its condition, or its reason, stays open. When the developer states an idea that none of the rows contains, such as a combination of two prototypes, add it as a row whose source is `developer`.
+3. Present every row in one action-items block, per the convention included at step 4: its number, idea, source, answers, the verdict of each source prototype by `{number}. {title}` (winner, rank, or rejected), and a recommended decision with its reason in a clause. After a revised round, a row matching a row of the previous `idea-decisions` artifact takes that row's decision as its recommendation. A row for which you do not have a basis shows "no recommendation".
+4. Take the developer's answer by row number: `3 keep`, `5 adapt: {how}`, `7 defer: {what unblocks it}`, `9 drop: {reason}`. An explicit `accept the rest` decides every remaining row that has a recommendation with that recommendation. A row that the answer does not cover, and an adapt, defer, or drop that lacks its how, its condition, or its reason, stays open. When the developer states an idea that none of the rows contains, such as a combination of two prototypes, add it as a row whose source is `developer`. A bare number in an answer names a row; a prototype in a stated idea is named by its number with its title or slug. When an answer leaves unclear whether a number names a row or a prototype, ask before deciding the row.
 5. Present the open rows again, until none remain.
 
 Save the table with {skill:save-artifact} as a ticket-level `idea-decisions` artifact that reuses the comparison's slug: the table with every decision filled, the index URL, and the comparison's path. When the developer stops before every row is answered, save it with `open` as each unanswered row's decision; the end vision does not cite an `idea-decisions` artifact that contains an open row. Give the developer the artifact's path.
