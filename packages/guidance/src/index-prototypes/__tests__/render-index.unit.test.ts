@@ -110,6 +110,7 @@ describe('render command', () => {
     await writeManifestFile(setDir, {
       title: 'Set',
       indexUrl: 'https://claude.ai/artifact/index',
+      summary: null,
       entries: [
         buildEntry({ slug: 'a', title: 'First draft' }),
         buildEntry({ slug: 'b' }),
@@ -141,6 +142,7 @@ describe('render command', () => {
     await writeManifestFile(setDir, {
       title: 'Set',
       indexUrl: null,
+      summary: null,
       entries: [buildEntry({ slug: 'a', shot: 'shots/a-v1.png' })],
     });
 
@@ -194,6 +196,7 @@ function buildEntry(fields: Partial<ManifestEntry> & { slug: string }): Manifest
     lens: null,
     inputs: [],
     description: null,
+    notes: [],
     shot: null,
     ...fields,
   };
@@ -212,6 +215,7 @@ async function makeSetDirWithShotOfSize(size: number): Promise<string> {
   await writeManifestFile(setDir, {
     title: 'Set',
     indexUrl: null,
+    summary: null,
     entries: [buildEntry({ slug: 'a', shot: 'shots/a-v1.png' })],
   });
   return setDir;

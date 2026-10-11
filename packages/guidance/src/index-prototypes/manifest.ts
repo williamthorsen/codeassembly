@@ -3,7 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
-import type { Manifest, ManifestEntry } from './types.ts';
+import type { Manifest, ManifestEntry, Note, SetSummary } from './types.ts';
 
 export const MANIFEST_FILENAME = 'manifest.json';
 
@@ -12,6 +12,19 @@ const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,39}$/;
 /** The outcome of reading a set's manifest. */
 export type ManifestRead =
   { kind: 'missing' } | { kind: 'invalid'; message: string } | { kind: 'ok'; manifest: Manifest };
+
+/** Returns true when `value` has the layout of a set summary. */
+export function isSetSummary(value: unknown): value is SetSummary {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.shared === 'string' &&
+    isNullableString(value.changes) &&
+    Array.isArray(value.try) &&
+    value.try.every((item) => typeof item === 'string')
+  );
+}
 
 /** Returns true when `slug` is usable as a set member's identifier, a file stem, and a `db` document id. */
 export function isValidSlug(slug: string): boolean {
@@ -56,8 +69,8 @@ export function resolveNumber(manifest: Manifest | null, slug: string): number {
 }
 
 /**
- * Reads and validates the manifest in `setDir`. A manifest whose entries lack numbers, written before numbers existed,
- * reads with numbers assigned in order of each slug's first registration.
+ * Reads and validates the manifest in `setDir`. A manifest written before a field existed reads with that field's
+ * default: numbers assigned in order of each slug's first registration, no summary, and no notes.
  */
 export async function readManifest(setDir: string): Promise<ManifestRead> {
   const manifestPath = resolveManifestPath(setDir);
@@ -79,7 +92,7 @@ export async function readManifest(setDir: string): Promise<ManifestRead> {
   if (!isStoredManifest(parsed)) {
     return { kind: 'invalid', message: `${manifestPath} does not have the manifest layout` };
   }
-  return { kind: 'ok', manifest: numberEntries(parsed) };
+  return { kind: 'ok', manifest: normalizeManifest(parsed) };
 }
 
 /** Returns the path of the manifest file in `setDir`. */
@@ -104,23 +117,20 @@ export async function writeManifest(setDir: string, manifest: Manifest): Promise
 
 // region | Helpers
 
-/** A manifest entry as stored on disk, whose number is absent in a manifest written before numbers existed. */
-type StoredEntry = Omit<ManifestEntry, 'number'> & { number?: number };
+/** A manifest entry as stored on disk, whose number and notes are absent in a manifest written before they existed. */
+type StoredEntry = Omit<ManifestEntry, 'notes' | 'number'> & { notes?: Note[]; number?: number };
 
-/** A manifest as stored on disk. */
-type StoredManifest = Omit<Manifest, 'entries'> & { entries: StoredEntry[] };
+/** A manifest as stored on disk, whose summary is absent in a manifest written before summaries existed. */
+type StoredManifest = Omit<Manifest, 'entries' | 'summary'> & { entries: StoredEntry[]; summary?: SetSummary | null };
 
-/** Returns true when `value` has the manifest layout. */
-function isStoredManifest(value: unknown): value is StoredManifest {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return (
-    typeof value.title === 'string' &&
-    (value.indexUrl === null || typeof value.indexUrl === 'string') &&
-    Array.isArray(value.entries) &&
-    value.entries.every((entry) => isStoredEntry(entry))
-  );
+/** Returns true when `value` has the layout of one note. */
+function isNote(value: unknown): value is Note {
+  return isRecord(value) && typeof value.label === 'string' && typeof value.value === 'string';
+}
+
+/** Returns true when `value` is a string or null. */
+function isNullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
 }
 
 /** Returns true when `value` has the layout of one stored manifest entry. */
@@ -142,15 +152,31 @@ function isStoredEntry(value: unknown): value is StoredEntry {
     Array.isArray(value.inputs) &&
     value.inputs.every((input) => typeof input === 'string') &&
     isNullableString(value.description) &&
+    (value.notes === undefined || (Array.isArray(value.notes) && value.notes.every((note) => isNote(note)))) &&
     isNullableString(value.shot)
   );
 }
 
+/** Returns true when `value` has the manifest layout. */
+function isStoredManifest(value: unknown): value is StoredManifest {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.title === 'string' &&
+    (value.indexUrl === null || typeof value.indexUrl === 'string') &&
+    (value.summary === undefined || value.summary === null || isSetSummary(value.summary)) &&
+    Array.isArray(value.entries) &&
+    value.entries.every((entry) => isStoredEntry(entry))
+  );
+}
+
 /**
- * Gives every entry its slug's number: the number on the slug's highest numbered version, or, for a slug that has none,
- * the next number past the set's highest, in order of first registration.
+ * Fills the fields that an older manifest lacks. Every entry takes its slug's number: the number on the slug's highest
+ * numbered version, or, for a slug that has none, the next number past the set's highest, in order of first
+ * registration.
  */
-function numberEntries(manifest: StoredManifest): Manifest {
+function normalizeManifest(manifest: StoredManifest): Manifest {
   const numbered = new Map<string, { version: number; number: number }>();
   for (const entry of manifest.entries) {
     const current = numbered.get(entry.slug);
@@ -170,19 +196,15 @@ function numberEntries(manifest: StoredManifest): Manifest {
   }
   return {
     ...manifest,
+    summary: manifest.summary ?? null,
     entries: manifest.entries.map((entry) => {
       const number = numbers.get(entry.slug);
       if (number === undefined) {
         throw new Error(`slug "${entry.slug}" was not numbered`);
       }
-      return { ...entry, number };
+      return { ...entry, number, notes: entry.notes ?? [] };
     }),
   };
-}
-
-/** Returns true when `value` is a string or null. */
-function isNullableString(value: unknown): value is string | null {
-  return value === null || typeof value === 'string';
 }
 
 // endregion | Helpers

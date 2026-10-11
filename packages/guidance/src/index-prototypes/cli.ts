@@ -266,12 +266,14 @@ async function register(setDir: string, values: Record<string, string>, now: Dat
     lens: values.lens ?? null,
     inputs: parseInputs(values.inputs),
     description: values.description ?? null,
+    notes: [],
     shot,
   };
 
   const manifest: Manifest = {
     title: setTitle,
     indexUrl: existing?.indexUrl ?? null,
+    summary: existing?.summary ?? null,
     entries: [...(existing?.entries ?? []), entry],
   };
   const manifestPath = await writeManifest(setDir, manifest);

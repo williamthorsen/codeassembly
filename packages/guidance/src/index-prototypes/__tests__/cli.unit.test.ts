@@ -110,6 +110,7 @@ describe(runIndexPrototypes, () => {
         lens: 'information density',
         inputs: ['ticket', 'sketch'],
         description: 'Packs the toolbar into one row.',
+        notes: [],
         shot: null,
       },
     });
@@ -165,6 +166,23 @@ describe(runIndexPrototypes, () => {
         { slug: 'bold', number: 3 },
       ],
     });
+  });
+
+  it('keeps the set summary across a later registration', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'a', NOW, ['--set-title', 'Set']);
+    const summary = { shared: 'Same data.', changes: null, try: ['Search for a title.'] };
+    const manifestPath = path.join(setDir, 'manifest.json');
+    const text = await readFile(manifestPath, 'utf8');
+    await writeFile(
+      manifestPath,
+      text.replace('"summary": null', () => `"summary": ${JSON.stringify(summary)}`),
+      'utf8',
+    );
+
+    await register(setDir, 'b', NOW, []);
+
+    expect(await readManifestFile(setDir)).toMatchObject({ summary });
   });
 
   it('replaces the set title when a later registration gives one', async () => {

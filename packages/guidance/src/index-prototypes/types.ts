@@ -14,8 +14,24 @@ export interface ManifestEntry {
   lens: string | null;
   inputs: string[];
   description: string | null;
+  /** Labelled facts to compare across the set, in display order. */
+  notes: Note[];
   /** Path of the stored screenshot, relative to the set directory. */
   shot: string | null;
+}
+
+/** One labelled fact about a prototype. */
+export interface Note {
+  label: string;
+  value: string;
+}
+
+/** What the prototypes of a set share, what the latest round changed, and what to try in each. */
+export interface SetSummary {
+  shared: string;
+  /** What the latest round revised; `null` in the first round. */
+  changes: string | null;
+  try: string[];
 }
 
 /** The `manifest.json` of one prototype set. */
@@ -23,6 +39,7 @@ export interface Manifest {
   title: string;
   /** The published index page's URL, once `record-index` has run. */
   indexUrl: string | null;
+  summary: SetSummary | null;
   entries: ManifestEntry[];
 }
 

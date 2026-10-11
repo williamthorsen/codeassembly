@@ -212,6 +212,7 @@ function buildEntry(slug: string, minute: number): ManifestEntry {
     lens: null,
     inputs: [],
     description: null,
+    notes: [],
     shot: null,
   };
 }

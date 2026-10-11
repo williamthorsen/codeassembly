@@ -134,9 +134,42 @@ describe(readManifest, () => {
     await expect(readManifest(setDir)).resolves.toMatchObject({ kind: 'invalid' });
   });
 
+  it('reads a manifest without a summary or notes as having none', async () => {
+    const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
+    const { notes: _omitted, ...entry } = buildEntry('a', 1);
+    await writeFile(
+      path.join(setDir, 'manifest.json'),
+      JSON.stringify({ title: 'T', indexUrl: null, entries: [entry] }),
+      'utf8',
+    );
+
+    const read = await readManifest(setDir);
+
+    expect(read).toMatchObject({ kind: 'ok', manifest: { summary: null, entries: [{ slug: 'a', notes: [] }] } });
+  });
+
+  it.each([
+    ['a summary without shared', { changes: null, try: [] }, []],
+    ['a summary whose try is not a list', { shared: 'S', changes: null, try: 'x' }, []],
+    ['a note without a value', null, [{ label: 'Search' }]],
+    ['notes that are not a list', null, 'Search: top'],
+  ])('reports %s', async (_case, summary, notes) => {
+    const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
+    await writeFile(
+      path.join(setDir, 'manifest.json'),
+      JSON.stringify({ title: 'T', indexUrl: null, summary, entries: [{ ...buildEntry('a', 1), notes }] }),
+      'utf8',
+    );
+
+    await expect(readManifest(setDir)).resolves.toMatchObject({ kind: 'invalid' });
+  });
+
   it('round-trips a written manifest without leaving a temporary file', async () => {
     const setDir = await mkdtemp(path.join(tmpdir(), 'index-prototypes-manifest-'));
-    const manifest = buildManifest([buildEntry('a', 1)]);
+    const manifest: Manifest = {
+      ...buildManifest([{ ...buildEntry('a', 1), notes: [{ label: 'Search', value: 'Top bar' }] }]),
+      summary: { shared: 'Same data.', changes: null, try: ['Search for a title.'] },
+    };
 
     const written = await writeManifest(setDir, manifest);
 
@@ -161,13 +194,14 @@ function buildEntry(slug: string, version: number, number = 1): ManifestEntry {
     lens: null,
     inputs: [],
     description: null,
+    notes: [],
     shot: null,
   };
 }
 
 /** Builds a manifest around `entries`. */
 function buildManifest(entries: ManifestEntry[]): Manifest {
-  return { title: 'Set', indexUrl: null, entries };
+  return { title: 'Set', indexUrl: null, summary: null, entries };
 }
 
 /** Returns `entry` without its number, as a manifest written before numbers existed stores it. */
