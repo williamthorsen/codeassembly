@@ -83,11 +83,11 @@ function renderCard(card: IndexCard, count: number): string {
   const rankOptions = Array.from({ length: count }, (_, index) => `<option value="${index + 1}">${index + 1}</option>`);
 
   return [
-    `<article class="card" tabindex="0" aria-labelledby="${titleId}" data-slug="${slug}" data-title="${title}" data-registered="${escapeHtml(entry.registeredAt)}">`,
+    `<article class="card" tabindex="0" aria-labelledby="${titleId}" data-slug="${slug}" data-number="${entry.number}" data-title="${title}" data-registered="${escapeHtml(entry.registeredAt)}">`,
     `<a class="thumb" href="${url}" target="_blank" rel="noopener" tabindex="-1" aria-hidden="true">${thumbnail}</a>`,
     '<div class="body">',
     '<div class="badges" data-role="badges"></div>',
-    `<h2 id="${titleId}"><a href="${url}" target="_blank" rel="noopener">${title}</a></h2>`,
+    `<h2 id="${titleId}"><a href="${url}" target="_blank" rel="noopener">${entry.number}. ${title}</a></h2>`,
     `<p class="meta">${slug} · v${entry.version} · ${escapeHtml(formatTimestamp(entry.registeredAt))}</p>`,
     ...(chips.length === 0 ? [] : [`<ul class="chips">${chips.join('')}</ul>`]),
     ...(entry.description === null ? [] : [`<p class="description">${escapeHtml(entry.description)}</p>`]),

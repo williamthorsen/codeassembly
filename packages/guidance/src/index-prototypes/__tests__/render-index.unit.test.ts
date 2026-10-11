@@ -41,7 +41,7 @@ describe(renderIndexPage, () => {
           entry: buildEntry({ slug: 'dense', lens: 'density', inputs: ['ticket', 'sketch'] }),
           shot: Buffer.from('png'),
         },
-        { entry: buildEntry({ slug: 'airy' }), shot: null },
+        { entry: buildEntry({ slug: 'airy', number: 2 }), shot: null },
       ],
     });
 
@@ -54,6 +54,10 @@ describe(renderIndexPage, () => {
       `<img src="data:image/png;base64,${Buffer.from('png').toString('base64')}" alt="Screenshot of Prototype dense">`,
     );
     expect(page).toContain('<span class="placeholder">No screenshot for v1</span>');
+    expect(page).toContain(
+      '<h2 id="title-dense"><a href="https://claude.ai/artifact/dense" target="_blank" rel="noopener">1. Prototype dense</a></h2>',
+    );
+    expect(page).toContain('data-slug="airy" data-number="2"');
     expect(page).toContain('href="https://claude.ai/artifact/dense" target="_blank" rel="noopener"');
   });
 
