@@ -190,7 +190,7 @@ The body following the frontmatter has this structure:
 
 ## Why
 
-{1-3 sentences stating the _purpose_ that the change serves in this repository: the consequence that it produces or removes, for users, the codebase, or future work. Frame it in terms of that consequence, not mechanism or how the need arose.
+{1-3 sentences stating the _purpose_ that the change serves in this repository: the consequence that it produces or removes, for users, the codebase, or future work. Frame it in terms of that consequence, not mechanism, how the need arose, or how the work is staged across pull requests.
 
 Bad: "The retry helper used a fixed backoff schedule with no shared state, so concurrent requests stacked up against the upstream rate limiter."
 Good: "Heavy-upload sessions were intermittently failing as users hit the upstream API's rate limit."}
