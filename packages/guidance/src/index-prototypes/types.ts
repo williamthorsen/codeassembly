@@ -53,6 +53,13 @@ export interface RegisterSuccess {
   entry: ManifestEntry;
 }
 
+/** The stdout payload of `copy-probe`: the probe's source, for the Playwright MCP's `browser_evaluate`. */
+export interface CopyProbeSuccess {
+  ok: true;
+  command: 'copy-probe';
+  function: string;
+}
+
 /** The stdout payload of a successful `record-index`. */
 export interface RecordIndexSuccess {
   ok: true;
@@ -76,4 +83,5 @@ export interface RenderSuccess {
 }
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
-export type IndexPrototypesResult = IndexPrototypesFailure | RecordIndexSuccess | RegisterSuccess | RenderSuccess;
+export type IndexPrototypesResult =
+  CopyProbeSuccess | IndexPrototypesFailure | RecordIndexSuccess | RegisterSuccess | RenderSuccess;

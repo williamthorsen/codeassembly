@@ -5,6 +5,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import { parseArgs, runIndexPrototypes } from '../cli.ts';
+import { COPY_PROBE_SCRIPT } from '../copy-probe.ts';
 import { buildPng } from '../test-utils/build-png.ts';
 
 const NOW = new Date('2026-10-03T01:19:36.000Z');
@@ -17,6 +18,14 @@ describe(parseArgs, () => {
       command: 'record-index',
       values: { 'set-dir': '/s', url: 'https://x.test/a' },
     });
+  });
+
+  it('parses copy-probe without flags', () => {
+    expect(parseArgs(['copy-probe'])).toEqual({ command: 'copy-probe', values: {} });
+  });
+
+  it('refuses --set-dir on copy-probe', () => {
+    expect(() => parseArgs(['copy-probe', '--set-dir', '/s'])).toThrow(/copy-probe does not take --set-dir/);
   });
 
   it('refuses a missing command', () => {
@@ -47,6 +56,14 @@ describe(runIndexPrototypes, () => {
     await expect(runIndexPrototypes({ argv: [], now: NOW })).resolves.toMatchObject({
       ok: false,
       error: 'invalid-args',
+    });
+  });
+
+  it('prints the copy probe without a set directory', async () => {
+    await expect(runIndexPrototypes({ argv: ['copy-probe'], now: NOW })).resolves.toEqual({
+      ok: true,
+      command: 'copy-probe',
+      function: COPY_PROBE_SCRIPT,
     });
   });
 
