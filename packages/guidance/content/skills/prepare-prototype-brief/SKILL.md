@@ -45,9 +45,17 @@ Allow tables and require the demo: A catalogue may be a table, and every row mus
 
 A builder draws every noun in the brief. Say what the viewer must be able to learn and at what precision, and let the builder choose the instrument: "the hour, legible across the table, to the precision that a character would have" rather than "a large clock." For an audience-facing or in-world view, state what the audience may know and what it may never see, and state that any readout more precise than the fiction allows is a defect.
 
+The same holds for the verbs `state`, `say`, `tell`, and `explain`. A requirement that the page states something before the first field is met most cheaply by a sentence under the heading. Write what the viewer must be able to learn and at what moment, such as "which scopes a preset grants, visible before a token is created", and let the builder choose whether a label, a column, or a control carries it.
+
+### Keep the brief out of the page
+
+Nothing in the brief is product copy. State in the brief that a builder never quotes the brief, the scenes, the lens, or an audit into the page, and that the text on the product surface follows {rulebook:ui-copy-conventions}.
+
+The failure that this prevents: the lens paragraph reproduced as helper text under a field, and an intro paragraph under every page heading.
+
 ### Require a salience order
 
-Require a salience order in every working view: the current state in one place, the next thing to happen more prominent than the rest, and every action visibly an action. Name {rulebook:accessibility-conventions} as the floor, and state that usability outranks restraint. Require that a status repeated on every row be a mark, a column, or a style, not a sentence.
+Require a salience order in every working view: the current state in one place, the next thing to happen more prominent than the rest, and every action visibly an action. Name {rulebook:accessibility-conventions} and {rulebook:ui-copy-conventions} as the floor, and state that usability outranks restraint. Require that a status repeated on every row be a mark, a column, or a style, not a sentence.
 
 The failure that this prevents: a page in one colour, in which the operator hunts for the control, and "Hidden from the players." written out on every hidden row.
 
@@ -65,10 +73,10 @@ Write the brief in this order, with these headings:
 
 1. **Context.** The ticket, quoted. The developer's motivating picture, restated in plain speech.
 2. **Settled intent.** Bullets. Each is a decision, with its reason when the reason constrains the design.
-3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view.
+3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view. The demo chrome (the demo control, scene captions, the lens note, the data-model note, the API list) sits in a band visibly distinct from the product surface, and every part of it is inside an element that carries `data-demo`.
 4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note when the product stores data; one is the API list when the product has an API.
-5. **Quality bar.** Works, legible, accessible, with the design skill to invoke before markup and the salience order required.
-6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round.
+5. **Quality bar.** Works, legible, accessible, and within the copy rules, with {rulebook:accessibility-conventions} and {rulebook:ui-copy-conventions} named, the design skill to invoke before markup, and the salience order required.
+6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round. One criterion is the copy: "Read every string on the product surface as its user opening the page for the tenth time. A string that explains the page, reassures, or repeats the brief, and any copy over the budget in {rulebook:ui-copy-conventions}, is a defect."
 7. **Rules of engagement.** The write allowance from the inputs. The default: Write the output file and nothing else, modify nothing in the repository, install nothing. When the ask allows more, state what it allows. Then: Publish the prototype and report its artifact URL and five lines of distinctive ideas.
 
 Then add the lens sections, one per builder, in the developer's words after a plain-speech pass.
@@ -113,7 +121,9 @@ Write the brief to `{scratch_dir}/brief.md`. Then check it against each rule abo
 - Every `show`, `display`, `present`: followed by a requirement to render.
 - Every instrument noun in an audience-facing instruction (clock, gauge, meter, counter, bar): replaced by the information and its precision.
 - `cost`, `price`, `free`, `cheap`, `budget`: absent, or present once in the judging section.
-- Salience order and the accessibility floor: named in the quality bar.
+- Every `state`, `say`, `tell`, `explain` in a requirement: rewritten as what the viewer can learn and at what moment.
+- Salience order, the accessibility floor, and the copy rules: named in the quality bar, and the copy rules named again in "How this round is judged".
+- The `data-demo` band: required in the deliverable.
 - The write allowance: stated in the rules of engagement.
 
 Report what the check changed, in one line per rule that fired.
@@ -144,7 +154,7 @@ Dispatch a builder once more with the same block when it returns without the fil
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. Register the prototypes in the order of the lens sections in the brief, so that the numbers that the helper assigns follow it. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison, naming each prototype as `{number}. {title}`: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), and the decisions that the round leaves open. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link, the comparison path, and one line per prototype as `{number}. {title}`, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. In step 3, list each prototype's product copy per its "List the product copy". Register the prototypes in the order of the lens sections in the brief, so that the numbers that the helper assigns follow it. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison, naming each prototype as `{number}. {title}`: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), a "Product copy" section, and the decisions that the round leaves open. The "Product copy" section names each prototype as `{number}. {title}` and lists its strings from the probe. For a prototype without a `data-demo` band, add a one-line note directly under its name, before the list, that the listing includes the demo chrome. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link, the comparison path, and one line per prototype as `{number}. {title}`, and nothing else.
 
 ### 7. Decide the ideas
 
