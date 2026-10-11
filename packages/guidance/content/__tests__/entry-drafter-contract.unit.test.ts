@@ -124,6 +124,16 @@ const PRESCRIBED_CONNECTIVE = 'Separately,';
 /** The phrase excluding how a change was produced, which a commit body contains and a bullet does not. */
 const PROCESS_NARRATION_PHRASE = 'review mechanics, ticket and finding numbers';
 
+/**
+ * Phrases naming provenance and staging rationale as facts about how the change was produced, and holding the lede to
+ * the same exclusion as the entries. Lowercased, so that a sentence's opening capital still matches.
+ */
+const PRODUCTION_FACT_PHRASES: ReadonlyArray<string> = [
+  'where its code or values were copied from',
+  'why the work is split across pull requests or what a later one will do',
+  'neither the lede nor an entry that you write includes them',
+];
+
 /** The rule that keeps an unquoted ` #` in an entry from opening a YAML comment that drops the rest of the text. */
 const QUOTING_RULE_PHRASE = '`text` and `migration` are always double-quoted';
 
@@ -146,6 +156,9 @@ const REVISION_CONTRACT_PHRASES: ReadonlyArray<string> = [
   'one replacement per passage',
   'revise those passages and nothing else',
 ];
+
+/** The phrase that reads staging rationale in a ticket's `## Problem` as how the work was staged. Lowercased. */
+const STAGED_PROBLEM_PHRASE = 'that is how the work was staged, not what the change is for';
 
 /** The rule directing the writer to state the change, whether or not a title above the lede names it too. */
 const STANDALONE_PHRASE = 'The lede stands alone';
@@ -360,6 +373,24 @@ describe('entry-drafter contract', () => {
       'A commit body contains review mechanics, ticket and finding numbers, and CI runs, and the drafter reads the ' +
       'commit log. Without this the drafter reads them as facts of the change and writes them into a bullet.';
     expect(await EXPANDED, message).toContain(PROCESS_NARRATION_PHRASE);
+  });
+
+  it('leaves provenance and staging rationale out of the lede and the entries', async () => {
+    const text = (await EXPANDED).toLowerCase();
+    const missing = PRODUCTION_FACT_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'A commit body or a staged ticket often states where code was copied from and why the work is split across ' +
+      'pull requests. Without this exclusion the drafter writes either into the lede as the change’s purpose. ' +
+      `These phrases are gone:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it('reads staging rationale in the ticket’s problem as how the work was staged', async () => {
+    const message =
+      'A staged ticket’s `## Problem` explains why the work is split. A drafter told that the section says what the ' +
+      'change is for takes that explanation as the change’s purpose.';
+    expect((await EXPANDED).toLowerCase(), message).toContain(STAGED_PROBLEM_PHRASE);
   });
 
   it('takes what changed from the diff against the default branch', async () => {

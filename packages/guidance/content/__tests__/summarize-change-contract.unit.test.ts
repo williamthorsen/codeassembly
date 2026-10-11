@@ -60,6 +60,9 @@ const TYPE_ASK_PHRASES: ReadonlyArray<string> = ['ask the developer only when', 
 /** The phrase stating `## Why` as the purpose that the change serves. Lowercased, like the text it is matched against. */
 const PURPOSE_WHY_PHRASE = 'the _purpose_ that the change serves in this repository';
 
+/** The phrase excluding staging across pull requests from `## Why`. Lowercased, like the text it is matched against. */
+const STAGING_WHY_PHRASE = 'or how the work is staged across pull requests';
+
 /** The phrase that counts a claim supported by any source but the diff as unsupported. */
 const UNSUPPORTED_SOURCE_PHRASE = 'only the commit log, the ticket, or this session supports';
 
@@ -136,6 +139,13 @@ describe('summarize-change contract', () => {
       `repository's readers never met. These phrases are back:\n  ${found.join('\n  ')}`;
     expect(text).toContain(PURPOSE_WHY_PHRASE);
     expect(found, message).toEqual([]);
+  });
+
+  it('keeps how the work is staged out of `## Why`', async () => {
+    const message =
+      'The session reads the whole ticket, and a staged ticket explains why the work is split across pull requests. ' +
+      'Purpose framing alone admits that explanation as the reason for the change.';
+    expect((await EXPANDED).toLowerCase(), message).toContain(STAGING_WHY_PHRASE);
   });
 
   it('decides each type rather than asking the developer', async () => {
