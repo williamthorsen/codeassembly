@@ -9,14 +9,21 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
-import { isEnoent } from '../lib/type-guards.ts';
+import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { COPY_PROBE_SCRIPT } from './copy-probe.ts';
 import { intakeScreenshot } from './intake-screenshot.ts';
 import { isValidSlug, listLatestEntries, nextVersion, readManifest, resolveNumber, writeManifest } from './manifest.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
-import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry } from './types.ts';
+import type {
+  IndexPrototypesFailure,
+  IndexPrototypesResult,
+  Manifest,
+  ManifestEntry,
+  Note,
+  SetSummary,
+} from './types.ts';
 
-const COMMANDS = ['copy-probe', 'record-index', 'register', 'render'] as const;
+const COMMANDS = ['copy-probe', 'describe-set', 'record-index', 'register', 'render'] as const;
 
 type Command = (typeof COMMANDS)[number];
 
@@ -24,8 +31,10 @@ const COMMAND_NAMES: ReadonlySet<string> = new Set(COMMANDS);
 
 const FLAGS: readonly FlagSpec[] = [
   { name: 'description', takesValue: true },
+  { name: 'file', takesValue: true },
   { name: 'inputs', takesValue: true },
   { name: 'lens', takesValue: true },
+  { name: 'note', takesValue: true },
   { name: 'out', takesValue: true },
   { name: 'screenshot', takesValue: true },
   { name: 'set-dir', takesValue: true },
@@ -38,18 +47,20 @@ const FLAGS: readonly FlagSpec[] = [
 
 const COMMAND_FLAGS: Record<Command, { required: readonly string[]; optional: readonly string[] }> = {
   'copy-probe': { required: [], optional: [] },
+  'describe-set': { required: ['file', 'set-dir'], optional: [] },
   'record-index': { required: ['set-dir', 'url'], optional: [] },
   register: {
     required: ['set-dir', 'slug', 'title', 'url'],
-    optional: ['description', 'inputs', 'lens', 'screenshot', 'set-title', 'source'],
+    optional: ['description', 'inputs', 'lens', 'note', 'screenshot', 'set-title', 'source'],
   },
   render: { required: ['out', 'set-dir'], optional: [] },
 };
 
-/** A parsed invocation: the command and its flag values, keyed by flag name. */
+/** A parsed invocation: the command, its single-valued flags keyed by flag name, and its `--note` flags in order. */
 export interface ParsedArgs {
   command: Command;
   values: Record<string, string>;
+  notes: Note[];
 }
 
 /** Executes the helper from `process.argv`, writing the JSON result to stdout and exiting non-zero on a failure. */
@@ -90,10 +101,12 @@ export async function runIndexPrototypes(input: {
   switch (args.command) {
     case 'copy-probe':
       return { ok: true, command: 'copy-probe', function: COPY_PROBE_SCRIPT };
+    case 'describe-set':
+      return describeSet(resolveSetDir(args.values), path.resolve(requireFlag(args.values, 'file')));
     case 'record-index':
       return recordIndex(resolveSetDir(args.values), requireFlag(args.values, 'url'));
     case 'register':
-      return register(resolveSetDir(args.values), args.values, input.now);
+      return register(resolveSetDir(args.values), args.values, args.notes, input.now);
     case 'render':
       return render(resolveSetDir(args.values), path.resolve(requireFlag(args.values, 'out')));
     default: {
@@ -105,7 +118,7 @@ export async function runIndexPrototypes(input: {
 
 /**
  * Parses argv into a command and its flags, throwing on an unknown command, a flag that the command does not take, a
- * missing required flag, or an empty value.
+ * missing required flag, an empty value, or a note that is not `<label>: <value>`.
  *
  * @internal - Exported to allow testing.
  */
@@ -122,8 +135,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     throw new Error(`unexpected argument: ${extra}`);
   }
 
-  const values = valueFlagMap(flags);
+  const noteFlags = flags.filter((flag) => flag.name === 'note');
+  const values = valueFlagMap(flags.filter((flag) => flag.name !== 'note'));
   const { required, optional } = COMMAND_FLAGS[command];
+  if (noteFlags.length > 0 && !optional.includes('note')) {
+    throw new Error(`${command} does not take --note`);
+  }
   for (const [name, value] of Object.entries(values)) {
     if (!required.includes(name) && !optional.includes(name)) {
       throw new Error(`${command} does not take --${name}`);
@@ -137,10 +154,44 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`${command} requires --${name}`);
     }
   }
-  return { command, values };
+  const notes = noteFlags.map((flag) => parseNote(flag.value ?? ''));
+  return { command, values, notes };
 }
 
 // region | Helpers
+
+/** Replaces the set's summary with the one in the JSON file at `filePath`. */
+async function describeSet(setDir: string, filePath: string): Promise<IndexPrototypesResult> {
+  let text: string;
+  try {
+    text = await readFile(filePath, 'utf8');
+  } catch (error) {
+    if (isEnoent(error)) {
+      return fail('summary-not-found', `${filePath} does not exist`);
+    }
+    throw error;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return fail('invalid-summary', `${filePath} is not valid JSON`);
+  }
+  const summary = parseSummary(parsed);
+  if (typeof summary === 'string') {
+    return fail('invalid-summary', `${filePath}: ${summary}`);
+  }
+
+  const read = await readManifest(setDir);
+  if (read.kind === 'missing') {
+    return fail('manifest-not-found', `no manifest in ${setDir}; register a prototype first`);
+  }
+  if (read.kind === 'invalid') {
+    return fail('invalid-manifest', read.message);
+  }
+  const manifestPath = await writeManifest(setDir, { ...read.manifest, summary });
+  return { ok: true, command: 'describe-set', manifestPath, summary };
+}
 
 /** Returns a failure result. */
 function fail(error: IndexPrototypesFailure['error'], message: string): IndexPrototypesFailure {
@@ -190,6 +241,43 @@ function parseInputs(value: string | undefined): string[] {
     .filter((item) => item !== '');
 }
 
+/** Splits a `--note` value at its first colon into a trimmed label and value, throwing when either is empty. */
+function parseNote(text: string): Note {
+  const colon = text.indexOf(':');
+  const label = colon === -1 ? '' : text.slice(0, colon).trim();
+  const value = colon === -1 ? '' : text.slice(colon + 1).trim();
+  if (label === '' || value === '') {
+    throw new Error(`--note "${text}" must have the form "<label>: <value>"`);
+  }
+  return { label, value };
+}
+
+/**
+ * Returns the trimmed summary in a parsed summary file, or a message naming its defect. `changes` may be absent, and an
+ * absent or blank `changes` reads as `null`.
+ */
+function parseSummary(value: unknown): SetSummary | string {
+  if (!isRecord(value)) {
+    return 'expected an object with "shared", "changes", and "try"';
+  }
+  const { shared, changes, try: tryItems } = value;
+  if (typeof shared !== 'string' || shared.trim() === '') {
+    return '"shared" must be a non-empty string';
+  }
+  if (changes !== undefined && changes !== null && typeof changes !== 'string') {
+    return '"changes" must be a string or null';
+  }
+  if (!Array.isArray(tryItems) || tryItems.some((item) => !(typeof item === 'string' && item.trim() !== ''))) {
+    return '"try" must be a list of non-empty strings';
+  }
+  const trimmedChanges = typeof changes === 'string' ? changes.trim() : '';
+  return {
+    shared: shared.trim(),
+    changes: trimmedChanges === '' ? null : trimmedChanges,
+    try: tryItems.map((item: string) => item.trim()),
+  };
+}
+
 /** Reads a stored screenshot, returning `null` when the file is missing. */
 async function readShot(shotPath: string): Promise<Buffer | null> {
   try {
@@ -219,7 +307,12 @@ async function recordIndex(setDir: string, url: string): Promise<IndexPrototypes
 }
 
 /** Adds a registration to the set's manifest, creating the manifest on the set's first registration. */
-async function register(setDir: string, values: Record<string, string>, now: Date): Promise<IndexPrototypesResult> {
+async function register(
+  setDir: string,
+  values: Record<string, string>,
+  notes: Note[],
+  now: Date,
+): Promise<IndexPrototypesResult> {
   const slug = requireFlag(values, 'slug');
   if (!isValidSlug(slug)) {
     return fail('invalid-slug', `slug "${slug}" must match [a-z0-9][a-z0-9-]{0,39}`);
@@ -266,12 +359,14 @@ async function register(setDir: string, values: Record<string, string>, now: Dat
     lens: values.lens ?? null,
     inputs: parseInputs(values.inputs),
     description: values.description ?? null,
+    notes,
     shot,
   };
 
   const manifest: Manifest = {
     title: setTitle,
     indexUrl: existing?.indexUrl ?? null,
+    summary: existing?.summary ?? null,
     entries: [...(existing?.entries ?? []), entry],
   };
   const manifestPath = await writeManifest(setDir, manifest);
@@ -302,7 +397,7 @@ async function render(setDir: string, outPath: string): Promise<IndexPrototypesR
     cards.push({ entry, shot });
   }
 
-  const page = renderIndexPage({ title: manifest.title, cards });
+  const page = renderIndexPage({ title: manifest.title, summary: manifest.summary, cards });
   const bytes = Buffer.byteLength(page, 'utf8');
   if (bytes > PAGE_LIMIT_BYTES) {
     return fail('page-too-large', `the page is ${bytes} bytes, over the ${PAGE_LIMIT_BYTES}-byte artifact cap`);

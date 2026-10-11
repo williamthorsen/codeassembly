@@ -16,14 +16,14 @@ const NOW = new Date('2026-10-03T01:19:36.000Z');
 
 describe(renderIndexPage, () => {
   it('opens with the title and the stylesheet, without a document wrapper', () => {
-    const page = renderIndexPage({ title: 'Header variants', cards: [] });
+    const page = renderIndexPage({ title: 'Header variants', summary: null, cards: [] });
 
     expect(page.startsWith('<title>Header variants</title>\n<style>')).toBe(true);
     expect(page).not.toMatch(/<!doctype|<(?:body|head|html)[\s>]/i);
   });
 
   it('declares both themes in the three-state shape', () => {
-    const page = renderIndexPage({ title: 'T', cards: [] });
+    const page = renderIndexPage({ title: 'T', summary: null, cards: [] });
 
     expect(page).toContain(`:root { color-scheme: light; --accent: ${THEME_TOKENS.light.accent};`);
     expect(page).toContain(
@@ -36,6 +36,7 @@ describe(renderIndexPage, () => {
   it('renders one card per input with its metadata, chips, and a thumbnail data URI', () => {
     const page = renderIndexPage({
       title: 'T',
+      summary: null,
       cards: [
         {
           entry: buildEntry({ slug: 'dense', lens: 'density', inputs: ['ticket', 'sketch'] }),
@@ -64,6 +65,7 @@ describe(renderIndexPage, () => {
   it('offers a rank for every position in the set', () => {
     const page = renderIndexPage({
       title: 'T',
+      summary: null,
       cards: ['a', 'b', 'c'].map((slug) => ({ entry: buildEntry({ slug }), shot: null })),
     });
 
@@ -75,6 +77,7 @@ describe(renderIndexPage, () => {
   it('escapes manifest text', () => {
     const page = renderIndexPage({
       title: '<Set> & "co"',
+      summary: null,
       cards: [{ entry: buildEntry({ slug: 'a', title: '<img onerror=x>', description: "it's <b>" }), shot: null }],
     });
 
@@ -83,8 +86,70 @@ describe(renderIndexPage, () => {
     expect(page).toContain('<p class="description">it&#39;s &lt;b&gt;</p>');
   });
 
+  it('renders the set summary between the title and the count, with a numbered try-list', () => {
+    const page = renderIndexPage({
+      title: 'T',
+      summary: { shared: 'Same data.', changes: 'Search moved.', try: ['Search.', 'Open a book.'] },
+      cards: [],
+    });
+
+    expect(page).toContain(
+      '<h1>T</h1>\n<section class="set-summary" aria-label="Set summary"><dl><dt>Shared</dt><dd>Same data.</dd><dt>Changed in this round</dt><dd>Search moved.</dd><dt>Try in each</dt><dd><ol><li>Search.</li><li>Open a book.</li></ol></dd></dl></section>\n<p class="summary" id="summary">',
+    );
+  });
+
+  it('leaves out the summary parts that are null or empty', () => {
+    const page = renderIndexPage({ title: 'T', summary: { shared: 'Same data.', changes: null, try: [] }, cards: [] });
+
+    expect(page).toContain('<dl><dt>Shared</dt><dd>Same data.</dd></dl>');
+    expect(page).not.toContain('Changed in this round');
+    expect(page).not.toContain('Try in each');
+  });
+
+  it('leaves out the summary section when the set has none', () => {
+    const page = renderIndexPage({ title: 'T', summary: null, cards: [] });
+
+    expect(page).not.toContain('<section class="set-summary"');
+  });
+
+  it("renders a card's notes as a definition list in order, and none when it has no notes", () => {
+    const page = renderIndexPage({
+      title: 'T',
+      summary: null,
+      cards: [
+        {
+          entry: buildEntry({
+            slug: 'a',
+            notes: [
+              { label: 'Search', value: 'Top bar' },
+              { label: 'Home', value: 'Recent items' },
+            ],
+          }),
+          shot: null,
+        },
+        { entry: buildEntry({ slug: 'b' }), shot: null },
+      ],
+    });
+
+    expect(page).toContain('<dl class="notes"><dt>Search</dt><dd>Top bar</dd><dt>Home</dt><dd>Recent items</dd></dl>');
+    expect(page.match(/<dl class="notes">/g)).toHaveLength(1);
+  });
+
+  it('escapes summary and note text', () => {
+    const page = renderIndexPage({
+      title: 'T',
+      summary: { shared: '<b>', changes: '"x"', try: ['a & b'] },
+      cards: [{ entry: buildEntry({ slug: 'a', notes: [{ label: '<i>', value: "it's" }] }), shot: null }],
+    });
+
+    expect(page).toContain('<dd>&lt;b&gt;</dd>');
+    expect(page).toContain('<dd>&quot;x&quot;</dd>');
+    expect(page).toContain('<li>a &amp; b</li>');
+    expect(page).toContain('<dt>&lt;i&gt;</dt><dd>it&#39;s</dd>');
+  });
+
   it('lists every shortcut key in the hint', () => {
-    const page = renderIndexPage({ title: 'T', cards: [] });
+    const page = renderIndexPage({ title: 'T', summary: null, cards: [] });
     const hint = /<p class="hint"[^>]*>(.*?)<\/p>/.exec(page)?.[1] ?? '';
 
     for (const key of SHORTCUT_KEYS) {
@@ -93,7 +158,7 @@ describe(renderIndexPage, () => {
   });
 
   it('embeds a script that reads the verdicts collection and cannot close its own element', () => {
-    const page = renderIndexPage({ title: 'T', cards: [] });
+    const page = renderIndexPage({ title: 'T', summary: null, cards: [] });
 
     expect(page).toContain(`<script>${INDEX_PAGE_SCRIPT}</script>`);
     expect(INDEX_PAGE_SCRIPT).toContain(`const COLLECTION = '${VERDICTS_COLLECTION}';`);
@@ -110,10 +175,17 @@ describe('render command', () => {
     await writeManifestFile(setDir, {
       title: 'Set',
       indexUrl: 'https://claude.ai/artifact/index',
+      summary: null,
       entries: [
-        buildEntry({ slug: 'a', title: 'First draft' }),
+        buildEntry({ slug: 'a', title: 'First draft', notes: [{ label: 'Draft', value: 'First notes' }] }),
         buildEntry({ slug: 'b' }),
-        buildEntry({ slug: 'a', version: 2, title: 'Second draft', shot: 'shots/a-v2.png' }),
+        buildEntry({
+          slug: 'a',
+          version: 2,
+          title: 'Second draft',
+          shot: 'shots/a-v2.png',
+          notes: [{ label: 'Draft', value: 'Second notes' }],
+        }),
       ],
     });
     const out = path.join(setDir, 'out', 'index.html');
@@ -133,7 +205,23 @@ describe('render command', () => {
     });
     expect(page).toContain('Second draft');
     expect(page).not.toContain('First draft');
+    expect(page).toContain('<dd>Second notes</dd>');
+    expect(page).not.toContain('First notes');
     expect(page).toContain('data:image/png;base64,');
+  });
+
+  it("renders the manifest's summary", async () => {
+    const setDir = await makeSetDir();
+    await writeManifestFile(setDir, {
+      title: 'Set',
+      indexUrl: null,
+      summary: { shared: 'Same data.', changes: null, try: [] },
+      entries: [buildEntry({ slug: 'a' })],
+    });
+
+    await render(setDir, path.join(setDir, 'index.html'));
+
+    expect(await readFile(path.join(setDir, 'index.html'), 'utf8')).toContain('<dt>Shared</dt><dd>Same data.</dd>');
   });
 
   it('renders the placeholder for a recorded screenshot missing from disk and reports it', async () => {
@@ -141,6 +229,7 @@ describe('render command', () => {
     await writeManifestFile(setDir, {
       title: 'Set',
       indexUrl: null,
+      summary: null,
       entries: [buildEntry({ slug: 'a', shot: 'shots/a-v1.png' })],
     });
 
@@ -194,6 +283,7 @@ function buildEntry(fields: Partial<ManifestEntry> & { slug: string }): Manifest
     lens: null,
     inputs: [],
     description: null,
+    notes: [],
     shot: null,
     ...fields,
   };
@@ -212,6 +302,7 @@ async function makeSetDirWithShotOfSize(size: number): Promise<string> {
   await writeManifestFile(setDir, {
     title: 'Set',
     indexUrl: null,
+    summary: null,
     entries: [buildEntry({ slug: 'a', shot: 'shots/a-v1.png' })],
   });
   return setDir;

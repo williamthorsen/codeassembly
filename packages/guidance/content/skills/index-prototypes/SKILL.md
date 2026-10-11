@@ -17,7 +17,7 @@ A ticket has one prototype set, in its artifact directory:
 
 ```
 {artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/prototypes/
-├── manifest.json        # set title, index URL, one entry per registration
+├── manifest.json        # set title, summary, index URL, one entry per registration
 ├── shots/{slug}-v{n}.png
 └── {slug}-v{n}.html     # prototype sources
 ```
@@ -27,6 +27,8 @@ A later round of prototypes revises the same set: A new idea takes a new slug, a
 A slug matches `[a-z0-9][a-z0-9-]{0,39}`. You choose each slug, before any prototype is built.
 
 The helper gives each slug a number at its first registration, in registration order, and every later version of the slug keeps it. The number is how the developer refers to a prototype: Name each prototype to them as `{number}. {title}`, such as `3. Catalog first`; the index card leads with the same form. When the developer names a prototype by a bare number, it is the slug whose manifest entries have that number. When no entry has it, ask which prototype they mean rather than guess. The slug stays the key in the manifest and in the verdicts.
+
+The set has one list of note labels: a few facts that differ from one prototype to the next and that a reviewer would compare, such as where search lives or what the home screen shows. Choose the labels before the set's first prototype is built, and write each one without a colon. Every prototype takes a note for every label, in the same order, so that the cards compare side by side. A later round reads the labels from the manifest's latest entries and keeps them, adding a label only when the round introduces something new to compare.
 
 ## Process
 
@@ -42,11 +44,11 @@ mktemp -d "${TMPDIR:-/tmp}/prototypes.XXXXXX"
 
 ### 2. Build the prototypes
 
-Choose a slug and version for each prototype. When a subagent builds one, give it the slug and version and tell it to:
+Choose a slug and version for each prototype, and the set's note labels per [The set](#the-set). When a subagent builds one, give it the slug, the version, and the note labels, and tell it to:
 
 1. Write the page source to `{set_dir}/{slug}-v{n}.html`.
 2. Publish that file with the Artifact tool.
-3. Report the artifact URL, a short title, the lens (the angle or constraint that distinguishes this prototype), the inputs it drew on, and a one-sentence description.
+3. Report the artifact URL, a short title, the lens (the angle or constraint that distinguishes this prototype), the inputs it drew on, a one-sentence description, and one line per note label as `{label}: {value}`.
 
 Build a prototype in the main session the same way.
 
@@ -85,12 +87,39 @@ node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs register \
   --lens "{lens}" \
   --inputs "{comma-separated inputs}" \
   --description "{description}" \
+  --note "{label}: {value}" \
   --screenshot "{working_dir}/.playwright-mcp/{slug}-v{n}.png"
 ```
 
-Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already held another version of the slug, so rename the source to match.
+Pass one `--note` per note label, in the set's label order. Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already held another version of the slug, so rename the source to match.
 
-### 5. Render and publish the index
+### 5. Describe the set
+
+Write the set's summary to `{scratch_dir}/summary.json` with the Write tool:
+
+```json
+{
+  "shared": "{what every prototype has in common}",
+  "changes": "{what this round revised}",
+  "try": ["{a task to do in each prototype}", "…"]
+}
+```
+
+- **`shared`**: What every prototype in the set has in common, such as the same screens, the same data, and both themes, in one or two sentences.
+- **`changes`**: What this round revised, naming each prototype as `{number}. {title}`; `null` in the set's first round.
+- **`try`**: A few tasks, each one line, that the reviewer does in every prototype to compare them, in the order in which the reviewer would do them.
+
+The page shows the summary under the set's title, so write it as labelled facts about the prototypes, not as an introduction to the page. Then store it:
+
+```bash
+node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs describe-set \
+  --set-dir "{set_dir}" \
+  --file "{scratch_dir}/summary.json"
+```
+
+Every round rewrites the whole summary.
+
+### 6. Render and publish the index
 
 ```bash
 node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs render \
@@ -103,7 +132,7 @@ Report a `warning` or a non-empty `missingShots` to the developer. Then publish 
 - **First publish** (`indexUrl` is `null`): pass `icon: "gallery"`, a one-sentence `description`, and `capabilities: {db: {}, user: {}}`.
 - **Republish** (`indexUrl` is set): pass `url` set to `indexUrl` and omit `capabilities` and `icon`, so that the page keeps its declaration, its icon, and its verdicts. In a session that has not yet read or published the index, read it with the Artifact tool's `read` action first.
 
-### 6. Record the index URL
+### 7. Record the index URL
 
 After the first publish, record the URL in the manifest:
 
@@ -113,7 +142,7 @@ node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs record-inde
   --url {index_url}
 ```
 
-### 7. Check the page and hand it over
+### 8. Check the page and hand it over
 
 After the first publish, list the `verdicts` collection once with the ArtifactData tool (`action: "list"`, the index URL, `collection: "verdicts"`). An empty list is the expected result. Then give the developer the index link alone, with one line saying what you exercised and what you could not.
 
@@ -146,14 +175,16 @@ Then, in step 3, after each screenshot, pass the result's `function` to `browser
 
 Every command prints one JSON object. A success has `ok: true`. A failure has `ok: false`, an `error` code, and a `message`, and the command exits 1:
 
-| `error`                | Meaning                                                                       |
-| ---------------------- | ----------------------------------------------------------------------------- |
-| `invalid-args`         | Unknown command, a flag the command does not take, or a missing required flag |
-| `invalid-manifest`     | `manifest.json` is not valid JSON or does not have the manifest layout        |
-| `invalid-slug`         | The slug does not match `[a-z0-9][a-z0-9-]{0,39}`                             |
-| `invalid-url`          | The URL is not http or https                                                  |
-| `manifest-not-found`   | The set does not have a manifest yet; register a prototype first              |
-| `missing-set-title`    | The set's first registration lacks `--set-title`                              |
-| `not-png`              | The screenshot is not a PNG file                                              |
-| `page-too-large`       | The page would exceed the 16,000,000-byte artifact cap; nothing was written   |
-| `screenshot-not-found` | The screenshot path does not exist                                            |
+| `error`                | Meaning                                                                                                                  |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `invalid-args`         | Unknown command, a flag the command does not take, a missing required flag, or a `--note` that is not `{label}: {value}` |
+| `invalid-manifest`     | `manifest.json` is not valid JSON or does not have the manifest layout                                                   |
+| `invalid-slug`         | The slug does not match `[a-z0-9][a-z0-9-]{0,39}`                                                                        |
+| `invalid-summary`      | The summary file is not valid JSON or does not have the summary layout                                                   |
+| `invalid-url`          | The URL is not http or https                                                                                             |
+| `manifest-not-found`   | The set does not have a manifest yet; register a prototype first                                                         |
+| `missing-set-title`    | The set's first registration lacks `--set-title`                                                                         |
+| `not-png`              | The screenshot is not a PNG file                                                                                         |
+| `page-too-large`       | The page would exceed the 16,000,000-byte artifact cap; nothing was written                                              |
+| `screenshot-not-found` | The screenshot path does not exist                                                                                       |
+| `summary-not-found`    | The summary file does not exist                                                                                          |

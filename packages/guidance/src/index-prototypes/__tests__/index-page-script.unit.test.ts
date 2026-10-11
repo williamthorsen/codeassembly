@@ -212,6 +212,7 @@ function buildEntry(slug: string, minute: number): ManifestEntry {
     lens: null,
     inputs: [],
     description: null,
+    notes: [],
     shot: null,
   };
 }
@@ -264,6 +265,7 @@ async function openPage(options: {
 }) {
   const html = renderIndexPage({
     title: 'Set',
+    summary: null,
     cards: SLUGS.map((slug, index) => ({ entry: buildEntry(slug, index), shot: null })),
   });
   const body = html.slice(html.indexOf('<main>'), html.indexOf('<script>'));

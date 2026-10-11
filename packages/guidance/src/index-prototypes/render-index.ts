@@ -1,6 +1,6 @@
 import { INDEX_PAGE_SCRIPT } from './index-page-script.ts';
 import { renderTokenDeclarations } from './tokens.ts';
-import type { ManifestEntry } from './types.ts';
+import type { ManifestEntry, Note, SetSummary } from './types.ts';
 
 /** A page size above which `render` warns that the page is approaching the artifact cap. */
 export const PAGE_WARN_BYTES = 12_000_000;
@@ -18,7 +18,11 @@ export interface IndexCard {
  * Renders the index page as Artifact page content: the `<title>` and `<style>` first, without a document wrapper,
  * which the Artifact tool adds at publish time.
  */
-export function renderIndexPage(input: { title: string; cards: readonly IndexCard[] }): string {
+export function renderIndexPage(input: {
+  title: string;
+  summary: SetSummary | null;
+  cards: readonly IndexCard[];
+}): string {
   const title = escapeHtml(input.title);
   const count = input.cards.length;
   return [
@@ -27,6 +31,7 @@ export function renderIndexPage(input: { title: string; cards: readonly IndexCar
     '<main>',
     '<header>',
     `<h1>${title}</h1>`,
+    ...(input.summary === null ? [] : [renderSummary(input.summary)]),
     `<p class="summary" id="summary">${count} ${count === 1 ? 'prototype' : 'prototypes'}</p>`,
     '</header>',
     '<div class="toolbar">',
@@ -91,6 +96,7 @@ function renderCard(card: IndexCard, count: number): string {
     `<p class="meta">${slug} · v${entry.version} · ${escapeHtml(formatTimestamp(entry.registeredAt))}</p>`,
     ...(chips.length === 0 ? [] : [`<ul class="chips">${chips.join('')}</ul>`]),
     ...(entry.description === null ? [] : [`<p class="description">${escapeHtml(entry.description)}</p>`]),
+    ...(entry.notes.length === 0 ? [] : [renderNotes(entry.notes)]),
     '<div class="controls" data-role="controls" hidden>',
     `<button type="button" data-action="reject" aria-pressed="false" aria-describedby="${titleId}">Reject</button>`,
     `<label class="rank">Rank <select data-action="rank" aria-describedby="${titleId}"><option value="">None</option>${rankOptions.join('')}</select></label>`,
@@ -99,6 +105,12 @@ function renderCard(card: IndexCard, count: number): string {
     '</div>',
     '</article>',
   ].join('\n');
+}
+
+/** Renders a card's notes as a definition list in their stored order. */
+function renderNotes(notes: readonly Note[]): string {
+  const pairs = notes.map((note) => `<dt>${escapeHtml(note.label)}</dt><dd>${escapeHtml(note.value)}</dd>`);
+  return `<dl class="notes">${pairs.join('')}</dl>`;
 }
 
 /** Renders the page's stylesheet: the theme tokens in the three-state shape, then the layout. */
@@ -135,6 +147,16 @@ kbd { font: 600 13px ui-monospace, SFMono-Regular, Menlo, monospace; color: var(
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .chip { padding: 2px 8px; border-radius: 999px; background: var(--chip); color: var(--text); font-size: 13px; }
 .description { margin: 0; }
+.set-summary { margin: 12px 0 8px; max-width: 72ch; }
+.set-summary dl { margin: 0; }
+.set-summary dt { margin-top: 8px; color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.set-summary dt:first-child { margin-top: 0; }
+.set-summary dd { margin: 2px 0 0; }
+.set-summary ol { margin: 0; padding-left: 1.5em; }
+.notes { display: grid; grid-template-columns: max-content 1fr; gap: 2px 12px; margin: 0; font-size: 14px; }
+.notes dt { color: var(--text-muted); font-size: 13px; font-weight: 600; }
+.notes dd { margin: 0; overflow-wrap: anywhere; }
+@media (max-width: 420px) { .notes { grid-template-columns: 1fr; } .notes dd { margin-bottom: 4px; } }
 .badges { display: flex; flex-wrap: wrap; gap: 6px; }
 .badges:empty { display: none; }
 .badge { padding: 2px 8px; border-radius: 6px; background: var(--chip); color: var(--text); font-size: 13px; font-weight: 600; }
@@ -147,6 +169,17 @@ button[aria-pressed="true"] { border-color: var(--accent); background: var(--acc
 button:disabled, select:disabled { cursor: not-allowed; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
 `;
+}
+
+/** Renders the set summary as a definition list, leaving out a part that is null or empty. */
+function renderSummary(summary: SetSummary): string {
+  const tryItems = summary.try.map((item) => `<li>${escapeHtml(item)}</li>`);
+  const pairs = [
+    `<dt>Shared</dt><dd>${escapeHtml(summary.shared)}</dd>`,
+    ...(summary.changes === null ? [] : [`<dt>Changed in this round</dt><dd>${escapeHtml(summary.changes)}</dd>`]),
+    ...(tryItems.length === 0 ? [] : [`<dt>Try in each</dt><dd><ol>${tryItems.join('')}</ol></dd>`]),
+  ];
+  return `<section class="set-summary" aria-label="Set summary"><dl>${pairs.join('')}</dl></section>`;
 }
 
 // endregion | Helpers
