@@ -8,6 +8,7 @@ members:
     - generated-content-policy
     - readme-conventions
     - shared-data-conventions
+    - ui-copy-conventions
   skills:
     - capture-event
     - capture-feedback
@@ -32,3 +33,5 @@ The skills belong here on different grounds. A rulebook of the personal collecti
 Adding a skill that declares a guidance hook has a drawback that the current members do not have. A project declaring this collection deploys its own copy of that skill, and that copy shadows the user's home-bound one. Because guidance-hook bindings do not cross the boundary between the user-global and project domains, guidance bound globally by the developer goes missing in that repository until the project binds it too. Weigh that against the general applicability claimed by membership before admitting such a skill.
 
 `shared-data-conventions` qualifies on its own terms too. It states a standard practice, expand, migrate, contract, and the rule that unmerged code does not write to shared state, and it does not name any author, platform, or store: Each repository's `AGENTS.md` names its own. Its body does not contain any invocation token, so its closure is empty.
+
+`ui-copy-conventions` qualifies on its own terms as well. What it asks of the text on a page follows from who reads that text, the person who returns to the page every week, rather than from a preference, and it does not name any author, repository, product, or tool. A project that has content guidelines of its own names them, and they take precedence. Its body does not contain any invocation token, so its closure is empty.
