@@ -14,7 +14,7 @@ import { COPY_PROBE_SCRIPT } from './copy-probe.ts';
 import { intakeScreenshot } from './intake-screenshot.ts';
 import { isValidSlug, listLatestEntries, nextVersion, readManifest, resolveNumber, writeManifest } from './manifest.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
-import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry } from './types.ts';
+import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry, Note } from './types.ts';
 
 const COMMANDS = ['copy-probe', 'record-index', 'register', 'render'] as const;
 
@@ -26,6 +26,7 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'description', takesValue: true },
   { name: 'inputs', takesValue: true },
   { name: 'lens', takesValue: true },
+  { name: 'note', takesValue: true },
   { name: 'out', takesValue: true },
   { name: 'screenshot', takesValue: true },
   { name: 'set-dir', takesValue: true },
@@ -41,15 +42,16 @@ const COMMAND_FLAGS: Record<Command, { required: readonly string[]; optional: re
   'record-index': { required: ['set-dir', 'url'], optional: [] },
   register: {
     required: ['set-dir', 'slug', 'title', 'url'],
-    optional: ['description', 'inputs', 'lens', 'screenshot', 'set-title', 'source'],
+    optional: ['description', 'inputs', 'lens', 'note', 'screenshot', 'set-title', 'source'],
   },
   render: { required: ['out', 'set-dir'], optional: [] },
 };
 
-/** A parsed invocation: the command and its flag values, keyed by flag name. */
+/** A parsed invocation: the command, its single-valued flags keyed by flag name, and its `--note` flags in order. */
 export interface ParsedArgs {
   command: Command;
   values: Record<string, string>;
+  notes: Note[];
 }
 
 /** Executes the helper from `process.argv`, writing the JSON result to stdout and exiting non-zero on a failure. */
@@ -93,7 +95,7 @@ export async function runIndexPrototypes(input: {
     case 'record-index':
       return recordIndex(resolveSetDir(args.values), requireFlag(args.values, 'url'));
     case 'register':
-      return register(resolveSetDir(args.values), args.values, input.now);
+      return register(resolveSetDir(args.values), args.values, args.notes, input.now);
     case 'render':
       return render(resolveSetDir(args.values), path.resolve(requireFlag(args.values, 'out')));
     default: {
@@ -105,7 +107,7 @@ export async function runIndexPrototypes(input: {
 
 /**
  * Parses argv into a command and its flags, throwing on an unknown command, a flag that the command does not take, a
- * missing required flag, or an empty value.
+ * missing required flag, an empty value, or a note that is not `<label>: <value>`.
  *
  * @internal - Exported to allow testing.
  */
@@ -122,8 +124,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     throw new Error(`unexpected argument: ${extra}`);
   }
 
-  const values = valueFlagMap(flags);
+  const noteFlags = flags.filter((flag) => flag.name === 'note');
+  const values = valueFlagMap(flags.filter((flag) => flag.name !== 'note'));
   const { required, optional } = COMMAND_FLAGS[command];
+  if (noteFlags.length > 0 && !optional.includes('note')) {
+    throw new Error(`${command} does not take --note`);
+  }
   for (const [name, value] of Object.entries(values)) {
     if (!required.includes(name) && !optional.includes(name)) {
       throw new Error(`${command} does not take --${name}`);
@@ -137,7 +143,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`${command} requires --${name}`);
     }
   }
-  return { command, values };
+  const notes = noteFlags.map((flag) => parseNote(flag.value ?? ''));
+  return { command, values, notes };
 }
 
 // region | Helpers
@@ -177,6 +184,17 @@ function isWebUrl(value: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** Splits a `--note` value at its first colon into a trimmed label and value, throwing when either is empty. */
+function parseNote(text: string): Note {
+  const colon = text.indexOf(':');
+  const label = colon === -1 ? '' : text.slice(0, colon).trim();
+  const value = colon === -1 ? '' : text.slice(colon + 1).trim();
+  if (label === '' || value === '') {
+    throw new Error(`--note "${text}" must have the form "<label>: <value>"`);
+  }
+  return { label, value };
 }
 
 /** Splits a comma-separated `--inputs` value into trimmed, non-empty items. */
@@ -219,7 +237,12 @@ async function recordIndex(setDir: string, url: string): Promise<IndexPrototypes
 }
 
 /** Adds a registration to the set's manifest, creating the manifest on the set's first registration. */
-async function register(setDir: string, values: Record<string, string>, now: Date): Promise<IndexPrototypesResult> {
+async function register(
+  setDir: string,
+  values: Record<string, string>,
+  notes: Note[],
+  now: Date,
+): Promise<IndexPrototypesResult> {
   const slug = requireFlag(values, 'slug');
   if (!isValidSlug(slug)) {
     return fail('invalid-slug', `slug "${slug}" must match [a-z0-9][a-z0-9-]{0,39}`);
@@ -266,7 +289,7 @@ async function register(setDir: string, values: Record<string, string>, now: Dat
     lens: values.lens ?? null,
     inputs: parseInputs(values.inputs),
     description: values.description ?? null,
-    notes: [],
+    notes,
     shot,
   };
 

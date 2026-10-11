@@ -17,11 +17,12 @@ describe(parseArgs, () => {
     expect(parseArgs(['record-index', '--set-dir', '/s', '--url=https://x.test/a'])).toEqual({
       command: 'record-index',
       values: { 'set-dir': '/s', url: 'https://x.test/a' },
+      notes: [],
     });
   });
 
   it('parses copy-probe without flags', () => {
-    expect(parseArgs(['copy-probe'])).toEqual({ command: 'copy-probe', values: {} });
+    expect(parseArgs(['copy-probe'])).toEqual({ command: 'copy-probe', values: {}, notes: [] });
   });
 
   it('refuses --set-dir on copy-probe', () => {
@@ -48,6 +49,30 @@ describe(parseArgs, () => {
 
   it('refuses an empty value', () => {
     expect(() => parseArgs(['record-index', '--set-dir=', '--url', 'u'])).toThrow(/--set-dir requires a value/);
+  });
+
+  it('collects every --note in order, split at the first colon', () => {
+    const argv = ['register', '--set-dir', '/s', '--slug', 'a', '--title', 'T', '--url', 'https://x.test/a'];
+
+    const parsed = parseArgs([...argv, '--note', ' Search : Top bar ', '--note=Opens at: 10:30']);
+
+    expect(parsed.notes).toEqual([
+      { label: 'Search', value: 'Top bar' },
+      { label: 'Opens at', value: '10:30' },
+    ]);
+    expect(parsed.values).not.toHaveProperty('note');
+  });
+
+  it.each(['Search', ': Top bar', 'Search:', 'Search:  '])('refuses the note %j', (note) => {
+    const argv = ['register', '--set-dir', '/s', '--slug', 'a', '--title', 'T', '--url', 'https://x.test/a'];
+
+    expect(() => parseArgs([...argv, '--note', note])).toThrow(/must have the form "<label>: <value>"/);
+  });
+
+  it('refuses --note on a command that does not take it', () => {
+    expect(() => parseArgs(['render', '--set-dir', '/s', '--out', 'o', '--note', 'a: b'])).toThrow(
+      /render does not take --note/,
+    );
   });
 });
 
@@ -166,6 +191,38 @@ describe(runIndexPrototypes, () => {
         { slug: 'bold', number: 3 },
       ],
     });
+  });
+
+  it('stores the notes on the entry in the order given', async () => {
+    const setDir = await makeSetDir();
+
+    const result = await register(setDir, 'a', NOW, [
+      '--set-title',
+      'Set',
+      '--note',
+      'Search: Top bar',
+      '--note',
+      'Home: Recent items',
+    ]);
+
+    expect(result).toMatchObject({
+      ok: true,
+      entry: {
+        notes: [
+          { label: 'Search', value: 'Top bar' },
+          { label: 'Home', value: 'Recent items' },
+        ],
+      },
+    });
+  });
+
+  it('refuses a malformed note without writing', async () => {
+    const setDir = await makeSetDir();
+
+    const result = await register(setDir, 'a', NOW, ['--set-title', 'Set', '--note', 'Search']);
+
+    expect(result).toMatchObject({ ok: false, error: 'invalid-args' });
+    await expect(readFile(path.join(setDir, 'manifest.json'), 'utf8')).rejects.toThrow(/ENOENT/);
   });
 
   it('keeps the set summary across a later registration', async () => {
