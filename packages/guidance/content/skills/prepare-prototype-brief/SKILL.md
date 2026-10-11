@@ -77,7 +77,7 @@ Write the brief in this order, with these headings:
 4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note when the product stores data; one is the API list when the product has an API.
 5. **Quality bar.** Works, legible, accessible, and within the copy rules, with {rulebook:accessibility-conventions} and {rulebook:ui-copy-conventions} named, the design skill to invoke before markup, and the salience order required.
 6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round. One criterion is the copy: "Read every string on the product surface as its user opening the page for the tenth time. A string that explains the page, reassures, or repeats the brief, and any copy over the budget in {rulebook:ui-copy-conventions}, is a defect."
-7. **Rules of engagement.** The write allowance from the inputs. The default: Write the output file and nothing else, modify nothing in the repository, install nothing. When the ask allows more, state what it allows. Then: Publish the prototype and report its artifact URL and five lines of distinctive ideas.
+7. **Rules of engagement.** The write allowance from the inputs. The default: Write the output file and nothing else, modify nothing in the repository, install nothing. When the ask allows more, state what it allows. Then: Publish the prototype and report its artifact URL, a value for each of the set's note labels (listed here), and five lines of distinctive ideas.
 
 Then add the lens sections, one per builder, in the developer's words after a plain-speech pass.
 
@@ -110,7 +110,7 @@ Resolve the set directory and the scratch directory per {skill:index-prototypes}
 
 ### 2. Gather the inputs
 
-Take the ticket and the ask. Propose lenses when the ask lacks them. Take the write allowance from the ask, and apply the default when the ask does not state one. Choose a slug per lens before anything is built.
+Take the ticket and the ask. Propose lenses when the ask lacks them. Take the write allowance from the ask, and apply the default when the ask does not state one. Choose a slug per lens and the set's note labels, per {skill:index-prototypes} "The set", before anything is built.
 
 ### 3. Compose and check the brief
 
@@ -125,6 +125,7 @@ Write the brief to `{scratch_dir}/brief.md`. Then check it against each rule abo
 - Salience order, the accessibility floor, and the copy rules: named in the quality bar, and the copy rules named again in "How this round is judged".
 - The `data-demo` band: required in the deliverable.
 - The write allowance: stated in the rules of engagement.
+- The note labels: listed in the rules of engagement.
 
 Report what the check changed, in one line per rule that fired.
 
@@ -148,13 +149,13 @@ output: {set_dir}/{slug}-v{n}.html
 
 followed by:
 
-> Read the brief in full and build the prototype for the lens named above. Write only the files that the brief's rules of engagement allow. Invoke the design skill that the brief names before writing markup. Publish the output with the Artifact tool. When done, reply with the artifact URL, a short title, the lens, the inputs that you drew on, a one-sentence description, and five lines of the system's distinctive ideas. Nothing else.
+> Read the brief in full and build the prototype for the lens named above. Write only the files that the brief's rules of engagement allow. Invoke the design skill that the brief names before writing markup. Publish the output with the Artifact tool. When done, reply with the artifact URL, a short title, the lens, the inputs that you drew on, a one-sentence description, one line per note label in the brief as `{label}: {value}`, and five lines of the system's distinctive ideas. Nothing else.
 
 Dispatch a builder once more with the same block when it returns without the file, with a file that does not open, or without an artifact URL. Report a second failure in the summary and leave the lens out of the round.
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 6 and the verdict check of step 7, for the screenshots, the registrations, and the index page. In step 3, list each prototype's product copy per its "List the product copy". Register the prototypes in the order of the lens sections in the brief, so that the numbers that the helper assigns follow it. Take each registration's URL, title, lens, inputs, and description from the builder's reply. Then write the comparison, naming each prototype as `{number}. {title}`: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), a "Product copy" section, and the decisions that the round leaves open. The "Product copy" section names each prototype as `{number}. {title}` and lists its strings from the probe. For a prototype without a `data-demo` band, add a one-line note directly under its name, before the list, that the listing includes the demo chrome. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link, the comparison path, and one line per prototype as `{number}. {title}`, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 7 and the verdict check of step 8, for the screenshots, the registrations, the set's summary, and the index page. In step 3, list each prototype's product copy per its "List the product copy". Register the prototypes in the order of the lens sections in the brief, so that the numbers that the helper assigns follow it. Take each registration's URL, title, lens, inputs, description, and notes from the builder's reply. Then write the comparison, naming each prototype as `{number}. {title}`: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), a "Product copy" section, and the decisions that the round leaves open. The "Product copy" section names each prototype as `{number}. {title}` and lists its strings from the probe. For a prototype without a `data-demo` band, add a one-line note directly under its name, before the list, that the listing includes the demo chrome. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link, the comparison path, and one line per prototype as `{number}. {title}`, and nothing else.
 
 ### 7. Decide the ideas
 
