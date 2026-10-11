@@ -229,13 +229,7 @@ describe(runIndexPrototypes, () => {
     const setDir = await makeSetDir();
     await register(setDir, 'a', NOW, ['--set-title', 'Set']);
     const summary = { shared: 'Same data.', changes: null, try: ['Search for a title.'] };
-    const manifestPath = path.join(setDir, 'manifest.json');
-    const text = await readFile(manifestPath, 'utf8');
-    await writeFile(
-      manifestPath,
-      text.replace('"summary": null', () => `"summary": ${JSON.stringify(summary)}`),
-      'utf8',
-    );
+    await describeSet(setDir, summary);
 
     await register(setDir, 'b', NOW, []);
 
@@ -357,6 +351,90 @@ describe(runIndexPrototypes, () => {
     expect(await readManifestFile(setDir)).toMatchObject({ indexUrl: 'https://claude.ai/artifact/index' });
   });
 
+  it('stores a trimmed summary and replaces an earlier one', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'a', NOW, ['--set-title', 'Set']);
+    await describeSet(setDir, { shared: 'First.', changes: null, try: [] });
+
+    const result = await describeSet(setDir, {
+      shared: ' Same data. ',
+      changes: ' Search moved. ',
+      try: [' Search. '],
+    });
+
+    const summary = { shared: 'Same data.', changes: 'Search moved.', try: ['Search.'] };
+    expect(result).toEqual({
+      ok: true,
+      command: 'describe-set',
+      manifestPath: path.join(setDir, 'manifest.json'),
+      summary,
+    });
+    expect(await readManifestFile(setDir)).toMatchObject({ title: 'Set', summary, entries: [{ slug: 'a' }] });
+  });
+
+  it.each([
+    ['an absent changes', { shared: 'S', try: [] }],
+    ['a blank changes', { shared: 'S', changes: '  ', try: [] }],
+  ])('stores %s as null', async (_case, input) => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'a', NOW, ['--set-title', 'Set']);
+
+    const result = await describeSet(setDir, input);
+
+    expect(result).toMatchObject({ ok: true, summary: { shared: 'S', changes: null, try: [] } });
+  });
+
+  it.each([
+    ['a list', []],
+    ['a blank shared', { shared: ' ', changes: null, try: [] }],
+    ['a numeric changes', { shared: 'S', changes: 1, try: [] }],
+    ['a blank try item', { shared: 'S', changes: null, try: ['ok', ''] }],
+    ['a missing try', { shared: 'S', changes: null }],
+  ])('refuses %s without writing', async (_case, input) => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'a', NOW, ['--set-title', 'Set']);
+    const before = await readManifestFile(setDir);
+
+    const result = await describeSet(setDir, input);
+
+    expect(result).toMatchObject({ ok: false, error: 'invalid-summary' });
+    expect(await readManifestFile(setDir)).toEqual(before);
+  });
+
+  it('refuses a summary file that is not JSON', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'a', NOW, ['--set-title', 'Set']);
+    const filePath = path.join(setDir, 'summary.json');
+    await writeFile(filePath, '{', 'utf8');
+
+    const result = await runIndexPrototypes({
+      argv: ['describe-set', '--set-dir', setDir, '--file', filePath],
+      now: NOW,
+    });
+
+    expect(result).toMatchObject({ ok: false, error: 'invalid-summary' });
+  });
+
+  it('refuses a summary file that does not exist', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'a', NOW, ['--set-title', 'Set']);
+
+    const result = await runIndexPrototypes({
+      argv: ['describe-set', '--set-dir', setDir, '--file', path.join(setDir, 'absent.json')],
+      now: NOW,
+    });
+
+    expect(result).toMatchObject({ ok: false, error: 'summary-not-found' });
+  });
+
+  it('refuses describe-set before any registration', async () => {
+    const setDir = await makeSetDir();
+
+    const result = await describeSet(setDir, { shared: 'S', changes: null, try: [] });
+
+    expect(result).toMatchObject({ ok: false, error: 'manifest-not-found' });
+  });
+
   it('refuses record-index before any registration', async () => {
     const setDir = await makeSetDir();
 
@@ -370,6 +448,13 @@ describe(runIndexPrototypes, () => {
 });
 
 // region | Helpers
+
+/** Writes `summary` as a JSON file beside the set and runs `describe-set` on it. */
+async function describeSet(setDir: string, summary: unknown) {
+  const filePath = path.join(setDir, 'summary.json');
+  await writeFile(filePath, JSON.stringify(summary), 'utf8');
+  return runIndexPrototypes({ argv: ['describe-set', '--set-dir', setDir, '--file', filePath], now: NOW });
+}
 
 /** Creates an empty set directory. */
 async function makeSetDir(): Promise<string> {

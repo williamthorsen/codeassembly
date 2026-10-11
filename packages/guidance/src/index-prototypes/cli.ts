@@ -9,14 +9,21 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
-import { isEnoent } from '../lib/type-guards.ts';
+import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { COPY_PROBE_SCRIPT } from './copy-probe.ts';
 import { intakeScreenshot } from './intake-screenshot.ts';
 import { isValidSlug, listLatestEntries, nextVersion, readManifest, resolveNumber, writeManifest } from './manifest.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
-import type { IndexPrototypesFailure, IndexPrototypesResult, Manifest, ManifestEntry, Note } from './types.ts';
+import type {
+  IndexPrototypesFailure,
+  IndexPrototypesResult,
+  Manifest,
+  ManifestEntry,
+  Note,
+  SetSummary,
+} from './types.ts';
 
-const COMMANDS = ['copy-probe', 'record-index', 'register', 'render'] as const;
+const COMMANDS = ['copy-probe', 'describe-set', 'record-index', 'register', 'render'] as const;
 
 type Command = (typeof COMMANDS)[number];
 
@@ -24,6 +31,7 @@ const COMMAND_NAMES: ReadonlySet<string> = new Set(COMMANDS);
 
 const FLAGS: readonly FlagSpec[] = [
   { name: 'description', takesValue: true },
+  { name: 'file', takesValue: true },
   { name: 'inputs', takesValue: true },
   { name: 'lens', takesValue: true },
   { name: 'note', takesValue: true },
@@ -39,6 +47,7 @@ const FLAGS: readonly FlagSpec[] = [
 
 const COMMAND_FLAGS: Record<Command, { required: readonly string[]; optional: readonly string[] }> = {
   'copy-probe': { required: [], optional: [] },
+  'describe-set': { required: ['file', 'set-dir'], optional: [] },
   'record-index': { required: ['set-dir', 'url'], optional: [] },
   register: {
     required: ['set-dir', 'slug', 'title', 'url'],
@@ -92,6 +101,8 @@ export async function runIndexPrototypes(input: {
   switch (args.command) {
     case 'copy-probe':
       return { ok: true, command: 'copy-probe', function: COPY_PROBE_SCRIPT };
+    case 'describe-set':
+      return describeSet(resolveSetDir(args.values), path.resolve(requireFlag(args.values, 'file')));
     case 'record-index':
       return recordIndex(resolveSetDir(args.values), requireFlag(args.values, 'url'));
     case 'register':
@@ -149,6 +160,39 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
 // region | Helpers
 
+/** Replaces the set's summary with the one in the JSON file at `filePath`. */
+async function describeSet(setDir: string, filePath: string): Promise<IndexPrototypesResult> {
+  let text: string;
+  try {
+    text = await readFile(filePath, 'utf8');
+  } catch (error) {
+    if (isEnoent(error)) {
+      return fail('summary-not-found', `${filePath} does not exist`);
+    }
+    throw error;
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    return fail('invalid-summary', `${filePath} is not valid JSON`);
+  }
+  const summary = parseSummary(parsed);
+  if (typeof summary === 'string') {
+    return fail('invalid-summary', `${filePath}: ${summary}`);
+  }
+
+  const read = await readManifest(setDir);
+  if (read.kind === 'missing') {
+    return fail('manifest-not-found', `no manifest in ${setDir}; register a prototype first`);
+  }
+  if (read.kind === 'invalid') {
+    return fail('invalid-manifest', read.message);
+  }
+  const manifestPath = await writeManifest(setDir, { ...read.manifest, summary });
+  return { ok: true, command: 'describe-set', manifestPath, summary };
+}
+
 /** Returns a failure result. */
 function fail(error: IndexPrototypesFailure['error'], message: string): IndexPrototypesFailure {
   return { ok: false, error, message };
@@ -186,6 +230,17 @@ function isWebUrl(value: string): boolean {
   }
 }
 
+/** Splits a comma-separated `--inputs` value into trimmed, non-empty items. */
+function parseInputs(value: string | undefined): string[] {
+  if (value === undefined) {
+    return [];
+  }
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter((item) => item !== '');
+}
+
 /** Splits a `--note` value at its first colon into a trimmed label and value, throwing when either is empty. */
 function parseNote(text: string): Note {
   const colon = text.indexOf(':');
@@ -197,15 +252,30 @@ function parseNote(text: string): Note {
   return { label, value };
 }
 
-/** Splits a comma-separated `--inputs` value into trimmed, non-empty items. */
-function parseInputs(value: string | undefined): string[] {
-  if (value === undefined) {
-    return [];
+/**
+ * Returns the trimmed summary in a parsed summary file, or a message naming its defect. `changes` may be absent, and an
+ * absent or blank `changes` reads as `null`.
+ */
+function parseSummary(value: unknown): SetSummary | string {
+  if (!isRecord(value)) {
+    return 'expected an object with "shared", "changes", and "try"';
   }
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item !== '');
+  const { shared, changes, try: tryItems } = value;
+  if (typeof shared !== 'string' || shared.trim() === '') {
+    return '"shared" must be a non-empty string';
+  }
+  if (changes !== undefined && changes !== null && typeof changes !== 'string') {
+    return '"changes" must be a string or null';
+  }
+  if (!Array.isArray(tryItems) || tryItems.some((item) => !(typeof item === 'string' && item.trim() !== ''))) {
+    return '"try" must be a list of non-empty strings';
+  }
+  const trimmedChanges = typeof changes === 'string' ? changes.trim() : '';
+  return {
+    shared: shared.trim(),
+    changes: trimmedChanges === '' ? null : trimmedChanges,
+    try: tryItems.map((item: string) => item.trim()),
+  };
 }
 
 /** Reads a stored screenshot, returning `null` when the file is missing. */

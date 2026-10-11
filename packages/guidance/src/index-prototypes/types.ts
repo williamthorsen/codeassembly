@@ -48,12 +48,14 @@ export type IndexPrototypesErrorCode =
   | 'invalid-args'
   | 'invalid-manifest'
   | 'invalid-slug'
+  | 'invalid-summary'
   | 'invalid-url'
   | 'manifest-not-found'
   | 'missing-set-title'
   | 'not-png'
   | 'page-too-large'
-  | 'screenshot-not-found';
+  | 'screenshot-not-found'
+  | 'summary-not-found';
 
 /** The helper's stdout payload on a recoverable failure. */
 export interface IndexPrototypesFailure {
@@ -75,6 +77,14 @@ export interface CopyProbeSuccess {
   ok: true;
   command: 'copy-probe';
   function: string;
+}
+
+/** The stdout payload of a successful `describe-set`. */
+export interface DescribeSetSuccess {
+  ok: true;
+  command: 'describe-set';
+  manifestPath: string;
+  summary: SetSummary;
 }
 
 /** The stdout payload of a successful `record-index`. */
@@ -101,4 +111,4 @@ export interface RenderSuccess {
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type IndexPrototypesResult =
-  CopyProbeSuccess | IndexPrototypesFailure | RecordIndexSuccess | RegisterSuccess | RenderSuccess;
+  CopyProbeSuccess | DescribeSetSuccess | IndexPrototypesFailure | RecordIndexSuccess | RegisterSuccess | RenderSuccess;
