@@ -13,19 +13,6 @@ const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,39}$/;
 export type ManifestRead =
   { kind: 'missing' } | { kind: 'invalid'; message: string } | { kind: 'ok'; manifest: Manifest };
 
-/** Returns true when `value` has the layout of a set summary. */
-export function isSetSummary(value: unknown): value is SetSummary {
-  if (!isRecord(value)) {
-    return false;
-  }
-  return (
-    typeof value.shared === 'string' &&
-    isNullableString(value.changes) &&
-    Array.isArray(value.try) &&
-    value.try.every((item) => typeof item === 'string')
-  );
-}
-
 /** Returns true when `slug` is usable as a set member's identifier, a file stem, and a `db` document id. */
 export function isValidSlug(slug: string): boolean {
   return SLUG_PATTERN.test(slug);
@@ -131,6 +118,19 @@ function isNote(value: unknown): value is Note {
 /** Returns true when `value` is a string or null. */
 function isNullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
+}
+
+/** Returns true when `value` has the layout of a set summary. */
+function isSetSummary(value: unknown): value is SetSummary {
+  if (!isRecord(value)) {
+    return false;
+  }
+  return (
+    typeof value.shared === 'string' &&
+    isNullableString(value.changes) &&
+    Array.isArray(value.try) &&
+    value.try.every((item) => typeof item === 'string')
+  );
 }
 
 /** Returns true when `value` has the layout of one stored manifest entry. */
