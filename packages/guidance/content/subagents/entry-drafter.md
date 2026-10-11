@@ -56,7 +56,7 @@ Read the change and settle the entries: what each outcome is, which type it take
 
 5. **The ticket.** Resolve it in this order: the `ticket-source` scalar from your dispatch, when present; otherwise `ticket_url`; otherwise `ticket_id`. Fetch a GitHub issue with `gh issue view {number} --json title,body`. Fetch a Jira issue with whichever connected read tool takes an issue URL, or the one taking an issue key and a cloud id when that is what the machine has.
 
-   **Read the ticket's `## Problem` section and nothing else.** It says what the change is for, and the diff says what the change did. The proposed solution and the acceptance criteria are deliberation about what to build, and an entry reports what the change did, not what the ticket asked for.
+   **Read the ticket's `## Problem` section and nothing else.** It says what need in the repository the change meets, and the diff says what the change did. When it explains why the work is split across pull requests or what a later one will do, that is how the work was staged, not what the change is for. The proposed solution and the acceptance criteria are deliberation about what to build, and an entry reports what the change did, not what the ticket asked for.
 
    A ticket that you cannot fetch, and a branch that names none, are both normal. Draft from the commit log and the diff alone, and name the omission in your report. Never fill the gap by asking the caller for a summary.
 
@@ -80,7 +80,7 @@ Writing follows.
 
 An entry list drops true facts. Almost everything the change contains is accurate, defensible, and not worth the reader's seconds, so the question is never whether a fact is real but whether this reader acts on it. Leave out the rest, however much effort it took to establish.
 
-Some facts describe how the change was produced rather than what it did: how the need for it arose, the branch's own steps, review mechanics, ticket and finding numbers, and test and CI runs. A commit body or a ticket often contains them, and an entry that you write never includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it does not get an entry.
+Some facts describe how the change was produced rather than what it did: how the need for it arose, the branch's own steps, where its code or values were copied from, why the work is split across pull requests or what a later one will do, review mechanics, ticket and finding numbers, and test and CI runs. A commit body or a ticket often contains them, and neither the lede nor an entry that you write includes them. An update to a bookkeeping record, such as a sweep ledger under `.agents/`, is of the same kind: It is not an outcome, and it does not get an entry.
 
 The general concision rule does not apply here. It tells a writer to keep every decision, constraint, and actionable fact and to compose tight instead of trimming, which is right for a plan or a report and wrong for this genre: The facts that you leave out are actionable ones, and the reader has the diff one click away.
 
