@@ -162,8 +162,9 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
 
 /**
  * Selects the backlog narrowed by the selectors and writes one input file per ticket under `--out`.
- * A ticket already assessed in this run is skipped unless it changed after both that assessment and the latest comment
- * carrying this run's marker, so that the sweep's own comment does not make a ticket look changed. A skipped ticket
+ * A ticket already assessed in this run is skipped unless it changed after that assessment, the latest comment carrying
+ * this run's marker, and the latest decision that this run applied to it, so that the sweep's own writes do not make a
+ * ticket look changed: GitHub stamps `updatedAt` a moment after the comment that caused it. A skipped ticket
  * whose latest assessment has an auto-close class and no decision after it is reported in `pendingAutomatic`, so that
  * the skill still applies it.
  */
@@ -174,6 +175,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   const paths = await resolveLedgerPaths(context.run, context.root);
   const ledger = readLedger(paths.ledgerFile);
   const assessedAt = new Map<number, string>();
+  const decidedAt = new Map<number, string>();
   const undecidedClass = new Map<number, string | undefined>();
   for (const record of ledger.records) {
     if (record.run !== run) continue;
@@ -181,6 +183,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
       assessedAt.set(record.number, record.assessedAt);
       undecidedClass.set(record.number, record.class);
     } else if (record.kind === 'decision') {
+      decidedAt.set(record.number, record.appliedAt);
       undecidedClass.delete(record.number);
     }
   }
@@ -193,9 +196,9 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   const pending = selection.ordered.filter((issue) => {
     const assessed = assessedAt.get(issue.number);
     if (assessed === undefined) return true;
-    const commented = findLatestRunMarkerDate(issue.comments, run);
-    const updated = Date.parse(issue.updatedAt);
-    const changed = updated > Date.parse(assessed) && (commented === undefined || updated > Date.parse(commented));
+    const sweepWrites = [assessed, findLatestRunMarkerDate(issue.comments, run), decidedAt.get(issue.number)];
+    const lastSweepWrite = Math.max(...sweepWrites.flatMap((date) => (date === undefined ? [] : [Date.parse(date)])));
+    const changed = Date.parse(issue.updatedAt) > lastSweepWrite;
     if (!changed) resumed.push(issue.number);
     return changed;
   });

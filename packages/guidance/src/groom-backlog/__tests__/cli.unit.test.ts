@@ -186,6 +186,32 @@ describe(runCli, () => {
       expect(result).toMatchObject({ ok: true, resumed: [10] });
     });
 
+    it('does not count an update stamped after the run comment but by the time of its decision as a change', async () => {
+      // GitHub stamps `updatedAt` a second after the comment that caused it.
+      issues[0]?.comments.push({
+        author: { login: 'owner' },
+        body: renderMarker({ run: 'r', decision: 'update' }),
+        createdAt: '2026-02-01T00:00:00Z',
+      });
+      if (issues[0]) issues[0].updatedAt = '2026-02-01T00:00:01Z';
+      writeLedger(root, [
+        assessment('r', 10, '2026-01-20T00:00:00Z'),
+        {
+          run: 'r',
+          kind: 'decision',
+          number: 10,
+          decision: 'update',
+          actor: 'agent',
+          decidedBy: 'user',
+          appliedAt: '2026-02-01T00:00:01Z',
+        },
+      ]);
+
+      const result = await runCli(['collect', '--run', 'r', '--out', 'in'], context);
+
+      expect(result).toMatchObject({ ok: true, resumed: [10] });
+    });
+
     it('reports a malformed selector as invalid-args', async () => {
       expect(await runCli(['collect', '--run', 'r', '--out', 'in', '--older-than', '3m'], context)).toMatchObject({
         ok: false,
