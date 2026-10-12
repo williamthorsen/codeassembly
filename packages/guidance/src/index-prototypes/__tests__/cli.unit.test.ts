@@ -176,6 +176,73 @@ describe(runIndexPrototypes, () => {
     });
   });
 
+  it('takes a requested number for a new slug and keeps it on a later registration', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'dense', NOW, ['--set-title', 'Set']);
+
+    await register(setDir, 'bold', NOW, ['--number', '3']);
+    const result = await register(setDir, 'bold', LATER, ['--number', '3']);
+
+    expect(result).toMatchObject({ ok: true, entry: { slug: 'bold', number: 3, version: 2 } });
+  });
+
+  it.each<[string, string, RegExp]>([
+    ['dense', '2', /slug "dense" is number 1, not 2/],
+    ['bold', '1', /number 1 belongs to slug "dense"/],
+    ['bold', '0', /must be a positive integer/],
+    ['bold', 'x', /must be a positive integer/],
+  ])('refuses --number %s for slug %s', async (slug, number, message) => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'dense', NOW, ['--set-title', 'Set']);
+
+    const result = await register(setDir, slug, LATER, ['--number', number]);
+
+    expect(result).toMatchObject({ ok: false, error: 'number-conflict' });
+    expect(result).toHaveProperty('message', expect.stringMatching(message));
+    expect(await readManifestFile(setDir)).toMatchObject({ entries: [{ slug: 'dense', number: 1 }] });
+  });
+
+  it('resolves the ids that registering the slugs in order would assign, without writing', async () => {
+    const setDir = await makeSetDir();
+    await register(setDir, 'dense', NOW, ['--set-title', 'Set']);
+    await register(setDir, 'airy', NOW, []);
+
+    const result = await runIndexPrototypes({
+      argv: ['resolve-ids', '--set-dir', setDir, '--slugs', 'airy, bold'],
+      now: LATER,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      command: 'resolve-ids',
+      ids: [
+        { slug: 'airy', number: 2, version: 2, id: '2.2' },
+        { slug: 'bold', number: 3, version: 1, id: '3.1' },
+      ],
+    });
+    expect(await readManifestFile(setDir)).toMatchObject({ entries: [{ slug: 'dense' }, { slug: 'airy' }] });
+  });
+
+  it('resolves ids for a set that has no manifest yet', async () => {
+    const setDir = await makeSetDir();
+
+    await expect(
+      runIndexPrototypes({ argv: ['resolve-ids', '--set-dir', setDir, '--slugs', 'a,b'], now: NOW }),
+    ).resolves.toMatchObject({ ok: true, ids: [{ id: '1.1' }, { id: '2.1' }] });
+  });
+
+  it.each([
+    ['Upper', 'invalid-slug'],
+    ['a,a', 'invalid-args'],
+    [' , ', 'invalid-args'],
+  ])('refuses resolve-ids --slugs %j', async (slugs, error) => {
+    const setDir = await makeSetDir();
+
+    await expect(
+      runIndexPrototypes({ argv: ['resolve-ids', '--set-dir', setDir, '--slugs', slugs], now: NOW }),
+    ).resolves.toMatchObject({ ok: false, error });
+  });
+
   it('writes numbers into a manifest that lacks them at the next registration', async () => {
     const setDir = await makeSetDir();
     await register(setDir, 'dense', NOW, ['--set-title', 'Set']);

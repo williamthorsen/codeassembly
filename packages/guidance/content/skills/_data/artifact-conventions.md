@@ -716,6 +716,7 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 - `plan-review`: Plan review findings (completeness and correctness analysis)
 - `plan-v2`: Refined implementation plan after review and revision
 - `pull-request`: PR description file; `capture-lede-decision` reads its `## What` as the agent's side of a lede episode
+- `refinement-log`: The accepted changes of one session of `refine-prototype`, grouped under the id of the version that each one entered, with the transplants' sources and the open forks; the end vision reads it with the `idea-decisions` artifact
 - `review`: Code review (ticket-level, commit scope)
 - `ticket`: Issue ticket
 

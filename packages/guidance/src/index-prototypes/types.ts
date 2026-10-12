@@ -20,6 +20,15 @@ export interface ManifestEntry {
   shot: string | null;
 }
 
+/** The id that the next registration of a slug takes, resolved before the prototype is built. */
+export interface PrototypeId {
+  slug: string;
+  number: number;
+  version: number;
+  /** `{number}.{version}`, the form in which the developer names a version. */
+  id: string;
+}
+
 /** One labelled fact about a prototype. */
 export interface Note {
   label: string;
@@ -53,6 +62,7 @@ export type IndexPrototypesErrorCode =
   | 'manifest-not-found'
   | 'missing-set-title'
   | 'not-png'
+  | 'number-conflict'
   | 'page-too-large'
   | 'screenshot-not-found'
   | 'summary-not-found';
@@ -95,6 +105,13 @@ export interface RecordIndexSuccess {
   indexUrl: string;
 }
 
+/** The stdout payload of a successful `resolve-ids`: one id per slug given, in the order given. */
+export interface ResolveIdsSuccess {
+  ok: true;
+  command: 'resolve-ids';
+  ids: PrototypeId[];
+}
+
 /** The stdout payload of a successful `render`. */
 export interface RenderSuccess {
   ok: true;
@@ -111,4 +128,10 @@ export interface RenderSuccess {
 
 /** The helper's full stdout payload: a discriminated union on `ok`. */
 export type IndexPrototypesResult =
-  CopyProbeSuccess | DescribeSetSuccess | IndexPrototypesFailure | RecordIndexSuccess | RegisterSuccess | RenderSuccess;
+  | CopyProbeSuccess
+  | DescribeSetSuccess
+  | IndexPrototypesFailure
+  | RecordIndexSuccess
+  | RegisterSuccess
+  | RenderSuccess
+  | ResolveIdsSuccess;

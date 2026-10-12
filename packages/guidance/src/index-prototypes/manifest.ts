@@ -3,7 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
-import type { Manifest, ManifestEntry, Note, SetSummary } from './types.ts';
+import type { Manifest, ManifestEntry, Note, PrototypeId, SetSummary } from './types.ts';
 
 export const MANIFEST_FILENAME = 'manifest.json';
 
@@ -12,6 +12,11 @@ const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]{0,39}$/;
 /** The outcome of reading a set's manifest. */
 export type ManifestRead =
   { kind: 'missing' } | { kind: 'invalid'; message: string } | { kind: 'ok'; manifest: Manifest };
+
+/** Formats a version's id, `{number}.{version}`, which the index card and the page itself lead with. */
+export function formatId(number: number, version: number): string {
+  return `${number}.${version}`;
+}
 
 /** Returns true when `slug` is usable as a set member's identifier, a file stem, and a `db` document id. */
 export function isValidSlug(slug: string): boolean {
@@ -38,19 +43,6 @@ export function nextVersion(manifest: Manifest | null, slug: string): number {
     if (entry.slug === slug && entry.version > highest) {
       highest = entry.version;
     }
-  }
-  return highest + 1;
-}
-
-/** Returns the number that a registration of `slug` takes: the slug's existing number, or one past the set's highest. */
-export function resolveNumber(manifest: Manifest | null, slug: string): number {
-  const entries = manifest?.entries ?? [];
-  let highest = 0;
-  for (const entry of entries) {
-    if (entry.slug === slug) {
-      return entry.number;
-    }
-    highest = Math.max(highest, entry.number);
   }
   return highest + 1;
 }
@@ -82,9 +74,47 @@ export async function readManifest(setDir: string): Promise<ManifestRead> {
   return { kind: 'ok', manifest: normalizeManifest(parsed) };
 }
 
+/**
+ * Returns the id that the next registration of each slug takes, in the order given: a registered slug keeps its
+ * number, and each new slug takes the next number past the set's highest, so that registering the slugs in this order
+ * assigns the same ids.
+ */
+export function resolveIds(manifest: Manifest | null, slugs: readonly string[]): PrototypeId[] {
+  const entries = manifest?.entries ?? [];
+  const numbers = new Map<string, number>();
+  let highest = 0;
+  for (const entry of entries) {
+    numbers.set(entry.slug, entry.number);
+    highest = Math.max(highest, entry.number);
+  }
+  return slugs.map((slug) => {
+    let number = numbers.get(slug);
+    if (number === undefined) {
+      highest += 1;
+      number = highest;
+      numbers.set(slug, number);
+    }
+    const version = nextVersion(manifest, slug);
+    return { slug, number, version, id: formatId(number, version) };
+  });
+}
+
 /** Returns the path of the manifest file in `setDir`. */
 export function resolveManifestPath(setDir: string): string {
   return path.join(setDir, MANIFEST_FILENAME);
+}
+
+/** Returns the number that a registration of `slug` takes: the slug's existing number, or one past the set's highest. */
+export function resolveNumber(manifest: Manifest | null, slug: string): number {
+  const entries = manifest?.entries ?? [];
+  let highest = 0;
+  for (const entry of entries) {
+    if (entry.slug === slug) {
+      return entry.number;
+    }
+    highest = Math.max(highest, entry.number);
+  }
+  return highest + 1;
 }
 
 /** Writes the manifest into `setDir` through a sibling temporary file and a rename, so that a reader never sees a partial file. */

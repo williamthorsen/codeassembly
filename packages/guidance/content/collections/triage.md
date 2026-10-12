@@ -39,6 +39,7 @@ members:
     - prepare-prototype-brief
     - pull-from-backlog
     - refine-plan
+    - refine-prototype
     - respond-to-review
     - review-branch
     - review-criteria
