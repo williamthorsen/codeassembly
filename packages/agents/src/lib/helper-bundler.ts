@@ -1,10 +1,10 @@
-import { execFileSync } from 'node:child_process';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import type * as Esbuild from 'esbuild';
 
+import { type AgentsGit, realGit } from './git.ts';
 import type { HelperTarget } from './helper-manifest.ts';
 import { resolveRunningPackageRoot } from './running-package.ts';
 import { isRecord } from './type-guards.ts';
@@ -112,37 +112,18 @@ export function findDriftedBundles(built: ReadonlyMap<string, Buffer>, recorded:
  * Reads the bundles that git records at `HEAD` under `contentRoot`. Throws when the root is not inside a git work tree
  * with a commit, since there is then no record to compare against.
  */
-export function readRecordedBundles(contentRoot: string): RecordedBundles {
-  try {
-    runGit(contentRoot, ['rev-parse', '--verify', '--quiet', 'HEAD']);
-  } catch (error: unknown) {
+export function readRecordedBundles(contentRoot: string, git: AgentsGit = realGit): RecordedBundles {
+  if (!git.hasHeadCommit(contentRoot)) {
     throw new Error(
       `The bundle check compares against git's HEAD, but ${contentRoot} is not inside a git work tree with a commit.`,
-      { cause: error },
     );
   }
 
   return {
-    // A `./` path after the colon resolves against the working directory, which here is the content root.
-    read: (out) => {
-      try {
-        return runGit(contentRoot, ['cat-file', 'blob', `HEAD:./${out}`]);
-      } catch {
-        return;
-      }
-    },
-    tracked: runGit(contentRoot, ['ls-tree', '-r', '--name-only', 'HEAD', '--', '.'])
-      .toString('utf8')
-      .split('\n')
-      .filter((line) => line.endsWith('.mjs')),
+    read: (out) => git.readHeadBlob(contentRoot, out),
+    tracked: git.listHeadFiles(contentRoot).filter((file) => file.endsWith('.mjs')),
   };
 }
-
-/**
- * Output cap for one git invocation, sized well past a bundle. The 1 MiB default throws `ENOBUFS` on a larger blob,
- * which `read` cannot distinguish from an absent one, so the check would report a recorded bundle as unrecorded.
- */
-const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
 
 // A CommonJS dependency (`yaml`) imports Node built-ins via bare `require('process')` calls.
 // esbuild's ESM output otherwise doesn't define `require`, so this banner restores a real one via `createRequire`.
@@ -193,11 +174,6 @@ async function loadEsbuild(importEsbuild: EsbuildImporter): Promise<typeof Esbui
       { cause: error },
     );
   }
-}
-
-/** Runs git in `cwd` and returns its stdout. Throws when git exits non-zero. */
-function runGit(cwd: string, args: readonly string[]): Buffer {
-  return execFileSync('git', args, { cwd, maxBuffer: GIT_MAX_BUFFER, stdio: ['ignore', 'pipe', 'ignore'] });
 }
 
 // endregion | Helpers

@@ -1,20 +1,14 @@
-import { execFile } from 'node:child_process';
 import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { promisify } from 'node:util';
 
+import { type AgentsGit, realGit } from './git.ts';
 import { getManifestPath } from './manifest.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from './running-package.ts';
 import { isEnoent, isRecord } from './type-guards.ts';
 import type { HomeWriteCommand } from './types.ts';
 
-const execFileAsync = promisify(execFile);
-
 /** Filename of the stamp, written beside the install manifest in `~/.codeassembly/`. */
 const PROVENANCE_FILENAME = 'home-provenance.json';
-
-/** How long a commit lookup may take before the stamp is written without one. */
-const COMMIT_LOOKUP_TIMEOUT_MS = 5_000;
 
 /** Membership set for `isHomeWrite`, widened to `string` so that an arbitrary value tests without a type assertion. */
 const HOME_WRITE_COMMANDS: ReadonlySet<string> = new Set<HomeWriteCommand>(['install', 'sync --global']);
@@ -107,22 +101,6 @@ export async function readHomeProvenanceAt(provenancePath: string): Promise<Home
 }
 
 /**
- * Reads the commit that `packageRoot` is on, or `undefined` when the question does not have an answer: The path is
- * not a git tree, or git is absent. A published install does not have a commit to report, so the lookup must never
- * fail the write that it describes.
- */
-export async function readSourceCommit(packageRoot: string): Promise<string | undefined> {
-  try {
-    const { stdout } = await execFileAsync('git', ['-C', packageRoot, 'rev-parse', 'HEAD'], {
-      timeout: COMMIT_LOOKUP_TIMEOUT_MS,
-    });
-    return stdout.trim() || undefined;
-  } catch {
-    return undefined;
-  }
-}
-
-/**
  * Records a failed home-domain attempt, keeping whatever write the stamp already reports. Swallows its own failure:
  * An error is already on its way to the caller, and losing the record must not replace it with a different one.
  */
@@ -157,9 +135,14 @@ export async function recordFailedHomeAttempt(
  * from, and the attempt that produced it. Called once a command has finished writing, never on a dry run: The stamp
  * reports what wrote, not what tried.
  */
-export async function recordHomeProvenance(command: HomeWriteCommand, homeDir?: string): Promise<void> {
+export async function recordHomeProvenance(
+  command: HomeWriteCommand,
+  homeDir?: string,
+  git: AgentsGit = realGit,
+): Promise<void> {
   const packageRoot = resolveRunningPackageRoot();
-  const sourceCommit = await readSourceCommit(packageRoot);
+  // A published install is not a git tree, so the stamp omits the commit rather than failing the write.
+  const sourceCommit = await git.readHeadCommit(packageRoot);
 
   const lastWrite: HomeWrite = {
     version: readRunningPackageVersion(),

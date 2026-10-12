@@ -5,11 +5,10 @@ import { buildSizeReport, type SizeReport } from '../../deployed-sizes/build-siz
 import { measureDeployment } from '../../deployed-sizes/measure-deployment.ts';
 import { readRecordLines, selectLatestSnapshot } from '../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
-import { resolveRepoRoot } from '../../deployed-sizes/resolve-repo-root.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../../deployed-sizes/schema.ts';
 import { shouldAppend } from '../../deployed-sizes/should-append.ts';
 import type { SizeSnapshot } from '../../deployed-sizes/types.ts';
-import { readSourceCommit } from '../../lib/home-provenance.ts';
+import { realGit } from '../../lib/git.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import { resolveRepo } from '../../shared/resolve-repo.ts';
 import { collectDeployedPaths, type DeployedPathSources, type ResolveSourceRoot } from './collect-deployed-paths.ts';
@@ -59,10 +58,10 @@ export async function recordDeployedSizes(input: {
     // is the one the gate must judge and its repository the one whose artifacts the reader can edit; the home
     // domain's comes from the running package, so both answers are that package's tree.
     const sourceRoot = domain.ambient === 'harness-home' ? packageRoot : domain.baseDir;
-    const report = buildSizeReport({ measured, previous, set, repoRoot: await resolveRepoRoot(sourceRoot) });
+    const report = buildSizeReport({ measured, previous, set, repoRoot: await realGit.findTopLevel(sourceRoot) });
 
     if (await shouldAppend({ measured, previous, sourceRoot })) {
-      const sourceCommit = await readSourceCommit(packageRoot);
+      const sourceCommit = await realGit.readHeadCommit(packageRoot);
       const snapshot: SizeSnapshot = {
         schemaVersion: SNAPSHOT_SCHEMA_VERSION,
         kind: 'snapshot',

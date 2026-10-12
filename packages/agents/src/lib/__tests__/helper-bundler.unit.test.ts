@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { bundleHelpers, findDriftedBundles, type RecordedBundles } from '../helper-bundler.ts';
+import { bundleHelpers, findDriftedBundles, readRecordedBundles, type RecordedBundles } from '../helper-bundler.ts';
 import type { HelperTarget } from '../helper-manifest.ts';
+import { makeFakeGit } from '../test-utils/make-fake-git.ts';
 
 const TARGET: HelperTarget = { entry: '../src/demo/cli.ts', entryPath: '/repo/src/demo/cli.ts', out: 'demo.mjs' };
 
@@ -61,6 +62,28 @@ describe(findDriftedBundles, () => {
     );
 
     expect(drifted).toEqual([{ out: 'skills/gone/gone.mjs', reason: 'orphaned' }]);
+  });
+});
+
+describe(readRecordedBundles, () => {
+  it('reads the bytes that HEAD records for a bundle', () => {
+    const git = makeFakeGit({ headFiles: { 'skills/demo/demo.mjs': 'committed' } });
+
+    expect(readRecordedBundles('/content', git).read('skills/demo/demo.mjs')?.toString('utf8')).toBe('committed');
+  });
+
+  it('tracks only the .mjs files that HEAD records', () => {
+    const git = makeFakeGit({
+      headFiles: { 'scripts/relay.mjs': 'relay', 'skills/demo/SKILL.md': '# demo\n', 'skills/demo/demo.mjs': 'demo' },
+    });
+
+    expect(readRecordedBundles('/content', git).tracked).toEqual(['scripts/relay.mjs', 'skills/demo/demo.mjs']);
+  });
+
+  it('fails naming the content root when git does not have a commit to compare against', () => {
+    expect(() => readRecordedBundles('/content', makeFakeGit())).toThrow(
+      '/content is not inside a git work tree with a commit',
+    );
   });
 });
 
