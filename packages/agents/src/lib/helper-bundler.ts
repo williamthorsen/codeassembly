@@ -71,8 +71,9 @@ export async function checkHelperBundles(
   contentRoot: string,
   targets: ReadonlyArray<HelperTarget>,
   importEsbuild: EsbuildImporter = importInstalledEsbuild,
+  git: AgentsGit = realGit,
 ): Promise<BundleDrift[]> {
-  const recorded = readRecordedBundles(contentRoot);
+  const recorded = readRecordedBundles(contentRoot, git);
   const outRoot = await mkdtemp(path.join(tmpdir(), 'helper-bundles-'));
   try {
     await bundleHelpers(targets, outRoot, importEsbuild);
