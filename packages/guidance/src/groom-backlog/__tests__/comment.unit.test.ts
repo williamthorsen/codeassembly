@@ -116,6 +116,25 @@ describe(renderComment, () => {
 
     expect(body).toContain(`**Disposition:** ${lead}`);
   });
+
+  it('names a drafted title ahead of the rewritten sections', () => {
+    const draft = { sections: [{ heading: 'Context', body: 'New.' }], title: 'Retry the upload', children: [] };
+    const reply: StoredReply = { ...buildReply({ recommendation: 'revise', draft }), ...PROVENANCE };
+
+    const body = renderComment(
+      {
+        children: undefined,
+        decidedBy: 'user',
+        decision: 'revise',
+        reason: undefined,
+        run: 'r',
+        supersededBy: undefined,
+      },
+      reply,
+    );
+
+    expect(body).toContain('**Disposition:** Revised: Title, Context.');
+  });
 });
 
 describe(shouldPostComment, () => {

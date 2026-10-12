@@ -76,12 +76,17 @@ function describeDisposition(
   reason: string | undefined,
   reply: StoredReply | undefined,
 ): string {
-  const headings = reply?.draft?.sections.map((section) => section.heading) ?? [];
+  const draft = reply?.draft;
+  const sections = draft?.sections.map((section) => section.heading) ?? [];
+  const headings = draft?.title === null || draft?.title === undefined ? sections : ['Title', ...sections];
   const lead = describeLead(decision, isHalfMet, headings);
   return reason === undefined || reason === '' ? lead : `${lead} ${reason}`;
 }
 
-/** Returns the sentence that states what was done with the ticket; `headings` names the sections that a draft rewrote. */
+/**
+ * Returns the sentence that states what was done with the ticket; `headings` names what a draft rewrote: `Title` for a
+ * drafted title, then each drafted section.
+ */
 function describeLead(decision: CommentDecision, isHalfMet: boolean, headings: readonly string[]): string {
   const rewritten = headings.join(', ');
   switch (decision.decision) {
