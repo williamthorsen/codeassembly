@@ -10,7 +10,8 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 /**
  * Builds a repository whose preferences configure a commit template, plus an empty home, then returns an
  * invocation that reads a commit subject back through `parse-title`. The subcommand refuses without the
- * work-type taxonomy, which the bundle embeds, so a bundle that did not embed it fails here.
+ * work-type taxonomy, which the bundle embeds, so a bundle that did not embed it fails here. The repository is
+ * real because the bundle resolves the project root through its real git adapter.
  */
 export function makeDescribeChangeSmokeTest(): SmokeTestInvocation {
   const repo = mkdtempSync(path.join(tmpdir(), 'describe-change-smoke-repo-'));
