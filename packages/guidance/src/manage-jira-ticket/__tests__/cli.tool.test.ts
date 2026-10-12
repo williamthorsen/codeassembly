@@ -34,6 +34,9 @@ if (args[1] === 'auth' && args[2] === 'status') {
 }
 `;
 
+const SITE_PREFERENCES =
+  'integrations:\n  jira:\n    project_key: ABC\nticket:\n  base_url: https://example.atlassian.net/browse/\n';
+
 describe('manage-jira-ticket CLI', () => {
   let workDir: string;
   let projectDir: string;
@@ -62,13 +65,61 @@ describe('manage-jira-ticket CLI', () => {
     const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix']);
 
     expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout)).toEqual({ key: 'ABC-7', parentSkipped: false, rawOutput: '{"key":"ABC-7"}' });
+    expect(JSON.parse(result.stdout)).toEqual({
+      activeSite: null,
+      key: 'ABC-7',
+      parentSkipped: false,
+      rawOutput: '{"key":"ABC-7"}',
+    });
     const calls = await readCalls();
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({
       args: expect.arrayContaining(['--project', 'ABC', '--type', 'Bug', '--summary', 'Fix it', '--json']),
       description: { type: 'doc', content: [{ type: 'heading' }, { type: 'taskList' }] },
     });
+  });
+
+  it('creates once on the target site when the active site matches the base URL', async () => {
+    await writePreferences(SITE_PREFERENCES);
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix'], {
+      STUB_SITE: 'example.atlassian.net',
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({ activeSite: 'example.atlassian.net', key: 'ABC-7' });
+    expect(await readSubcommands()).toEqual(['auth status', 'workitem create']);
+  });
+
+  it('refuses to create on another site without any other acli call', async () => {
+    await writePreferences(SITE_PREFERENCES);
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(
+      ['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix', '--parent', 'ABC-1'],
+      { STUB_SITE: 'other.atlassian.net' },
+    );
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      activeSite: 'other.atlassian.net',
+      fallback: 'wrong-site',
+      targetSite: 'example.atlassian.net',
+    });
+    expect(result.stderr).toContain('acli jira auth switch --site example.atlassian.net');
+    expect(await readSubcommands()).toEqual(['auth status']);
+  });
+
+  it('refuses to create when the active site cannot be read', async () => {
+    await writePreferences(SITE_PREFERENCES);
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix']);
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({ activeSite: null, fallback: 'site-unreadable' });
+    expect(await readSubcommands()).toEqual(['auth status']);
   });
 
   it('refuses an empty body without calling acli', async () => {
@@ -180,6 +231,17 @@ describe('manage-jira-ticket CLI', () => {
       .split('\n')
       .filter((line) => line.length > 0)
       .map((line): unknown => JSON.parse(line));
+  }
+
+  /** Reads the `acli` subcommands that the stand-in recorded, such as `auth status`, in call order. */
+  async function readSubcommands(): Promise<string[]> {
+    const calls = await readCalls();
+    return calls.map((call) => {
+      if (!isRecord(call) || !Array.isArray(call.args)) {
+        throw new Error('unexpected stand-in log entry');
+      }
+      return call.args.slice(1, 3).join(' ');
+    });
   }
 
   /** Runs the helper's source from the project directory, with the `acli` stand-in first on `PATH`. */

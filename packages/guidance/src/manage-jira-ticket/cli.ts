@@ -117,16 +117,34 @@ async function readBody(bodyFile: string): Promise<string> {
 }
 
 /**
- * Resolves the target for `workType` from the repository's preferences file alone, so that a project key in the
- * user's global file never sends a repository's work items to another project.
+ * Resolves the target for `workType` from the repository's preferences, which the caller reads from the repository's
+ * file alone, so that a project key in the user's global file never sends a repository's work items to another project.
  */
-async function readTarget(workType: string): Promise<Target> {
-  const preferences = await readProjectPreferences(resolveProjectRoot());
+async function readTarget(workType: string, preferences: Readonly<Record<string, unknown>>): Promise<Target> {
   const workTypes = await loadWorkTypes();
   if (workTypes === null) {
     throw new Error('the work-type taxonomy could not be read');
   }
   return resolveTarget(workType, readJiraPreferences(preferences), workTypes);
+}
+
+/** Reads `ticket.base_url` from the preferences, treating an absent, null, or empty value as unset. */
+function readTicketBaseUrl(preferences: Readonly<Record<string, unknown>>): string | undefined {
+  const ticket = preferences.ticket;
+  if (ticket === undefined || ticket === null) {
+    return undefined;
+  }
+  if (!isRecord(ticket)) {
+    throw new Error("preferences: 'ticket' must be an object");
+  }
+  const baseUrl = ticket.base_url;
+  if (baseUrl === undefined || baseUrl === null) {
+    return undefined;
+  }
+  if (typeof baseUrl !== 'string') {
+    throw new TypeError("preferences: 'ticket.base_url' must be a string");
+  }
+  return baseUrl === '' ? undefined : baseUrl;
 }
 
 /** Runs `acli` without a shell and reports its exit code and output; throws when `acli` cannot be started. */
@@ -193,11 +211,31 @@ async function runCreate(argv: readonly string[]): Promise<void> {
     ['body-file', 'summary', 'work-type'],
   );
   const markdown = await readBody(values['body-file'] ?? '');
-  const target = await readTarget(values['work-type'] ?? '');
+  const preferences = await readProjectPreferences(resolveProjectRoot());
+  const target = await readTarget(values['work-type'] ?? '', preferences);
   if ('fallback' in target) {
     writeJson(target);
     process.stderr.write(`manage-jira-ticket: ${target.warning}\n`);
     process.exit(1);
+  }
+
+  // Check the site before any other `acli` call, because `acli` acts on its active site whatever the project key names.
+  const baseUrl = readTicketBaseUrl(preferences);
+  let activeSite: string | null = null;
+  if (baseUrl !== undefined) {
+    const check = await readSiteCheck(baseUrl, runAcli);
+    if (!check.match) {
+      const warning = `Jira work item not created: ${describeSiteMismatch(check)}`;
+      writeJson({
+        activeSite: check.activeSite,
+        fallback: check.activeSite === null ? 'site-unreadable' : 'wrong-site',
+        targetSite: check.targetSite,
+        warning,
+      });
+      process.stderr.write(`manage-jira-ticket: ${warning}\n`);
+      process.exit(1);
+    }
+    activeSite = check.activeSite;
   }
 
   const scratchDir = await mkdtemp(path.join(tmpdir(), 'manage-jira-ticket-'));
@@ -209,7 +247,7 @@ async function runCreate(argv: readonly string[]): Promise<void> {
     for (const diagnostic of outcome.diagnostics) {
       process.stderr.write(`manage-jira-ticket: ${diagnostic}\n`);
     }
-    writeJson(outcome.result);
+    writeJson({ ...outcome.result, activeSite });
     if (!outcome.ok) {
       process.exitCode = 1;
     }
@@ -221,7 +259,7 @@ async function runCreate(argv: readonly string[]): Promise<void> {
 /** Resolves and prints the target for `--work-type`. */
 async function runResolveTarget(argv: readonly string[]): Promise<void> {
   const values = parseValues(argv, [{ name: 'work-type', takesValue: true }], ['work-type']);
-  writeJson(await readTarget(values['work-type'] ?? ''));
+  writeJson(await readTarget(values['work-type'] ?? '', await readProjectPreferences(resolveProjectRoot())));
 }
 
 /** Writes `value` to stdout as indented JSON. */
