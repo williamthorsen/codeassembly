@@ -1,20 +1,16 @@
 /** Git-branch resolution and filesystem sanitization, shared across skill modules. */
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 
-const execFileAsync = promisify(execFile);
+import { realGit, type SharedGit } from './git.ts';
 
 /**
- * Resolves the current branch name via `git -C {cwd} branch --show-current`. Throws when git fails: a missing git
- * binary, or a `cwd` outside a repository. A detached HEAD is not a failure: git reports an empty string, which is
- * returned verbatim so that each caller decides whether to refuse it or fall back.
+ * Resolves the current branch name at `cwd`. Throws when git fails: a missing git binary, or a `cwd` outside a
+ * repository. A detached HEAD is not a failure: git reports an empty string, which is returned verbatim so that each
+ * caller decides whether to refuse it or fall back.
  */
-export async function resolveCurrentBranch(cwd: string): Promise<string> {
+export async function resolveCurrentBranch(cwd: string, git: SharedGit = realGit): Promise<string> {
   try {
-    const { stdout } = await execFileAsync('git', ['-C', cwd, 'branch', '--show-current']);
-    return stdout.trim();
+    return await git.findCurrentBranch(cwd);
   } catch (error) {
     throw chainError('Could not resolve current branch (is this a git repository?)', error);
   }

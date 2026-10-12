@@ -4,7 +4,11 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { deriveSessionContext } from '../cli.ts';
+
+/** A git adapter for a working directory without any remote. */
+const NO_REMOTE_GIT = makeFakeGit();
 
 const NOW = new Date('2026-05-26T02:07:41Z');
 const LATER = new Date('2026-06-01T00:00:00Z');
@@ -28,11 +32,23 @@ describe('recompose on every invocation', () => {
 
   it('follows a change to the project ticket_ref_prefix', async () => {
     await writePrefs(workDir, "project:\n  ticket_ref_prefix: '#'\n");
-    const before = await deriveSessionContext({ cwd: workDir, branch: '100', now: NOW, home: homeDir });
+    const before = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: '100',
+      now: NOW,
+      home: homeDir,
+    });
     expect(before.ticket_ref).toBe('#100');
 
     await writePrefs(workDir, "project:\n  ticket_ref_prefix: 'ABC-'\n");
-    const after = await deriveSessionContext({ cwd: workDir, branch: '100', now: LATER, home: homeDir });
+    const after = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: '100',
+      now: LATER,
+      home: homeDir,
+    });
     expect(after.ticket_id).toBe('ABC-100');
     expect(after.ticket_ref).toBe('ABC-100');
     expect(after.created_at).toBe(before.created_at);
@@ -41,20 +57,38 @@ describe('recompose on every invocation', () => {
 
   it('follows a change to the global preferences file', async () => {
     await writePrefs(homeDir, 'project:\n  slug: first\n');
-    await deriveSessionContext({ cwd: workDir, branch: 'add-cache', now: NOW, home: homeDir });
+    await deriveSessionContext({ git: NO_REMOTE_GIT, cwd: workDir, branch: 'add-cache', now: NOW, home: homeDir });
 
     await writePrefs(homeDir, 'project:\n  slug: second\n');
-    const after = await deriveSessionContext({ cwd: workDir, branch: 'add-cache', now: NOW, home: homeDir });
+    const after = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'add-cache',
+      now: NOW,
+      home: homeDir,
+    });
     expect(after.project_slug).toBe('second');
   });
 
   it('re-seeds a ticket_url that no flag wrote when ticket.base_url changes', async () => {
     await writePrefs(workDir, `ticket:\n  base_url: ${BASE_A}\n`);
-    const before = await deriveSessionContext({ cwd: workDir, branch: 'MAC-1', now: NOW, home: homeDir });
+    const before = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'MAC-1',
+      now: NOW,
+      home: homeDir,
+    });
     expect(before.ticket_url).toBe(`${BASE_A}MAC-1`);
 
     await writePrefs(workDir, `ticket:\n  base_url: ${BASE_B}\n`);
-    const after = await deriveSessionContext({ cwd: workDir, branch: 'MAC-1', now: NOW, home: homeDir });
+    const after = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'MAC-1',
+      now: NOW,
+      home: homeDir,
+    });
     expect(after.ticket_url).toBe(`${BASE_B}MAC-1`);
     expect(after.explicit_urls).toEqual({});
   });
@@ -66,6 +100,7 @@ describe('recompose on every invocation', () => {
   ] as const)('keeps the value written by $flag across a preferences change', async ({ field, value }) => {
     await writePrefs(workDir, `ticket:\n  base_url: ${BASE_A}\n`);
     await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'MAC-1',
       now: NOW,
@@ -74,7 +109,13 @@ describe('recompose on every invocation', () => {
     });
 
     await writePrefs(workDir, `ticket:\n  base_url: ${BASE_B}\n`);
-    const after = await deriveSessionContext({ cwd: workDir, branch: 'MAC-1', now: NOW, home: homeDir });
+    const after = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'MAC-1',
+      now: NOW,
+      home: homeDir,
+    });
     expect(after[field]).toBe(value);
     expect(after.explicit_urls).toEqual({ [field]: value });
   });
@@ -84,22 +125,46 @@ describe('recompose on every invocation', () => {
     const manifestPath = manifestPathFor(workDir, 'MAC-1');
     await writeFile(manifestPath, JSON.stringify({ ticket_url: `${BASE_A}MAC-1` }), 'utf8');
 
-    const migrated = await deriveSessionContext({ cwd: workDir, branch: 'MAC-1', now: NOW, home: homeDir });
+    const migrated = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'MAC-1',
+      now: NOW,
+      home: homeDir,
+    });
     expect(migrated.explicit_urls).toEqual({});
 
     await writePrefs(workDir, `ticket:\n  base_url: ${BASE_B}\n`);
-    const after = await deriveSessionContext({ cwd: workDir, branch: 'MAC-1', now: NOW, home: homeDir });
+    const after = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'MAC-1',
+      now: NOW,
+      home: homeDir,
+    });
     expect(after.ticket_url).toBe(`${BASE_B}MAC-1`);
   });
 
   it('does not rewrite the file when its content is unchanged', async () => {
     await writePrefs(workDir, 'project:\n  slug: my-project\n');
     const manifestPath = manifestPathFor(workDir, 'add-cache');
-    const first = await deriveSessionContext({ cwd: workDir, branch: 'add-cache', now: NOW, home: homeDir });
+    const first = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'add-cache',
+      now: NOW,
+      home: homeDir,
+    });
     const before = await stat(manifestPath);
     const beforeText = await readFile(manifestPath, 'utf8');
 
-    const second = await deriveSessionContext({ cwd: workDir, branch: 'add-cache', now: LATER, home: homeDir });
+    const second = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'add-cache',
+      now: LATER,
+      home: homeDir,
+    });
     expect(second).toEqual(first);
     expect(await readFile(manifestPath, 'utf8')).toBe(beforeText);
     expect((await stat(manifestPath)).mtimeMs).toBe(before.mtimeMs);

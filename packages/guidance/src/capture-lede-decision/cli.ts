@@ -18,6 +18,7 @@ import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
+import type { SharedGit } from '../shared/git.ts';
 import { resolveRepo } from '../shared/resolve-repo.ts';
 import { resolveSession } from '../shared/resolve-session.ts';
 import { prepareDecision } from './prepare-decision.ts';
@@ -118,6 +119,7 @@ export async function runDecision(input: {
   stdin: Readable;
   cwd: string;
   env: NodeJS.ProcessEnv;
+  git?: SharedGit;
   now: Date;
   defaultSubagentsDir: string;
   home?: string;
@@ -175,7 +177,7 @@ export async function runDecision(input: {
 
   const comment = await readAll(input.stdin);
   const session = resolveSession(input.env);
-  const repo = await resolveRepo(input.cwd);
+  const repo = await resolveRepo(input.cwd, input.git);
 
   const prep = prepareDecision({
     episode: resolved.episode,

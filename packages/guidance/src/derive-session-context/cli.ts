@@ -14,26 +14,23 @@
  *   or a `pr_url`. Because the default branch is not derived from any ticket and does not belong to any pull
  *   request, a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`.
  */
-import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { resolveCurrentBranch, sanitizeBranch } from '../shared/branch-helpers.ts';
+import { realGit, type SharedGit } from '../shared/git.ts';
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
 import { composeManifest, DEFAULT_REMOTE_NAME } from './compose-manifest.ts';
 import { readPreferences, readProjectPreferences } from './read-preferences.ts';
 import { readProjectStage } from './read-project-stage.ts';
 import type { BranchManifest, ExplicitUrls } from './types.ts';
-
-const execFileAsync = promisify(execFile);
 
 /** The manifest fields written by the mutation flags, and the ones that the default-branch invariant governs. */
 const STORED_URL_FIELDS = ['ticket_url', 'pr_url'] as const;
@@ -92,6 +89,7 @@ export async function deriveSessionContext(input: {
   cwd: string;
   branch: string;
   now: Date;
+  git?: SharedGit;
   home?: string;
   mutations?: readonly ManifestMutation[];
 }): Promise<BranchManifest> {
@@ -106,7 +104,13 @@ export async function deriveSessionContext(input: {
   const mutations = input.mutations ?? [];
 
   const prior = (await readPriorManifest(newPath)) ?? (await readPriorManifest(oldPath));
-  const composed = await composeFromPreferences({ cwd: input.cwd, home, branch: input.branch, now: input.now });
+  const composed = await composeFromPreferences({
+    cwd: input.cwd,
+    git: input.git ?? realGit,
+    home,
+    branch: input.branch,
+    now: input.now,
+  });
 
   const carried = prior?.record === undefined ? {} : readExplicitUrls(prior.record, composed);
   const { seeded, explicitUrls } = enforceDefaultBranchInvariant(
@@ -155,6 +159,7 @@ function buildManifest(
 /** Composes a fresh manifest from the preferences files and the git remote. */
 async function composeFromPreferences(input: {
   cwd: string;
+  git: SharedGit;
   home: string;
   branch: string;
   now: Date;
@@ -162,7 +167,7 @@ async function composeFromPreferences(input: {
   const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
   const projectStage = readProjectStage(await readProjectPreferences(input.cwd));
   const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
-  const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
+  const remoteUrl = await resolveRemoteUrl(input.git, input.cwd, remoteName);
   return composeManifest({
     preferences: readResult.preferences,
     projectStage,
@@ -310,11 +315,9 @@ async function writeManifest(targetPath: string, content: string): Promise<void>
  * Resolves the named git remote's fetch URL at `cwd` as git reports it, or null on any failure, which lets a caller
  * treat an unresolvable remote as absent.
  */
-async function resolveRemoteUrl(cwd: string, remoteName: string): Promise<string | null> {
+async function resolveRemoteUrl(git: SharedGit, cwd: string, remoteName: string): Promise<string | null> {
   try {
-    const { stdout } = await execFileAsync('git', ['-C', cwd, 'remote', 'get-url', remoteName]);
-    const trimmed = stdout.trim();
-    return trimmed.length > 0 ? trimmed : null;
+    return (await git.findRemoteUrl(cwd, remoteName)) ?? null;
   } catch {
     return null;
   }
