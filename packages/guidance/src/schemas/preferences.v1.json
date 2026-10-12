@@ -132,8 +132,13 @@
     },
     "project": {
       "type": "object",
-      "description": "Project identification configuration.",
+      "description": "Project identification configuration, and the project's declared stage (`maturity`, `sensitivity`, `users`), which design guidance treats as premises.",
       "properties": {
+        "maturity": {
+          "type": "string",
+          "enum": ["hobby", "early", "production"],
+          "description": "How far the project has come. `hobby`: built for the owner's own use or learning; breakage costs only the owner's time. `early`: in use by others, but the shape is still changing; downtime is tolerated. `production`: others depend on it; downtime and data loss have real costs. Read from the project preferences file only."
+        },
         "scopes": {
           "type": "array",
           "description": "Directories that own a change scope although they are not workspace packages, such as an app built by another toolchain. `describe-change resolve-scopes` resolves paths against these together with the pnpm workspace's packages, the longest containing directory winning. Read from the project preferences file only; the global file contributes no scopes. A declared directory does not become a workspace to any tool.",
@@ -155,6 +160,11 @@
             "additionalProperties": false
           }
         },
+        "sensitivity": {
+          "type": "string",
+          "enum": ["low", "personal", "confidential"],
+          "description": "The most sensitive data that the project holds. `low`: nothing that would harm anyone if published. `personal`: personal data about the owner or identifiable individuals. `confidential`: secrets, credentials, or data that a third party is obliged to protect. Read from the project preferences file only."
+        },
         "slug": {
           "type": "string",
           "description": "Project identifier used for namespacing artifacts under `{base_dir}/projects/{slug}/`."
@@ -162,6 +172,11 @@
         "ticket_ref_prefix": {
           "type": "string",
           "description": "Prefix that appears at the start of `ticket_ref`. Use `#` for GitHub issues (added at render time, omitted from file paths) or a Jira project key like `MAC-` (part of the canonical ticket ID)."
+        },
+        "users": {
+          "type": "string",
+          "enum": ["owner", "team", "public"],
+          "description": "Who uses the project. `owner`: only the repo's owner. `team`: a known, bounded group. `public`: anyone who can reach it. Read from the project preferences file only."
         }
       }
     },
