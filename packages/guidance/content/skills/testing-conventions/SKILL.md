@@ -1,6 +1,6 @@
 ---
 name: testing-conventions
-description: Test naming conventions and behavioral testing patterns for projects with test suites
+description: What a test is for, how to name and structure it, and how it reaches git and other external programs. Consult before writing or changing a test.
 user-invocable: false
 ---
 
@@ -18,7 +18,7 @@ Before writing a test, ask what would go uncaught if it did not exist. Three ans
 
 Then ask where the expected result comes from. A specification, a format, or a rule that someone could state without opening the code makes it an expectation. If pasting in whatever the code now produces would make the test pass again, the test pins a value, whatever its name says. When a test compares two sets, derive the expected one from its source; a set typed into the test drifts.
 
-Three cases recur. Configuration is verified by the tool that reads it, which the build and lint gates run; if an accident is real and the tool is silent, prevent it at the tool rather than detect it in a test. Wording is asserted only when the text is the sole thing that distinguishes two code paths that exist, and then by a durable fragment. A process that this repository does not author is replaced by a stub.
+Three cases recur. Configuration is verified by the tool that reads it, which the build and lint gates run; if an accident is real and the tool is silent, prevent it at the tool rather than detect it in a test. Wording is asserted only when the text is the sole thing that distinguishes two code paths that exist, and then by a durable fragment. A process that this repository does not author is reached through an adapter and replaced by a fake, as [External programs](#external-programs) states.
 
 If a rule above forbids a test and the case seems exceptional, stop before writing it, state the case in one sentence, and wait.
 
@@ -157,6 +157,19 @@ jest.mock('@atlaskit/component', () => ({
     <div {...props} style={{ width }}>{isOpen && children}</div>
 }));
 ```
+
+### External programs
+
+A test that runs an external program to produce its inputs verifies the program rather than this code, and it depends on the copy installed on the machine that runs it: its version, its config, and its background processes. A `git commit` in a test repository, for example, can start a background maintenance run that is still writing into `.git/` when the test removes the directory.
+
+- Code reaches an external program whose behavior is not the subject of the test, such as git, through a small adapter that the code receives as a dependency.
+- Tests of that code pass a fake adapter that returns fixed answers.
+- Only the adapter's own test runs the real program, and it checks that the adapter parses the program's output as the code expects.
+- A test does not create a repository, or any other state of a real program, to produce an input that a fake could return.
+
+A test whose subject is the program's effect on real state, such as a command that initializes a repository, runs the program because that effect is the behavior under test.
+
+The `typescript-testing-conventions` skill shows the TypeScript shape.
 
 ## Additional patterns
 
