@@ -6,8 +6,8 @@ Standards for AI-generated artifact storage, naming, and lifecycle.
 
 The artifact directory is the developer's audit trail of development. Its plans, reviews, change summaries, pull-request and merge records, devlogs, and chat summaries record what an agent produced and when, each as it stood at the moment of writing (see [Mutability](#mutability)). The directory is not a source of truth, and it is not a home for durable content:
 
-- **Durable content.** Instructions, a procedure, or a reference that a later session must find belong in the repository (its docs, `AGENTS.md`, or a README), or in a skill or rulebook when they apply across repositories. A later session looks there, not in the artifact directory.
-- **Authority.** An artifact is not authority on the current state of code, design, or decisions. An agent treats what it finds by searching artifacts as history, and verifies it against the repository, the tickets, and the pull requests.
+- **Durable content.** Put instructions, a procedure, or a reference that a later session must find in the repository (its docs, `AGENTS.md`, or a README), or in a skill or rulebook when they apply across repositories. A later session looks there, not in the artifact directory.
+- **Authority.** An artifact is not authority on the current state of code, design, or decisions. Treat what a search of artifacts turns up as history, and verify it against the repository, the tickets, and the pull requests.
 - **Inputs to the same work.** A skill that reads an artifact as an input to the same piece of work, such as the plan that `implement-plan` executes or the change summary that `create-pr` publishes, uses the artifact as the workflow intends.
 
 ## Directory structure

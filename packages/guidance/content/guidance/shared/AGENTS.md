@@ -26,7 +26,7 @@
 
 When creating an artifact (plan, devlog, review, change summary, chat summary, etc.), invoke the `save-artifact` skill to resolve path and naming. Do not place artifacts in ad-hoc locations.
 
-The artifact directory (`~/ai-artifacts` by default) is the developer's audit trail: It records what agents planned, reviewed, summarized, and published, and when. It is not a source of truth. Instructions, a procedure, or a reference that a later session must find belong in the repository (its docs, `AGENTS.md`, or a README), or in a skill or rulebook when they apply across repositories; never save them as an artifact.
+The artifact directory (`~/ai-artifacts` by default) is the developer's audit trail: It records what agents planned, reviewed, summarized, and published, and when. It is not a source of truth. Put instructions, a procedure, or a reference that a later session must find in the repository (its docs, `AGENTS.md`, or a README), or in a skill or rulebook when they apply across repositories; never save them as an artifact.
 
 An artifact is not authority on the current state of code, design, or decisions. Treat what a search of artifacts turns up as history, and verify it against the repository, the tickets, and the pull requests. A skill that reads an artifact as an input to the same piece of work, such as the plan that `implement-plan` executes or the change summary that `create-pr` publishes, uses the artifact as the workflow intends.
 
