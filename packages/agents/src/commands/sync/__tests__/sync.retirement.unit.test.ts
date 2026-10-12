@@ -4,9 +4,13 @@ import path from 'node:path';
 
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import { syncCommand } from '../sync.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe(syncCommand, () => {
   const fixture = createSyncFixture();
@@ -22,12 +26,12 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await writeFixtureRulebook('beta', 'delivery: ambient', 'Beta rules.');
     await declareRulebooks('alpha', 'beta');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:beta -->');
 
     await declareRulebooks('alpha');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).not.toContain('<!-- rulebook:beta -->');
@@ -37,11 +41,11 @@ describe(syncCommand, () => {
   it('retracts the delivered block when a rulebook delivery changes away from ambient', async () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await writeFixtureRulebook('alpha', 'delivery: skill', 'Alpha rules.');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('consult-alpha'))).toBe(true);
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
@@ -50,11 +54,11 @@ describe(syncCommand, () => {
   it('when the manifest is emptied, retracts every delivered block', async () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await declareRulebooks();
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
   });
@@ -69,7 +73,7 @@ describe(syncCommand, () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const projectMd = await readFile(projectMdPath(), 'utf8');
     expect(projectMd).not.toContain('<!-- rulebook:alpha -->');
@@ -83,7 +87,7 @@ describe(syncCommand, () => {
     await mkdir(path.join(projectRoot, '.agents'), { recursive: true });
     await writeFile(projectMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(projectMdPath())).toBe(true);
     expect(await readFile(projectMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
@@ -96,7 +100,7 @@ describe(syncCommand, () => {
     await mkdir(neutralDir, { recursive: true });
     await writeFile(path.join(neutralDir, 'alpha.md'), '# Alpha\n', 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(neutralDir)).toBe(false);
   });
@@ -105,8 +109,8 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(projectMdPath())).toBe(false);
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
@@ -121,7 +125,7 @@ describe(syncCommand, () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const agentsMd = await readFile(agentsMdPath(), 'utf8');
     expect(agentsMd).not.toContain('<!-- rulebook:alpha -->');
@@ -134,7 +138,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(agentsMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(agentsMdPath())).toBe(true);
     expect(await readFile(agentsMdPath(), 'utf8')).not.toContain('<!-- rulebook:alpha -->');
@@ -144,7 +148,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(agentsMdPath())).toBe(false);
   });
@@ -157,7 +161,7 @@ describe(syncCommand, () => {
     await writeFile(projectMdPath(), projectMd, 'utf8');
     await writeFile(path.join(projectRoot, '.agents', 'rulebooks', 'alpha.md'), '# Alpha\n', 'utf8');
 
-    const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
       dryRun: true,
       level: 'info',
     });
@@ -173,7 +177,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(projectMdPath(), '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit), {
       level: 'info',
     });
 

@@ -1,17 +1,10 @@
-import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
-
+import { type AgentsGit, realGit } from '../lib/git.ts';
 import { isRecord } from '../lib/type-guards.ts';
 import type { DeploymentMeasurement } from './measure-deployment.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from './types.ts';
 
-const execFileAsync = promisify(execFile);
-
 /** Default branch assumed when the remote does not name one, which is what `origin/HEAD` records. */
 const FALLBACK_DEFAULT_BRANCH = 'origin/main';
-
-/** How long a git lookup may take before the gate answers without it. */
-const GIT_LOOKUP_TIMEOUT_MS = 5_000;
 
 /**
  * Decides whether a measured vector enters the record. Two conditions must hold: The vector differs from the previous
@@ -33,11 +26,12 @@ export async function shouldAppend(input: {
   measured: DeploymentMeasurement;
   previous: SizeSnapshot | undefined;
   sourceRoot: string;
+  git?: AgentsGit;
 }): Promise<boolean> {
   if (input.previous !== undefined && isUnchanged(input.measured, input.previous)) {
     return false;
   }
-  return isOnDefaultBranch(input.sourceRoot);
+  return isOnDefaultBranch(input.sourceRoot, input.git ?? realGit);
 }
 
 // region | Helpers
@@ -97,19 +91,12 @@ function haveSameFiles(
  * Reports whether the source tree's `HEAD` is an ancestor of the remote-tracking default branch, or whether the
  * question is unanswerable, which the gate treats the same way.
  */
-async function isOnDefaultBranch(sourceRoot: string): Promise<boolean> {
-  const defaultBranch = await resolveDefaultBranch(sourceRoot);
+async function isOnDefaultBranch(sourceRoot: string, git: AgentsGit): Promise<boolean> {
+  const defaultBranch = await resolveDefaultBranch(sourceRoot, git);
   if (defaultBranch === undefined) {
     return true;
   }
-  try {
-    await execFileAsync('git', ['-C', sourceRoot, 'merge-base', '--is-ancestor', 'HEAD', defaultBranch], {
-      timeout: GIT_LOOKUP_TIMEOUT_MS,
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return await git.isAncestor(sourceRoot, 'HEAD', defaultBranch);
 }
 
 /**
@@ -129,26 +116,13 @@ function isUnchanged(measured: DeploymentMeasurement, previous: SizeSnapshot): b
  * `origin/main`. Returns `undefined` when neither resolves, which is the answer for a source tree that is not a git
  * tree and for a clone whose remote names no default branch.
  */
-async function resolveDefaultBranch(sourceRoot: string): Promise<string | undefined> {
-  try {
-    const { stdout } = await execFileAsync('git', ['-C', sourceRoot, 'rev-parse', '--abbrev-ref', 'origin/HEAD'], {
-      timeout: GIT_LOOKUP_TIMEOUT_MS,
-    });
-    const named = stdout.trim();
-    if (named !== '') {
-      return named;
-    }
-  } catch {
-    // `origin/HEAD` is unset in many clones; the fallback below is probed before the gate gives up.
+async function resolveDefaultBranch(sourceRoot: string, git: AgentsGit): Promise<string | undefined> {
+  // `origin/HEAD` is unset in many clones, so the fallback is probed before the gate gives up.
+  const named = await git.readSymbolicRef(sourceRoot, 'origin/HEAD');
+  if (named !== undefined) {
+    return named;
   }
-  try {
-    await execFileAsync('git', ['-C', sourceRoot, 'rev-parse', '--verify', FALLBACK_DEFAULT_BRANCH], {
-      timeout: GIT_LOOKUP_TIMEOUT_MS,
-    });
-    return FALLBACK_DEFAULT_BRANCH;
-  } catch {
-    return undefined;
-  }
+  return (await git.verifyRef(sourceRoot, FALLBACK_DEFAULT_BRANCH)) ? FALLBACK_DEFAULT_BRANCH : undefined;
 }
 
 /** Serializes a nested block of numbers with every object's keys in a fixed order, so that key order decides nothing. */

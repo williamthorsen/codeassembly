@@ -8,10 +8,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { getHomeProvenancePath, readHomeProvenance } from '../../lib/home-provenance.ts';
 import { getManifestPath, readManifest } from '../../lib/manifest.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('install (home provenance)', () => {
   let tempDir: string;
@@ -37,7 +41,7 @@ describe('install (home provenance)', () => {
   }
 
   it('stamps the run that it completed', async () => {
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readHomeProvenance(tempDir)).toMatchObject({ command: 'install' });
   });
@@ -45,25 +49,25 @@ describe('install (home provenance)', () => {
   it("stamps a run that doesn't detect any harness but still writes shared guidance", async () => {
     await rm(path.join(tempDir, '.claude'), { recursive: true, force: true });
 
-    await installCommand(makeOptions({ harness: 'all' }), tempDir);
+    await installCommand(makeOptions({ harness: 'all' }), tempDir, fakeGit);
 
     expect(await readHomeProvenance(tempDir)).toMatchObject({ command: 'install' });
   });
 
   it('leaves the stamp untouched on a dry run', async () => {
-    await installCommand(makeOptions({ dryRun: true }), tempDir);
+    await installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit);
 
     expect(existsSync(getHomeProvenancePath(tempDir))).toBe(false);
   });
 
   it('records the failed attempt when the run cannot deploy, keeping any earlier write', async () => {
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
     const written = (await readHomeProvenance(tempDir))?.lastWrite;
     await mkdir(path.join(tempDir, '.agents'), { recursive: true });
     await writeFile(path.join(tempDir, '.agents', 'not-a-dir'), 'not a dir\n', 'utf8');
     await declareFixtureSource(tempDir, contentDir, 'sources:\n  - name: bad-source\n    path: ./not-a-dir\n');
 
-    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(/bad-source/);
+    await expect(installCommand(makeOptions(), tempDir, fakeGit)).rejects.toThrow(/bad-source/);
 
     const stamp = await readHomeProvenance(tempDir);
     expect(stamp?.lastAttempt).toMatchObject({ command: 'install', outcome: 'failed' });
@@ -71,7 +75,7 @@ describe('install (home provenance)', () => {
   });
 
   it('records the running package version in the harness manifest', async () => {
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude?.version).toBe(readRunningPackageVersion());

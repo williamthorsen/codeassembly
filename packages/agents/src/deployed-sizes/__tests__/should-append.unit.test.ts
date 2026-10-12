@@ -1,17 +1,11 @@
-import { execFile } from 'node:child_process';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
-import { promisify } from 'node:util';
+import { describe, expect, it, vi } from 'vitest';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-
+import type { AgentsGit } from '../../lib/git.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { DeploymentMeasurement } from '../measure-deployment.ts';
 import { parseSnapshotLine, SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
 import { shouldAppend } from '../should-append.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from '../types.ts';
-
-const execFileAsync = promisify(execFile);
 
 /** One expansion key, whose bytes and reach the attribution cases vary. */
 const SHARED = 'partial:codeassembly/_partials/shared.md';
@@ -21,172 +15,136 @@ const VECTOR: Record<string, DeployedFile> = {
   'claude/skills/plan/run.mjs': { bytes: 400, kind: 'asset' },
 };
 
+/** A source tree whose `HEAD` sits on the default branch, which `origin/HEAD` names. */
+const ON_DEFAULT_BRANCH = makeFakeGit({ ancestor: true, originHead: 'origin/main' });
+
 describe(shouldAppend, () => {
-  let scratch: string;
-  let sourceRoot: string;
-
-  beforeEach(async () => {
-    scratch = await mkdtemp(path.join(tmpdir(), 'should-append-'));
-    sourceRoot = await initRepoOnDefaultBranch(scratch);
-  });
-
-  afterEach(async () => {
-    await rm(scratch, { recursive: true, force: true });
-  });
+  const sourceRoot = '/source';
+  const git = ON_DEFAULT_BRANCH;
 
   it('appends the first vector, which no previous snapshot can equal', async () => {
-    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot })).toBe(true);
+    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git })).toBe(true);
   });
 
   it('does not append a measurement equal to the previous snapshot', async () => {
     const previous = snapshotOf(measure(VECTOR));
 
-    expect(await shouldAppend({ measured: measure(VECTOR), previous, sourceRoot })).toBe(false);
+    expect(await shouldAppend({ measured: measure(VECTOR), previous, sourceRoot, git })).toBe(false);
   });
 
   it('appends a vector whose keys match but whose bytes differ', async () => {
     const grown = { ...VECTOR, 'claude/skills/plan/SKILL.md': { bytes: 1_300, kind: 'document' as const } };
 
-    expect(await shouldAppend({ measured: measure(grown), previous: snapshotOf(measure(VECTOR)), sourceRoot })).toBe(
-      true,
-    );
+    expect(
+      await shouldAppend({ measured: measure(grown), previous: snapshotOf(measure(VECTOR)), sourceRoot, git }),
+    ).toBe(true);
   });
 
   it('appends a vector that gained a file', async () => {
     const gained = { ...VECTOR, 'claude/skills/review/SKILL.md': { bytes: 900, kind: 'document' as const } };
 
-    expect(await shouldAppend({ measured: measure(gained), previous: snapshotOf(measure(VECTOR)), sourceRoot })).toBe(
-      true,
-    );
+    expect(
+      await shouldAppend({ measured: measure(gained), previous: snapshotOf(measure(VECTOR)), sourceRoot, git }),
+    ).toBe(true);
   });
 
   it('appends a vector that lost a file', async () => {
     const { 'claude/skills/plan/run.mjs': _dropped, ...lost } = VECTOR;
 
-    expect(await shouldAppend({ measured: measure(lost), previous: snapshotOf(measure(VECTOR)), sourceRoot })).toBe(
-      true,
-    );
+    expect(
+      await shouldAppend({ measured: measure(lost), previous: snapshotOf(measure(VECTOR)), sourceRoot, git }),
+    ).toBe(true);
   });
 
   it('appends an ambient-region edit, which changes an aggregate and no file', async () => {
     const previous = snapshotOf(measure(VECTOR, { ambientRegions: 2_000 }));
     const edited = measure(VECTOR, { ambientRegions: 2_400 });
 
-    expect(await shouldAppend({ measured: edited, previous, sourceRoot })).toBe(true);
+    expect(await shouldAppend({ measured: edited, previous, sourceRoot, git })).toBe(true);
   });
 
   it('appends a description edit that leaves its file the same size', async () => {
     const previous = snapshotOf(measure(VECTOR, { skillDescriptions: 40 }));
     const reworded = measure(VECTOR, { skillDescriptions: 52 });
 
-    expect(await shouldAppend({ measured: reworded, previous, sourceRoot })).toBe(true);
+    expect(await shouldAppend({ measured: reworded, previous, sourceRoot, git })).toBe(true);
   });
 
   it('does not append when the files and every aggregate are unchanged', async () => {
     const measured = measure(VECTOR, { ambientRegions: 2_000, skillDescriptions: 40, subagentDescriptions: 12 });
 
-    expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot })).toBe(false);
+    expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot, git })).toBe(false);
   });
 
   it('reads an unchanged previous snapshot back out of a record line as unchanged', async () => {
     const measured = measure(VECTOR, { ambientRegions: 2_000, skillDescriptions: 40, subagentDescriptions: 12 });
     const previous = parseSnapshotLine(JSON.stringify(snapshotOf(measured)));
 
-    expect(await shouldAppend({ measured, previous, sourceRoot })).toBe(false);
+    expect(await shouldAppend({ measured, previous, sourceRoot, git })).toBe(false);
   });
 
   it('appends a rewiring that moves a reach without moving any bytes', async () => {
     const previous = snapshotOf(measure(VECTOR, {}, { [SHARED]: { bytes: 300, reach: 4 } }));
     const rewired = measure(VECTOR, {}, { [SHARED]: { bytes: 300, reach: 5 } });
 
-    expect(await shouldAppend({ measured: rewired, previous, sourceRoot })).toBe(true);
+    expect(await shouldAppend({ measured: rewired, previous, sourceRoot, git })).toBe(true);
   });
 
   it('appends a measurement whose expansions the previous snapshot does not state', async () => {
     const { expansions, ...withoutExpansions } = snapshotOf(measure(VECTOR));
 
-    expect(await shouldAppend({ measured: measure(VECTOR), previous: withoutExpansions, sourceRoot })).toBe(true);
+    expect(await shouldAppend({ measured: measure(VECTOR), previous: withoutExpansions, sourceRoot, git })).toBe(true);
   });
 
   it('does not append when the files, the expansions, and every aggregate are unchanged', async () => {
     const measured = measure(VECTOR, { ambientRegions: 2_000 }, { [SHARED]: { bytes: 300, reach: 4 } });
 
-    expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot })).toBe(false);
+    expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot, git })).toBe(false);
   });
 
   it('does not append from a commit that the default branch does not contain', async () => {
-    await git(sourceRoot, ['checkout', '--quiet', '-b', 'feature']);
-    await writeFile(path.join(sourceRoot, 'feature.txt'), 'unmerged\n', 'utf8');
-    await git(sourceRoot, ['add', '.']);
-    await commit(sourceRoot, 'unmerged work');
+    const onFeature = makeFakeGit({ ancestor: false, originHead: 'origin/main' });
 
-    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot })).toBe(false);
+    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git: onFeature })).toBe(
+      false,
+    );
+  });
+
+  it('judges ancestry against the branch that origin/HEAD names', async () => {
+    const isAncestor = vi.fn<AgentsGit['isAncestor']>().mockResolvedValue(true);
+    const trunk = { ...makeFakeGit({ originHead: 'origin/trunk' }), isAncestor };
+
+    await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git: trunk });
+
+    expect(isAncestor).toHaveBeenCalledWith(sourceRoot, 'HEAD', 'origin/trunk');
   });
 
   it('appends from a source tree that is not a git tree', async () => {
-    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot: scratch })).toBe(true);
+    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git: makeFakeGit() })).toBe(
+      true,
+    );
   });
 
   it('appends from a clone whose remote names no default branch', async () => {
-    const bare = path.join(scratch, 'no-remote');
-    await git(scratch, ['init', '--quiet', '--initial-branch', 'trunk', 'no-remote']);
-    await writeFile(path.join(bare, 'file.txt'), 'content\n', 'utf8');
-    await git(bare, ['add', '.']);
-    await commit(bare, 'initial');
+    const noDefault = makeFakeGit({ ancestor: false, verifiedRefs: ['HEAD'] });
 
-    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot: bare })).toBe(true);
+    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git: noDefault })).toBe(
+      true,
+    );
   });
 
   it('reads origin/main when the remote records no origin/HEAD', async () => {
-    await git(sourceRoot, ['symbolic-ref', '--delete', 'refs/remotes/origin/HEAD']);
-    await git(sourceRoot, ['checkout', '--quiet', '-b', 'feature']);
-    await writeFile(path.join(sourceRoot, 'feature.txt'), 'unmerged\n', 'utf8');
-    await git(sourceRoot, ['add', '.']);
-    await commit(sourceRoot, 'unmerged work');
+    const isAncestor = vi.fn<AgentsGit['isAncestor']>().mockResolvedValue(false);
+    const fallback = { ...makeFakeGit({ verifiedRefs: ['origin/main'] }), isAncestor };
 
-    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot })).toBe(false);
+    expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git: fallback })).toBe(
+      false,
+    );
+    expect(isAncestor).toHaveBeenCalledWith(sourceRoot, 'HEAD', 'origin/main');
   });
 });
 
 // region | Helpers
-
-/** Records a commit, supplying the identity and signing settings that the machine's own git config may withhold. */
-async function commit(cwd: string, message: string): Promise<void> {
-  await git(cwd, [
-    '-c',
-    'user.name=Test',
-    '-c',
-    'user.email=test@example.com',
-    '-c',
-    'commit.gpgsign=false',
-    'commit',
-    '--quiet',
-    '--message',
-    message,
-  ]);
-}
-
-/** Runs one git command in a scratch tree, never against the working repository. */
-async function git(cwd: string, args: ReadonlyArray<string>): Promise<string> {
-  const { stdout } = await execFileAsync('git', ['-C', cwd, ...args]);
-  return stdout;
-}
-
-/**
- * Builds a disposable repository whose `HEAD` sits on the default branch: one commit on `main`, an `origin` remote
- * pointing at itself, and the remote-tracking refs that the gate reads.
- */
-async function initRepoOnDefaultBranch(scratch: string): Promise<string> {
-  const sourceRoot = path.join(scratch, 'source');
-  await git(scratch, ['init', '--quiet', '--initial-branch', 'main', 'source']);
-  await writeFile(path.join(sourceRoot, 'file.txt'), 'content\n', 'utf8');
-  await git(sourceRoot, ['add', '.']);
-  await commit(sourceRoot, 'initial');
-  await git(sourceRoot, ['remote', 'add', 'origin', sourceRoot]);
-  await git(sourceRoot, ['fetch', '--quiet', 'origin']);
-  await git(sourceRoot, ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main']);
-  return sourceRoot;
-}
 
 /** A measurement stating `files` and whichever always-loaded components the case varies. */
 function measure(

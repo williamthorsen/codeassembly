@@ -11,7 +11,11 @@ import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../../deployed-sizes/schema.ts';
 import type { DeployedFile, SizeSnapshot } from '../../deployed-sizes/types.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import { renderSizesReport, sizesCommand } from '../sizes.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe(renderSizesReport, () => {
   it('ranks documents by descending size', () => {
@@ -119,13 +123,13 @@ describe(sizesCommand, () => {
       buildSnapshot({ 'claude/skills/home-only/SKILL.md': { bytes: 1_024, kind: 'document' } }),
     );
 
-    await sizesCommand({ global: true }, process.cwd(), homeDir);
+    await sizesCommand({ global: true }, process.cwd(), homeDir, fakeGit);
 
     expect(stdio.stdout).toContain('claude/skills/home-only/SKILL.md');
   });
 
   it('prints guidance rather than failing when a deployment has not been recorded', async () => {
-    await expect(sizesCommand({ global: true }, process.cwd(), homeDir)).resolves.toBeUndefined();
+    await expect(sizesCommand({ global: true }, process.cwd(), homeDir, fakeGit)).resolves.toBeUndefined();
 
     expect(stdio.stdout).toContain("A deployment hasn't been recorded here.");
   });

@@ -11,6 +11,7 @@ import { listDeclaredGuidanceHooks } from '../../lib/declared-guidance-hooks.ts'
 import { resolveDeclaredReferences } from '../../lib/declared-references.ts';
 import { type DeclaredSource, NoContentSourceError, resolveDeclaredSources } from '../../lib/declared-sources.ts';
 import { type DirectArtifacts, resolveSeedClosures } from '../../lib/dependency-resolver.ts';
+import { type AgentsGit, realGit } from '../../lib/git.ts';
 import { buildGuidanceHookFills } from '../../lib/guidance-hook-fills.ts';
 import { recordFailedHomeAttempt, recordHomeProvenance } from '../../lib/home-provenance.ts';
 import { assertDesignatedWriter } from '../../lib/home-writer-guard.ts';
@@ -81,6 +82,7 @@ export async function syncCommand(
   options: InstallOptions,
   projectRoot: string = process.cwd(),
   homeDir: string = homedir(),
+  git: AgentsGit = realGit,
 ): Promise<SyncOutcome> {
   if (path.resolve(projectRoot) === path.resolve(homeDir)) {
     throw new Error(
@@ -92,6 +94,7 @@ export async function syncCommand(
     options,
     { baseDir: projectRoot, ambient: 'project-local', anchorBase: path.resolve(projectRoot) },
     homeDir,
+    git,
   );
 }
 
@@ -102,7 +105,11 @@ export async function syncCommand(
  * mechanically. It does not write any agent-read host file. When the home declaration is absent, changes nothing and
  * returns the outcome naming `init --global` as the remedy.
  */
-export async function syncGlobalCommand(options: InstallOptions, homeDir: string = homedir()): Promise<SyncOutcome> {
+export async function syncGlobalCommand(
+  options: InstallOptions,
+  homeDir: string = homedir(),
+  git: AgentsGit = realGit,
+): Promise<SyncOutcome> {
   // Runs first, and before the dry-run gate: A preview must refuse wherever the real run would.
   await assertDesignatedWriter({
     command: 'sync --global',
@@ -118,7 +125,12 @@ export async function syncGlobalCommand(options: InstallOptions, homeDir: string
   let outcome: SyncOutcome;
   let retirement: Retirement | undefined;
   try {
-    outcome = await reconcileDomain(options, { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' }, homeDir);
+    outcome = await reconcileDomain(
+      options,
+      { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' },
+      homeDir,
+      git,
+    );
     retirement = await retireAmbientHost(options, path.join(homeDir, '.agents', 'GLOBAL.md'), true);
   } catch (error: unknown) {
     // Recorded past the designated-writer guard above, so an installation refused by the guard doesn't touch any home
@@ -130,7 +142,7 @@ export async function syncGlobalCommand(options: InstallOptions, homeDir: string
   }
 
   if (!options.dryRun) {
-    await recordHomeProvenance('sync --global', homeDir);
+    await recordHomeProvenance('sync --global', homeDir, git);
   }
 
   if (retirement === undefined || outcome.kind !== 'reconciled') {
@@ -151,7 +163,12 @@ export async function syncGlobalCommand(options: InstallOptions, homeDir: string
  * `homeDir` is a parameter rather than a `SyncDomain` field because it is the same directory in both domains: It
  * contains the user-global half of the `harnesses` chain and the harnesses to which targeting falls back.
  */
-async function reconcileDomain(options: InstallOptions, domain: SyncDomain, homeDir: string): Promise<SyncOutcome> {
+async function reconcileDomain(
+  options: InstallOptions,
+  domain: SyncDomain,
+  homeDir: string,
+  git: AgentsGit,
+): Promise<SyncOutcome> {
   const declaration = await resolveDeclaration({
     cwd: domain.baseDir,
     domain: domain.ambient === 'harness-home' ? 'home' : 'project',
@@ -390,7 +407,7 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
 
   // Advisory only, and gathered for both paths: A dry run that would create the host warns about it too.
   const unignoredHosts =
-    domain.ambient === 'project-local' ? await findUnignoredHosts(domain.baseDir, ambientHostPlans) : [];
+    domain.ambient === 'project-local' ? await findUnignoredHosts(domain.baseDir, ambientHostPlans, git) : [];
 
   // Read after the render gates above, which leaves a malformed directive to fail from the gate that can name its
   // body and line rather than from this pass.
@@ -471,6 +488,7 @@ async function reconcileDomain(options: InstallOptions, domain: SyncDomain, home
   const sizes = await recordDeployedSizes({
     plan,
     domain,
+    git,
     homeDir,
     packageRoot: resolveRunningPackageRoot(),
     resolveSourceRoot: (source) => sourceRoots.get(source),

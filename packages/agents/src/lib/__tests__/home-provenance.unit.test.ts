@@ -12,8 +12,13 @@ import {
 } from '../home-provenance.ts';
 import { getManifestPath } from '../manifest.ts';
 import { readRunningPackageVersion, resolveRunningPackageRoot } from '../running-package.ts';
+import { makeFakeGit } from '../test-utils/make-fake-git.ts';
+
+/** The commit that the fake reports the running package to be on. */
+const SOURCE_COMMIT = 'c'.repeat(40);
 
 describe('home provenance', () => {
+  const git = makeFakeGit({ headCommit: SOURCE_COMMIT });
   let homeDir: string;
 
   beforeEach(async () => {
@@ -33,7 +38,7 @@ describe('home provenance', () => {
 
   describe(recordHomeProvenance, () => {
     it('records the running package, the command, and a timestamp', async () => {
-      await recordHomeProvenance('sync --global', homeDir);
+      await recordHomeProvenance('sync --global', homeDir, git);
 
       const stamp = await readHomeProvenance(homeDir);
       expect(stamp).toMatchObject({
@@ -49,20 +54,26 @@ describe('home provenance', () => {
     });
 
     it('records the source commit when the package is in a git tree', async () => {
-      await recordHomeProvenance('install', homeDir);
+      await recordHomeProvenance('install', homeDir, git);
 
-      expect((await readHomeProvenance(homeDir))?.lastWrite?.sourceCommit).toMatch(/^[0-9a-f]{40}$/);
+      expect((await readHomeProvenance(homeDir))?.lastWrite?.sourceCommit).toBe(SOURCE_COMMIT);
+    });
+
+    it('omits the source commit when the package is not in a git tree', async () => {
+      await recordHomeProvenance('install', homeDir, makeFakeGit());
+
+      expect((await readHomeProvenance(homeDir))?.lastWrite).not.toHaveProperty('sourceCommit');
     });
 
     it('overwrites the previous stamp, so the newest write is the one reported', async () => {
-      await recordHomeProvenance('install', homeDir);
-      await recordHomeProvenance('sync --global', homeDir);
+      await recordHomeProvenance('install', homeDir, git);
+      await recordHomeProvenance('sync --global', homeDir, git);
 
       expect((await readHomeProvenance(homeDir))?.lastWrite?.command).toBe('sync --global');
     });
 
     it('mirrors the write fields at the top level, keeping the stamp readable by a binary predating `lastWrite`', async () => {
-      await recordHomeProvenance('install', homeDir);
+      await recordHomeProvenance('install', homeDir, git);
 
       const raw: unknown = JSON.parse(await readFile(getHomeProvenancePath(homeDir), 'utf8'));
       expect(raw).toMatchObject({
@@ -73,7 +84,7 @@ describe('home provenance', () => {
     });
 
     it('writes valid JSON with a trailing newline', async () => {
-      await recordHomeProvenance('install', homeDir);
+      await recordHomeProvenance('install', homeDir, git);
 
       const raw = await readFile(getHomeProvenancePath(homeDir), 'utf8');
       expect(raw.endsWith('\n')).toBe(true);
@@ -98,7 +109,7 @@ describe('home provenance', () => {
     });
 
     it('keeps the write that the stamp already reports, so the deployed guidance stays datable', async () => {
-      await recordHomeProvenance('install', homeDir);
+      await recordHomeProvenance('install', homeDir, git);
       const written = (await readHomeProvenance(homeDir))?.lastWrite;
 
       await recordFailedHomeAttempt('sync --global', { summary: 'rejected' }, homeDir);

@@ -3,6 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { printLine } from '../lib/emit-report.ts';
+import { type AgentsGit, realGit } from '../lib/git.ts';
 import { bundleHelpers, checkHelperBundles, type DriftReason } from '../lib/helper-bundler.ts';
 import { readHelperTargets } from '../lib/helper-manifest.ts';
 import { resolveContentRoot } from '../lib/resolve-content-root.ts';
@@ -21,6 +22,7 @@ export interface BundleHelpersOptions {
 export async function bundleHelpersCommand(
   options: BundleHelpersOptions,
   cwd: string = process.cwd(),
+  git: AgentsGit = realGit,
 ): Promise<boolean> {
   const root = await resolveContentRoot(options.content, cwd, 'bundle helpers from');
   await assertDirectory(root);
@@ -34,7 +36,7 @@ export async function bundleHelpersCommand(
     return true;
   }
 
-  const drifted = await checkHelperBundles(root, targets);
+  const drifted = await checkHelperBundles(root, targets, undefined, git);
   if (drifted.length === 0) {
     printLine({ glyph: 'passed', level: 'info', text: `Every bundle under ${root} matches a fresh build.` });
     return true;

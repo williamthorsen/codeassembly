@@ -5,10 +5,14 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 // Exercises the `packages:` declaration: A package's content dir joins the source search order and its catalog seeds
 // the closure, so naming the package is the whole declaration. Fixture packages live under the temp project's own
@@ -126,7 +130,7 @@ describe('sync with a declared package', () => {
       `sources:\n  - name: '${PACKAGE_NAME}'\n    path: ${localDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\n`,
     );
 
-    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
       /claimed more than once.*@ca-fixture\/guide/s,
     );
   });
@@ -136,7 +140,7 @@ describe('sync with a declared package', () => {
     await writeOverlay(packageContent(), '_defaults:\n  model: haiku\n');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const deployed = await readFile(subagentPath('pkg-agent'), 'utf8');
     expect(deployed).toContain('model: haiku');
@@ -147,7 +151,7 @@ describe('sync with a declared package', () => {
     await writeSubagent(packageContent(), 'pkg-agent');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(subagentPath('pkg-agent'), 'utf8')).not.toContain('model:');
   });
@@ -157,7 +161,7 @@ describe('sync with a declared package', () => {
     await writeOverlay(packageContent(), '_defaults:\n  model: haiku\n');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\nsubagents:\n  use:\n    - lib-agent\n`);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(subagentPath('lib-agent'), 'utf8')).toContain('model: sonnet');
   });
@@ -168,7 +172,7 @@ describe('sync with a declared package', () => {
     await writeSubagent(packageContent(), 'pkg-agent');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(skillPath('consult-pkg-rules'), 'utf8')).toContain('Pkg rules.');
     expect(existsSync(skillPath('pkg-skill'))).toBe(true);
@@ -179,7 +183,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('Ambient package rules.');
   });
@@ -189,7 +193,7 @@ describe('sync with a declared package', () => {
     await writeCollection(packageContent(), 'pkg-bundle', ['member-skill']);
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\ncollections:\n  use:\n    - pkg-bundle\n`);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('member-skill'))).toBe(true);
   });
@@ -199,7 +203,7 @@ describe('sync with a declared package', () => {
     await writeSkill(packageContent(), 'pkg-skill', 'dependencies:\n  rulebooks:\n    - library-dep\n');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(skillPath('consult-library-dep'), 'utf8')).toContain('Library dependency.');
   });
@@ -212,7 +216,7 @@ describe('sync with a declared package', () => {
       `sources:\n  - name: org\n    path: ${sourceDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\nrulebooks:\n  use:\n    - contested\n`,
     );
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Source body.');
@@ -225,7 +229,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(packageContent(), 'shadowed', 'delivery: ambient', 'Package body.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Library body.');
@@ -243,7 +247,7 @@ describe('sync with a declared package', () => {
       `sources:\n  - name: org\n    path: ${sourceDir}\npackages:\n  use:\n    - '${PACKAGE_NAME}'\nrulebooks:\n  use:\n    - from-source\n`,
     );
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Source rules.');
@@ -253,7 +257,7 @@ describe('sync with a declared package', () => {
   it('retracts a package artifact once a higher tier drops the package', async () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
     expect(await readFile(localHostPath(), 'utf8')).toContain('Ambient package rules.');
 
     await writeFile(
@@ -261,7 +265,7 @@ describe('sync with a declared package', () => {
       `packages:\n  drop:\n    - '${PACKAGE_NAME}'\n`,
       'utf8',
     );
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('Ambient package rules.');
   });
@@ -280,7 +284,7 @@ describe('sync with a declared package', () => {
       'utf8',
     );
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Local body.');
@@ -296,7 +300,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(secondContent, 'contested', 'delivery: ambient', 'Second body.');
     await declare("packages:\n  use:\n    - '@ca-fixture/first'\n    - '@ca-fixture/second'\n");
 
-    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('Second body.');
@@ -320,7 +324,7 @@ describe('sync with a declared package', () => {
       'utf8',
     );
 
-    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(renderReportText(outcome)).not.toContain(PACKAGE_NAME);
   });
@@ -333,7 +337,7 @@ describe('sync with a declared package', () => {
     );
     await declare('rulebooks:\n  use: []\n');
 
-    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const advice = renderReportText(outcome);
     expect(advice).toContain(PACKAGE_NAME);
@@ -349,7 +353,7 @@ describe('sync with a declared package', () => {
     await writeRulebook(packageContent(), 'pkg-ambient', 'delivery: ambient', 'Ambient package rules.');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\n`);
 
-    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(renderReportText(outcome)).not.toContain('has not declared');
   });
@@ -363,7 +367,7 @@ describe('sync with a declared package', () => {
       await writeSupportFile(packageContent(), path.join('_data', 'house-style.md'));
       await declare(`sources:\n  - package: '${PACKAGE_NAME}'\nskills:\n  use:\n    - pkg-skill\n`);
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(skillPath('pkg-skill'))).toBe(true);
       expect(await readFile(skillPath('consult-pkg-dep'), 'utf8')).toContain('Package dependency.');
@@ -385,7 +389,7 @@ describe('sync with a declared package', () => {
       await symlink(realDir, path.join(projectRoot, 'node_modules', '@ca-fixture', 'linked'), 'dir');
       await declare("sources:\n  - package: '@ca-fixture/linked'\nskills:\n  use:\n    - linked-skill\n");
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(skillPath('linked-skill'))).toBe(true);
     });
@@ -399,7 +403,7 @@ describe('sync with a declared package', () => {
       await writeSkill(packageContent(), 'pkg-skill');
       await declare(`sources:\n  - name: guide\n    package: '${PACKAGE_NAME}'\nskills:\n  use:\n    - pkg-skill\n`);
 
-      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(renderReportText(outcome)).not.toContain('has not declared');
     });
@@ -419,7 +423,7 @@ describe('sync with a declared package', () => {
         'utf8',
       );
 
-      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(skillPath('pkg-skill'))).toBe(true);
       expect(renderReportText(outcome)).not.toContain('has not declared');
@@ -428,7 +432,7 @@ describe('sync with a declared package', () => {
     it('fails the run when the package is not installed, writing nothing', async () => {
       await declare("sources:\n  - package: '@ca-fixture/absent'\n");
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /Declared source "@ca-fixture\/absent" \(package "@ca-fixture\/absent"\) is not installed/,
       );
       expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
@@ -438,7 +442,7 @@ describe('sync with a declared package', () => {
   it('fails the run when a declared package is not installed, writing nothing', async () => {
     await declare("packages:\n  use:\n    - '@ca-fixture/absent'\n");
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
       /"@ca-fixture\/absent" is not installed/,
     );
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
@@ -448,7 +452,7 @@ describe('sync with a declared package', () => {
     await installPackage('@ca-fixture/empty', 'missing-dir');
     await declare("packages:\n  use:\n    - '@ca-fixture/empty'\n");
 
-    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+    const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const warning = renderReportText(outcome, { level: 'warn' });
     expect(warning).toMatch(/Declared source "@ca-fixture\/empty" \(.*missing-dir\) does not exist/);

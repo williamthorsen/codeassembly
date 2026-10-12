@@ -7,9 +7,13 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('install stale-file pruning', () => {
   let tempDir: string;
@@ -29,10 +33,10 @@ describe('install stale-file pruning', () => {
 
   it('removes an orphaned script whose source was deleted', async () => {
     const contentDir = await buildContent({ scripts: { 'keep.sh': scriptBody, 'drop.sh': scriptBody } });
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     await rm(path.join(contentDir, 'scripts', 'drop.sh'));
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'drop.sh'))).toBe(false);
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'keep.sh'))).toBe(true);
@@ -40,12 +44,12 @@ describe('install stale-file pruning', () => {
 
   it('keeps a user-modified orphan without --force and retains it in the manifest', async () => {
     const contentDir = await buildContent({ scripts: { 'keep.sh': scriptBody, 'drop.sh': scriptBody } });
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     const installedScript = path.join(tempDir, '.claude', 'scripts', 'drop.sh');
     await writeFile(installedScript, '#!/usr/bin/env bash\necho edited\n', 'utf8');
     await rm(path.join(contentDir, 'scripts', 'drop.sh'));
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(installedScript)).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -55,12 +59,12 @@ describe('install stale-file pruning', () => {
 
   it('removes a user-modified orphan when --force is set', async () => {
     const contentDir = await buildContent({ scripts: { 'keep.sh': scriptBody, 'drop.sh': scriptBody } });
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     const installedScript = path.join(tempDir, '.claude', 'scripts', 'drop.sh');
     await writeFile(installedScript, '#!/usr/bin/env bash\necho edited\n', 'utf8');
     await rm(path.join(contentDir, 'scripts', 'drop.sh'));
-    await installCommand(makeOptions({ force: true }), tempDir);
+    await installCommand(makeOptions({ force: true }), tempDir, fakeGit);
 
     expect(existsSync(installedScript)).toBe(false);
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -70,10 +74,10 @@ describe('install stale-file pruning', () => {
 
   it('in dry-run, leaves an orphan on disk and does not rewrite the manifest', async () => {
     const contentDir = await buildContent({ scripts: { 'keep.sh': scriptBody, 'drop.sh': scriptBody } });
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     await rm(path.join(contentDir, 'scripts', 'drop.sh'));
-    await installCommand(makeOptions({ dryRun: true }), tempDir);
+    await installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'drop.sh'))).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -87,7 +91,7 @@ describe('install stale-file pruning', () => {
     await writeFile(path.join(preExisting, 'user-note.md'), '# mine\n', 'utf8');
 
     await buildContent({ scripts: { 'keep.sh': scriptBody } });
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(preExisting, 'user-note.md'))).toBe(true);
   });
@@ -98,7 +102,7 @@ describe('install stale-file pruning', () => {
       await seedFlatSupportEntries();
       using silent = silenceConsole(['info', 'warn']);
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, fakeGit);
 
       expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(false);
       expect(existsSync(glossaryPath())).toBe(false);
@@ -118,7 +122,7 @@ describe('install stale-file pruning', () => {
       await writeFile(glossaryPath(), EDITED_GLOSSARY, 'utf8');
       using silent = silenceConsole(['info', 'warn']);
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, fakeGit);
 
       expect(await readFile(glossaryPath(), 'utf8')).toBe(EDITED_GLOSSARY);
       expect(existsSync(path.join(tempDir, '.claude', 'skills', '_data'))).toBe(false);
@@ -137,7 +141,7 @@ describe('install stale-file pruning', () => {
       await writeFile(glossaryPath(), EDITED_GLOSSARY, 'utf8');
       using _silent = silenceConsole(['info', 'warn']);
 
-      await installCommand(makeOptions({ force: true }), tempDir);
+      await installCommand(makeOptions({ force: true }), tempDir, fakeGit);
 
       expect(existsSync(glossaryPath())).toBe(false);
       const manifest = await readManifest(getManifestPath(tempDir));

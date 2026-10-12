@@ -5,9 +5,13 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('syncCommand with a declared collection', () => {
   let projectRoot: string;
@@ -39,7 +43,7 @@ describe('syncCommand with a declared collection', () => {
     await writeCollection(contentDir, 'recommended', { skills: ['people-report'], subagents: ['canary'] });
     await declareCollections(projectRoot, contentDir, 'recommended');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const skill = await readFile(path.join(projectRoot, '.claude', 'skills', 'people-report', 'SKILL.md'), 'utf8');
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
@@ -51,7 +55,7 @@ describe('syncCommand with a declared collection', () => {
     await writeCollection(contentDir, 'recommended', { skills: ['ghost'] });
     await declareCollections(projectRoot, contentDir, 'recommended');
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/ghost.*not found/);
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/ghost.*not found/);
     expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
   });
 });

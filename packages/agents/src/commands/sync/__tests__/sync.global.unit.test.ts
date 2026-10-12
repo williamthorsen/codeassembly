@@ -9,6 +9,7 @@ import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
 import { HARNESSES } from '../../../lib/harness.ts';
 import { getHomeProvenancePath, readHomeProvenance } from '../../../lib/home-provenance.ts';
 import { resolveRunningPackageRoot } from '../../../lib/running-package.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
@@ -16,6 +17,9 @@ import { isSyncValidationError } from '../sync-validation-error.ts';
 import { ambientRegionNote } from '../test-utils/ambient-region-note.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -81,13 +85,13 @@ describe(syncGlobalCommand, () => {
   it("names the home declaration when a declared artifact doesn't resolve from any source", async () => {
     await declareRaw('skills:\n  use:\n    - ghost\n');
 
-    await expect(syncGlobalCommand(makeOptions(), homeDir)).rejects.toThrow(
+    await expect(syncGlobalCommand(makeOptions(), homeDir, fakeGit)).rejects.toThrow(
       `The home declaration (${path.join(homeDir, '.agents', 'codeassembly.yaml')}) declares skill "ghost"`,
     );
   });
 
   it("when ~/.agents/codeassembly.yaml doesn't exist, doesn't make any changes and points at init --global", async () => {
-    const infoLines = renderReportLines(await syncGlobalCommand(makeOptions(), homeDir), { level: 'info' });
+    const infoLines = renderReportLines(await syncGlobalCommand(makeOptions(), homeDir, fakeGit), { level: 'info' });
 
     expect(existsSync(path.join(homeDir, '.agents', 'rulebooks'))).toBe(false);
     expect(infoLines.join('\n')).toContain('init --global');
@@ -101,7 +105,7 @@ describe(syncGlobalCommand, () => {
       'references:\n  - name: fixture-docs\n    package: ca-fixture-docs\n    path: docs\n    summary: Read it.\n',
     );
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     expect(await readFile(claudeMd, 'utf8')).toContain('Location: `~/node_modules/ca-fixture-docs/docs`');
   });
@@ -110,7 +114,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureSkill('people-report');
     await declareRaw('skills:\n  use:\n    - people-report\n');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'people-report', 'SKILL.md'), 'utf8');
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
@@ -124,7 +128,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('beta', 'delivery: skill', 'Beta body.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n    - beta\n');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'consult-alpha', 'SKILL.md'), 'utf8');
     expect(skill).toContain('[beta](~/.claude/skills/consult-beta/SKILL.md)');
@@ -135,7 +139,7 @@ describe(syncGlobalCommand, () => {
     await writeFile(path.join(contentDir, 'skills', '_data', 'concision.md'), '# Concision\n', 'utf8');
     await declareRaw('rulebooks:\n  use: []\n');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const sourcesRoot = path.join(homeDir, '.claude', 'skills', '_sources');
     expect(await readFile(path.join(sourcesRoot, FIXTURE_SOURCE_NAME, '_data', 'concision.md'), 'utf8')).toBe(
@@ -148,7 +152,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: skill', 'Read `{harness_home_dir}/skills/_data/concision.md`.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'consult-alpha', 'SKILL.md'), 'utf8');
     expect(skill).toContain(`Read \`~/.claude/skills/_sources/${FIXTURE_SOURCE_NAME}/_data/concision.md\`.`);
@@ -159,7 +163,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: skill', 'See [concision](../../skills/_data/concision.md).');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const skill = await readFile(path.join(homeDir, '.claude', 'skills', 'consult-alpha', 'SKILL.md'), 'utf8');
     expect(skill).toContain(`[concision](~/.claude/skills/_sources/${FIXTURE_SOURCE_NAME}/_data/concision.md)`);
@@ -170,7 +174,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const content = await readFile(claudeMd, 'utf8');
     expect(content).toContain('<!-- rulebook:alpha -->');
@@ -183,14 +187,14 @@ describe(syncGlobalCommand, () => {
     const rovoMd = await seedGuidanceFile(ROVO_HOME, HARNESSES.rovo.guidanceFileName);
     await writeFixtureRulebook('alpha', 'delivery: [ambient, skill]', 'Alpha rules.');
     await declareRaw('harnesses:\n  use:\n    - claude\n    - rovo\nrulebooks:\n  use:\n    - alpha\n');
-    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir);
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, fakeGit);
     const rovoSkill = path.join(homeDir, ROVO_HOME, 'skills', 'consult-alpha', 'SKILL.md');
     expect(existsSync(rovoSkill)).toBe(true);
     expect(existsSync(path.join(homeDir, ROVO_HOME, 'prompts.yml'))).toBe(true);
     expect(await readFile(rovoMd, 'utf8')).toContain('Alpha rules.');
 
     await declareRaw('harnesses:\n  use:\n    - claude\nrulebooks:\n  use:\n    - alpha\n');
-    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir);
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, fakeGit);
 
     expect(existsSync(rovoSkill)).toBe(false);
     expect(existsSync(path.join(homeDir, ROVO_HOME, 'prompts.yml'))).toBe(false);
@@ -205,7 +209,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     expect(await readFile(claudeMd, 'utf8')).toContain(
       `<!-- codeassembly-ambient:start -->\n${ambientRegionNote}\n<!-- rulebook:alpha -->`,
@@ -218,7 +222,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir);
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, fakeGit);
 
     for (const guidanceFile of [claudeMd, rovoMd]) {
       expect(await readFile(guidanceFile, 'utf8')).toContain('<!-- rulebook:alpha -->');
@@ -231,7 +235,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('harnesses:\n  use:\n    - claude\nrulebooks:\n  use:\n    - alpha\n');
 
-    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir);
+    await syncGlobalCommand(makeOptions({ harness: 'all' }), homeDir, fakeGit);
 
     expect(await readFile(claudeMd, 'utf8')).toContain('<!-- rulebook:alpha -->');
     expect(await readFile(rovoMd, 'utf8')).not.toContain('<!-- rulebook:alpha -->');
@@ -244,7 +248,9 @@ describe(syncGlobalCommand, () => {
     await declareRaw(`sources:\n  - name: org\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`);
 
     try {
-      await expect(syncGlobalCommand(makeOptions(), homeDir)).rejects.toThrow(/Unsupported content format.*"org".*2/s);
+      await expect(syncGlobalCommand(makeOptions(), homeDir, fakeGit)).rejects.toThrow(
+        /Unsupported content format.*"org".*2/s,
+      );
     } finally {
       await rm(sourceDir, { recursive: true, force: true });
     }
@@ -255,7 +261,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('beta', 'delivery: skill', 'Beta rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n    - beta\n');
 
-    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir), { level: 'warn' });
+    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir, fakeGit), { level: 'warn' });
     expect(output).toContain('codeassembly install');
 
     // The skip is confined to ambient delivery: Skill delivery, which shares the run, still completes.
@@ -273,7 +279,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir), { level: 'warn' });
+    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir, fakeGit), { level: 'warn' });
     expect(output).toContain('damaged ambient region');
 
     expect(await readFile(damaged, 'utf8')).toBe(before);
@@ -287,7 +293,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir), { level: 'warn' });
+    const output = renderReportText(await syncGlobalCommand(makeOptions(), homeDir, fakeGit), { level: 'warn' });
     expect(output).toContain("doesn't have an ambient region");
 
     expect(await readFile(regionless, 'utf8')).toBe('# Guidance without a region\n');
@@ -299,7 +305,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir), {
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, fakeGit), {
       dryRun: true,
       level: 'info',
     });
@@ -312,7 +318,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
 
-    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir), {
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, fakeGit), {
       dryRun: true,
       level: 'info',
     });
@@ -329,7 +335,7 @@ describe(syncGlobalCommand, () => {
     const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
     await writeFile(legacyPath, '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir), {
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, fakeGit), {
       dryRun: true,
       level: 'info',
     });
@@ -344,7 +350,7 @@ describe(syncGlobalCommand, () => {
     const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
     await writeFile(legacyPath, 'Mine.\n\n<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir), {
+    const output = renderReportText(await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, fakeGit), {
       dryRun: true,
       level: 'info',
     });
@@ -361,7 +367,7 @@ describe(syncGlobalCommand, () => {
     const legacyContent = '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n';
     await writeFile(legacyPath, legacyContent, 'utf8');
 
-    await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir);
+    await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, fakeGit);
 
     expect(await readFile(legacyPath, 'utf8')).toBe(legacyContent);
   });
@@ -375,7 +381,7 @@ describe(syncGlobalCommand, () => {
 
     let raised: unknown;
     try {
-      await syncGlobalCommand(makeOptions(), homeDir);
+      await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
     } catch (error: unknown) {
       raised = error;
     }
@@ -388,18 +394,18 @@ describe(syncGlobalCommand, () => {
   });
 
   it('refuses a bare sync run rooted at the home directory, directing to --global', async () => {
-    await expect(syncCommand(makeOptions(), homeDir, homeDir)).rejects.toThrow(/--global/);
+    await expect(syncCommand(makeOptions(), homeDir, homeDir, fakeGit)).rejects.toThrow(/--global/);
   });
 
   it('empties the ambient region on undeclare and never writes ~/.agents/AGENTS.md', async () => {
     const claudeMd = await seedGuidanceFile('.claude', 'CLAUDE.md');
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRaw('rulebooks:\n  use:\n    - alpha\n');
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
     expect(await readFile(claudeMd, 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await declareRaw('rulebooks:\n  use: []\n');
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const content = await readFile(claudeMd, 'utf8');
     expect(content).not.toContain('<!-- rulebook:alpha -->');
@@ -414,7 +420,7 @@ describe(syncGlobalCommand, () => {
     const legacyPath = path.join(homeDir, '.agents', 'GLOBAL.md');
     await writeFile(legacyPath, '<!-- rulebook:alpha -->\nAlpha rules.\n<!-- /rulebook:alpha -->\n', 'utf8');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     expect(existsSync(legacyPath)).toBe(false);
   });
@@ -430,7 +436,7 @@ describe(syncGlobalCommand, () => {
       'utf8',
     );
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const remainder = await readFile(legacyPath, 'utf8');
     expect(remainder).toContain('# My hand-written notes');
@@ -441,7 +447,7 @@ describe(syncGlobalCommand, () => {
     await writeFixtureSkill('people-report');
     await declareRaw('skills:\n  use:\n    - people-report\n');
 
-    await syncGlobalCommand(makeOptions({ harness: 'rovo' }), homeDir);
+    await syncGlobalCommand(makeOptions({ harness: 'rovo' }), homeDir, fakeGit);
 
     const prompts = await readFile(path.join(homeDir, ROVO_HOME, 'prompts.yml'), 'utf8');
     expect(prompts).toContain('# codeassembly:managed:start');
@@ -459,7 +465,7 @@ describe(syncGlobalCommand, () => {
       'utf8',
     );
 
-    await syncGlobalCommand(makeOptions({ harness: 'rovo' }), homeDir);
+    await syncGlobalCommand(makeOptions({ harness: 'rovo' }), homeDir, fakeGit);
 
     const prompts = await readFile(path.join(homeDir, ROVO_HOME, 'prompts.yml'), 'utf8');
     expect(prompts).toContain("name: 'hand-authored'");
@@ -476,7 +482,7 @@ describe(syncGlobalCommand, () => {
     await mkdir(neutralDir, { recursive: true });
     await writeFile(path.join(neutralDir, 'alpha.md'), '# Alpha\n', 'utf8');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     expect(existsSync(neutralDir)).toBe(false);
   });
@@ -490,7 +496,7 @@ describe(syncGlobalCommand, () => {
     await writeFile(path.join(neutralDir, 'alpha.md'), '# Alpha\n', 'utf8');
     await writeFile(path.join(neutralDir, 'notes.txt'), 'mine\n', 'utf8');
 
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     expect(existsSync(path.join(neutralDir, 'alpha.md'))).toBe(false);
     expect(await readFile(path.join(neutralDir, 'notes.txt'), 'utf8')).toBe('mine\n');
@@ -500,7 +506,7 @@ describe(syncGlobalCommand, () => {
     it('stamps the run that it completed', async () => {
       await declareRaw('rulebooks:\n  use: []\n');
 
-      await syncGlobalCommand(makeOptions(), homeDir);
+      await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
       expect(await readHomeProvenance(homeDir)).toMatchObject({ command: 'sync --global' });
     });
@@ -508,13 +514,13 @@ describe(syncGlobalCommand, () => {
     it('leaves the stamp untouched on a dry run', async () => {
       await declareRaw('rulebooks:\n  use: []\n');
 
-      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir);
+      await syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, fakeGit);
 
       expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
     });
 
     it("leaves the stamp untouched when a home declaration to act on doesn't exist", async () => {
-      await syncGlobalCommand(makeOptions(), homeDir);
+      await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
       expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
     });
@@ -526,14 +532,16 @@ describe(syncGlobalCommand, () => {
       await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
       await declareRaw(`home-writer: ${path.join(homeDir, 'designated')}\nrulebooks:\n  use:\n    - alpha\n`);
 
-      await expect(syncGlobalCommand(makeOptions(), homeDir)).rejects.toThrow(/not the designated home-domain writer/);
+      await expect(syncGlobalCommand(makeOptions(), homeDir, fakeGit)).rejects.toThrow(
+        /not the designated home-domain writer/,
+      );
       expect(await readFile(guidanceFile, 'utf8')).not.toContain('Alpha rules.');
     });
 
     it('refuses a dry run exactly as it refuses the real one', async () => {
       await declareRaw(`home-writer: ${path.join(homeDir, 'designated')}\n`);
 
-      await expect(syncGlobalCommand(makeOptions({ dryRun: true }), homeDir)).rejects.toThrow(
+      await expect(syncGlobalCommand(makeOptions({ dryRun: true }), homeDir, fakeGit)).rejects.toThrow(
         /not the designated home-domain writer/,
       );
     });
@@ -543,7 +551,7 @@ describe(syncGlobalCommand, () => {
       await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
       await declareRaw(`home-writer: ${resolveRunningPackageRoot()}\nrulebooks:\n  use:\n    - alpha\n`);
 
-      await syncGlobalCommand(makeOptions(), homeDir);
+      await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
       expect(await readFile(guidanceFile, 'utf8')).toContain('Alpha rules.');
     });

@@ -4,10 +4,14 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 // A declared guidance hook is inert until a binding fills it, and `install` doesn't bind any hook, so every hook that it
 // meets is unbound. These pin that the directive doesn't appear in installed harness guidance, which renders through
@@ -49,7 +53,7 @@ describe('install guidance-hook strip', () => {
       },
     });
 
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     const guidance = await readFile(path.join(tempDir, '.claude', 'CLAUDE.md'), 'utf8');
     expect(guidance).not.toContain('guidance-hook');
@@ -72,7 +76,7 @@ describe('install guidance-hook strip', () => {
       },
     });
 
-    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions(), tempDir, fakeGit)).rejects.toThrow(
       /guidance\/_harnesses\/claude\/CLAUDE\.md:2 name="preferences" firstDeclaredAt=1 reason=duplicate-hook/,
     );
   });
