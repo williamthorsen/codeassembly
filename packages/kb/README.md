@@ -144,6 +144,8 @@ A structural defect in any loaded file throws a `KbLoaderError` (see below). Any
 
 `enumerateNotes({ kbRoot, config })` performs the enumeration on its own, and `enumerateNotePaths({ kbRoot, config })` returns the same note set as store-root-relative paths without opening a single note. Both are exported from `@williamthorsen/kb/check`; the paths-only variant serves a caller that needs the note set's shape rather than its content.
 
+`check`, `enumerateNotes`, and `enumerateNotePaths` each take an optional `git`, a `KbGit` adapter that answers the enumeration's repository queries. It defaults to one that runs git. A consumer's tests can pass an object that implements `KbGit` and returns fixed answers, so that they don't need a real repository; `@williamthorsen/kb/check` exports the `KbGit` type and its `GitAnswer` result type.
+
 ### Which notes are checked: `.kb/config.yaml`
 
 `.kb/config.yaml` configures which notes a check enumerates and how widely the store is published. Every key is optional; an absent file or an omitted key falls back to the default.
@@ -171,7 +173,7 @@ Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `
 
 When the store is in a git working tree, the repository's ignore rules narrow the selection further. A note is enumerated when git tracks it, or when the repository's ignore rules don't cover it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: Such a link is broken for every clone but the author's. This lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
 
-A store outside a git working tree, or a machine without git installed, keeps the filesystem walk alone. When the repository ignores every note that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting an empty note set as clean.
+A store outside a git working tree, or a machine without git installed, keeps the filesystem walk alone. So does a `git` adapter whose `listScope` returns `undefined`. When the repository ignores every note that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting an empty note set as clean.
 
 ### Linking into another store
 
