@@ -24,7 +24,7 @@ export interface RawCommit {
 
 /** The adapter that runs git. */
 export const realGit: DescribeChangeGit = {
-  findTopLevel: sharedGit.findTopLevel,
+  findTopLevel: (startDir) => sharedGit.findTopLevel(startDir),
   hasCommit,
   listCommits,
 };
