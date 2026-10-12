@@ -31,7 +31,7 @@ Resolve the ticket directory per {skill:save-artifact}, and create `{ticket_dir}
 
 ### 2. Write the brief
 
-Write the brief to `{ticket_dir}/usability/brief.md`, with these sections:
+Compose the brief with these sections:
 
 1. **Product.** What the product is and whom it serves, in two or three sentences.
 2. **Targets.** One row per target: its URL, its write rule, its sign-in state, and the method by which a lens grants itself a role or an approval there. A target is read-only unless it is on `localhost` or the developer names it as disposable, per {rulebook:shared-data-conventions}. Writes go to a writable target, with `@example.com` accounts that the lens creates.
