@@ -122,6 +122,20 @@ describe('manage-jira-ticket CLI', () => {
     expect(await readSubcommands()).toEqual(['auth status']);
   });
 
+  it('refuses to create on another site when only the global preferences set the base URL', async () => {
+    await writePreferences('integrations:\n  jira:\n    project_key: ABC\n');
+    await writeGlobalPreferences('ticket:\n  base_url: https://example.atlassian.net/browse/\n');
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix'], {
+      STUB_SITE: 'other.atlassian.net',
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({ fallback: 'wrong-site', targetSite: 'example.atlassian.net' });
+    expect(await readSubcommands()).toEqual(['auth status']);
+  });
+
   it('refuses an empty body without calling acli', async () => {
     await writePreferences('integrations:\n  jira:\n    project_key: ABC\n');
     const bodyFile = await writeInput('body.md', '');
@@ -262,6 +276,12 @@ describe('manage-jira-ticket CLI', () => {
       }
       throw error;
     }
+  }
+
+  /** Writes the stand-in home directory's global preferences file. */
+  async function writeGlobalPreferences(content: string): Promise<void> {
+    await mkdir(path.join(homeDir, '.agents'), { recursive: true });
+    await writeFile(path.join(homeDir, '.agents', 'preferences.yaml'), content);
   }
 
   /** Writes an input file into the working directory and returns its absolute path. */

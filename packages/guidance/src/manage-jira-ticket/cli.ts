@@ -14,7 +14,7 @@ import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { readProjectPreferences } from '../derive-session-context/read-preferences.ts';
+import { readPreferences, readProjectPreferences } from '../derive-session-context/read-preferences.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { loadWorkTypes } from '../lib/work-types.ts';
@@ -128,22 +128,13 @@ async function readTarget(workType: string, preferences: Readonly<Record<string,
   return resolveTarget(workType, readJiraPreferences(preferences), workTypes);
 }
 
-/** Reads `ticket.base_url` from the preferences, treating an absent, null, or empty value as unset. */
-function readTicketBaseUrl(preferences: Readonly<Record<string, unknown>>): string | undefined {
-  const ticket = preferences.ticket;
-  if (ticket === undefined || ticket === null) {
-    return undefined;
-  }
-  if (!isRecord(ticket)) {
-    throw new Error("preferences: 'ticket' must be an object");
-  }
-  const baseUrl = ticket.base_url;
-  if (baseUrl === undefined || baseUrl === null) {
-    return undefined;
-  }
-  if (typeof baseUrl !== 'string') {
-    throw new TypeError("preferences: 'ticket.base_url' must be a string");
-  }
+/**
+ * Reads `ticket.base_url` from the repository's preferences, falling back to the global file as the session manifest
+ * does, and treats an absent or empty value as unset. Unlike the project key, a global base URL is safe to read here:
+ * It can only make the site check refuse, never send a work item elsewhere.
+ */
+async function readTicketBaseUrl(projectRoot: string): Promise<string | undefined> {
+  const baseUrl = (await readPreferences({ cwd: projectRoot })).preferences.ticket?.base_url;
   return baseUrl === '' ? undefined : baseUrl;
 }
 
@@ -211,8 +202,8 @@ async function runCreate(argv: readonly string[]): Promise<void> {
     ['body-file', 'summary', 'work-type'],
   );
   const markdown = await readBody(values['body-file'] ?? '');
-  const preferences = await readProjectPreferences(resolveProjectRoot());
-  const target = await readTarget(values['work-type'] ?? '', preferences);
+  const projectRoot = resolveProjectRoot();
+  const target = await readTarget(values['work-type'] ?? '', await readProjectPreferences(projectRoot));
   if ('fallback' in target) {
     writeJson(target);
     process.stderr.write(`manage-jira-ticket: ${target.warning}\n`);
@@ -220,7 +211,7 @@ async function runCreate(argv: readonly string[]): Promise<void> {
   }
 
   // Check the site before any other `acli` call, because `acli` acts on its active site whatever the project key names.
-  const baseUrl = readTicketBaseUrl(preferences);
+  const baseUrl = await readTicketBaseUrl(projectRoot);
   let activeSite: string | null = null;
   if (baseUrl !== undefined) {
     const check = await readSiteCheck(baseUrl, runAcli);

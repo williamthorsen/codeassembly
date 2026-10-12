@@ -171,7 +171,7 @@ Identify the client per {skill?:update-jira-ticket}, which ranks the three clien
 
   `{parent_flag}` is `--parent {parent}` when step 4 decided a parent, and empty otherwise. Pass the body path as the literal absolute path, unquoted, without a shell variable or a guard: The helper refuses a missing or empty file before it calls `acli`.
 
-  When `ticket.base_url` is set, the helper first compares `acli`'s active site with the base URL's host, because `acli` creates on whichever site it is signed in to. It then converts the body to ADF, checks a parent with `acli jira workitem view`, and runs `acli jira workitem create` exactly once. It prints `{"key": "ABC-123", "rawOutput": "...", "parentSkipped": false, "activeSite": "..."}`, in which `activeSite` is null when `ticket.base_url` is unset. `parentSkipped: true` means that Jira rejected the parent reference and the work item was created without it; report the parent skipped per step 7.
+  When `ticket.base_url` is set, in the repository's preferences or the global file, the helper first compares `acli`'s active site with the base URL's host, because `acli` creates on whichever site it is signed in to. It then converts the body to ADF, checks a parent with `acli jira workitem view`, and runs `acli jira workitem create` exactly once. It prints `{"key": "ABC-123", "rawOutput": "...", "parentSkipped": false, "activeSite": "..."}`, in which `activeSite` is null when `ticket.base_url` is unset. `parentSkipped: true` means that Jira rejected the parent reference and the work item was created without it; report the parent skipped per step 7.
 
   On a non-zero exit, read what it printed:
   - `{"fallback": "no-project-key"}`: As under [Resolve the target](#resolve-the-target), and `acli` was not called.
