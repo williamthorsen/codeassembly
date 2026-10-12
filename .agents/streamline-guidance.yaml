@@ -1,0 +1,5 @@
+declined: []
+reviewed:
+  - file: packages/guidance/content/skills/index-prototypes/SKILL.md
+    reviewed-at: 2026-10-11
+    deployed-bytes: 12531

@@ -9,8 +9,6 @@ supported-harnesses: [claude]
 
 Publish one index page for a ticket's prototypes instead of one link per prototype. Each card shows a screenshot that links to the prototype, its metadata, and verdict controls. The developer rejects, ranks, and picks a winner on the page, and the page saves those verdicts through the `db` capability, where you read them back with the ArtifactData tool.
 
-A bundled helper keeps the set's manifest, stores the screenshots, and renders the page. You build the prototypes, capture the screenshots, publish, and read the verdicts.
-
 ## The set
 
 A ticket has one prototype set, in its artifact directory:
@@ -26,9 +24,9 @@ A later round of prototypes revises the same set: A new idea takes a new slug, a
 
 A slug matches `[a-z0-9][a-z0-9-]{0,39}`. You choose each slug, before any prototype is built.
 
-The helper gives each slug a number at its first registration, and every later version of the slug keeps it. A version's id is `{number}.{version}`, such as `3.2` for the second version of prototype 3, and it is how the developer refers to a version: Name each one to them as `{id} {title}`, such as `3.2 Catalog first`; the index card leads with the same form, and the page itself states it as the first line of its `data-demo` band, so that the developer reads which version they have open without returning to the index. A bare number names the slug whose entries have that number, at its latest version. When no entry has it, ask which prototype they mean rather than guess. The slug stays the key in the manifest and in the verdicts.
+The helper gives each slug a number at its first registration, and every later version of the slug keeps it. A version's id is `{number}.{version}`, and it is how the developer refers to a version: Name each one to them as `{id} {title}`, such as `3.2 Catalog first`; the index card leads with the same form, and the page itself states it as the first line of its `data-demo` band. A bare number names the slug whose entries have that number, at its latest version. When no entry has it, ask which prototype they mean rather than guess. The slug stays the key in the manifest and in the verdicts.
 
-Resolve the ids before anything is built, so that each builder writes its id into the page, and pass each number through when you register:
+Resolve the ids before anything is built, and pass each number through when you register:
 
 ```bash
 node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs resolve-ids \
@@ -36,7 +34,7 @@ node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs resolve-ids
   --slugs "{comma-separated slugs, in the order of the round}"
 ```
 
-The result's `ids` give each slug its `number`, `version`, and `id`: A registered slug keeps its number and takes its next version, and each new slug takes the next number past the set's highest, in the order given.
+The result's `ids` give each slug its `number`, `version`, and `id`.
 
 The set has one list of note labels: a few facts that differ from one prototype to the next and that a reviewer would compare, such as where search lives or what the home screen shows. Choose the labels before the set's first prototype is built, and write each one without a colon. Every prototype takes a note for every label, in the same order, so that the cards compare side by side. A later round reads the labels from the manifest's latest entries and keeps them, adding a label only when the round introduces something new to compare.
 
@@ -44,7 +42,7 @@ The set has one list of note labels: a few facts that differ from one prototype 
 
 ### 1. Resolve the set directory
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash, and build the set directory from `artifact_base_dir`, `project_slug`, and `ticket_id` as shown above. When `manifest.json` exists there, read it, and [read back the verdicts](#read-back-the-verdicts) before planning the round: They say which prototypes are worth revising.
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash, and build the set directory from `artifact_base_dir`, `project_slug`, and `ticket_id` as shown above. When `manifest.json` exists there, read it, and [read back the verdicts](#read-back-the-verdicts) before planning the round.
 
 Resolve a scratch directory for the rendered page: the scratchpad directory that the environment declares, or, when it declares none, a new one:
 
@@ -102,7 +100,7 @@ node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs register \
   --screenshot "{working_dir}/.playwright-mcp/{slug}-v{n}.png"
 ```
 
-Pass `--number` with the number that `resolve-ids` gave the slug, so that a registration out of the resolved order is refused rather than given a number that disagrees with the page. Pass one `--note` per note label, in the set's label order. Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already held another version of the slug, so rename the source to match.
+Pass `--number` with the number that `resolve-ids` gave the slug. Pass one `--note` per note label, in the set's label order. Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already held another version of the slug, so rename the source to match.
 
 ### 5. Describe the set
 
