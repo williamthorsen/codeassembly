@@ -27,6 +27,7 @@ import { type CommentDecision, renderComment, shouldPostComment, type StoredRepl
 import { findCrossReferences } from './cross-reference.ts';
 import { DEFAULT_PAGE_SIZE, PAGE_SIZE_RANGE, renderDigest } from './digest.ts';
 import { fetchIssue, fetchOpenIssues, resolveRepository, resolveShortSha, runCommand } from './fetch.ts';
+import { type BacklogGit, realGit } from './git.ts';
 import { detectInProgress } from './in-progress.ts';
 import { appendRecords, buildReplyPath, type LedgerPaths, readLedger, resolveLedgerPaths } from './ledger.ts';
 import { findLatestMarker, findLatestRunMarkerDate } from './marker.ts';
@@ -45,6 +46,7 @@ import type { CommandRunner, Escalation, Issue, TicketInput } from './types.ts';
 
 /** Everything a command reads from its environment, injected so that tests can supply fixtures. */
 export interface CommandContext {
+  git: BacklogGit;
   now: Date;
   root: string;
   run: CommandRunner;
@@ -109,6 +111,7 @@ async function main(): Promise<void> {
     const argv = process.argv.slice(2);
     const needsStdin = argv[0] === 'ingest' || argv[0] === 'record';
     const result = await runCli(argv, {
+      git: realGit,
       now: new Date(),
       root: process.cwd(),
       run: runCommand,
@@ -172,7 +175,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   const run = readRequired(flags, 'run');
   const outDir = path.resolve(context.root, readRequired(flags, 'out'));
 
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   const ledger = readLedger(paths.ledgerFile);
   const assessedAt = new Map<number, string>();
   const decidedAt = new Map<number, string>();
@@ -188,8 +191,8 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
     }
   }
 
-  const repository = await resolveRepository(context.run, context.root);
-  const sha = await resolveShortSha(context.run, context.root);
+  const repository = await resolveRepository(context.run, context.git, context.root);
+  const sha = await resolveShortSha(context.git, context.root);
   const selection = await selectBacklog(flags, context);
 
   const resumed: number[] = [];
@@ -213,12 +216,13 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   const numbers = new Set(issues.map((issue) => issue.number));
   const inProgress = await detectInProgress({
     defaultBranch: repository.defaultBranch,
+    git: context.git,
     numbers,
     root: context.root,
-    run: context.run,
   });
   const crossReferences = await findCrossReferences({
-    defaultBranch: await resolveLogRef(context.run, context.root, repository.defaultBranch),
+    defaultBranch: await resolveLogRef(context.git, context.root, repository.defaultBranch),
+    git: context.git,
     issues,
     nameWithOwner: repository.nameWithOwner,
     root: context.root,
@@ -282,7 +286,7 @@ async function runComment(flags: ParsedFlags, context: CommandContext): Promise<
   }
   const children = childrenValue?.split(',').map((child) => parsePositiveInteger('children', child.trim()));
 
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   const reply = decidedBy === 'bulk' ? undefined : readReply(paths, run, number);
   if (decidedBy !== 'bulk' && reply === undefined) {
     throw new CommandError('missing-reply', `run "${run}" does not have a valid reply file for #${number}`);
@@ -317,7 +321,7 @@ async function runDigest(flags: ParsedFlags, context: CommandContext): Promise<C
     );
   }
 
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   const ledger = readLedger(paths.ledgerFile);
   const latest = new Map<number, AssessmentRecord>();
   for (const record of ledger.records) {
@@ -349,7 +353,7 @@ async function runDraft(flags: ParsedFlags, context: CommandContext): Promise<Co
   const number = parsePositiveInteger('number', readRequired(flags, 'number'));
   const out = path.resolve(context.root, readRequired(flags, 'out'));
 
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   const reply = readReply(paths, run, number);
   if (reply === undefined) {
     throw new CommandError('missing-reply', `run "${run}" does not have a valid reply file for #${number}`);
@@ -421,9 +425,9 @@ async function runIngest(flags: ParsedFlags, context: CommandContext): Promise<C
   }
 
   const policyClass = classify(reply, { inProgress, umbrella });
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   const assessedAt = toSeconds(context.now);
-  const sha = await resolveShortSha(context.run, context.root);
+  const sha = await resolveShortSha(context.git, context.root);
 
   const replyFile = buildReplyPath(paths, run, reply.number);
   mkdirSync(path.dirname(replyFile), { recursive: true });
@@ -479,7 +483,7 @@ async function runRecord(flags: ParsedFlags, context: CommandContext): Promise<C
     return { run, ...value, recordedAt: value.recordedAt ?? timestamp };
   });
 
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   appendRecords(paths.ledgerFile, records);
   return { ok: true, appended: records.length, ledger: paths.ledgerFile };
 }
@@ -612,13 +616,8 @@ async function readStdin(): Promise<string> {
 }
 
 /** Returns the ref whose log the cross-reference pass reads: the remote's default branch when it is fetched. */
-async function resolveLogRef(run: CommandRunner, root: string, defaultBranch: string): Promise<string> {
-  try {
-    await run('git', ['rev-parse', '--verify', '--quiet', `refs/remotes/origin/${defaultBranch}`], root);
-    return `origin/${defaultBranch}`;
-  } catch {
-    return defaultBranch;
-  }
+async function resolveLogRef(git: BacklogGit, root: string, defaultBranch: string): Promise<string> {
+  return (await git.hasRef(root, `refs/remotes/origin/${defaultBranch}`)) ? `origin/${defaultBranch}` : defaultBranch;
 }
 
 /** Selects the backlog by `--scope`, `--exclude-label`, and `--older-than`, in sweep order, capped by `--limit`. */

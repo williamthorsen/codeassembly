@@ -5,8 +5,8 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import type { BacklogGit } from './git.ts';
 import { type LedgerRecord, LedgerRecordSchema } from './schemas.ts';
-import type { CommandRunner } from './types.ts';
 
 /** The ledger's directory, relative to the primary worktree. */
 export const LEDGER_DIR = path.join('local', 'ticket-triage');
@@ -69,8 +69,8 @@ export function readLedger(ledgerFile: string): { defects: LedgerDefect[]; recor
  * Resolves the ledger's paths from any worktree of the repository at `root`: The git common directory belongs to the
  * primary worktree, whose root is its parent.
  */
-export async function resolveLedgerPaths(run: CommandRunner, root: string): Promise<LedgerPaths> {
-  const commonDir = path.resolve(root, (await run('git', ['rev-parse', '--git-common-dir'], root)).trim());
+export async function resolveLedgerPaths(git: BacklogGit, root: string): Promise<LedgerPaths> {
+  const commonDir = await git.findCommonDir(root);
   const base = path.join(path.dirname(commonDir), LEDGER_DIR);
   return { assessmentsDir: path.join(base, 'assessments'), ledgerFile: path.join(base, 'ledger.jsonl') };
 }

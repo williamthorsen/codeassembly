@@ -1,11 +1,13 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import type { BacklogGit } from '../../groom-backlog/git.ts';
 import { buildFakeRunner, type RunnerCall } from '../../test-utils/fake-runner.ts';
+import { makeFakeBacklogGit } from '../../test-utils/make-fake-backlog-git.ts';
 import { type CommandContext, runCli } from '../cli.ts';
 
 const NOW = new Date('2026-10-01T12:00:00Z');
@@ -29,11 +31,10 @@ describe(runCli, () => {
   let root: string;
   let context: CommandContext;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     root = mkdtempSync(path.join(tmpdir(), 'pull-cli-'));
-    await mkdir(path.join(root, '.git'));
-    const runner = buildFakeRunner((call) => respond(call, root));
-    context = { now: NOW, root, run: runner.run };
+    const runner = buildFakeRunner(respond);
+    context = { git: makeFakeRepository(root), now: NOW, root, run: runner.run };
   });
 
   afterEach(async () => {
@@ -201,20 +202,21 @@ function policy(recordedAt: string): Record<string, unknown> {
   return { run: 'groom', kind: 'policy', decisions: {}, decidedBy: 'user', recordedAt };
 }
 
-/** Answers the fake runner's calls. */
-function respond(call: RunnerCall, root: string): string | undefined {
+/** Builds a git adapter answering for a repository at `root` on `main`, with ticket 13's branch two commits ahead. */
+function makeFakeRepository(root: string): BacklogGit {
+  return makeFakeBacklogGit({
+    commitsAhead: { 'refs/heads/main..refs/heads/13-branch': 2 },
+    commonDir: path.join(root, '.git'),
+    originHead: 'main',
+    shortSha: 'abc1234',
+    tips: { 'refs/heads/main': '2026-09-30T00:00:00Z', 'refs/heads/13-branch': '2026-09-01T00:00:00Z' },
+    worktrees: [{ branchRef: 'refs/heads/main', path: root }],
+  });
+}
+
+/** Answers the fake runner's `gh` calls. */
+function respond(call: RunnerCall): string | undefined {
   const [first, second] = call.args;
-  if (call.command === 'git') {
-    if (first === 'rev-parse' && second === '--git-common-dir') return path.join(root, '.git');
-    if (first === 'rev-parse' && second === '--short') return 'abc1234\n';
-    if (first === 'symbolic-ref') return 'refs/remotes/origin/main\n';
-    if (first === 'for-each-ref') {
-      return 'refs/heads/main\t2026-09-30T00:00:00Z\nrefs/heads/13-branch\t2026-09-01T00:00:00Z\n';
-    }
-    if (first === 'worktree') return `worktree ${root}\nHEAD abc\nbranch refs/heads/main\n`;
-    if (first === 'rev-list') return '2\n';
-    return undefined;
-  }
   if (first === 'repo') return JSON.stringify({ nameWithOwner: 'owner/repo', defaultBranchRef: { name: 'main' } });
   if (first === 'api' && second === 'user') return 'me\n';
   if (first === 'api') return JSON.stringify([MILESTONES]);

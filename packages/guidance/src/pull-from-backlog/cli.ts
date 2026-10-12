@@ -21,6 +21,7 @@ import {
   resolveShortSha,
   runCommand,
 } from '../groom-backlog/fetch.ts';
+import { type BacklogGit, realGit } from '../groom-backlog/git.ts';
 import { detectInProgress } from '../groom-backlog/in-progress.ts';
 import { appendRecords, readLedger, resolveLedgerPaths } from '../groom-backlog/ledger.ts';
 import type { LedgerRecord } from '../groom-backlog/schemas.ts';
@@ -32,6 +33,7 @@ import { buildSurvey } from './survey.ts';
 
 /** Everything a command reads from its environment, injected so that tests can supply fixtures. */
 export interface CommandContext {
+  git: BacklogGit;
   now: Date;
   root: string;
   run: CommandRunner;
@@ -67,7 +69,12 @@ class CommandError extends Error {
 /** Executes the helper from `process.argv` and writes the JSON result to stdout. */
 async function main(): Promise<void> {
   try {
-    const result = await runCli(process.argv.slice(2), { now: new Date(), root: process.cwd(), run: runCommand });
+    const result = await runCli(process.argv.slice(2), {
+      git: realGit,
+      now: new Date(),
+      root: process.cwd(),
+      run: runCommand,
+    });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
     process.stderr.write(`pull-from-backlog: ${describeError(error)}\n`);
@@ -112,10 +119,10 @@ async function runRecord(flags: ParsedFlags, context: CommandContext): Promise<C
     run: `${PULL_RUN_PREFIX}${recordedAt.slice(0, 10)}`,
     kind: 'pull',
     picked,
-    sha: await resolveShortSha(context.run, context.root),
+    sha: await resolveShortSha(context.git, context.root),
     recordedAt,
   };
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   appendRecords(paths.ledgerFile, [record]);
   return { ok: true, record, ledger: paths.ledgerFile };
 }
@@ -129,17 +136,17 @@ async function runSurvey(flags: ParsedFlags, context: CommandContext): Promise<C
   if (nowFlag === '') throw new CommandError('invalid-args', '--now must name a milestone');
   const config = await readPullConfig(context.root);
 
-  const paths = await resolveLedgerPaths(context.run, context.root);
+  const paths = await resolveLedgerPaths(context.git, context.root);
   const ledger = readLedger(paths.ledgerFile);
-  const repository = await resolveRepository(context.run, context.root);
+  const repository = await resolveRepository(context.run, context.git, context.root);
   const open = await fetchOpenIssues(context.run, context.root);
   const milestones = await fetchMilestones(context.run, context.root);
   const user = (await context.run('gh', ['api', 'user', '--jq', '.login'], context.root)).trim();
   const inProgress = await detectInProgress({
     defaultBranch: repository.defaultBranch,
+    git: context.git,
     numbers: new Set(open.map((issue) => issue.number)),
     root: context.root,
-    run: context.run,
   });
 
   const survey = buildSurvey({

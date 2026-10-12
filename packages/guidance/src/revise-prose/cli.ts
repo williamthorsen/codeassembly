@@ -27,6 +27,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { DEFAULT_BATCH_BUDGET, planBatches } from './batch.ts';
 import { collectProse, extractFileProse, NotARepositoryError } from './collect-prose.ts';
+import { realGit, type ReviseProseGit } from './git.ts';
 import {
   applyRejections,
   composeRecord,
@@ -159,11 +160,14 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  *
  * @internal - Exported to allow testing.
  */
-export async function runDetect(input: {
-  argv: readonly string[];
-  root: string;
-  home?: string;
-}): Promise<DetectResult> {
+export async function runDetect(
+  input: {
+    argv: readonly string[];
+    root: string;
+    home?: string;
+  },
+  git: ReviseProseGit = realGit,
+): Promise<DetectResult> {
   let args: ParsedArgs;
   try {
     args = parseArgs(input.argv);
@@ -189,6 +193,7 @@ export async function runDetect(input: {
     const { scannedFiles, skipped, spans } = await collectProse({
       root: input.root,
       paths: args.paths,
+      git,
       ...(input.home !== undefined && { home: input.home }),
     });
 

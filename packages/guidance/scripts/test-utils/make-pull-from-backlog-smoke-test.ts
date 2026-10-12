@@ -10,6 +10,9 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 /**
  * Builds a throwaway git repository with one commit and returns an invocation that records one pull in its ledger.
  * Exercises the commit lookup, the ledger's resolution through git, and its first append, none of which needs `gh`.
+ * The invocation runs the shipped bundle end to end, which cannot take a fake git adapter, so the bundle's real
+ * adapter needs a real repository to read. Its commit disables automatic maintenance, whose background run can outlive the
+ * fixture's directory.
  */
 export function makePullFromBacklogSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'pull-from-backlog-smoke-'));
@@ -17,6 +20,10 @@ export function makePullFromBacklogSmokeTest(): SmokeTestInvocation {
   execFileSync('git', [
     '-C',
     fixtureDir,
+    '-c',
+    'gc.auto=0',
+    '-c',
+    'maintenance.auto=false',
     '-c',
     'user.name=Smoke',
     '-c',

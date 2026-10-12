@@ -8,7 +8,8 @@ import path from 'node:path';
 
 import { extractTicketId } from '../derive-session-context/extract-ticket-id.ts';
 import { sanitizeBranch } from '../shared/branch-helpers.ts';
-import type { CommandRunner, InProgress, InProgressSignal } from './types.ts';
+import type { BacklogGit, Worktree } from './git.ts';
+import type { InProgress, InProgressSignal } from './types.ts';
 
 const HEADS_PREFIX = 'refs/heads/';
 const REMOTES_PREFIX = 'refs/remotes/';
@@ -27,18 +28,12 @@ interface Candidate {
 /** Returns the in-progress signal for each of `numbers` that has one. */
 export async function detectInProgress(input: {
   defaultBranch: string;
+  git: BacklogGit;
   numbers: ReadonlySet<number>;
   root: string;
-  run: CommandRunner;
 }): Promise<Map<number, InProgress>> {
-  const { defaultBranch, numbers, root, run } = input;
-  const tips = parseRefs(
-    await run(
-      'git',
-      ['for-each-ref', '--format=%(refname)%09%(committerdate:iso-strict)', HEADS_PREFIX, REMOTES_PREFIX],
-      root,
-    ),
-  );
+  const { defaultBranch, git, numbers, root } = input;
+  const tips = await git.listBranchTips(root);
   /** Returns the full ref of the default branch against which a branch's commits ahead are counted. */
   function resolveBase(ref: string): string | undefined {
     const remote = ref.startsWith(REMOTES_PREFIX) ? ref.slice(REMOTES_PREFIX.length).split('/', 1)[0] : undefined;
@@ -50,7 +45,7 @@ export async function detectInProgress(input: {
   }
 
   const candidates = [
-    ...readManifestCandidates(await run('git', ['worktree', 'list', '--porcelain'], root)),
+    ...readManifestCandidates(await git.listWorktrees(root)),
     ...readBranchCandidates(tips, defaultBranch),
   ];
 
@@ -63,10 +58,7 @@ export async function detectInProgress(input: {
   const signals = new Map<number, InProgress>();
   for (const [number, candidate] of found) {
     const base = resolveBase(candidate.ref);
-    const commitsAhead =
-      base === undefined
-        ? 0
-        : Number((await run('git', ['rev-list', '--count', `${base}..${candidate.ref}`], root)).trim());
+    const commitsAhead = base === undefined ? 0 : await git.countCommitsAhead(root, base, candidate.ref);
     signals.set(number, {
       commitsAhead,
       lastCommitAt: tips.get(candidate.ref) ?? candidate.lastCommitAt,
@@ -102,12 +94,10 @@ function readBranchCandidates(tips: ReadonlyMap<string, string>, defaultBranch: 
 }
 
 /** Returns the manifest candidates of every worktree whose branch manifest names a numeric ticket. */
-function readManifestCandidates(porcelain: string): Candidate[] {
+function readManifestCandidates(worktrees: readonly Worktree[]): Candidate[] {
   const result: Candidate[] = [];
-  for (const block of porcelain.split('\n\n')) {
-    const worktree = /^worktree (.+)$/m.exec(block)?.[1];
-    const branchRef = /^branch (.+)$/m.exec(block)?.[1];
-    if (worktree === undefined || branchRef?.startsWith(HEADS_PREFIX) !== true) continue;
+  for (const { branchRef, path: worktree } of worktrees) {
+    if (branchRef?.startsWith(HEADS_PREFIX) !== true) continue;
     const branch = branchRef.slice(HEADS_PREFIX.length);
     const number = readManifestTicket(worktree, branch);
     if (number === undefined) continue;
@@ -132,16 +122,6 @@ function readManifestTicket(worktree: string, branch: string): number | undefine
   } catch {
     return undefined;
   }
-}
-
-/** Parses `for-each-ref` output into each ref's tip commit date, by full ref name. */
-function parseRefs(output: string): Map<string, string> {
-  const tips = new Map<string, string>();
-  for (const line of output.split('\n')) {
-    const [ref, date] = line.split('\t', 2);
-    if (ref !== undefined && ref !== '' && date !== undefined) tips.set(ref, date);
-  }
-  return tips;
 }
 
 /** Returns a ticket id as a GitHub issue number, or `undefined` when it is not numeric. */

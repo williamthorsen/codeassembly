@@ -1,9 +1,10 @@
-/** Reads the repository's identity, its issues, pull requests, and milestones through `gh` and `git`. */
+/** Reads the repository's identity, its issues, pull requests, and milestones through `gh` and the git adapter. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { z } from 'zod';
 
+import type { BacklogGit } from './git.ts';
 import type { CommandRunner, Issue } from './types.ts';
 
 const execFileAsync = promisify(execFile);
@@ -117,11 +118,11 @@ export function parseIssueList(json: unknown): Issue[] {
  * Resolves the repository's GitHub name and default branch. The default branch is read from `origin/HEAD` first,
  * which costs no API call, and from GitHub when the remote does not record one.
  */
-export async function resolveRepository(run: CommandRunner, root: string): Promise<RepositoryInfo> {
+export async function resolveRepository(run: CommandRunner, git: BacklogGit, root: string): Promise<RepositoryInfo> {
   const view = RepoViewSchema.parse(
     JSON.parse(await run('gh', ['repo', 'view', '--json', 'nameWithOwner,defaultBranchRef'], root)),
   );
-  const fromOrigin = await readOriginHead(run, root);
+  const fromOrigin = await git.findOriginHead(root);
   const defaultBranch = fromOrigin ?? view.defaultBranchRef?.name;
   if (defaultBranch === undefined || defaultBranch === '') {
     throw new Error('could not resolve the default branch from origin/HEAD or from GitHub');
@@ -130,22 +131,11 @@ export async function resolveRepository(run: CommandRunner, root: string): Promi
 }
 
 /** Resolves the short SHA of `HEAD`. */
-export async function resolveShortSha(run: CommandRunner, root: string): Promise<string> {
-  return (await run('git', ['rev-parse', '--short', 'HEAD'], root)).trim();
+export async function resolveShortSha(git: BacklogGit, root: string): Promise<string> {
+  return git.findShortSha(root);
 }
 
 // region | Helpers
-
-/** Returns the branch to which `origin/HEAD` points, or `undefined` when the remote does not record one. */
-async function readOriginHead(run: CommandRunner, root: string): Promise<string | undefined> {
-  try {
-    const ref = (await run('git', ['symbolic-ref', '--quiet', 'refs/remotes/origin/HEAD'], root)).trim();
-    const prefix = 'refs/remotes/origin/';
-    return ref.startsWith(prefix) ? ref.slice(prefix.length) : undefined;
-  } catch {
-    return undefined;
-  }
-}
 
 /** Maps a parsed `gh` issue onto `Issue`, reducing each relation to issue numbers. */
 function toIssue(issue: z.infer<typeof IssueSchema>): Issue {

@@ -9,7 +9,9 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
  * Builds a throwaway git repository containing one Markdown file with one known site, and returns an
- * invocation that sweeps it. Exercises the git listing, the prose extraction, and the detection pipeline.
+ * invocation that sweeps it. Exercises the git listing, the prose extraction, and the detection pipeline. The
+ * invocation runs the shipped bundle end to end, which cannot take a fake git adapter, so the bundle's real adapter
+ * needs a real repository to read.
  */
 export function makeReviseProseSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'revise-prose-smoke-'));
