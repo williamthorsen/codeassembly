@@ -1,8 +1,8 @@
 import type { AgentsGit } from '../git.ts';
 
 /**
- * The fixed answers of a fake git adapter. An omitted field answers as git does outside any repository; a function
- * field answers per argument.
+ * The fixed answers of a fake git adapter. An omitted field gives callers the answer that they receive outside any
+ * repository; a function field answers per argument.
  */
 export interface FakeGitAnswers {
   /** Whether `HEAD` is an ancestor of the default branch, per working directory. */
