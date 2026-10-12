@@ -57,6 +57,7 @@ members:
     - summarize-chat
     - systematic-debugging
     - testing-conventions
+    - triage-spike-findings
     - typescript-testing-conventions
     - update-project-guidance
     - upgrade-dependencies
