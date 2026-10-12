@@ -1,11 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { composeManifest } from '../compose-manifest.ts';
+import type { ProjectStage } from '../read-project-stage.ts';
 import type { ResolvedPreferences } from '../types.ts';
 
 const NOW = new Date('2026-05-26T02:07:41Z');
 const HOME = '/Users/test';
 const CWD = '/Users/test/repos/codeassembly';
+
+const NO_STAGE: ProjectStage = { maturity: null, sensitivity: null, users: null };
 
 const DEFAULT_PATHS = { chats: 'chats', devlogs: 'devlogs', plans: 'plans' };
 
@@ -17,6 +20,7 @@ describe(composeManifest, () => {
     const prefs: ResolvedPreferences = { project: { slug: 'configs-macos' } };
     const manifest = composeManifest({
       preferences: prefs,
+      projectStage: NO_STAGE,
       branchName: 'MAC-130/agents/feat/branch-manifest',
       cwd: CWD,
       home: HOME,
@@ -28,9 +32,21 @@ describe(composeManifest, () => {
     expect(manifest.branch_name).toBe('MAC-130/agents/feat/branch-manifest');
   });
 
+  it('reports the project stage, null for each undeclared value', () => {
+    const base = { preferences: {}, branchName: 'main', cwd: CWD, home: HOME, now: NOW };
+    const undeclared = composeManifest({ ...base, projectStage: NO_STAGE });
+    expect(undeclared).toMatchObject({ project_maturity: null, project_sensitivity: null, project_users: null });
+    const declared = composeManifest({
+      ...base,
+      projectStage: { maturity: 'hobby', sensitivity: 'low', users: 'owner' },
+    });
+    expect(declared).toMatchObject({ project_maturity: 'hobby', project_sensitivity: 'low', project_users: 'owner' });
+  });
+
   it('2: simple branch with description', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'example-project' } },
+      projectStage: NO_STAGE,
       branchName: 'PT-456/fix/login-redirect',
       cwd: CWD,
       home: HOME,
@@ -43,6 +59,7 @@ describe(composeManifest, () => {
   it('3: lowercase ticket ID is normalized to uppercase', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'configs-macos' } },
+      projectStage: NO_STAGE,
       branchName: 'mac-147',
       cwd: CWD,
       home: HOME,
@@ -55,6 +72,7 @@ describe(composeManifest, () => {
   it('4: non-ticket branch produces null ticket fields', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'example-project' } },
+      projectStage: NO_STAGE,
       branchName: 'experiment/try-new-parser',
       cwd: CWD,
       home: HOME,
@@ -67,6 +85,7 @@ describe(composeManifest, () => {
   it('5: underscore-separated branch is equivalent to slash-separated', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'configs-macos' } },
+      projectStage: NO_STAGE,
       branchName: 'MAC-130_agents_feat_branch-manifest',
       cwd: CWD,
       home: HOME,
@@ -78,6 +97,7 @@ describe(composeManifest, () => {
   it('6: sub-ticket suffix is dropped from ticket_id but preserved in branch_name', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'example-project' } },
+      projectStage: NO_STAGE,
       branchName: 'NMR-567.2/fix/regression',
       cwd: CWD,
       home: HOME,
@@ -90,6 +110,7 @@ describe(composeManifest, () => {
   it('7: ticket-ID-only branch', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'example-project' } },
+      projectStage: NO_STAGE,
       branchName: 'MAC-200',
       cwd: CWD,
       home: HOME,
@@ -102,6 +123,7 @@ describe(composeManifest, () => {
   it('8: single-letter prefix is not a valid ticket ID', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'example-project' } },
+      projectStage: NO_STAGE,
       branchName: 'a-1-test',
       cwd: CWD,
       home: HOME,
@@ -114,6 +136,7 @@ describe(composeManifest, () => {
   it('9: bare-numeric branch with configured Jira-style prefix', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'configs-macos', ticket_ref_prefix: 'MAC-' } },
+      projectStage: NO_STAGE,
       branchName: '147/feat/improve-parser',
       cwd: CWD,
       home: HOME,
@@ -126,6 +149,7 @@ describe(composeManifest, () => {
   it('10: bare-numeric branch without configured prefix returns the bare number', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'example-project' } },
+      projectStage: NO_STAGE,
       branchName: '42_fix_login-redirect',
       cwd: CWD,
       home: HOME,
@@ -138,6 +162,7 @@ describe(composeManifest, () => {
   it('11: bare-numeric branch with # display prefix', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'codeassembly', ticket_ref_prefix: '#' } },
+      projectStage: NO_STAGE,
       branchName: '152',
       cwd: CWD,
       home: HOME,
@@ -150,6 +175,7 @@ describe(composeManifest, () => {
   it('12: author-prefixed lowercase branch', () => {
     const manifest = composeManifest({
       preferences: { project: { slug: 'configs-macos' } },
+      projectStage: NO_STAGE,
       branchName: 'wt/mac-130',
       cwd: CWD,
       home: HOME,
@@ -166,6 +192,7 @@ describe(composeManifest, () => {
         project: { slug: 'myproject' },
         artifacts: { base_dir: 'ai-artifacts' },
       },
+      projectStage: NO_STAGE,
       branchName: 'MAC-200/feat/new-feature',
       cwd,
       home: HOME,
@@ -178,6 +205,7 @@ describe(composeManifest, () => {
     it('defaults scm to github when not configured', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: HOME,
@@ -189,6 +217,7 @@ describe(composeManifest, () => {
     it('defaults default_branch to origin/main when the preferences do not configure a remote', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: HOME,
@@ -203,6 +232,7 @@ describe(composeManifest, () => {
           project: { slug: 'x' },
           repository: { default_remote: { name: 'upstream', default_branch: 'trunk' } },
         },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: HOME,
@@ -214,6 +244,7 @@ describe(composeManifest, () => {
     it('falls back to repository.slug then to working-dir basename for project_slug', () => {
       const fromRepo = composeManifest({
         preferences: { repository: { slug: 'repo-slug' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: '/anything',
         home: HOME,
@@ -223,6 +254,7 @@ describe(composeManifest, () => {
 
       const fromCwd = composeManifest({
         preferences: {},
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: '/Users/test/repos/codeassembly',
         home: HOME,
@@ -234,6 +266,7 @@ describe(composeManifest, () => {
     it('expands ~ in artifact base_dir against home', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' }, artifacts: { base_dir: '~/custom-artifacts' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: '/Users/test',
@@ -245,6 +278,7 @@ describe(composeManifest, () => {
     it('defaults artifact base_dir to ~/ai-artifacts when not configured', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: '/Users/test',
@@ -256,6 +290,7 @@ describe(composeManifest, () => {
     it('defaults artifact_paths and merges configured overrides', () => {
       const withDefaults = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: HOME,
@@ -268,6 +303,7 @@ describe(composeManifest, () => {
           project: { slug: 'x' },
           artifacts: { paths: { chats: 'transcripts' } },
         },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: HOME,
@@ -279,6 +315,7 @@ describe(composeManifest, () => {
     it('emits created_at as an ISO 8601 UTC string trimmed to seconds', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: HOME,
@@ -290,6 +327,7 @@ describe(composeManifest, () => {
     it('seeds ticket_url and pr_url to null on a fresh compose', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'main',
         cwd: CWD,
         home: HOME,
@@ -304,6 +342,7 @@ describe(composeManifest, () => {
     it('constructs ticket_url from base_url and a Jira-style ticket id', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse/' } },
+        projectStage: NO_STAGE,
         branchName: 'MAC-130/feat/x',
         cwd: CWD,
         home: HOME,
@@ -319,6 +358,7 @@ describe(composeManifest, () => {
           project: { slug: 'x', ticket_ref_prefix: '#' },
           ticket: { base_url: 'https://github.com/owner/repo/issues/' },
         },
+        projectStage: NO_STAGE,
         branchName: '152',
         cwd: CWD,
         home: HOME,
@@ -331,6 +371,7 @@ describe(composeManifest, () => {
     it('normalizes the base/id boundary to one slash when the base lacks a trailing slash', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse' } },
+        projectStage: NO_STAGE,
         branchName: 'MAC-130',
         cwd: CWD,
         home: HOME,
@@ -342,6 +383,7 @@ describe(composeManifest, () => {
     it('leaves ticket_url null when the preferences do not configure a base_url', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'MAC-130',
         cwd: CWD,
         home: HOME,
@@ -354,6 +396,7 @@ describe(composeManifest, () => {
     it('leaves ticket_url null when a base_url is set but a ticket id cannot be derived from the branch', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse/' } },
+        projectStage: NO_STAGE,
         branchName: 'experiment/no-ticket',
         cwd: CWD,
         home: HOME,
@@ -367,6 +410,7 @@ describe(composeManifest, () => {
     it('leaves ticket_url null for a PR-sentinel id even when a base_url is configured', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' }, ticket: { base_url: 'https://org.atlassian.net/browse/' } },
+        projectStage: NO_STAGE,
         branchName: 'PR-123',
         cwd: CWD,
         home: HOME,
@@ -382,6 +426,7 @@ describe(composeManifest, () => {
     it('constructs a GitHub pr_url from a PR-<n> identity and an SSH remote', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'PR-950',
         cwd: CWD,
         home: HOME,
@@ -395,6 +440,7 @@ describe(composeManifest, () => {
     it('constructs a GitHub pr_url from an HTTPS remote, stripping the .git suffix', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'PR-42',
         cwd: CWD,
         home: HOME,
@@ -407,6 +453,7 @@ describe(composeManifest, () => {
     it('uses the Bitbucket URL shape when scm is bitbucket', () => {
       const manifest = composeManifest({
         preferences: { scm: 'bitbucket', project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'PR-7',
         cwd: CWD,
         home: HOME,
@@ -419,6 +466,7 @@ describe(composeManifest, () => {
     it('leaves pr_url null for a non-PR identity even when a remote is present', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'MAC-130',
         cwd: CWD,
         home: HOME,
@@ -431,6 +479,7 @@ describe(composeManifest, () => {
     it('leaves pr_url null for a PR identity when the remote URL is unknown', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'PR-950',
         cwd: CWD,
         home: HOME,
@@ -443,6 +492,7 @@ describe(composeManifest, () => {
     it('leaves pr_url null when the remote cannot be parsed to owner/repo', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
         branchName: 'PR-950',
         cwd: CWD,
         home: HOME,

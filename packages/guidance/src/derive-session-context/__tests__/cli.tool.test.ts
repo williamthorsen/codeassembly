@@ -276,6 +276,28 @@ describe(deriveSessionContext, () => {
     expect(recomposed.pr_url).toBeNull();
   });
 
+  it('reports the project stage declared in the project file and null for each undeclared value', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n  maturity: hobby\n  users: owner\n');
+    const manifest = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
+    expect(manifest).toMatchObject({ project_maturity: 'hobby', project_sensitivity: null, project_users: 'owner' });
+  });
+
+  it('ignores a project stage declared only in the global preferences file', async () => {
+    const projectDir = path.join(workDir, 'project');
+    const homeDir = path.join(workDir, 'home');
+    await writeProjectPrefs(projectDir, 'project:\n  slug: my-project\n');
+    await writeProjectPrefs(homeDir, 'project:\n  maturity: production\n  sensitivity: confidential\n');
+    const manifest = await deriveSessionContext({ cwd: projectDir, branch: WORKING_BRANCH, now: NOW, home: homeDir });
+    expect(manifest).toMatchObject({ project_maturity: null, project_sensitivity: null, project_users: null });
+  });
+
+  it('rejects a project stage value outside its set, naming the key', async () => {
+    await writeProjectPrefs(workDir, 'project:\n  maturity: prod\n');
+    await expect(
+      deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir }),
+    ).rejects.toThrow(/'project\.maturity' must be one of "hobby", "early", "production"/);
+  });
+
   it('returns ticket_base_url and constructs ticket_url from preferences', async () => {
     await writeProjectPrefs(
       workDir,
