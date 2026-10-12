@@ -27,30 +27,26 @@ export interface FakeGitAnswers {
 export function makeFakeGit(answers: FakeGitAnswers = {}): AgentsGit {
   const { headFiles, remotes } = answers;
   return {
-    checkIgnored: async (_cwd, filePath) =>
-      typeof answers.ignored === 'function' ? answers.ignored(filePath) : answers.ignored,
-    findTopLevel: async () => answers.topLevel,
+    checkIgnored: (_cwd, filePath) =>
+      Promise.resolve(typeof answers.ignored === 'function' ? answers.ignored(filePath) : answers.ignored),
+    findTopLevel: () => Promise.resolve(answers.topLevel),
     hasHeadCommit: () => headFiles !== undefined,
-    isAncestor: async (cwd) =>
-      typeof answers.ancestor === 'function' ? answers.ancestor(cwd) : (answers.ancestor ?? false),
+    isAncestor: (cwd) =>
+      Promise.resolve(typeof answers.ancestor === 'function' ? answers.ancestor(cwd) : (answers.ancestor ?? false)),
     listHeadFiles: () => {
       if (headFiles === undefined) throw new Error('fake git: HEAD is not a commit');
       return Object.keys(headFiles);
     },
-    listRemotes: async () => {
-      if (remotes instanceof Error) throw remotes;
-      return Object.keys(remotes ?? {});
-    },
+    listRemotes: () =>
+      remotes instanceof Error ? Promise.reject(remotes) : Promise.resolve(Object.keys(remotes ?? {})),
     readHeadBlob: (_cwd, relativePath) => {
       const contents = headFiles?.[relativePath];
       return contents === undefined ? undefined : Buffer.from(contents);
     },
-    readHeadCommit: async () => answers.headCommit,
-    readRemoteUrl: async (_cwd, name) => {
-      if (remotes instanceof Error) throw remotes;
-      return remotes?.[name];
-    },
-    readSymbolicRef: async (_cwd, ref) => (ref === 'origin/HEAD' ? answers.originHead : undefined),
-    verifyRef: async (_cwd, ref) => answers.verifiedRefs?.includes(ref) ?? false,
+    readHeadCommit: () => Promise.resolve(answers.headCommit),
+    readRemoteUrl: (_cwd, name) =>
+      remotes instanceof Error ? Promise.reject(remotes) : Promise.resolve(remotes?.[name]),
+    readSymbolicRef: (_cwd, ref) => Promise.resolve(ref === 'origin/HEAD' ? answers.originHead : undefined),
+    verifyRef: (_cwd, ref) => Promise.resolve(answers.verifiedRefs?.includes(ref) ?? false),
   };
 }
