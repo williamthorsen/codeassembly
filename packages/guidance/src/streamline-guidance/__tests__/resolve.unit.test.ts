@@ -1,4 +1,3 @@
-import { execFileSync } from 'node:child_process';
 import { mkdir, mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -7,11 +6,12 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runResolve } from '../cli.ts';
 import { RECORD_PATH } from '../record.ts';
+import { makeFakeGit } from '../test-utils/make-fake-git.ts';
 import type { HelperFailure, ResolveSuccess } from '../types.ts';
 
 const TARGET = 'lib/skills/demo/SKILL.md';
 
-/** A repository containing one content root, whose skill includes a partial that includes and links onward. */
+/** A repository's committed files: one content root, whose skill includes a partial that includes and links onward. */
 const REPOSITORY_FILES: Readonly<Record<string, string>> = {
   '.agents/preferences.yaml': 'artifacts:\n  base_dir: artifacts\n',
   'AGENTS.md':
@@ -55,6 +55,10 @@ const HOME_FILES: Readonly<Record<string, string>> = {
 };
 
 describe(runResolve, () => {
+  /** Files that git reports as modified, staged, or untracked. */
+  let changed: string[];
+  /** Files that git lists as tracked, or as untracked and not ignored. */
+  let files: string[];
   let home: string;
   let repository: string;
   let scratch: string;
@@ -73,20 +77,8 @@ describe(runResolve, () => {
         ]),
       ),
     );
-    execFileSync('git', ['-C', repository, 'init', '--quiet']);
-    execFileSync('git', ['-C', repository, 'add', '--all']);
-    execFileSync('git', [
-      '-C',
-      repository,
-      '-c',
-      'user.email=test@example.com',
-      '-c',
-      'user.name=Test',
-      'commit',
-      '--quiet',
-      '--message',
-      'seed',
-    ]);
+    files = Object.keys(REPOSITORY_FILES);
+    changed = [];
   });
 
   afterEach(async () => {
@@ -147,7 +139,7 @@ describe(runResolve, () => {
   });
 
   it('rejects a file beneath a named directory whose include does not resolve, and resolves the others', async () => {
-    await writeFiles(repository, {
+    await changeFiles({
       'lib/notes/README.md': [
         '<!-- include: ../_partials/inner.md / -->',
         '',
@@ -175,8 +167,7 @@ describe(runResolve, () => {
   });
 
   it('marks only a file with uncommitted changes as dirty', async () => {
-    await writeFile(path.join(repository, 'lib/_partials/shared.md'), 'Shared text.\n', 'utf8');
-    execFileSync('git', ['-C', repository, 'add', 'lib/_partials/shared.md']);
+    await changeFiles({ 'lib/_partials/shared.md': 'Shared text.\n' });
 
     const result = expectSuccess(await resolve('lib/_partials/shared.md', 'lib/_partials/inner.md', 'AGENTS.md'));
 
@@ -188,9 +179,8 @@ describe(runResolve, () => {
   });
 
   it('reports only the declined cuts whose phrase their file still contains', async () => {
-    await writeFile(
-      path.join(repository, RECORD_PATH),
-      [
+    await changeFiles({
+      [RECORD_PATH]: [
         'declined:',
         '  - file: lib/_partials/shared.md',
         '    phrase: Shared   text.',
@@ -202,8 +192,7 @@ describe(runResolve, () => {
         '    declined-at: 2026-09-01',
         '',
       ].join('\n'),
-      'utf8',
-    );
+    });
 
     const result = expectSuccess(await resolve(TARGET));
 
@@ -213,11 +202,15 @@ describe(runResolve, () => {
   });
 
   it("reports a reviewed file's last review, and omits it for a file that the record does not review", async () => {
-    await writeFile(
-      path.join(repository, RECORD_PATH),
-      ['reviewed:', `  - file: ${TARGET}`, '    reviewed-at: 2026-09-01', '    deployed-bytes: 512', ''].join('\n'),
-      'utf8',
-    );
+    await changeFiles({
+      [RECORD_PATH]: [
+        'reviewed:',
+        `  - file: ${TARGET}`,
+        '    reviewed-at: 2026-09-01',
+        '    deployed-bytes: 512',
+        '',
+      ].join('\n'),
+    });
 
     const result = expectSuccess(await resolve(TARGET));
 
@@ -228,7 +221,7 @@ describe(runResolve, () => {
   describe('deployed bytes', () => {
     it("reports a document's deployed bytes as the size of its body once its includes are expanded", async () => {
       const source = ['xy', '', '<!-- include: ../../_partials/tiny.md / -->', ''].join('\n');
-      await writeFiles(repository, { 'lib/_partials/tiny.md': 'ab\n', 'lib/skills/sized/SKILL.md': source });
+      await changeFiles({ 'lib/_partials/tiny.md': 'ab\n', 'lib/skills/sized/SKILL.md': source });
 
       const result = expectSuccess(await resolve('lib/skills/sized/SKILL.md'));
 
@@ -236,7 +229,7 @@ describe(runResolve, () => {
     });
 
     it("reports a partial's deployed bytes as its own bytes times the documents that it reaches", async () => {
-      await writeFiles(repository, {
+      await changeFiles({
         'lib/skills/second/SKILL.md': '<!-- include: ../../_partials/shared.md / -->\n',
       });
 
@@ -258,7 +251,7 @@ describe(runResolve, () => {
         body: ['Text.', '<!-- include: ../../_partials/loop.md / -->', ''].join('\n'),
       },
     ])('omits the field for a file carrying $shape, and keeps it a target', async ({ body }) => {
-      await writeFiles(repository, {
+      await changeFiles({
         'lib/_partials/loop.md': '<!-- include: ./loop-back.md / -->\n',
         'lib/_partials/loop-back.md': '<!-- include: ./loop.md / -->\n',
         'lib/skills/broken/SKILL.md': body,
@@ -281,21 +274,30 @@ describe(runResolve, () => {
 
   describe('failures', () => {
     it('if the working directory is not in a repository, fails as not-a-repository', async () => {
-      const result = await runResolve({ argv: ['loose.md'], cwd: home, home });
+      const result = await runResolve({ argv: ['loose.md'], cwd: home, home }, makeFakeGit({}));
 
       expect(result).toMatchObject({ ok: false, error: 'not-a-repository' });
     });
 
     it('if the record is malformed, fails as invalid-record', async () => {
-      await writeFile(path.join(repository, RECORD_PATH), 'declined:\n  - file: x.md\n', 'utf8');
+      await changeFiles({ [RECORD_PATH]: 'declined:\n  - file: x.md\n' });
 
       expect(await resolve(TARGET)).toMatchObject({ ok: false, error: 'invalid-record' });
     });
   });
 
+  /** Writes files into the repository as uncommitted changes, which git lists and reports as changed. */
+  async function changeFiles(changes: Readonly<Record<string, string>>): Promise<void> {
+    await writeFiles(repository, changes);
+    for (const file of Object.keys(changes)) {
+      if (!files.includes(file)) files.push(file);
+      changed.push(file);
+    }
+  }
+
   /** Runs `resolve` from the repository root against the fixture home. */
   async function resolve(...paths: string[]): Promise<HelperFailure | ResolveSuccess> {
-    return runResolve({ argv: paths, cwd: repository, home });
+    return runResolve({ argv: paths, cwd: repository, home }, makeFakeGit({ topLevel: repository, files, changed }));
   }
 });
 
