@@ -2,7 +2,7 @@
 slug: williamthorsen-workflow-preferences
 description: William Thorsen's personal preferences for how work moves -- scope, branches and worktrees, guidance capture, and the arc of product development.
 delivery: ambient
-version: '9'
+version: '10'
 ---
 
 # William Thorsen's workflow preferences
@@ -37,7 +37,7 @@ When the developer starts a product, move the work through these stages in order
 2. Opinions: Evaluate the idea from other roles and record the evaluations with it.
 3. Brief: Flesh the idea out into a brief for a prototype round.
 4. Prototypes: Build competing prototypes of a rich feature set through `prepare-prototype-brief`, judge them through `index-prototypes`, decide every idea in the round's idea table through `prepare-prototype-brief`, and synthesize the prototypes. A verdict on a prototype does not decide its ideas: Each idea is kept, adapted, deferred, or dropped by the developer's answer. Prototyping a rich feature set is how the product that could emerge becomes visible, so run the round before writing the vision.
-5. End vision: Write the purpose, the non-goals, the decisions with their reasons, and a rough structure from what the prototypes taught, citing the round's `idea-decisions` artifact, and get the developer's approval. Record every decision on an idea in the design doc, so that a later session sees why an idea is absent.
+5. End vision: Write the purpose, the non-goals, the project's declared stage (maturity, sensitivity, and users), the decisions with their reasons, and a rough structure from what the prototypes taught, citing the round's `idea-decisions` artifact, and get the developer's approval. Record every decision on an idea in the design doc, so that a later session sees why an idea is absent.
 6. MVP: Build the smallest product that does the product's one job. Put a prototype feature in it when the product cannot do that job without the feature, and leave the rest for increments.
 7. Increments: Add features one iteration at a time.
 
@@ -47,7 +47,7 @@ Hold the finished product to the baseline, not any one iteration. An iteration m
 
 Write a ticket in detail when its work is about to be implemented. Until then, keep each artifact to one tier:
 
-- Keep the vision in a design doc in the repo: the purpose, the non-goals, the decisions with their reasons, and the rough structure. Put a statement there when reversing it later would invalidate completed work, or when a new session needs it to choose a direction, and leave most other detail to its iteration.
+- Keep the vision in a design doc in the repo: the purpose, the non-goals, the declared stage, the decisions with their reasons, and the rough structure. Put a statement there when reversing it later would invalidate completed work, or when a new session needs it to choose a direction, and leave most other detail to its iteration.
 - Have the epic point to the design doc, state what is out of scope, and list the iterations as its sub-issues in order. Keep the vision out of the epic's body, because a ticket's body is frozen once its work starts and the vision is not.
 - Use the milestone to mark the current iteration, which `pull-from-backlog` reads as the Now set.
 - Treat the prototype as the baseline.
