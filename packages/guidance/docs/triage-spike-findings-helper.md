@@ -13,8 +13,8 @@ triage-spike-findings.mjs render --file <dispositions.json> --out <dir> [--previ
 ```
 
 - **`check-labels`** runs `gh label list` in `--root` (the working directory by default) and reports `families`, one entry per family with its `present` and `missing` labels, and `complete`, which is true only when every label of both families is present. The families are `confidence:` (`high`, `medium`, `low`) and `value:` (`must-have`, `should-have`, `nice-to-have`, `questionable`), as the common preset of `release-kit sync-labels` spells them. A `gh` failure is `gh-failed`.
-- **`validate`** parses the record at `--file` and applies the gate. The result contains `items`, the counts `byDisposition`, `byConfidence`, and `byValue`, and `missingTickets`: the ids of the `ticket` items without a number and whether `umbrella` is null.
-- **`render`** validates the record, then writes `dispositions-comment.md` and one `comment-{issue}.md` per issue that a `comment` disposition names under `--out`, grouping the items that name one issue into one file. The result contains `preview`, `dispositionsComment`, and `issueComments`, a list of `{ issue, path }`. Without `--preview`, a `ticket` item without a number or a null `umbrella` is `tickets-missing`, and nothing is written; with it, `(pending)` stands in for each missing number.
+- **`validate`** parses the record at `--file` and applies the gate. The result contains `items`, the counts `byDisposition`, `byConfidence`, and `byValue`, and `missingTickets`: the ids of the `ticket` items without a number and whether `umbrella` is null while a `ticket` item exists.
+- **`render`** validates the record, then writes `dispositions-comment.md` and one `comment-{issue}.md` per issue that a `comment` disposition names under `--out`, grouping the items that name one issue into one file. The result contains `preview`, `dispositionsComment`, and `issueComments`, a list of `{ issue, path }`. Without `--preview`, a `ticket` item without a number or a null `umbrella` on a record that has a `ticket` item is `tickets-missing`, and nothing is written; with it, `(pending)` stands in for each missing number.
 
 The error codes are `gate-violation`, `gh-failed`, `invalid-args`, `invalid-record`, `record-not-found`, and `tickets-missing`. A `gate-violation` message names every failing item and clause.
 
@@ -58,6 +58,6 @@ A record passes when every clause holds, and `validate` and `render` report ever
 
 ## The rendered comment
 
-`dispositions-comment.md` opens with a heading naming the source, a paragraph stating the grading convention and the umbrella, and a table with the columns item, disposition, confidence, value, where, and reason. The where column is `#N` for a `ticket` or `comment` item, `merged into {id}` for a `merge`, and empty for a `drop`. A `## Challenge` section carries `challengeSummary`, and a `## Labels and follow-ups` section carries `notes`.
+`dispositions-comment.md` opens with a heading naming the source, a paragraph stating the grading convention and, when an item takes a ticket, the umbrella, and a table with the columns item, disposition, confidence, value, where, and reason. The where column is `#N` for a `ticket` or `comment` item, `merged into {id}` for a `merge`, and empty for a `drop`. A `## Challenge` section carries `challengeSummary`, and a `## Labels and follow-ups` section carries `notes`.
 
 `comment-{issue}.md` opens with one line naming the source and the triage ticket, then one bullet per item: its title, its grades, and its reason.
