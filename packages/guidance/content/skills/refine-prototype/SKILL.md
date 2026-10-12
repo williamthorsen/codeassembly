@@ -9,7 +9,7 @@ supported-harnesses: [claude]
 
 Work one prototype page the way a designer works a sketch: The developer gives commands, you apply them to the page, their browser shows the result, and nothing else runs. The development gates are off on purpose. A sketch is the reference for the ticket that follows, never the implementation, and it earns its speed by skipping what a change to the product needs.
 
-The page lives in the ticket's prototype set, per {skill:index-prototypes}, and every accepted version joins the set under its id, so the round's index shows the refinement's history beside the round.
+The page lives in the ticket's prototype set, per {skill:index-prototypes}, and every accepted version joins the set under its id: Each snapshot replaces the slug's card on the index under the new id, and the manifest and the refinement log keep the earlier versions.
 
 ## Inputs
 

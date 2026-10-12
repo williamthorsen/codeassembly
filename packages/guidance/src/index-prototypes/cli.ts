@@ -211,34 +211,6 @@ function fail(error: IndexPrototypesFailure['error'], message: string): IndexPro
   return { ok: false, error, message };
 }
 
-/**
- * Returns the number that a registration of `slug` takes: the one that the set assigns when `requested` is absent,
- * or the requested one once it is checked. A registered slug keeps its number, a new slug cannot take a number that
- * another slug holds, and the value must be a positive integer; a request that fails one of those returns the failure.
- */
-function resolveRegistrationNumber(
-  manifest: Manifest | null,
-  slug: string,
-  requested: string | undefined,
-): number | IndexPrototypesFailure {
-  const assigned = resolveNumber(manifest, slug);
-  if (requested === undefined) {
-    return assigned;
-  }
-  const number = Number(requested);
-  if (!Number.isSafeInteger(number) || number < 1) {
-    return fail('number-conflict', `--number "${requested}" must be a positive integer`);
-  }
-  const entries = manifest?.entries ?? [];
-  if (entries.some((entry) => entry.slug === slug)) {
-    return assigned === number
-      ? number
-      : fail('number-conflict', `slug "${slug}" is number ${assigned}, not ${number}`);
-  }
-  const holder = entries.find((entry) => entry.number === number);
-  return holder === undefined ? number : fail('number-conflict', `number ${number} belongs to slug "${holder.slug}"`);
-}
-
 /** Returns true when `value` names a helper command. */
 function isCommand(value: string): value is Command {
   return COMMAND_NAMES.has(value);
@@ -419,28 +391,6 @@ async function register(
   return { ok: true, command: 'register', manifestPath, entry };
 }
 
-/** Resolves the id that the next registration of each slug in the comma-separated `slugs` takes, without writing. */
-async function resolveIdsForSlugs(setDir: string, slugs: string): Promise<IndexPrototypesResult> {
-  const list = parseInputs(slugs);
-  if (list.length === 0) {
-    return fail('invalid-args', '--slugs requires at least one slug');
-  }
-  const invalid = list.find((slug) => !isValidSlug(slug));
-  if (invalid !== undefined) {
-    return fail('invalid-slug', `slug "${invalid}" must match [a-z0-9][a-z0-9-]{0,39}`);
-  }
-  if (new Set(list).size !== list.length) {
-    return fail('invalid-args', '--slugs names a slug twice');
-  }
-
-  const read = await readManifest(setDir);
-  if (read.kind === 'invalid') {
-    return fail('invalid-manifest', read.message);
-  }
-  const manifest = read.kind === 'ok' ? read.manifest : null;
-  return { ok: true, command: 'resolve-ids', ids: resolveIds(manifest, list) };
-}
-
 /**
  * Renders the set's index page from the latest version of each slug and writes it to `outPath`, refusing a page over
  * the artifact cap. A recorded screenshot that is missing from disk renders as the placeholder and is reported.
@@ -494,6 +444,56 @@ function requireFlag(values: Record<string, string>, name: string): string {
     throw new Error(`--${name} is missing after parsing`);
   }
   return value;
+}
+
+/** Resolves the id that the next registration of each slug in the comma-separated `slugs` takes, without writing. */
+async function resolveIdsForSlugs(setDir: string, slugs: string): Promise<IndexPrototypesResult> {
+  const list = parseInputs(slugs);
+  if (list.length === 0) {
+    return fail('invalid-args', '--slugs requires at least one slug');
+  }
+  const invalid = list.find((slug) => !isValidSlug(slug));
+  if (invalid !== undefined) {
+    return fail('invalid-slug', `slug "${invalid}" must match [a-z0-9][a-z0-9-]{0,39}`);
+  }
+  if (new Set(list).size !== list.length) {
+    return fail('invalid-args', '--slugs names a slug twice');
+  }
+
+  const read = await readManifest(setDir);
+  if (read.kind === 'invalid') {
+    return fail('invalid-manifest', read.message);
+  }
+  const manifest = read.kind === 'ok' ? read.manifest : null;
+  return { ok: true, command: 'resolve-ids', ids: resolveIds(manifest, list) };
+}
+
+/**
+ * Returns the number that a registration of `slug` takes: the one that the set assigns when `requested` is absent,
+ * or the requested one once it is checked. A registered slug keeps its number, a new slug cannot take a number that
+ * another slug holds, and the value must be a positive integer; a request that fails one of those returns the failure.
+ */
+function resolveRegistrationNumber(
+  manifest: Manifest | null,
+  slug: string,
+  requested: string | undefined,
+): number | IndexPrototypesFailure {
+  const assigned = resolveNumber(manifest, slug);
+  if (requested === undefined) {
+    return assigned;
+  }
+  const number = Number(requested);
+  if (!Number.isSafeInteger(number) || number < 1) {
+    return fail('number-conflict', `--number "${requested}" must be a positive integer`);
+  }
+  const entries = manifest?.entries ?? [];
+  if (entries.some((entry) => entry.slug === slug)) {
+    return assigned === number
+      ? number
+      : fail('number-conflict', `slug "${slug}" is number ${assigned}, not ${number}`);
+  }
+  const holder = entries.find((entry) => entry.number === number);
+  return holder === undefined ? number : fail('number-conflict', `number ${number} belongs to slug "${holder.slug}"`);
 }
 
 /** Resolves the required `--set-dir` value to an absolute path. */
