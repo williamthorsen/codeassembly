@@ -171,10 +171,11 @@ Identify the client per {skill?:update-jira-ticket}, which ranks the three clien
 
   `{parent_flag}` is `--parent {parent}` when step 4 decided a parent, and empty otherwise. Pass the body path as the literal absolute path, unquoted, without a shell variable or a guard: The helper refuses a missing or empty file before it calls `acli`.
 
-  The helper converts the body to ADF, checks a parent with `acli jira workitem view`, and runs `acli jira workitem create` exactly once. It prints `{"key": "ABC-123", "rawOutput": "...", "parentSkipped": false}`. `parentSkipped: true` means that Jira rejected the parent reference and the work item was created without it; report the parent skipped per step 7.
+  When `ticket.base_url` is set, the helper first compares `acli`'s active site with the base URL's host, because `acli` creates on whichever site it is signed in to. It then converts the body to ADF, checks a parent with `acli jira workitem view`, and runs `acli jira workitem create` exactly once. It prints `{"key": "ABC-123", "rawOutput": "...", "parentSkipped": false, "activeSite": "..."}`, in which `activeSite` is null when `ticket.base_url` is unset. `parentSkipped: true` means that Jira rejected the parent reference and the work item was created without it; report the parent skipped per step 7.
 
   On a non-zero exit, read what it printed:
-  - `{"fallback": ...}`: As under [Resolve the target](#resolve-the-target), and `acli` was not called.
+  - `{"fallback": "no-project-key"}`: As under [Resolve the target](#resolve-the-target), and `acli` was not called.
+  - `{"fallback": "wrong-site"}` or `{"fallback": "site-unreadable"}`: `acli` is signed in to another site, or its site could not be read, and nothing was created. Create through the next client that {skill?:update-jira-ticket} ranks, including a client that the machine adds. When none remains, take the [no-remote fallback](#fallback-no-remote-platform) with the helper's warning, which names both sites and the `acli jira auth switch` command. Never run that command, because the active site is shared by every session on the machine.
   - `"key": null`: The create call ran, and stderr says why the key is missing. Read the key from `rawOutput` when it contains one, and otherwise check Jira for the work item. Never run `create` again: A second call creates a second work item.
   - Nothing: An argument or the body file was rejected before any `acli` call, as stderr states. Fix it and run the helper again.
 
@@ -236,7 +237,13 @@ Through a connected tool, use the link type named `Blocks`, falling back to a ty
 
 The two clients take opposite argument orders for the same relationship: `acli --out` names the blocker, whereas a connected tool's `inwardIssue` does. A link type's inward and outward descriptions describe how Jira stores the link, and only `acli`'s argument names follow that orientation, so take each client's mapping from its own documentation and the descriptions only to select the type.
 
-Through `acli`:
+Through `acli`, after a create through `acli`, the work item is on the active site, so link without a further check. After a create through another client, first compare the active site with `ticket_base_url` (step 1) when it is set, and report each link skipped with the helper's stderr line when it exits non-zero:
+
+```bash
+node {harness_home_dir}/scripts/manage-jira-ticket.mjs check-site --target {ticket_base_url}
+```
+
+Then:
 
 ```bash
 acli jira workitem link create --out "{blocker}" --in "{blocked}" --type Blocks --yes

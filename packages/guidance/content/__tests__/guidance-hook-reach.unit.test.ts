@@ -35,7 +35,10 @@ interface DeclaringBody {
   readonly relativePath: string;
 }
 
-/** One hook, the bodies that declare it, the rulebooks bound to it, and the body against which its splice is proven. */
+/**
+ * One hook, the bodies that declare it, the rulebooks bound to it, and the body against which its splice is proven. A
+ * hook without bound rulebooks is one that only a machine's own declaration binds.
+ */
 interface HookGuard {
   readonly hook: string;
   readonly role: string;
@@ -99,6 +102,16 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     spliceProbe: {
       body: { label: 'implement-plan', relativePath: 'skills/implement-plan/SKILL.md' },
       coexisting: ['## Comment discipline'],
+    },
+  },
+  {
+    hook: 'jira-clients',
+    role: 'identifies the Jira client for a read or a write',
+    declaringBodies: [{ label: 'update-jira-ticket', relativePath: 'skills/update-jira-ticket/SKILL.md' }],
+    boundRulebooks: [],
+    spliceProbe: {
+      body: { label: 'update-jira-ticket', relativePath: 'skills/update-jira-ticket/SKILL.md' },
+      coexisting: ['## ADF path'],
     },
   },
   {
@@ -184,10 +197,14 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
     }
   });
 
-  // The bound render throws on an anchor that a fill leaves unresolvable, so a body that is present here resolved.
-  it.each(declaringBodies)('$label resolves its anchors once filled', async ({ relativePath }) => {
-    expect(await readBoundBody(relativePath)).toContain(openHookMarker(hook));
-  });
+  // The bound render throws on an anchor that a fill leaves unresolvable, so a body that is present here resolved. A
+  // hook that only a machine binds has no library fill to render.
+  it.runIf(boundRulebooks.length > 0).each(declaringBodies)(
+    '$label resolves its anchors once filled',
+    async ({ relativePath }) => {
+      expect(await readBoundBody(relativePath)).toContain(openHookMarker(hook));
+    },
+  );
 });
 
 // The rows above are hand-listed because they guard a body dropping off, which a discovered population cannot catch.
