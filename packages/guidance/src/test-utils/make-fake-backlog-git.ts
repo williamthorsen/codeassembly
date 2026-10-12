@@ -18,14 +18,14 @@ export interface FakeBacklogGitAnswers {
 
 /** Builds a git adapter that answers from fixed values; a query for an answer that it lacks throws, as git would fail. */
 export function makeFakeBacklogGit(answers: FakeBacklogGitAnswers): BacklogGit {
-  const tips = answers.tips ?? {};
+  const tips = new Map(Object.entries(answers.tips ?? {}));
   return {
     countCommitsAhead: (_cwd, base, ref) => Promise.resolve(answers.commitsAhead?.[`${base}..${ref}`] ?? 0),
     findCommonDir: () => resolveAnswer(answers.commonDir, 'commonDir'),
     findOriginHead: () => Promise.resolve(answers.originHead),
     findShortSha: () => resolveAnswer(answers.shortSha, 'shortSha'),
-    hasRef: (_cwd, ref) => Promise.resolve(ref in tips || (answers.refs ?? []).includes(ref)),
-    listBranchTips: () => Promise.resolve(new Map(Object.entries(tips))),
+    hasRef: (_cwd, ref) => Promise.resolve(tips.has(ref) || (answers.refs ?? []).includes(ref)),
+    listBranchTips: () => Promise.resolve(new Map(tips)),
     listCommitsSince: () => Promise.resolve([...(answers.commits ?? [])]),
     listWorktrees: () => Promise.resolve([...(answers.worktrees ?? [])]),
   };

@@ -136,8 +136,9 @@ async function listCommitsSince(cwd: string, ref: string, since: string): Promis
 
 /** Runs `git worktree list --porcelain`, whose records are separated by blank lines. */
 async function listWorktrees(cwd: string): Promise<Worktree[]> {
+  const porcelain = await runGit(cwd, ['worktree', 'list', '--porcelain']);
   const worktrees: Worktree[] = [];
-  for (const block of (await runGit(cwd, ['worktree', 'list', '--porcelain'])).split('\n\n')) {
+  for (const block of porcelain.split('\n\n')) {
     const worktreePath = /^worktree (.+)$/m.exec(block)?.[1];
     if (worktreePath === undefined) continue;
     worktrees.push({ branchRef: /^branch (.+)$/m.exec(block)?.[1], path: worktreePath });

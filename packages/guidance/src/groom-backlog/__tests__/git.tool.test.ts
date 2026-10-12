@@ -67,7 +67,7 @@ describe('realGit', () => {
 
       const tips = await realGit.listBranchTips(root);
 
-      expect([...tips.keys()].toSorted()).toStrictEqual([
+      expect(tips.keys().toArray().toSorted()).toStrictEqual([
         'refs/heads/13-thing',
         'refs/heads/main',
         'refs/remotes/origin/14-other',

@@ -5,8 +5,8 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import path from 'node:path';
 
-import { type LedgerRecord, LedgerRecordSchema } from './schemas.ts';
 import type { BacklogGit } from './git.ts';
+import { type LedgerRecord, LedgerRecordSchema } from './schemas.ts';
 
 /** The ledger's directory, relative to the primary worktree. */
 export const LEDGER_DIR = path.join('local', 'ticket-triage');
