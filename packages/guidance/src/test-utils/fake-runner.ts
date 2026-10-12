@@ -3,7 +3,7 @@ import type { CommandRunner } from '../groom-backlog/types.ts';
 /** One call that a fake runner received. */
 export interface RunnerCall {
   args: readonly string[];
-  command: 'gh' | 'git';
+  command: 'gh';
 }
 
 /**

@@ -1,8 +1,8 @@
-import type { BacklogGit, Worktree } from '../git.ts';
-import type { Commit } from '../types.ts';
+import type { BacklogGit, Worktree } from '../groom-backlog/git.ts';
+import type { Commit } from '../groom-backlog/types.ts';
 
-/** The fixed answers of a fake git adapter. */
-export interface FakeGitAnswers {
+/** The fixed answers of a fake backlog git adapter. */
+export interface FakeBacklogGitAnswers {
   /** Commits ahead, by the `base..ref` range that git takes; an unlisted range counts zero. */
   commitsAhead?: Readonly<Record<string, number>>;
   commits?: readonly Commit[];
@@ -17,7 +17,7 @@ export interface FakeGitAnswers {
 }
 
 /** Builds a git adapter that answers from fixed values; a query for an answer that it lacks throws, as git would fail. */
-export function makeFakeGit(answers: FakeGitAnswers): BacklogGit {
+export function makeFakeBacklogGit(answers: FakeBacklogGitAnswers): BacklogGit {
   const tips = answers.tips ?? {};
   return {
     countCommitsAhead: (_cwd, base, ref) => Promise.resolve(answers.commitsAhead?.[`${base}..${ref}`] ?? 0),

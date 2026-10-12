@@ -6,7 +6,9 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { buildFakeRunner, type RunnerCall } from '../../test-utils/fake-runner.ts';
+import { makeFakeBacklogGit } from '../../test-utils/make-fake-backlog-git.ts';
 import { type CommandContext, runCli } from '../cli.ts';
+import type { BacklogGit } from '../git.ts';
 import { renderMarker } from '../marker.ts';
 import type { AssessorReply } from '../schemas.ts';
 import { buildReply } from '../test-utils/build-reply.ts';
@@ -92,9 +94,9 @@ describe(runCli, () => {
     root = mkdtempSync(path.join(tmpdir(), 'groom-cli-'));
     await mkdir(path.join(root, '.git'));
     issues = structuredClone(ISSUES);
-    const runner = buildFakeRunner((call) => respond(call, root, issues));
+    const runner = buildFakeRunner((call) => respond(call, issues));
     calls = runner.calls;
-    context = { now: NOW, root, run: runner.run, stdin: '' };
+    context = { git: makeFakeRepository(root), now: NOW, root, run: runner.run, stdin: '' };
   });
 
   afterEach(async () => {
@@ -598,6 +600,18 @@ function assessment(run: string, number: number, assessedAt: string): Record<str
   };
 }
 
+/** Builds a git adapter answering for a repository at `root` on `main`, with ticket 10's branch three commits ahead. */
+function makeFakeRepository(root: string): BacklogGit {
+  return makeFakeBacklogGit({
+    commitsAhead: { 'refs/heads/main..refs/heads/10-uploader': 3 },
+    commonDir: path.join(root, '.git'),
+    originHead: 'main',
+    shortSha: 'abc1234',
+    tips: { 'refs/heads/main': '2026-09-01T00:00:00Z', 'refs/heads/10-uploader': '2026-09-02T00:00:00Z' },
+    worktrees: [{ branchRef: 'refs/heads/main', path: root }],
+  });
+}
+
 /** Reads the fixture's ledger as parsed lines; a ledger not yet written reads as empty. */
 function readLedgerLines(root: string): unknown[] {
   const file = path.join(root, 'local', 'ticket-triage', 'ledger.jsonl');
@@ -608,26 +622,8 @@ function readLedgerLines(root: string): unknown[] {
     .map((line): unknown => JSON.parse(line));
 }
 
-/** Answers the fake runner's calls with a repository on `main`, the open `issues`, the closed issues, and a closing PR for #10. */
-function respond(call: RunnerCall, root: string, issues: typeof ISSUES): string | undefined {
-  const [first, second] = call.args;
-  if (call.command === 'git') {
-    if (first === 'rev-parse' && second === '--git-common-dir') return path.join(root, '.git');
-    if (first === 'rev-parse' && second === '--short') return 'abc1234\n';
-    if (first === 'rev-parse') return undefined;
-    if (first === 'symbolic-ref') return 'refs/remotes/origin/main\n';
-    if (first === 'for-each-ref')
-      return 'refs/heads/main\t2026-09-01T00:00:00Z\nrefs/heads/10-uploader\t2026-09-02T00:00:00Z\n';
-    if (first === 'worktree') return `worktree ${root}\nHEAD abc\nbranch refs/heads/main\n`;
-    if (first === 'rev-list') return '3\n';
-    if (first === 'log') return '';
-    return undefined;
-  }
-  return respondToGh(call, issues);
-}
-
-/** Answers the fake runner's `gh` calls for `respond`. */
-function respondToGh(call: RunnerCall, issues: typeof ISSUES): string | undefined {
+/** Answers the fake runner's `gh` calls with the open `issues`, the closed issues, and a closing PR for #10. */
+function respond(call: RunnerCall, issues: typeof ISSUES): string | undefined {
   const [first, second] = call.args;
   if (first === 'repo') return JSON.stringify({ nameWithOwner: 'owner/repo', defaultBranchRef: { name: 'main' } });
   if (first === 'issue' && second === 'view') {

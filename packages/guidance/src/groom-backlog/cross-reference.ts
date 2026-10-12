@@ -5,6 +5,7 @@
  */
 import { z } from 'zod';
 
+import type { BacklogGit } from './git.ts';
 import type { CommandRunner, Commit, CrossReference, Issue } from './types.ts';
 
 /** The most merged pull requests that one pass reads. */
@@ -41,12 +42,13 @@ export function buildTokenPattern(number: number): RegExp {
 /** Returns each issue's candidates, closing PRs first, then mentioning PRs, then commits, each oldest first. */
 export async function findCrossReferences(input: {
   defaultBranch: string;
+  git: BacklogGit;
   issues: readonly Issue[];
   nameWithOwner: string;
   root: string;
   run: CommandRunner;
 }): Promise<Map<number, CrossReference[]>> {
-  const { defaultBranch, issues, nameWithOwner, root, run } = input;
+  const { defaultBranch, git, issues, nameWithOwner, root, run } = input;
   const since = issues.map((issue) => issue.createdAt).toSorted()[0];
   if (since === undefined) return new Map();
 
@@ -70,9 +72,7 @@ export async function findCrossReferences(input: {
       ),
     ),
   );
-  const commits = parseCommits(
-    await run('git', ['log', defaultBranch, `--since=${since}`, '--format=%h%x1f%s%x1f%cI'], root),
-  );
+  const commits = await git.listCommitsSince(root, defaultBranch, since);
   return matchCrossReferences({ commits, issues, nameWithOwner, pullRequests });
 }
 
@@ -115,19 +115,3 @@ export function matchCrossReferences(input: {
   }
   return result;
 }
-
-// region | Helpers
-
-/** Parses `git log` output written with unit-separated short SHA, subject, and committer date. */
-function parseCommits(output: string): Commit[] {
-  const commits: Commit[] = [];
-  for (const line of output.split('\n')) {
-    const [sha, subject, date] = line.split('\u{1F}', 3);
-    if (sha !== undefined && sha !== '' && subject !== undefined && date !== undefined) {
-      commits.push({ date, sha, subject });
-    }
-  }
-  return commits;
-}
-
-// endregion | Helpers

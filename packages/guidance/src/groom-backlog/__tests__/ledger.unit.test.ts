@@ -1,6 +1,9 @@
+import path from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
-import { parseLedger } from '../ledger.ts';
+import { makeFakeBacklogGit } from '../../test-utils/make-fake-backlog-git.ts';
+import { parseLedger, resolveLedgerPaths } from '../ledger.ts';
 
 // One record of each shape that the calibration sweep wrote, its decision records in their three key sets and with a
 // null `supersededBy`.
@@ -49,5 +52,17 @@ describe(parseLedger, () => {
 
     expect(records).toHaveLength(1);
     expect(defects.map((defect) => defect.line)).toStrictEqual([2, 3]);
+  });
+});
+
+describe(resolveLedgerPaths, () => {
+  it("places the ledger beside the common git directory, in the primary worktree's root", async () => {
+    const primary = path.join(path.sep, 'repos', 'project');
+    const git = makeFakeBacklogGit({ commonDir: path.join(primary, '.git') });
+
+    expect(await resolveLedgerPaths(git, path.join(primary, '..', 'project.linked'))).toStrictEqual({
+      assessmentsDir: path.join(primary, 'local', 'ticket-triage', 'assessments'),
+      ledgerFile: path.join(primary, 'local', 'ticket-triage', 'ledger.jsonl'),
+    });
   });
 });
