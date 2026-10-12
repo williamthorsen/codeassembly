@@ -1,11 +1,10 @@
-import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { defaultKbConfig, type KbConfig } from '../../config/config-schema.ts';
-import { commitAll, initGitRepo } from '../../test-utils/git-repo.ts';
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { makeTree } from '../../test-utils/make-tree.ts';
 import { enumerateNotePaths, enumerateNotes } from '../enumerate.ts';
 
@@ -167,60 +166,54 @@ describe(enumerateNotes, () => {
 });
 
 describe(`${enumerateNotePaths.name} under git`, () => {
-  it('omits a note that the repository ignores', async () => {
+  it('omits a note outside the scope that git reports', async () => {
     const root = await makeTree({
-      '.gitignore': 'local/\n*.local.md\n',
       'content/Kept.md': VALID,
       'content/local/Scratch.md': VALID,
       'content/Draft.local.md': VALID,
     });
-    initGitRepo(root);
-    commitAll(root, 'base');
+    const git = makeFakeGit({ listScope: new Set(['content/Kept.md']) });
 
-    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
+    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig, git });
 
     expect(paths).toEqual(['content/Kept.md']);
   });
 
-  it('keeps an untracked note not covered by any ignore rule', async () => {
-    const root = await makeTree({ 'content/Tracked.md': VALID });
-    initGitRepo(root);
-    commitAll(root, 'base');
-    await writeFile(join(root, 'content', 'Untracked.md'), VALID, 'utf8');
-
-    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
-
-    expect(paths.toSorted()).toEqual(['content/Tracked.md', 'content/Untracked.md']);
-  });
-
-  it('enumerates a note whose on-disk name is decomposed, which git reports composed', async () => {
+  it('matches a note whose on-disk name is decomposed against the composed name that git reports', async () => {
     const root = await makeTree({ [`content/${DECOMPOSED_NAME}`]: VALID });
-    initGitRepo(root);
-    commitAll(root, 'base');
+    const git = makeFakeGit({ listScope: new Set([`content/${DECOMPOSED_NAME}`.normalize('NFC')]) });
 
-    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
+    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig, git });
 
     expect(paths.map((path) => path.normalize('NFC'))).toEqual([`content/${DECOMPOSED_NAME}`.normalize('NFC')]);
   });
 
   it('warns when git ignores every note that the walk found', async () => {
-    const root = await makeTree({ '.gitignore': 'content/\n', 'content/Scratch.md': VALID });
-    initGitRepo(root);
-    commitAll(root, 'base');
+    const root = await makeTree({ 'content/Scratch.md': VALID });
+    const git = makeFakeGit({ listScope: new Set(['.gitignore']) });
     using stdio = captureStdio();
 
-    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
+    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig, git });
 
     expect(paths).toEqual([]);
     expect(stdio.stderr).toContain('git ignores every note');
   });
 
-  it('keeps every note under a directory that is not a git working tree', async () => {
-    const root = await makeTree({ '.gitignore': 'content/\n', 'content/Scratch.md': VALID });
+  it('keeps every note that the walk found when git cannot list a scope', async () => {
+    const root = await makeTree({ 'content/Scratch.md': VALID });
 
-    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig });
+    const paths = await enumerateNotePaths({ kbRoot: root, config: defaultKbConfig, git: makeFakeGit() });
 
     expect(paths).toEqual(['content/Scratch.md']);
+  });
+
+  it('applies the scope to the parsed enumeration too', async () => {
+    const root = await makeTree({ 'content/Kept.md': VALID, 'content/Ignored.md': VALID });
+    const git = makeFakeGit({ listScope: new Set(['content/Kept.md']) });
+
+    const notes = await enumerateNotes({ kbRoot: root, config: defaultKbConfig, git });
+
+    expect(notes.map((entry) => entry.relativePath)).toEqual(['content/Kept.md']);
   });
 });
 

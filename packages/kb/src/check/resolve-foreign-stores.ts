@@ -4,6 +4,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isAtLeastAsShareable, type StoreVisibility } from '../config/config-schema.ts';
 import { loadKbConfig } from '../config/load-config.ts';
+import type { KbGit } from '../git/git.ts';
 import { resolveKbDir } from '../layout/index.ts';
 import type { KbRegistry } from '../types.ts';
 import { buildVaultIndex } from '../vault-integrity/build-vault-index.ts';
@@ -36,13 +37,14 @@ export function collectStorePrefixes(notes: readonly { body: string }[]): Set<st
  * `unavailable` rather than throwing, so that one unrelated store cannot fail the run.
  */
 export async function resolveForeignStores(input: {
+  git: KbGit;
   prefixes: Iterable<string>;
   registry: KbRegistry;
   sourceVisibility: StoreVisibility;
 }): Promise<Map<string, ForeignStore>> {
   const resolved = new Map<string, ForeignStore>();
   for (const prefix of input.prefixes) {
-    resolved.set(prefix, await resolveOne(prefix, input.registry, input.sourceVisibility));
+    resolved.set(prefix, await resolveOne(prefix, input.registry, input.sourceVisibility, input.git));
   }
   return resolved;
 }
@@ -54,6 +56,7 @@ async function resolveOne(
   prefix: string,
   registry: KbRegistry,
   sourceVisibility: StoreVisibility,
+  git: KbGit,
 ): Promise<ForeignStore> {
   const entry = registry.entries.find((candidate) => candidate.name === prefix);
   if (entry === undefined) return { status: 'unknown' };
@@ -76,7 +79,7 @@ async function resolveOne(
     return { status: 'disallowed', visibility: config.visibility };
   }
 
-  const paths = await enumerateNotePaths({ kbRoot: entry.path, config });
+  const paths = await enumerateNotePaths({ kbRoot: entry.path, config, git });
   return { status: 'resolved', index: buildVaultIndex(paths.map((path) => ({ path }))) };
 }
 

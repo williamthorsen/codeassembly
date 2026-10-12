@@ -6,7 +6,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import type { KbConfig } from '../config/config-schema.ts';
 import { createNoteScopeMatcher, type NoteScopeMatcher } from '../config/note-scope.ts';
-import { realGit } from '../git/git.ts';
+import { type KbGit, realGit } from '../git/git.ts';
 import { readNoteContent } from '../note-io/read-note.ts';
 import { isGlobSegment } from './glob-segments.ts';
 
@@ -36,8 +36,8 @@ export interface EnumeratedNote {
  * A note whose content cannot be read still contributes its path here, whereas `enumerateNotes` drops it with a
  * warning.
  */
-export async function enumerateNotePaths(input: { kbRoot: string; config: KbConfig }): Promise<string[]> {
-  const locations = await collectNoteLocations(input);
+export async function enumerateNotePaths(input: { kbRoot: string; config: KbConfig; git?: KbGit }): Promise<string[]> {
+  const locations = await collectNoteLocations({ ...input, git: input.git ?? realGit });
   return locations.map((location) => location.relativePath);
 }
 
@@ -53,14 +53,19 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
  * If the store is in a git working tree, the enumeration keeps only the notes that git tracks and the untracked
  * notes that the repository's ignore rules don't cover. A note that the repository ignores is therefore neither
  * enumerated nor available as a wikilink target, so a link pointing at one resolves to nothing. A store outside a
- * working tree, or a machine without git installed, keeps what the walk alone found.
+ * working tree, or a machine without git installed, keeps what the walk alone found. `git` answers the repository
+ * queries, and defaults to running git.
  *
  * Notes with malformed or absent frontmatter are kept: `readNoteContent` records the parse error in `error` and
  * returns an empty field map rather than throwing, so that they remain valid wikilink targets. A note that cannot be
  * read, or a directory that cannot be listed, is skipped with a `kb:` stderr warning rather than aborting the walk.
  */
-export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }): Promise<EnumeratedNote[]> {
-  const locations = await collectNoteLocations(input);
+export async function enumerateNotes(input: {
+  kbRoot: string;
+  config: KbConfig;
+  git?: KbGit;
+}): Promise<EnumeratedNote[]> {
+  const locations = await collectNoteLocations({ ...input, git: input.git ?? realGit });
 
   const notes: EnumeratedNote[] = [];
   for (const { path, relativePath } of locations) {
@@ -86,15 +91,15 @@ export async function enumerateNotes(input: { kbRoot: string; config: KbConfig }
 // region | Helpers
 
 /** Walks a KB root and collects every note admitted by the config's `targets`/`exclude` and the repository's ignore rules, in walk order. */
-async function collectNoteLocations(input: { kbRoot: string; config: KbConfig }): Promise<NoteLocation[]> {
-  const { kbRoot, config } = input;
+async function collectNoteLocations(input: { kbRoot: string; config: KbConfig; git: KbGit }): Promise<NoteLocation[]> {
+  const { kbRoot, config, git } = input;
   const matcher = createNoteScopeMatcher(config);
   const topLevelDirs = leadingLiteralSegments(config.targets);
 
   const candidates: NoteLocation[] = [];
   await walk({ root: kbRoot, dir: kbRoot, matcher, topLevelDirs, out: candidates });
 
-  const gitScope = realGit.listScope({ root: kbRoot });
+  const gitScope = git.listScope({ root: kbRoot });
   if (gitScope === undefined) return candidates;
 
   const locations = candidates.filter((candidate) => gitScope.has(candidate.relativePath.normalize('NFC')));

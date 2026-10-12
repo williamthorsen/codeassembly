@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import type { KbConfig, StoreVisibility } from '../config/config-schema.ts';
 import { loadKbConfig } from '../config/load-config.ts';
 import { tryLoadKbRegistry } from '../discovery/load-registry.ts';
+import { type KbGit, realGit } from '../git/git.ts';
 import { resolveKbDir, TAXONOMY_FILE } from '../layout/index.ts';
 import { pathsFindings } from '../lints/paths.ts';
 import { tagAliasFindings } from '../lints/tag-alias.ts';
@@ -43,8 +44,11 @@ export interface CheckResult {
  * A structural defect in any loaded file throws a `KbLoaderError` (the loaders' own contract); the caller decides how
  * to report it. Any other error from enumeration or the checks propagates unchanged; it is never relabeled as a
  * config defect.
+ *
+ * `git` answers the repository queries for this store and every qualified store, and defaults to running git.
  */
-export async function check(input: { kbRoot: string; cwd?: string; home?: string }): Promise<CheckResult> {
+export async function check(input: { kbRoot: string; cwd?: string; home?: string; git?: KbGit }): Promise<CheckResult> {
+  const git = input.git ?? realGit;
   const kbRoot: KbRoot = { path: input.kbRoot, kbDir: resolveKbDir(input.kbRoot) };
 
   const [config, aliases, taxonomy] = await Promise.all([
@@ -53,10 +57,11 @@ export async function check(input: { kbRoot: string; cwd?: string; home?: string
     loadTaxonomy({ kbRoot }),
   ]);
 
-  const notes = await enumerateNotes({ kbRoot: input.kbRoot, config });
+  const notes = await enumerateNotes({ kbRoot: input.kbRoot, config, git });
 
   const qualified = await resolveQualifiedStores({
     notes,
+    git,
     projectDir: input.cwd ?? input.kbRoot,
     sourceVisibility: config.visibility,
     ...(input.home !== undefined && { home: input.home }),
@@ -95,6 +100,7 @@ function registryFindings(error: string | undefined): Finding[] {
  */
 async function resolveQualifiedStores(input: {
   notes: readonly EnumeratedNote[];
+  git: KbGit;
   projectDir: string;
   sourceVisibility: StoreVisibility;
   home?: string;
@@ -111,6 +117,7 @@ async function resolveQualifiedStores(input: {
   if (registry.error !== undefined) return { foreignStores: new Map(), registryError: registry.error };
 
   const foreignStores = await resolveForeignStores({
+    git: input.git,
     prefixes,
     registry: registry.config,
     sourceVisibility: input.sourceVisibility,
