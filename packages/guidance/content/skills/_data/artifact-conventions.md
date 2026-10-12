@@ -17,6 +17,9 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │       │   ├── manifest.json
         │       │   ├── shots/{slug}-v{n}.png
         │       │   └── {slug}-v{n}.html
+        │       ├── usability/                                ← a usability assessment's lens reports and evidence, kept by `assess-usability`
+        │       │   ├── {lens}-report.md
+        │       │   └── {lens}/{finding-id}-{slug}.png
         │       └── {run-id}/                                 ← review run directory
         │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
@@ -43,6 +46,10 @@ A `project.ticket_ref_prefix` other than `#` is part of the ticket ID, so it nam
 ### Prototype sets
 
 `prototypes/` holds the ticket's one prototype set: the sources, the stored screenshots, and the manifest from which `index-prototypes` renders the set's index page. The page itself is rendered into the session's scratch directory for publishing and is not kept here.
+
+### Usability evidence
+
+`usability/` holds the working files of the ticket's usability assessment: each lens's report and each lens's screenshots. The `usability-findings` artifact cites the screenshots by paths relative to the ticket directory, so they stay beside it.
 
 ### Run directories
 
@@ -719,6 +726,8 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 - `refinement-log`: The accepted changes of one session of `refine-prototype`, grouped under the id of the version that each one entered, with the transplants' sources and the open forks; the end vision reads it with the `idea-decisions` artifact
 - `review`: Code review (ticket-level, commit scope)
 - `ticket`: Issue ticket
+- `usability-brief`: The brief that every lens of a usability assessment reads: the targets and their write rules, the lenses with their minimum use cases, and the exclusions; `assess-usability` saves it at its checkpoint
+- `usability-findings`: The merged findings of a usability assessment, ranked by effect and reach, with the use-case outcomes, the ideas, the proposed groupings, the residual unknowns, and the lens reports; `assess-usability` saves it, and `triage-spike-findings` reads it
 
 ### Non-ticket artifacts
 

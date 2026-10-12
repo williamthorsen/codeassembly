@@ -15,6 +15,9 @@ merge:
 pr:
   title_format: '[{ticket_ref} ]{title}'
 project:
+  audience: public
+  maturity: early
+  sensitivity: low
   slug: codeassembly
   ticket_ref_prefix: '#'
 repository:

@@ -17,3 +17,6 @@ plan-reviser:
 
 prose-reviser:
   model: inherit
+
+usability-assessor:
+  model: inherit
