@@ -132,8 +132,13 @@
     },
     "project": {
       "type": "object",
-      "description": "Project identification configuration, and the project's declared stage (`maturity`, `sensitivity`, `users`), which design guidance treats as premises.",
+      "description": "Project identification configuration, and the project's declared stage (`maturity`, `sensitivity`, `audience`), which design guidance treats as premises.",
       "properties": {
+        "audience": {
+          "type": "string",
+          "enum": ["owner", "team", "public"],
+          "description": "Who uses the project. `owner`: only the repo's owner. `team`: a known, bounded group. `public`: anyone who can reach it. Read from the project preferences file only."
+        },
         "maturity": {
           "type": "string",
           "enum": ["hobby", "early", "production"],
@@ -172,11 +177,6 @@
         "ticket_ref_prefix": {
           "type": "string",
           "description": "Prefix that appears at the start of `ticket_ref`. Use `#` for GitHub issues (added at render time, omitted from file paths) or a Jira project key like `MAC-` (part of the canonical ticket ID)."
-        },
-        "users": {
-          "type": "string",
-          "enum": ["owner", "team", "public"],
-          "description": "Who uses the project. `owner`: only the repo's owner. `team`: a known, bounded group. `public`: anyone who can reach it. Read from the project preferences file only."
         }
       }
     },

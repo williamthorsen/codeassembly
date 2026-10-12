@@ -55,7 +55,7 @@ export interface BranchManifest {
   /** The project's declared stage, read from the project preferences file only; `null` when undeclared. */
   readonly project_maturity?: ProjectStage['maturity'];
   readonly project_sensitivity?: ProjectStage['sensitivity'];
-  readonly project_users?: ProjectStage['users'];
+  readonly project_audience?: ProjectStage['audience'];
   readonly scm: 'github' | 'bitbucket';
   readonly default_branch: string;
   readonly branch_name: string;

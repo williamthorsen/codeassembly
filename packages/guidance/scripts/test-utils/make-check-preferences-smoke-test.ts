@@ -12,7 +12,7 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 export function makeCheckPreferencesSmokeTest(): SmokeTestInvocation {
   const dir = mkdtempSync(path.join(tmpdir(), 'check-preferences-'));
   const filePath = path.join(dir, 'preferences.yaml');
-  writeFileSync(filePath, 'project:\n  maturity: hobby\n  sensitivity: low\n  users: owner\nprojct: {}\n', 'utf8');
+  writeFileSync(filePath, 'project:\n  maturity: hobby\n  sensitivity: low\n  audience: owner\nprojct: {}\n', 'utf8');
   return { args: [filePath], assertResult: assertOneWarning };
 }
 

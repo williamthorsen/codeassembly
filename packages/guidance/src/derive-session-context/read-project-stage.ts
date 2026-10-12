@@ -3,13 +3,13 @@ import { isRecord } from '../lib/type-guards.ts';
 
 export const MATURITY_VALUES = ['hobby', 'early', 'production'] as const;
 export const SENSITIVITY_VALUES = ['low', 'personal', 'confidential'] as const;
-export const USERS_VALUES = ['owner', 'team', 'public'] as const;
+export const AUDIENCE_VALUES = ['owner', 'team', 'public'] as const;
 
 /** The project's declared stage, each value `null` when the project file does not declare it. */
 export interface ProjectStage {
   readonly maturity: (typeof MATURITY_VALUES)[number] | null;
   readonly sensitivity: (typeof SENSITIVITY_VALUES)[number] | null;
-  readonly users: (typeof USERS_VALUES)[number] | null;
+  readonly audience: (typeof AUDIENCE_VALUES)[number] | null;
 }
 
 /**
@@ -19,7 +19,7 @@ export interface ProjectStage {
 export function readProjectStage(projectPreferences: Record<string, unknown>): ProjectStage {
   const section = projectPreferences.project;
   if (section === undefined) {
-    return { maturity: null, sensitivity: null, users: null };
+    return { maturity: null, sensitivity: null, audience: null };
   }
   if (!isRecord(section)) {
     throw new Error(`preferences: 'project' must be an object (got ${JSON.stringify(section)})`);
@@ -27,7 +27,7 @@ export function readProjectStage(projectPreferences: Record<string, unknown>): P
   return {
     maturity: expectOneOf(section.maturity, MATURITY_VALUES, 'project.maturity'),
     sensitivity: expectOneOf(section.sensitivity, SENSITIVITY_VALUES, 'project.sensitivity'),
-    users: expectOneOf(section.users, USERS_VALUES, 'project.users'),
+    audience: expectOneOf(section.audience, AUDIENCE_VALUES, 'project.audience'),
   };
 }
 

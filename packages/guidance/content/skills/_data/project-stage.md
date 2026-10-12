@@ -1,6 +1,6 @@
 # Project stage
 
-A project declares its stage in its own `.agents/preferences.yaml`, under `project`, and the session-context manifest reports each value as `project_maturity`, `project_sensitivity`, and `project_users`, `null` when the project does not declare it. The global preferences file never supplies a stage, because a stage describes one repo.
+A project declares its stage in its own `.agents/preferences.yaml`, under `project`, and the session-context manifest reports each value as `project_maturity`, `project_sensitivity`, and `project_audience`, `null` when the project does not declare it. The global preferences file never supplies a stage, because a stage describes one repo.
 
 ## Values
 
@@ -12,7 +12,7 @@ A project declares its stage in its own `.agents/preferences.yaml`, under `proje
 | `sensitivity` | `low`          | Nothing that would harm anyone if published.                                     |
 |               | `personal`     | Personal data about the owner or identifiable individuals.                       |
 |               | `confidential` | Secrets, credentials, or data that a third party is obliged to protect.          |
-| `users`       | `owner`        | Only the repo's owner uses it.                                                   |
+| `audience`    | `owner`        | Only the repo's owner uses it.                                                   |
 |               | `team`         | A known, bounded group uses it.                                                  |
 |               | `public`       | Anyone who can reach it uses it.                                                 |
 

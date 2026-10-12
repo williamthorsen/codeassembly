@@ -11,7 +11,7 @@ describe(checkPreferences, () => {
   });
 
   it('accepts a declared project stage', () => {
-    const document = { project: { maturity: 'hobby', sensitivity: 'low', users: 'owner' } };
+    const document = { project: { maturity: 'hobby', sensitivity: 'low', audience: 'owner' } };
     expect(checkPreferences(document, preferencesSchema)).toEqual([]);
   });
 
@@ -102,19 +102,21 @@ function collectKeywords(schema: unknown): Set<string> {
   }
   for (const [keyword, value] of Object.entries(schema)) {
     keywords.add(keyword);
-    const subschemas =
-      keyword === 'properties' && isRecord(value)
-        ? Object.values(value)
-        : keyword === 'items' || keyword === 'additionalProperties'
-          ? [value]
-          : [];
-    for (const subschema of subschemas) {
+    for (const subschema of listSubschemas(keyword, value)) {
       for (const nested of collectKeywords(subschema)) {
         keywords.add(nested);
       }
     }
   }
   return keywords;
+}
+
+/** Returns the subschemas held by one keyword's value: every property schema, or the one `items` or `additionalProperties` schema. */
+function listSubschemas(keyword: string, value: unknown): unknown[] {
+  if (keyword === 'properties') {
+    return isRecord(value) ? Object.values(value) : [];
+  }
+  return keyword === 'items' || keyword === 'additionalProperties' ? [value] : [];
 }
 
 // endregion | Helpers

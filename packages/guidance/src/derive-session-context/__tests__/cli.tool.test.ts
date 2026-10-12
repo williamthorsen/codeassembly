@@ -277,9 +277,9 @@ describe(deriveSessionContext, () => {
   });
 
   it('reports the project stage declared in the project file and null for each undeclared value', async () => {
-    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n  maturity: hobby\n  users: owner\n');
+    await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n  maturity: hobby\n  audience: owner\n');
     const manifest = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
-    expect(manifest).toMatchObject({ project_maturity: 'hobby', project_sensitivity: null, project_users: 'owner' });
+    expect(manifest).toMatchObject({ project_maturity: 'hobby', project_sensitivity: null, project_audience: 'owner' });
   });
 
   it('ignores a project stage declared only in the global preferences file', async () => {
@@ -288,7 +288,7 @@ describe(deriveSessionContext, () => {
     await writeProjectPrefs(projectDir, 'project:\n  slug: my-project\n');
     await writeProjectPrefs(homeDir, 'project:\n  maturity: production\n  sensitivity: confidential\n');
     const manifest = await deriveSessionContext({ cwd: projectDir, branch: WORKING_BRANCH, now: NOW, home: homeDir });
-    expect(manifest).toMatchObject({ project_maturity: null, project_sensitivity: null, project_users: null });
+    expect(manifest).toMatchObject({ project_maturity: null, project_sensitivity: null, project_audience: null });
   });
 
   it('rejects a project stage value outside its set, naming the key', async () => {

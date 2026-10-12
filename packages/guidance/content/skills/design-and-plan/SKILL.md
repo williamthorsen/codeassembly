@@ -64,7 +64,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 ### Phase 2: Understand the task
 
-1. **Explore project context:** Check relevant files, docs, recent commits to understand the affected area of the codebase. Read the project's declared stage from the manifest's `project_maturity`, `project_sensitivity`, and `project_users` fields, which `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` emits.
+1. **Explore project context:** Check relevant files, docs, recent commits to understand the affected area of the codebase. Read the project's declared stage from the manifest's `project_maturity`, `project_sensitivity`, and `project_audience` fields, which `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` emits.
 
 2. **Evaluate the ticket on its merits**: Apply the criteria in [ticket evaluation](../_data/ticket-evaluation.md). When evaluation reveals a divergence from the ticket as written, recommend a disposition, build the design on it, and present the divergence at the ticket checkpoint; raise it earlier only when the design cannot proceed without the answer. Divergence includes scope that should grow: By default, fold work that the problem requires into this change rather than into a follow-up (see [scope-and-deferral](../_data/scope-and-deferral.md)).
 

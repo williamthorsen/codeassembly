@@ -67,7 +67,7 @@ export function composeManifest(input: {
     project_slug: projectSlug,
     project_maturity: projectStage.maturity,
     project_sensitivity: projectStage.sensitivity,
-    project_users: projectStage.users,
+    project_audience: projectStage.audience,
     scm,
     default_branch: defaultBranch,
     branch_name: branchName,

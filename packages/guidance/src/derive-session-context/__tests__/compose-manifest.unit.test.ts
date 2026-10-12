@@ -8,7 +8,7 @@ const NOW = new Date('2026-05-26T02:07:41Z');
 const HOME = '/Users/test';
 const CWD = '/Users/test/repos/codeassembly';
 
-const NO_STAGE: ProjectStage = { maturity: null, sensitivity: null, users: null };
+const NO_STAGE: ProjectStage = { maturity: null, sensitivity: null, audience: null };
 
 const DEFAULT_PATHS = { chats: 'chats', devlogs: 'devlogs', plans: 'plans' };
 
@@ -35,12 +35,16 @@ describe(composeManifest, () => {
   it('reports the project stage, null for each undeclared value', () => {
     const base = { preferences: {}, branchName: 'main', cwd: CWD, home: HOME, now: NOW };
     const undeclared = composeManifest({ ...base, projectStage: NO_STAGE });
-    expect(undeclared).toMatchObject({ project_maturity: null, project_sensitivity: null, project_users: null });
+    expect(undeclared).toMatchObject({ project_maturity: null, project_sensitivity: null, project_audience: null });
     const declared = composeManifest({
       ...base,
-      projectStage: { maturity: 'hobby', sensitivity: 'low', users: 'owner' },
+      projectStage: { maturity: 'hobby', sensitivity: 'low', audience: 'owner' },
     });
-    expect(declared).toMatchObject({ project_maturity: 'hobby', project_sensitivity: 'low', project_users: 'owner' });
+    expect(declared).toMatchObject({
+      project_maturity: 'hobby',
+      project_sensitivity: 'low',
+      project_audience: 'owner',
+    });
   });
 
   it('2: simple branch with description', () => {

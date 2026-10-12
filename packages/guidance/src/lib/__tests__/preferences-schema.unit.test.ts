@@ -115,7 +115,7 @@ describe('preferences.v1.json schema', () => {
   it.each([
     ['maturity', ['hobby', 'early', 'production']],
     ['sensitivity', ['low', 'personal', 'confidential']],
-    ['users', ['owner', 'team', 'public']],
+    ['audience', ['owner', 'team', 'public']],
   ])('accepts each declared `project.%s` value and rejects any other', async (key, values) => {
     for (const value of values) {
       const output = await validate(schemaId, { project: { [key]: value } }, FLAG);
