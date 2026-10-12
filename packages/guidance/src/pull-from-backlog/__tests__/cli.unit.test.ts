@@ -1,5 +1,5 @@
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
-import { mkdir, rm } from 'node:fs/promises';
+import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -31,9 +31,8 @@ describe(runCli, () => {
   let root: string;
   let context: CommandContext;
 
-  beforeEach(async () => {
+  beforeEach(() => {
     root = mkdtempSync(path.join(tmpdir(), 'pull-cli-'));
-    await mkdir(path.join(root, '.git'));
     const runner = buildFakeRunner(respond);
     context = { git: makeFakeRepository(root), now: NOW, root, run: runner.run };
   });

@@ -16,7 +16,10 @@ export interface FakeBacklogGitAnswers {
   worktrees?: readonly Worktree[];
 }
 
-/** Builds a git adapter that answers from fixed values; a query for an answer that it lacks throws, as git would fail. */
+/**
+ * Builds a git adapter that answers from fixed values. A missing `commonDir` or `shortSha` rejects, as git would fail;
+ * every other missing answer reads as absent.
+ */
 export function makeFakeBacklogGit(answers: FakeBacklogGitAnswers): BacklogGit {
   const tips = new Map(Object.entries(answers.tips ?? {}));
   return {
