@@ -62,6 +62,7 @@ members:
     - upgrade-dependencies
     - wrap-up
   subagents:
+    - disposition-challenger
     - entry-drafter
     - handoff-reviewer
     - plan-reviewer

@@ -6,6 +6,9 @@
 _defaults:
   permissionMode: bypassPermissions
 
+disposition-challenger:
+  model: inherit
+
 handoff-reviewer:
   model: sonnet
 
