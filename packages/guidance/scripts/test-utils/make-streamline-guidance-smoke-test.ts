@@ -13,7 +13,8 @@ const TARGET = 'skills/demo/SKILL.md';
 /**
  * Builds a throwaway git repository containing one content root, whose skill includes one partial, and
  * returns an invocation that resolves the skill. Exercises the git listing, the include listing, and the
- * transitive-file pipeline.
+ * transitive-file pipeline. The invocation runs the shipped bundle end to end, which cannot take a fake git adapter,
+ * so the bundle's real adapter needs a real repository to read.
  */
 export function makeStreamlineGuidanceSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'streamline-guidance-smoke-'));
