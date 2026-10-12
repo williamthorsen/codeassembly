@@ -159,6 +159,8 @@ When the preferences do not name a project, the helper prints `{"fallback": "no-
 
 Identify the client per {skill?:update-jira-ticket}, which ranks the three client shapes and states the description format that each one takes. If it identifies none, take the [no-remote fallback](#fallback-no-remote-platform), naming the absent client in the warning.
 
+<!-- include: ../_partials/jira-task-list-flattening.md / -->
+
 - **`contentFormat` tool** (e.g. `createJiraIssue`): `projectKey`, `issueTypeName`, `summary` (`ticket_title`), and the step-2 body as a top-level `description` with `contentFormat: "markdown"`. Take any further required argument from the tool's own schema, which a connected server may extend.
 - **HTML tool** (e.g. `create_jira_issue`): The same target and summary, with the body as `description_html`, rendered to the allowlist and passed through that skill's pre-flight checker before the call.
 - **`acli`**: Write the step-2 body as Markdown to a scratch file per [gh body file](#gh-body-file), naming it `jira-body-{timestamp}.md`, and run the helper once:
@@ -305,7 +307,7 @@ body_path="{absolute path from the write step}"
 gh issue comment {number} --body-file "$body_path"
 ```
 
-**Jira.** Comment through the client that created the work item, in the format assigned to that client by {skill?:update-jira-ticket}: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file.
+**Jira.** Comment through the client that created the work item, in the format assigned to that client by {skill?:update-jira-ticket}: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file. Flatten task lists for a connected tool as [Create the work item](#create-the-work-item) states.
 
 The scratch file follows [gh body file](#gh-body-file), whose rules are about the path rather than the platform: `acli` reads a file the same way `gh` does, and a path carried between Bash invocations resolves to nothing either way.
 

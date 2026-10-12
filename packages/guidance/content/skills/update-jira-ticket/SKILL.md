@@ -10,7 +10,7 @@ The same constraint applies to creating a Jira issue and to updating one: Whatev
 
 ## Checklists
 
-Convert task-list syntax (`- [ ]` / `- [x]`) to plain `-` bullets before submitting Markdown or HTML, on creation and update alike. Neither conversion to ADF maps it to task items: The brackets are escaped, so the line persists as a bullet reading `\[ \] ...`.
+<!-- include: ../_partials/jira-task-list-flattening.md / -->
 
 Native checkboxes exist only as ADF `taskList` / `taskItem` nodes, which makes the [ADF path](#adf-path) the one exception. A body submitted as ADF contains real task items and keeps them. That is not a reason to use ADF elsewhere: Because `contentFormat` applies to the whole field rather than a section of it, a checklist never justifies authoring an entire description as ADF on a client that takes Markdown.
 
