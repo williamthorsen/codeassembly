@@ -23,7 +23,7 @@ Read the declared stage of the project under assessment from `node {harness_home
 
 ### 1. Prepare the targets
 
-Resolve the ticket directory per {skill:save-artifact}, and create `{ticket_dir}/usability/` with one subdirectory per lens.
+Resolve the ticket directory per {skill:save-artifact}, and create `{ticket_dir}/usability/`.
 
 - **The browser.** The lenses share one browser that the Playwright MCP server drives, so they run one after another. Confirm that the browser answers before anything else; when it does not, ask the developer for one and stop.
 - **The local stack.** When a target is local, confirm that it runs, and start it by the repository's own scripts when it does not. Use a development build that reaches only the local stack, never a script that reaches a hosted service.
@@ -47,7 +47,7 @@ Save the brief with {skill:save-artifact} as a ticket-level `usability-brief` ar
 
 ### 4. Dispatch the lenses
 
-Dispatch one lens at a time, in the order of the brief's lens table, and wait for each to return before dispatching the next. Send one {tool:Task} call, `subagent_type: usability-assessor`, with this block and nothing else composed into it:
+Dispatch one lens at a time, in the order of the brief's lens table, and wait for each to return before dispatching the next. Create `{ticket_dir}/usability/{lens slug}/` before dispatching each lens. Send one {tool:Task} call, `subagent_type: usability-assessor`, with this block and nothing else composed into it:
 
 ```dispatch
 brief: {path to the saved brief}

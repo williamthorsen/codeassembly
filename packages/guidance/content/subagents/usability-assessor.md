@@ -1,7 +1,7 @@
 ---
 name: usability-assessor
 description: Assess a product's usability through one lens of an assessment brief, by walking each of the lens's use cases in a browser. Returns use-case outcomes, formal findings with reproduction steps and evidence, ideas kept apart from the findings, and the limits of the assessment.
-disallowedTools: Edit, NotebookEdit, Task
+disallowedTools: Edit, NotebookEdit, Task, Write
 rulebooks:
   - accessibility-conventions
   - ui-copy-conventions

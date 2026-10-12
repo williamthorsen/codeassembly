@@ -17,7 +17,7 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │       │   ├── manifest.json
         │       │   ├── shots/{slug}-v{n}.png
         │       │   └── {slug}-v{n}.html
-        │       ├── usability/                                ← a usability assessment's brief, lens reports, and evidence, kept by `assess-usability`
+        │       ├── usability/                                ← a usability assessment's lens reports and evidence, kept by `assess-usability`
         │       │   ├── {lens}-report.md
         │       │   └── {lens}/{finding-id}-{slug}.png
         │       └── {run-id}/                                 ← review run directory
