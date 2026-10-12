@@ -11,6 +11,7 @@ members:
     - align-ticket-with-implementation
     - anti-patterns
     - assess-ticket
+    - assess-usability
     - brainstorming
     - capture-lede-decision
     - classify-complexity
