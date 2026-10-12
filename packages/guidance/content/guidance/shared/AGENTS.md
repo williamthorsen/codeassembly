@@ -26,6 +26,10 @@
 
 When creating an artifact (plan, devlog, review, change summary, chat summary, etc.), invoke the `save-artifact` skill to resolve path and naming. Do not place artifacts in ad-hoc locations.
 
+The artifact directory (`~/ai-artifacts` by default) is the developer's audit trail: It records what agents planned, reviewed, summarized, and published, and when. It is not a source of truth. Instructions, a procedure, or a reference that a later session must find belong in the repository (its docs, `AGENTS.md`, or a README), or in a skill or rulebook when they apply across repositories; never save them as an artifact.
+
+An artifact is not authority on the current state of code, design, or decisions. Treat what a search of artifacts turns up as history, and verify it against the repository, the tickets, and the pull requests. A skill that reads an artifact as an input to the same piece of work, such as the plan that `implement-plan` executes or the change summary that `create-pr` publishes, uses the artifact as the workflow intends.
+
 A saved artifact records what its author produced at that moment. Correct one that got its own subject wrong; never edit one toward what has happened since, and never report its divergence from current state as a defect or as a repair for the user to weigh.
 
 Two artifacts are never edited once written, because a rewrite of either destroys evidence silently: `capture-lede-decision` reads the `pull-request` artifact's `## What` and the `merge` artifact's `## Body` to recover what was published. Each opens with a marker that directs a reading agent to give its own revision a new record and leave the original unedited.
