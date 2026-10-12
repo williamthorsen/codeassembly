@@ -5,8 +5,13 @@ export interface FakeGitAnswers {
   findMergeBase?: GitAnswer<string>;
   findTopLevel?: GitAnswer<string>;
   listChangedFiles?: GitAnswer<string[]>;
-  /** One scope for every root, or a scope per root; a root without one gets `undefined`, as outside a working tree. */
-  listScope?: ReadonlySet<string> | ReadonlyMap<string, ReadonlySet<string>>;
+  /**
+   * The scope for every root that `listScopeByRoot` does not name; absent means `undefined`, as outside a working
+   * tree.
+   */
+  listScope?: ReadonlySet<string>;
+  /** A scope per root, for a run that enumerates more than one store. */
+  listScopeByRoot?: ReadonlyMap<string, ReadonlySet<string>>;
 }
 
 /**
@@ -14,12 +19,11 @@ export interface FakeGitAnswers {
  * tree, except `listChangedFiles`, which defaults to an empty change set.
  */
 export function makeFakeGit(answers: FakeGitAnswers = {}): KbGit {
-  const { listScope } = answers;
   return {
     findMergeBase: () => answers.findMergeBase ?? NOT_A_REPOSITORY,
     findTopLevel: () => answers.findTopLevel ?? NOT_A_REPOSITORY,
     listChangedFiles: () => answers.listChangedFiles ?? { ok: true, value: [] },
-    listScope: ({ root }) => (listScope instanceof Map ? listScope.get(root) : listScope),
+    listScope: ({ root }) => answers.listScopeByRoot?.get(root) ?? answers.listScope,
   };
 }
 
