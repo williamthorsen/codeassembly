@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { isRecord } from '../../lib/type-guards.ts';
 import preferencesSchema from '../../schemas/preferences.v1.json' with { type: 'json' };
-import { ANNOTATION_KEYWORDS, checkPreferences, formatFinding, HANDLED_KEYWORDS } from '../check-preferences.ts';
+import { ANNOTATION_KEYWORDS, checkPreferences, type Finding, HANDLED_KEYWORDS } from '../check-preferences.ts';
 import { findNearestKey } from '../find-nearest-key.ts';
 
 describe(checkPreferences, () => {
@@ -85,6 +85,11 @@ describe(findNearestKey, () => {
 });
 
 // region | Helpers
+
+/** Renders a finding as one line, so that an assertion reads as the finding does. */
+function formatFinding(finding: Finding): string {
+  return `${finding.level} ${finding.path}: ${finding.message}`;
+}
 
 /**
  * Collects the keywords used by a schema node and its subschemas. Keys under `properties` are property names, so the

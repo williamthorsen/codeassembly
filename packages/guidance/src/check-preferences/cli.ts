@@ -1,7 +1,7 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit non-zero on an invalid file, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 // CLI entry point for the check-preferences helper: validates a `preferences.yaml` against the schema bundled with
-// this release, printing one line per finding and exiting 1 when any finding is an error.
+// this release, printing the findings as JSON and exiting 1 when any finding is an error.
 
 import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
@@ -14,40 +14,20 @@ import { parse as parseYaml } from 'yaml';
 
 import { isEnoent } from '../lib/type-guards.ts';
 import preferencesSchema from '../schemas/preferences.v1.json' with { type: 'json' };
-import { checkPreferences, formatFinding } from './check-preferences.ts';
+import { checkPreferences, type Finding } from './check-preferences.ts';
 
-/** Checks the file named on the command line, or `.agents/preferences.yaml` under the working directory. */
+/**
+ * Checks the file named on the command line, or `.agents/preferences.yaml` under the working directory, and prints
+ * `{ file, present, valid, findings }` as JSON. Returns the exit code: 1 when any finding is an error, else 0.
+ */
 export async function runCheckPreferences(argv: readonly string[], cwd: string): Promise<number> {
   if (argv.length > 1) {
     throw new Error(`expected at most one path (got ${argv.join(' ')})`);
   }
   const filePath = path.resolve(cwd, argv[0] ?? path.join('.agents', 'preferences.yaml'));
-
-  let text: string;
-  try {
-    text = await readFile(filePath, 'utf8');
-  } catch (error) {
-    if (isEnoent(error)) {
-      process.stderr.write(`check-preferences: ${filePath} does not exist; nothing to check\n`);
-      return 0;
-    }
-    throw error;
-  }
-
-  let document: unknown;
-  try {
-    document = parseYaml(text);
-  } catch (error) {
-    process.stdout.write(`error (root): malformed YAML in ${filePath}: ${describeError(error)}\n`);
-    return 1;
-  }
-
-  // An empty document declares no keys.
-  const findings = checkPreferences(document ?? {}, preferencesSchema);
-  for (const finding of findings) {
-    process.stdout.write(`${formatFinding(finding)}\n`);
-  }
-  return findings.some((finding) => finding.level === 'error') ? 1 : 0;
+  const result = await checkFile(filePath);
+  process.stdout.write(`${JSON.stringify(result)}\n`);
+  return result.valid ? 0 : 1;
 }
 
 if (isEntryPoint()) {
@@ -60,6 +40,34 @@ if (isEntryPoint()) {
 }
 
 // region | Helpers
+
+/** Reads and checks one preferences file. A missing file is valid, because the file is optional. */
+async function checkFile(
+  filePath: string,
+): Promise<{ file: string; present: boolean; valid: boolean; findings: readonly Finding[] }> {
+  let text: string;
+  try {
+    text = await readFile(filePath, 'utf8');
+  } catch (error) {
+    if (isEnoent(error)) {
+      return { file: filePath, present: false, valid: true, findings: [] };
+    }
+    throw error;
+  }
+
+  let document: unknown;
+  try {
+    document = parseYaml(text);
+  } catch (error) {
+    const finding: Finding = { level: 'error', path: '(root)', message: `malformed YAML: ${describeError(error)}` };
+    return { file: filePath, present: true, valid: false, findings: [finding] };
+  }
+
+  // An empty document declares no keys.
+  const findings = checkPreferences(document ?? {}, preferencesSchema);
+  const valid = findings.every((finding) => finding.level !== 'error');
+  return { file: filePath, present: true, valid, findings };
+}
 
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a

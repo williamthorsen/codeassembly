@@ -34,11 +34,6 @@ export function checkPreferences(document: unknown, schema: unknown): Finding[] 
   return findings;
 }
 
-/** Formats a finding as the one line that the CLI prints. */
-export function formatFinding(finding: Finding): string {
-  return `${finding.level} ${finding.path}: ${finding.message}`;
-}
-
 // region | Helpers
 
 /** Renders a key path as dotted keys with bracketed array indices, or `(root)` for the document itself. */
