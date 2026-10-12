@@ -6,7 +6,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import type { KbConfig } from '../config/config-schema.ts';
 import { createNoteScopeMatcher, type NoteScopeMatcher } from '../config/note-scope.ts';
-import { listGitScope } from '../git/list-git-scope.ts';
+import { realGit } from '../git/git.ts';
 import { readNoteContent } from '../note-io/read-note.ts';
 import { isGlobSegment } from './glob-segments.ts';
 
@@ -94,7 +94,7 @@ async function collectNoteLocations(input: { kbRoot: string; config: KbConfig })
   const candidates: NoteLocation[] = [];
   await walk({ root: kbRoot, dir: kbRoot, matcher, topLevelDirs, out: candidates });
 
-  const gitScope = listGitScope({ root: kbRoot });
+  const gitScope = realGit.listScope({ root: kbRoot });
   if (gitScope === undefined) return candidates;
 
   const locations = candidates.filter((candidate) => gitScope.has(candidate.relativePath.normalize('NFC')));
