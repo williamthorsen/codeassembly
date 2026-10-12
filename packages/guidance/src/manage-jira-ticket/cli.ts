@@ -1,7 +1,7 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-// CLI entry point for the manage-jira-ticket helper: resolves where a Jira work item goes, converts a Markdown body to
-// ADF, and creates the work item through `acli` exactly once.
+// CLI entry point for the manage-jira-ticket helper: resolves where a Jira work item goes, compares `acli`'s active site
+// with a ticket's site, converts a Markdown body to ADF, and creates the work item through `acli` exactly once.
 
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -14,11 +14,12 @@ import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { readProjectPreferences } from '../derive-session-context/read-preferences.ts';
+import { readPreferences, readProjectPreferences } from '../derive-session-context/read-preferences.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { loadWorkTypes } from '../lib/work-types.ts';
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
+import { readSiteCheck, type SiteCheck } from './check-site.ts';
 import { convertMarkdownToAdf } from './convert-body.ts';
 import { type AcliResult, createWorkItem } from './create-work-item.ts';
 import { readJiraPreferences, resolveTarget, type Target } from './resolve-target.ts';
@@ -26,6 +27,7 @@ import { readJiraPreferences, resolveTarget, type Target } from './resolve-targe
 const execFileAsync = promisify(execFile);
 
 const USAGE = `usage:
+  manage-jira-ticket check-site --target <url-or-host>
   manage-jira-ticket resolve-target --work-type <type>
   manage-jira-ticket convert-body --body-file <md> --out <path>
   manage-jira-ticket create --summary <text> --body-file <md> --work-type <type> [--parent <key>]`;
@@ -35,6 +37,9 @@ async function main(): Promise<void> {
   try {
     const [subcommand, ...argv] = process.argv.slice(2);
     switch (subcommand) {
+      case 'check-site':
+        await runCheckSite(argv);
+        break;
       case 'convert-body':
         await runConvertBody(argv);
         break;
@@ -58,6 +63,14 @@ if (isEntryPoint()) {
 }
 
 // region | Helpers
+
+/** States why `check` failed and names the command that makes the target site active. */
+function describeSiteMismatch(check: SiteCheck): string {
+  const switchCommand = `acli jira auth switch --site ${check.targetSite}`;
+  return check.activeSite === null
+    ? `could not read acli's active site; the ticket is on ${check.targetSite}. Sign in, then run \`${switchCommand}\`.`
+    : `acli's active site is ${check.activeSite}, but the ticket is on ${check.targetSite}. Run \`${switchCommand}\`.`;
+}
 
 /** Returns true when this module is the process entry point, resolving both sides through `realpathSync`. */
 function isEntryPoint(): boolean {
@@ -104,16 +117,25 @@ async function readBody(bodyFile: string): Promise<string> {
 }
 
 /**
- * Resolves the target for `workType` from the repository's preferences file alone, so that a project key in the
- * user's global file never sends a repository's work items to another project.
+ * Resolves the target for `workType` from the repository's preferences, which the caller reads from the repository's
+ * file alone, so that a project key in the user's global file never sends a repository's work items to another project.
  */
-async function readTarget(workType: string): Promise<Target> {
-  const preferences = await readProjectPreferences(resolveProjectRoot());
+async function readTarget(workType: string, preferences: Readonly<Record<string, unknown>>): Promise<Target> {
   const workTypes = await loadWorkTypes();
   if (workTypes === null) {
     throw new Error('the work-type taxonomy could not be read');
   }
   return resolveTarget(workType, readJiraPreferences(preferences), workTypes);
+}
+
+/**
+ * Reads `ticket.base_url` from the repository's preferences, falling back to the global file as the session manifest
+ * does, and treats an absent or empty value as unset. Unlike the project key, a global base URL is safe to read here:
+ * It can only make the site check refuse, never send a work item elsewhere.
+ */
+async function readTicketBaseUrl(projectRoot: string): Promise<string | undefined> {
+  const baseUrl = (await readPreferences({ cwd: projectRoot })).preferences.ticket?.base_url;
+  return baseUrl === '' ? undefined : baseUrl;
 }
 
 /** Runs `acli` without a shell and reports its exit code and output; throws when `acli` cannot be started. */
@@ -134,6 +156,17 @@ async function runAcli(args: readonly string[]): Promise<AcliResult> {
       return { exitCode: error.code, stderr: error.stderr, stdout: error.stdout };
     }
     throw error;
+  }
+}
+
+/** Prints the site check for `--target`, exiting non-zero and naming the switch command unless the sites match. */
+async function runCheckSite(argv: readonly string[]): Promise<void> {
+  const values = parseValues(argv, [{ name: 'target', takesValue: true }], ['target']);
+  const check = await readSiteCheck(values.target ?? '', runAcli);
+  writeJson(check);
+  if (!check.match) {
+    process.stderr.write(`manage-jira-ticket: ${describeSiteMismatch(check)}\n`);
+    process.exitCode = 1;
   }
 }
 
@@ -169,11 +202,31 @@ async function runCreate(argv: readonly string[]): Promise<void> {
     ['body-file', 'summary', 'work-type'],
   );
   const markdown = await readBody(values['body-file'] ?? '');
-  const target = await readTarget(values['work-type'] ?? '');
+  const projectRoot = resolveProjectRoot();
+  const target = await readTarget(values['work-type'] ?? '', await readProjectPreferences(projectRoot));
   if ('fallback' in target) {
     writeJson(target);
     process.stderr.write(`manage-jira-ticket: ${target.warning}\n`);
     process.exit(1);
+  }
+
+  // Check the site before any other `acli` call, because `acli` acts on its active site whatever the project key names.
+  const baseUrl = await readTicketBaseUrl(projectRoot);
+  let activeSite: string | null = null;
+  if (baseUrl !== undefined) {
+    const check = await readSiteCheck(baseUrl, runAcli);
+    if (!check.match) {
+      const warning = `Jira work item not created: ${describeSiteMismatch(check)}`;
+      writeJson({
+        activeSite: check.activeSite,
+        fallback: check.activeSite === null ? 'site-unreadable' : 'wrong-site',
+        targetSite: check.targetSite,
+        warning,
+      });
+      process.stderr.write(`manage-jira-ticket: ${warning}\n`);
+      process.exit(1);
+    }
+    activeSite = check.activeSite;
   }
 
   const scratchDir = await mkdtemp(path.join(tmpdir(), 'manage-jira-ticket-'));
@@ -185,7 +238,7 @@ async function runCreate(argv: readonly string[]): Promise<void> {
     for (const diagnostic of outcome.diagnostics) {
       process.stderr.write(`manage-jira-ticket: ${diagnostic}\n`);
     }
-    writeJson(outcome.result);
+    writeJson({ ...outcome.result, activeSite });
     if (!outcome.ok) {
       process.exitCode = 1;
     }
@@ -197,7 +250,7 @@ async function runCreate(argv: readonly string[]): Promise<void> {
 /** Resolves and prints the target for `--work-type`. */
 async function runResolveTarget(argv: readonly string[]): Promise<void> {
   const values = parseValues(argv, [{ name: 'work-type', takesValue: true }], ['work-type']);
-  writeJson(await readTarget(values['work-type'] ?? ''));
+  writeJson(await readTarget(values['work-type'] ?? '', await readProjectPreferences(resolveProjectRoot())));
 }
 
 /** Writes `value` to stdout as indented JSON. */

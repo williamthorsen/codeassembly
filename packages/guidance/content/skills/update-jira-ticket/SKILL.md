@@ -1,6 +1,6 @@
 ---
 name: update-jira-ticket
-description: 'Use whenever creating or updating a Jira issue description or comment, whether through acli, a contentFormat-based tool (createJiraIssue taking description, editJiraIssue taking fields.description, both with contentFormat markdown/adf), or an HTML-based tool (create_jira_issue / update_jira_issue, taking description_html / comment_html). Jira stores a Markdown or HTML body with its task-list syntax escaped, so checklists go in as plain bullets on those surfaces and as real task items through acli. The HTML tools additionally need the bundled pre-flight checker to catch INVALID_INPUT triggers (composition rules, named entities, Confluence macros, multi-line <pre>, disallowed elements) before any MCP round-trip; the contentFormat tools take Markdown directly, and acli takes plain text or ADF and parses Markdown as wiki markup.'
+description: 'Use whenever creating or updating a Jira issue description or comment, whether through acli, a contentFormat-based tool (createJiraIssue taking description, editJiraIssue taking fields.description, both with contentFormat markdown/adf), or an HTML-based tool (create_jira_issue / update_jira_issue, taking description_html / comment_html). Jira stores a Markdown or HTML body with its task-list syntax escaped, so checklists go in as plain bullets on those surfaces and as real task items through acli. The HTML tools additionally need the bundled pre-flight checker to catch INVALID_INPUT triggers (composition rules, named entities, Confluence macros, multi-line <pre>, disallowed elements) before any MCP round-trip; the contentFormat tools take Markdown directly, and acli takes plain text or ADF and parses Markdown as wiki markup. Also use to identify the Jira client for reading a ticket, including a client that the machine adds through the `jira-clients` guidance hook.'
 user-invocable: true
 ---
 
@@ -26,11 +26,23 @@ Match your client to one of these shapes:
 
 If more than one is available, prefer the `contentFormat` tool: It takes Markdown directly, whereas `acli` needs ADF. Because the `contentFormat` tool needs a connected Jira server, `acli` is the fallback for a machine without one.
 
+When the machine adds a client of its own, a section after this one describes it, with the sites that it reaches and where it ranks among these.
+
+<!-- guidance-hook: jira-clients -->
+
 ## ADF path
 
 Use this branch when the client is `acli`.
 
-1. **Author Markdown, then convert it to ADF with the helper.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown and write it to a scratch file. Then run:
+1. **Check `acli`'s active site before the first `acli` call.** `acli` acts on whichever site it is signed in to. Compare that site with the ticket's host, taken from the ticket URL, or from `ticket_base_url` when the ticket URL is not known:
+
+   ```bash
+   node {harness_home_dir}/scripts/manage-jira-ticket.mjs check-site --target {ticket URL or ticket_base_url}
+   ```
+
+   The helper prints `{"activeSite": ..., "targetSite": ..., "match": ...}` and exits non-zero unless the two match. On a mismatch, use another client from [Identify your client](#identify-your-client); when none remains, report the wrong site by repeating the helper's stderr line, which names both sites and the `acli jira auth switch` command. Never run that command, because the active site is shared by every session on the machine. A non-zero exit without JSON means that `acli` is unavailable. Skip the check when neither URL is known. `manage-jira-ticket.mjs create` runs the same check itself.
+
+2. **Author Markdown, then convert it to ADF with the helper.** Prefer a local Markdown artefact when one exists; otherwise compose in Markdown and write it to a scratch file. Then run:
 
    ```bash
    node {harness_home_dir}/scripts/manage-jira-ticket.mjs convert-body --body-file {absolute Markdown path} --out {absolute ADF path}
@@ -38,10 +50,10 @@ Use this branch when the client is `acli`.
 
    Pass both paths as literal absolute paths, unquoted; the helper refuses a missing or empty body file. It writes the ADF document to `--out` and prints `{"adfPath": "..."}`. Pass that path to `--description-file`, or to `--body-file` for a comment. Never hand-write the ADF.
 
-2. **Never pass Markdown to `--description` or `--description-file`.** `acli` parses it as Jira wiki markup, in which `#` opens an ordered list, so `## Problem` becomes a nested numbered item and every backtick, tilde, underscore, and bracket comes back backslash-escaped. Because the command reports success, only reading the work item back reveals the damage.
-3. **Reserve plain text for a body without any structure to lose**, such as a one-line comment. Submit anything containing headings, lists, or inline marks as ADF.
-4. **Keep your checkboxes**, per [Checklists](#checklists). The helper converts task-list syntax to `taskList` / `taskItem` nodes, so leave it in the Markdown rather than flattening it to plain bullets.
-5. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`, the HTML checker. `manage-jira-ticket.mjs` is the converter.
+3. **Never pass Markdown to `--description` or `--description-file`.** `acli` parses it as Jira wiki markup, in which `#` opens an ordered list, so `## Problem` becomes a nested numbered item and every backtick, tilde, underscore, and bracket comes back backslash-escaped. Because the command reports success, only reading the work item back reveals the damage.
+4. **Reserve plain text for a body without any structure to lose**, such as a one-line comment. Submit anything containing headings, lists, or inline marks as ADF.
+5. **Keep your checkboxes**, per [Checklists](#checklists). The helper converts task-list syntax to `taskList` / `taskItem` nodes, so leave it in the Markdown rather than flattening it to plain bullets.
+6. **Do not sanitize.** The HTML allowlist, the composition rules, and the pre-flight checker under [HTML path](#html-path) **do not apply** here, and you must **not** run `update-jira-ticket.mjs`, the HTML checker. `manage-jira-ticket.mjs` is the converter.
 
 ## Markdown path
 

@@ -15,14 +15,27 @@ const execFileAsync = promisify(execFile);
 const CLI_PATH = fileURLToPath(new URL('../cli.ts', import.meta.url));
 
 // An `acli` stand-in: It appends its argv, and the content of any `--description-file`, to the log as one JSON line.
+// `auth status` reports `STUB_SITE` as the active site, or fails as an unauthenticated `acli` when it is unset.
 const ACLI_STUB = String.raw`#!${process.execPath}
 const fs = require('node:fs');
 const args = process.argv.slice(2);
 const fileIndex = args.indexOf('--description-file');
 const description = fileIndex === -1 ? null : JSON.parse(fs.readFileSync(args[fileIndex + 1], 'utf8'));
 fs.appendFileSync(process.env.STUB_LOG, JSON.stringify({ args, description }) + '\n');
-process.stdout.write(args[2] === 'create' ? '{"key":"ABC-7"}' : '');
+if (args[1] === 'auth' && args[2] === 'status') {
+  if (process.env.STUB_SITE) {
+    process.stdout.write('✓ Authenticated\n  Site: ' + process.env.STUB_SITE + '\n  Email: user@example.com\n');
+  } else {
+    process.stderr.write("✗ Error: unauthorized: use 'acli jira auth login' to authenticate\n");
+    process.exitCode = 1;
+  }
+} else {
+  process.stdout.write(args[2] === 'create' ? '{"key":"ABC-7"}' : '');
+}
 `;
+
+const SITE_PREFERENCES =
+  'integrations:\n  jira:\n    project_key: ABC\nticket:\n  base_url: https://example.atlassian.net/browse/\n';
 
 describe('manage-jira-ticket CLI', () => {
   let workDir: string;
@@ -52,13 +65,75 @@ describe('manage-jira-ticket CLI', () => {
     const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix']);
 
     expect(result.exitCode).toBe(0);
-    expect(JSON.parse(result.stdout)).toEqual({ key: 'ABC-7', parentSkipped: false, rawOutput: '{"key":"ABC-7"}' });
+    expect(JSON.parse(result.stdout)).toEqual({
+      activeSite: null,
+      key: 'ABC-7',
+      parentSkipped: false,
+      rawOutput: '{"key":"ABC-7"}',
+    });
     const calls = await readCalls();
     expect(calls).toHaveLength(1);
     expect(calls[0]).toMatchObject({
       args: expect.arrayContaining(['--project', 'ABC', '--type', 'Bug', '--summary', 'Fix it', '--json']),
       description: { type: 'doc', content: [{ type: 'heading' }, { type: 'taskList' }] },
     });
+  });
+
+  it('creates once on the target site when the active site matches the base URL', async () => {
+    await writePreferences(SITE_PREFERENCES);
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix'], {
+      STUB_SITE: 'example.atlassian.net',
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(result.stdout)).toMatchObject({ activeSite: 'example.atlassian.net', key: 'ABC-7' });
+    expect(await readSubcommands()).toEqual(['auth status', 'workitem create']);
+  });
+
+  it('refuses to create on another site without any other acli call', async () => {
+    await writePreferences(SITE_PREFERENCES);
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(
+      ['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix', '--parent', 'ABC-1'],
+      { STUB_SITE: 'other.atlassian.net' },
+    );
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({
+      activeSite: 'other.atlassian.net',
+      fallback: 'wrong-site',
+      targetSite: 'example.atlassian.net',
+    });
+    expect(result.stderr).toContain('acli jira auth switch --site example.atlassian.net');
+    expect(await readSubcommands()).toEqual(['auth status']);
+  });
+
+  it('refuses to create when the active site cannot be read', async () => {
+    await writePreferences(SITE_PREFERENCES);
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix']);
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({ activeSite: null, fallback: 'site-unreadable' });
+    expect(await readSubcommands()).toEqual(['auth status']);
+  });
+
+  it('refuses to create on another site when only the global preferences set the base URL', async () => {
+    await writePreferences('integrations:\n  jira:\n    project_key: ABC\n');
+    await writeGlobalPreferences('ticket:\n  base_url: https://example.atlassian.net/browse/\n');
+    const bodyFile = await writeInput('body.md', 'Body\n');
+
+    const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix'], {
+      STUB_SITE: 'other.atlassian.net',
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toMatchObject({ fallback: 'wrong-site', targetSite: 'example.atlassian.net' });
+    expect(await readSubcommands()).toEqual(['auth status']);
   });
 
   it('refuses an empty body without calling acli', async () => {
@@ -104,6 +179,44 @@ describe('manage-jira-ticket CLI', () => {
     expect(JSON.parse(result.stdout)).toEqual({ issueType: 'Task', projectKey: 'XYZ' });
   });
 
+  it('prints a match and exits zero when the active site is the target', async () => {
+    const result = await runCli(['check-site', '--target', 'https://example.atlassian.net/browse/ABC-1'], {
+      STUB_SITE: 'example.atlassian.net',
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(JSON.parse(result.stdout)).toEqual({
+      activeSite: 'example.atlassian.net',
+      match: true,
+      targetSite: 'example.atlassian.net',
+    });
+  });
+
+  it('names both sites and the switch command when the active site is another', async () => {
+    const result = await runCli(['check-site', '--target', 'example.atlassian.net'], {
+      STUB_SITE: 'other.atlassian.net',
+    });
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toHaveProperty('match', false);
+    expect(result.stderr).toContain(
+      "acli's active site is other.atlassian.net, but the ticket is on example.atlassian.net",
+    );
+    expect(result.stderr).toContain('acli jira auth switch --site example.atlassian.net');
+  });
+
+  it('reports an unreadable active site when acli is not signed in', async () => {
+    const result = await runCli(['check-site', '--target', 'example.atlassian.net']);
+
+    expect(result.exitCode).toBe(1);
+    expect(JSON.parse(result.stdout)).toEqual({
+      activeSite: null,
+      match: false,
+      targetSite: 'example.atlassian.net',
+    });
+    expect(result.stderr).toContain("could not read acli's active site");
+  });
+
   it('writes the converted body to the named path', async () => {
     const bodyFile = await writeInput('body.md', '- [x] done\n');
     const outFile = path.join(workDir, 'body.adf.json');
@@ -134,10 +247,22 @@ describe('manage-jira-ticket CLI', () => {
       .map((line): unknown => JSON.parse(line));
   }
 
+  /** Reads the `acli` subcommands that the stand-in recorded, such as `auth status`, in call order. */
+  async function readSubcommands(): Promise<string[]> {
+    const calls = await readCalls();
+    return calls.map((call) => {
+      if (!isRecord(call) || !Array.isArray(call.args)) {
+        throw new Error('unexpected stand-in log entry');
+      }
+      return call.args.slice(1, 3).join(' ');
+    });
+  }
+
   /** Runs the helper's source from the project directory, with the `acli` stand-in first on `PATH`. */
-  async function runCli(argv: readonly string[]): Promise<CliResult> {
+  async function runCli(argv: readonly string[], stubEnv: Readonly<Record<string, string>> = {}): Promise<CliResult> {
     const env = {
       ...process.env,
+      ...stubEnv,
       HOME: homeDir,
       PATH: `${workDir}${path.delimiter}${process.env.PATH ?? ''}`,
       STUB_LOG: path.join(workDir, 'calls.log'),
@@ -151,6 +276,12 @@ describe('manage-jira-ticket CLI', () => {
       }
       throw error;
     }
+  }
+
+  /** Writes the stand-in home directory's global preferences file. */
+  async function writeGlobalPreferences(content: string): Promise<void> {
+    await mkdir(path.join(homeDir, '.agents'), { recursive: true });
+    await writeFile(path.join(homeDir, '.agents', 'preferences.yaml'), content);
   }
 
   /** Writes an input file into the working directory and returns its absolute path. */

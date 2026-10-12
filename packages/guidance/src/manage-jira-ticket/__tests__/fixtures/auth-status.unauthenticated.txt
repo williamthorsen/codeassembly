@@ -1,0 +1,1 @@
+✗ Error: unauthorized: use 'acli jira auth login' to authenticate

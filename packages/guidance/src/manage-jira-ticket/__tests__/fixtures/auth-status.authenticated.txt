@@ -1,0 +1,4 @@
+✓ Authenticated
+  Site: example.atlassian.net
+  Email: user@example.com
+  Authentication Type: oauth_global

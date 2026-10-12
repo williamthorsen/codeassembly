@@ -75,7 +75,15 @@ Skills may request a subset of these fields. The `updatedAt` field is needed by 
 
 Access Jira Cloud through Atlassian's `acli`, falling back to a connected Jira read tool. Detect the CLI with `command -v acli`, and treat a non-zero exit from the fetch itself as unavailable: An `acli` that is installed but unauthenticated exits non-zero with an error on stderr and nothing on stdout, and that error does not distinguish an authentication failure from a missing issue, so fall through on the exit status rather than on the message.
 
-**Preferred: `acli`.** Read the ticket body with the default view, which renders the description as text.
+**Preferred: `acli`.** `acli` reads from whichever site it is signed in to, and a ticket on another site fails with the same error as a missing one. Before the first `acli` call, compare its active site with the ticket's host, taken from the ticket URL, or from `ticket_base_url` when the ticket URL is not known:
+
+```
+node {harness_home_dir}/scripts/manage-jira-ticket.mjs check-site --target {ticket URL or ticket_base_url}
+```
+
+The helper prints `{"activeSite": ..., "targetSite": ..., "match": ...}` and exits non-zero unless the two match. On a mismatch, read the ticket through another client below; a non-zero exit without JSON means that `acli` is unavailable. When neither URL is known, skip the check and read through `acli` as below.
+
+Read the ticket body with the default view, which renders the description as text.
 
 ```
 acli jira workitem view {key}
@@ -90,9 +98,11 @@ When a skill needs structured metadata, such as the `updated` timestamp for a st
 - **Takes an issue URL**: Pass the ticket URL. Prefer this shape when both are connected, since it does not need site resolution.
 - **Takes an issue key and a cloud ID**: Resolve the cloud ID first, from the same server's tool listing accessible Atlassian sites. It is the `id` of the site whose URL matches the ticket URL's host, or of the sole site listed when the ticket URL is not known. If neither settles it, ask the user which site hosts the ticket. Resolve it once and reuse it for the rest of the session.
 
-**Last resort.** When neither is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4d), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
+**A client that the machine adds.** {skill?:update-jira-ticket} lists any Jira client that this machine adds to the cascade, with the sites that it reaches and its rank. Read through it as its entry states.
 
-The stored URL applies throughout: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)).
+**Last resort.** When no client can read the ticket and `check-site` reported a mismatch, report the wrong site rather than a missing ticket: Repeat the helper's stderr line, which names both sites and the `acli jira auth switch` command. Never run that command, because the active site is shared by every session on the machine. When no client is available, present the Jira key and ask the user for the ticket content. When `ticket.base_url` is configured, the ticket URL is reconstructed from the base and `ticket_id` (per [auto-resolve](#auto-resolve) step 4d), so it does not have to be supplied or re-pasted. A caller with a sound default source may substitute it for that prompt, as [When auto-resolve fails](#when-auto-resolve-fails) allows.
+
+The stored URL applies throughout: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)). A site mismatch does not show that the ticket is missing, so it does not invalidate the stored URL.
 
 ## Platform-specific write
 
