@@ -5,6 +5,7 @@ import { Readable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { parseArgs, runDecision } from '../cli.ts';
 import { createLedeFixture, FIXTURE_AGENT_LEDE, type LedeFixture } from '../test-utils/create-lede-fixture.ts';
 import type { DecisionResult } from '../types.ts';
@@ -357,6 +358,7 @@ function runInput(input: {
     argv: input.argv,
     stdin: Readable.from([Buffer.from(input.comment ?? '', 'utf8')]),
     cwd: input.fixture.root,
+    git: makeFakeGit(),
     env: {},
     now: NOW,
     defaultSubagentsDir: input.fixture.subagentsDir,

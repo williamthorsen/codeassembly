@@ -1,23 +1,16 @@
-import { execFile } from 'node:child_process';
 import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { Readable } from 'node:stream';
-import { promisify } from 'node:util';
 
 import { describe, expect, it } from 'vitest';
 
+import type { SharedGit } from '../../shared/git.ts';
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { parseArgs, runCapture } from '../cli.ts';
 
-const execFileAsync = promisify(execFile);
-
-/** Initializes a throwaway git repo with a single named remote so that `resolveRepo` can derive an `owner/name`. */
-async function makeRepoWithRemote(remoteUrl: string, remoteName = 'origin'): Promise<string> {
-  const repo = await mkdtemp(join(tmpdir(), 'capture-cli-repo-'));
-  await execFileAsync('git', ['-C', repo, 'init', '--quiet']);
-  await execFileAsync('git', ['-C', repo, 'remote', 'add', remoteName, remoteUrl]);
-  return repo;
-}
+/** A git adapter for a working directory without any remote. */
+const NO_REMOTE_GIT = makeFakeGit();
 
 const NOW = new Date('2026-06-04T06:57:22.000Z');
 
@@ -28,6 +21,11 @@ const STORE_CONFIG = `targets:
 exclude:
   - '**/node_modules/**'
 `;
+
+/** Builds a working directory whose git adapter lists a single named remote, from which `resolveRepo` derives an `owner/name`. */
+function buildRepoWithRemote(url: string, name = 'origin'): { cwd: string; git: SharedGit } {
+  return { cwd: '/tmp/capture-cli-repo', git: makeFakeGit({ remotes: [{ name, url }] }) };
+}
 
 /** Builds a Readable stream that emits the given body and ends. */
 function bodyStream(body: string): Readable {
@@ -153,12 +151,13 @@ describe(parseArgs, () => {
 describe(runCapture, () => {
   it('writes recordType: event and returns a ULID id and second-precision capturedAt', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
       home,
@@ -181,12 +180,13 @@ describe(runCapture, () => {
 
   it('captures an event without a session field when the harness does not expose a session id', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
+      git,
       env: {},
       now: NOW,
       home,
@@ -202,12 +202,13 @@ describe(runCapture, () => {
 
   it('treats a blank session id as a missing one', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: '' },
       now: NOW,
       home,
@@ -230,6 +231,7 @@ describe(runCapture, () => {
     );
 
     const amended = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--amend', ID, '--summary', 'Corrected summary'],
       stdin: bodyStream('Corrected body.'),
       cwd: '/tmp/different-cwd',
@@ -250,12 +252,13 @@ describe(runCapture, () => {
 
   it('writes the impact field when --impact is supplied', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing', '--impact', 'high'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
       home,
@@ -270,12 +273,13 @@ describe(runCapture, () => {
 
   it('writes the harness field when --harness is supplied', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing', '--harness', 'claude'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
       home,
@@ -290,12 +294,13 @@ describe(runCapture, () => {
 
   it('resolves repo via the first-remote fallback when origin is absent', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git', 'upstream');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git', 'upstream');
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
       home,
@@ -313,6 +318,7 @@ describe(runCapture, () => {
     const bareDir = await mkdtemp(join(tmpdir(), 'capture-cli-norepo-'));
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: bareDir,
@@ -334,6 +340,7 @@ describe(runCapture, () => {
     await mkdir(join(cwdWithKb, '.kb'), { recursive: true });
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', 'codeassembly', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: cwdWithKb,
@@ -354,6 +361,7 @@ describe(runCapture, () => {
     const home = await mkdtemp(join(tmpdir(), 'capture-cli-empty-'));
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', 'missing', '--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
@@ -380,6 +388,7 @@ describe(runCapture, () => {
     );
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', 'named', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: '/tmp/elsewhere',
@@ -407,6 +416,7 @@ describe(runCapture, () => {
     );
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
@@ -430,6 +440,7 @@ describe(runCapture, () => {
     await writeFile(join(home, '.agents', 'kb.yaml'), 'kbs:\n  codeassembly:\n    path: /tmp/whatever\n', 'utf8');
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
@@ -456,6 +467,7 @@ describe(runCapture, () => {
     );
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', '@feedback', '--summary', 'Noticed a thing'],
       stdin: bodyStream('Body text.'),
       cwd: '/tmp/elsewhere',
@@ -475,6 +487,7 @@ describe(runCapture, () => {
     const { home } = await makeStore('codeassembly');
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', '@feedback', '--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
@@ -502,6 +515,7 @@ describe(runCapture, () => {
     );
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
@@ -528,6 +542,7 @@ describe(runCapture, () => {
     );
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', 'realstore', '--summary', 'x'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
@@ -547,6 +562,7 @@ describe(runCapture, () => {
     const { home } = await makeStore('codeassembly');
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', 'codeassembly'],
       stdin: bodyStream(''),
       cwd: '/tmp/elsewhere',
@@ -563,12 +579,13 @@ describe(runCapture, () => {
 
   it('amends an event, editing content while preserving provenance and unsupplied fields', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const created = await runCapture({
       argv: ['--store', '@default', '--summary', 'Original summary', '--tags', 'one', '--impact', 'high'],
       stdin: bodyStream('Original body.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
       now: NOW,
       home,
@@ -577,6 +594,7 @@ describe(runCapture, () => {
     if (!created.ok) return;
 
     const amended = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--amend', created.id, '--summary', 'Corrected summary'],
       stdin: bodyStream('Corrected body.'),
       cwd: '/tmp/different-cwd',
@@ -609,12 +627,13 @@ describe(runCapture, () => {
 
   it('overrides curatorial fields on amend only when their flag is supplied', async () => {
     const { home } = await makeStore('codeassembly');
-    const repo = await makeRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
+    const { cwd: repo, git } = buildRepoWithRemote('git@github.com:williamthorsen/codeassembly.git');
 
     const created = await runCapture({
       argv: ['--store', '@default', '--summary', 'Original', '--tags', 'one', '--impact', 'high'],
       stdin: bodyStream('Body.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
       now: NOW,
       home,
@@ -626,6 +645,7 @@ describe(runCapture, () => {
       argv: ['--store', '@default', '--amend', created.id, '--summary', 'Original', '--tags', 'two', '--impact', 'low'],
       stdin: bodyStream('Body.'),
       cwd: repo,
+      git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
       now: NOW,
       home,
@@ -643,6 +663,7 @@ describe(runCapture, () => {
     const { home } = await makeStore('codeassembly');
 
     const result = await runCapture({
+      git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--amend', ID, '--summary', 'x'],
       stdin: bodyStream('body'),
       cwd: '/tmp/elsewhere',

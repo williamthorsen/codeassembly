@@ -26,6 +26,7 @@ import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';
+import type { SharedGit } from '../shared/git.ts';
 import { resolveRepo } from '../shared/resolve-repo.ts';
 import { resolveSession } from '../shared/resolve-session.ts';
 import { prepareEvent } from './prepare-event.ts';
@@ -78,6 +79,7 @@ export async function runCapture(input: {
   stdin: Readable;
   cwd: string;
   env: NodeJS.ProcessEnv;
+  git?: SharedGit;
   now: Date;
   home?: string;
 }): Promise<CaptureResult> {
@@ -129,7 +131,7 @@ export async function runCapture(input: {
   }
 
   const session = resolveSession(input.env);
-  const repo = await resolveRepo(input.cwd);
+  const repo = await resolveRepo(input.cwd, input.git);
   const context: CaptureContext = {
     cwd: input.cwd,
     ...(session !== undefined && { session }),
