@@ -103,6 +103,40 @@ it('processes user data correctly', () => {
 });
 ```
 
+## External programs
+
+The `testing-conventions` skill states the rule: Code reaches an external program through an adapter, and its tests pass a fake. In TypeScript, the adapter is a type, the code takes it as a parameter whose default is the real adapter, and the test passes an object literal. Prefer the parameter to module mocking (`vi.mock`), which leaves the dependency out of the signature and lets the code keep calling the program directly.
+
+```typescript
+// ✅ Good: The code receives git, and the test supplies its answers
+export interface Git {
+  listTrackedFiles(root: string): string[];
+}
+
+export const realGit: Git = {
+  listTrackedFiles: (root) =>
+    execFileSync('git', ['ls-files'], { cwd: root, encoding: 'utf8' }).split('\n').filter(Boolean),
+};
+
+export function findSkillFiles(root: string, git: Git = realGit): string[] {
+  return git.listTrackedFiles(root).filter((path) => path.endsWith('/SKILL.md'));
+}
+
+it('returns only the tracked SKILL.md files', () => {
+  const git: Git = { listTrackedFiles: () => ['a/SKILL.md', 'a/notes.md'] };
+  expect(findSkillFiles('/repo', git)).toStrictEqual(['a/SKILL.md']);
+});
+
+// ❌ Avoid: The test builds a real repository to produce the same input
+it('returns only the tracked SKILL.md files', () => {
+  execFileSync('git', ['init'], { cwd: scratch });
+  // ...write the files, then `git add` and `git commit`...
+  expect(findSkillFiles(scratch)).toStrictEqual(['a/SKILL.md']);
+});
+```
+
+Only `realGit` has a test that runs git, and that test checks that `listTrackedFiles` parses the output of `git ls-files`.
+
 ## Console and stream output
 
 The `testing-conventions` skill states the rule: A passing test prints nothing beyond the runner's report. These are the TypeScript techniques for applying it. Each helper restores what it replaced when its `using` scope ends.
