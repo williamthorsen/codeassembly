@@ -138,7 +138,13 @@ const PRODUCTION_FACT_PHRASES: ReadonlyArray<string> = [
 const QUOTING_RULE_PHRASE = '`text` and `migration` are always double-quoted';
 
 /** Every code under which the caller redispatches, each of which the drafter has to be able to act on. */
-const REJECTION_CODES: ReadonlyArray<string> = ['subject', 'unmatched-return', 'unsupported-claim', 'voice'];
+const REJECTION_CODES: ReadonlyArray<string> = [
+  'subject',
+  'type-mismatch',
+  'unmatched-return',
+  'unsupported-claim',
+  'voice',
+];
 
 /**
  * Phrases naming each reader, which a rewrite dropping the audience would lose. Lowercased, so that a doctrine
@@ -185,6 +191,21 @@ const SUBJECT_TEST_SOURCES: ReadonlyArray<string> = [
 const SUPPORTING_EDIT_PHRASES: ReadonlyArray<string> = [
   'a supporting edit is not an outcome of its own',
   'the paths in which its outcome appears',
+];
+
+/**
+ * Phrases stating that a rejected entry's `text` travels with its audited type, which overrides the commit log.
+ * Lowercased, so that a sentence's opening capital still matches.
+ */
+const TYPED_PASSAGE_PHRASES: ReadonlyArray<string> = [
+  '`{type}: {passage}`',
+  'overrides the type implied by the commit log',
+];
+
+/** Each file stating the typed passage: The caller sends it, and the drafter writes to the type that it supplies. */
+const TYPED_PASSAGE_SOURCES: ReadonlyArray<string> = [
+  path.join('skills', 'summarize-change', 'SKILL.md'),
+  path.join('subagents', 'entry-drafter.md'),
 ];
 
 /** The taxonomy that supplies each entry's `type`, and through that type's tier its reader. */
@@ -314,6 +335,18 @@ describe('entry-drafter contract', () => {
     const message =
       'A redispatch hands the drafter a code and the passages that failed, so a code that the caller sends and this ' +
       `file does not explain reaches a fresh context that cannot act on it. These codes are unexplained:\n  ${missing.join('\n  ')}`;
+    expect(missing, message).toEqual([]);
+  });
+
+  it.each(TYPED_PASSAGE_SOURCES)('sends a rejected entry with its audited type in %s', async (relativePath) => {
+    const text = (await readContentFile(relativePath)).toLowerCase();
+    const missing = TYPED_PASSAGE_PHRASES.filter((phrase) => !text.includes(phrase));
+
+    const message =
+      'The audit corrects an entry’s type in the caller, and the drafter, in a fresh context, re-derives the type ' +
+      'from the commit log. Unless the fence states the audited type and the drafter defers to it, a corrected entry ' +
+      'comes back in the old type’s form on every redispatch, and the developer is asked to settle it. These ' +
+      `phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
