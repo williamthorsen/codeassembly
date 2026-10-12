@@ -7,7 +7,7 @@ import {
   validate,
 } from '@williamthorsen/change-grammar';
 
-import type { RawCommit } from './read-commits.ts';
+import type { RawCommit } from './git.ts';
 
 /**
  * Derives what a branch of commits adds up to.
