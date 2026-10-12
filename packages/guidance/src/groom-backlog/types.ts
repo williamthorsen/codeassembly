@@ -4,6 +4,13 @@ import type { AssessmentRecord, AssessorReply, Marker } from './schemas.ts';
 /** Runs `command` with `args` in `cwd` and resolves to its stdout; rejects when the command fails. */
 export type CommandRunner = (command: 'gh' | 'git', args: readonly string[], cwd: string) => Promise<string>;
 
+/** A default-branch commit as the cross-reference pass reads it. */
+export interface Commit {
+  date: string;
+  sha: string;
+  subject: string;
+}
+
 /** One comment on a fetched issue. */
 export interface IssueComment {
   author: string;

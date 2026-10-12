@@ -5,7 +5,7 @@
  */
 import { z } from 'zod';
 
-import type { CommandRunner, CrossReference, Issue } from './types.ts';
+import type { CommandRunner, Commit, CrossReference, Issue } from './types.ts';
 
 /** The most merged pull requests that one pass reads. */
 export const PR_FETCH_LIMIT = 5_000;
@@ -29,13 +29,6 @@ const PullRequestListSchema = z.array(
 
 /** A merged pull request as the pass reads it. */
 export type PullRequest = z.infer<typeof PullRequestListSchema>[number];
-
-/** A default-branch commit as the pass reads it. */
-export interface Commit {
-  date: string;
-  sha: string;
-  subject: string;
-}
 
 /**
  * Builds a pattern matching `#N` as a token: not preceded by a word character, a slash, or `#` (which would make it
