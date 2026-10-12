@@ -34,6 +34,18 @@ if (args[1] === 'auth' && args[2] === 'status') {
 }
 `;
 
+// A `git` stand-in: The CLI resolves its project root through `git -C <dir> rev-parse --show-toplevel`, which it
+// answers with `STUB_GIT_TOPLEVEL`; it fails every other invocation.
+const GIT_STUB = String.raw`#!${process.execPath}
+const args = process.argv.slice(2);
+if (args[0] === '-C' && args[2] === 'rev-parse' && args[3] === '--show-toplevel') {
+  process.stdout.write(process.env.STUB_GIT_TOPLEVEL + '\n');
+} else {
+  process.stderr.write('git stub: unexpected invocation: ' + args.join(' ') + '\n');
+  process.exitCode = 128;
+}
+`;
+
 const SITE_PREFERENCES =
   'integrations:\n  jira:\n    project_key: ABC\nticket:\n  base_url: https://example.atlassian.net/browse/\n';
 
@@ -48,10 +60,8 @@ describe('manage-jira-ticket CLI', () => {
     homeDir = path.join(workDir, 'home');
     await mkdir(path.join(projectDir, '.agents'), { recursive: true });
     await mkdir(homeDir);
-    await execFileAsync('git', ['init', '--quiet', projectDir]);
-    const acliPath = path.join(workDir, 'acli');
-    await writeFile(acliPath, ACLI_STUB);
-    await chmod(acliPath, 0o755);
+    await writeStub('acli', ACLI_STUB);
+    await writeStub('git', GIT_STUB);
   });
 
   afterEach(async () => {
@@ -164,6 +174,8 @@ describe('manage-jira-ticket CLI', () => {
 
     expect(result.exitCode).toBe(0);
     expect(JSON.parse(result.stdout)).toEqual({ issueType: 'Task', projectKey: 'XYZ' });
+    // An empty stderr shows that the project root came from git rather than from the fallback's diagnostic.
+    expect(result.stderr).toBe('');
   });
 
   it('ignores Jira settings in the global preferences file', async () => {
@@ -258,13 +270,14 @@ describe('manage-jira-ticket CLI', () => {
     });
   }
 
-  /** Runs the helper's source from the project directory, with the `acli` stand-in first on `PATH`. */
+  /** Runs the helper's source from the project directory, with the `acli` and `git` stand-ins first on `PATH`. */
   async function runCli(argv: readonly string[], stubEnv: Readonly<Record<string, string>> = {}): Promise<CliResult> {
     const env = {
       ...process.env,
       ...stubEnv,
       HOME: homeDir,
       PATH: `${workDir}${path.delimiter}${process.env.PATH ?? ''}`,
+      STUB_GIT_TOPLEVEL: projectDir,
       STUB_LOG: path.join(workDir, 'calls.log'),
     };
     try {
@@ -294,6 +307,13 @@ describe('manage-jira-ticket CLI', () => {
   /** Writes the project's preferences file. */
   async function writePreferences(content: string): Promise<void> {
     await writeFile(path.join(projectDir, '.agents', 'preferences.yaml'), content);
+  }
+
+  /** Writes an executable stand-in for a command into the directory that leads `PATH`. */
+  async function writeStub(name: string, content: string): Promise<void> {
+    const stubPath = path.join(workDir, name);
+    await writeFile(stubPath, content);
+    await chmod(stubPath, 0o755);
   }
 
   // endregion | Helpers
