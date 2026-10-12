@@ -1,6 +1,6 @@
 ---
 name: testing-conventions
-description: Test naming conventions and behavioral testing patterns for projects with test suites
+description: What a test is for, how to name and structure it, and how it reaches git and other external programs. Consult before writing or changing a test.
 user-invocable: false
 ---
 
