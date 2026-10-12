@@ -5,11 +5,15 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 /** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
 const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
@@ -65,7 +69,7 @@ describe(syncCommand, () => {
       await writeSourceRulebook('source-only', 'delivery: skill\ndescription: From org.', 'Org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const skill = await readFile(skillPath('consult-source-only'), 'utf8');
       expect(skill).toContain('description: From org.');
@@ -75,14 +79,14 @@ describe(syncCommand, () => {
     it('delivers an ambient source rulebook to the local host and retracts it on removal', async () => {
       await writeSourceRulebook('ambient-src', 'delivery: ambient', 'Ambient org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - ambient-src\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const localHost = await readFile(localHostPath(), 'utf8');
       expect(localHost).toContain('<!-- rulebook:ambient-src -->');
       expect(localHost).toContain('Ambient org rules.');
 
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:ambient-src -->');
     });
@@ -92,7 +96,7 @@ describe(syncCommand, () => {
       await writeSourceRulebook('shadowed', 'delivery: ambient', 'Source body.');
       await declareWithSource('rulebooks:\n  use:\n    - shadowed\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(localHostPath(), 'utf8')).toContain('Source body.');
     });
@@ -102,7 +106,7 @@ describe(syncCommand, () => {
       await writeFixtureRulebook('unpopulated', 'delivery: ambient', 'Fixture body.');
       await declareWithSource('rulebooks:\n  use:\n    - unpopulated\n', missingDir);
 
-      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const warning = renderReportText(outcome, { level: 'warn' });
       expect(warning).toContain(`Declared source "org" (${missingDir}) does not exist`);
@@ -120,7 +124,7 @@ describe(syncCommand, () => {
         `sources:\n  - name: org\n    path: ${firstDir}\n  - name: team\n    path: ${secondDir}\nrulebooks:\n  use: []\n`,
       );
 
-      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const warnings = renderReportLines(outcome, { level: 'warn' }).filter((line) => line.includes('does not exist'));
       expect(warnings).toHaveLength(2);
@@ -132,7 +136,7 @@ describe(syncCommand, () => {
       const missingDir = path.join(sourceDir, 'missing');
       await declareWithSource('rulebooks:\n  use: []\n', missingDir);
 
-      const outcome = await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir);
+      const outcome = await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit);
 
       expect(renderReportText(outcome, { dryRun: true, level: 'warn' })).toContain(
         `Declared source "org" (${missingDir}) does not exist`,
@@ -144,7 +148,7 @@ describe(syncCommand, () => {
       await writeFile(filePath, 'not a dir\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n', filePath);
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/not a directory/);
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/not a directory/);
     });
 
     it.runIf(canEnforceDirPermissions)(
@@ -157,7 +161,7 @@ describe(syncCommand, () => {
         await declareWithSource('rulebooks:\n  use: []\n', inner);
 
         try {
-          await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+          await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
             /Invalid declared source.*"org".*unreadable/s,
           );
         } finally {
@@ -177,7 +181,7 @@ describe(syncCommand, () => {
         await declareWithSource('rulebooks:\n  use: []\n', locked);
 
         try {
-          await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+          await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
             /Invalid declared source.*"org".*unreadable/s,
           );
         } finally {
@@ -190,7 +194,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /Unsupported content format.*"org".*3.*supports content formats 1 and 2/s,
       );
     });
@@ -199,7 +203,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /Unsupported content format/,
       );
       expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
@@ -209,7 +213,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         new RegExp(`Unsupported content format.*${contentDir}`, 's'),
       );
     });
@@ -218,7 +222,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: [1\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /Unreadable content manifest.*"org"/s,
       );
     });
@@ -228,7 +232,7 @@ describe(syncCommand, () => {
       await writeSourceRulebook('source-only', 'delivery: skill\ndescription: From org.', 'Org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(skillPath('consult-source-only'), 'utf8')).toContain('Org rules.');
     });
@@ -237,7 +241,7 @@ describe(syncCommand, () => {
       await writeSourceSkill('source-skill');
       await declareWithSource('skills:\n  use:\n    - source-skill\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(skillPath('source-skill'), 'utf8')).toContain('<!-- codeassembly-skill:source-skill -->');
     });
@@ -249,7 +253,7 @@ describe(syncCommand, () => {
         `sources:\n  - name: ../escape\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`,
       );
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /Unusable declared source name.*\.\.\/escape.*relative path segment/s,
       );
     });
@@ -265,12 +269,12 @@ describe(syncCommand, () => {
           contentDir,
           `sources:\n  - name: '@acme/guidance'\n    path: ${scopedDir}\nrulebooks:\n  use: []\n`,
         );
-        await syncCommand(makeOptions(), projectRoot, homeDir);
+        await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
         const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
         expect(existsSync(path.join(sourcesRoot, '@acme', 'guidance', '_data', 'a.md'))).toBe(true);
 
         await rm(path.join(scopedDir, 'skills', '_data'), { recursive: true });
-        await syncCommand(makeOptions(), projectRoot, homeDir);
+        await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
         expect(existsSync(sourcesRoot)).toBe(false);
       } finally {
@@ -282,7 +286,7 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const delivered = path.join(projectRoot, '.claude', 'skills', '_sources', 'org', '_data', 'house-style.md');
       expect(await readFile(delivered, 'utf8')).toContain('# House style');
@@ -298,7 +302,7 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('skills:\n  use:\n    - org-skill\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const target = path.join(
         path.resolve(projectRoot),
@@ -322,7 +326,7 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use:\n    - org-rules\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const target = path.join(
         path.resolve(projectRoot),
@@ -351,7 +355,7 @@ describe(syncCommand, () => {
       );
 
       try {
-        await syncCommand(makeOptions(), projectRoot, homeDir);
+        await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
         const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
         expect(await readFile(path.join(sourcesRoot, 'org', '_data', 'shared.md'), 'utf8')).toContain('From org.');
@@ -367,12 +371,12 @@ describe(syncCommand, () => {
     it('retracts the support entries a dropped source delivered', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(true);
 
       await declareFixtureSource(projectRoot, contentDir, 'rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(sourcesRoot)).toBe(false);
     });
@@ -381,7 +385,7 @@ describe(syncCommand, () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
@@ -397,7 +401,7 @@ describe(syncCommand, () => {
     it('names only the outgoing namespace when a source is renamed', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await declareFixtureSource(
         projectRoot,
@@ -405,7 +409,7 @@ describe(syncCommand, () => {
         `sources:\n  - name: renamed\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`,
       );
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
@@ -417,28 +421,28 @@ describe(syncCommand, () => {
     it('names the namespace that a still-declared source empties', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await rm(path.join(sourceDir, 'skills', '_data'), { recursive: true });
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
 
       expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (source ships none)`);
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(false);
     });
 
     it('names the source-support retraction that a real run would perform, writing nothing', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       const sourcesRoot = path.join(projectRoot, '.claude', 'skills', '_sources');
       await declareFixtureSource(projectRoot, contentDir, 'rulebooks:\n  use: []\n');
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
@@ -456,7 +460,7 @@ describe(syncCommand, () => {
       );
       await declareWithSource('subagents:\n  use:\n    - source-agent\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const deployed = await readFile(path.join(projectRoot, '.claude', 'agents', 'source-agent.md'), 'utf8');
       expect(deployed).toContain('<!-- codeassembly-subagent:source-agent -->');
@@ -479,7 +483,7 @@ describe(syncCommand, () => {
       );
       await declareWithSource('skills:\n  use:\n    - shared-skill\n');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(skillPath('shared-skill'), 'utf8')).toContain('# Source shared skill');
     });
@@ -489,7 +493,7 @@ describe(syncCommand, () => {
       await writeFile(filePath, 'not a dir\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n', filePath);
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /Invalid declared source/,
       );
     });
@@ -500,7 +504,7 @@ describe(syncCommand, () => {
       await writeFixtureRulebook('fixture-only', 'delivery: ambient', 'Fixture only.');
       await declareWithSource('rulebooks:\n  use:\n    - shadowed\n    - fixture-only\n');
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
@@ -520,7 +524,7 @@ describe(syncCommand, () => {
       );
       await declareWithSource('skills:\n  use:\n    - source-skill\nsubagents:\n  use:\n    - source-agent\n');
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
@@ -534,7 +538,7 @@ describe(syncCommand, () => {
       await writeSourceRulebook('shadowed', 'delivery: ambient', 'Source body.');
       await declareWithSource('rulebooks:\n  use:\n    - shadowed\n');
 
-      const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit), {
         level: 'warn',
       });
 
@@ -547,7 +551,7 @@ describe(syncCommand, () => {
       await writeSourceRulebook('source-only', 'delivery: ambient', 'Org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
 
-      const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit), {
         level: 'warn',
       });
 

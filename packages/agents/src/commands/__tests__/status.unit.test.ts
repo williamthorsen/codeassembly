@@ -7,11 +7,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { recordFailedHomeAttempt } from '../../lib/home-provenance.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { statusCommand } from '../status.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('statusCommand', () => {
   let tempDir: string;
@@ -38,7 +42,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -51,7 +55,7 @@ describe('statusCommand', () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
     await recordFailedHomeAttempt('sync --global', { summary: 'two rulebooks rejected', defectCount: 2 }, tempDir);
 
     using stdio = captureStdio({ includeConsole: true });
@@ -86,7 +90,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     using stdio = captureStdio({ includeConsole: true });
     await statusCommand({ harness: 'claude' }, tempDir);
@@ -111,7 +115,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     await unlink(path.join(claudeHome, 'CLAUDE.md'));
 
@@ -126,7 +130,7 @@ describe('statusCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     await writeFile(path.join(claudeHome, 'CLAUDE.md'), 'tampered content', 'utf8');
 

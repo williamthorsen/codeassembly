@@ -15,6 +15,7 @@ import {
 } from '../lib/declared-sources.ts';
 import { emitReport, printLine } from '../lib/emit-report.ts';
 import { describePruneResult, pruneOrphanedEntries } from '../lib/entry-remover.ts';
+import { type AgentsGit, realGit } from '../lib/git.ts';
 import {
   listGuidanceTemplateFiles,
   renderGuidanceTemplateFile,
@@ -57,7 +58,11 @@ interface TemplateRoot {
 /**
  * Executes the install command, installing skills and subagents for the specified harnesses.
  */
-export async function installCommand(options: InstallOptions, baseDir?: string): Promise<void> {
+export async function installCommand(
+  options: InstallOptions,
+  baseDir?: string,
+  git: AgentsGit = realGit,
+): Promise<void> {
   // Runs first, and before the dry-run gate: A preview must refuse wherever the real run would. The attempt is
   // recorded only past this point, so an installation refused by the guard leaves the home domain's record untouched.
   await assertDesignatedWriter({
@@ -68,7 +73,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
   });
 
   try {
-    await deployHomeDomain(options, baseDir);
+    await deployHomeDomain(options, baseDir, git);
   } catch (error: unknown) {
     // A declaration without a usable source is refused before anything about the run is known, so it is not an attempt.
     if (!options.dryRun && !(error instanceof NoContentSourceError)) {
@@ -79,7 +84,7 @@ export async function installCommand(options: InstallOptions, baseDir?: string):
 }
 
 /** Deploys the home domain, past the designated-writer guard that `installCommand` applies. */
-async function deployHomeDomain(options: InstallOptions, baseDir: string | undefined): Promise<void> {
+async function deployHomeDomain(options: InstallOptions, baseDir: string | undefined, git: AgentsGit): Promise<void> {
   const homeDir = baseDir ?? homedir();
   // Resolve the home declaration's sources, which refuses a missing or unusable source, or a content root whose
   // declared format this tool cannot honor, before anything is written, dry-run included. `roots` is the search order
@@ -115,7 +120,7 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
       console.info('Nothing else to install.');
     }
     if (!options.dryRun) {
-      await recordHomeProvenance('install', baseDir);
+      await recordHomeProvenance('install', baseDir, git);
     }
     return;
   }
@@ -199,7 +204,7 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
     };
     await writeManifest(manifestPath, updatedManifest);
     console.info('\nManifest updated.');
-    await recordHomeProvenance('install', baseDir);
+    await recordHomeProvenance('install', baseDir, git);
   }
 }
 

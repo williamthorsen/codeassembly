@@ -1,15 +1,15 @@
-import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readRecordLines, selectLatestSnapshot } from '../../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../../deployed-sizes/resolve-record-path.ts';
+import type { AgentsGit } from '../../../lib/git.ts';
 import { resolveHarnessPaths } from '../../../lib/harness.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import type { DeployedPathSources, ResolveSourceRoot } from '../collect-deployed-paths.ts';
@@ -18,7 +18,11 @@ import { syncCommand } from '../sync.ts';
 import type { SyncDomain } from '../sync-domain.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-const execFileAsync = promisify(execFile);
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
+
+/** The commit that the fake reports every source tree to be on. */
+const SOURCE_COMMIT = 'c'.repeat(40);
 
 /** The source from which every planned artifact in these tests resolves. */
 const SOURCE_NAME = 'codeassembly';
@@ -28,14 +32,23 @@ describe(recordDeployedSizes, () => {
   let homeDir: string;
   let projectRoot: string;
   let packageRoot: string;
+  let consumerRoot: string;
+  let git: AgentsGit;
 
   beforeEach(async () => {
     scratch = await mkdtemp(path.join(tmpdir(), 'sync-sizes-'));
     homeDir = path.join(scratch, 'home');
     projectRoot = path.join(scratch, 'project');
+    packageRoot = path.join(scratch, 'source');
+    consumerRoot = path.join(scratch, 'consumer');
     await mkdir(homeDir, { recursive: true });
     await mkdir(projectRoot, { recursive: true });
-    packageRoot = await initRepoOnDefaultBranch(scratch);
+    // Every tree sits on the default branch except the consumer, which is on an unmerged feature branch.
+    git = makeFakeGit({
+      ancestor: (cwd) => cwd !== consumerRoot,
+      headCommit: SOURCE_COMMIT,
+      originHead: 'origin/main',
+    });
   });
 
   afterEach(async () => {
@@ -51,6 +64,7 @@ describe(recordDeployedSizes, () => {
     await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -81,6 +95,7 @@ describe(recordDeployedSizes, () => {
         ],
       },
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -99,6 +114,7 @@ describe(recordDeployedSizes, () => {
     await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: repoDomain(projectRoot),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -117,6 +133,7 @@ describe(recordDeployedSizes, () => {
     await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -124,7 +141,7 @@ describe(recordDeployedSizes, () => {
 
     const snapshot = selectLatestSnapshot(await readRecordLines(resolveRecordPath({ home: homeDir, domain: 'home' })));
     expect(snapshot?.version).toMatch(/^\d+\.\d+\.\d+/);
-    expect(snapshot?.sourceCommit).toMatch(/^[0-9a-f]{40}$/);
+    expect(snapshot?.sourceCommit).toBe(SOURCE_COMMIT);
   });
 
   it('does not append a second line when a later run measures the same vector', async () => {
@@ -132,8 +149,8 @@ describe(recordDeployedSizes, () => {
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
     const plan = planWithSkill('plan', skillsDir);
 
-    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
-    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), git, homeDir, packageRoot, resolveSourceRoot });
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), git, homeDir, packageRoot, resolveSourceRoot });
 
     expect(await countLines(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(1);
   });
@@ -143,22 +160,22 @@ describe(recordDeployedSizes, () => {
     const body = path.join(skillsDir, 'plan', 'SKILL.md');
     await writeDeployedFile(body, 'body');
     const plan = planWithSkill('plan', skillsDir);
-    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), git, homeDir, packageRoot, resolveSourceRoot });
 
     await writeDeployedFile(body, 'a much longer body than before');
-    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), git, homeDir, packageRoot, resolveSourceRoot });
 
     expect(await countLines(resolveRecordPath({ home: homeDir, domain: 'home' }))).toBe(2);
   });
 
   it('judges a repo domain by its own tree, not by the tree the binary ran from', async () => {
-    const consumerRoot = await initRepoOnFeatureBranch(scratch);
     const { skillsDir } = resolveHarnessPaths('claude', consumerRoot);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
     await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: repoDomain(consumerRoot),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -174,6 +191,7 @@ describe(recordDeployedSizes, () => {
     await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -191,6 +209,7 @@ describe(recordDeployedSizes, () => {
     const outcome = await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -206,12 +225,13 @@ describe(recordDeployedSizes, () => {
     const after = 'a much longer body than before';
     await writeDeployedFile(bodyPath, before);
     const plan = planWithSkill('plan', skillsDir);
-    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), git, homeDir, packageRoot, resolveSourceRoot });
 
     await writeDeployedFile(bodyPath, after);
     const outcome = await recordDeployedSizes({
       plan,
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -232,11 +252,12 @@ describe(recordDeployedSizes, () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
     const plan = planWithSkill('plan', skillsDir);
-    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), homeDir, packageRoot, resolveSourceRoot });
+    await recordDeployedSizes({ plan, domain: homeDomain(homeDir), git, homeDir, packageRoot, resolveSourceRoot });
 
     const outcome = await recordDeployedSizes({
       plan,
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -253,6 +274,7 @@ describe(recordDeployedSizes, () => {
     const outcome = await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: homeDomain(homeDir),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -262,13 +284,13 @@ describe(recordDeployedSizes, () => {
   });
 
   it('reports a diff on a feature branch, whose deployment the append gate keeps out of the record', async () => {
-    const consumerRoot = await initRepoOnFeatureBranch(scratch);
     const { skillsDir } = resolveHarnessPaths('claude', consumerRoot);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
     const outcome = await recordDeployedSizes({
       plan: planWithSkill('plan', skillsDir),
       domain: repoDomain(consumerRoot),
+      git,
       homeDir,
       packageRoot,
       resolveSourceRoot,
@@ -306,26 +328,26 @@ describe('sync --dry-run', () => {
   });
 
   it('measures nothing and appends nothing', async () => {
-    await syncCommand(options({ dryRun: true }), projectRoot, homeDir);
+    await syncCommand(options({ dryRun: true }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(recordRoot(homeDir))).toBe(false);
   });
 
   it('does not report a size line', async () => {
-    const outcome = await syncCommand(options({ dryRun: true }), projectRoot, homeDir);
+    const outcome = await syncCommand(options({ dryRun: true }), projectRoot, homeDir, fakeGit);
 
     expect(renderReportText(outcome, { dryRun: true })).not.toContain('Deployed sizes:');
   });
 
   it('leaves the report and the exit path of a live sync unchanged', async () => {
-    const outcome = await syncCommand(options(), projectRoot, homeDir);
+    const outcome = await syncCommand(options(), projectRoot, homeDir, fakeGit);
 
     expect(outcome.kind).toBe('reconciled');
     expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(true);
   });
 
   it('closes a live sync with the size block and the command that ranks every document', async () => {
-    const outcome = await syncCommand(options(), projectRoot, homeDir);
+    const outcome = await syncCommand(options(), projectRoot, homeDir, fakeGit);
     const report = renderReportText(outcome);
 
     expect(report).toContain('Deployed sizes:');
@@ -350,66 +372,9 @@ async function countLines(recordPath: string): Promise<number> {
   return raw.split('\n').filter((line) => line.trim() !== '').length;
 }
 
-/** Records a commit, supplying the identity and signing settings that the machine's own git config may withhold. */
-async function commit(cwd: string, message: string): Promise<void> {
-  await git(cwd, [
-    '-c',
-    'user.name=Test',
-    '-c',
-    'user.email=test@example.com',
-    '-c',
-    'commit.gpgsign=false',
-    'commit',
-    '--quiet',
-    '--message',
-    message,
-  ]);
-}
-
-/** Runs one git command in a scratch tree, never against the working repository. */
-async function git(cwd: string, args: ReadonlyArray<string>): Promise<void> {
-  await execFileAsync('git', ['-C', cwd, ...args]);
-}
-
 /** The home domain, whose base is the home directory. */
 function homeDomain(home: string): SyncDomain {
   return { baseDir: home, ambient: 'harness-home', anchorBase: '~' };
-}
-
-/**
- * Builds a disposable source tree whose `HEAD` sits on the default branch, which is what the append gate requires.
- * Never the working repository.
- */
-async function initRepoOnDefaultBranch(scratch: string): Promise<string> {
-  const packageRoot = path.join(scratch, 'source');
-  await git(scratch, ['init', '--quiet', '--initial-branch', 'main', 'source']);
-  await writeFile(path.join(packageRoot, 'file.txt'), 'content\n', 'utf8');
-  await git(packageRoot, ['add', '.']);
-  await commit(packageRoot, 'initial');
-  await git(packageRoot, ['remote', 'add', 'origin', packageRoot]);
-  await git(packageRoot, ['fetch', '--quiet', 'origin']);
-  await git(packageRoot, ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main']);
-  return packageRoot;
-}
-
-/**
- * Builds a disposable repository whose `HEAD` sits on a branch that the default branch does not contain, which is
- * what the append gate refuses. Never the working repository.
- */
-async function initRepoOnFeatureBranch(scratch: string): Promise<string> {
-  const root = path.join(scratch, 'consumer');
-  await git(scratch, ['init', '--quiet', '--initial-branch', 'main', 'consumer']);
-  await writeFile(path.join(root, 'file.txt'), 'content\n', 'utf8');
-  await git(root, ['add', '.']);
-  await commit(root, 'initial');
-  await git(root, ['remote', 'add', 'origin', root]);
-  await git(root, ['fetch', '--quiet', 'origin']);
-  await git(root, ['symbolic-ref', 'refs/remotes/origin/HEAD', 'refs/remotes/origin/main']);
-  await git(root, ['checkout', '--quiet', '-b', 'feature']);
-  await writeFile(path.join(root, 'feature.txt'), 'unmerged\n', 'utf8');
-  await git(root, ['add', '.']);
-  await commit(root, 'unmerged work');
-  return root;
 }
 
 /** Sync options for a live run, overridden per test. */

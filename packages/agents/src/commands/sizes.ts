@@ -7,6 +7,7 @@ import { renderAggregates } from '../deployed-sizes/render-aggregates.ts';
 import { resolveRecordPath } from '../deployed-sizes/resolve-record-path.ts';
 import type { SizeSnapshot } from '../deployed-sizes/types.ts';
 import { emitReport } from '../lib/emit-report.ts';
+import { type AgentsGit, realGit } from '../lib/git.ts';
 import type { ReportLine } from '../lib/report-line.ts';
 import { resolveRepo } from '../shared/resolve-repo.ts';
 
@@ -21,11 +22,12 @@ export async function sizesCommand(
   options: { global: boolean },
   cwd: string = process.cwd(),
   homeDir: string = homedir(),
+  git: AgentsGit = realGit,
 ): Promise<void> {
   const recordPath = resolveRecordPath(
     options.global
       ? { home: homeDir, domain: 'home' }
-      : { home: homeDir, domain: 'repo', repo: await resolveRepo(cwd) },
+      : { home: homeDir, domain: 'repo', repo: await resolveRepo(cwd, git) },
   );
   emitReport(renderSizesReport(selectLatestSnapshot(await readRecordLines(recordPath)), options.global));
 }

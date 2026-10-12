@@ -5,10 +5,14 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import type { GuidanceHookAdvisory } from '../hook-bindings.ts';
 import { syncCommand } from '../sync.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('syncCommand with guidance-hook bindings', () => {
   let projectRoot: string;
@@ -51,7 +55,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     for (const deployed of [
       await readFile(path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md'), 'utf8'),
@@ -78,7 +82,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const deployed = await readFile(path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md'), 'utf8');
     expect(deployed).toContain('<!-- rulebook:layout-preferences -->\n<!-- rulebook-version: 4 -->');
@@ -97,7 +101,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const consultSkill = path.join(projectRoot, '.claude', 'skills', 'consult-layout-preferences', 'SKILL.md');
     expect(existsSync(consultSkill)).toBe(true);
@@ -116,7 +120,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const deployed = await readFile(path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md'), 'utf8');
     expect(deployed).not.toContain('guidance-hook');
@@ -135,7 +139,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - ghost-preferences',
     ]);
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
       /Guidance hook "impl" binds rulebook "ghost-preferences"/,
     );
     expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
@@ -154,7 +158,7 @@ describe('syncCommand with guidance-hook bindings', () => {
       '      - layout-preferences',
     ]);
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
       /Rulebook "layout-preferences", bound to guidance hook "impl", declares a guidance hook of its own \(nested\)/,
     );
   });
@@ -173,9 +177,9 @@ describe('syncCommand with guidance-hook bindings', () => {
     ]);
     const deployedPath = path.join(projectRoot, '.claude', 'skills', 'implement-plan', 'SKILL.md');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
     const first = await readFile(deployedPath, 'utf8');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(deployedPath, 'utf8')).toBe(first);
   });
@@ -200,7 +204,7 @@ describe('syncCommand with guidance-hook bindings', () => {
     await mkdir(path.join(homeDir, '.claude'), { recursive: true });
     await mkdir(path.join(homeDir, '.rovo'), { recursive: true });
 
-    await syncCommand({ ...makeOptions(), harness: 'all' }, projectRoot, homeDir);
+    await syncCommand({ ...makeOptions(), harness: 'all' }, projectRoot, homeDir, fakeGit);
 
     const readDeployed = (dotDir: string) =>
       readFile(path.join(projectRoot, dotDir, 'skills', 'implement-plan', 'SKILL.md'), 'utf8');
@@ -299,7 +303,7 @@ function makeOptions(): InstallOptions {
 
 /** Runs a sync and returns the guidance-hook advisories in its plan. */
 async function syncAdvisories(projectRoot: string, homeDir: string): Promise<ReadonlyArray<GuidanceHookAdvisory>> {
-  const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+  const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
   if (outcome.kind !== 'reconciled') {
     throw new Error(
       `Expected a reconciled sync, but the sync did not find a declaration at ${outcome.declarationPath}.`,

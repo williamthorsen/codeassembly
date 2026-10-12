@@ -6,9 +6,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { hasAmbientRegion } from '../../../lib/ambient-region.ts';
 import { HARNESSES } from '../../../lib/harness.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import { syncCommand } from '../sync.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -33,7 +37,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(true);
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(false);
@@ -43,7 +47,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('gamma', 'delivery: [ambient, skill]', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
     expect(existsSync(localHostPath())).toBe(false);
@@ -54,7 +58,7 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await installBothHarnesses();
 
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(true);
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
@@ -66,7 +70,7 @@ describe(syncCommand, () => {
     await writeLocalDeclaration('harnesses:\n  use:\n    - rovo\n');
     await installBothHarnesses();
 
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
     expect(existsSync(skillPath('consult-gamma', '.claude'))).toBe(false);
@@ -76,7 +80,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await installBothHarnesses();
-    const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit), {
       level: 'info',
     });
 
@@ -88,7 +92,7 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
     await installBothHarnesses();
-    const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit), {
       level: 'info',
     });
 
@@ -100,7 +104,7 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  drop:\n    - claude\n    - rovo\n');
     await installBothHarnesses();
-    const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit), {
       level: 'info',
     });
 
@@ -113,11 +117,11 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n    - rovo\n');
     await installBothHarnesses();
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
 
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(false);
     expect(existsSync(path.join(projectRoot, HARNESSES.rovo.localGuidanceFileName))).toBe(false);
@@ -130,11 +134,11 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n    - rovo\n');
     await installBothHarnesses();
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n');
     const output = renderReportText(
-      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, homeDir),
+      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, homeDir, fakeGit),
       { dryRun: true, level: 'info' },
     );
 
@@ -148,9 +152,9 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await writeLocalDeclaration('harnesses:\n  use:\n    - claude\n    - rovo\n');
     await installBothHarnesses();
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
-    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'claude' }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('consult-gamma', ROVO_HOME))).toBe(true);
   });
@@ -160,7 +164,7 @@ describe(syncCommand, () => {
     await declareRulebooks('gamma');
     await installBothHarnesses();
     const output = renderReportText(
-      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, homeDir),
+      await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, homeDir, fakeGit),
       { dryRun: true, level: 'info' },
     );
 
@@ -177,7 +181,7 @@ describe(syncCommand, () => {
       await declareRulebooks('claude-models');
       await installBothHarnesses();
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(skillPath('consult-claude-models', '.claude'))).toBe(true);
       expect(existsSync(skillPath('consult-claude-models', ROVO_HOME))).toBe(false);
@@ -190,7 +194,7 @@ describe(syncCommand, () => {
       await writeFixtureRulebook('shared', 'delivery: ambient', 'Shared rules.');
       await declareRulebooks('claude-models', 'shared');
       await installBothHarnesses();
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
       expect(existsSync(skillPath('consult-claude-models', ROVO_HOME))).toBe(true);
 
       await writeFixtureRulebook(
@@ -198,7 +202,7 @@ describe(syncCommand, () => {
         'delivery: [ambient, skill]\nsupported-harnesses: claude',
         'Use the latest model.',
       );
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(skillPath('consult-claude-models', '.claude'))).toBe(true);
       expect(existsSync(skillPath('consult-claude-models', ROVO_HOME))).toBe(false);
@@ -217,7 +221,7 @@ describe(syncCommand, () => {
       await installBothHarnesses();
 
       const output = renderReportText(
-        await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, homeDir),
+        await syncCommand(makeOptions({ harness: 'all', dryRun: true }), projectRoot, homeDir, fakeGit),
         { dryRun: true, level: 'info' },
       );
 
@@ -234,9 +238,12 @@ describe(syncCommand, () => {
       await declareRulebooks('claude-models');
       await installBothHarnesses();
 
-      const output = renderReportText(await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir), {
-        level: 'info',
-      });
+      const output = renderReportText(
+        await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit),
+        {
+          level: 'info',
+        },
+      );
 
       expect(output).toContain('delivered 1 rulebook-skill file(s)');
     });
@@ -251,7 +258,7 @@ describe(syncCommand, () => {
       await declareRulebooks('claude-models', 'dispatch');
       await installBothHarnesses();
 
-      await expect(syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /names a rulebook that deploys only to claude/,
       );
     });
@@ -270,7 +277,7 @@ describe(syncCommand, () => {
       await declareRulebooks('claude-models', 'dispatch');
       await installBothHarnesses();
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(skillPath('consult-dispatch', '.claude'), 'utf8')).toContain('See /consult-claude-models.');
     });

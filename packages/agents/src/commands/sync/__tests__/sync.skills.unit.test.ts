@@ -5,10 +5,14 @@ import path from 'node:path';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { HARNESSES } from '../../../lib/harness.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -50,7 +54,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('people-report', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSkills('people-report');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const deployed = await readFile(skillPath('people-report'), 'utf8');
       expect(deployed).toContain('See /consult-nmr-scripts.');
@@ -62,7 +66,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('people-report', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSkills('people-report');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /\{rulebook:nmr-scripts\} in skills\/people-report\/SKILL\.md[\s\S]*names an ambient-only rulebook/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
@@ -72,7 +76,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('people-report', { body: 'See [the events](#lifecycle-events).' });
       await declareSkills('people-report');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /skills\/people-report\/SKILL\.md contains 1 unresolvable anchor link target/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
@@ -82,7 +86,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('people-report');
       await declareSkills('people-report');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const skill = await readFile(skillPath('people-report'), 'utf8');
       expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
@@ -95,7 +99,7 @@ describe(syncCommand, () => {
       });
       await declareSkills('people-report');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const skill = await readFile(skillPath('people-report'), 'utf8');
       expect(skill).not.toContain('guidance-hook');
@@ -108,7 +112,7 @@ describe(syncCommand, () => {
       });
       await declareSkills('people-report');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /skills\/people-report\/SKILL\.md:\d+ name="preferences" .*reason=duplicate-hook/,
       );
       expect(existsSync(skillPath('people-report'))).toBe(false);
@@ -117,10 +121,10 @@ describe(syncCommand, () => {
     it('when re-run with unchanged content, does not rewrite the declared skill file', async () => {
       await writeFixtureSkill('people-report');
       await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       const firstMtime = statSync(skillPath('people-report')).mtimeMs;
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(statSync(skillPath('people-report')).mtimeMs).toBe(firstMtime);
     });
@@ -129,11 +133,11 @@ describe(syncCommand, () => {
       await writeFixtureSkill('people-report');
       await writeFixtureSkill('other');
       await declareSkills('people-report', 'other');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       expect(existsSync(skillPath('other'))).toBe(true);
 
       await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(path.dirname(skillPath('other')))).toBe(false);
       expect(existsSync(skillPath('people-report'))).toBe(true);
@@ -145,10 +149,10 @@ describe(syncCommand, () => {
       await writeFile(manual, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
       await writeFixtureSkill('people-report');
       await declareSkills('people-report');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       await declareSkills();
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(manual)).toBe(true);
       expect(existsSync(path.dirname(skillPath('people-report')))).toBe(false);
@@ -157,7 +161,7 @@ describe(syncCommand, () => {
     it("throws when a declared skill doesn't resolve from any declared source, writing nothing", async () => {
       await declareSkills('ghost');
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/ghost/);
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/ghost/);
       expect(existsSync(skillPath('ghost'))).toBe(false);
     });
 
@@ -165,11 +169,11 @@ describe(syncCommand, () => {
       await writeFixtureRulebook('gamma', 'delivery: skill', 'Gamma rules.');
       await writeFixtureSkill('people-report');
       await declareRaw('rulebooks:\n  use:\n    - gamma\nskills:\n  use:\n    - people-report\n');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       expect(await readFile(skillPath('consult-gamma'), 'utf8')).toContain('<!-- codeassembly-rulebook:gamma -->');
       expect(await readFile(skillPath('people-report'), 'utf8')).toContain('<!-- codeassembly-skill:people-report -->');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(skillPath('consult-gamma'))).toBe(true);
       expect(existsSync(skillPath('people-report'))).toBe(true);
@@ -180,7 +184,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('shared');
       await declareRaw('rulebooks:\n  use:\n    - foo\nskills:\n  use:\n    - shared\n');
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/collision/i);
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/collision/i);
       expect(existsSync(skillPath('shared'))).toBe(false);
     });
 
@@ -188,7 +192,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('people-report');
       await declareSkills('people-report');
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
@@ -209,7 +213,7 @@ describe(syncCommand, () => {
       await writeFile(path.join(skillDir, 'guide.md'), '# Guide\n', 'utf8');
       await declareSkills('demo');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const skill = await readFile(skillPath('demo'), 'utf8');
       expect(skill).toContain('Shared fragment.');
@@ -226,7 +230,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('undeclared-skill');
       await declareSkills('demo');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       // The target exists in the content root but is undeclared, so it isn't in any project tree. Re-pointing the link
       // there would make it unresolvable outright; the harness home is where an installed copy can still answer it.
@@ -247,7 +251,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('helper');
       await declareSkills('demo', 'helper');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const skillsDir = path.join(path.resolve(projectRoot), '.claude', 'skills');
       const body = await readFile(skillPath('demo'), 'utf8');
@@ -260,10 +264,12 @@ describe(syncCommand, () => {
       await writeFixtureSkill('demo', { body: 'Use {tool:NoSuchTool}.' });
       await declareSkills('demo');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /Unmapped tool name "NoSuchTool" in skills\/demo\/SKILL\.md/,
       );
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/Unmapped tool name "NoSuchTool"/);
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
+        /Unmapped tool name "NoSuchTool"/,
+      );
       expect(existsSync(skillPath('demo'))).toBe(false);
     });
   });
@@ -294,7 +300,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('everywhere');
       await declareSkills('rovo-only', 'everywhere');
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(skillPath('rovo-only', ROVO_HOME))).toBe(true);
       expect(existsSync(skillPath('rovo-only', '.claude'))).toBe(false);
@@ -306,12 +312,12 @@ describe(syncCommand, () => {
       await installBothHarnesses();
       await writeFixtureSkill('was-everywhere');
       await declareSkills('was-everywhere');
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
       expect(existsSync(skillPath('was-everywhere', '.claude'))).toBe(true);
       expect(existsSync(skillPath('was-everywhere', ROVO_HOME))).toBe(true);
 
       await writeFixtureSkill('was-everywhere', { supportedHarnesses: '[rovo]' });
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(path.dirname(skillPath('was-everywhere', '.claude')))).toBe(false);
       expect(existsSync(skillPath('was-everywhere', ROVO_HOME))).toBe(true);

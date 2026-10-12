@@ -10,11 +10,15 @@ import { NoContentSourceError } from '../../lib/declared-sources.ts';
 import { HARNESSES } from '../../lib/harness.ts';
 import { getHomeProvenancePath } from '../../lib/home-provenance.ts';
 import { computeContentHash, getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../test-utils/declare-fixture-source.ts';
 import { RETIRED_CLAUDE_SETTINGS, RETIRED_ROVO_CONFIG } from '../test-utils/retired-hook-configs.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -56,7 +60,7 @@ describe(installCommand, () => {
     const claudeHome = await setupClaudeHome();
     await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
 
-    await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit)).rejects.toThrow(
       /Unsupported content format.*3.*supports content formats 1 and 2/s,
     );
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(false);
@@ -67,7 +71,7 @@ describe(installCommand, () => {
     await setupClaudeHome();
     await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
 
-    await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, fakeGit)).rejects.toThrow(
       /Unsupported content format/,
     );
   });
@@ -76,7 +80,7 @@ describe(installCommand, () => {
     const claudeHome = await setupClaudeHome();
     await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 1\n', 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
   });
@@ -84,7 +88,7 @@ describe(installCommand, () => {
   it('installs scripts and guidance with a manifest', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
     expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(true);
@@ -103,7 +107,7 @@ describe(installCommand, () => {
   it('writes nothing in dry-run mode', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ dryRun: true }), tempDir);
+    await installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit);
 
     expect(existsSync(getManifestPath(tempDir))).toBe(false);
     expect(await readdir(path.join(claudeHome, 'skills'))).toHaveLength(0);
@@ -112,11 +116,11 @@ describe(installCommand, () => {
   it('is idempotent: Re-installing is byte-identical', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
     const firstGuidance = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
     const firstScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
     const secondGuidance = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
     const secondScript = await readFile(path.join(claudeHome, 'scripts', 'demo.sh'), 'utf8');
 
@@ -131,18 +135,18 @@ describe(installCommand, () => {
     await mkdir(claudeHome, { recursive: true });
     await symlink(realSkills, path.join(claudeHome, 'skills'));
 
-    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow('Target directory is a symlink');
+    await expect(installCommand(makeOptions(), tempDir, fakeGit)).rejects.toThrow('Target directory is a symlink');
   });
 
   it('skips a user-modified guidance file on re-install without --force', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
     const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     const modified = (await readFile(guidancePath, 'utf8')) + '\n<!-- user modification -->\n';
     await writeFile(guidancePath, modified, 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(await readFile(guidancePath, 'utf8')).toBe(modified);
   });
@@ -150,12 +154,12 @@ describe(installCommand, () => {
   it('overwrites a user-modified guidance file on re-install with --force', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
     const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     const managed = await readFile(guidancePath, 'utf8');
     await writeFile(guidancePath, managed + '\n<!-- user modification -->\n', 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude', force: true }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude', force: true }), tempDir, fakeGit);
 
     expect(await readFile(guidancePath, 'utf8')).toBe(managed);
   });
@@ -163,12 +167,12 @@ describe(installCommand, () => {
   it('prefixes skip warnings with the warning glyph and the success summary with the passed glyph', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
     const guidancePath = path.join(claudeHome, 'CLAUDE.md');
     await writeFile(guidancePath, `${await readFile(guidancePath, 'utf8')}\n<!-- user modification -->\n`, 'utf8');
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
     const infoLines = silent.info.mock.calls.map((call) => String(call[0]));
 
@@ -181,7 +185,7 @@ describe(installCommand, () => {
     await rm(path.join(contentDir, 'scripts'), { recursive: true, force: true });
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
     const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
     expect(warnLines.some((line) => line.includes("The content roots don't contain a scripts directory"))).toBe(true);
@@ -190,7 +194,7 @@ describe(installCommand, () => {
   it('copies guidance but symlinks scripts in link mode', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ link: true }), tempDir);
+    await installCommand(makeOptions({ link: true }), tempDir, fakeGit);
 
     // Guidance is always copied (path rewriting forbids symlinking); scripts are symlinked.
     expect(lstatSync(path.join(claudeHome, 'CLAUDE.md')).isSymbolicLink()).toBe(false);
@@ -207,7 +211,7 @@ describe(installCommand, () => {
   it('installs nothing into the claude skills directory', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(await readdir(path.join(claudeHome, 'skills'))).toEqual([]);
   });
@@ -215,7 +219,7 @@ describe(installCommand, () => {
   it('installs nothing into the rovo skills directory', async () => {
     const rovoHome = await setupRovoHome();
 
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, fakeGit);
 
     expect(await readdir(path.join(rovoHome, 'skills'))).toEqual([]);
   });
@@ -224,7 +228,7 @@ describe(installCommand, () => {
     const claudeHome = await setupClaudeHome();
     await writeFile(path.join(contentDir, 'skills', 'reference.md'), '# Reference\n', 'utf8');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(await readdir(path.join(claudeHome, 'skills'))).toEqual([]);
     expect(existsSync(path.join(claudeHome, 'agents', 'demo-agent.md'))).toBe(false);
@@ -239,7 +243,7 @@ describe(installCommand, () => {
       'utf8',
     );
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8')).toContain(
       `Read \`~/.claude/skills/_sources/${FIXTURE_SOURCE_NAME}/_data/sample.md\`.`,
@@ -249,7 +253,7 @@ describe(installCommand, () => {
   it('names the guidance template by its path in the source in the provenance marker', async () => {
     const claudeHome = await setupClaudeHome();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     const content = await readFile(path.join(claudeHome, 'CLAUDE.md'), 'utf8');
     expect(content).toContain(
@@ -291,8 +295,8 @@ describe(installCommand, () => {
       },
     });
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, fakeGit);
 
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only'))).toBe(false);
     expect(existsSync(promptsYmlPath)).toBe(false);
@@ -333,7 +337,7 @@ describe(installCommand, () => {
           await declare();
           using _silent = silenceConsole(['info', 'warn']);
 
-          const run = installCommand(makeOptions({ dryRun }), tempDir);
+          const run = installCommand(makeOptions({ dryRun }), tempDir, fakeGit);
 
           await expect(run).rejects.toBeInstanceOf(NoContentSourceError);
           await expect(run).rejects.toThrow(path.join(tempDir, '.agents', 'codeassembly.yaml'));
@@ -355,7 +359,7 @@ describe(installCommand, () => {
       const settingsPath = path.join(claudeHome, 'settings.json');
       await writeFile(settingsPath, RETIRED_CLAUDE_SETTINGS, 'utf8');
 
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
       const settings = await readFile(settingsPath, 'utf8');
       expect(settings).not.toContain('--sentinel codeassembly-agents');
@@ -368,7 +372,7 @@ describe(installCommand, () => {
       const configPath = path.join(rovoHome, 'config.yml');
       await writeFile(configPath, RETIRED_ROVO_CONFIG, 'utf8');
 
-      await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
+      await installCommand(makeOptions({ harness: 'rovo' }), tempDir, fakeGit);
 
       const config = await readFile(configPath, 'utf8');
       expect(config).not.toContain('--sentinel codeassembly-agents');
@@ -379,7 +383,7 @@ describe(installCommand, () => {
     it('does not create a harness config that is absent', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
       expect(existsSync(path.join(claudeHome, 'settings.json'))).toBe(false);
     });
@@ -390,7 +394,7 @@ describe(installCommand, () => {
       await writeFile(settingsPath, RETIRED_CLAUDE_SETTINGS, 'utf8');
 
       using silent = silenceConsole(['info']);
-      await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, fakeGit);
       const lines = silent.info.mock.calls.map((call) => String(call[0]));
 
       expect(lines).toContain(`  [hooks] Would remove 1 retired session-lifecycle hook entries from ${settingsPath}`);
@@ -402,7 +406,7 @@ describe(installCommand, () => {
       await writeFile(path.join(claudeHome, 'settings.json'), `${JSON.stringify({ model: 'opus' })}\n`, 'utf8');
 
       using silent = silenceConsole(['info']);
-      await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, fakeGit);
       const lines = silent.info.mock.calls.map((call) => String(call[0]));
 
       expect(lines.some((line) => line.includes('[hooks]'))).toBe(false);
@@ -414,7 +418,7 @@ describe(installCommand, () => {
       await writeFile(settingsPath, '{ not json', 'utf8');
 
       using silent = silenceConsole(['warn']);
-      await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+      await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
       const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
       expect(warnLines.some((line) => line.includes('Skipping hook-entry removal'))).toBe(true);
@@ -428,7 +432,7 @@ describe(installCommand, () => {
     it('places scripts and sets the executable bit', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, fakeGit);
 
       const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
       expect(existsSync(scriptPath)).toBe(true);
@@ -440,7 +444,7 @@ describe(installCommand, () => {
       // `install` copies a bundled `.mjs` into a harness home by the same path as the shell helpers beside it.
       await buildContentTree(contentDir, { scripts: { 'relay-demo.mjs': 'process.stdout.write("{}")\n' } });
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, fakeGit);
 
       expect(existsSync(path.join(claudeHome, 'scripts', 'relay-demo.mjs'))).toBe(true);
       expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
@@ -450,7 +454,7 @@ describe(installCommand, () => {
       const claudeHome = await setupClaudeHome();
       await buildContentTree(contentDir, { scripts: { 'README.md': '# Helper scripts\n' } });
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, fakeGit);
 
       expect(existsSync(path.join(claudeHome, 'scripts', 'README.md'))).toBe(false);
     });
@@ -458,7 +462,7 @@ describe(installCommand, () => {
     it('records script entries with a sha256 hash and linked:false in copy mode', async () => {
       await setupClaudeHome();
 
-      await installCommand(makeOptions(), tempDir);
+      await installCommand(makeOptions(), tempDir, fakeGit);
 
       const manifest = await readManifest(getManifestPath(tempDir));
       const scripts = manifest.harnesses.claude?.entries.filter((e) => e.relativePath.startsWith('scripts/')) ?? [];
@@ -472,7 +476,7 @@ describe(installCommand, () => {
     it('records script entries with linked:true in link mode', async () => {
       await setupClaudeHome();
 
-      await installCommand(makeOptions({ link: true }), tempDir);
+      await installCommand(makeOptions({ link: true }), tempDir, fakeGit);
 
       const manifest = await readManifest(getManifestPath(tempDir));
       const scripts = manifest.harnesses.claude?.entries.filter((e) => e.relativePath.startsWith('scripts/')) ?? [];
@@ -484,11 +488,11 @@ describe(installCommand, () => {
 
     it('re-links a linked script whose source changed, without --force', async () => {
       const claudeHome = await setupClaudeHome();
-      await installCommand(makeOptions({ link: true }), tempDir);
+      await installCommand(makeOptions({ link: true }), tempDir, fakeGit);
       await writeFile(path.join(contentDir, 'scripts', 'demo.sh'), '#!/bin/bash\necho changed\n', 'utf8');
 
       using silent = silenceConsole(['info', 'warn']);
-      await installCommand(makeOptions({ link: true }), tempDir);
+      await installCommand(makeOptions({ link: true }), tempDir, fakeGit);
       const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
       expect(warnLines.some((line) => line.includes('Skipping modified'))).toBe(false);
@@ -497,13 +501,13 @@ describe(installCommand, () => {
 
     it('skips a regular file that replaced a linked script, without --force', async () => {
       const claudeHome = await setupClaudeHome();
-      await installCommand(makeOptions({ link: true }), tempDir);
+      await installCommand(makeOptions({ link: true }), tempDir, fakeGit);
       const deployedPath = path.join(claudeHome, 'scripts', 'demo.sh');
       await rm(deployedPath);
       await writeFile(deployedPath, '#!/bin/bash\necho mine\n', 'utf8');
 
       using silent = silenceConsole(['info', 'warn']);
-      await installCommand(makeOptions({ link: true }), tempDir);
+      await installCommand(makeOptions({ link: true }), tempDir, fakeGit);
       const warnLines = silent.warn.mock.calls.map((call) => String(call[0]));
 
       expect(warnLines.some((line) => line.includes('Skipping modified item: scripts/demo.sh'))).toBe(true);
@@ -513,7 +517,7 @@ describe(installCommand, () => {
     it('does not create a scripts directory in dry-run mode', async () => {
       const claudeHome = await setupClaudeHome();
 
-      await installCommand(makeOptions({ dryRun: true }), tempDir);
+      await installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit);
 
       expect(existsSync(path.join(claudeHome, 'scripts'))).toBe(false);
     });

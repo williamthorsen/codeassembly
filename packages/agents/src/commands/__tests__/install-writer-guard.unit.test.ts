@@ -7,10 +7,14 @@ import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveRunningPackageRoot } from '../../lib/running-package.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('install (designated-writer guard)', () => {
   let tempDir: string;
@@ -41,14 +45,16 @@ describe('install (designated-writer guard)', () => {
   it('refuses a mismatched installation before writing anything', async () => {
     await designateWriter(path.join(tempDir, 'designated'));
 
-    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(/not the designated home-domain writer/);
+    await expect(installCommand(makeOptions(), tempDir, fakeGit)).rejects.toThrow(
+      /not the designated home-domain writer/,
+    );
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(false);
   });
 
   it('refuses a dry run exactly as it refuses the real one', async () => {
     await designateWriter(path.join(tempDir, 'designated'));
 
-    await expect(installCommand(makeOptions({ dryRun: true }), tempDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit)).rejects.toThrow(
       /not the designated home-domain writer/,
     );
   });
@@ -56,7 +62,7 @@ describe('install (designated-writer guard)', () => {
   it('proceeds when the setting designates the running installation', async () => {
     await designateWriter(resolveRunningPackageRoot());
 
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
   });
@@ -65,7 +71,7 @@ describe('install (designated-writer guard)', () => {
     await designateWriter(path.join(tempDir, 'designated'));
     using stdio = captureStdio({ includeConsole: true });
 
-    await installCommand(makeOptions({ shouldOverrideWriter: true }), tempDir);
+    await installCommand(makeOptions({ shouldOverrideWriter: true }), tempDir, fakeGit);
     expect(stdio.stderr).toContain('--override-writer');
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
   });

@@ -6,10 +6,14 @@ import { dedent } from '@williamthorsen/toolbelt.strings';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { HARNESSES } from '../../../lib/harness.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -73,7 +77,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary', { body: 'Read `{harness_home_dir}/skills/_data/x.md`.' });
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const supportFile = path.join(
         path.resolve(projectRoot),
@@ -102,7 +106,7 @@ describe(syncCommand, () => {
         'skills:\n  use:\n    - commit\nsubagents:\n  use:\n    - canary\n',
       );
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const target = path.join(path.resolve(projectRoot), '.claude', 'skills', 'commit', 'SKILL.md');
       const deployed = await readFile(subagentPath('canary'), 'utf8');
@@ -116,7 +120,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).toContain('See /consult-nmr-scripts.');
@@ -129,7 +133,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary', { frontmatter: 'rulebooks:\n  - review-criteria\n' });
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).toContain('skills:\n  - consult-review-criteria\n');
@@ -143,7 +147,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary', { frontmatter: 'rulebooks:\n  - review-criteria\n' });
       await declareSubagents('canary');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /subagents\/canary\.md declares 1 unusable rulebook injection[\s\S]*names an ambient-only rulebook/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -155,7 +159,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary', { body: 'See {rulebook:nmr-scripts}.' });
       await declareSubagents('canary');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /\{rulebook:nmr-scripts\} in subagents\/canary\.md[\s\S]*names an ambient-only rulebook/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -166,7 +170,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary', { body: 'See [the findings](#finding-scheme).' });
       await declareSubagents('canary');
 
-      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /subagents\/canary\.md contains 1 unresolvable anchor link target/,
       );
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -184,7 +188,7 @@ describe(syncCommand, () => {
         'rulebooks:\n  use:\n    - alpha\nsubagents:\n  use:\n    - canary\n',
       );
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
         /\{rulebook:nmr-scripts\} in subagents\/canary\.md/,
       );
       expect(existsSync(localHostPath())).toBe(false);
@@ -196,7 +200,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary');
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).toContain('<!-- codeassembly-subagent:canary -->');
@@ -213,7 +217,7 @@ describe(syncCommand, () => {
       });
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       const deployed = await readFile(subagentPath('canary'), 'utf8');
       expect(deployed).not.toContain('guidance-hook');
@@ -224,11 +228,11 @@ describe(syncCommand, () => {
       await writeOverlays();
       await writeFixtureSubagent('canary');
       await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       const firstBytes = await readFile(subagentPath('canary'), 'utf8');
       const firstMtime = statSync(subagentPath('canary')).mtimeMs;
 
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(subagentPath('canary'), 'utf8')).toBe(firstBytes);
       expect(statSync(subagentPath('canary')).mtimeMs).toBe(firstMtime);
@@ -239,11 +243,11 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary');
       await writeFixtureSubagent('other');
       await declareSubagents('canary', 'other');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       expect(existsSync(subagentPath('other'))).toBe(true);
 
       await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(subagentPath('other'))).toBe(false);
       expect(existsSync(subagentPath('canary'))).toBe(true);
@@ -256,10 +260,10 @@ describe(syncCommand, () => {
       await writeFile(manual, '---\nname: manual\n---\n\n# Hand-authored\n', 'utf8');
       await writeFixtureSubagent('canary');
       await declareSubagents('canary');
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       await declareSubagents();
-      await syncCommand(makeOptions(), projectRoot, homeDir);
+      await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(manual)).toBe(true);
       expect(existsSync(subagentPath('canary'))).toBe(false);
@@ -269,7 +273,7 @@ describe(syncCommand, () => {
       await writeOverlays();
       await declareSubagents('ghost');
 
-      await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/ghost/);
+      await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/ghost/);
       expect(existsSync(subagentPath('ghost'))).toBe(false);
     });
 
@@ -279,7 +283,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary');
       await declareSubagents('canary');
 
-      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
       const claude = await readFile(subagentPath('canary', '.claude', 'agents'), 'utf8');
       const rovo = await readFile(subagentPath('canary', ROVO_HOME, 'subagents'), 'utf8');
@@ -294,7 +298,7 @@ describe(syncCommand, () => {
       await writeFixtureSubagent('canary');
       await declareSubagents('canary');
 
-      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+      const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
         dryRun: true,
         level: 'info',
       });
@@ -337,7 +341,7 @@ describe(syncCommand, () => {
       await writeFixtureSkill('internal-skill', 'user-invocable: false');
       await declareSkills('public-skill', 'internal-skill');
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain('# codeassembly:managed:start');
@@ -350,10 +354,10 @@ describe(syncCommand, () => {
     it('leaves prompts.yml byte-identical on a re-sync without any skill changes', async () => {
       await writeFixtureSkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
       const first = await readFile(promptsYmlPath(), 'utf8');
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(first);
     });
@@ -363,7 +367,7 @@ describe(syncCommand, () => {
       await declareSkills('public-skill');
       await seedHandAuthoredPromptsYml();
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain("name: 'hand-authored'");
@@ -375,11 +379,11 @@ describe(syncCommand, () => {
     it('removes the region and deletes the file when undeclaring leaves nothing foreign', async () => {
       await writeFixtureSkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
       expect(existsSync(promptsYmlPath())).toBe(true);
 
       await declareSkills();
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
 
       expect(existsSync(promptsYmlPath())).toBe(false);
     });
@@ -388,11 +392,11 @@ describe(syncCommand, () => {
       await writeFixtureSkill('public-skill', 'description: Public skill');
       await declareSkills('public-skill');
       await seedHandAuthoredPromptsYml();
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
       expect(await readFile(promptsYmlPath(), 'utf8')).toContain('# codeassembly:managed:start');
 
       await declareSkills();
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
 
       const prompts = await readFile(promptsYmlPath(), 'utf8');
       expect(prompts).toContain("name: 'hand-authored'");
@@ -406,7 +410,9 @@ describe(syncCommand, () => {
       const flowAuthored = "prompts: [{ name: 'foreign', content_file: custom.md }]\n";
       await writeFile(promptsYmlPath(), flowAuthored, 'utf8');
 
-      await expect(syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir)).rejects.toThrow(/block-style/);
+      await expect(syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
+        /block-style/,
+      );
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(flowAuthored);
     });
@@ -416,7 +422,7 @@ describe(syncCommand, () => {
       const handAuthored = await readFile(promptsYmlPath(), 'utf8');
       await declareSkills();
 
-      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir);
+      await syncCommand(makeOptions({ harness: 'rovo' }), projectRoot, homeDir, fakeGit);
 
       expect(await readFile(promptsYmlPath(), 'utf8')).toBe(handAuthored);
     });
@@ -426,7 +432,7 @@ describe(syncCommand, () => {
       await declareSkills('public-skill');
 
       const output = renderReportText(
-        await syncCommand(makeOptions({ harness: 'rovo', dryRun: true }), projectRoot, homeDir),
+        await syncCommand(makeOptions({ harness: 'rovo', dryRun: true }), projectRoot, homeDir, fakeGit),
         { dryRun: true, level: 'info' },
       );
 

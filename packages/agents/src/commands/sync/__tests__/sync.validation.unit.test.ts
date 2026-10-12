@@ -6,10 +6,14 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ContentDefect } from '../../../lib/content-defects.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 import { isSyncValidationError } from '../sync-validation-error.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('syncCommand pre-write validation', () => {
   let projectRoot: string;
@@ -100,7 +104,7 @@ describe('syncCommand pre-write validation', () => {
     await writeLibraryRulebook(contentDir, 'alpha', "version: '1'");
     await declareRulebooks(projectRoot, contentDir, 'alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(path.join(projectRoot, 'CLAUDE.local.md'))).toBe(true);
   });
@@ -111,7 +115,7 @@ describe('syncCommand pre-write validation', () => {
 /** Runs a sync expected to fail validation and returns the aggregate's defects. */
 async function collectDefects(projectRoot: string, homeDir: string): Promise<ReadonlyArray<ContentDefect>> {
   try {
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
   } catch (error: unknown) {
     if (isSyncValidationError(error)) {
       return error.defects;

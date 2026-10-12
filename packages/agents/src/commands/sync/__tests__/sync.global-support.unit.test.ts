@@ -6,10 +6,14 @@ import path from 'node:path';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import { buildContentTree } from '../../test-utils/build-content-tree.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/declare-fixture-source.ts';
 import { syncGlobalCommand } from '../sync.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 // `sync --global` delivers a source's support directories (e.g. `_data`) through the `renderSkillDirectory` walk,
 // which drops `_partials` at every depth.
@@ -42,7 +46,7 @@ describe('sync --global support-directory _partials exclusion', () => {
     await writeFile(path.join(supportSrc, 'modules', '_partials', 'inner.md'), 'inner partial\n', 'utf8');
 
     using _silent = silenceConsole(['info', 'warn']);
-    await syncGlobalCommand(makeOptions(), homeDir);
+    await syncGlobalCommand(makeOptions(), homeDir, fakeGit);
 
     const supportRoot = path.join(homeDir, '.claude', 'skills', '_sources', FIXTURE_SOURCE_NAME, 'nested-support');
     expect(existsSync(path.join(supportRoot, 'modules', 'sub.md'))).toBe(true);

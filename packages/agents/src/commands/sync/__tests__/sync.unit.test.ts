@@ -1,18 +1,19 @@
-import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { promisify } from 'node:util';
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AgentsGit } from '../../../lib/git.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import { syncCommand } from '../sync.ts';
 import { ambientRegionNote } from '../test-utils/ambient-region-note.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-const execFileAsync = promisify(execFile);
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe(syncCommand, () => {
   const fixture = createSyncFixture();
@@ -33,7 +34,7 @@ describe(syncCommand, () => {
     ({ projectRoot, homeDir } = fixture);
   });
   it("when codeassembly.yaml doesn't exist, doesn't make any changes", async () => {
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
     expect(existsSync(projectMdPath())).toBe(false);
@@ -43,7 +44,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('# Alpha\n\nAlpha rules.\n');
@@ -54,7 +55,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', "delivery: ambient\nversion: '3'", 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->\n<!-- rulebook-version: 3 -->');
   });
@@ -63,7 +64,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('rulebook-version');
   });
@@ -72,7 +73,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('<!-- codeassembly-ambient:start -->');
@@ -86,7 +87,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).toContain(
       `<!-- codeassembly-ambient:start -->\n${ambientRegionNote}\n<!-- rulebook:alpha -->`,
@@ -99,7 +100,7 @@ describe(syncCommand, () => {
     const handAuthored = '# Personal notes\n\nMy sandbox URL is http://localhost:9999.\n';
     await writeFile(localHostPath(), handAuthored, 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost.startsWith(handAuthored)).toBe(true);
@@ -111,7 +112,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await installBothHarnesses();
 
-    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ harness: 'all' }), projectRoot, homeDir, fakeGit);
 
     for (const name of ['CLAUDE.local.md', 'AGENTS.local.md']) {
       expect(await readFile(localHostPath(name), 'utf8')).toContain('<!-- rulebook:alpha -->');
@@ -122,10 +123,10 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', '# Alpha\n\nAlpha rules.');
     await declareRulebooks('alpha');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
     const firstLocalHost = await readFile(localHostPath(), 'utf8');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(firstLocalHost);
   });
@@ -134,7 +135,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(localHostPath())).toBe(false);
   });
@@ -143,11 +144,11 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:alpha -->');
 
     await declareRulebooks();
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).not.toContain('<!-- rulebook:alpha -->');
@@ -161,7 +162,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeLocalDeclaration(`home-writer: ${homeDir}\n`);
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/home-writer/);
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/home-writer/);
 
     expect(existsSync(localHostPath())).toBe(false);
   });
@@ -172,7 +173,7 @@ describe(syncCommand, () => {
     const broken = '# Personal notes\n\n<!-- codeassembly-ambient:start -->\nStranded text.\n';
     await writeFile(localHostPath(), broken, 'utf8');
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/damaged ambient region/);
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/damaged ambient region/);
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(broken);
     expect(existsSync(skillPath('consult-alpha'))).toBe(false);
@@ -183,7 +184,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '<!-- codeassembly-ambient:start -->\nStranded text.\n', 'utf8');
 
-    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir)).rejects.toThrow(
+    await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
       /damaged ambient region/,
     );
   });
@@ -192,14 +193,14 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
     const stray = (await readFile(localHostPath(), 'utf8')).replace(
       '# Personal notes\n',
       '# Personal notes\n\n<!-- codeassembly-ambient:start -->\nMy sandbox URL.\n',
     );
     await writeFile(localHostPath(), stray, 'utf8');
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/damaged ambient region/);
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/damaged ambient region/);
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(stray);
   });
@@ -211,18 +212,17 @@ describe(syncCommand, () => {
     const doubled = `${region}\n\n# Personal notes\n\n${region}\n`;
     await writeFile(localHostPath(), doubled, 'utf8');
 
-    await expect(syncCommand(makeOptions(), projectRoot, homeDir)).rejects.toThrow(/damaged ambient region/);
+    await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(/damaged ambient region/);
 
     expect(await readFile(localHostPath(), 'utf8')).toBe(doubled);
   });
 
   it('warns about an unignored local host in dry-run as well as on a live run', async () => {
-    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
-    await writeFile(path.join(projectRoot, '.gitignore'), 'node_modules/\n', 'utf8');
+    const git = makeFakeGit({ ignored: false });
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const warnings = renderReportLines(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+    const warnings = renderReportLines(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, git), {
       dryRun: true,
       level: 'warn',
     });
@@ -232,12 +232,11 @@ describe(syncCommand, () => {
   });
 
   it('warns once when the local host that it writes is not git-ignored', async () => {
-    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
-    await writeFile(path.join(projectRoot, '.gitignore'), 'node_modules/\n', 'utf8');
+    const git = makeFakeGit({ ignored: false });
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const warnings = renderReportLines(await syncCommand(makeOptions(), projectRoot, homeDir), {
+    const warnings = renderReportLines(await syncCommand(makeOptions(), projectRoot, homeDir, git), {
       level: 'warn',
     });
 
@@ -248,12 +247,11 @@ describe(syncCommand, () => {
   });
 
   it('stays silent when the local host is git-ignored', async () => {
-    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
-    await writeFile(path.join(projectRoot, '.gitignore'), '*.local.*\n', 'utf8');
+    const git = makeFakeGit({ ignored: true });
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir, git), {
       level: 'warn',
     });
     expect(output).not.toContain('is not git-ignored');
@@ -263,21 +261,23 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit), {
       level: 'warn',
     });
     expect(output).not.toContain('is not git-ignored');
   });
 
   it('does not check the ignore status of a host that it is not writing', async () => {
-    await execFileAsync('git', ['-C', projectRoot, 'init', '--quiet']);
+    const checkIgnored = vi.fn<AgentsGit['checkIgnored']>().mockResolvedValue(false);
+    const git = { ...makeFakeGit(), checkIgnored };
     await writeFixtureRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
 
-    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions(), projectRoot, homeDir, git), {
       level: 'warn',
     });
     expect(output).not.toContain('is not git-ignored');
+    expect(checkIgnored).not.toHaveBeenCalled();
   });
 
   it('in dry-run mode, writes nothing to disk', async () => {
@@ -285,7 +285,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('alpha', 'gamma');
 
-    await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir);
+    await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(localHostPath())).toBe(false);
     expect(existsSync(skillPath('consult-gamma'))).toBe(false);
@@ -295,7 +295,7 @@ describe(syncCommand, () => {
     await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
     await declareRulebooks('alpha');
 
-    const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
       dryRun: true,
       level: 'info',
     });
@@ -308,7 +308,7 @@ describe(syncCommand, () => {
     await declareRulebooks('alpha');
     await writeFile(localHostPath(), '# Personal notes\n', 'utf8');
 
-    const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir), {
+    const output = renderReportText(await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit), {
       dryRun: true,
       level: 'info',
     });

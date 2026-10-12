@@ -7,10 +7,14 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { HARNESSES } from '../../lib/harness.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -35,7 +39,7 @@ describe('install harness targeting', () => {
     await setupHarnessHomes();
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
 
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(false);
@@ -46,7 +50,7 @@ describe('install harness targeting', () => {
     using silent = silenceConsole(['info', 'warn']);
     await setupHarnessHomes();
 
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
@@ -57,7 +61,7 @@ describe('install harness targeting', () => {
     using silent = silenceConsole(['info', 'warn']);
     await declareHarnesses('harnesses:\n  use:\n    - rovo\n');
 
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting rovo (declared).');
@@ -68,7 +72,7 @@ describe('install harness targeting', () => {
     await setupHarnessHomes();
     await declareHarnesses('harnesses:\n  use:\n    - rovo\n');
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
     expect(silent.info.mock.calls.map((call) => String(call[0]))).toContain('Targeting claude (--harness claude).');

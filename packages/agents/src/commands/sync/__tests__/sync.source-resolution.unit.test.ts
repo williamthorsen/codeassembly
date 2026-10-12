@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { NoContentSourceError } from '../../../lib/declared-sources.ts';
 import { getHomeProvenancePath } from '../../../lib/home-provenance.ts';
+import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../../lib/types.ts';
 import {
   declareFixtureSource,
@@ -16,6 +17,9 @@ import {
 import { syncCommand, syncGlobalCommand } from '../sync.ts';
 import { SyncValidationError } from '../sync-validation-error.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 // Syncs a project that draws artifacts from a declared source alongside a lower-precedence library source, to catch
 // failures that only show up when composing two sources end-to-end.
@@ -72,7 +76,7 @@ describe('sync with a declared source over the library source', () => {
     );
     await declare('rulebooks:\n  use:\n    - org-rules\n    - library-rules\n');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const localHost = await readFile(localHostPath(), 'utf8');
     expect(localHost).toContain('<!-- rulebook:org-rules -->');
@@ -80,7 +84,7 @@ describe('sync with a declared source over the library source', () => {
     expect(await readFile(skillPath('consult-library-rules'), 'utf8')).toContain('# Library rules');
 
     await declare('rulebooks:\n  use:\n    - library-rules\n');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(await readFile(localHostPath(), 'utf8')).not.toContain('<!-- rulebook:org-rules -->');
     expect(existsSync(skillPath('consult-library-rules'))).toBe(true);
@@ -106,7 +110,7 @@ describe('sync with a declared source over the library source', () => {
     );
     await declare('skills:\n  use:\n    - org-skill\nsubagents:\n  use:\n    - org-agent\n');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     const skillMd = await readFile(skillPath('org-skill'), 'utf8');
     expect(skillMd).toContain('<!-- codeassembly-skill:org-skill -->');
@@ -115,7 +119,7 @@ describe('sync with a declared source over the library source', () => {
     expect(await readFile(subagentPath('org-agent'), 'utf8')).toContain('<!-- codeassembly-subagent:org-agent -->');
 
     await declare('skills:\n  use: []\nsubagents:\n  use: []\n');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('org-skill'))).toBe(false);
     expect(existsSync(subagentPath('org-agent'))).toBe(false);
@@ -136,7 +140,7 @@ describe('sync with a declared source over the library source', () => {
     );
     await declare('collections:\n  use:\n    - org-bundle\n');
 
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     // A source collection is traversal-only: Its members deploy (the source skill and the library rulebook)
     // while the collection itself is never emitted.
@@ -144,7 +148,7 @@ describe('sync with a declared source over the library source', () => {
     expect(await readFile(skillPath('consult-library-rules'), 'utf8')).toContain('# Library rules');
 
     await declare('collections:\n  use: []\n');
-    await syncCommand(makeOptions(), projectRoot, homeDir);
+    await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
     expect(existsSync(skillPath('org-skill'))).toBe(false);
     expect(existsSync(skillPath('consult-library-rules'))).toBe(false);
@@ -196,7 +200,7 @@ describe('sync source resolution', () => {
       it(`stops with NoContentSourceError naming the project declaration when it declares no source (dryRun: ${dryRun})`, async () => {
         await writeFile(projectDeclarationPath(), 'rulebooks:\n  use:\n    - library-rules\n', 'utf8');
 
-        const error = await captureError(syncCommand(makeOptions({ dryRun }), projectRoot, homeDir));
+        const error = await captureError(syncCommand(makeOptions({ dryRun }), projectRoot, homeDir, fakeGit));
 
         expect(error).toBeInstanceOf(NoContentSourceError);
         expect(error.message).toContain('No content source is declared.');
@@ -208,7 +212,7 @@ describe('sync source resolution', () => {
         const missingDir = path.join(projectRoot, 'missing-content');
         await declareFixtureSource(projectRoot, missingDir, 'rulebooks:\n  use:\n    - library-rules\n');
 
-        const error = await captureError(syncCommand(makeOptions({ dryRun }), projectRoot, homeDir));
+        const error = await captureError(syncCommand(makeOptions({ dryRun }), projectRoot, homeDir, fakeGit));
 
         expect(error).toBeInstanceOf(NoContentSourceError);
         expect(error.message).toContain(
@@ -237,7 +241,7 @@ describe('sync source resolution', () => {
         await mkdir(path.dirname(homeDeclarationPath()), { recursive: true });
         await writeFile(homeDeclarationPath(), 'rulebooks:\n  use:\n    - library-rules\n', 'utf8');
 
-        const error = await captureError(syncGlobalCommand(makeOptions({ dryRun }), homeDir));
+        const error = await captureError(syncGlobalCommand(makeOptions({ dryRun }), homeDir, fakeGit));
 
         expect(error).toBeInstanceOf(NoContentSourceError);
         expect(error.message).toContain('No content source is declared.');
@@ -252,7 +256,7 @@ describe('sync source resolution', () => {
         await writeFile(homeDeclarationPath(), 'rulebooks:\n  use:\n    - library-rules\n', 'utf8');
         await writeFixtureDeclaration(homeLocalDeclarationPath(), missingDir);
 
-        const error = await captureError(syncGlobalCommand(makeOptions({ dryRun }), homeDir));
+        const error = await captureError(syncGlobalCommand(makeOptions({ dryRun }), homeDir, fakeGit));
 
         expect(error).toBeInstanceOf(NoContentSourceError);
         expect(error.message).toContain(
@@ -279,14 +283,14 @@ describe('sync source resolution', () => {
     });
 
     it('names the shadowed source in the dry-run resolution line', async () => {
-      const outcome = await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir);
+      const outcome = await syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit);
 
       const text = renderReportText(outcome, { dryRun: true });
       expect(text).toMatch(/ {2}rulebook {2}shared-rules {2}← source "high" \(shadows source "low"\)$/m);
     });
 
     it('warns on a real run, naming the winning and the shadowed source, and deploys the winner', async () => {
-      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir);
+      const outcome = await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       expect(renderReportText(outcome, { level: 'warn' })).toContain(
         '[warning] 1 artifact shadows a lower-precedence source: rulebook "shared-rules" (source "high" over source "low")',
@@ -313,7 +317,7 @@ describe('sync source resolution', () => {
         'utf8',
       );
 
-      const error = await captureError(syncCommand(makeOptions(), projectRoot, homeDir));
+      const error = await captureError(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit));
 
       expect(error).toBeInstanceOf(NoContentSourceError);
       expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
@@ -327,7 +331,7 @@ describe('sync source resolution', () => {
         'utf8',
       );
 
-      const error = await captureError(syncCommand(makeOptions(), projectRoot, homeDir));
+      const error = await captureError(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit));
 
       expect(error).toBeInstanceOf(SyncValidationError);
       expect(error.message).toContain('declares rulebook "library-rules", which was not found in any of:');

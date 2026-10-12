@@ -7,10 +7,14 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { HARNESSES } from '../../lib/harness.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -51,7 +55,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readScript(tempDir, 'org-only.sh')).toContain('echo org');
   });
@@ -63,7 +67,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo demo');
   });
@@ -75,7 +79,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo from-source');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
@@ -97,7 +101,7 @@ describe('install with declared sources', () => {
     ]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readScript(tempDir, 'contested.sh')).toContain('echo higher');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
@@ -109,7 +113,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'not-yet', dir: path.join(tempDir, 'not-yet') }]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(warnedLines(silent.warn.mock.calls)).toMatch(/Declared source "not-yet".*does not exist/s);
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo demo');
@@ -120,7 +124,7 @@ describe('install with declared sources', () => {
     await writeFile(filePath, '', 'utf8');
     await declareSources(tempDir, [{ name: 'a-file', dir: filePath }]);
 
-    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(/Invalid declared source/);
+    await expect(installCommand(makeOptions(), tempDir, fakeGit)).rejects.toThrow(/Invalid declared source/);
     expect(existsSync(path.join(tempDir, '.claude', 'scripts'))).toBe(false);
   });
 
@@ -129,7 +133,9 @@ describe('install with declared sources', () => {
     await writeFile(filePath, '', 'utf8');
     await declareSources(tempDir, [{ name: 'a-file', dir: filePath }]);
 
-    await expect(installCommand(makeOptions({ dryRun: true }), tempDir)).rejects.toThrow(/Invalid declared source/);
+    await expect(installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit)).rejects.toThrow(
+      /Invalid declared source/,
+    );
   });
 
   it('refuses a declared source declaring an unsupported content format on a dry run', async () => {
@@ -137,7 +143,9 @@ describe('install with declared sources', () => {
     await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 99\n', 'utf8');
     await declareSources(tempDir, [{ name: 'future', dir: sourceDir }]);
 
-    await expect(installCommand(makeOptions({ dryRun: true }), tempDir)).rejects.toThrow(/Unsupported content format/);
+    await expect(installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit)).rejects.toThrow(
+      /Unsupported content format/,
+    );
   });
 
   it('deploys a source template with its own shared guidance inlined', async () => {
@@ -148,7 +156,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     const deployed = await readGuidance(tempDir);
     expect(deployed).toContain('Org claude preamble.');
@@ -164,7 +172,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readGuidance(tempDir)).toContain(
       `Source: guidance/_harnesses/claude/CLAUDE.md in source "org" (${sourceDir})`,
@@ -178,7 +186,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await expect(installCommand(makeOptions(), tempDir)).rejects.toThrow(
+    await expect(installCommand(makeOptions(), tempDir, fakeGit)).rejects.toThrow(
       /Include directive target not found.*org\/guidance\/shared\/AGENTS\.md/s,
     );
   });
@@ -191,7 +199,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
       /claude guidance template is shipped by more than one content root.*source "codeassembly"/s,
@@ -207,7 +215,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     const deployed = await readGuidance(tempDir);
     expect(deployed).toContain('Org claude preamble, no ambient region.');
@@ -228,7 +236,7 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readGuidance(tempDir)).toContain('Org claude preamble.');
     expect(existsSync(path.join(tempDir, '.claude', 'fragments'))).toBe(false);
@@ -245,14 +253,14 @@ describe('install with declared sources', () => {
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readGuidance(tempDir)).toContain('Fixture claude preamble.');
   });
 
   it('retracts a template file not shipped by the owning source', async () => {
     using _silent = silenceConsole(['info', 'warn']);
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, fakeGit);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(true);
 
     const sourceDir = path.join(tempDir, 'sources', 'org');
@@ -266,7 +274,7 @@ describe('install with declared sources', () => {
     );
     await declareSources(tempDir, [{ name: 'org', dir: sourceDir }]);
 
-    await installCommand(makeOptions({ harness: 'rovo' }), tempDir);
+    await installCommand(makeOptions({ harness: 'rovo' }), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(false);
   });

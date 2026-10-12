@@ -8,11 +8,15 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { HARNESSES } from '../../lib/harness.ts';
 import { getManifestPath, readManifest } from '../../lib/manifest.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 import { RETIRED_ROVO_CONFIG } from '../test-utils/retired-hook-configs.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
 
@@ -38,7 +42,7 @@ describe('install retraction of a de-declared harness', () => {
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(false);
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(true);
@@ -57,7 +61,7 @@ describe('install retraction of a de-declared harness', () => {
     await writeFile(rovoConfig, RETIRED_ROVO_CONFIG, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readFile(rovoConfig, 'utf8')).not.toContain('--sentinel codeassembly-agents');
     expect(silent.warn.mock.calls).toHaveLength(0);
@@ -69,7 +73,7 @@ describe('install retraction of a de-declared harness', () => {
     await writeFile(modifiedScriptPath(), EDITED_SCRIPT, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(await readFile(modifiedScriptPath(), 'utf8')).toBe(EDITED_SCRIPT);
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -85,7 +89,7 @@ describe('install retraction of a de-declared harness', () => {
     await writeFile(modifiedScriptPath(), EDITED_SCRIPT, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions({ force: true }), tempDir);
+    await installCommand(makeOptions({ force: true }), tempDir, fakeGit);
 
     expect(existsSync(modifiedScriptPath())).toBe(false);
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -99,7 +103,7 @@ describe('install retraction of a de-declared harness', () => {
     await writeFile(rovoConfig, RETIRED_ROVO_CONFIG, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions({ dryRun: true }), tempDir);
+    await installCommand(makeOptions({ dryRun: true }), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -115,7 +119,7 @@ describe('install retraction of a de-declared harness', () => {
     await installBoth();
 
     await declareHarnesses('harnesses:\n  use: []\n');
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, '.claude', 'scripts', 'demo.sh'))).toBe(false);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(false);
@@ -128,7 +132,7 @@ describe('install retraction of a de-declared harness', () => {
     using silent = silenceConsole(['info', 'warn']);
     await installBoth();
 
-    await installCommand(makeOptions({ harness: 'claude' }), tempDir);
+    await installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit);
 
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh'))).toBe(true);
     const manifest = await readManifest(getManifestPath(tempDir));
@@ -145,7 +149,7 @@ describe('install retraction of a de-declared harness', () => {
     await writeFile(rovoConfig, BROKEN_CONFIG, 'utf8');
 
     await declareHarnesses('harnesses:\n  use:\n    - claude\n');
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(silent.warn.mock.calls.map((call) => String(call[0]))).toContainEqual(
       expect.stringContaining('Skipping hook-entry removal'),
@@ -161,7 +165,7 @@ describe('install retraction of a de-declared harness', () => {
     await installBoth();
     await rm(path.join(tempDir, ROVO_HOME, 'skills'), { recursive: true, force: true });
 
-    await installCommand(makeOptions(), tempDir);
+    await installCommand(makeOptions(), tempDir, fakeGit);
 
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.rovo?.entries.length).toBeGreaterThan(0);
@@ -183,7 +187,7 @@ describe('install retraction of a de-declared harness', () => {
   async function installBoth(overrides: Partial<InstallOptions> = {}): Promise<void> {
     await mkdir(path.join(tempDir, '.claude', 'skills'), { recursive: true });
     await mkdir(path.join(tempDir, ROVO_HOME, 'skills'), { recursive: true });
-    await installCommand(makeOptions(overrides), tempDir);
+    await installCommand(makeOptions(overrides), tempDir, fakeGit);
   }
 
   function makeOptions(overrides: Partial<InstallOptions> = {}): InstallOptions {

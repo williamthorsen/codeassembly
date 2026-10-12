@@ -5,7 +5,7 @@ import { renderAmbientBody } from '../../lib/ambient-body.ts';
 import { appendAmbientRegion, classifyAmbientRegion, injectAmbientRegion } from '../../lib/ambient-region.ts';
 import type { ResolvedReference } from '../../lib/declared-references.ts';
 import { writeIfChanged } from '../../lib/fs-helpers.ts';
-import { realGit } from '../../lib/git.ts';
+import { type AgentsGit, realGit } from '../../lib/git.ts';
 import { resolveAmbientHostPath } from '../../lib/harness.ts';
 import type { ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import type { ResolveRulebookContext } from '../../lib/rulebook-transform.ts';
@@ -66,10 +66,11 @@ export async function deliverAmbient(plans: ReadonlyArray<PlannedAmbientHost>): 
 export async function findUnignoredHosts(
   projectRoot: string,
   plans: ReadonlyArray<PlannedAmbientHost>,
+  git: AgentsGit = realGit,
 ): Promise<ReadonlyArray<string>> {
   const unignored: Array<string> = [];
   for (const { hostPath, plan } of plans) {
-    if (plan.kind === 'write' && (await realGit.checkIgnored(projectRoot, hostPath)) === false) {
+    if (plan.kind === 'write' && (await git.checkIgnored(projectRoot, hostPath)) === false) {
       unignored.push(hostPath);
     }
   }

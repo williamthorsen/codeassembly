@@ -8,7 +8,7 @@ import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../../deployed-sizes/schema.ts';
 import { shouldAppend } from '../../deployed-sizes/should-append.ts';
 import type { SizeSnapshot } from '../../deployed-sizes/types.ts';
-import { realGit } from '../../lib/git.ts';
+import { type AgentsGit, realGit } from '../../lib/git.ts';
 import { readRunningPackageVersion } from '../../lib/running-package.ts';
 import { resolveRepo } from '../../shared/resolve-repo.ts';
 import { collectDeployedPaths, type DeployedPathSources, type ResolveSourceRoot } from './collect-deployed-paths.ts';
@@ -39,16 +39,18 @@ export type SizeReportOutcome =
 export async function recordDeployedSizes(input: {
   plan: DeployedPathSources;
   domain: SyncDomain;
+  git?: AgentsGit;
   homeDir: string;
   packageRoot: string;
   resolveSourceRoot: ResolveSourceRoot;
 }): Promise<SizeReportOutcome> {
   const { plan, domain, homeDir, packageRoot, resolveSourceRoot } = input;
+  const git = input.git ?? realGit;
   try {
     const recordPath = resolveRecordPath(
       domain.ambient === 'harness-home'
         ? { home: homeDir, domain: 'home' }
-        : { home: homeDir, domain: 'repo', repo: await resolveRepo(domain.baseDir) },
+        : { home: homeDir, domain: 'repo', repo: await resolveRepo(domain.baseDir, git) },
     );
     const set = await collectDeployedPaths(plan, domain, homeDir, resolveSourceRoot);
     const measured = await measureDeployment(set);
@@ -58,10 +60,10 @@ export async function recordDeployedSizes(input: {
     // is the one the gate must judge and its repository the one whose artifacts the reader can edit; the home
     // domain's comes from the running package, so both answers are that package's tree.
     const sourceRoot = domain.ambient === 'harness-home' ? packageRoot : domain.baseDir;
-    const report = buildSizeReport({ measured, previous, set, repoRoot: await realGit.findTopLevel(sourceRoot) });
+    const report = buildSizeReport({ measured, previous, set, repoRoot: await git.findTopLevel(sourceRoot) });
 
-    if (await shouldAppend({ measured, previous, sourceRoot })) {
-      const sourceCommit = await realGit.readHeadCommit(packageRoot);
+    if (await shouldAppend({ measured, previous, sourceRoot, git })) {
+      const sourceCommit = await git.readHeadCommit(packageRoot);
       const snapshot: SizeSnapshot = {
         schemaVersion: SNAPSHOT_SCHEMA_VERSION,
         kind: 'snapshot',

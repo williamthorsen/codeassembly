@@ -8,12 +8,16 @@ import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { getManifestPath, readManifest, writeManifest } from '../../lib/manifest.ts';
+import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import type { AgentsManifest, InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 import { RETIRED_CLAUDE_SETTINGS } from '../test-utils/retired-hook-configs.ts';
 import { uninstallCommand } from '../uninstall.ts';
+
+/** A git adapter that answers as git does outside any repository. */
+const fakeGit = makeFakeGit();
 
 describe('uninstallCommand', () => {
   let tempDir: string;
@@ -73,7 +77,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
     const settingsPath = path.join(claudeHome, 'settings.json');
     await writeFile(settingsPath, '{ not json', 'utf8');
 
@@ -90,7 +94,7 @@ describe('uninstallCommand', () => {
     const claudeHome = path.join(tempDir, '.claude');
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
     const settingsPath = path.join(claudeHome, 'settings.json');
     await writeFile(settingsPath, RETIRED_CLAUDE_SETTINGS, 'utf8');
 
@@ -107,7 +111,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     const manualFile = path.join(claudeHome, 'agents', 'manual-agent.md');
     await writeFile(manualFile, 'manual content', 'utf8');
@@ -132,7 +136,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
@@ -150,7 +154,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
@@ -169,7 +173,7 @@ describe('uninstallCommand', () => {
     await mkdir(path.join(claudeHome, 'skills'), { recursive: true });
     await mkdir(path.join(claudeHome, 'agents'), { recursive: true });
 
-    await installCommand(makeInstallOptions(), tempDir);
+    await installCommand(makeInstallOptions(), tempDir, fakeGit);
 
     const scriptPath = path.join(claudeHome, 'scripts', 'demo.sh');
     await writeFile(scriptPath, '#!/usr/bin/env bash\necho tampered\n', 'utf8');
