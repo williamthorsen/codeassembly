@@ -8,6 +8,8 @@ user-invocable: false
 
 Save AI-generated files with standardized naming conventions.
 
+An artifact belongs to the developer's audit trail, as [artifact-conventions.md](../_data/artifact-conventions.md#purpose) states. Instructions, a procedure, or a reference that a later session must find belong in the repository, or in a skill or rulebook, and not in an artifact.
+
 ## Filename formats
 
 ### Ticket-level artifacts
