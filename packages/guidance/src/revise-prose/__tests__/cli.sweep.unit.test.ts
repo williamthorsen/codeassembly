@@ -1,5 +1,4 @@
-import { execFileSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
@@ -9,6 +8,7 @@ import { stringify as stringifyYaml } from 'yaml';
 import { runDetect, runRecord } from '../cli.ts';
 import { LEGACY_STALE_VERSION } from '../convert-record.ts';
 import { parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
+import { makeFakeGit } from '../test-utils/make-fake-git.ts';
 import type { DetectResult, DetectSuccess, LegacyRecord, ProseRecord, RunFold, SweepVersions } from '../types.ts';
 
 /** The detector rules that `bothRules` names under unit `writing`. */
@@ -52,7 +52,6 @@ describe(runDetect, () => {
 
   beforeEach(async () => {
     scratch = await mkdtemp(path.join(tmpdir(), 'revise-prose-cli-'));
-    execFileSync('git', ['-C', scratch, 'init', '--quiet']);
     for (const [file, content] of Object.entries(FIXTURE_FILES)) {
       await mkdir(path.join(scratch, path.dirname(file)), { recursive: true });
       await writeFile(path.join(scratch, file), content, 'utf8');
@@ -508,15 +507,9 @@ describe(runDetect, () => {
   });
 
   it('reports a root outside a git working tree as a structured failure', async () => {
-    const outside = await mkdtemp(path.join(tmpdir(), 'revise-prose-bare-'));
-    try {
-      expect(await runDetect({ argv: [], root: outside, home: outside })).toMatchObject({
-        ok: false,
-        error: 'not-a-repository',
-      });
-    } finally {
-      await rm(outside, { recursive: true, force: true });
-    }
+    const result = await runDetect({ argv: [], root: scratch, home: scratch }, makeFakeGit({ notARepository: true }));
+
+    expect(result).toMatchObject({ ok: false, error: 'not-a-repository' });
   });
 
   // region | Helpers
@@ -603,20 +596,20 @@ describe(runDetect, () => {
   }
 
   /**
-   * Sweeps the fixture repository, anchoring `home` at the scratch tree so that the run does not read the real
-   * preferences.
+   * Sweeps the fixture tree, anchoring `home` at the scratch tree so that the run does not read the real preferences.
+   * The fake git adapter lists every file in the tree as the sweep starts, as git would for an untracked tree.
    */
   async function sweep(argv: readonly string[] = []): Promise<DetectResult> {
-    return runDetect({ argv, root: scratch, home: scratch });
+    return runDetect({ argv, root: scratch, home: scratch }, makeFakeGit({ files: await listTree(scratch) }));
   }
 
-  /** Writes a record keyed on unit versions into the fixture repository, as a sweep before rules were versioned did. */
+  /** Writes a record keyed on unit versions into the fixture tree, as a sweep before rules were versioned did. */
   async function writeLegacyRecord(record: LegacyRecord): Promise<void> {
     await mkdir(path.join(scratch, '.agents'), { recursive: true });
     await writeFile(path.join(scratch, RECORD_PATH), stringifyYaml(record), 'utf8');
   }
 
-  /** Writes a record into the fixture repository. */
+  /** Writes a record into the fixture tree. */
   async function writeRecord(record: ProseRecord): Promise<void> {
     await mkdir(path.join(scratch, '.agents'), { recursive: true });
     await writeFile(path.join(scratch, RECORD_PATH), stringifyRecord(record), 'utf8');
@@ -626,6 +619,15 @@ describe(runDetect, () => {
 });
 
 // region | Helpers
+
+/** Lists every file beneath `root`, repository-relative with forward slashes, sorted as git sorts them. */
+async function listTree(root: string): Promise<string[]> {
+  const entries = await readdir(root, { recursive: true, withFileTypes: true });
+  return entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => path.relative(root, path.join(entry.parentPath, entry.name)).split(path.sep).join('/'))
+    .toSorted();
+}
 
 /** Narrows a result to its success arm, failing the test with the helper's own message when it is not one. */
 function expectSuccess(result: DetectResult): DetectSuccess {

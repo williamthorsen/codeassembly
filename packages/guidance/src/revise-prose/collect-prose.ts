@@ -6,7 +6,6 @@
  * about scope is decided here, so that the detector sees prose alone and the agent never adjudicates a candidate from
  * a file that it may not edit.
  */
-import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
@@ -15,6 +14,7 @@ import { isHarnessDeployPath } from 'codeassembly/api';
 
 import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
 import { extractYamlProse, UnparsableYamlError } from './extract-yaml.ts';
+import { realGit, type ReviseProseGit } from './git.ts';
 import { findHashCommentStart } from './hash-comments.ts';
 import { maskCodeSpans } from './mask-code-spans.ts';
 import { RECORD_PATH } from './record.ts';
@@ -47,10 +47,16 @@ export async function collectProse(input: {
   root: string;
   paths?: readonly string[];
   home?: string;
+  git?: ReviseProseGit;
 }): Promise<ProseCollection> {
   const home = input.home ?? homedir();
   const artifactBaseDir = await resolveRootArtifactBaseDir(input.root, home);
-  const files = resolveTargetFiles({ root: input.root, paths: input.paths ?? [], artifactBaseDir });
+  const files = resolveTargetFiles({
+    root: input.root,
+    paths: input.paths ?? [],
+    artifactBaseDir,
+    git: input.git ?? realGit,
+  });
 
   const spans: ProseSpan[] = [];
   const skipped: Record<SkipReason, number> = {
@@ -149,24 +155,20 @@ export function resolveTargetFiles(input: {
   root: string;
   paths: readonly string[];
   artifactBaseDir: string;
+  git: ReviseProseGit;
 }): string[] {
-  const tracked = listGitFiles(input.root, ['ls-files', '-z', '--'], input.paths);
-  const untracked = listGitFiles(input.root, ['ls-files', '-z', '--others', '--exclude-standard', '--'], input.paths);
-
-  const seen = new Set<string>();
-  const files: string[] = [];
-  for (const file of [...tracked, ...untracked]) {
-    if (seen.has(file)) continue;
-    seen.add(file);
-    if (isExcludedPath({ file, root: input.root, artifactBaseDir: input.artifactBaseDir })) continue;
-    files.push(file);
+  let listed: string[];
+  try {
+    listed = input.git.listFiles(input.root, input.paths);
+  } catch {
+    throw new NotARepositoryError(`${input.root} is not inside a git working tree; the sweep reads what git tracks`);
   }
-  return files;
+  return listed.filter((file) => !isExcludedPath({ file, root: input.root, artifactBaseDir: input.artifactBaseDir }));
 }
 
 // region | Helpers
 
-/** The NUL byte, which separates `git ls-files -z` records and, inside a file's content, marks that file as binary. */
+/** The NUL byte, which inside a file's content marks that file as binary. */
 const NUL = '\0';
 
 /** File extensions whose prose the sweep reads, mapped to the extractor that reads them. */
@@ -187,9 +189,6 @@ const PROSE_KINDS_BY_EXTENSION: Readonly<Record<string, ProseKind>> = {
   '.yml': 'yaml',
   '.zsh': 'shell',
 };
-
-/** Output cap for one `git ls-files`, sized past the listing produced by a large repository. */
-const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
 
 /**
  * Markers stamped into deployed output, each anchored to the start of a line. Every deployment writes its marker on a
@@ -586,22 +585,6 @@ function isTableRow(line: string): boolean {
  */
 function isVendoredContent(content: string, kind: ProseKind): boolean {
   return VENDOR_MARKERS[kind].test(content);
-}
-
-/** Runs one `git ls-files` form under `root`, returning repository-relative paths. */
-function listGitFiles(root: string, args: readonly string[], paths: readonly string[]): string[] {
-  let stdout: string;
-  try {
-    stdout = execFileSync('git', [...args, ...paths], {
-      cwd: root,
-      encoding: 'utf8',
-      maxBuffer: GIT_MAX_BUFFER,
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-  } catch {
-    throw new NotARepositoryError(`${root} is not inside a git working tree; the sweep reads what git tracks`);
-  }
-  return stdout.split(NUL).filter((file) => file !== '');
 }
 
 /**
