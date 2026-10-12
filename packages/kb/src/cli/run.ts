@@ -1,3 +1,4 @@
+import type { KbGit } from '../git/git.ts';
 import { type CommandOutput, runCheck } from './commands/check.ts';
 import { runCreate } from './commands/create.ts';
 import { runScaffold } from './commands/scaffold.ts';
@@ -32,7 +33,7 @@ const HELP_COMMANDS: ReadonlySet<string | undefined> = new Set([undefined, '--he
  * Dispatches a `kb` subcommand and returns its {@link CommandOutput} without touching `process`, so tests drive the
  * command directly. A bare invocation or `--help`/`-h` prints top-level usage (exit 0), and an unknown command prints
  * usage to stderr (exit 2). The optional `selectKb` picker is forwarded to `set-default`'s interactive form and to
- * `create`'s ambiguous default-KB prompt.
+ * `create`'s ambiguous default-KB prompt. The optional `git` adapter is forwarded to the commands that query git.
  *
  * `--output-style` is accepted anywhere before `--` and removed before dispatch; with `env` and `isTty` it resolves
  * the style of stdout, which is plain when neither is given.
@@ -41,6 +42,7 @@ export async function run(input: {
   argv: readonly string[];
   cwd: string;
   env?: Readonly<Record<string, string | undefined>>;
+  git?: KbGit;
   home?: string;
   isTty?: boolean;
   selectKb?: SelectKbPrompt;
@@ -60,6 +62,7 @@ export async function run(input: {
       argv: rest,
       cwd: input.cwd,
       style: resolved.style,
+      ...(input.git !== undefined && { git: input.git }),
       ...(input.home !== undefined && { home: input.home }),
     });
   }
@@ -78,7 +81,12 @@ export async function run(input: {
   }
 
   if (command === 'taxonomy') {
-    return runTaxonomy({ argv: rest, cwd: input.cwd, ...(input.home !== undefined && { home: input.home }) });
+    return runTaxonomy({
+      argv: rest,
+      cwd: input.cwd,
+      ...(input.git !== undefined && { git: input.git }),
+      ...(input.home !== undefined && { home: input.home }),
+    });
   }
 
   if (command === 'set-default') {

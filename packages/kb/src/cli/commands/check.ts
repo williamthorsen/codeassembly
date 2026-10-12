@@ -4,6 +4,7 @@ import type { OutputStyle } from '@williamthorsen/toolbelt.terminal/candidate';
 import { check, type CheckResult } from '../../check/check.ts';
 import type { EnumeratedNote } from '../../check/enumerate.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';
+import { type KbGit, realGit } from '../../git/git.ts';
 import type { Finding } from '../../types.ts';
 import { type CheckScope, formatHuman, formatJson, type StoreRef, summarize } from '../format.ts';
 import { takeInlineValue, takeValue } from '../parse-flag-value.ts';
@@ -54,14 +55,16 @@ Exit codes:
  * The command writes nothing to the store, so it ignores the registry's `readonly` flag. `check` throws a
  * `KbLoaderError` for a structural defect in a store file that it loads, and the command maps that error to exit 2;
  * any other error from `check` propagates to the caller as a real crash. `style` sets the human report's glyphs, and
- * defaults to plain.
+ * defaults to plain. `git` answers the run's repository queries, and defaults to running git.
  */
 export async function runCheck(input: {
   argv: readonly string[];
   cwd: string;
+  git?: KbGit;
   home?: string;
   style?: OutputStyle;
 }): Promise<CommandOutput> {
+  const git = input.git ?? realGit;
   let options: CheckOptions;
   try {
     options = parseCheckArgs(input.argv);
@@ -88,6 +91,7 @@ export async function runCheck(input: {
     result = await check({
       kbRoot: store.path,
       cwd: input.cwd,
+      git,
       ...(input.home !== undefined && { home: input.home }),
     });
   } catch (error) {
@@ -97,7 +101,7 @@ export async function runCheck(input: {
     throw error;
   }
 
-  const selection = await resolveSelection({ options, store, result });
+  const selection = await resolveSelection({ options, store, result, git });
   if (!selection.ok) {
     return { exitCode: 2, stdout: '', stderr: `kb check: ${selection.message}\n` };
   }
@@ -208,8 +212,9 @@ async function resolveSelection(input: {
   options: CheckOptions;
   store: StoreRef;
   result: CheckResult;
+  git: KbGit;
 }): Promise<SelectionOutcome> {
-  const { options, store, result } = input;
+  const { options, store, result, git } = input;
 
   if (options.vs === null && options.patterns.length === 0) {
     return { ok: true, scope: 'vault', notes: result.notes, findings: result.findings };
@@ -219,7 +224,7 @@ async function resolveSelection(input: {
   let patterns = options.patterns;
   if (options.vs !== null) {
     scope = 'vs';
-    const changed = resolveChangedPaths({ storeRoot: store.path, ref: options.vs });
+    const changed = resolveChangedPaths({ storeRoot: store.path, ref: options.vs, git });
     if (!changed.ok) {
       return { ok: false, message: changed.message };
     }
