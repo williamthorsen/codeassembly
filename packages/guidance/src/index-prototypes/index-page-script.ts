@@ -130,7 +130,7 @@ export const INDEX_PAGE_SCRIPT = `(() => {
     const parts = [cards.length + (cards.length === 1 ? ' prototype' : ' prototypes')];
     if (state.db !== null) {
       const winnerCard = winner === null ? null : bySlug.get(winner);
-      parts.push(winnerCard ? 'winner: ' + winnerCard.dataset.number + '. ' + winnerCard.dataset.title : 'no winner yet');
+      parts.push(winnerCard ? 'winner: ' + winnerCard.dataset.id + ' ' + winnerCard.dataset.title : 'no winner yet');
       parts.push(rankedCount + ' ranked', rejectedCount + ' rejected');
     }
     summary.textContent = parts.join(' · ');

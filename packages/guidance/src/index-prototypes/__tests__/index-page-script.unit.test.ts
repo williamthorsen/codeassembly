@@ -26,7 +26,7 @@ describe('index page script', () => {
     expect(page.badges('b')).toEqual(['Winner']);
     expect(page.badges('a')).toEqual(['Rank 2']);
     expect(page.badges('c')).toEqual(['Rejected']);
-    expect(page.text('#summary')).toBe('3 prototypes · winner: 2. Prototype b · 1 ranked · 1 rejected');
+    expect(page.text('#summary')).toBe('3 prototypes · winner: 2.1 Prototype b · 1 ranked · 1 rejected');
   });
 
   it('treats the later of two winner claims as the winner', async () => {

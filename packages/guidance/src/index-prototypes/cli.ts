@@ -12,7 +12,15 @@ import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { COPY_PROBE_SCRIPT } from './copy-probe.ts';
 import { intakeScreenshot } from './intake-screenshot.ts';
-import { isValidSlug, listLatestEntries, nextVersion, readManifest, resolveNumber, writeManifest } from './manifest.ts';
+import {
+  isValidSlug,
+  listLatestEntries,
+  nextVersion,
+  readManifest,
+  resolveIds,
+  resolveNumber,
+  writeManifest,
+} from './manifest.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
 import type {
   IndexPrototypesFailure,
@@ -23,7 +31,7 @@ import type {
   SetSummary,
 } from './types.ts';
 
-const COMMANDS = ['copy-probe', 'describe-set', 'record-index', 'register', 'render'] as const;
+const COMMANDS = ['copy-probe', 'describe-set', 'record-index', 'register', 'render', 'resolve-ids'] as const;
 
 type Command = (typeof COMMANDS)[number];
 
@@ -35,11 +43,13 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'inputs', takesValue: true },
   { name: 'lens', takesValue: true },
   { name: 'note', takesValue: true },
+  { name: 'number', takesValue: true },
   { name: 'out', takesValue: true },
   { name: 'screenshot', takesValue: true },
   { name: 'set-dir', takesValue: true },
   { name: 'set-title', takesValue: true },
   { name: 'slug', takesValue: true },
+  { name: 'slugs', takesValue: true },
   { name: 'source', takesValue: true },
   { name: 'title', takesValue: true },
   { name: 'url', takesValue: true },
@@ -51,9 +61,10 @@ const COMMAND_FLAGS: Record<Command, { required: readonly string[]; optional: re
   'record-index': { required: ['set-dir', 'url'], optional: [] },
   register: {
     required: ['set-dir', 'slug', 'title', 'url'],
-    optional: ['description', 'inputs', 'lens', 'note', 'screenshot', 'set-title', 'source'],
+    optional: ['description', 'inputs', 'lens', 'note', 'number', 'screenshot', 'set-title', 'source'],
   },
   render: { required: ['out', 'set-dir'], optional: [] },
+  'resolve-ids': { required: ['set-dir', 'slugs'], optional: [] },
 };
 
 /** A parsed invocation: the command, its single-valued flags keyed by flag name, and its `--note` flags in order. */
@@ -109,6 +120,8 @@ export async function runIndexPrototypes(input: {
       return register(resolveSetDir(args.values), args.values, args.notes, input.now);
     case 'render':
       return render(resolveSetDir(args.values), path.resolve(requireFlag(args.values, 'out')));
+    case 'resolve-ids':
+      return resolveIdsForSlugs(resolveSetDir(args.values), requireFlag(args.values, 'slugs'));
     default: {
       const _exhaustive: never = args.command;
       throw new Error(`unhandled command: ${String(_exhaustive)}`);
@@ -196,6 +209,34 @@ async function describeSet(setDir: string, filePath: string): Promise<IndexProto
 /** Returns a failure result. */
 function fail(error: IndexPrototypesFailure['error'], message: string): IndexPrototypesFailure {
   return { ok: false, error, message };
+}
+
+/**
+ * Returns the number that a registration of `slug` takes: the one that the set assigns when `requested` is absent,
+ * or the requested one once it is checked. A registered slug keeps its number, a new slug cannot take a number that
+ * another slug holds, and the value must be a positive integer; a request that fails one of those returns the failure.
+ */
+function resolveRegistrationNumber(
+  manifest: Manifest | null,
+  slug: string,
+  requested: string | undefined,
+): number | IndexPrototypesFailure {
+  const assigned = resolveNumber(manifest, slug);
+  if (requested === undefined) {
+    return assigned;
+  }
+  const number = Number(requested);
+  if (!Number.isSafeInteger(number) || number < 1) {
+    return fail('number-conflict', `--number "${requested}" must be a positive integer`);
+  }
+  const entries = manifest?.entries ?? [];
+  if (entries.some((entry) => entry.slug === slug)) {
+    return assigned === number
+      ? number
+      : fail('number-conflict', `slug "${slug}" is number ${assigned}, not ${number}`);
+  }
+  const holder = entries.find((entry) => entry.number === number);
+  return holder === undefined ? number : fail('number-conflict', `number ${number} belongs to slug "${holder.slug}"`);
 }
 
 /** Returns true when `value` names a helper command. */
@@ -332,6 +373,11 @@ async function register(
     return fail('missing-set-title', 'the first registration in a set requires --set-title');
   }
 
+  const number = resolveRegistrationNumber(existing, slug, values.number);
+  if (typeof number !== 'number') {
+    return number;
+  }
+
   const version = nextVersion(existing, slug);
   let shot: string | null = null;
   const screenshot = values.screenshot;
@@ -350,7 +396,7 @@ async function register(
 
   const entry: ManifestEntry = {
     slug,
-    number: resolveNumber(existing, slug),
+    number,
     version,
     registeredAt: now.toISOString(),
     title: requireFlag(values, 'title'),
@@ -371,6 +417,28 @@ async function register(
   };
   const manifestPath = await writeManifest(setDir, manifest);
   return { ok: true, command: 'register', manifestPath, entry };
+}
+
+/** Resolves the id that the next registration of each slug in the comma-separated `slugs` takes, without writing. */
+async function resolveIdsForSlugs(setDir: string, slugs: string): Promise<IndexPrototypesResult> {
+  const list = parseInputs(slugs);
+  if (list.length === 0) {
+    return fail('invalid-args', '--slugs requires at least one slug');
+  }
+  const invalid = list.find((slug) => !isValidSlug(slug));
+  if (invalid !== undefined) {
+    return fail('invalid-slug', `slug "${invalid}" must match [a-z0-9][a-z0-9-]{0,39}`);
+  }
+  if (new Set(list).size !== list.length) {
+    return fail('invalid-args', '--slugs names a slug twice');
+  }
+
+  const read = await readManifest(setDir);
+  if (read.kind === 'invalid') {
+    return fail('invalid-manifest', read.message);
+  }
+  const manifest = read.kind === 'ok' ? read.manifest : null;
+  return { ok: true, command: 'resolve-ids', ids: resolveIds(manifest, list) };
 }
 
 /**

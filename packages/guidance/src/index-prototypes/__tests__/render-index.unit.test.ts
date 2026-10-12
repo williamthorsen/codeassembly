@@ -47,7 +47,7 @@ describe(renderIndexPage, () => {
     });
 
     expect(page.match(/<article class="card"/g)).toHaveLength(2);
-    expect(page).toContain('<p class="meta">dense · v1 · 2026-10-03 01:19 UTC</p>');
+    expect(page).toContain('<p class="meta">dense · 2026-10-03 01:19 UTC</p>');
     expect(page).toContain(
       '<li class="chip">Lens: density</li><li class="chip">ticket</li><li class="chip">sketch</li>',
     );
@@ -56,9 +56,9 @@ describe(renderIndexPage, () => {
     );
     expect(page).toContain('<span class="placeholder">No screenshot for v1</span>');
     expect(page).toContain(
-      '<h2 id="title-dense"><a href="https://claude.ai/artifact/dense" target="_blank" rel="noopener">1. Prototype dense</a></h2>',
+      '<h2 id="title-dense"><a href="https://claude.ai/artifact/dense" target="_blank" rel="noopener">1.1 Prototype dense</a></h2>',
     );
-    expect(page).toContain('data-slug="airy" data-number="2"');
+    expect(page).toContain('data-slug="airy" data-number="2" data-id="2.1"');
     expect(page).toContain('href="https://claude.ai/artifact/dense" target="_blank" rel="noopener"');
   });
 

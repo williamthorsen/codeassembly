@@ -31,6 +31,7 @@ const DECLARED_KEYS: ReadonlySet<string> = new Set([
   'brief',
   'candidates',
   'files',
+  'id',
   'lens',
   'output',
   'plan',

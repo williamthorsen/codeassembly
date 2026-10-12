@@ -3,7 +3,7 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
-import type { Manifest, ManifestEntry, Note, SetSummary } from './types.ts';
+import type { Manifest, ManifestEntry, Note, PrototypeId, SetSummary } from './types.ts';
 
 export const MANIFEST_FILENAME = 'manifest.json';
 
@@ -53,6 +53,36 @@ export function resolveNumber(manifest: Manifest | null, slug: string): number {
     highest = Math.max(highest, entry.number);
   }
   return highest + 1;
+}
+
+/**
+ * Returns the id that the next registration of each slug takes, in the order given: a registered slug keeps its
+ * number, and each new slug takes the next number past the set's highest, so that registering the slugs in this order
+ * assigns the same ids.
+ */
+export function resolveIds(manifest: Manifest | null, slugs: readonly string[]): PrototypeId[] {
+  const entries = manifest?.entries ?? [];
+  const numbers = new Map<string, number>();
+  let highest = 0;
+  for (const entry of entries) {
+    numbers.set(entry.slug, entry.number);
+    highest = Math.max(highest, entry.number);
+  }
+  return slugs.map((slug) => {
+    let number = numbers.get(slug);
+    if (number === undefined) {
+      highest += 1;
+      number = highest;
+      numbers.set(slug, number);
+    }
+    const version = nextVersion(manifest, slug);
+    return { slug, number, version, id: formatId(number, version) };
+  });
+}
+
+/** Formats a version's id, `{number}.{version}`, which the index card and the page itself lead with. */
+export function formatId(number: number, version: number): string {
+  return `${number}.${version}`;
 }
 
 /**

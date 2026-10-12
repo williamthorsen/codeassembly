@@ -5,10 +5,12 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import {
+  formatId,
   isValidSlug,
   listLatestEntries,
   nextVersion,
   readManifest,
+  resolveIds,
   resolveNumber,
   writeManifest,
 } from '../manifest.ts';
@@ -46,6 +48,31 @@ describe(resolveNumber, () => {
 
   it("gives a new slug one past the set's highest number", () => {
     expect(resolveNumber(buildManifest([buildEntry('a', 1, 1), buildEntry('b', 1, 4)]), 'c')).toBe(5);
+  });
+});
+
+describe(resolveIds, () => {
+  it('numbers the slugs of an empty set from 1 in the order given, each at version 1', () => {
+    expect(resolveIds(null, ['b', 'a'])).toEqual([
+      { slug: 'b', number: 1, version: 1, id: '1.1' },
+      { slug: 'a', number: 2, version: 1, id: '2.1' },
+    ]);
+  });
+
+  it('keeps a registered slug at its number and next version, and numbers new slugs past the highest', () => {
+    const manifest = buildManifest([buildEntry('a', 1, 1), buildEntry('b', 1, 4), buildEntry('a', 2, 1)]);
+
+    expect(resolveIds(manifest, ['c', 'a', 'd'])).toEqual([
+      { slug: 'c', number: 5, version: 1, id: '5.1' },
+      { slug: 'a', number: 1, version: 3, id: '1.3' },
+      { slug: 'd', number: 6, version: 1, id: '6.1' },
+    ]);
+  });
+});
+
+describe(formatId, () => {
+  it('joins the number and the version with a dot', () => {
+    expect(formatId(3, 12)).toBe('3.12');
   });
 });
 

@@ -9,7 +9,7 @@ supported-harnesses: [claude]
 
 Write the brief that a round of prototype builders receives, from the idea, the settled intent, and the lenses that the developer supplies. Every builder reads the brief and follows its words literally: A criterion written into a section's instruction becomes a refrain in every entry, a request to convince becomes a sales pitch, "show the view" becomes a paragraph about the view, and "a large clock" becomes a digital readout. Apply the rules below yourself, so that the developer states the ask and never has to police their own wording.
 
-The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_dir}/{slug}-v{n}.html`, one index page with screenshots and verdicts, and a comparison afterwards. Once the developer has judged the round, an `idea-decisions` artifact records the decision on each of the round's ideas.
+The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_dir}/{slug}-v{n}.html` with its id, `{number}.{version}`, on the page, one index page with screenshots and verdicts, and a comparison afterwards. Once the developer has judged the round, an `idea-decisions` artifact records the decision on each of the round's ideas.
 
 ## Inputs
 
@@ -73,7 +73,7 @@ Write the brief in this order, with these headings:
 
 1. **Context.** The ticket, quoted. The developer's motivating picture, restated in plain speech.
 2. **Settled intent.** Bullets. Each is a decision, with its reason when the reason constrains the design.
-3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view. The demo chrome (the demo control, scene captions, the lens note, the data-model note, the API list) sits in a band visibly distinct from the product surface, and every part of it is inside an element that carries `data-demo`.
+3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view. The demo chrome (the demo control, scene captions, the lens note, the data-model note, the API list) sits in a band visibly distinct from the product surface, and every part of it is inside an element that carries `data-demo`. The band's first line is the id and the title from the dispatch block, `{id} {title}`.
 4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note when the product stores data; one is the API list when the product has an API.
 5. **Quality bar.** Works, legible, accessible, and within the copy rules, with {rulebook:accessibility-conventions} and {rulebook:ui-copy-conventions} named, the design skill to invoke before markup, and the salience order required.
 6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round. One criterion is the copy: "Read every string on the product surface as its user opening the page for the tenth time. A string that explains the page, reassures, or repeats the brief, and any copy over the budget in {rulebook:ui-copy-conventions}, is a defect."
@@ -89,7 +89,7 @@ The idea table lists every distinctive idea of the round, so that each one is ke
 | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | #        | The row's number, starting at 1 in each comparison                                                                                                                  |
 | Idea     | One line                                                                                                                                                            |
-| Source   | Every prototype that has the idea, as `{number}. {title}`, or `developer` for an idea that the developer states                                                     |
+| Source   | Every prototype that has the idea, as `{id} {title}`, or `developer` for an idea that the developer states                                                          |
 | Answers  | The ticket criterion, the settled intent, or the audit finding or requirement in the ticket or the product's design doc that the idea answers; blank when none does |
 | Decision | Empty in the comparison                                                                                                                                             |
 
@@ -110,7 +110,7 @@ Resolve the set directory and the scratch directory per {skill:index-prototypes}
 
 ### 2. Gather the inputs
 
-Take the ticket and the ask. Propose lenses when the ask lacks them. Take the write allowance from the ask, and apply the default when the ask does not state one. Choose a slug per lens and the set's note labels, per {skill:index-prototypes} "The set", before anything is built.
+Take the ticket and the ask. Propose lenses when the ask lacks them. Take the write allowance from the ask, and apply the default when the ask does not state one. Choose a slug per lens and the set's note labels, per {skill:index-prototypes} "The set", before anything is built, and resolve the slugs' ids per the same section, in the order of the lens sections.
 
 ### 3. Compose and check the brief
 
@@ -144,18 +144,19 @@ brief: {path to the saved brief}
 lens: {lens name}
 slug: {slug}
 version: {n}
+id: {number}.{n}
 output: {set_dir}/{slug}-v{n}.html
 ```
 
 followed by:
 
-> Read the brief in full and build the prototype for the lens named above. Write only the files that the brief's rules of engagement allow. Invoke the design skill that the brief names before writing markup. Publish the output with the Artifact tool. When done, reply with the artifact URL, a short title, the lens, the inputs that you drew on, a one-sentence description, one line per note label in the brief as `{label}: {value}`, and five lines of the system's distinctive ideas. Nothing else.
+> Read the brief in full and build the prototype for the lens named above. Write only the files that the brief's rules of engagement allow. Put the id above and the prototype's title on the first line of the page's `data-demo` band. Invoke the design skill that the brief names before writing markup. Publish the output with the Artifact tool. When done, reply with the artifact URL, a short title, the lens, the inputs that you drew on, a one-sentence description, one line per note label in the brief as `{label}: {value}`, and five lines of the system's distinctive ideas. Nothing else.
 
 Dispatch a builder once more with the same block when it returns without the file, with a file that does not open, or without an artifact URL. Report a second failure in the summary and leave the lens out of the round.
 
 ### 6. Index and compare
 
-Continue with {skill:index-prototypes} steps 3 to 7 and the verdict check of step 8, for the screenshots, the registrations, the set's summary, and the index page. In step 3, list each prototype's product copy per its "List the product copy". Register the prototypes in the order of the lens sections in the brief, so that the numbers that the helper assigns follow it. Take each registration's URL, title, lens, inputs, description, and notes from the builder's reply. Then write the comparison, naming each prototype as `{number}. {title}`: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), a "Product copy" section, and the decisions that the round leaves open. The "Product copy" section names each prototype as `{number}. {title}` and lists its strings from the probe. For a prototype without a `data-demo` band, add a one-line note directly under its name, before the list, that the listing includes the demo chrome. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link, the comparison path, and one line per prototype as `{number}. {title}`, and nothing else.
+Continue with {skill:index-prototypes} steps 3 to 7 and the verdict check of step 8, for the screenshots, the registrations, the set's summary, and the index page. In step 3, list each prototype's product copy per its "List the product copy". Register each prototype with `--number` from its resolved id, so that the number on the page and the number in the manifest agree whatever the order in which the builders returned. Take each registration's URL, title, lens, inputs, description, and notes from the builder's reply. Then write the comparison, naming each prototype as `{id} {title}`: the points on which the prototypes agree, the points on which they diverge, the [idea table](#the-idea-table), a "Product copy" section, and the decisions that the round leaves open. The "Product copy" section names each prototype as `{id} {title}` and lists its strings from the probe. For a prototype without a `data-demo` band, add a one-line note directly under its name, before the list, that the listing includes the demo chrome. Save it with {skill:save-artifact} as a ticket-level `comparison` artifact. Give the developer the index link, the comparison path, and one line per prototype as `{id} {title}`, and nothing else.
 
 ### 7. Decide the ideas
 
@@ -163,7 +164,7 @@ Run this step once the developer says that they have judged the round, in this s
 
 1. Resolve the set directory per {skill:index-prototypes} step 1, and read back the verdicts per its "Read back the verdicts".
 2. Read the latest `comparison` artifact in the ticket directory. When an `idea-decisions` artifact is newer than it, resume from that artifact and walk only its open rows. When the latest comparison does not contain an idea table, report that the round does not have one and stop.
-3. Present every row in one action-items block, per the convention included at step 4: its number, idea, source, answers, the verdict of each source prototype by `{number}. {title}` (winner, rank, or rejected), and a recommended decision with its reason in a clause. After a revised round, a row matching a row of the previous `idea-decisions` artifact takes that row's decision as its recommendation. A row for which you do not have a basis shows "no recommendation".
+3. Present every row in one action-items block, per the convention included at step 4: its number, idea, source, answers, the verdict of each source prototype by `{id} {title}` (winner, rank, or rejected), and a recommended decision with its reason in a clause. After a revised round, a row matching a row of the previous `idea-decisions` artifact takes that row's decision as its recommendation. A row for which you do not have a basis shows "no recommendation".
 4. Take the developer's answer by row number: `3 keep`, `5 adapt: {how}`, `7 defer: {what unblocks it}`, `9 drop: {reason}`. An explicit `accept the rest` decides every remaining row that has a recommendation with that recommendation. A row that the answer does not cover, and an adapt, defer, or drop that lacks its how, its condition, or its reason, stays open. When the developer states an idea that none of the rows contains, such as a combination of two prototypes, add it as a row whose source is `developer`. A bare number in an answer names a row; a prototype in a stated idea is named by its number with its title or slug. When an answer leaves unclear whether a number names a row or a prototype, ask before deciding the row.
 5. Present the open rows again, until none remain.
 
