@@ -1,15 +1,18 @@
-import { execFile } from 'node:child_process';
 import { chmod, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { promisify } from 'node:util';
 
 import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { deriveSessionContext } from '../cli.ts';
 
-const execFileAsync = promisify(execFile);
+/** A git adapter for a working directory without any remote. */
+const NO_REMOTE_GIT = makeFakeGit();
+
+/** A git adapter whose origin remote is on GitHub. */
+const GITHUB_ORIGIN_GIT = makeFakeGit({ remotes: [{ name: 'origin', url: 'git@github.com:owner/repo.git' }] });
 
 const NOW = new Date('2026-05-26T02:07:41Z');
 
@@ -33,6 +36,7 @@ describe(deriveSessionContext, () => {
   it('derives and writes a manifest when none exists', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const manifest = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'MAC-130/feat/x',
       now: NOW,
@@ -61,7 +65,13 @@ describe(deriveSessionContext, () => {
     };
     await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
 
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(result.project_slug).toBe('my-project');
     expect(result.created_at).toBe('2025-01-01T00:00:00Z');
     expect(JSON.parse(await readFile(manifestPath, 'utf8'))).toEqual(result);
@@ -73,6 +83,7 @@ describe(deriveSessionContext, () => {
     await writeFile(manifestPath, JSON.stringify({ ticket_id: 'OLD-1' }), 'utf8');
 
     const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'main',
       now: NOW,
@@ -92,7 +103,13 @@ describe(deriveSessionContext, () => {
       'utf8',
     );
 
-    const result = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
+    const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: WORKING_BRANCH,
+      now: NOW,
+      home: workDir,
+    });
     expect(result.ticket_url).toBeNull();
     expect(result.pr_url).toBe('https://x/pull/2');
     expect(result.explicit_urls).toEqual({ pr_url: 'https://x/pull/2' });
@@ -104,6 +121,7 @@ describe(deriveSessionContext, () => {
     await writeFile(manifestPath, '{ not valid json', 'utf8');
 
     const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'main',
       now: NOW,
@@ -122,7 +140,13 @@ describe(deriveSessionContext, () => {
       'utf8',
     );
 
-    const result = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
+    const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: WORKING_BRANCH,
+      now: NOW,
+      home: workDir,
+    });
     expect(result.created_at).toBe('2025-01-01T00:00:00Z');
     expect(result.ticket_url).toBe(ticketUrl);
 
@@ -156,7 +180,9 @@ describe(deriveSessionContext, () => {
         skip();
       }
 
-      await expect(deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir })).rejects.toThrow();
+      await expect(
+        deriveSessionContext({ git: NO_REMOTE_GIT, cwd: workDir, branch: 'main', now: NOW, home: workDir }),
+      ).rejects.toThrow();
     } finally {
       // Restore permissions so that afterEach cleanup can remove the directory tree.
       await chmod(agentsDir, 0o755);
@@ -164,20 +190,26 @@ describe(deriveSessionContext, () => {
   });
 
   it('throws a detached-HEAD error when the branch is empty', async () => {
-    await expect(deriveSessionContext({ cwd: workDir, branch: '', now: NOW, home: workDir })).rejects.toThrow(
-      /Detached HEAD/,
-    );
+    await expect(
+      deriveSessionContext({ git: NO_REMOTE_GIT, cwd: workDir, branch: '', now: NOW, home: workDir }),
+    ).rejects.toThrow(/Detached HEAD/);
   });
 
   it('throws a detached-HEAD error when the branch is HEAD', async () => {
-    await expect(deriveSessionContext({ cwd: workDir, branch: 'HEAD', now: NOW, home: workDir })).rejects.toThrow(
-      /Detached HEAD/,
-    );
+    await expect(
+      deriveSessionContext({ git: NO_REMOTE_GIT, cwd: workDir, branch: 'HEAD', now: NOW, home: workDir }),
+    ).rejects.toThrow(/Detached HEAD/);
   });
 
   it('seeds ticket_url and pr_url to null on a fresh compose', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    const manifest = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const manifest = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(manifest.ticket_url).toBeNull();
     expect(manifest.pr_url).toBeNull();
   });
@@ -188,6 +220,7 @@ describe(deriveSessionContext, () => {
   ] as const)('persists $flag and a subsequent read returns it', async ({ field, url }) => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const set = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: WORKING_BRANCH,
       now: NOW,
@@ -196,7 +229,13 @@ describe(deriveSessionContext, () => {
     });
     expect(set[field]).toBe(url);
 
-    const reread = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
+    const reread = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: WORKING_BRANCH,
+      now: NOW,
+      home: workDir,
+    });
     expect(reread[field]).toBe(url);
   });
 
@@ -206,6 +245,7 @@ describe(deriveSessionContext, () => {
   ] as const)('resets the field to null on $flag', async ({ field, url }) => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: WORKING_BRANCH,
       now: NOW,
@@ -213,6 +253,7 @@ describe(deriveSessionContext, () => {
       mutations: [{ field, value: url }],
     });
     const cleared = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: WORKING_BRANCH,
       now: NOW,
@@ -244,7 +285,13 @@ describe(deriveSessionContext, () => {
     };
     await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
 
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
+    const recomposed = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: WORKING_BRANCH,
+      now: NOW,
+      home: workDir,
+    });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBe(ticketUrl);
     expect(recomposed.pr_url).toBe(prUrl);
@@ -257,7 +304,13 @@ describe(deriveSessionContext, () => {
     // The diagnostic makes a vanished `ticket_url`/`pr_url` explainable rather than silent.
     await writeFile(manifestPath, '{ not valid json', 'utf8');
     using stdio = captureStdio();
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const recomposed = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBeNull();
     expect(recomposed.pr_url).toBeNull();
@@ -270,7 +323,13 @@ describe(deriveSessionContext, () => {
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
     await writeFile(manifestPath, '42', 'utf8');
 
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const recomposed = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBeNull();
     expect(recomposed.pr_url).toBeNull();
@@ -278,7 +337,13 @@ describe(deriveSessionContext, () => {
 
   it('reports the project stage declared in the project file and null for each undeclared value', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n  maturity: hobby\n  audience: owner\n');
-    const manifest = await deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir });
+    const manifest = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: WORKING_BRANCH,
+      now: NOW,
+      home: workDir,
+    });
     expect(manifest).toMatchObject({ project_maturity: 'hobby', project_sensitivity: null, project_audience: 'owner' });
   });
 
@@ -287,14 +352,20 @@ describe(deriveSessionContext, () => {
     const homeDir = path.join(workDir, 'home');
     await writeProjectPrefs(projectDir, 'project:\n  slug: my-project\n');
     await writeProjectPrefs(homeDir, 'project:\n  maturity: production\n  sensitivity: confidential\n');
-    const manifest = await deriveSessionContext({ cwd: projectDir, branch: WORKING_BRANCH, now: NOW, home: homeDir });
+    const manifest = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: projectDir,
+      branch: WORKING_BRANCH,
+      now: NOW,
+      home: homeDir,
+    });
     expect(manifest).toMatchObject({ project_maturity: null, project_sensitivity: null, project_audience: null });
   });
 
   it('rejects a project stage value outside its set, naming the key', async () => {
     await writeProjectPrefs(workDir, 'project:\n  maturity: prod\n');
     await expect(
-      deriveSessionContext({ cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir }),
+      deriveSessionContext({ git: NO_REMOTE_GIT, cwd: workDir, branch: WORKING_BRANCH, now: NOW, home: workDir }),
     ).rejects.toThrow(/'project\.maturity' must be one of "hobby", "early", "production"/);
   });
 
@@ -303,7 +374,13 @@ describe(deriveSessionContext, () => {
       workDir,
       'project:\n  slug: my-project\nticket:\n  base_url: https://org.atlassian.net/browse/\n',
     );
-    const manifest = await deriveSessionContext({ cwd: workDir, branch: 'MAC-130/feat/x', now: NOW, home: workDir });
+    const manifest = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'MAC-130/feat/x',
+      now: NOW,
+      home: workDir,
+    });
     expect(manifest.ticket_base_url).toBe('https://org.atlassian.net/browse/');
     expect(manifest.ticket_url).toBe('https://org.atlassian.net/browse/MAC-130');
   });
@@ -330,29 +407,44 @@ describe(deriveSessionContext, () => {
     };
     await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
 
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'MAC-130', now: NOW, home: workDir });
+    const recomposed = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'MAC-130',
+      now: NOW,
+      home: workDir,
+    });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.ticket_url).toBe(stored);
   });
 
   it('seeds pr_url from a PR-<n> identity using the git remote', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    await initGitRepo(workDir, 'git@github.com:owner/repo.git');
-    const manifest = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });
+    const manifest = await deriveSessionContext({
+      git: GITHUB_ORIGIN_GIT,
+      cwd: workDir,
+      branch: 'PR-950',
+      now: NOW,
+      home: workDir,
+    });
     expect(manifest.ticket_id).toBe('PR-950');
     expect(manifest.pr_url).toBe('https://github.com/owner/repo/pull/950');
   });
 
   it('leaves pr_url null on a PR-<n> branch when the repo does not have any git remote', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    await initGitRepo(workDir);
-    const manifest = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });
+    const manifest = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'PR-950',
+      now: NOW,
+      home: workDir,
+    });
     expect(manifest.pr_url).toBeNull();
   });
 
   it('carries a stored pr_url forward across a recompose, overriding the seeded default', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
-    await initGitRepo(workDir, 'git@github.com:owner/repo.git');
     const stored = 'https://github.com/owner/repo/pull/999';
     // A manifest without `explicit_urls`; composition would seed .../pull/950 from the remote and the PR-950 identity.
     const manifestPath = path.join(workDir, '.agents', 'PR-950.branch-manifest.json');
@@ -370,7 +462,13 @@ describe(deriveSessionContext, () => {
     };
     await writeFile(manifestPath, JSON.stringify(stale), 'utf8');
 
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'PR-950', now: NOW, home: workDir });
+    const recomposed = await deriveSessionContext({
+      git: GITHUB_ORIGIN_GIT,
+      cwd: workDir,
+      branch: 'PR-950',
+      now: NOW,
+      home: workDir,
+    });
     expect(recomposed.scm).toBe('github');
     expect(recomposed.pr_url).toBe(stored);
   });
@@ -383,14 +481,6 @@ async function writeProjectPrefs(workDir: string, body: string): Promise<void> {
   const agentsDir = path.join(workDir, '.agents');
   await mkdir(agentsDir, { recursive: true });
   await writeFile(path.join(agentsDir, 'preferences.yaml'), body, 'utf8');
-}
-
-/** Initializes a throwaway git repo at `dir`, optionally adding an `origin` remote. */
-async function initGitRepo(dir: string, remoteUrl?: string): Promise<void> {
-  await execFileAsync('git', ['-C', dir, 'init']);
-  if (remoteUrl !== undefined) {
-    await execFileAsync('git', ['-C', dir, 'remote', 'add', 'origin', remoteUrl]);
-  }
 }
 
 // endregion | Helpers

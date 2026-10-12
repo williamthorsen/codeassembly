@@ -5,7 +5,11 @@ import path from 'node:path';
 import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { deriveSessionContext } from '../cli.ts';
+
+/** A git adapter for a working directory without any remote. */
+const NO_REMOTE_GIT = makeFakeGit();
 
 const NOW = new Date('2026-05-26T02:07:41Z');
 
@@ -28,6 +32,7 @@ describe('default-branch invariant', () => {
     {
       using stdio = captureStdio();
       const result = await deriveSessionContext({
+        git: NO_REMOTE_GIT,
         cwd: workDir,
         branch: 'main',
         now: NOW,
@@ -38,17 +43,24 @@ describe('default-branch invariant', () => {
       expect(stdio.stderr).toMatch(new RegExp(`refusing to store ${field} on default branch main`));
     }
 
-    const reread = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const reread = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(reread[field]).toBeNull();
   });
 
   it('leaves a clean default-branch manifest untouched when a set is refused', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const manifestPath = path.join(workDir, '.agents', 'main.branch-manifest.json');
-    await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    await deriveSessionContext({ git: NO_REMOTE_GIT, cwd: workDir, branch: 'main', now: NOW, home: workDir });
     const before = await readFile(manifestPath, 'utf8');
 
     await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'main',
       now: NOW,
@@ -65,6 +77,7 @@ describe('default-branch invariant', () => {
   ] as const)('still accepts $flag on the default branch', async ({ field }) => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const cleared = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'main',
       now: NOW,
@@ -94,7 +107,13 @@ describe('default-branch invariant', () => {
     await writeFile(manifestPath, JSON.stringify(polluted), 'utf8');
 
     using stdio = captureStdio();
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(stdio.stderr).toMatch(/cleared ticket_url stored on default branch main/);
     expect(stdio.stderr).toMatch(/cleared pr_url stored on default branch main/);
     expect(result.ticket_url).toBeNull();
@@ -126,7 +145,13 @@ describe('default-branch invariant', () => {
     };
     await writeFile(manifestPath, JSON.stringify(seeded), 'utf8');
 
-    const result = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(result.default_branch).toBe('origin/main');
     expect(result.branch_name).toBe('main');
     expect(result.project_slug).toBe('my-project');
@@ -143,7 +168,13 @@ describe('default-branch invariant', () => {
     await writeFile(manifestPath, JSON.stringify({ ...explicitUrls, explicit_urls: explicitUrls }), 'utf8');
 
     using _stdio = captureStdio();
-    const recomposed = await deriveSessionContext({ cwd: workDir, branch: 'main', now: NOW, home: workDir });
+    const recomposed = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
+      cwd: workDir,
+      branch: 'main',
+      now: NOW,
+      home: workDir,
+    });
     expect(recomposed.ticket_url).toBeNull();
     expect(recomposed.pr_url).toBeNull();
     expect(recomposed.explicit_urls).toEqual({});
@@ -158,6 +189,7 @@ describe('default-branch invariant', () => {
     const url = 'https://github.com/owner/repo/issues/783';
 
     const onTrunk = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'trunk',
       now: NOW,
@@ -167,6 +199,7 @@ describe('default-branch invariant', () => {
     expect(onTrunk.ticket_url).toBeNull();
 
     const onMain = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'main',
       now: NOW,
@@ -182,6 +215,7 @@ describe('default-branch invariant', () => {
       'project:\n  slug: my-project\nrepository:\n  default_remote:\n    default_branch: release/2.x\n',
     );
     const result = await deriveSessionContext({
+      git: NO_REMOTE_GIT,
       cwd: workDir,
       branch: 'release/2.x',
       now: NOW,
