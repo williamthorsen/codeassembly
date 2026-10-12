@@ -1,7 +1,7 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-// CLI entry point for the manage-jira-ticket helper: resolves where a Jira work item goes, converts a Markdown body to
-// ADF, and creates the work item through `acli` exactly once.
+// CLI entry point for the manage-jira-ticket helper: resolves where a Jira work item goes, compares `acli`'s active site
+// with a ticket's site, converts a Markdown body to ADF, and creates the work item through `acli` exactly once.
 
 import { execFile } from 'node:child_process';
 import { realpathSync } from 'node:fs';
@@ -19,6 +19,7 @@ import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { loadWorkTypes } from '../lib/work-types.ts';
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
+import { readSiteCheck, type SiteCheck } from './check-site.ts';
 import { convertMarkdownToAdf } from './convert-body.ts';
 import { type AcliResult, createWorkItem } from './create-work-item.ts';
 import { readJiraPreferences, resolveTarget, type Target } from './resolve-target.ts';
@@ -26,6 +27,7 @@ import { readJiraPreferences, resolveTarget, type Target } from './resolve-targe
 const execFileAsync = promisify(execFile);
 
 const USAGE = `usage:
+  manage-jira-ticket check-site --target <url-or-host>
   manage-jira-ticket resolve-target --work-type <type>
   manage-jira-ticket convert-body --body-file <md> --out <path>
   manage-jira-ticket create --summary <text> --body-file <md> --work-type <type> [--parent <key>]`;
@@ -35,6 +37,9 @@ async function main(): Promise<void> {
   try {
     const [subcommand, ...argv] = process.argv.slice(2);
     switch (subcommand) {
+      case 'check-site':
+        await runCheckSite(argv);
+        break;
       case 'convert-body':
         await runConvertBody(argv);
         break;
@@ -58,6 +63,14 @@ if (isEntryPoint()) {
 }
 
 // region | Helpers
+
+/** States why `check` failed and names the command that makes the target site active. */
+function describeSiteMismatch(check: SiteCheck): string {
+  const switchCommand = `acli jira auth switch --site ${check.targetSite}`;
+  return check.activeSite === null
+    ? `could not read acli's active site; the ticket is on ${check.targetSite}. Sign in, then run \`${switchCommand}\`.`
+    : `acli's active site is ${check.activeSite}, but the ticket is on ${check.targetSite}. Run \`${switchCommand}\`.`;
+}
 
 /** Returns true when this module is the process entry point, resolving both sides through `realpathSync`. */
 function isEntryPoint(): boolean {
@@ -134,6 +147,17 @@ async function runAcli(args: readonly string[]): Promise<AcliResult> {
       return { exitCode: error.code, stderr: error.stderr, stdout: error.stdout };
     }
     throw error;
+  }
+}
+
+/** Prints the site check for `--target`, exiting non-zero and naming the switch command unless the sites match. */
+async function runCheckSite(argv: readonly string[]): Promise<void> {
+  const values = parseValues(argv, [{ name: 'target', takesValue: true }], ['target']);
+  const check = await readSiteCheck(values.target ?? '', runAcli);
+  writeJson(check);
+  if (!check.match) {
+    process.stderr.write(`manage-jira-ticket: ${describeSiteMismatch(check)}\n`);
+    process.exitCode = 1;
   }
 }
 
