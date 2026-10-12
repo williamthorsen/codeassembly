@@ -21,10 +21,10 @@ export async function resolveRepo(cwd: string, git: SharedGit = realGit): Promis
 // region | Helpers
 
 /**
- * Reads the preferred remote's fetch URL, preferring `origin` and falling back to the first listed
- * remote. Returns `undefined` for the expected best-effort cases (a missing remote, an unparseable URL, a non-git
- * directory). When the `git` binary itself is unavailable (`ENOENT`), it emits a one-line warning before returning
- * `undefined`, so a broken environment is distinguished from an absent remote rather than silently suppressed.
+ * Reads the preferred remote's fetch URL, preferring `origin` and falling back to the first listed remote. Returns
+ * `undefined` for the expected best-effort cases (a missing remote, an unparseable URL, a non-git directory). When the
+ * `git` binary itself is unavailable (`ENOENT`), it emits a one-line warning before returning `undefined`, so a broken
+ * environment is distinguished from an absent remote rather than silently suppressed.
  */
 async function resolveRemoteUrl(cwd: string, git: SharedGit): Promise<string | undefined> {
   try {

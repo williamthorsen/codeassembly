@@ -5,8 +5,8 @@ import { realGit, type SharedGit } from './git.ts';
 
 /**
  * Resolves the current branch name at `cwd`. Throws when git fails: a missing git binary, or a `cwd` outside a
- * repository. A detached HEAD is not a failure: git reports an empty string, which is
- * returned verbatim so that each caller decides whether to refuse it or fall back.
+ * repository. A detached HEAD is not a failure: git reports an empty string, which is returned verbatim so that each
+ * caller decides whether to refuse it or fall back.
  */
 export async function resolveCurrentBranch(cwd: string, git: SharedGit = realGit): Promise<string> {
   try {
