@@ -29,7 +29,8 @@ import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { resolveCurrentBranch, sanitizeBranch } from '../shared/branch-helpers.ts';
 import { resolveProjectRoot } from '../shared/resolve-project-root.ts';
 import { composeManifest, DEFAULT_REMOTE_NAME } from './compose-manifest.ts';
-import { readPreferences } from './read-preferences.ts';
+import { readPreferences, readProjectPreferences } from './read-preferences.ts';
+import { readProjectStage } from './read-project-stage.ts';
 import type { BranchManifest, ExplicitUrls } from './types.ts';
 
 const execFileAsync = promisify(execFile);
@@ -159,10 +160,12 @@ async function composeFromPreferences(input: {
   now: Date;
 }): Promise<BranchManifest> {
   const readResult = await readPreferences({ cwd: input.cwd, home: input.home });
+  const projectStage = readProjectStage(await readProjectPreferences(input.cwd));
   const remoteName = readResult.preferences.repository?.default_remote?.name ?? DEFAULT_REMOTE_NAME;
   const remoteUrl = await resolveRemoteUrl(input.cwd, remoteName);
   return composeManifest({
     preferences: readResult.preferences,
+    projectStage,
     branchName: input.branch,
     cwd: input.cwd,
     home: input.home,

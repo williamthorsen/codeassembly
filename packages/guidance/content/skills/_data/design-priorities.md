@@ -8,7 +8,7 @@ Design options have two kinds of properties.
 
 **Correctness** (what makes the design right):
 
-- Behavioral correctness: Does it produce the right results across the cases that matter?
+- Behavioral correctness: Does it produce the right results across the cases that matter? The project's declared stage sets which cases matter; see [project stage](project-stage.md).
 - API quality: Clear contracts, expressive interfaces, sensible boundaries
 - Architectural soundness: Modularity, separation of concerns, single responsibility, composability, SOLID
 - Testability: The design can be verified in isolation

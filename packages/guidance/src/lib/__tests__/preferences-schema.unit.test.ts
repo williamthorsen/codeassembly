@@ -112,6 +112,19 @@ describe('preferences.v1.json schema', () => {
     expect(output).toMatchObject({ valid: false });
   });
 
+  it.each([
+    ['maturity', ['hobby', 'early', 'production']],
+    ['sensitivity', ['low', 'personal', 'confidential']],
+    ['audience', ['owner', 'team', 'public']],
+  ])('accepts each declared `project.%s` value and rejects any other', async (key, values) => {
+    for (const value of values) {
+      const output = await validate(schemaId, { project: { [key]: value } }, FLAG);
+      expect(output, `${key}: ${value}`).toMatchObject({ valid: true });
+    }
+    const output = await validate(schemaId, { project: { [key]: 'enterprise' } }, FLAG);
+    expect(output).toMatchObject({ valid: false });
+  });
+
   it('accepts `project.scopes` entries with and without a `name`', async () => {
     const output = await validate(
       schemaId,

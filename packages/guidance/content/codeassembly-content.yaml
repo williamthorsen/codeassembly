@@ -33,6 +33,8 @@ helpers:
     out: skills/revise-prose/revise-prose.mjs
   - entry: ../src/streamline-guidance/cli.ts
     out: skills/streamline-guidance/streamline-guidance.mjs
+  - entry: ../src/check-preferences/cli.ts
+    out: scripts/check-preferences.mjs
   - entry: ../src/describe-change/cli.ts
     out: scripts/describe-change.mjs
   - entry: ../src/select-lede-exemplars/cli.ts

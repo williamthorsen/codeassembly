@@ -1,4 +1,5 @@
 /** Shared types for the session-context deriver. */
+import type { ProjectStage } from './read-project-stage.ts';
 
 /** A narrow projection of `src/schemas/preferences.v1.json` covering the fields that the deriver consumes. */
 export interface ResolvedPreferences {
@@ -51,6 +52,10 @@ export interface BranchManifest {
   readonly ticket_id: string | null;
   readonly ticket_ref: string | null;
   readonly project_slug: string;
+  /** The project's declared stage, read from the project preferences file only; `null` when undeclared. */
+  readonly project_maturity?: ProjectStage['maturity'];
+  readonly project_sensitivity?: ProjectStage['sensitivity'];
+  readonly project_audience?: ProjectStage['audience'];
   readonly scm: 'github' | 'bitbucket';
   readonly default_branch: string;
   readonly branch_name: string;
