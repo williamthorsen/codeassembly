@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { realGit } from '../git.ts';
 import { listWorkingTreeFiles } from '../list-working-tree-files.ts';
 
 describe(listWorkingTreeFiles, () => {
@@ -41,6 +42,10 @@ describe(listWorkingTreeFiles, () => {
     await writeFile(path.join(repository, 'ignored.md'), 'Ignored.\n', 'utf8');
     await writeFile(path.join(repository, 'untracked.md'), 'Untracked.\n', 'utf8');
 
-    expect(listWorkingTreeFiles(repository).toSorted()).toStrictEqual(['.gitignore', 'kept.md', 'untracked.md']);
+    expect(listWorkingTreeFiles(repository, realGit).toSorted()).toStrictEqual([
+      '.gitignore',
+      'kept.md',
+      'untracked.md',
+    ]);
   });
 });

@@ -6,7 +6,6 @@
  * to which the target or one of its includes links. Links inside a linked file are not followed, and an invocation
  * token names separately loaded content, so neither contributes a file.
  */
-import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 
@@ -14,6 +13,7 @@ import { buildIncludeGraph, DirectiveExpansionError, expandIncludes, type Includ
 
 import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
 import { findDeployedSource, isDeployedCopy } from './deployed-source.ts';
+import type { StreamlineGit } from './git.ts';
 import { listWorkingTreeFiles } from './list-working-tree-files.ts';
 import { isLive } from './record.ts';
 import type {
@@ -36,29 +36,28 @@ export function findContentRoot(file: string, contentRoots: readonly string[]): 
 }
 
 /** Returns the real path of the repository's top level. Throws {@link NotARepositoryError} outside a working tree. */
-export function findRepositoryRoot(cwd: string): string {
-  try {
-    const stdout = execFileSync('git', ['rev-parse', '--show-toplevel'], {
-      cwd,
-      encoding: 'utf8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    });
-    return realpathSync(stdout.trim());
-  } catch (error) {
-    throw new NotARepositoryError(`${cwd} is not inside a git working tree`, { cause: error });
+export function findRepositoryRoot(cwd: string, git: StreamlineGit): string {
+  const topLevel = git.findTopLevel(cwd);
+  if (topLevel === undefined) {
+    throw new NotARepositoryError(`${cwd} is not inside a git working tree`);
   }
+  return realpathSync(topLevel);
 }
 
 /** Lists the absolute directories of every content root in the repository. */
-export function listContentRoots(root: string): string[] {
-  return listWorkingTreeFiles(root, [`*${CONTENT_ROOT_MANIFEST}`])
+export function listContentRoots(root: string, git: StreamlineGit): string[] {
+  return listWorkingTreeFiles(root, git, [`*${CONTENT_ROOT_MANIFEST}`])
     .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
     .map((file) => path.join(root, path.dirname(file)));
 }
 
 /** Measures what each repository-relative file deploys, on the terms that `resolve` reports as `deployedBytes`. */
-export async function measureDeployedBytes(root: string, files: readonly string[]): Promise<Map<string, number>> {
-  return measureFiles(files, { contentRoots: listContentRoots(root), graphs: new Map(), root });
+export async function measureDeployedBytes(
+  root: string,
+  files: readonly string[],
+  git: StreamlineGit,
+): Promise<Map<string, number>> {
+  return measureFiles(files, { contentRoots: listContentRoots(root, git), git, graphs: new Map(), root });
 }
 
 /** Raised when the helper runs somewhere git does not track. */
@@ -70,6 +69,7 @@ export class NotARepositoryError extends Error {}
  */
 export async function resolveGuidance(input: {
   cwd: string;
+  git: StreamlineGit;
   home: string;
   paths: readonly string[];
   record: GuidanceRecord;
@@ -77,7 +77,8 @@ export async function resolveGuidance(input: {
 }): Promise<ResolveSuccess> {
   const context: ResolutionContext = {
     artifactBaseDir: resolveRealPath(await resolveRootArtifactBaseDir(input.root, input.home)),
-    contentRoots: listContentRoots(input.root),
+    contentRoots: listContentRoots(input.root, input.git),
+    git: input.git,
     graphs: new Map(),
     home: input.home,
     root: input.root,
@@ -107,7 +108,7 @@ export async function resolveGuidance(input: {
   const files = [...named.keys(), ...edges.keys()];
   const measures: FileMeasures = {
     deployedBytes: await measureFiles(files, context),
-    dirty: listDirtyFiles(input.root, files),
+    dirty: input.git.listChangedFiles(input.root, files),
     reviews: mapLastReviews(input.record),
   };
 
@@ -147,12 +148,10 @@ const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
 /** Matches a `{harness_home_dir}` reference into a deployed tree, whose captured group is the path beneath the home. */
 const HARNESS_HOME_REFERENCE_REGEX = /\{harness_home_dir\}\/((?:scripts|skills)\/[^\s`'"()<>[\]]+)/g;
 
-/** Output cap for one git listing, sized to exceed what a large repository produces. */
-const GIT_MAX_BUFFER = 256 * 1_024 * 1_024;
-
 /** The values that measuring deployed bytes fixes for one run. */
 interface MeasurementContext {
   contentRoots: readonly string[];
+  git: StreamlineGit;
   /** The include graph of each content root that the run has reached, built once per root. */
   graphs: Map<string, IncludeGraph>;
   root: string;
@@ -312,30 +311,6 @@ function isInside(child: string, parent: string): boolean {
   return !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-/** Returns the repository-relative files that git reports as changed or untracked, among the given files. */
-function listDirtyFiles(root: string, files: readonly string[]): Set<string> {
-  if (files.length === 0) {
-    return new Set();
-  }
-  const stdout = execFileSync('git', ['status', '--porcelain=v1', '-z', '--untracked-files=all', '--', ...files], {
-    cwd: root,
-    encoding: 'utf8',
-    maxBuffer: GIT_MAX_BUFFER,
-    stdio: ['ignore', 'pipe', 'ignore'],
-  });
-
-  const dirty = new Set<string>();
-  const entries = stdout.split('\u{0}');
-  for (let index = 0; index < entries.length; index += 1) {
-    const entry = entries[index] ?? '';
-    if (entry.length < 4) continue;
-    dirty.add(entry.slice(3));
-    // A rename or copy entry is followed by its original path, which is not itself an entry.
-    if (/[CR]/.test(entry.slice(0, 2))) index += 1;
-  }
-  return dirty;
-}
-
 /**
  * Lists the existing Markdown files to which content links: Markdown links resolved against the host's directory, and
  * `{harness_home_dir}` references mapped into the content root, whose tree is deployed beneath the harness home.
@@ -363,8 +338,8 @@ function listLinkedPaths(
 }
 
 /** Lists the Markdown files in the working tree beneath a repository-relative directory. */
-function listMarkdownFilesUnder(root: string, directory: string): string[] {
-  return listWorkingTreeFiles(root, [directory === '' ? '.' : directory]).filter(
+function listMarkdownFilesUnder(root: string, directory: string, git: StreamlineGit): string[] {
+  return listWorkingTreeFiles(root, git, [directory === '' ? '.' : directory]).filter(
     (file) => path.extname(file).toLowerCase() === '.md',
   );
 }
@@ -492,7 +467,7 @@ function resolveNamedPath(
   if (!isInside(realPath, context.root)) {
     return [{ path: namedPath, reason: 'outside-repository' }];
   }
-  return listMarkdownFilesUnder(context.root, path.relative(context.root, realPath)).map((file) =>
+  return listMarkdownFilesUnder(context.root, path.relative(context.root, realPath), context.git).map((file) =>
     classifyFile(path.join(context.root, file), file, context),
   );
 }

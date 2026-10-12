@@ -16,6 +16,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { scanFlags } from '../lib/parse-flags.ts';
 import { checkCuts, parseCheckInput } from './check.ts';
+import { realGit, type StreamlineGit } from './git.ts';
 import { composeRecord, parseFold, parseRecord, RECORD_PATH, stringifyRecord } from './record.ts';
 import { findRepositoryRoot, measureDeployedBytes, NotARepositoryError, resolveGuidance } from './resolve.ts';
 import type {
@@ -48,7 +49,10 @@ if (isEntryPoint()) {
  *
  * @internal - Exported to allow testing.
  */
-export function runCheck(input: { cwd: string; inputJson: string }): CheckSuccess | HelperFailure {
+export function runCheck(
+  input: { cwd: string; inputJson: string },
+  git: StreamlineGit = realGit,
+): CheckSuccess | HelperFailure {
   let cuts: CheckInput[];
   try {
     cuts = parseCheckInput(input.inputJson);
@@ -58,13 +62,13 @@ export function runCheck(input: { cwd: string; inputJson: string }): CheckSucces
 
   let root: string;
   try {
-    root = findRepositoryRoot(input.cwd);
+    root = findRepositoryRoot(input.cwd, git);
   } catch (error) {
     if (!(error instanceof NotARepositoryError)) throw error;
     return { ok: false, error: 'not-a-repository', message: error.message };
   }
 
-  return { ok: true, reports: checkCuts({ root, cuts }) };
+  return { ok: true, reports: checkCuts({ cuts, git, root }) };
 }
 
 /**
@@ -72,24 +76,27 @@ export function runCheck(input: { cwd: string; inputJson: string }): CheckSucces
  *
  * @internal - Exported to allow testing.
  */
-export async function runCommand(input: {
-  argv: readonly string[];
-  cwd: string;
-  home: string;
-  readStdin: () => Promise<string>;
-}): Promise<CheckSuccess | HelperFailure | RecordSuccess | ResolveSuccess> {
+export async function runCommand(
+  input: {
+    argv: readonly string[];
+    cwd: string;
+    home: string;
+    readStdin: () => Promise<string>;
+  },
+  git: StreamlineGit = realGit,
+): Promise<CheckSuccess | HelperFailure | RecordSuccess | ResolveSuccess> {
   const [command, ...rest] = input.argv;
   switch (command) {
     case 'check':
       return rest.length === 0
-        ? runCheck({ cwd: input.cwd, inputJson: await input.readStdin() })
+        ? runCheck({ cwd: input.cwd, inputJson: await input.readStdin() }, git)
         : rejectArguments('check');
     case 'record':
       return rest.length === 0
-        ? await runRecord({ cwd: input.cwd, foldJson: await input.readStdin() })
+        ? await runRecord({ cwd: input.cwd, foldJson: await input.readStdin() }, git)
         : rejectArguments('record');
     case 'resolve':
-      return runResolve({ argv: rest, cwd: input.cwd, home: input.home });
+      return runResolve({ argv: rest, cwd: input.cwd, home: input.home }, git);
     default:
       return {
         ok: false,
@@ -105,7 +112,10 @@ export async function runCommand(input: {
  *
  * @internal - Exported to allow testing.
  */
-export async function runRecord(input: { cwd: string; foldJson: string }): Promise<HelperFailure | RecordSuccess> {
+export async function runRecord(
+  input: { cwd: string; foldJson: string },
+  git: StreamlineGit = realGit,
+): Promise<HelperFailure | RecordSuccess> {
   let fold: RecordFold;
   try {
     fold = parseFold(input.foldJson);
@@ -115,7 +125,7 @@ export async function runRecord(input: { cwd: string; foldJson: string }): Promi
 
   let root: string;
   try {
-    root = findRepositoryRoot(input.cwd);
+    root = findRepositoryRoot(input.cwd, git);
   } catch (error) {
     if (!(error instanceof NotARepositoryError)) throw error;
     return { ok: false, error: 'not-a-repository', message: error.message };
@@ -129,7 +139,7 @@ export async function runRecord(input: { cwd: string; foldJson: string }): Promi
   }
 
   const reviewed = fold.reviewed.filter((file) => existsSync(path.join(root, file)));
-  const deployedBytes = await measureDeployedBytes(root, reviewed);
+  const deployedBytes = await measureDeployedBytes(root, reviewed, git);
   const record = composeRecord(
     prior,
     { ...fold, reviewed },
@@ -147,11 +157,14 @@ export async function runRecord(input: { cwd: string; foldJson: string }): Promi
  *
  * @internal - Exported to allow testing.
  */
-export async function runResolve(input: {
-  argv: readonly string[];
-  cwd: string;
-  home: string;
-}): Promise<HelperFailure | ResolveSuccess> {
+export async function runResolve(
+  input: {
+    argv: readonly string[];
+    cwd: string;
+    home: string;
+  },
+  git: StreamlineGit = realGit,
+): Promise<HelperFailure | ResolveSuccess> {
   let paths: string[];
   try {
     paths = scanFlags(input.argv, []).positionals;
@@ -164,7 +177,7 @@ export async function runResolve(input: {
 
   let root: string;
   try {
-    root = findRepositoryRoot(input.cwd);
+    root = findRepositoryRoot(input.cwd, git);
   } catch (error) {
     if (!(error instanceof NotARepositoryError)) throw error;
     return { ok: false, error: 'not-a-repository', message: error.message };
@@ -177,7 +190,7 @@ export async function runResolve(input: {
     return { ok: false, error: 'invalid-record', message: describeError(error) };
   }
 
-  return resolveGuidance({ cwd: input.cwd, home: input.home, paths, record, root });
+  return resolveGuidance({ cwd: input.cwd, git, home: input.home, paths, record, root });
 }
 
 // region | Helpers
