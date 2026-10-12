@@ -99,10 +99,18 @@ export function checkGate(record: DispositionsRecord): GateViolation[] {
   return violations;
 }
 
-/** Returns the ids of the `ticket` items without a ticket number, and whether the umbrella is missing. */
+/**
+ * Returns the ids of the `ticket` items without a ticket number, and whether the umbrella is missing. A record without
+ * any `ticket` item does not need an umbrella, so its umbrella is never missing.
+ */
 export function findMissingTickets(record: DispositionsRecord): { items: string[]; umbrella: boolean } {
   return {
     items: record.items.filter((item) => item.disposition === 'ticket' && item.ticket === null).map((item) => item.id),
-    umbrella: record.umbrella === null,
+    umbrella: record.umbrella === null && hasTicketItem(record),
   };
+}
+
+/** Returns whether any item of the record takes a ticket, and therefore needs the umbrella. */
+export function hasTicketItem(record: DispositionsRecord): boolean {
+  return record.items.some((item) => item.disposition === 'ticket');
 }

@@ -75,6 +75,11 @@ describe(findMissingTickets, () => {
     expect(findMissingTickets(buildRecord())).toEqual({ items: ['10'], umbrella: true });
   });
 
+  it('does not require an umbrella when no item takes a ticket', () => {
+    const record = buildRecord({ items: [buildItem({ disposition: 'drop', confidence: 'low' })] });
+    expect(findMissingTickets(record)).toEqual({ items: [], umbrella: false });
+  });
+
   it('reports nothing missing once every number is recorded', () => {
     const record = buildRecord({ umbrella: 281, items: [buildItem({ ticket: 282 })] });
     expect(findMissingTickets(record)).toEqual({ items: [], umbrella: false });

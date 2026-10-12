@@ -1,5 +1,5 @@
 /** Renders the dispositions comment and the per-issue comments from a dispositions record. */
-import type { DispositionsRecord, Item } from './schemas.ts';
+import { type DispositionsRecord, hasTicketItem, type Item } from './schemas.ts';
 
 /** The text that stands in for a ticket number that step 7 has not yet assigned. */
 export const PENDING = '(pending)';
@@ -7,10 +7,11 @@ export const PENDING = '(pending)';
 /** Renders the comment that the skill posts on the triage ticket: the table, the challenge, and the notes. */
 export function renderDispositionsComment(record: DispositionsRecord): string {
   const umbrella = record.umbrella === null ? PENDING : `#${record.umbrella}`;
+  const umbrellaSentence = hasTicketItem(record) ? ` The umbrella for the new tickets is ${umbrella}.` : '';
   const lines = [
     `## Dispositions of the findings of ${record.source}`,
     '',
-    `Every item that the findings left undisposed, with its disposition and grades. Confidence grades advisability: \`high\` is clearly worth doing, \`medium\` is worth doing but arguable, \`low\` is not worth a ticket now. Value grades how much the item matters. The umbrella for the new tickets is ${umbrella}.`,
+    `Every item that the findings left undisposed, with its disposition and grades. Confidence grades advisability: \`high\` is clearly worth doing, \`medium\` is worth doing but arguable, \`low\` is not worth a ticket now. Value grades how much the item matters.${umbrellaSentence}`,
     '',
     '| Item | Disposition | Confidence | Value | Where | Reason |',
     '| --- | --- | --- | --- | --- | --- |',

@@ -25,7 +25,13 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │       │   ├── inventory.md
         │       │   ├── recommendations.md
         │       │   ├── challenge.md
-        │       │   └── dispositions.json
+        │       │   ├── dispositions.json
+        │       │   ├── preview/                              ← the rendered comments shown at the confirmation
+        │       │   │   ├── dispositions-comment.md
+        │       │   │   └── comment-{issue}.md
+        │       │   └── rendered/                             ← the rendered comments that are posted
+        │       │       ├── dispositions-comment.md
+        │       │       └── comment-{issue}.md
         │       └── {run-id}/                                 ← review run directory
         │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
@@ -59,7 +65,7 @@ A `project.ticket_ref_prefix` other than `#` is part of the ticket ID, so it nam
 
 ### Triage working files
 
-`triage/` holds the working files of a triage of the ticket's findings: a local copy of the findings when they came from an artifact URL, the inventory, the recommendations that the challenger reads, the challenger's reply, and the dispositions record from which the `dispositions` artifact is rendered. The record stays here as a working file; the artifact is the rendered text.
+`triage/` holds the working files of a triage of the ticket's findings: a local copy of the findings when they came from an artifact URL, the inventory, the recommendations that the challenger reads, the challenger's reply, the dispositions record from which the `dispositions` artifact is rendered, and the comments rendered from that record: `preview/` with placeholders for the confirmation, `rendered/` with every number for posting. The record stays here as a working file; the artifact is the rendered text.
 
 ### Run directories
 

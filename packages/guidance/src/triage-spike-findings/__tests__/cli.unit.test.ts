@@ -127,6 +127,14 @@ describe(runCli, () => {
       expect(readFileSync(path.join(root, 'out', 'comment-272.md'), 'utf8')).toContain('Sign-in error pattern');
     });
 
+    it('renders without an umbrella when no item takes a ticket', async () => {
+      const record = buildRecord({ items: [buildItem({ disposition: 'comment', target: 272 })] });
+
+      const result = await runCli(['render', '--file', writeRecord(root, record), '--out', 'out'], context);
+
+      expect(result).toMatchObject({ ok: true, preview: false, issueComments: [{ issue: 272 }] });
+    });
+
     it('writes the comment and the per-issue comments once every number is recorded', async () => {
       const record = buildRecord({
         umbrella: 281,

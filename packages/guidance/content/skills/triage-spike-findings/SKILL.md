@@ -77,7 +77,7 @@ Present the dispositions as a table (item, disposition, confidence, value, reaso
 
 Compose the bodies:
 
-- **The umbrella**: its problem (the follow-up work of the findings), its context (a link to the triage ticket, and the tickets that the findings filed without adopting them, listed and not made children), and "Every child is closed" as its acceptance criterion. It takes no graded label.
+- **The umbrella**, when at least one item is a `ticket`: its problem (the follow-up work of the findings), its context (a link to the triage ticket, and the tickets that the findings filed without adopting them, listed and not made children), and "Every child is closed" as its acceptance criterion. It takes no graded label.
 - **One child per `ticket` item**, in the ticket skeleton that {skill:create-ticket} step 2 states: problem, context, and acceptance criteria, with the title and reason of every `merge` item that targets it folded in. Its labels are `confidence:{grade}` and `value:{grade}`.
 
 Run the helper's `render --preview` to `{ticket_dir}/triage/preview/`, which writes the dispositions comment with `(pending)` where a number is not yet known, and one comment file per issue that a `comment` disposition names.
@@ -86,12 +86,12 @@ Show everything that step 7 will create or post in one block: every body with it
 
 ### 7. Write
 
-Nothing before this step writes anything remote. On a failed write, stop and report which item failed; every number already recorded stays in `dispositions.json`, and a re-run of this step creates only the items whose `ticket` is still null and posts only what is not yet posted.
+Nothing before this step writes anything remote. On a failed write, stop and report which item failed; every number already recorded stays in `dispositions.json`, so that a re-run of this step creates only what is still null and checks each issue before posting on it.
 
-1. Create the umbrella with {skill:create-ticket}, and write its number into `umbrella`.
+1. When at least one item is a `ticket` and `umbrella` is null, create the umbrella with {skill:create-ticket}, and write its number into `umbrella`.
 2. For each `ticket` item, in record order, run {skill:create-ticket} with `--parent {umbrella}` and `--label confidence:{grade},value:{grade}`, and write the returned number into the item's `ticket` as soon as it is returned.
 3. Run the helper's `render` to `{ticket_dir}/triage/rendered/`, without `--preview`.
-4. Post each `comment-{issue}.md` on its issue, and then `dispositions-comment.md` on the triage ticket:
+4. Post each `comment-{issue}.md` on its issue, and then `dispositions-comment.md` on the triage ticket. Before each post, read the issue's comments with `gh issue view {issue} --json comments`, and skip the post when a comment already opens with the first line of the rendered file:
 
    ```bash
    body_path="{ticket_dir}/triage/rendered/comment-{issue}.md"
@@ -103,6 +103,6 @@ Nothing before this step writes anything remote. On a failed write, stop and rep
 
 ### 8. Report
 
-Report the umbrella, each child with its grades, each issue commented on, and the artifact's path. The triage ticket stays open: Closing it is the developer's call, once they have read the record.
+Report the umbrella when one was created, each child with its grades, each issue commented on, and the artifact's path. The triage ticket stays open: Closing it is the developer's call, once they have read the record.
 
 <!-- include: ../_partials/gh-body-file.md / -->

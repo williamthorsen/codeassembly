@@ -32,6 +32,14 @@ describe(renderDispositionsComment, () => {
     expect(comment).toContain(`| ticket | medium | should-have | ${PENDING} |`);
   });
 
+  it('omits the umbrella sentence when no item takes a ticket', () => {
+    const comment = renderDispositionsComment(
+      buildRecord({ items: [buildItem({ disposition: 'drop', confidence: 'low' })] }),
+    );
+
+    expect(comment).not.toContain('umbrella');
+  });
+
   it('escapes a pipe in a cell and renders the notes section when notes exist', () => {
     const comment = renderDispositionsComment(
       buildRecord({ items: [buildItem({ reason: 'a | b' })], notes: ['The labels were created directly.'] }),
