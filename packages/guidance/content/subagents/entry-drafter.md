@@ -137,6 +137,9 @@ A dispatch with a `rejection` scalar is a redispatch: An earlier draft failed, a
 
 A `rejected` fence comes with it, listing one per line the passages that failed, copied from that draft. A passage is one entry's `text`, one entry's `migration`, or the whole lede. Revise those passages and nothing else. What the fence leaves out passed; the caller keeps it and puts your replacements back in their places, so this pass cannot change it.
 
+An entry's `text` arrives as `{type}: {passage}`, where `{type}` is a key in the taxonomy; the lede and a `migration` arrive bare. A type supplied for a passage overrides the type implied by the commit log: The caller audited it against the diff, so write the replacement in the form that "What your type must state" gives the supplied type. Return the replacement without the type.
+
+- **`type-mismatch`**: The passage was written in the form of a type other than the one supplied, such as a `fix` entry's opening on an entry typed `feat`. Rewrite it in the supplied type's form.
 - **`voice`**: A figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
 - **`subject`**: A passage used a verb that the pull request does not perform. Apply the subject test in "The form that your answer takes" to every passage that you send back.
 - **`unsupported-claim`**: A sentence claimed more than the change supports. Restate the passage within what the diff shows. Returning nothing for it is not the repair: A return short of one replacement per passage cannot be placed.
