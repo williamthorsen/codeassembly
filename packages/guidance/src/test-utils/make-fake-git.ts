@@ -24,23 +24,27 @@ export function makeFakeGit(answers: FakeGitAnswers = {}): SharedGit {
   const { errors = {} } = answers;
   const remotes = answers.remotes ?? [];
   return {
-    findCurrentBranch: async () => {
-      if (errors.findCurrentBranch !== undefined) throw errors.findCurrentBranch;
-      return answers.branch ?? 'main';
-    },
-    findRemoteUrl: async (_cwd, name) => {
-      if (errors.findRemoteUrl !== undefined) throw errors.findRemoteUrl;
-      const remote = remotes.find((entry) => entry.name === name);
-      if (remote === undefined) throw new Error(`error: No such remote '${name}'`);
-      return remote.url === '' ? undefined : remote.url;
-    },
+    findCurrentBranch: () => answerWith(errors.findCurrentBranch, () => answers.branch ?? 'main'),
+    findRemoteUrl: (_cwd, name) =>
+      answerWith(errors.findRemoteUrl, () => {
+        const remote = remotes.find((entry) => entry.name === name);
+        if (remote === undefined) throw new Error(`error: No such remote '${name}'`);
+        return remote.url === '' ? undefined : remote.url;
+      }),
     findTopLevel: () => {
       if (errors.findTopLevel !== undefined) throw errors.findTopLevel;
       return answers.topLevel ?? { failure: 'fatal: not a git repository' };
     },
-    listRemotes: async () => {
-      if (errors.listRemotes !== undefined) throw errors.listRemotes;
-      return remotes.map((entry) => entry.name);
-    },
+    listRemotes: () => answerWith(errors.listRemotes, () => remotes.map((entry) => entry.name)),
   };
 }
+
+// region | Helpers
+
+/** Settles with the configured error when there is one, and otherwise with the answer; a thrown answer rejects. */
+function answerWith<T>(error: Error | undefined, answer: () => T): Promise<T> {
+  if (error !== undefined) return Promise.reject(error);
+  return Promise.try(answer);
+}
+
+// endregion | Helpers
