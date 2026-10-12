@@ -66,6 +66,7 @@ members:
     - plan-reviser
     - prose-reviser
     - ticket-assessor
+    - usability-assessor
 ---
 
 # Triage

@@ -29,3 +29,8 @@ prose-reviser:
 # `create_file` is dropped: The assessor returns text.
 ticket-assessor:
   tools: [bash, expand_code_chunks, expand_folder, grep, open_files]
+
+# Rovo does not read a denylist, so the read-only grant is named here. The subagent is dispatched only by the
+# Claude-only `assess-usability`, so this grant never runs a lens.
+usability-assessor:
+  tools: [bash, expand_code_chunks, expand_folder, grep, open_files]
