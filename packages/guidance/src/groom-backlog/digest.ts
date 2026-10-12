@@ -154,15 +154,16 @@ function indent(text: string, width: number): string {
     .join('\n');
 }
 
-/** Renders a reply's draft under an entry: each drafted section under its heading, then each child ticket. */
+/** Renders a reply's draft under an entry: its title, each drafted section under its heading, then each child ticket. */
 function renderDraft(escalation: Escalation): string[] {
   const draft = escalation.reply?.draft;
   if (draft === null || draft === undefined) return [];
+  const title = draft.title === null ? [] : [indent(`#### Title\n\n${draft.title}`, 5)];
   const blocks = draft.sections.map((section) => indent(`#### ${section.heading}\n\n${section.body}`, 5));
   const children = draft.children.map((child, offset) =>
     indent(`#### Child ${offset + 1}: ${child.title}\n\n${child.body}`, 5),
   );
-  return ['   - Draft:', ...[...blocks, ...children].flatMap((block) => ['', block])];
+  return ['   - Draft:', ...[...title, ...blocks, ...children].flatMap((block) => ['', block])];
 }
 
 /** Renders one escalation as a numbered entry with its supporting bullets, its proposal, and its draft. */

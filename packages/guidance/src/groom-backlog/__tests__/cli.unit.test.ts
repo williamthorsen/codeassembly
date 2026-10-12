@@ -186,6 +186,32 @@ describe(runCli, () => {
       expect(result).toMatchObject({ ok: true, resumed: [10] });
     });
 
+    it('does not count an update stamped after the run comment but by the time of its decision as a change', async () => {
+      // GitHub stamps `updatedAt` a second after the comment that caused it.
+      issues[0]?.comments.push({
+        author: { login: 'owner' },
+        body: renderMarker({ run: 'r', decision: 'update' }),
+        createdAt: '2026-02-01T00:00:00Z',
+      });
+      if (issues[0]) issues[0].updatedAt = '2026-02-01T00:00:01Z';
+      writeLedger(root, [
+        assessment('r', 10, '2026-01-20T00:00:00Z'),
+        {
+          run: 'r',
+          kind: 'decision',
+          number: 10,
+          decision: 'update',
+          actor: 'agent',
+          decidedBy: 'user',
+          appliedAt: '2026-02-01T00:00:01Z',
+        },
+      ]);
+
+      const result = await runCli(['collect', '--run', 'r', '--out', 'in'], context);
+
+      expect(result).toMatchObject({ ok: true, resumed: [10] });
+    });
+
     it('reports a malformed selector as invalid-args', async () => {
       expect(await runCli(['collect', '--run', 'r', '--out', 'in', '--older-than', '3m'], context)).toMatchObject({
         ok: false,
@@ -447,7 +473,7 @@ describe(runCli, () => {
 
   describe('draft', () => {
     const CONTEXT_SECTION = { heading: 'Context', body: 'The uploader lives in `src/transport/`.' };
-    const DRAFT = { sections: [CONTEXT_SECTION, { heading: 'Notes', body: 'Appended.' }], children: [] };
+    const DRAFT = { sections: [CONTEXT_SECTION, { heading: 'Notes', body: 'Appended.' }], title: null, children: [] };
 
     beforeEach(() => {
       const body = '## Problem\n\nIt fails.\n\n## Context\n\nOld path.\n';
@@ -459,14 +485,32 @@ describe(runCli, () => {
 
       const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
 
-      expect(result).toMatchObject({ ok: true, stale: false, sections: ['Context', 'Notes'], children: [] });
+      expect(result).toMatchObject({
+        ok: true,
+        stale: false,
+        title: null,
+        sections: ['Context', 'Notes'],
+        children: [],
+      });
       expect(readFileSync(path.join(root, 'd', 'body.md'), 'utf8')).toBe(
         '## Problem\n\nIt fails.\n\n## Context\n\nThe uploader lives in `src/transport/`.\n\n## Notes\n\nAppended.\n',
       );
     });
 
+    it('returns the drafted title', async () => {
+      writeStoredReply(root, buildReply({ recommendation: 'revise', draft: { ...DRAFT, title: 'Retry the upload' } }));
+
+      const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);
+
+      expect(result).toMatchObject({ ok: true, stale: false, title: 'Retry the upload' });
+    });
+
     it('writes one file per child of a split', async () => {
-      const draft = { sections: [CONTEXT_SECTION], children: [{ title: 'Add the backoff', body: 'Backoff.' }] };
+      const draft = {
+        sections: [CONTEXT_SECTION],
+        title: null,
+        children: [{ title: 'Add the backoff', body: 'Backoff.' }],
+      };
       writeStoredReply(root, buildReply({ recommendation: 'split', draft }));
 
       const result = await runCli(['draft', '--run', 'r', '--number', '10', '--out', 'd'], context);

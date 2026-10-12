@@ -16,36 +16,41 @@ describe('AssessorReplySchema', () => {
   it.each(['update', 'revise'] as const)('requires a draft for %s', (recommendation) => {
     expect(AssessorReplySchema.safeParse(buildReply({ recommendation })).success).toBe(false);
     expect(
-      AssessorReplySchema.safeParse(buildReply({ recommendation, draft: { sections: [SECTION], children: [] } }))
-        .success,
+      AssessorReplySchema.safeParse(
+        buildReply({ recommendation, draft: { sections: [SECTION], title: null, children: [] } }),
+      ).success,
     ).toBe(true);
   });
 
   it('refuses a draft on a recommendation that does not draft one', () => {
-    const reply = buildReply({ recommendation: 'keep', draft: { sections: [SECTION], children: [] } });
+    const reply = buildReply({ recommendation: 'keep', draft: { sections: [SECTION], title: null, children: [] } });
 
     expect(AssessorReplySchema.safeParse(reply).success).toBe(false);
   });
 
   it('requires children exactly for a split', () => {
-    const split = buildReply({ recommendation: 'split', draft: { sections: [SECTION], children: [] } });
-    const update = buildReply({ recommendation: 'update', draft: { sections: [SECTION], children: [CHILD] } });
+    const split = buildReply({ recommendation: 'split', draft: { sections: [SECTION], title: null, children: [] } });
+    const update = buildReply({
+      recommendation: 'update',
+      draft: { sections: [SECTION], title: null, children: [CHILD] },
+    });
 
     expect(AssessorReplySchema.safeParse(split).success).toBe(false);
     expect(AssessorReplySchema.safeParse(update).success).toBe(false);
-    expect(AssessorReplySchema.safeParse({ ...split, draft: { sections: [SECTION], children: [CHILD] } }).success).toBe(
-      true,
-    );
+    expect(
+      AssessorReplySchema.safeParse({ ...split, draft: { sections: [SECTION], title: null, children: [CHILD] } })
+        .success,
+    ).toBe(true);
   });
 
   it('strips the heading prefix and refuses a heading named twice', () => {
     const prefixed = buildReply({
       recommendation: 'update',
-      draft: { sections: [{ heading: '## Context', body: 'Text' }], children: [] },
+      draft: { sections: [{ heading: '## Context', body: 'Text' }], title: null, children: [] },
     });
     const repeated = buildReply({
       recommendation: 'update',
-      draft: { sections: [SECTION, { heading: '## context', body: 'Other' }], children: [] },
+      draft: { sections: [SECTION, { heading: '## context', body: 'Other' }], title: null, children: [] },
     });
 
     expect(AssessorReplySchema.parse(prefixed).draft?.sections[0]?.heading).toBe('Context');

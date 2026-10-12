@@ -97,6 +97,7 @@ describe(renderComment, () => {
         { heading: 'Context', body: 'New.' },
         { heading: 'Acceptance criteria', body: '- [ ] Done.' },
       ],
+      title: null,
       children: decision === 'split' ? [{ title: 'Child', body: 'Body.' }] : [],
     };
     const reply: StoredReply = { ...buildReply({ recommendation: decision, draft }), ...PROVENANCE };
@@ -114,6 +115,25 @@ describe(renderComment, () => {
     );
 
     expect(body).toContain(`**Disposition:** ${lead}`);
+  });
+
+  it('names a drafted title ahead of the rewritten sections', () => {
+    const draft = { sections: [{ heading: 'Context', body: 'New.' }], title: 'Retry the upload', children: [] };
+    const reply: StoredReply = { ...buildReply({ recommendation: 'revise', draft }), ...PROVENANCE };
+
+    const body = renderComment(
+      {
+        children: undefined,
+        decidedBy: 'user',
+        decision: 'revise',
+        reason: undefined,
+        run: 'r',
+        supersededBy: undefined,
+      },
+      reply,
+    );
+
+    expect(body).toContain('**Disposition:** Revised: Title, Context.');
   });
 });
 

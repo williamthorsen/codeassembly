@@ -6,9 +6,10 @@ import { buildReply } from '../test-utils/build-reply.ts';
 import type { Escalation, InProgress } from '../types.ts';
 
 const IN_PROGRESS: InProgress = { signal: 'branch', ref: '10', commitsAhead: 2, lastCommitAt: '2026-10-01T00:00:00Z' };
-const DRAFT = { sections: [{ heading: 'Context', body: 'Moved.' }], children: [] };
+const DRAFT = { sections: [{ heading: 'Context', body: 'Moved.' }], title: null, children: [] };
 const SPLIT_DRAFT = {
   sections: [{ heading: 'Problem', body: 'First piece.' }],
+  title: null,
   children: [{ title: 'B', body: 'B.' }],
 };
 
