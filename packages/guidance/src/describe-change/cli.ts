@@ -36,6 +36,7 @@ import {
 } from './change-record-block.ts';
 import { consolidateBranch } from './consolidate-branch.ts';
 import { findDefects } from './find-defects.ts';
+import { type DescribeChangeGit, realGit } from './git.ts';
 import { loadPreferences, resolveProjectRoot } from './load-preferences.ts';
 import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readDeclaredScopes } from './read-declared-scopes.ts';
@@ -205,42 +206,48 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
  */
 export async function runDescribe(input: DescribeInput): Promise<DescribeResult> {
   const args = parseArgs(input.argv);
+  const run: RunInput = { ...input, git: input.git ?? realGit };
   switch (args.subcommand) {
     case 'amend-entry':
-      return runAmendEntry(args, input);
+      return runAmendEntry(args, run);
     case 'check-merge-body':
-      return runCheckMergeBody(args, input);
+      return runCheckMergeBody(args, run);
     case 'consolidate-branch':
-      return runConsolidateBranch(args.baseRef, input);
+      return runConsolidateBranch(args.baseRef, run);
     case 'consolidate-entries':
-      return runConsolidateEntries(args.entriesFile, input);
+      return runConsolidateEntries(args.entriesFile, run);
     case 'parse-title':
-      return runParseTitle(args.surface, args.subject, input);
+      return runParseTitle(args.surface, args.subject, run);
     case 'render-block':
-      return runRenderBlock(args, input);
+      return runRenderBlock(args, run);
     case 'render-details':
-      return runRenderDetails(args.entriesFile, input);
+      return runRenderDetails(args.entriesFile, run);
     case 'render-titles':
-      return runRenderTitles(args.record, input);
+      return runRenderTitles(args.record, run);
     case 'resolve-effective-record':
-      return runResolveEffectiveRecord(args, input);
+      return runResolveEffectiveRecord(args, run);
     case 'resolve-labels':
-      return runResolveLabels(args, input);
+      return runResolveLabels(args, run);
     case 'resolve-merge':
-      return runResolveMerge(args.merge, input);
+      return runResolveMerge(args.merge, run);
     case 'resolve-scopes':
-      return runResolveScopes(args.paths, input);
+      return runResolveScopes(args.paths, run);
     case 'resolve-ticket-type':
-      return runResolveTicketType(args.ticketLabels, input);
+      return runResolveTicketType(args.ticketLabels, run);
   }
 }
 
-/** What a run reads: its argv, the directory from which it was invoked, the taxonomy's directory, and the home directory. */
+/**
+ * What a run reads: its argv, the directory from which it was invoked, the taxonomy's directory, the home directory, and
+ * the git adapter.
+ */
 export interface DescribeInput {
   argv: readonly string[];
   cwd: string;
   /** Directory containing `work-types.json`; when absent, the run reads the taxonomy embedded in the bundle. */
   dataDir?: string;
+  /** The git adapter; when absent, the run uses the one that runs git. */
+  git?: DescribeChangeGit;
   home: string;
 }
 
@@ -273,6 +280,11 @@ interface LoadedTemplates {
   warnings: string[];
 }
 
+/** A run's input, with the git adapter that it uses resolved. */
+interface RunInput extends DescribeInput {
+  git: DescribeChangeGit;
+}
+
 /** One subcommand's flags, and the reader that turns its scanned arguments into what the run asks for. */
 interface SubcommandSpec {
   flags: readonly FlagSpec[];
@@ -293,6 +305,7 @@ function buildUsageMessage(subcommand: string | undefined): string {
 async function consolidatePullRequestCommits(input: {
   args: ResolveMergeArgs;
   cwd: string;
+  git: DescribeChangeGit;
   taxonomy: Taxonomy;
   template: string;
 }): Promise<MergeInput['commits']> {
@@ -303,7 +316,12 @@ async function consolidatePullRequestCommits(input: {
     };
   }
   try {
-    const commits = await readCommits({ baseRef: input.args.baseRef, cwd: input.cwd, headRef: input.args.headCommit });
+    const commits = await readCommits({
+      baseRef: input.args.baseRef,
+      cwd: input.cwd,
+      git: input.git,
+      headRef: input.args.headCommit,
+    });
     const { consolidatedRecord } = consolidateBranch(commits, compileTemplate(input.template), input.taxonomy);
     return { ...(consolidatedRecord !== undefined && { consolidatedRecord }), kind: 'read' };
   } catch (error) {
@@ -349,8 +367,8 @@ function isSubcommand(value: string): value is Subcommand {
  * template that the engine cannot round-trip and warns of any whose render loses a token, when a taxonomy is readable
  * to verify against.
  */
-async function loadTemplates(input: DescribeInput): Promise<LoadedTemplates> {
-  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+async function loadTemplates(input: RunInput): Promise<LoadedTemplates> {
+  const { projectRoot, warning } = resolveProjectRoot(input.cwd, input.git);
   const { templates, warnings } = await loadPreferences({ home: input.home, projectRoot });
   if (warning !== undefined) {
     warnings.unshift(warning);
@@ -366,7 +384,7 @@ async function loadTemplates(input: DescribeInput): Promise<LoadedTemplates> {
 
 /** Loads the templates for a subcommand that cannot run without the taxonomy, prefixing the refusal with `reason`. */
 async function loadTemplatesWithTaxonomy(
-  input: DescribeInput,
+  input: RunInput,
   reason: string,
 ): Promise<LoadedTemplates & { taxonomy: Taxonomy }> {
   const loaded = await loadTemplates(input);
@@ -764,7 +782,7 @@ function renderTemplate(template: string, record: ChangeRecord): string {
  */
 async function runAmendEntry(
   args: { amendment: EntryAmendment; bodyFile: string; entryIndex: number },
-  input: DescribeInput,
+  input: RunInput,
 ): Promise<DescribeResult> {
   const taxonomy = await loadTaxonomy(input.dataDir);
   if (taxonomy === null) {
@@ -796,7 +814,7 @@ async function runAmendEntry(
  */
 async function runCheckMergeBody(
   args: { bodyFile: string; entryCount: number },
-  input: DescribeInput,
+  input: RunInput,
 ): Promise<DescribeResult> {
   const resolved = path.resolve(input.cwd, args.bodyFile);
   let body: string;
@@ -824,7 +842,7 @@ async function runCheckMergeBody(
  * Reads a range's commits and consolidates them, in the shape named by the JSON output. Each entry is rendered back
  * through the template that read it, so its `change` is canonical whatever subject it came from.
  */
-async function runConsolidateBranch(baseRef: string, input: DescribeInput): Promise<DescribeResult> {
+async function runConsolidateBranch(baseRef: string, input: RunInput): Promise<DescribeResult> {
   const { projectRoot, taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
     input,
     'consolidate-branch ranks types against the taxonomy',
@@ -832,7 +850,7 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
   if (templates.commit === '') {
     throw new Error('commit.title_format is empty, so a branch’s commits cannot be read back');
   }
-  const commits = await readCommits({ baseRef, cwd: projectRoot });
+  const commits = await readCommits({ baseRef, cwd: projectRoot, git: input.git });
   const nodes = compileTemplate(templates.commit);
   const consolidation = consolidateBranch(commits, nodes, taxonomy);
   const { consolidatedRecord } = consolidation;
@@ -865,7 +883,7 @@ async function runConsolidateBranch(baseRef: string, input: DescribeInput): Prom
  * the types, so the run does not read a title template or the repository. An empty list determines nothing, as a branch
  * without a commit entry does.
  */
-async function runConsolidateEntries(entriesFile: string, input: DescribeInput): Promise<DescribeResult> {
+async function runConsolidateEntries(entriesFile: string, input: RunInput): Promise<DescribeResult> {
   const taxonomy = await loadTaxonomy(input.dataDir);
   if (taxonomy === null) {
     throw new Error(
@@ -888,7 +906,7 @@ async function runConsolidateEntries(entriesFile: string, input: DescribeInput):
 }
 
 /** Reads a subject back through the named surface's template. */
-async function runParseTitle(surface: Surface, subject: string, input: DescribeInput): Promise<DescribeResult> {
+async function runParseTitle(surface: Surface, subject: string, input: RunInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
     input,
     'parse-title resolves the type against the taxonomy',
@@ -902,7 +920,7 @@ async function runParseTitle(surface: Surface, subject: string, input: DescribeI
  */
 async function runRenderBlock(
   args: { block: ChangeRecordBlock; entriesFile?: string },
-  input: DescribeInput,
+  input: RunInput,
 ): Promise<DescribeResult> {
   const entries =
     args.entriesFile === undefined ? [] : await readEntriesFile({ cwd: input.cwd, filePath: args.entriesFile });
@@ -914,7 +932,7 @@ async function runRenderBlock(
  * Renders the `## Details` body from the entries file, refusing when the taxonomy that orders and heads the
  * subsections cannot be read or lacks a heading.
  */
-async function runRenderDetails(entriesFile: string, input: DescribeInput): Promise<DescribeResult> {
+async function runRenderDetails(entriesFile: string, input: RunInput): Promise<DescribeResult> {
   const taxonomy = await loadTaxonomy(input.dataDir);
   const headings = await loadWorkTypeHeadings(input.dataDir);
   if (taxonomy === null) {
@@ -936,7 +954,7 @@ async function runRenderDetails(entriesFile: string, input: DescribeInput): Prom
  * Renders every surface's title from the record, warning rather than refusing when a taxonomy is not readable to verify
  * the templates.
  */
-async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Promise<DescribeResult> {
+async function runRenderTitles(record: ChangeRecord, input: RunInput): Promise<DescribeResult> {
   const { taxonomy, templates, warnings } = await loadTemplates(input);
   if (taxonomy === null) {
     warnings.push(
@@ -960,7 +978,7 @@ async function runRenderTitles(record: ChangeRecord, input: DescribeInput): Prom
  */
 async function runResolveEffectiveRecord(
   args: { overrides: RecordOverrides; record: ChangeRecord },
-  input: DescribeInput,
+  input: RunInput,
 ): Promise<DescribeResult> {
   const taxonomy = await loadTaxonomy(input.dataDir);
   if (taxonomy === null) {
@@ -992,9 +1010,9 @@ async function runResolveEffectiveRecord(
  */
 async function runResolveLabels(
   args: { bodyFile?: string; record: ChangeRecord },
-  input: DescribeInput,
+  input: RunInput,
 ): Promise<DescribeResult> {
-  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+  const { projectRoot, warning } = resolveProjectRoot(input.cwd, input.git);
   const body =
     args.bodyFile === undefined ? { entries: [], warnings: [] } : await readBodyEntries(input.cwd, args.bodyFile);
   const warnings = [...(warning === undefined ? [] : [warning]), ...body.warnings];
@@ -1010,7 +1028,7 @@ async function runResolveLabels(
  * `resolveMerge`. The body file is read relative to the invoking directory, and the label map and the commits from the
  * repository root.
  */
-async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Promise<DescribeResult> {
+async function runResolveMerge(args: ResolveMergeArgs, input: RunInput): Promise<DescribeResult> {
   const { projectRoot, taxonomy, templates, warnings } = await loadTemplatesWithTaxonomy(
     input,
     'resolve-merge checks types against the taxonomy',
@@ -1024,7 +1042,13 @@ async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Pr
   }
 
   const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));
-  const commits = await consolidatePullRequestCommits({ args, cwd: projectRoot, taxonomy, template: templates.commit });
+  const commits = await consolidatePullRequestCommits({
+    args,
+    cwd: projectRoot,
+    git: input.git,
+    taxonomy,
+    template: templates.commit,
+  });
   const output = resolveMerge({
     block: readChangeRecordBlock(body),
     commits,
@@ -1043,8 +1067,8 @@ async function runResolveMerge(args: ResolveMergeArgs, input: DescribeInput): Pr
  * preferences file declares. The run is anchored at the repository root, so a path is read the same way whatever
  * subdirectory the caller invoked it from.
  */
-async function runResolveScopes(paths: readonly string[], input: DescribeInput): Promise<DescribeResult> {
-  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+async function runResolveScopes(paths: readonly string[], input: RunInput): Promise<DescribeResult> {
+  const { projectRoot, warning } = resolveProjectRoot(input.cwd, input.git);
   const declared = await readDeclaredScopes(projectRoot);
   const scopeDirs = mergeScopeDirs({
     declaredDirs: declared.scopeDirs,
@@ -1056,8 +1080,8 @@ async function runResolveScopes(paths: readonly string[], input: DescribeInput):
 }
 
 /** Resolves the work type that the ticket's labels name through the repository's label map. */
-async function runResolveTicketType(ticketLabels: readonly string[], input: DescribeInput): Promise<DescribeResult> {
-  const { projectRoot, warning } = await resolveProjectRoot(input.cwd);
+async function runResolveTicketType(ticketLabels: readonly string[], input: RunInput): Promise<DescribeResult> {
+  const { projectRoot, warning } = resolveProjectRoot(input.cwd, input.git);
   const ticketType = await resolveTicketType({
     labelMapPath: path.join(projectRoot, '.meta', 'label-map.json'),
     labels: ticketLabels,

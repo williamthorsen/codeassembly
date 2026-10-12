@@ -1,12 +1,11 @@
-import { execFile } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
-import { promisify } from 'node:util';
 
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { isMissingFile, isRecord } from '../lib/type-guards.ts';
+import type { DescribeChangeGit } from './git.ts';
 import { type Surface, SURFACES } from './types.ts';
 
 /**
@@ -39,17 +38,15 @@ export async function loadPreferences(input: { home: string; projectRoot: string
  * run reads does not depend on which subdirectory the caller invoked it from. Falls back to `cwd` outside a repository,
  * reporting git's own diagnostic so that a misanchored run is debuggable rather than silent.
  */
-export async function resolveProjectRoot(cwd: string): Promise<{ projectRoot: string; warning?: string }> {
-  try {
-    const { stdout } = await execFileAsync('git', ['-C', cwd, 'rev-parse', '--show-toplevel']);
-    return { projectRoot: stdout.trim() };
-  } catch (error) {
-    const diagnostic = error instanceof Error ? error.message.trim().split('\n').at(-1) : String(error);
-    return {
-      projectRoot: cwd,
-      warning: `git could not resolve the repository root (${diagnostic}); anchoring at ${cwd}`,
-    };
+export function resolveProjectRoot(cwd: string, git: DescribeChangeGit): { projectRoot: string; warning?: string } {
+  const result = git.findTopLevel(cwd);
+  if ('root' in result) {
+    return { projectRoot: result.root };
   }
+  return {
+    projectRoot: cwd,
+    warning: `git could not resolve the repository root (${result.failure}); anchoring at ${cwd}`,
+  };
 }
 
 /** The four resolved templates, and whatever the resolution had to report about how it got there. */
@@ -59,8 +56,6 @@ export interface LoadedPreferences {
 }
 
 // region | Helpers
-
-const execFileAsync = promisify(execFile);
 
 /**
  * Reads one preferences file into the `title_format` value declared by each surface, absent when the file omits the key.

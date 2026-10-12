@@ -2,7 +2,7 @@ import { compileTemplate, type Taxonomy } from '@williamthorsen/change-grammar';
 import { describe, expect, it } from 'vitest';
 
 import { consolidateBranch } from '../consolidate-branch.ts';
-import type { RawCommit } from '../read-commits.ts';
+import type { RawCommit } from '../git.ts';
 
 const TAXONOMY: Taxonomy = {
   tiers: ['public', 'internal', 'process'],
