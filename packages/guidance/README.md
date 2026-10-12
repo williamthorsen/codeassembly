@@ -61,3 +61,4 @@ The package publishes a JSON Schema for the file; [Schemas](docs/schemas.md) giv
 - [Next-ticket helper](docs/pull-from-backlog-helper.md): the helper that the `pull-from-backlog` skill runs.
 - [Prototype index helper](docs/index-prototypes-helper.md): the helper that the `index-prototypes` skill runs.
 - [Guidance streamlining helper](docs/streamline-guidance-helper.md): the helper that the `streamline-guidance` skill runs.
+- [Findings triage helper](docs/triage-spike-findings-helper.md): the helper that the `triage-spike-findings` skill runs.

@@ -18,8 +18,9 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 | `--parent <ref>`      | Make the new ticket a child of the referenced ticket. One reference; a ticket has one parent. |
 | `--blocked-by <refs>` | Mark the new ticket as blocked by the referenced tickets.                                     |
 | `--blocking <refs>`   | Mark the new ticket as blocking the referenced tickets.                                       |
+| `--label <labels>`    | Apply these labels with the ones that step 5 resolves. GitHub only.                           |
 
-Each takes ticket references in the project's own form (`#123`, `ABC-123`), comma-separated when more than one applies. All three are optional, and each overrides the inference in step 4 for its own relationship.
+The three relationship arguments take ticket references in the project's own form (`#123`, `ABC-123`), comma-separated when more than one applies. Each is optional, and each overrides the inference in step 4 for its own relationship. `--label` takes label names, comma-separated, exactly as the repository spells them.
 
 <!-- guidance-hook: ticketing-preferences -->
 
@@ -89,7 +90,7 @@ Decide which apply from the reason this ticket is being created, narrowed by `br
 
 **Most tickets have none, and for those, say nothing.** When nothing applies, continue to step 5 without asking.
 
-When one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so that a wrong target is visible while it is still free to correct. If the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
+When one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so that a wrong target is visible while it is still free to correct. A relationship supplied through an argument is one that the caller has already confirmed: State it in the completion output and do not ask about it; the confirmation covers the inferred relationships alone. If the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -103,7 +104,9 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-labels --scope "{sco
 
 Read `labels` from the output, `{"labels":["feature","breaking","scope:agents"]}`; [`resolve-labels`](../_data/title-templates.md#resolve-labels) states what it contains. When the list is empty, the create call does not apply any labels. Relay any warning that the run writes to stderr.
 
-Render one `--label "{label_name}"` flag per returned label, and write them into the create call in step 6 as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call does not apply any labels at all.
+Append the labels given through `--label` to the returned list; they add to the resolved scope and type labels and never replace them. `gh issue create` fails on a label that the repository does not have, so the caller of `--label` checks that each label exists before invoking this skill. On the Jira path, `--label` is not applied: Report it skipped in the completion output.
+
+Render one `--label "{label_name}"` flag per label in the combined list, and write them into the create call in step 6 as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call does not apply any labels at all.
 
 ### 6. Create remote ticket
 
@@ -342,6 +345,7 @@ Plan saved: {plan artifact path}           <- only if plan existed
 Plan comment skipped: {reason}             <- only if a plan was saved but not attached
 Relationships: {list}                      <- only if any were created
 Relationships skipped: {list with reasons} <- only if any were skipped
+Labels skipped: {labels}                   <- only when `--label` was given on the Jira path
 Branch association skipped: {reason}       <- only when the step-6 guard skipped the persist
 ```
 

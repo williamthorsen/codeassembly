@@ -49,3 +49,5 @@ helpers:
     out: skills/index-prototypes/index-prototypes.mjs
   - entry: ../src/select-pr-ticket/cli.ts
     out: skills/review-gh-pr/select-pr-ticket.mjs
+  - entry: ../src/triage-spike-findings/cli.ts
+    out: skills/triage-spike-findings/triage-spike-findings.mjs

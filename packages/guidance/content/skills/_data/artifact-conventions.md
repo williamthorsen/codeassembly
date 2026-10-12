@@ -20,6 +20,18 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │       ├── usability/                                ← a usability assessment's lens reports and evidence, kept by `assess-usability`
         │       │   ├── {lens}-report.md
         │       │   └── {lens}/{finding-id}-{slug}.png
+        │       ├── triage/                                   ← a findings triage's working files, kept by `triage-spike-findings`
+        │       │   ├── findings.md
+        │       │   ├── inventory.md
+        │       │   ├── recommendations.md
+        │       │   ├── challenge.md
+        │       │   ├── dispositions.json
+        │       │   ├── preview/                              ← the rendered comments shown at the confirmation
+        │       │   │   ├── dispositions-comment.md
+        │       │   │   └── comment-{issue}.md
+        │       │   └── rendered/                             ← the rendered comments that are posted
+        │       │       ├── dispositions-comment.md
+        │       │       └── comment-{issue}.md
         │       └── {run-id}/                                 ← review run directory
         │           ├── {NN}_{role}_{artifact}.md
         │           └── ...
@@ -50,6 +62,10 @@ A `project.ticket_ref_prefix` other than `#` is part of the ticket ID, so it nam
 ### Usability evidence
 
 `usability/` holds the working files of the ticket's usability assessment: each lens's report and each lens's screenshots. The `usability-findings` artifact cites the screenshots by paths relative to the ticket directory, so they stay beside it.
+
+### Triage working files
+
+`triage/` holds the working files of a triage of the ticket's findings: a local copy of the findings when they came from an artifact URL, the inventory, the recommendations that the challenger reads, the challenger's reply, the dispositions record from which the `dispositions` artifact is rendered, and the comments rendered from that record: `preview/` with placeholders for the confirmation, `rendered/` with every number for posting. The record stays here as a working file; the artifact is the rendered text.
 
 ### Run directories
 
@@ -716,6 +732,7 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 - `change-summary`: Branch change summary for PRs
 - `comparison`: Findings across a round of prototypes: where they agree, where they diverge, a table of every distinctive idea with an empty decision, and which decisions the round leaves open; `prepare-prototype-brief` saves it after the index
 - `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when a ticket is not in session)
+- `dispositions`: The rendered dispositions of a triage of findings, the text that `triage-spike-findings` posts on the triage ticket: every item with its disposition, its confidence and value, where it went, and its reason, with the challenge's summary; the JSON record from which it is rendered stays in `triage/`
 - `devlog`: Development log entry (falls back to non-ticket path when a ticket is not in session)
 - `idea-decisions`: The idea table of a round of prototypes with the decision on each idea filled; `prepare-prototype-brief` saves it after the developer decides each idea, and the end vision cites it
 - `merge`: Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode

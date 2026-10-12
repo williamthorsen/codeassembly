@@ -57,11 +57,13 @@ members:
     - summarize-chat
     - systematic-debugging
     - testing-conventions
+    - triage-spike-findings
     - typescript-testing-conventions
     - update-project-guidance
     - upgrade-dependencies
     - wrap-up
   subagents:
+    - disposition-challenger
     - entry-drafter
     - handoff-reviewer
     - plan-reviewer
