@@ -35,12 +35,15 @@ If a change needs coverage and these sections rule out every candidate test, it 
 
 ## Where a test goes
 
-A test's **tier** is what it starts or builds to observe a behavior. The cheapest tier calls the code in the test's own process. An **expensive tier** spawns an entry point as a process, starts a runtime, or builds a full fixture. A project's own tier names may classify tests on another axis, such as what they reach; the rules below concern cost.
+A test's **tier** is what it starts or builds to observe a behavior. The cheapest tier calls the code in the test's own process. An **expensive tier** spawns an entry point as a process, starts a runtime or an engine such as a database, or builds a full fixture. An engine counts as expensive whether it runs in the test's process or in another. A project's own tier names may classify tests on another axis, such as what they reach, and a test takes its label from the project's definition; nmr's, for example, labels a test that runs an embedded engine `tool`. The rules below concern cost.
 
 - **Tier placement.** Test each case at the cheapest tier that can observe it. An expensive tier covers only what a cheaper tier cannot observe: that the entry starts, parses its arguments, wires its dependencies, and reports its exit status, with one smoke example per entry or verb. A branch of logic, a message, or a field of output is a case for the cheapest tier, even when the entry is the only caller that exercises it.
 - **Consolidate before adding.** Write a new example only for a behavior that the existing examples cannot be extended to cover. Cases that share setup and action are one table-driven test, as [Test structure](#test-structure) states. When the examples do not mutate a fixture, build it once per file, not once per example.
 - **Delete what is superseded, in the same change.** A higher-tier example is superseded when cheaper coverage observes each of its assertions, apart from the entry wiring that the smoke example covers. A change that adds the cheaper coverage deletes the examples that it supersedes, once the new tests pass the second check in [When tests are required](#when-tests-are-required). A port or a rewrite follows the same rule: The change that contains the port deletes the old suite rather than keeping it to catch regressions.
 - **Justify each expensive addition.** A change that adds an example at an expensive tier states, in its plan or its pull-request description, why a cheaper tier cannot observe that example. The justification does not belong in a test comment.
+- **Use the cheapest setup that fits.** Give an expensive tier the cheapest setup that fits its time budget, such as an in-process engine when few files need one. Add infrastructure, such as a server, a container, or a shared test package, only after a run of the suite at CI's parallelism shows that the cheaper setup does not fit.
+- **Keep setup cost independent of the number of files.** Design expensive setup so that adding or splitting a test file does not add to it, for example by starting one engine for the suite rather than one per file.
+- **Fix the design, not the timeout.** When setup exceeds a hook's timeout, change the design so that the setup does less work. A raised timeout is not a fix: It hides a cost that grows with each file and with CI load.
 
 ## Do not test that removed things stay removed
 
@@ -134,6 +137,7 @@ A test file runs in one test worker, and a file that keeps its fixtures makes an
 - **Ceiling.** The `max-lines` setting that the project's lint configuration applies to test files. Where the lint does not set one, 500 lines, counting every line.
 - **Aspect.** A group of the subject's behaviors that shares setup and reads without the rest of the file. Each split file contains one aspect.
 - **Naming.** Each split file keeps the subject's name and adds the aspect after it, followed by any segment that the project's naming requires: `sync.test.ts` becomes `sync.retirement.test.ts`, and `sync.tool.test.ts` becomes `sync.retirement.tool.test.ts`.
+- **Setup.** A split does not add expensive setup. When the file starts an engine or another expensive fixture of its own, share that setup across files first, as [Where a test goes](#where-a-test-goes) states, then split.
 - **Fixtures.** Move the fixture builders that the split files share out of the test files, into a module in a `test-utils/` directory beside the tests (beside `__tests__/` when the tests live in one, never inside it), so that a new aspect file costs one import.
 
 ## Keep passing tests quiet
@@ -179,6 +183,14 @@ A test that runs an external program to produce its inputs verifies the program 
 A test whose subject is the program's effect on real state, such as a command that initializes a repository, runs the program because that effect is the behavior under test.
 
 The `typescript-testing-conventions` skill shows the TypeScript shape.
+
+### Code that uses a database
+
+A database is a program like any other in [External programs](#external-programs): A test starts one only when its subject is SQL.
+
+- Logic that only passes through SQL, such as assembling a view, gating a command, or ordering and reporting, is tested at the cheapest tier against a fake client that returns fixed rows and errors, such as a SQLSTATE. Mock at the boundary of the module containing the SQL when that is simpler than faking the client.
+- The database tests that earn a place cover what the schema does not already state: that the migrations apply, transactional bookkeeping, upserts and idempotence, and queries.
+- Do not write a test per constraint, such as inserting a duplicate row to expect the error. The test that the migrations apply covers the schema.
 
 ## Additional patterns
 

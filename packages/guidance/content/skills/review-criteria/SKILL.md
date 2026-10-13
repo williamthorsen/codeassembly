@@ -76,7 +76,7 @@ The commonest instance is a test asserting that deleted code, text, or behavior 
 
 ## Grown test files
 
-A test file that the change adds to and leaves past the ceiling in the `testing-conventions` skill is a Warning, and its proposed change is a split by aspect as that skill describes. The diff does not show a file's length, so measure each test file that the change adds to. Where the project's lint applies `max-lines` to test files, the lint is the guard, and this is not a finding. A file past the ceiling that the change does not add to is Legacy.
+A test file that the change adds to and leaves past the ceiling in the `testing-conventions` skill is a Warning, and its proposed change is a split by aspect as that skill describes. When the file starts expensive setup of its own, such as a database engine, the proposed change shares that setup before the split, so that the split does not add to it. The diff does not show a file's length, so measure each test file that the change adds to. Where the project's lint applies `max-lines` to test files, the lint is the guard, and this is not a finding. A file past the ceiling that the change does not add to is Legacy.
 
 ## Test placement
 
@@ -86,6 +86,17 @@ Two defects against the placement rules in the `testing-conventions` skill are W
 - **A kept superseded suite.** The change adds cheaper coverage but keeps the higher-tier examples that the new coverage supersedes. The proposed change deletes those examples. To find them, read each process-spawning or full-fixture example that exercises the logic which the change's new tests cover, and compare its assertions with the new tests.
 
 The same defects in tests that the change neither adds nor supersedes are Legacy.
+
+## Database tests and setup cost
+
+Four defects against the database and setup rules in the `testing-conventions` skill are Warnings:
+
+- **A database for a test whose subject is not SQL.** The proposed change tests the logic against a fake client or a mock at the boundary of the module containing the SQL.
+- **A test per constraint.** The proposed change deletes it; the test that the migrations apply covers the schema.
+- **A raised hook timeout.** The proposed change reduces the work that the setup does.
+- **A split that adds per-file setup.** The change adds or splits a test file, and each file starts its own expensive setup. The proposed change shares that setup across the files.
+
+The same defects in tests that the change does not add, split, or modify are Legacy.
 
 ## Noisy tests
 
