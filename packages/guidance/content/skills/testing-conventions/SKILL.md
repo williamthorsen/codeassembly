@@ -33,6 +33,15 @@ A test that guards a behavior still has to clear two checks:
 
 If a change needs coverage and these sections rule out every candidate test, it is merged without one; say which answer ruled the candidate out.
 
+## Where a test goes
+
+A test's **tier** is what it starts or builds to observe a behavior. The cheapest tier calls the code in the test's own process. An **expensive tier** spawns an entry point as a process, starts a runtime, or builds a full fixture. A project's own tier names may classify tests on another axis, such as what they reach; the rules below concern cost.
+
+- **Tier placement.** Test each case at the cheapest tier that can observe it. An expensive tier covers only what a cheaper tier cannot observe: that the entry starts, parses its arguments, wires its dependencies, and reports its exit status, with one smoke example per entry or verb. A branch of logic, a message, or a field of output is a case for the cheapest tier, even when the entry is the only caller that exercises it.
+- **Consolidate before adding.** Write a new example only for a behavior that the existing examples cannot be extended to cover. Cases that share setup and action are one table-driven test, as [Test structure](#test-structure) states. When the examples do not mutate a fixture, build it once per file, not once per example.
+- **Delete what is superseded, in the same change.** A higher-tier example is superseded when cheaper coverage observes each of its assertions, apart from the entry wiring that the smoke example covers. A change that adds the cheaper coverage deletes the examples that it supersedes, once the new tests pass the second check in [When tests are required](#when-tests-are-required). A port or a rewrite follows the same rule: The change that contains the port deletes the old suite rather than keeping it to catch regressions.
+- **Justify each expensive addition.** A change that adds an example at an expensive tier states, in its plan or its pull-request description, why a cheaper tier cannot observe that example. The justification does not belong in a test comment.
+
 ## Do not test that removed things stay removed
 
 This is the commonest test that guards a decision. When a change removes code, text, or behavior, never add a permanent test asserting the removed thing is absent (a `not.toContain` guard against a deleted string, `expect(isEventType('input.received')).toBe(false)` against a removed variant). The assertion encodes history, not contract: It can fail only if someone reverts that exact line, so it does not guard any regression class, and such assertions accumulate without limit. The positive assertion describing the replacement behavior is the real guard.
