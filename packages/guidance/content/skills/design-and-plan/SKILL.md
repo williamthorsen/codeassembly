@@ -108,6 +108,8 @@ Here, _the implementation_ is the plan artifact (Phase 4): Mechanism that the ti
 
 **Present the ticket as the first checkpoint**, in one turn: the draft ticket, the decisions taken so far with their reasons, and the forks that survived the gate as option-style questions. Revise until approved. Approval of the ticket is approval of the design.
 
+**When the checkpoint splits the ticket**, the session continues with one piece: With two pieces, it plans the originating ticket, which keeps the first piece; with an umbrella, it plans the first child, whose work belongs in that child's own worktree. Phase 5 then ends with the launch prompts that [Splitting the ticket](#splitting-the-ticket) defines, with each ticket's entry point chosen by that section's **Report.** rule, and the planned piece's prompt names its saved plan. With two pieces, the next-steps menu stays for the originating ticket, and that ticket's prompt heading adds that this session continues with it at the menu. With an umbrella, the launch prompts replace the `Next action` menu, so that nothing offers to implement a child in the current worktree.
+
 ### Phase 4: Generate implementation plan
 
 <HARD-GATE>
@@ -134,10 +136,11 @@ Then save both artifacts:
    - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout (auto-generate ticket ID as `{YYYYMMDD}-{4 random hex}` if none found)
    - Target: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
    - `mkdir -p` the target directory
+   - After an umbrella split, save the plan in the planned child's directory instead, `tickets/{child_id}/`, beside the ticket artifact that `{skill:create-ticket}` saved there
 
 2. Resolve frontmatter fields for both artifacts. The frontmatter conforms to the [universal artifact frontmatter](../_data/artifact-conventions.md#universal-artifact-frontmatter) schema.
 
-   Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body.
+   Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body. For a plan saved in a child's directory, append `--override ticket_id="{child_id}" --override ticket_ref="{child_ref}"` to the plan's invocation, so that its frontmatter names the child rather than the current branch's ticket.
 
    Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, when the source was a remote ticket and the refined ticket does not differ from its body: the same condition under which the remote-issue offer below is not made. This records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). When the offer is made, omit it on both outcomes: On consent, the remote is written after the artifact is saved, so recency already prefers the remote, and a refusal leaves the snapshot genuinely newer.
 
@@ -147,7 +150,7 @@ Then save both artifacts:
 
    Prepend the resolved frontmatter to each artifact content before writing.
 
-4. Report paths and present next steps.
+4. Report paths and present next steps. After a split at the ticket checkpoint, end with the launch prompts, per the checkpoint-split rule in Phase 3.
 
 ```
 Design and plan complete:
@@ -175,7 +178,7 @@ Next steps:
 On consent, write the refined ticket per [platform-specific write](../_data/ticket-source-resolution.md#platform-specific-write). The refined ticket is the whole body approved by the user, so it replaces the remote body outright.
 
 <HARD-GATE>
-Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1: Remote issue**` and `**A2: Next action**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they do not add or reorder any option. The plan was developed interactively, with the ticket and the plan each approved at a checkpoint; use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
+Follow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The `**A1: Remote issue**` and `**A2: Next action**` sub-block labels above are the sanctioned wrapper when the remote offer is shown; they do not add or reorder any option. After an umbrella split at the ticket checkpoint, the launch prompts take the place of the `Next action` menu, per the checkpoint-split rule in Phase 3. The plan was developed interactively, with the ticket and the plan each approved at a checkpoint; use this as recommendation context. Include both `{ticket_path}` and `{plan_path}` in each skill-invoking option line.
 </HARD-GATE>
 
 **STOP.** Beyond the remote-issue update above, do not invoke any skill. Do not begin implementation.
