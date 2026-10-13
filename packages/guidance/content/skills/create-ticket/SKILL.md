@@ -25,7 +25,7 @@ The three relationship arguments take ticket references in the project's own for
 
 ### Another repository
 
-`--repo` files the ticket in another GitHub repository, and every step resolves against that repository rather than the session's: its configuration, its issues, and its artifact directory. Compare the value with `gh repo view --json nameWithOwner --jq .nameWithOwner`, ignoring case; when the two name the same repository, drop `--repo` and run as though it were absent.
+`--repo` files the ticket in another GitHub repository, and every step resolves against that repository rather than the session's: its configuration, its issues, and its artifact directory. Compare the value with `gh repo view --json nameWithOwner --jq .nameWithOwner`, ignoring case; when the two name the same repository, drop `--repo` and run as though it were absent. When the command fails, as it does in a session whose repository is not on GitHub, the two are different repositories.
 
 Otherwise, resolve the target before step 1:
 
