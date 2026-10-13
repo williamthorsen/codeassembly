@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import type { StoreVisibility } from '../../config/config-schema.ts';
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { makeStore } from '../../test-utils/make-store.ts';
 import type { KbRegistry } from '../../types.ts';
 import type { ForeignStore } from '../../vault-integrity/check-vault-integrity.ts';
@@ -74,6 +75,7 @@ describe(resolveForeignStores, () => {
     const second = await makeStore({ 'content/Two.md': 'body', '.kb/config.yaml': 'visibility: shared\n' });
 
     const resolved = await resolveForeignStores({
+      git: makeFakeGit(),
       prefixes: ['fde', 'ops', 'fde'],
       registry: makeRegistry({ fde: first, ops: second }),
       sourceVisibility: 'private',
@@ -99,7 +101,7 @@ async function resolveOne(
   registry: KbRegistry,
   sourceVisibility: StoreVisibility,
 ): Promise<ForeignStore> {
-  const resolved = await resolveForeignStores({ prefixes: [prefix], registry, sourceVisibility });
+  const resolved = await resolveForeignStores({ git: makeFakeGit(), prefixes: [prefix], registry, sourceVisibility });
   const store = resolved.get(prefix);
   if (store === undefined) throw new Error(`resolveForeignStores did not record an entry for "${prefix}"`);
   return store;

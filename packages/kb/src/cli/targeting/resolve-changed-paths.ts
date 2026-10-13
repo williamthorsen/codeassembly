@@ -1,7 +1,7 @@
 import { realpathSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 
-import { runGit } from '../../git/run-git.ts';
+import type { KbGit } from '../../git/git.ts';
 
 /** The outcome of resolving a `--vs` ref to its changed-note paths: the store-relative paths, or a failure message. */
 export type ChangedPathsResult = { ok: true; paths: string[] } | { ok: false; message: string };
@@ -15,36 +15,26 @@ export type ChangedPathsResult = { ok: true; paths: string[] } | { ok: false; me
  * root: a no-op when the store is the repository root, correct when it is nested. A git failure (unknown ref, not a
  * repository) returns `{ ok: false }` for the caller to report as a usage error rather than throwing.
  */
-export function resolveChangedPaths(input: { storeRoot: string; ref: string }): ChangedPathsResult {
-  const { storeRoot, ref } = input;
+export function resolveChangedPaths(input: { storeRoot: string; ref: string; git: KbGit }): ChangedPathsResult {
+  const { storeRoot, ref, git } = input;
 
-  const mergeBase = runGit({ cwd: storeRoot, args: ['merge-base', ref, 'HEAD'] });
+  const mergeBase = git.findMergeBase({ cwd: storeRoot, ref });
   if (!mergeBase.ok) {
     return { ok: false, message: `could not resolve ref "${ref}": ${mergeBase.message}` };
   }
 
-  const toplevel = runGit({ cwd: storeRoot, args: ['rev-parse', '--show-toplevel'] });
+  const toplevel = git.findTopLevel({ cwd: storeRoot });
   if (!toplevel.ok) {
     return { ok: false, message: toplevel.message };
   }
 
-  // `-z` emits NUL-delimited, unquoted paths so that names with non-ASCII bytes survive verbatim (git's default
-  // octal-quoting would otherwise corrupt them); `-- .` limits the diff to the store subtree when the store is
-  // nested below the repository root.
-  const diff = runGit({
-    cwd: storeRoot,
-    args: ['diff', '--name-only', '-z', '--diff-filter=AMR', '--find-renames', mergeBase.stdout.trim(), '--', '.'],
-  });
+  const diff = git.listChangedFiles({ cwd: storeRoot, base: mergeBase.value });
   if (!diff.ok) {
     return { ok: false, message: diff.message };
   }
 
   const realStoreRoot = realpathSync(storeRoot);
-  const repoRoot = toplevel.stdout.trim();
-  const paths = diff.stdout
-    .split('\0')
-    .filter((entry) => entry !== '')
-    .map((entry) => relative(realStoreRoot, join(repoRoot, entry)).split(sep).join('/'));
+  const paths = diff.value.map((entry) => relative(realStoreRoot, join(toplevel.value, entry)).split(sep).join('/'));
 
   return { ok: true, paths };
 }

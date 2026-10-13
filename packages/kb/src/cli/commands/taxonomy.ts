@@ -3,6 +3,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { enumerateNotes } from '../../check/enumerate.ts';
 import { isKbLoaderError } from '../../config/kb-loader-error.ts';
 import { loadKbConfig } from '../../config/load-config.ts';
+import { type KbGit, realGit } from '../../git/git.ts';
 import { resolveKbDir, TAXONOMY_FILE } from '../../layout/index.ts';
 import { deriveDomains } from '../../taxonomy/domain-paths.ts';
 import { loadTaxonomy } from '../../taxonomy/load-taxonomy.ts';
@@ -46,6 +47,7 @@ Exit codes:
 export async function runTaxonomy(input: {
   argv: readonly string[];
   cwd: string;
+  git?: KbGit;
   home?: string;
 }): Promise<CommandOutput> {
   let options: TaxonomyOptions;
@@ -78,7 +80,7 @@ export async function runTaxonomy(input: {
   const kbRoot: KbRoot = { path: resolved.store.path, kbDir: resolveKbDir(resolved.store.path) };
 
   try {
-    return await initTaxonomy({ kbRoot, merge: options.merge });
+    return await initTaxonomy({ kbRoot, merge: options.merge, git: input.git ?? realGit });
   } catch (error) {
     if (isKbLoaderError(error)) {
       return { exitCode: 2, stdout: '', stderr: `kb taxonomy: ${error.message}\n` };
@@ -147,8 +149,8 @@ export function parseTaxonomyArgs(argv: readonly string[]): TaxonomyOptions {
  * Declares every domain implied by the store's notes. Refuses a store that already declares domains unless `merge` is
  * set, in which case only the absent ones are added.
  */
-async function initTaxonomy(input: { kbRoot: KbRoot; merge: boolean }): Promise<CommandOutput> {
-  const { kbRoot, merge } = input;
+async function initTaxonomy(input: { kbRoot: KbRoot; merge: boolean; git: KbGit }): Promise<CommandOutput> {
+  const { kbRoot, merge, git } = input;
 
   const existing = await loadTaxonomy({ kbRoot });
   if (existing.size > 0 && !merge) {
@@ -157,7 +159,7 @@ async function initTaxonomy(input: { kbRoot: KbRoot; merge: boolean }): Promise<
   }
 
   const config = await loadKbConfig({ kbRoot });
-  const notes = await enumerateNotes({ kbRoot: kbRoot.path, config });
+  const notes = await enumerateNotes({ kbRoot: kbRoot.path, config, git });
   const domains = deriveDomains(notes.map((note) => note.relativePath));
 
   if (domains.length === 0) {

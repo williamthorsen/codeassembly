@@ -1,12 +1,13 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, realpath, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { check } from '../../check/check.ts';
+import type { KbGit } from '../../git/git.ts';
 import { TAXONOMY_FILE } from '../../layout/index.ts';
-import { commitAll, initGitRepo } from '../../test-utils/git-repo.ts';
+import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { makeStore } from '../../test-utils/make-store.ts';
 import { makeTempDir } from '../../test-utils/make-temp-dir.ts';
 import { getRegistryPathFor, seedRegistry } from '../../test-utils/registry.ts';
@@ -327,14 +328,11 @@ describe('kb check targeting', () => {
   });
 
   it('validates only the notes changed since a ref', async () => {
-    const store = await makeStore({ 'content/BadUnchanged.md': UNRESOLVED_LINK });
-    initGitRepo(store);
-    const base = commitAll(store, 'base');
-    await writeFile(join(store, 'content', 'GoodChanged.md'), VALID, 'utf8');
-    commitAll(store, 'add a clean note');
+    const store = await makeStore({ 'content/BadUnchanged.md': UNRESOLVED_LINK, 'content/GoodChanged.md': VALID });
+    const git = await makeChangedFilesGit(store, ['content/GoodChanged.md']);
 
-    const whole = await run({ argv: ['check'], cwd: store });
-    const scoped = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+    const whole = await run({ argv: ['check'], cwd: store, git });
+    const scoped = await run({ argv: ['check', '--vs=main'], cwd: store, git });
 
     expect(whole.exitCode).toBe(1);
     expect(scoped.exitCode).toBe(0);
@@ -342,10 +340,9 @@ describe('kb check targeting', () => {
 
   it('exits 2 for an unresolvable --vs ref', async () => {
     const store = await makeStore({ 'content/Clean.md': VALID });
-    initGitRepo(store);
-    commitAll(store, 'base');
+    const git = makeFakeGit({ findMergeBase: { ok: false, message: 'fatal: Not a valid object name no-such-ref' } });
 
-    const result = await run({ argv: ['check', '--vs=no-such-ref'], cwd: store });
+    const result = await run({ argv: ['check', '--vs=no-such-ref'], cwd: store, git });
 
     expect(result.exitCode).toBe(2);
     expect(result.stderr).toContain('no-such-ref');
@@ -365,25 +362,19 @@ describe('kb check targeting', () => {
   it('checks only the changed metacharacter-named note, not its glob-expanded siblings', async () => {
     // `Draft2.md` is unchanged and erroring; as a glob, `Draft[v2].md` would also match it, so a
     // `--vs` run that touched only the clean `Draft[v2].md` must not be failed by the sibling.
-    const store = await makeStore({ 'content/Draft2.md': UNRESOLVED_LINK });
-    initGitRepo(store);
-    const base = commitAll(store, 'base');
-    await writeFile(join(store, 'content', 'Draft[v2].md'), VALID, 'utf8');
-    commitAll(store, 'add the metachar-named note');
+    const store = await makeStore({ 'content/Draft2.md': UNRESOLVED_LINK, 'content/Draft[v2].md': VALID });
+    const git = await makeChangedFilesGit(store, ['content/Draft[v2].md']);
 
-    const result = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+    const result = await run({ argv: ['check', '--vs=main'], cwd: store, git });
 
     expect(result.exitCode).toBe(0);
   });
 
   it('checks a changed note with a non-ASCII name', async () => {
-    const store = await makeStore({ 'content/Clean.md': VALID });
-    initGitRepo(store);
-    const base = commitAll(store, 'base');
-    await writeFile(join(store, 'content', 'Café.md'), UNRESOLVED_LINK, 'utf8');
-    commitAll(store, 'add a non-ascii note');
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Café.md': UNRESOLVED_LINK });
+    const git = await makeChangedFilesGit(store, ['content/Café.md']);
 
-    const result = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+    const result = await run({ argv: ['check', '--vs=main'], cwd: store, git });
 
     expect(result.exitCode).toBe(1);
   });
@@ -411,14 +402,11 @@ describe('kb check vault-scoped findings', () => {
   });
 
   it('keeps a vault-scoped finding under a --vs run', async () => {
-    const store = await makeStore({ 'content/Clean.md': VALID });
-    initGitRepo(store);
-    const base = commitAll(store, 'base');
-    await writeFile(join(store, 'content', 'Added.md'), VALID, 'utf8');
-    commitAll(store, 'add a note');
+    const store = await makeStore({ 'content/Clean.md': VALID, 'content/Added.md': VALID });
+    const git = await makeChangedFilesGit(store, ['content/Added.md']);
     stubVaultFinding();
 
-    const result = await run({ argv: ['check', `--vs=${base}`], cwd: store });
+    const result = await run({ argv: ['check', '--vs=main'], cwd: store, git });
 
     expect(result.stdout).toContain('taxonomy.undeclared');
   });
@@ -479,6 +467,15 @@ describe('kb check vault-scoped findings', () => {
 });
 
 // region | Helpers
+
+/** Builds a git adapter for a `--vs` run in which git reports `files`, store-relative, as changed since the merge base. */
+async function makeChangedFilesGit(store: string, files: readonly string[]): Promise<KbGit> {
+  return makeFakeGit({
+    findMergeBase: { ok: true, value: 'base' },
+    findTopLevel: { ok: true, value: await realpath(store) },
+    listChangedFiles: { ok: true, value: [...files] },
+  });
+}
 
 /** Creates an isolated home registering `name → storePath` in `~/.agents/kb.yaml`; returns the home dir. */
 async function makeHome(name: string, storePath: string): Promise<string> {
