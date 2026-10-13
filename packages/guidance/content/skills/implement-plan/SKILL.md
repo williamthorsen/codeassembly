@@ -100,18 +100,18 @@ Options that invoke a skill include context-clearing guidance:
 
 - **Create PR without review**: No "Clear context" prefix; the PR description is composed from the branch's commits and diff. `create-pr` requires the branch to be in sync with its remote and stops when it is not, so note on the option that it needs the branch pushed first.
 - **Split the branch**: No "Clear context" prefix, and no pasted invocation line; the split runs in this session because the library doesn't have a skill for it, and it cuts the pieces from the branch's commits and the saved plan. See [Splitting the branch](#splitting-the-branch).
-- **Review branch**: Prepend "Clear context and use..."; a reviewer that watched the code being written inherits the author's blind spots.
+- **Review branch**: Prepend "Clear context, then..."; a reviewer that watched the code being written inherits the author's blind spots.
 
 Example (rendered for the default case, in which the recommendation rules below select Review branch):
 
 ```
 Next steps:
 1. 🚢 ■□□ Create PR without review:
-   - Push the branch first, then use the `create-pr` skill
+   - Push the branch first, then {skill?:create-pr}
 2. ✂️ ■□□ Split the branch:
    - Selection runs the split in this session
 3. 🔍 ■■□ Review branch:
-   - Clear context and use the `review-branch` skill with ticket: {ticket_source}
+   - Clear context, then {skill?:review-branch} with ticket: {ticket_source}
 ```
 
 Skill names for each option:

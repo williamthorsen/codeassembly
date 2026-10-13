@@ -20,20 +20,20 @@ Present all three options as a numbered list per [option format](#option-format)
 
 Options that invoke a skill include context-clearing guidance:
 
-- **Refine plan**: Prepend "Clear context and use..." because the plan artifact is self-contained; prior conversation wastes tokens and can introduce bias.
+- **Refine plan**: Prepend "Clear context, then..." because the plan artifact is self-contained; prior conversation wastes tokens and can introduce bias.
 - **Split the ticket**: No "Clear context" prefix, and no pasted invocation line; the split runs in this session because the library doesn't have a skill for it, and it cuts the pieces from the saved plan. See [Splitting the ticket](#splitting-the-ticket).
-- **Implement**: No "Clear context" prefix. The ticket and plan are self-contained, so `implement-plan` works the same in this session or in a fresh one, and clearing gains nothing: Unlike a refine or review pass, implementation is not harmed by sharing the planner's view. The user can also paste the same line into a fresh session or the other harness, in which the skill re-resolves the plan and ticket from the environment.
+- **Implement**: No "Clear context" prefix. The ticket and plan are self-contained, so `implement-plan` works the same in this session or in a fresh one, and clearing gains nothing: Unlike a refine or review pass, implementation is not harmed by sharing the planner's view. The user can also paste the same line into a fresh session, or into the other harness with its own skill sigil, in which the skill re-resolves the plan and ticket from the environment.
 
 Example (rendered for the default case, in which the recommendation rules below select Implement):
 
 ```
 Next steps:
 1. 🧠 ■□□ Refine plan:
-   - Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_source}
+   - Clear context, then {skill?:refine-plan} with plan: {plan_path}, ticket: {ticket_source}
 2. ✂️ ■□□ Split the ticket:
    - Selection runs the split in this session
 3. 🚀 ■■□ Implement:
-   - Use the `implement-plan` skill with plan: {plan_path}, ticket: {ticket_source}
+   - {skill?:implement-plan} with plan: {plan_path}, ticket: {ticket_source}
 ```
 
 Skill names for each option:
