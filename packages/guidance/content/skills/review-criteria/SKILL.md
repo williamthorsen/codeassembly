@@ -77,6 +77,15 @@ The commonest instance is a test asserting that deleted code, text, or behavior 
 
 A test file that the change adds to and leaves past the ceiling in the `testing-conventions` skill is a Warning, and its proposed change is a split by aspect as that skill describes. The diff does not show a file's length, so measure each test file that the change adds to. Where the project's lint applies `max-lines` to test files, the lint is the guard, and this is not a finding. A file past the ceiling that the change does not add to is Legacy.
 
+## Test placement
+
+Two defects against the placement rules in the `testing-conventions` skill are Warnings:
+
+- **A misplaced expensive example.** The change adds an example at an expensive tier, and a cheaper tier could observe it. The proposed change moves the case to the cheaper tier. If the change's plan or pull-request description gives a reason that a cheaper tier cannot observe the case, it is not a finding.
+- **A kept superseded suite.** The change adds cheaper coverage, and higher-tier examples that the new coverage supersedes remain. The proposed change deletes those examples. To find them, read each process-spawning or full-fixture example that exercises the logic which the change's new tests cover, and compare its assertions with the new tests.
+
+The same defects in tests that the change neither adds nor supersedes are Legacy.
+
 ## Noisy tests
 
 A test that the change adds and that writes output on a passing run is a Suggestion, and its proposed change is the interception that the `testing-conventions` skill describes. The diff does not show runtime output: Read the test run's output when one is available, and otherwise read for logging calls on the paths that the test exercises. A noisy test that the change does not add is Legacy.
