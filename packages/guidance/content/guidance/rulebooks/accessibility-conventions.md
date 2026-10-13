@@ -1,7 +1,7 @@
 ---
 slug: accessibility-conventions
 description: 'Accessibility of interfaces: usability before style, and contrast and size floors for text. Consult before writing an artifact page, a prototype, or a mockup, before defining or changing colour tokens, and before writing CSS or a UI component.'
-delivery: [ambient, skill]
+delivery: [skill]
 version: '1'
 ---
 
