@@ -100,6 +100,19 @@ const DESIGN_AND_PLAN_REMOTE_ISSUE: Spec = {
   ],
 };
 
+// The ending of a session whose ticket checkpoint split the ticket, stated in design-and-plan's own body.
+const DESIGN_AND_PLAN_CHECKPOINT_SPLIT: Spec = {
+  name: 'design-and-plan-checkpoint-split',
+  heading: '**When the checkpoint splits the ticket**',
+  rules: [
+    // The umbrella case. Without it the session renders the next-steps menu, whose Implement option implements a
+    // child in the umbrella's worktree.
+    'the launch prompts replace the `Next action` menu',
+    // The planned piece's prompt. Without it the child's session starts without the plan that this session saved.
+    "the planned piece's prompt names its saved plan",
+  ],
+};
+
 // The next-steps menu stated in implement-plan's own body. Not an include: Only this guard sees the block.
 const IMPLEMENT_PLAN_MENU: Spec = {
   name: 'implement-plan-menu',
@@ -260,7 +273,14 @@ const CONSUMERS: ReadonlyArray<{ readonly slug: string; readonly specs: Readonly
   { slug: 'collaborate', specs: [OPTION_FORMAT] },
   {
     slug: 'design-and-plan',
-    specs: [OPTION_FORMAT, NEXT_STEPS_AFTER_PLAN, DESIGN_AND_PLAN_REMOTE_ISSUE, SPLIT_TICKET, SPLIT_LAUNCH_PROMPTS],
+    specs: [
+      OPTION_FORMAT,
+      NEXT_STEPS_AFTER_PLAN,
+      DESIGN_AND_PLAN_REMOTE_ISSUE,
+      DESIGN_AND_PLAN_CHECKPOINT_SPLIT,
+      SPLIT_TICKET,
+      SPLIT_LAUNCH_PROMPTS,
+    ],
   },
   { slug: 'implement-plan', specs: [OPTION_FORMAT, IMPLEMENT_PLAN_MENU, SPLIT_TICKET, SPLIT_LAUNCH_PROMPTS] },
   { slug: 'merge-pr', specs: [OPTION_FORMAT] },
