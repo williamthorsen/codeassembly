@@ -1,4 +1,7 @@
 /** The graded label families that a child ticket carries, and the check that a repository has them. */
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
+
 import { z } from 'zod';
 
 import { CONFIDENCE_GRADES, VALUE_GRADES } from './schemas.ts';
@@ -9,6 +12,8 @@ export const LABEL_FAMILIES: Readonly<Record<'confidence' | 'value', readonly st
   confidence: CONFIDENCE_GRADES.map((grade) => `confidence:${grade}`),
   value: VALUE_GRADES.map((grade) => `value:${grade}`),
 };
+
+const execFileAsync = promisify(execFile);
 
 /** The most labels that one `gh label list` reads; a repository past it is beyond what the families need. */
 const LABEL_LIST_LIMIT = 500;
@@ -38,6 +43,12 @@ export async function checkLabels(run: CommandRunner, root: string): Promise<Lab
   const complete = families.confidence.missing.length === 0 && families.value.missing.length === 0;
   return { complete, families };
 }
+
+/** Runs `gh` through `execFile`, with a buffer large enough for a repository's whole label list. */
+export const runCommand: CommandRunner = async (command, args, cwd) => {
+  const { stdout } = await execFileAsync(command, [...args], { cwd, maxBuffer: 16 * 1_024 * 1_024 });
+  return stdout;
+};
 
 // region | Helpers
 
