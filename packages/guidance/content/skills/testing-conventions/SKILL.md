@@ -184,6 +184,14 @@ A test whose subject is the program's effect on real state, such as a command th
 
 The `typescript-testing-conventions` skill shows the TypeScript shape.
 
+### Code that uses a database
+
+A database is a program like any other in [External programs](#external-programs): A test starts one only when its subject is SQL.
+
+- Logic that only passes through SQL, such as assembling a view, gating a command, or ordering and reporting, is tested at the cheapest tier against a fake client that returns fixed rows and errors, such as a SQLSTATE. Mock at the boundary of the module containing the SQL when that is simpler than faking the client.
+- The database tests that earn a place cover what the schema does not already state: that the migrations apply, transactional bookkeeping, upserts and idempotence, and queries.
+- Do not write a test per constraint, such as inserting a duplicate row to expect the error. The test that the migrations apply covers the schema.
+
 ## Additional patterns
 
 ### Omit "should" from test names
