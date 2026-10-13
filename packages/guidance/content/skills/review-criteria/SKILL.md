@@ -96,7 +96,7 @@ Four defects against the database and setup rules in the `testing-conventions` s
 - **A raised hook timeout.** The proposed change reduces the work that the setup does.
 - **A split that adds per-file setup.** The change adds or splits a test file, and each file starts its own expensive setup. The proposed change shares that setup across the files.
 
-The same defects in tests that the change does not add or split are Legacy.
+The same defects in tests that the change does not add, split, or modify are Legacy.
 
 ## Noisy tests
 
