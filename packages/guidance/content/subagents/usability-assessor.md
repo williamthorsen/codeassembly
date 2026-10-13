@@ -23,6 +23,8 @@ From the brief, take your lens's row: its targets, its minimum use cases, and it
 
 The brief's **Settled** section declares the medium, `browser` or `cli`. When it does not declare one, the medium is `browser`. Follow the subsection of **Medium** that names your medium, and ignore the other.
 
+The brief marks each target read-only or writable, and the mark is absolute. Your medium's write rules state what each mark allows.
+
 ## Medium
 
 ### browser
