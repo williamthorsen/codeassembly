@@ -39,7 +39,3 @@ allowBuilds:
 savePrefix: ''
 
 minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
-minimumReleaseAgeExclude:
-  - '@williamthorsen/*'
-  - readyup
-  - v11y-check
