@@ -58,6 +58,14 @@ The bundle does not have a shebang, so the `node` prefix is required. Each subco
 - An unreadable taxonomy causes a warning from `render-titles`, which then renders from templates that nothing verified or checked for a lost token, and stops `parse-title`, `consolidate-branch`, `consolidate-entries`, `render-details`, `resolve-effective-record`, `resolve-merge`, and `amend-entry`.
 - Outside a repository, a subcommand that anchors at the repository root warns on stderr and anchors at the working directory instead: the `.agents/` and `.meta/label-map.json` lookups, so the global templates still render, and `resolve-scopes`'s discovery of workspace and declared scope directories.
 - A `title_format` resolving to anything but a string causes a warning on stderr, and the next source supplies the template.
+- A type or scope that a configured label map does not define causes a warning from `resolve-labels`, naming the key and the map. A repository that does not configure a map does not cause any.
+- A `--project-root` that does not name a readable directory stops `render-titles` and `resolve-labels`, naming the path.
+
+## Reading another repository's configuration
+
+`render-titles` and `resolve-labels` take `--project-root <dir>`, which names the directory to read in place of the invoking repository's root: its `.agents/preferences.yaml` and its `.meta/label-map.json`. A relative path resolves against the invoking directory. The global preferences file still supplies a template that the directory's file omits. The run skips git's root resolution, so it does not warn outside a repository. Every other subcommand refuses the flag.
+
+`create-ticket` uses it to resolve the title and the labels of a ticket filed in another repository, from a directory into which that repository's configuration has been fetched.
 
 ## `render-titles`
 
@@ -72,7 +80,7 @@ node {harness_home_dir}/scripts/describe-change.mjs render-titles \
   --pr-number "{pr_number}"
 ```
 
-Its flags are `--title`, `--scope`, `--type`, `--breaking`, `--ticket-ref`, and `--pr-number`, and all are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so that titles with spaces or shell-special characters are passed intact. Add `--breaking` for a breaking change; `--type feat!` is also accepted and splits into the bare type and the marker. A `--scope` of `*` normalizes to an empty scope, so the sentinel never appears in a rendered title.
+Its flags are `--title`, `--scope`, `--type`, `--breaking`, `--ticket-ref`, `--pr-number`, and [`--project-root`](#reading-another-repositorys-configuration), and all are optional. Each missing flag means the corresponding token resolves to the empty string. Always quote `--title` so that titles with spaces or shell-special characters are passed intact. Add `--breaking` for a breaking change; `--type feat!` is also accepted and splits into the bare type and the marker. A `--scope` of `*` normalizes to an empty scope, so the sentinel never appears in a rendered title.
 
 Output is JSON:
 
@@ -509,7 +517,7 @@ project:
 
 ## `resolve-labels`
 
-`resolve-labels` reports the labels for a change, from the effective record that the flags pass and, when `--body-file` names a body, from the entries in its last `change-record` block. Every flag is optional. Without `--body-file`, as for a ticket that does not have a body yet, the run labels the record alone.
+`resolve-labels` reports the labels for a change, from the effective record that the flags pass and, when `--body-file` names a body, from the entries in its last `change-record` block. Every flag is optional, [`--project-root`](#reading-another-repositorys-configuration) included. Without `--body-file`, as for a ticket that does not have a body yet, the run labels the record alone.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs resolve-labels \
@@ -523,7 +531,7 @@ node {harness_home_dir}/scripts/describe-change.mjs resolve-labels \
 
 **`labels` is the union of what the record and the entries name**, each mapped through the repository's `.meta/label-map.json`: the type label of every type, `breaking` when the record or any entry is breaking, and the scope label of every scope. Type labels come first, then `breaking`, then scope labels. Within each group the record's label leads, followed by the entries' labels in the order in which the entries name them, and each label appears once.
 
-**A key that the map does not name, and a scope of `*`, do not add a label.** The run does not read the taxonomy, so an undeclared type is labeled only when the map names it. A label map that is absent, unparseable, or empty does not yield any labels at all, `breaking` included.
+**A key that the map does not name, and a scope of `*`, do not add a label.** The run warns on stderr for each such key except `*`, naming it and the map. The run does not read the taxonomy, so an undeclared type is labeled only when the map names it. A label map that is absent, unparseable, or empty does not yield any labels at all, `breaking` included, and does not cause any warning.
 
 **The body file may be the change summary itself**, since only its last `change-record` block is read and the frontmatter is ignored. A body that does not contain a block, or a block without entries, is labeled from the flags alone. The run warns and does the same for a malformed block or entry list, and it refuses a body file that cannot be read. `--type feat!` is accepted and splits into the bare type and the marker.
 

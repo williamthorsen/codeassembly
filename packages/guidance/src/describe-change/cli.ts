@@ -1,7 +1,7 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
 import { realpathSync } from 'node:fs';
-import { readFile, writeFile } from 'node:fs/promises';
+import { readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
@@ -42,7 +42,7 @@ import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readDeclaredScopes } from './read-declared-scopes.ts';
 import { readLabelMap, resolveLabeledRecord } from './read-label-map.ts';
 import { renderDetails } from './render-details.ts';
-import { resolveLabels } from './resolve-labels.ts';
+import { findUnmappedKeys, resolveLabels } from './resolve-labels.ts';
 import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOutcome } from './resolve-merge.ts';
 import { discoverWorkspaceDirs, mergeScopeDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
@@ -92,7 +92,12 @@ const RECORD_FLAGS: readonly FlagSpec[] = [
  */
 export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
   'render-titles': {
-    flags: [...RECORD_FLAGS, { name: 'pr-number', takesValue: true }, { name: 'ticket-ref', takesValue: true }],
+    flags: [
+      ...RECORD_FLAGS,
+      { name: 'pr-number', takesValue: true },
+      { name: 'project-root', takesValue: true },
+      { name: 'ticket-ref', takesValue: true },
+    ],
     read: readRenderTitlesArgs,
   },
   'parse-title': { flags: [], read: readParseTitleArgs },
@@ -147,6 +152,7 @@ export const SUBCOMMANDS: Record<Subcommand, SubcommandSpec> = {
     flags: [
       { name: 'body-file', takesValue: true },
       { name: 'breaking', takesValue: false },
+      { name: 'project-root', takesValue: true },
       { name: 'scope', takesValue: true },
       { name: 'type', takesValue: true },
     ],
@@ -223,11 +229,11 @@ export async function runDescribe(input: DescribeInput): Promise<DescribeResult>
     case 'render-details':
       return runRenderDetails(args.entriesFile, run);
     case 'render-titles':
-      return runRenderTitles(args.record, run);
+      return runRenderTitles(args.record, await applyProjectRoot(run, args.projectRoot));
     case 'resolve-effective-record':
       return runResolveEffectiveRecord(args, run);
     case 'resolve-labels':
-      return runResolveLabels(args, run);
+      return runResolveLabels(args, await applyProjectRoot(run, args.projectRoot));
     case 'resolve-merge':
       return runResolveMerge(args.merge, run);
     case 'resolve-scopes':
@@ -280,15 +286,37 @@ interface LoadedTemplates {
   warnings: string[];
 }
 
-/** A run's input, with the git adapter that it uses resolved. */
+/** A run's input, with the git adapter that it uses resolved, and the project root that `--project-root` names. */
 interface RunInput extends DescribeInput {
   git: DescribeChangeGit;
+  projectRoot?: string;
 }
 
 /** One subcommand's flags, and the reader that turns its scanned arguments into what the run asks for. */
 interface SubcommandSpec {
   flags: readonly FlagSpec[];
   read: (scan: ScanResult) => ParsedArgs;
+}
+
+/**
+ * Resolves the directory that `--project-root` names against the invoking directory and adds it to the run's input,
+ * refusing a path that is not a directory.
+ */
+async function applyProjectRoot(input: RunInput, projectRoot: string | undefined): Promise<RunInput> {
+  if (projectRoot === undefined) {
+    return input;
+  }
+  const resolved = path.resolve(input.cwd, projectRoot);
+  let isDirectory: boolean;
+  try {
+    isDirectory = (await stat(resolved)).isDirectory();
+  } catch (error) {
+    throw chainError(`--project-root ${resolved} cannot be read`, error);
+  }
+  if (!isDirectory) {
+    throw new Error(`--project-root ${resolved} is not a directory`);
+  }
+  return { ...input, projectRoot: resolved };
 }
 
 /** Builds the usage error for a missing or unknown subcommand, listing every subcommand that the helper takes. */
@@ -368,7 +396,7 @@ function isSubcommand(value: string): value is Subcommand {
  * to verify against.
  */
 async function loadTemplates(input: RunInput): Promise<LoadedTemplates> {
-  const { projectRoot, warning } = resolveProjectRoot(input.cwd, input.git);
+  const { projectRoot, warning } = resolveRunProjectRoot(input);
   const { templates, warnings } = await loadPreferences({ home: input.home, projectRoot });
   if (warning !== undefined) {
     warnings.unshift(warning);
@@ -571,6 +599,15 @@ function readParseTitleArgs({ positionals }: ScanResult): ParsedArgs {
   return { subcommand: 'parse-title', subject, surface };
 }
 
+/** Reads `--project-root`, refusing an empty value. */
+function readProjectRootFlag(flags: readonly MatchedFlag[]): string | undefined {
+  const projectRoot = valueFlagMap(flags)['project-root']?.trim();
+  if (projectRoot === '') {
+    throw new Error('--project-root requires a value');
+  }
+  return projectRoot;
+}
+
 /** Reads the record flags into a record, leaving out every field whose flag is absent. */
 function readRecordFlags(flags: readonly MatchedFlag[]): ChangeRecord {
   const values = valueFlagMap(flags);
@@ -628,7 +665,12 @@ function readRenderDetailsArgs({ flags, positionals }: ScanResult): ParsedArgs {
  */
 function readRenderTitlesArgs({ flags, positionals }: ScanResult): ParsedArgs {
   refusePositionals(positionals);
-  return { record: readRecordFlags(flags), subcommand: 'render-titles' };
+  const projectRoot = readProjectRootFlag(flags);
+  return {
+    ...(projectRoot !== undefined && { projectRoot }),
+    record: readRecordFlags(flags),
+    subcommand: 'render-titles',
+  };
 }
 
 /** Collects every value of a repeatable flag, in the order that the invocation passes them. */
@@ -665,8 +707,10 @@ function readResolveLabelsArgs({ flags, positionals }: ScanResult): ParsedArgs {
   if (bodyFile === '') {
     throw new Error('--body-file requires a value');
   }
+  const projectRoot = readProjectRootFlag(flags);
   return {
     ...(bodyFile !== undefined && { bodyFile }),
+    ...(projectRoot !== undefined && { projectRoot }),
     record: readRecordFlags(flags),
     subcommand: 'resolve-labels',
   };
@@ -773,6 +817,16 @@ function refuseUnverifiableTemplates(templates: Record<Surface, string>, taxonom
 /** Renders one template against the record; an unconfigured surface renders empty rather than compiling nothing. */
 function renderTemplate(template: string, record: ChangeRecord): string {
   return template === '' ? '' : render(compileTemplate(template), record);
+}
+
+/**
+ * Resolves the run's project root: the directory that `--project-root` names when the invocation passes one, and the
+ * repository root of the invoking directory otherwise.
+ */
+function resolveRunProjectRoot(input: RunInput): { projectRoot: string; warning?: string } {
+  return input.projectRoot === undefined
+    ? resolveProjectRoot(input.cwd, input.git)
+    : { projectRoot: input.projectRoot };
 }
 
 /**
@@ -1012,13 +1066,19 @@ async function runResolveLabels(
   args: { bodyFile?: string; record: ChangeRecord },
   input: RunInput,
 ): Promise<DescribeResult> {
-  const { projectRoot, warning } = resolveProjectRoot(input.cwd, input.git);
+  const { projectRoot, warning } = resolveRunProjectRoot(input);
   const body =
     args.bodyFile === undefined ? { entries: [], warnings: [] } : await readBodyEntries(input.cwd, args.bodyFile);
   const warnings = [...(warning === undefined ? [] : [warning]), ...body.warnings];
-  const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));
-  const labels = resolveLabels({ entries: body.entries, labelMap, record: normalizeChangeRecord(args.record) });
-  const output: ResolveLabelsOutcome = { labels };
+  const labelMapPath = path.join(projectRoot, '.meta', 'label-map.json');
+  const labelMap = await readLabelMap(labelMapPath);
+  const labelInput = { entries: body.entries, labelMap, record: normalizeChangeRecord(args.record) };
+  const unmapped = findUnmappedKeys(labelInput);
+  warnings.push(
+    ...unmapped.types.map((key) => `label map ${labelMapPath} does not define type "${key}"; no label applied`),
+    ...unmapped.scopes.map((key) => `label map ${labelMapPath} does not define scope "${key}"; no label applied`),
+  );
+  const output: ResolveLabelsOutcome = { labels: resolveLabels(labelInput) };
   return { output, warnings };
 }
 

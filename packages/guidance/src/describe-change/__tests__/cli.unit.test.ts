@@ -1108,6 +1108,31 @@ describe('resolve-labels', () => {
     expect(output).toStrictEqual({ labels: ['fix', 'breaking', 'scope:agents'] });
   });
 
+  it('warns once for each type and scope that the label map does not define, and labels the rest', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+    const mapPath = join(cwd, '.meta', 'label-map.json');
+
+    const argv = ['resolve-labels', '--scope', 'guidance', '--type', 'docs!'];
+    const { output, warnings } = await runDescribe({ argv, cwd, git, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['breaking'] });
+    expect(warnings).toStrictEqual([
+      `label map ${mapPath} does not define type "docs"; no label applied`,
+      `label map ${mapPath} does not define scope "guidance"; no label applied`,
+    ]);
+  });
+
+  it('does not warn about an undefined key when the repository does not configure a label map', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    const argv = ['resolve-labels', '--scope', 'guidance', '--type', 'feat'];
+    const { output, warnings } = await runDescribe({ argv, cwd, git, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: [] });
+    expect(warnings).toStrictEqual([]);
+  });
+
   it('warns and labels the record alone when the block is malformed', async () => {
     const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
     await writeLabelMap(cwd, LABEL_MAP);
@@ -1141,7 +1166,6 @@ describe('resolve-labels', () => {
     { argv: ['--type', 'feat!'], labels: ['feature', 'breaking'] },
     { argv: ['--scope', 'kb', '--type', 'feat'], labels: ['feature', 'scope:kb'] },
     { argv: ['--scope', '*', '--type', 'feat'], labels: ['feature'] },
-    { argv: ['--scope', 'unmapped', '--type', 'docs'], labels: [] },
   ])('without a body file, labels the record alone: $argv', async ({ argv, labels }) => {
     const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
     await writeLabelMap(cwd, LABEL_MAP);
@@ -1192,6 +1216,71 @@ describe('resolve-labels', () => {
   });
 });
 
+describe('--project-root', () => {
+  const TARGET_TEMPLATES = "ticket:\n  title_format: '[{scope}|]{title}'";
+
+  it('renders titles from the named root’s templates rather than the invoking repository’s', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    const target = await makeRoot(TARGET_TEMPLATES);
+
+    const argv = ['render-titles', '--project-root', target, '--scope', 'kb', '--title', 'Add foo'];
+    const { output, warnings } = await runDescribe({ argv, cwd, git, dataDir: DATA_DIR, home });
+
+    expect(output).toMatchObject({ commit_title: '', ticket_title: 'kb|Add foo' });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('resolves labels through the named root’s label map rather than the invoking repository’s', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+    const target = await makeRoot('');
+    await writeLabelMap(target, { scopes: { guidance: 'scope:guidance' }, types: { feat: 'enhancement' } });
+
+    const argv = ['resolve-labels', '--project-root', target, '--scope', 'guidance', '--type', 'feat'];
+    const { output, warnings } = await runDescribe({ argv, cwd, git, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['enhancement', 'scope:guidance'] });
+    expect(warnings).toStrictEqual([]);
+  });
+
+  it('resolves a relative root against the invoking directory', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(join(cwd, 'target'), { scopes: {}, types: { fix: 'bug' } });
+
+    const argv = ['resolve-labels', '--project-root', 'target', '--type', 'fix'];
+    const { output } = await runDescribe({ argv, cwd, git, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['bug'] });
+  });
+
+  it('refuses a root that does not exist, naming it', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    const missing = join(cwd, 'absent');
+
+    await expect(
+      runDescribe({ argv: ['resolve-labels', '--project-root', missing], cwd, git, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(`--project-root ${missing} cannot be read`);
+  });
+
+  it('refuses a root that is a file', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    const file = join(cwd, '.agents', 'preferences.yaml');
+
+    await expect(
+      runDescribe({ argv: ['render-titles', '--project-root', file], cwd, git, dataDir: DATA_DIR, home }),
+    ).rejects.toThrow(`--project-root ${file} is not a directory`);
+  });
+
+  it('refuses an empty value', () => {
+    expect(() => parseArgs(['render-titles', '--project-root', ' '])).toThrow('--project-root requires a value');
+  });
+
+  it('is refused as unknown by a subcommand other than render-titles and resolve-labels', () => {
+    expect(() => parseArgs(['consolidate-branch', '--base', 'main', '--project-root', '.'])).toThrow(
+      'unknown flag: --project-root',
+    );
+  });
+});
 describe('resolve-effective-record', () => {
   it('reads the record flags and every override flag', () => {
     const parsed = parseArgs([
@@ -1930,6 +2019,13 @@ async function makePullRequestRepo(
 }
 
 /** Creates a project root with `content` as its preferences and a fake git rooted there, plus an empty global home. */
+/** Creates a directory standing in for another repository's root, with the given preferences. */
+async function makeRoot(content: string): Promise<string> {
+  const root = await mkdtemp(join(tmpdir(), 'describe-change-root-'));
+  await writeAgentsPreferences(root, content);
+  return root;
+}
+
 async function makeRepo(content: string): Promise<{ cwd: string; git: FakeGit; home: string }> {
   const cwd = await mkdtemp(join(tmpdir(), 'describe-change-repo-'));
   await writeAgentsPreferences(cwd, content);
