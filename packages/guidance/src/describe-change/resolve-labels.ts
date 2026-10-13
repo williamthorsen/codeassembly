@@ -17,29 +17,74 @@ import { BREAKING_LABEL, type LabelMap, type LabelSection } from './read-label-m
  * configure any label at all yields none, `breaking` included, since a repository without a label map does not have
  * any labels to apply.
  */
-export function resolveLabels(input: {
-  entries: readonly ChangeEntry[];
-  labelMap: LabelMap;
-  record: ChangeRecord;
-}): string[] {
+export function resolveLabels(input: LabelInput): string[] {
   const { entries, labelMap, record } = input;
-  if (Object.keys(labelMap.types).length === 0 && Object.keys(labelMap.scopes).length === 0) {
+  if (isUnconfigured(labelMap)) {
     return [];
   }
 
+  const keys = collectKeys(input);
   const isBreaking = record.breaking === true || entries.some((entry) => entry.breaking);
   const labels = [
-    ...lookUpLabels(labelMap.types, [record.type, ...entries.map((entry) => entry.type)]),
+    ...lookUpLabels(labelMap.types, keys.types),
     ...(isBreaking ? [BREAKING_LABEL] : []),
-    ...lookUpLabels(labelMap.scopes, [
-      record.scope,
-      ...dropIncidentalRoot(entries.flatMap((entry) => entry.scopes.flatMap((scope) => splitScopes(scope)))),
-    ]),
+    ...lookUpLabels(labelMap.scopes, keys.scopes),
   ];
   return [...new Set(labels)];
 }
 
+/**
+ * Finds each type and scope that the change names and that a configured map does not define, each once and in the
+ * order that `resolveLabels` reads them. A map that does not configure any label reports none, since such a repository
+ * does not apply any labels.
+ */
+export function findUnmappedKeys(input: LabelInput): { scopes: string[]; types: string[] } {
+  if (isUnconfigured(input.labelMap)) {
+    return { scopes: [], types: [] };
+  }
+  const keys = collectKeys(input);
+  return {
+    scopes: findMissingKeys(input.labelMap.scopes, keys.scopes),
+    types: findMissingKeys(input.labelMap.types, keys.types),
+  };
+}
+
+/** What a change's labels are resolved from. */
+export interface LabelInput {
+  entries: readonly ChangeEntry[];
+  labelMap: LabelMap;
+  record: ChangeRecord;
+}
+
 // region | Helpers
+
+/** Lists the type keys and the scope keys that the record and the entries name, the record's first. */
+function collectKeys(input: LabelInput): { scopes: Array<string | undefined>; types: Array<string | undefined> } {
+  const { entries, record } = input;
+  return {
+    scopes: [
+      record.scope,
+      ...dropIncidentalRoot(entries.flatMap((entry) => entry.scopes.flatMap((scope) => splitScopes(scope)))),
+    ],
+    types: [record.type, ...entries.map((entry) => entry.type)],
+  };
+}
+
+/** Lists each trimmed key that the section does not define, skipping an absent key, an empty one, and `*`. */
+function findMissingKeys(section: LabelSection, keys: ReadonlyArray<string | undefined>): string[] {
+  const missing = keys.flatMap((key) => {
+    const trimmed = key?.trim();
+    return trimmed === undefined || trimmed === '' || trimmed === '*' || Object.hasOwn(section, trimmed)
+      ? []
+      : [trimmed];
+  });
+  return [...new Set(missing)];
+}
+
+/** Reports whether the map does not configure any label in either section. */
+function isUnconfigured(labelMap: LabelMap): boolean {
+  return Object.keys(labelMap.types).length === 0 && Object.keys(labelMap.scopes).length === 0;
+}
 
 /** Maps each key to the label that the section names for it, skipping a key that is absent, `*`, or unmapped. */
 function lookUpLabels(section: LabelSection, keys: ReadonlyArray<string | undefined>): string[] {

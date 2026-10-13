@@ -1108,6 +1108,31 @@ describe('resolve-labels', () => {
     expect(output).toStrictEqual({ labels: ['fix', 'breaking', 'scope:agents'] });
   });
 
+  it('warns once for each type and scope that the label map does not define, and labels the rest', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    await writeLabelMap(cwd, LABEL_MAP);
+    const mapPath = join(cwd, '.meta', 'label-map.json');
+
+    const argv = ['resolve-labels', '--scope', 'guidance', '--type', 'docs!'];
+    const { output, warnings } = await runDescribe({ argv, cwd, git, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: ['breaking'] });
+    expect(warnings).toStrictEqual([
+      `label map ${mapPath} does not define type "docs"; no label applied`,
+      `label map ${mapPath} does not define scope "guidance"; no label applied`,
+    ]);
+  });
+
+  it('does not warn about an undefined key when the repository does not configure a label map', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+
+    const argv = ['resolve-labels', '--scope', 'guidance', '--type', 'feat'];
+    const { output, warnings } = await runDescribe({ argv, cwd, git, dataDir: DATA_DIR, home });
+
+    expect(output).toStrictEqual({ labels: [] });
+    expect(warnings).toStrictEqual([]);
+  });
+
   it('warns and labels the record alone when the block is malformed', async () => {
     const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
     await writeLabelMap(cwd, LABEL_MAP);
@@ -1141,7 +1166,6 @@ describe('resolve-labels', () => {
     { argv: ['--type', 'feat!'], labels: ['feature', 'breaking'] },
     { argv: ['--scope', 'kb', '--type', 'feat'], labels: ['feature', 'scope:kb'] },
     { argv: ['--scope', '*', '--type', 'feat'], labels: ['feature'] },
-    { argv: ['--scope', 'unmapped', '--type', 'docs'], labels: [] },
   ])('without a body file, labels the record alone: $argv', async ({ argv, labels }) => {
     const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
     await writeLabelMap(cwd, LABEL_MAP);

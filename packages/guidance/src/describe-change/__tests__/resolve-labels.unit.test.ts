@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { ChangeEntry } from '../change-entries.ts';
 import type { LabelMap } from '../read-label-map.ts';
-import { resolveLabels } from '../resolve-labels.ts';
+import { findUnmappedKeys, resolveLabels } from '../resolve-labels.ts';
 
 const MAP: LabelMap = {
   scopes: { agents: 'scope:agents', kb: 'scope:kb', root: 'scope:root' },
@@ -96,6 +96,41 @@ describe(resolveLabels, () => {
     expect(resolveLabels({ entries, labelMap: { scopes: {}, types: {} }, record: { breaking: true } })).toStrictEqual(
       [],
     );
+  });
+});
+
+describe(findUnmappedKeys, () => {
+  it('reports each type and scope that the map does not define, once, in the order that the change names them', () => {
+    const entries = [
+      buildEntry({ scopes: ['fleet', 'agents'], type: 'perf' }),
+      buildEntry({ scopes: ['fleet'], type: 'perf' }),
+    ];
+
+    expect(findUnmappedKeys({ entries, labelMap: MAP, record: { scope: 'guidance', type: 'tests' } })).toStrictEqual({
+      scopes: ['guidance', 'fleet'],
+      types: ['tests', 'perf'],
+    });
+  });
+
+  it('does not report a scope of *, an empty key, or a root that the entries set aside', () => {
+    const map: LabelMap = { scopes: { agents: 'scope:agents' }, types: { feat: 'feature' } };
+    const entries = [
+      buildEntry({ scopes: ['*', 'agents'], type: 'feat' }),
+      buildEntry({ scopes: ['root'], type: 'feat' }),
+    ];
+
+    expect(findUnmappedKeys({ entries, labelMap: map, record: { scope: ' ', type: 'feat' } })).toStrictEqual({
+      scopes: [],
+      types: [],
+    });
+  });
+
+  it('does not report any key when the map does not configure any label', () => {
+    const entries = [buildEntry({ scopes: ['agents'], type: 'feat' })];
+
+    expect(
+      findUnmappedKeys({ entries, labelMap: { scopes: {}, types: {} }, record: { scope: 'kb', type: 'fix' } }),
+    ).toStrictEqual({ scopes: [], types: [] });
   });
 });
 

@@ -42,7 +42,7 @@ import { MissingCommitError, readCommits } from './read-commits.ts';
 import { readDeclaredScopes } from './read-declared-scopes.ts';
 import { readLabelMap, resolveLabeledRecord } from './read-label-map.ts';
 import { renderDetails } from './render-details.ts';
-import { resolveLabels } from './resolve-labels.ts';
+import { findUnmappedKeys, resolveLabels } from './resolve-labels.ts';
 import { type MergeInput, type MergeOverrides, resolveMerge, type ResolveMergeOutcome } from './resolve-merge.ts';
 import { discoverWorkspaceDirs, mergeScopeDirs, resolveScopes } from './resolve-scopes.ts';
 import { resolveTicketType } from './resolve-ticket-type.ts';
@@ -1016,9 +1016,15 @@ async function runResolveLabels(
   const body =
     args.bodyFile === undefined ? { entries: [], warnings: [] } : await readBodyEntries(input.cwd, args.bodyFile);
   const warnings = [...(warning === undefined ? [] : [warning]), ...body.warnings];
-  const labelMap = await readLabelMap(path.join(projectRoot, '.meta', 'label-map.json'));
-  const labels = resolveLabels({ entries: body.entries, labelMap, record: normalizeChangeRecord(args.record) });
-  const output: ResolveLabelsOutcome = { labels };
+  const labelMapPath = path.join(projectRoot, '.meta', 'label-map.json');
+  const labelMap = await readLabelMap(labelMapPath);
+  const labelInput = { entries: body.entries, labelMap, record: normalizeChangeRecord(args.record) };
+  const unmapped = findUnmappedKeys(labelInput);
+  warnings.push(
+    ...unmapped.types.map((key) => `label map ${labelMapPath} does not define type "${key}"; no label applied`),
+    ...unmapped.scopes.map((key) => `label map ${labelMapPath} does not define scope "${key}"; no label applied`),
+  );
+  const output: ResolveLabelsOutcome = { labels: resolveLabels(labelInput) };
   return { output, warnings };
 }
 
