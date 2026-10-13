@@ -1,7 +1,7 @@
 ---
 slug: shared-data-conventions
 description: 'Changes to shared data: unmerged code never writes to a shared store, and a change to the shape of persisted data proceeds as expand, migrate, contract. Consult before planning, implementing, or reviewing a change that alters the shape of persisted data or writes to a shared store.'
-delivery: [ambient, skill]
+delivery: [skill]
 version: '1'
 ---
 

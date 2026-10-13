@@ -109,13 +109,14 @@ function buildAlwaysResolvingResolver(dir: string): SourceResolver {
 }
 
 /**
- * Writes a rulebook frontmatter file under `contentDir`, with `body` following its frontmatter and `extraFrontmatter`
- * appended to the slug line.
+ * Writes an ambient rulebook under `contentDir`, with `body` following its frontmatter and `extraFrontmatter` appended
+ * to the slug and delivery lines.
  */
 async function writeRulebook(contentDir: string, slug: string, body: string, extraFrontmatter = ''): Promise<void> {
   const filePath = path.join(contentDir, 'guidance', 'rulebooks', `${slug}.md`);
   await mkdir(path.dirname(filePath), { recursive: true });
-  const frontmatter = extraFrontmatter === '' ? `slug: ${slug}` : `slug: ${slug}\n${extraFrontmatter}`;
+  const declared = `slug: ${slug}\ndelivery: ambient`;
+  const frontmatter = extraFrontmatter === '' ? declared : `${declared}\n${extraFrontmatter}`;
   await writeFile(filePath, `---\n${frontmatter}\n---\n\n${body}\n`, 'utf8');
 }
 

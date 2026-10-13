@@ -16,6 +16,7 @@ Evaluation criteria for code review. Apply proportionally: Match depth to risk.
 
 - **Correctness**: Logic errors, unhandled error paths, data loss risks
 - **Data changes**: A change that removes or renames data that deployed code still reads, or that depends on a migration run before merge (see {rulebook:shared-data-conventions})
+- **Interfaces**: A change that defines or changes colour tokens, text styles, or a page or UI component (see {rulebook:accessibility-conventions})
 - **Conventions**: Adherence to codebase patterns and project standards
 - **Edge cases**: Boundary conditions, empty collections, zero values, undefined states
 - **Test coverage**: Adequate tests for new functionality; tests that verify behavior and earn their place, not just coverage
@@ -89,6 +90,10 @@ The same defects in tests that the change neither adds nor supersedes are Legacy
 ## Noisy tests
 
 A test that the change adds and that writes output on a passing run is a Suggestion, and its proposed change is the interception that the `testing-conventions` skill describes. The diff does not show runtime output: Read the test run's output when one is available, and otherwise read for logging calls on the paths that the test exercises. A noisy test that the change does not add is Legacy.
+
+## Always-loaded context
+
+A change that adds to what every session loads is a Warning unless nearly every session needs the content, and a ticket that asks for the change does not exempt it. Such a change makes a rulebook ambient, adds an ambient rulebook to a collection or a `codeassembly.yaml` declaration, or grows an `AGENTS.md`, a `CLAUDE.md`, or another file loaded at session start. The proposed change is `skill` or `hook` delivery, or a move of the content into a skill. A skill's or subagent's description is not a finding: Every session needs it to discover what it describes.
 
 ## Finding references
 
