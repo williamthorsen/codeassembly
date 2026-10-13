@@ -7,22 +7,18 @@
  * per-issue comments from a record. The helper does not write anything remote: The skill creates the tickets through
  * `create-ticket` and posts the comments.
  */
-import { execFile } from 'node:child_process';
 import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
-import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
-import { checkLabels } from './labels.ts';
+import { checkLabels, runCommand } from './labels.ts';
 import { renderDispositionsComment, renderIssueComments } from './render.ts';
 import { checkGate, type DispositionsRecord, findMissingTickets, RecordSchema } from './schemas.ts';
 import type { CommandRunner } from './types.ts';
-
-const execFileAsync = promisify(execFile);
 
 /** Everything a command reads from its environment, injected so that tests can supply fixtures. */
 export interface CommandContext {
@@ -69,12 +65,6 @@ async function main(): Promise<void> {
 if (isEntryPoint()) {
   await main();
 }
-
-/** Runs `gh` through `execFile`, with a buffer large enough for a repository's whole label list. */
-export const runCommand: CommandRunner = async (command, args, cwd) => {
-  const { stdout } = await execFileAsync(command, [...args], { cwd, maxBuffer: 16 * 1_024 * 1_024 });
-  return stdout;
-};
 
 /**
  * Runs one command. Invalid arguments, a missing or invalid record, a gate violation, a record whose tickets are not yet
