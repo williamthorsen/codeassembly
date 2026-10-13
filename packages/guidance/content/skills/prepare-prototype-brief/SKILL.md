@@ -47,6 +47,12 @@ A builder draws every noun in the brief. Say what the viewer must be able to lea
 
 The same holds for the verbs `state`, `say`, `tell`, and `explain`. A requirement that the page states something before the first field is met most cheaply by a sentence under the heading. Write what the viewer must be able to learn and at what moment, such as "which scopes a preset grants, visible before a token is created", and let the builder choose whether a label, a column, or a control carries it.
 
+### Describe only what the audience sees
+
+In an instruction for an audience-facing view, describe what the audience sees. When information is intended to be unknown to the audience, do not include or reference it in audience-facing material.
+
+The failure that this prevents: an element on the audience view whose job is to point at or stand for the withheld information.
+
 ### Keep the brief out of the page
 
 Nothing in the brief is product copy. State in the brief that a builder never quotes the brief, the scenes, the lens, or an audit into the page, and that the text on the product surface follows {rulebook:ui-copy-conventions}.
@@ -120,6 +126,7 @@ Write the brief to `{scratch_dir}/brief.md`. Then check it against each rule abo
 - Every criterion: in "How this round is judged" and nowhere else.
 - Every `show`, `display`, `present`: followed by a requirement to render.
 - Every instrument noun in an audience-facing instruction (clock, gauge, meter, counter, bar): replaced by the information and its precision.
+- Every `do not know`, `mystery`, `unknown to`, `without knowing` in an audience-facing instruction: rewritten as what the audience sees, without the withheld information.
 - `cost`, `price`, `free`, `cheap`, `budget`: absent, or present once in the judging section.
 - Every `state`, `say`, `tell`, `explain` in a requirement: rewritten as what the viewer can learn and at what moment.
 - Salience order, the accessibility floor, and the copy rules: named in the quality bar, and the copy rules named again in "How this round is judged".
