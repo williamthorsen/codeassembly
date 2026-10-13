@@ -42,23 +42,36 @@ gh pr create \
   --body-file "$body_path" \
   --base "{base_branch}" \
   --draft \
+  --assignee "@me" \
   {label_flags}
 ```
 
-`gh pr create` prints the pull-request URL. Read it from the command's output and include it in step 4's artifact and the completion line; never capture it into a shell variable.
+`--assignee "@me"` assigns the pull request to the authenticated `gh` user, who is the developer creating it.
 
-### 3. Handle label failures
+`gh pr create` prints the pull-request URL. Read it from the command's output and include it in step 5's artifact and the completion line; never capture it into a shell variable.
 
-If `gh pr create` fails and the error indicates one or more labels are invalid:
+### 3. Handle label and assignee failures
 
-1. Identify the failing label(s) from the error message.
-2. Remove the failing labels from the `--label` flags.
-3. Retry `gh pr create` without the failing labels, re-stating the assignment and the guard for the same scratch file; do not rewrite the body or inline it.
-4. Record which labels were skipped.
+If `gh pr create` fails and the error indicates that one or more labels are invalid, or that the assignee cannot be assigned:
 
-If the failure is unrelated to labels, report the error and stop.
+1. Identify the failing labels, the assignee, or both from the error message.
+2. Remove the failing `--label` flags, and remove `--assignee` if the assignee failed.
+3. Retry `gh pr create` once without them, re-stating the `body_path` assignment and the guard for the same scratch file; do not rewrite the body or inline it.
+4. Record which labels were skipped, and whether the assignee was skipped, with the reason from the error.
 
-### 4. Save PR artifact
+If the failure is unrelated to labels and the assignee, report the error and stop.
+
+### 4. Read back the assignee
+
+`gh` can create the pull request without applying an assignee that it cannot assign, so read the applied assignee from the created pull request rather than assuming it:
+
+```bash
+gh pr view {PR URL} --json assignees --jq '[.assignees[].login] | join(", ")'
+```
+
+An empty result means that the pull request has no assignee: Record the assignee as skipped, with the reason "not applied by GitHub" unless step 3 already recorded one.
+
+### 5. Save PR artifact
 
 Save a `pull-request` artifact in the ticket directory.
 
@@ -86,6 +99,7 @@ Created: {YYYY-MM-DD HH:MMZ}
 Labels attempted: {comma-separated list, or "none"}
 Labels applied: {comma-separated list, or "none"}
 Labels skipped: {comma-separated list, or "none"}
+Assignee: {login read back in step 4, or "none"}
 
 ## Body
 
@@ -98,6 +112,7 @@ Labels skipped: {comma-separated list, or "none"}
 PR created: {URL}
 Labels applied: {list}                  <- only if labels were requested
 Labels skipped: {list}                  <- only if any labels failed
+Assignee skipped: {reason}              <- only if the pull request has no assignee
 Artifact saved: {artifact path}
 ```
 
