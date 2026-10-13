@@ -19,8 +19,23 @@ Create a ticket on the appropriate platform. The remote platform (e.g., GitHub) 
 | `--blocked-by <refs>` | Mark the new ticket as blocked by the referenced tickets.                                     |
 | `--blocking <refs>`   | Mark the new ticket as blocking the referenced tickets.                                       |
 | `--label <labels>`    | Apply these labels with the ones that step 5 resolves. GitHub only.                           |
+| `--repo <OWNER/REPO>` | File the ticket in this GitHub repository. See [Another repository](#another-repository).     |
 
 The three relationship arguments take ticket references in the project's own form (`#123`, `ABC-123`), comma-separated when more than one applies. Each is optional, and each overrides the inference in step 4 for its own relationship. `--label` takes label names, comma-separated, exactly as the repository spells them.
+
+### Another repository
+
+`--repo` files the ticket in another GitHub repository, and every step resolves against that repository rather than the session's: its configuration, its issues, and its artifact directory. Compare the value with `gh repo view --json nameWithOwner --jq .nameWithOwner`, ignoring case; when the two name the same repository, drop `--repo` and run as though it were absent.
+
+Otherwise, resolve the target before step 1:
+
+```bash
+node {harness_home_dir}/skills/create-ticket/resolve-ticket-target.mjs --repo {OWNER/REPO}
+```
+
+It prints `{"repo": "...", "projectRoot": "...", "projectSlug": "...", "ticketRefPrefix": "...", "missing": [...]}`. `repo` is the canonical `OWNER/REPO`, used as `{target_repo}` below. `projectRoot` is a directory that holds the target's `.meta/label-map.json` and `.agents/preferences.yaml` as its default branch contains them; `missing` names each that it does not contain, and the completion output reports each. On a non-zero exit, nothing has been created: Report the helper's stderr and stop.
+
+The steps below state what changes for a target repository. A step that does not mention it runs unchanged.
 
 <!-- guidance-hook: ticketing-preferences -->
 
@@ -33,6 +48,8 @@ Get `project_slug` and `artifact_base_dir` -- but NOT the new ticket's `ticket_i
 - Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `project_slug`, `artifact_base_dir`, and `ticket_base_url` from the manifest JSON emitted on stdout
 - From the same manifest JSON, also read `ticket_id` as `branch_ticket_id`, the ticket from which the current branch is derived (empty when the branch name does not encode a ticket). The step-4 inference and the step-6 guard both read it; the new ticket's authoritative `ticket_id` still comes from the platform in step 6. Read `branch_name` and `default_branch` too, which the step-6 guard compares.
 - Read `project.ticket_ref_prefix` from `.agents/preferences.yaml` (e.g., `CODY-`); if absent, default to empty string
+
+For a [target repository](#another-repository), take `project_slug` from the helper's `projectSlug` and `ticket_ref_prefix` from its `ticketRefPrefix` instead. `artifact_base_dir` stays the session's.
 
 ### 2. Write ticket content
 
@@ -62,7 +79,11 @@ Then decide the ticket's scope and type, for use in steps 5 and 6. The type is t
 
 <!-- include: ../../_partials/work-type-choice.md / -->
 
+For a [target repository](#another-repository), the scope is a key of the `scopes` section in `{projectRoot}/.meta/label-map.json`, or `*` when the target does not have a label map.
+
 ### 3. Resolve platform
+
+For a [target repository](#another-repository), the platform is GitHub: Skip this step.
 
 Determine where to create the remote ticket:
 
@@ -88,6 +109,8 @@ Three relationships are available, each stated from the new ticket's side:
 
 Decide which apply from the reason this ticket is being created, narrowed by `branch_ticket_id` (step 1): Work split out of the current branch's ticket relates to it, and a backlog idea raised in passing does not. An argument supplied by the caller replaces the inference for its own relationship.
 
+For a [target repository](#another-repository), do not infer any relationship from `branch_ticket_id`, which identifies a ticket in the session's repository; apply only those that the arguments state. A reference resolves in the target, so a ticket in any other repository is passed as its URL.
+
 **Most tickets have none, and for those, say nothing.** When nothing applies, continue to step 5 without asking.
 
 When one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so that a wrong target is visible while it is still free to correct. A relationship supplied through an argument is one that the caller has already confirmed: State it in the completion output and do not ask about it; the confirmation covers the inferred relationships alone. If the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
@@ -101,6 +124,8 @@ If the platform resolved in step 3 is GitHub, resolve the labels from the scope 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs resolve-labels --scope "{scope}" --type "{type}"
 ```
+
+For a [target repository](#another-repository), add `--project-root "{projectRoot}"`, so that the labels come from the target's label map.
 
 Read `labels` from the output, `{"labels":["feature","breaking","scope:agents"]}`; [`resolve-labels`](../_data/title-templates.md#resolve-labels) states what it contains. When the list is empty, the create call does not apply any labels. Relay any warning that the run writes to stderr.
 
@@ -121,6 +146,8 @@ node {harness_home_dir}/scripts/describe-change.mjs render-titles --title "{titl
   | python3 -c "import sys,json; print(json.load(sys.stdin).get('ticket_title',''))"
 ```
 
+For a [target repository](#another-repository), add `--project-root "{projectRoot}"`, so that the title follows the target's `ticket.title_format`.
+
 Use a JSON parser (python3 above; `jq -r '.ticket_title'` if `jq` is available) instead of `grep`/`cut` because rendered titles may contain backslash-escaped double quotes (`\"`), which a regex extractor would silently truncate.
 
 The pipeline prints the rendered title. Read it from the command's output and write it into the create call below as literal text, as the GitHub issue title or the Jira summary; it already includes any prefix (per the configured `ticket.title_format`) and the bare title text. Assigning the parse instead prints nothing, and a shell variable does not survive to the create call, so a call that reads `$ticket_title` submits an empty title. If the script is not found, fall back to the bare `{title}`.
@@ -132,8 +159,10 @@ Write the body to a scratch file per [gh body file](#gh-body-file), naming it `g
 ```bash
 body_path="{absolute path from the write step}"
 [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
-gh issue create --title "{ticket_title}" --body-file "$body_path" {label_flags}
+gh issue create --title "{ticket_title}" --body-file "$body_path" {label_flags} {repo_flag}
 ```
+
+`{repo_flag}` is `--repo {target_repo}` for a [target repository](#another-repository), and empty otherwise; steps 7 and 9 pass it to `gh` the same way.
 
 `gh issue create` prints the issue URL. Read it from the command's output; the issue number is its final path segment. Never capture either into a shell variable.
 
@@ -187,6 +216,8 @@ Identify the client per {skill?:update-jira-ticket}, which ranks the three clien
 
 #### Persist the branch association
 
+For a [target repository](#another-repository), skip this section and report the skip, e.g. `Ticket {target_repo}#{number} filed in another repository; skipped branch-manifest association.` The `ticket_id` comparison below would match a target issue whose number equals the branch's ticket ID.
+
 Persist the new ticket's URL into the branch manifest so that later sessions reuse it (see [ticket source resolution](../_data/ticket-source-resolution.md#stored-ticket-url)), but only when the new ticket belongs to the current branch. Compare `branch_ticket_id` (step 1) against the `ticket_id` produced by the path above, and `branch_name` against `default_branch` (both step 1). The second comparison strips `default_branch`'s remote first, taking everything after its first `/`, since `default_branch` is remote-qualified (`origin/main`) whereas `branch_name` is bare (`main`). Comparing the two as written does not match on any branch and silently disables the guard.
 
 - When the branch is not the default branch, and `branch_ticket_id` is either empty (the branch name does not encode a ticket) or equal to `ticket_id` (the branch is already linked to this ticket), persist:
@@ -218,7 +249,7 @@ Otherwise apply relationships after the ticket exists rather than as part of cre
 One call applies every relationship decided:
 
 ```bash
-gh issue edit {number} --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}"
+gh issue edit {number} --parent "{parent}" --add-blocked-by "{blocked_by}" --add-blocking "{blocking}" {repo_flag}
 ```
 
 Omit the flag for any relationship that step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
@@ -311,7 +342,7 @@ Then attach it as a comment on the remote ticket, through the platform resolved 
 ```bash
 body_path="{absolute path from the write step}"
 [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
-gh issue comment {number} --body-file "$body_path"
+gh issue comment {number} --body-file "$body_path" {repo_flag}
 ```
 
 **Jira.** Comment through the client that created the work item, in the format assigned to that client by {skill?:update-jira-ticket}: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file. Flatten task lists for a connected tool as [Create the work item](#create-the-work-item) states.
@@ -356,6 +387,7 @@ Relationships: {list}                      <- only if any were created
 Relationships skipped: {list with reasons} <- only if any were skipped
 Labels skipped: {labels}                   <- only when `--label` was given on the Jira path
 Branch association skipped: {reason}       <- only when the step-6 guard skipped the persist
+Target configuration missing: {files}      <- only when the target's default branch lacks a file in `missing`
 ```
 
 Nothing else.
