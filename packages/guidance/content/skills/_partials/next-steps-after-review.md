@@ -206,10 +206,10 @@ Proposed edits to the source:
 
 1. 🚀 ■■□ Implement directly and commit
 2. 📋 ■□□ Ask the author to address the findings
-3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
+3. 📋🔍 ■□□ Wait for the author to address the findings, then {skill?:review-branch}
 4. 🎫 ■□□ Create a follow-up ticket
 
-If the author is an agent, run `respond-to-review` in that session.
+If the author is an agent, run {skill?:respond-to-review} in that session.
 ```
 
 Local-branch variant, rendered when a finding names alternatives that the author owns. The entry states the alternatives; choosing option 1 hands that call to whoever implements:
@@ -225,10 +225,10 @@ Proposed edits to the source:
 
 1. 🚀 ■□□ Implement directly and commit
 2. 📋 ■■□ Ask the author to address the findings
-3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
+3. 📋🔍 ■□□ Wait for the author to address the findings, then {skill?:review-branch}
 4. 🎫 ■□□ Create a follow-up ticket
 
-If the author is an agent, run `respond-to-review` in that session.
+If the author is an agent, run {skill?:respond-to-review} in that session.
 ```
 
 Local-branch variant, rendered when three findings naming a single change each appear next to one separable recommendation. The ticket option's findings keep their entries, since the user is consenting to their disposition too:
@@ -250,10 +250,10 @@ Proposed edits to the source:
 
 1. 🚀 ■■□ Implement directly and commit
 2. 📋 ■□□ Ask the author to address the findings
-3. 📋🔍 ■□□ Wait for the author to address the findings, then `review-branch`
+3. 📋🔍 ■□□ Wait for the author to address the findings, then {skill?:review-branch}
 4. 🎫 ■□□ Create a follow-up ticket for R2
 
-If the author is an agent, run `respond-to-review` in that session.
+If the author is an agent, run {skill?:respond-to-review} in that session.
 ```
 
 PR variant, rendered for the default case. "Implement directly and commit" is on the menu, so the preview renders here too:
