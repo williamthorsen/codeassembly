@@ -23,6 +23,10 @@ const DeliveryModeSchema = z.enum(['ambient', 'hook', 'skill']);
  */
 const DELIVERY_ERROR = "delivery must be 'ambient', 'hook', or 'skill', or a non-empty list of them";
 
+/** The rejection reported for a rulebook that omits `delivery`, which every rulebook declares. */
+const DELIVERY_MISSING_ERROR =
+  "delivery is required: declare 'ambient', 'hook', or 'skill', or a non-empty list of them";
+
 /** The rejection reported for a non-string `version`: The schema received it as a number, so quoting is the fix. */
 const VERSION_TYPE_ERROR = "version must be quoted (e.g. version: '1.10'); unquoted, 1.10 is read as the number 1.1";
 
@@ -48,8 +52,9 @@ export const RulebookFrontmatterSchema = z.object({
   delivery: z
     // The message is declared on the union rather than on `DeliveryModeSchema`, whose own message a union discards.
     // `.min(1)` rejects an empty list, which would otherwise parse without naming any route.
-    .union([DeliveryModeSchema, z.array(DeliveryModeSchema).min(1, DELIVERY_ERROR)], { error: DELIVERY_ERROR })
-    .default('ambient')
+    .union([DeliveryModeSchema, z.array(DeliveryModeSchema).min(1, DELIVERY_ERROR)], {
+      error: (issue) => (issue.input === undefined ? DELIVERY_MISSING_ERROR : DELIVERY_ERROR),
+    })
     .transform((value) => (typeof value === 'string' ? [value] : value)),
   version: z.string({ error: VERSION_TYPE_ERROR }).refine(isRenderableVersion, VERSION_SHAPE_ERROR).optional(),
   [SUPPORTED_HARNESSES_KEY]: z.unknown().transform(normalizeSupportedHarnesses).optional(),
