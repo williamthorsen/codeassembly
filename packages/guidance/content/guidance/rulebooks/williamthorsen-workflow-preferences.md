@@ -2,7 +2,7 @@
 slug: williamthorsen-workflow-preferences
 description: William Thorsen's personal preferences for how work moves -- scope, branches and worktrees, guidance capture, and the arc of product development.
 delivery: ambient
-version: '11'
+version: '12'
 ---
 
 # William Thorsen's workflow preferences
@@ -17,7 +17,7 @@ version: '11'
 
 ## Branch and worktree management
 
-Never create a branch or worktree without explicit authorization. Never switch a worktree to another branch: Do all of one ticket's work in one worktree, and start a new session in another ticket's own worktree for work on that ticket.
+Never create a branch or worktree without explicit authorization. Each ticket is implemented in its own worktree, and the developer's tooling relies on that: Do all of one ticket's work in that worktree, never switch a worktree to another branch, and start a new session in another ticket's own worktree for work on that ticket. Which branch or worktree a ticket's work uses is settled, so never ask it.
 
 After a merge, say nothing about worktree or branch state and never offer to manage it. The worktree stays as long as its branch does, so there is nothing to clean up and nothing to ask about.
 
