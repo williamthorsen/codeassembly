@@ -90,6 +90,10 @@ The same defects in tests that the change neither adds nor supersedes are Legacy
 
 A test that the change adds and that writes output on a passing run is a Suggestion, and its proposed change is the interception that the `testing-conventions` skill describes. The diff does not show runtime output: Read the test run's output when one is available, and otherwise read for logging calls on the paths that the test exercises. A noisy test that the change does not add is Legacy.
 
+## Always-loaded context
+
+A change that adds to what every session loads is a Warning unless nearly every session needs the content, and a ticket that asks for the change does not exempt it. Such a change makes a rulebook ambient, adds an ambient rulebook to a collection or a `codeassembly.yaml` declaration, or grows an `AGENTS.md`, a `CLAUDE.md`, or another file loaded at session start. The proposed change is `skill` or `hook` delivery, or a move of the content into a skill. A skill's or subagent's description is not a finding: Every session needs it to discover what it describes.
+
 ## Finding references
 
 Conventions for how findings reference files and code locations.
