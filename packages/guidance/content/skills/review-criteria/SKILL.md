@@ -81,8 +81,8 @@ A test file that the change adds to and leaves past the ceiling in the `testing-
 
 Two defects against the placement rules in the `testing-conventions` skill are Warnings:
 
-- **A misplaced expensive example.** The change adds an example at an expensive tier, and a cheaper tier could observe it. The proposed change moves the case to the cheaper tier. If the change's plan or pull-request description gives a reason that a cheaper tier cannot observe the case, it is not a finding.
-- **A kept superseded suite.** The change adds cheaper coverage, and higher-tier examples that the new coverage supersedes remain. The proposed change deletes those examples. To find them, read each process-spawning or full-fixture example that exercises the logic which the change's new tests cover, and compare its assertions with the new tests.
+- **A misplaced expensive example.** The change adds an example at an expensive tier, and a cheaper tier could observe it. The proposed change moves the case to the cheaper tier. If the change's plan or pull-request description explains why a cheaper tier cannot observe the case, it is not a finding.
+- **A kept superseded suite.** The change adds cheaper coverage but keeps the higher-tier examples that the new coverage supersedes. The proposed change deletes those examples. To find them, read each process-spawning or full-fixture example that exercises the logic which the change's new tests cover, and compare its assertions with the new tests.
 
 The same defects in tests that the change neither adds nor supersedes are Legacy.
 
