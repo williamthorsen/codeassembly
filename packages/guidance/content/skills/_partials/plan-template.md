@@ -50,7 +50,7 @@
 
 `## Dependencies` (external dependencies or blockers) is the one optional section: Insert it between `## Risks` and `## Verification` only when the plan has external blockers, and omit it otherwise.
 
-**Per-task test criterion:** When a task creates or modifies testable behavior, its acceptance criteria must include a test criterion (e.g., "New/modified behavior is covered by tests"). Omit it when the change falls entirely within the carve-outs defined in the `testing-conventions` skill, or when the only tests it would compel are ones that fail that skill's bar for earning a place.
+**Per-task test criterion:** When a task creates or modifies testable behavior, its acceptance criteria must include a test criterion that asks for coverage at the cheapest tier that observes the behavior, per the placement rules in the `testing-conventions` skill (e.g., "New/modified behavior is covered by tests at the cheapest tier that observes it"). Omit it when the change falls entirely within the carve-outs defined in the `testing-conventions` skill, or when the only tests it would compel are ones that fail that skill's bar for earning a place.
 
 **Per-task documentation criterion:** When a task adds, removes, or renames user-facing surface (CLI flags, commands, API endpoints, configuration keys, environment variables), its acceptance criteria must include updating documentation, help text, and usage examples, including removal of references to anything that no longer exists.
 
