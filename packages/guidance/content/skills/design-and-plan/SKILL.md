@@ -171,7 +171,7 @@ Next steps:
 
 **A2: Next action**
 1. 🧠 ■□□ Refine plan:
-   - Clear context and use the `refine-plan` skill with plan: {plan_path}, ticket: {ticket_path}
+   - Clear context, then {skill?:refine-plan} with plan: {plan_path}, ticket: {ticket_path}
 ...
 ```
 
