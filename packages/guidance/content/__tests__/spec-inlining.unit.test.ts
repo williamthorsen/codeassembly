@@ -51,7 +51,7 @@ const OPTION_FORMAT: Spec = {
     'not doubt about a fact',
     // The closed gated class's closing line. Without it the class reads as examples of a broader "consequential"
     // category, which the agent interprets generously.
-    "Everything else is the agent's call by default",
+    'Decide everything else yourself by default',
     // The gate's carve-out. Without it the gate reads as license to decide an authorization ask, trading a menu
     // problem for an agent that acts when it should have asked.
     'The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint',
@@ -80,7 +80,7 @@ const OPTION_FORMAT: Spec = {
     // The check that corrects markers set too weak. The gate reads only the markers, so without it a weak marker
     // renders a menu that the gate would have decided.
     '**Check the leader before rendering.**',
-    'When every alternative carries a disqualifying `➖`, the leader is ■■■',
+    'When every alternative carries a disqualifying `➖`, mark the leader ■■■',
     // The gate's one observed blind spot. Without it the agent measures each option by its own elapsed time and
     // round trips, which are scarce to it, and treats having measured one as license to rank.
     '**Never rank the options by your own elapsed time, round trips, or effort.**',
