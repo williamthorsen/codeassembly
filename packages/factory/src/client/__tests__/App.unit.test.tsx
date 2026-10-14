@@ -1,4 +1,4 @@
-// @vitest-environment jsdom
+// @vitest-environment happy-dom
 
 import { cleanup, fireEvent, render, waitFor, within } from '@testing-library/react';
 import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
