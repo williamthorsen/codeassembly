@@ -1,6 +1,6 @@
 import { Script } from 'node:vm';
 
-import { JSDOM } from 'jsdom';
+import { Window } from 'happy-dom';
 import { describe, expect, it } from 'vitest';
 
 import { COPY_PROBE_SCRIPT } from '../copy-probe.ts';
@@ -91,8 +91,13 @@ describe('copy probe', () => {
 
 /** Runs the probe source, as `browser_evaluate` receives it, against a page with the given body. */
 function probe(body: string): unknown {
-  const dom = new JSDOM(`<!doctype html><html><body>${body}</body></html>`, { runScripts: 'outside-only' });
-  return new Script(`(${COPY_PROBE_SCRIPT})()`).runInContext(dom.getInternalVMContext());
+  const window = new Window();
+  window.document.write(`<!doctype html><html><body>${body}</body></html>`);
+  try {
+    return new Script(`(${COPY_PROBE_SCRIPT})()`).runInContext(window);
+  } finally {
+    void window.happyDOM.close();
+  }
 }
 
 // endregion | Helpers

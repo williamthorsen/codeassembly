@@ -516,6 +516,9 @@ importers:
       eslint:
         specifier: 'catalog:'
         version: 10.12.0(jiti@2.7.0)(supports-color@7.2.0)
+      happy-dom:
+        specifier: 'catalog:'
+        version: 21.0.1
       jsdom:
         specifier: 'catalog:'
         version: 30.1.1
