@@ -56,7 +56,7 @@ describe(runCli, () => {
   });
 
   describe('validate', () => {
-    it('reports the counts of a record that passes the gate', async () => {
+    it('reports the counts and the display order of a record that passes the gate', async () => {
       const result = await runCli(['validate', '--file', writeRecord(root, buildRecord())], context);
 
       expect(result).toEqual({
@@ -66,6 +66,7 @@ describe(runCli, () => {
         byConfidence: { low: 1, medium: 3 },
         byValue: { 'nice-to-have': 2, questionable: 1, 'should-have': 1 },
         missingTickets: { items: ['10'], umbrella: true },
+        order: ['10', '27', '24', '16'],
       });
     });
 
