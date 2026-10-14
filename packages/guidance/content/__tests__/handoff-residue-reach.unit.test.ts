@@ -19,13 +19,13 @@ const RULE_HEADING = '## Handoffs';
 
 /** The phrases that each carrier must contain, as the install pipeline delivers the file. */
 const CARRIERS: ReadonlyMap<string, ReadonlyArray<string>> = new Map([
-  [RULEBOOK, ['A sandbox denial is never by itself a reason to hand a step over', "Verification is the agent's"]],
+  [RULEBOOK, ['Never hand a step over because of a sandbox denial alone', 'Verify yourself']],
   [
     'guidance/rulebooks/williamthorsen-tooling-preferences.md',
     ['retry the command through the permission gate', 'the durable grant'],
   ],
   ['skills/_data/action-items.md', ['is yours to run']],
-  ['skills/_partials/action-items.md', ['is run, not asked']],
+  ['skills/_partials/action-items.md', ['rather than ask for it']],
   ['skills/_partials/option-format.md', ['Verification is never in the gated class']],
   [
     'skills/_partials/plan-template.md',
