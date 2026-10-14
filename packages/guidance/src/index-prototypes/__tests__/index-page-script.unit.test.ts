@@ -1,7 +1,7 @@
 import { Script } from 'node:vm';
 
-import { JSDOM } from 'jsdom';
-import { describe, expect, it } from 'vitest';
+import { type Element, HTMLElement, Window } from 'happy-dom';
+import { afterEach, describe, expect, it } from 'vitest';
 
 import { INDEX_PAGE_SCRIPT } from '../index-page-script.ts';
 import { renderIndexPage } from '../render-index.ts';
@@ -10,6 +10,12 @@ import type { ManifestEntry } from '../types.ts';
 type VerdictData = Record<string, unknown>;
 
 const SLUGS = ['a', 'b', 'c'] as const;
+
+const openWindows: Window[] = [];
+
+afterEach(async () => {
+  await Promise.all(openWindows.splice(0).map((window) => window.happyDOM.close()));
+});
 
 describe('index page script', () => {
   it('renders verdicts in winner, rank, registration order with rejected last, ignoring stale slugs', async () => {
@@ -199,6 +205,14 @@ describe('index page script', () => {
 
 // region | Helpers
 
+/** Narrows an element to an `HTMLElement`, failing the test on any other element. */
+function assertIsHTMLElement(element: Element): HTMLElement {
+  if (!(element instanceof HTMLElement)) {
+    throw new TypeError(`expected an HTMLElement, got ${element.tagName}`);
+  }
+  return element;
+}
+
 /** Builds a manifest entry registered `minute` minutes past the hour. */
 function buildEntry(slug: string, minute: number): ManifestEntry {
   return {
@@ -256,7 +270,12 @@ function createStore(initial: Record<string, VerdictData>, refuseWrites: boolean
   return { db, writes };
 }
 
-/** Renders a three-prototype index into a JSDOM window with a fake `claude.use`, runs the page script, and settles. */
+/** Returns the element as an `HTMLElement`, or `undefined` when it is absent. */
+function findHTMLElement(element: Element | null): HTMLElement | undefined {
+  return element === null ? undefined : assertIsHTMLElement(element);
+}
+
+/** Renders a three-prototype index into a happy-dom window with a fake `claude.use`, runs the page script, and settles. */
 async function openPage(options: {
   verdicts?: Record<string, VerdictData>;
   canWrite?: boolean | null;
@@ -269,8 +288,9 @@ async function openPage(options: {
     cards: SLUGS.map((slug, index) => ({ entry: buildEntry(slug, index), shot: null })),
   });
   const body = html.slice(html.indexOf('<main>'), html.indexOf('<script>'));
-  const dom = new JSDOM(`<!doctype html><html><body>${body}</body></html>`, { runScripts: 'outside-only' });
-  const { window } = dom;
+  const window = new Window();
+  openWindows.push(window);
+  window.document.write(`<!doctype html><html><body>${body}</body></html>`);
   const store = createStore(options.verdicts ?? {}, options.refuseWrites ?? false);
   const user = { can: () => Promise.resolve(options.canWrite === undefined ? true : options.canWrite) };
   Object.assign(window, {
@@ -282,17 +302,17 @@ async function openPage(options: {
       },
     },
   });
-  new Script(INDEX_PAGE_SCRIPT).runInContext(dom.getInternalVMContext());
+  new Script(INDEX_PAGE_SCRIPT).runInContext(window);
   await settle();
 
   const element = (selector: string) => {
-    const found = window.document.querySelector<HTMLElement>(selector);
+    const found = window.document.querySelector(selector);
     if (found === null) {
       throw new Error(`no element matches ${selector}`);
     }
-    return found;
+    return assertIsHTMLElement(found);
   };
-  const cards = () => [...window.document.querySelectorAll<HTMLElement>('.card')];
+  const cards = () => [...window.document.querySelectorAll('.card')].map(assertIsHTMLElement);
   return {
     store,
     element,
@@ -300,7 +320,7 @@ async function openPage(options: {
     order: () => cards().map((card) => card.dataset.slug),
     badges: (slug: string) =>
       [...element(`[data-slug="${slug}"] [data-role="badges"]`).children].map((badge) => badge.textContent),
-    controlsHidden: () => cards().map((card) => card.querySelector<HTMLElement>('[data-role="controls"]')?.hidden),
+    controlsHidden: () => cards().map((card) => findHTMLElement(card.querySelector('[data-role="controls"]'))?.hidden),
     click: (slug: string, action: string) => element(`[data-slug="${slug}"] [data-action="${action}"]`).click(),
     selectRank: (slug: string, value: string) => {
       const select = element(`[data-slug="${slug}"] select`);
@@ -308,9 +328,9 @@ async function openPage(options: {
       select.dispatchEvent(new window.Event('change', { bubbles: true }));
     },
     focus: (slug: string) => element(`[data-slug="${slug}"]`).focus(),
-    focusedSlug: () => window.document.activeElement?.closest<HTMLElement>('.card')?.dataset.slug,
+    focusedSlug: () => findHTMLElement(window.document.activeElement.closest('.card'))?.dataset.slug,
     activeElement: () => window.document.activeElement,
-    // JSDOM does not lay out, so each card reports the top edge of the row that it is assigned to.
+    // happy-dom does not lay out, so each card reports the top edge of the row that it is assigned to.
     layOutRows: (rows: string[][]) => {
       for (const [rowIndex, row] of rows.entries()) {
         for (const slug of row) {
@@ -320,8 +340,9 @@ async function openPage(options: {
     },
     // Returns false when the page handled the key and suppressed its default action.
     press: (key: string) => {
-      const target = window.document.activeElement ?? window.document.body;
-      return target.dispatchEvent(new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }));
+      return window.document.activeElement.dispatchEvent(
+        new window.KeyboardEvent('keydown', { key, bubbles: true, cancelable: true }),
+      );
     },
   };
 }

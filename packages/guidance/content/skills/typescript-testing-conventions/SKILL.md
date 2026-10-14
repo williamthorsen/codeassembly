@@ -103,6 +103,21 @@ it('processes user data correctly', () => {
 });
 ```
 
+## DOM environment
+
+A test that renders into a DOM runs under happy-dom, which starts and runs faster than jsdom. Under Vitest, set `environment: 'happy-dom'` or open the file with the `// @vitest-environment happy-dom` pragma; under Jest, use the `@happy-dom/jest-environment` package. A test that constructs a window directly uses happy-dom's `Window` rather than `JSDOM`.
+
+Use jsdom only for a test that depends on a behavior that happy-dom lacks, and name that behavior in a comment at the opt-in, so that a reader can check whether happy-dom has since gained it.
+
+```typescript
+// ✅ Good: The opt-in names what happy-dom lacks
+// @vitest-environment jsdom
+// happy-dom lacks <the behavior on which this test depends>.
+
+// ❌ Avoid: jsdom by habit
+// @vitest-environment jsdom
+```
+
 ## External programs
 
 The `testing-conventions` skill states the rule: Code reaches an external program through an adapter, and its tests pass a fake. In TypeScript, the adapter is a type, the code takes it as a parameter whose default is the real adapter, and the test passes an object literal. Prefer the parameter to module mocking (`vi.mock`), which leaves the dependency out of the signature and lets the code keep calling the program directly.

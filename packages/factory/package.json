@@ -40,7 +40,7 @@
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-react": "catalog:",
-    "jsdom": "catalog:",
+    "happy-dom": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
   },

@@ -46,7 +46,6 @@
   },
   "devDependencies": {
     "@hyperjump/json-schema": "1.17.8",
-    "@types/jsdom": "30.0.0",
     "@types/node": "catalog:",
     "@williamthorsen/change-grammar": "catalog:",
     "@williamthorsen/kb": "workspace:*",
@@ -57,7 +56,7 @@
     "codeassembly": "workspace:*",
     "esbuild": "catalog:",
     "eslint": "catalog:",
-    "jsdom": "catalog:",
+    "happy-dom": "catalog:",
     "marklassian": "1.2.1",
     "ulid": "3.0.2",
     "vitest": "catalog:",
