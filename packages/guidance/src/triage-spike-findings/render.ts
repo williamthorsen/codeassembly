@@ -14,9 +14,9 @@ export function renderDispositionsComment(record: DispositionsRecord): string {
     '',
     `Every item that the findings left undisposed, with its disposition and grades. Confidence grades advisability: \`high\` is clearly worth doing, \`medium\` is worth doing but arguable, \`low\` is not worth a ticket now. Value grades how much the item matters.${umbrellaSentence}`,
     '',
-    '| Item | Disposition | Confidence | Value | Where | Reason |',
-    '| --- | --- | --- | --- | --- | --- |',
-    ...orderItems(record).map((item) => renderRow(item)),
+    '| Item | Disposition | Confidence | Value | Where | Blocked by | Reason |',
+    '| --- | --- | --- | --- | --- | --- | --- |',
+    ...orderItems(record).map((item) => renderRow(item, record)),
     '',
     '## Challenge',
     '',
@@ -59,14 +59,27 @@ function escapeCell(text: string): string {
     .trim();
 }
 
+/** Renders a `ticket` item's blockers as issue numbers, with a placeholder for a blocker not yet created. */
+function renderBlockedBy(item: Item, record: DispositionsRecord): string {
+  if (item.disposition !== 'ticket') return '';
+  return (item.blockedBy ?? [])
+    .map((entry) => {
+      if (typeof entry === 'number') return `#${entry}`;
+      const ticket = record.items.find((candidate) => candidate.id === entry)?.ticket ?? null;
+      return ticket === null ? PENDING : `#${ticket}`;
+    })
+    .join(', ');
+}
+
 /** Renders one item's table row. */
-function renderRow(item: Item): string {
+function renderRow(item: Item, record: DispositionsRecord): string {
   const cells = [
     `${item.id} ${item.title}`,
     item.disposition,
     item.confidence,
     item.value,
     renderWhere(item),
+    renderBlockedBy(item, record),
     item.reason,
   ];
   return `| ${cells.map((cell) => escapeCell(cell)).join(' | ')} |`;

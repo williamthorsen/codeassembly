@@ -48,6 +48,24 @@ describe(renderDispositionsComment, () => {
     expect(comment).toContain(`| ticket | medium | should-have | ${PENDING} |`);
   });
 
+  it("renders each ticket item's blockers by issue number, with a placeholder for one not yet created", () => {
+    const comment = renderDispositionsComment(
+      buildRecord({
+        items: [
+          buildItem({ id: 'a', ticket: 290 }),
+          buildItem({ id: 'b', ticket: 291, blockedBy: ['a', 412] }),
+          buildItem({ id: 'c', blockedBy: ['d'] }),
+          buildItem({ id: 'd' }),
+        ],
+      }),
+    );
+
+    expect(comment).toContain('| Where | Blocked by | Reason |');
+    expect(comment).toContain('| #290 |  |');
+    expect(comment).toContain('| #291 | #290, #412 |');
+    expect(comment).toContain(`| ${PENDING} | ${PENDING} |`);
+  });
+
   it('omits the umbrella sentence when no item takes a ticket', () => {
     const comment = renderDispositionsComment(
       buildRecord({ items: [buildItem({ disposition: 'drop', confidence: 'low' })] }),
