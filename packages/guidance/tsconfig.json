@@ -9,6 +9,7 @@
     "content/__tests__/**/*.ts",
     "content/scripts/__tests__/**/*.ts",
     "content/test-utils/**/*.ts",
+    "bin/",
     "scripts/",
     "src/",
     "*.ts",

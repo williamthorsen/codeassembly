@@ -26,7 +26,6 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { makeCaptureEventSmokeTest } from '../test-utils/make-capture-event-smoke-test.ts';
-import { makeCheckPreferencesSmokeTest } from '../test-utils/make-check-preferences-smoke-test.ts';
 import { makeDeriveSessionContextSmokeTest } from '../test-utils/make-derive-session-context-smoke-test.ts';
 import { makeDescribeChangeSmokeTest } from '../test-utils/make-describe-change-smoke-test.ts';
 import { makeFeedbackMemoriesSmokeTest } from '../test-utils/make-feedback-memories-smoke-test.ts';
@@ -47,6 +46,7 @@ import { makeSelectPrTicketSmokeTest } from '../test-utils/make-select-pr-ticket
 import { makeStreamlineGuidanceSmokeTest } from '../test-utils/make-streamline-guidance-smoke-test.ts';
 import { makeTriageSpikeFindingsSmokeTest } from '../test-utils/make-triage-spike-findings-smoke-test.ts';
 import { makeUpdateJiraTicketSmokeTest } from '../test-utils/make-update-jira-ticket-smoke-test.ts';
+import { makeValidatePreferencesSmokeTest } from '../test-utils/make-validate-preferences-smoke-test.ts';
 import { type HelperTarget, readHelperTargets } from '../test-utils/read-helper-targets.ts';
 import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts';
 
@@ -55,7 +55,6 @@ import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts
 // triggers fixture setup.
 const smokeTests: Record<string, SmokeTestInvocation> = {
   '../src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
-  '../src/check-preferences/cli.ts': makeCheckPreferencesSmokeTest(),
   '../src/derive-session-context/cli.ts': makeDeriveSessionContextSmokeTest(),
   '../src/describe-change/cli.ts': makeDescribeChangeSmokeTest(),
   '../src/feedback-memories/cli.ts': makeFeedbackMemoriesSmokeTest(),
@@ -76,6 +75,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   '../src/streamline-guidance/cli.ts': makeStreamlineGuidanceSmokeTest(),
   '../src/triage-spike-findings/cli.ts': makeTriageSpikeFindingsSmokeTest(),
   '../src/update-jira-ticket/cli.ts': makeUpdateJiraTicketSmokeTest(),
+  '../src/validate-preferences/cli.ts': makeValidatePreferencesSmokeTest(),
 };
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');

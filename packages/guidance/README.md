@@ -52,7 +52,11 @@ Agent behavior is configured through `.agents/preferences.yaml` files. The resol
 
 Project-level values take precedence over global. An explicitly empty value at the project level (e.g., `title_format: ''`) overrides a non-empty global value.
 
-The package publishes a JSON Schema for the file; [Schemas](docs/schemas.md) gives its identifier and versioning.
+The package publishes a JSON Schema for the file; [Schemas](docs/schemas.md) gives its identifier and versioning. To validate preferences files in a repository's own checks, install this package and run its bin on them; [Validation](docs/preferences.md#validation) states its options and rules.
+
+```sh
+codeassembly-validate-preferences --strict .agents/preferences.yaml
+```
 
 ## Helper reference
 

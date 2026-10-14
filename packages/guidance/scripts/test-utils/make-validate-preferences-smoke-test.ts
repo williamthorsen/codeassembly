@@ -9,11 +9,11 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
  * Returns an invocation that checks a preferences file with a declared stage and one misspelt key, and asserts that the
  * bundled schema accepts the stage and reports the misspelling as a warning.
  */
-export function makeCheckPreferencesSmokeTest(): SmokeTestInvocation {
-  const dir = mkdtempSync(path.join(tmpdir(), 'check-preferences-'));
+export function makeValidatePreferencesSmokeTest(): SmokeTestInvocation {
+  const dir = mkdtempSync(path.join(tmpdir(), 'validate-preferences-'));
   const filePath = path.join(dir, 'preferences.yaml');
   writeFileSync(filePath, 'project:\n  maturity: hobby\n  sensitivity: low\n  audience: owner\nprojct: {}\n', 'utf8');
-  return { args: [filePath], assertResult: assertOneWarning };
+  return { args: ['--json', filePath], assertResult: assertOneWarning };
 }
 
 // region | Helpers

@@ -2,33 +2,33 @@ import { describe, expect, it } from 'vitest';
 
 import { isRecord } from '../../lib/type-guards.ts';
 import preferencesSchema from '../../schemas/preferences.v1.json' with { type: 'json' };
-import { ANNOTATION_KEYWORDS, checkPreferences, type Finding, HANDLED_KEYWORDS } from '../check-preferences.ts';
 import { findNearestKey } from '../find-nearest-key.ts';
+import { ANNOTATION_KEYWORDS, type Finding, HANDLED_KEYWORDS, validatePreferences } from '../validate-preferences.ts';
 
-describe(checkPreferences, () => {
+describe(validatePreferences, () => {
   it('accepts a document that omits every optional key', () => {
-    expect(checkPreferences({}, preferencesSchema)).toEqual([]);
+    expect(validatePreferences({}, preferencesSchema)).toEqual([]);
   });
 
   it('accepts a declared project stage', () => {
     const document = { project: { maturity: 'hobby', sensitivity: 'low', audience: 'owner' } };
-    expect(checkPreferences(document, preferencesSchema)).toEqual([]);
+    expect(validatePreferences(document, preferencesSchema)).toEqual([]);
   });
 
   it('reports a known key with an invalid value as an error', () => {
-    expect(checkPreferences({ project: { maturity: 'prod' } }, preferencesSchema).map(formatFinding)).toEqual([
+    expect(validatePreferences({ project: { maturity: 'prod' } }, preferencesSchema).map(formatFinding)).toEqual([
       'error project.maturity: must be one of "hobby", "early", "production" (got "prod")',
     ]);
   });
 
   it('reports a missing required key as an error', () => {
-    expect(checkPreferences({ commit: {} }, preferencesSchema).map(formatFinding)).toEqual([
+    expect(validatePreferences({ commit: {} }, preferencesSchema).map(formatFinding)).toEqual([
       "error commit: missing required key 'title_format'",
     ]);
   });
 
   it('reports an unrecognized key as a warning naming the nearest known key', () => {
-    const findings = checkPreferences({ projct: {}, project: { maturty: 'hobby' } }, preferencesSchema);
+    const findings = validatePreferences({ projct: {}, project: { maturty: 'hobby' } }, preferencesSchema);
     expect(findings.map(formatFinding)).toEqual([
       "warning projct: unrecognized key; did you mean 'project'?",
       "warning project.maturty: unrecognized key; did you mean 'maturity'?",
@@ -36,28 +36,28 @@ describe(checkPreferences, () => {
   });
 
   it('reports an unrecognized key without a suggestion when no known key is near', () => {
-    expect(checkPreferences({ deployment: 'x' }, preferencesSchema).map(formatFinding)).toEqual([
+    expect(validatePreferences({ deployment: 'x' }, preferencesSchema).map(formatFinding)).toEqual([
       'warning deployment: unrecognized key',
     ]);
   });
 
   it('checks values under a schema-valued `additionalProperties` and inside arrays', () => {
     const document = { artifacts: { paths: { chats: 3 } }, editors: [{ name: 'Webstorm', command: 'webstorm' }] };
-    expect(checkPreferences(document, preferencesSchema).map(formatFinding)).toEqual([
+    expect(validatePreferences(document, preferencesSchema).map(formatFinding)).toEqual([
       'error artifacts.paths.chats: expected string (got 3)',
       "error editors[0]: missing required key 'extensions'",
     ]);
   });
 
   it('reports a top-level scalar as an error', () => {
-    expect(checkPreferences('hobby', preferencesSchema).map(formatFinding)).toEqual([
+    expect(validatePreferences('hobby', preferencesSchema).map(formatFinding)).toEqual([
       'error (root): expected object (got "hobby")',
     ]);
   });
 
   it('enforces `minimum` and `minLength`', () => {
     const document = { ticket: { title_format: '{title}', pull: { now: '', staleBranchDays: 0 } } };
-    expect(checkPreferences(document, preferencesSchema).map(formatFinding)).toEqual([
+    expect(validatePreferences(document, preferencesSchema).map(formatFinding)).toEqual([
       'error ticket.pull.now: must be at least 1 characters long',
       'error ticket.pull.staleBranchDays: must be at least 1 (got 0)',
     ]);
