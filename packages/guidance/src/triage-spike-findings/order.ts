@@ -33,11 +33,6 @@ export function orderItems(record: DispositionsRecord): Item[] {
 
 // region | Helpers
 
-/** Compares two grades by their position in `rank`. */
-function compareRank<T>(rank: readonly T[], a: T, b: T): number {
-  return rank.indexOf(a) - rank.indexOf(b);
-}
-
 /** Compares two items by value, then confidence, then their position in `tickets`. */
 function comparePriority(tickets: readonly Item[], a: Item, b: Item): number {
   return (
@@ -45,6 +40,11 @@ function comparePriority(tickets: readonly Item[], a: Item, b: Item): number {
     compareRank(CONFIDENCE_RANK, a.confidence, b.confidence) ||
     tickets.indexOf(a) - tickets.indexOf(b)
   );
+}
+
+/** Compares two grades by their position in `rank`. */
+function compareRank<T>(rank: readonly T[], a: T, b: T): number {
+  return rank.indexOf(a) - rank.indexOf(b);
 }
 
 /** Places each ticket item once all of its blockers are placed, taking the highest-priority ready item each time. */
