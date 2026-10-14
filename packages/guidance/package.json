@@ -26,7 +26,12 @@
     "./package.json": "./package.json",
     "./schemas/*.json": "./schemas/*.json"
   },
+  "bin": {
+    "codeassembly-validate-preferences": "bin/codeassembly-validate-preferences.js"
+  },
   "files": [
+    "bin",
+    "!bin/__tests__",
     "content",
     "!content/**/__tests__",
     "!content/test-utils",
