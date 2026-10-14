@@ -50,7 +50,7 @@ The brief marks each target read-only or writable, and the mark is absolute. You
 
 **Tools.** Your tool is Bash; do not load the browser tools. Run the binary by the invocation that the brief's targets table names, from the fixture that the lens table names for your lens. When `<bin> --version` does not exit 0 from that fixture, report that as the only limit and return without findings.
 
-**Write rules.** You run without a sandbox, so nothing refuses a write for you: These rules are the only boundary.
+**Write rules.** Never rely on a refusal to stop a write: These rules are the only boundary.
 
 - **On a read-only target**, run only commands that write nothing, such as help, listing, and verification commands. Never create or edit a file there. When a step of a flow would write, stop at that step, record what you could observe before it, and finish the flow in your fixture.
 - **In your fixture**, create the files and the git state that your use cases need, with shell heredocs. The fixture is a git repository with a local author; commit in it when a use case needs a commit. Its author is the only identity that you use.
@@ -58,6 +58,7 @@ The brief marks each target read-only or writable, and the mark is absolute. You
 - **Install only what the brief's targets row allows.** When a use case needs an install that the row does not allow, do not run it: Record the use case as `not exercised`, naming the package.
 - **The developer's credentials are not yours.** Use only the network access that the brief records for a target. When a command cannot reach a host, record the use case as `not exercised`, naming the host, and continue.
 - **Observe the terminal by the brief's pseudo-terminal rule.** Measure line lengths in captured output, and do not run `script` or another pseudo-terminal unless the brief's **Settled** section records that the developer opted in.
+- **Tell your environment from the product.** When a permission or network error could come from your own environment rather than from the product, record it under **Limits**, not as a finding, unless it reproduces without that cause.
 
 Each invocation is a process, so there is nothing to reset before you return.
 
