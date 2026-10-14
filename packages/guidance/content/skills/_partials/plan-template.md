@@ -13,7 +13,7 @@
 
 ## Decisions taken
 
-- {A decision that the agent took without asking, with its one-line reason; append `(provisional)` when it awaits the checkpoint}
+- {⏳ while it awaits the checkpoint} {A decision that the agent took without asking, with its one-line reason}
 
 ## Tasks
 
