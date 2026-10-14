@@ -2,12 +2,12 @@
 slug: shell-conventions
 description: Conventions for writing production-quality bash scripts in this repository.
 delivery: skill
-version: '4'
+version: '5'
 ---
 
 # Shell script conventions
 
-Conventions for writing production-quality bash scripts in this repository. These complement the universal style rules (verb-led function names, primary logic first, long-form CLI options).
+Conventions for writing production-quality bash scripts in this repository. These complement the universal style rules (verb-led function names, primary logic first, long-form CLI options). A script's interface, meaning its help, exit codes, error messages, and progress reports, follows {rulebook:cli-conventions}; this rulebook states how a bash script implements it.
 
 ## Script anatomy
 
@@ -59,9 +59,11 @@ main() {
 
 # region | Helper functions
 
-# Displays command-line syntax. Can exit with or without an error code.
+# Displays command-line syntax: to stdout for a help request (exit 0), to stderr otherwise.
 show_usage() {
-  cat >&2 <<USAGE
+  local code="${1:-1}" fd=2
+  ((code == 0)) && fd=1
+  cat >&"$fd" <<USAGE
 One-line purpose.
 
 Usage:
@@ -81,7 +83,7 @@ Examples:
   $PROG my-value
   result=\$($PROG my-value) && echo "\$result"
 USAGE
-  exit "${1:-1}"
+  exit "$code"
 }
 # endregion | Helper functions
 
@@ -106,25 +108,20 @@ Read a path that must be non-empty as `${dir:?message}`, which aborts, whereas t
 
 ## Help and exit codes
 
-| Situation                                | Exit code              |
-| ---------------------------------------- | ---------------------- |
-| `--help` or `-h` (explicit help request) | 0                      |
-| Bad input, missing arguments             | 1                      |
-| Unknown command / subcommand             | 2                      |
-| Required external command not found      | 127 (POSIX convention) |
-
-`show_usage` accepts an optional exit code parameter, defaulting to 1:
+The exit codes and the destination of help output are stated in the CLI conventions linked above. `show_usage` takes the exit code as an optional parameter, defaulting to 1, and chooses the stream from it:
 
 ```bash
 show_usage() {
-  cat >&2 <<USAGE
+  local code="${1:-1}" fd=2
+  ((code == 0)) && fd=1
+  cat >&"$fd" <<USAGE
 ...
 USAGE
-  exit "${1:-1}"
+  exit "$code"
 }
 ```
 
-Call sites: `show_usage 0` for help requests, `show_usage` (bare) for errors.
+Call sites: `show_usage 0` for help requests, `show_usage 2` for an unknown command, and `show_usage` (bare) for other errors.
 
 ### `--help` must be handled manually
 
@@ -167,15 +164,13 @@ cmd="$1"; shift
 case "$cmd" in
 list) do_list ;;
 prune) do_prune ;;
-*) echo "$PROG: Unknown command '$cmd'" >&2; show_usage ;;
+*) echo "$PROG: Unknown command '$cmd'" >&2; show_usage 2 ;;
 esac
 ```
 
 ## Error messages
 
-- **Always to stderr**: `echo "..." >&2`
-- **Prefix with `$PROG:`**, so that a reader of piped output can tell which script wrote the message.
-- **Be actionable**: Tell the user what to do, not just what went wrong.
+Write each message to stderr with `>&2`, and prefix it with `$PROG:`, so that it meets the error rules in the CLI conventions:
 
 ```bash
 # Bad
@@ -188,7 +183,7 @@ echo "Create it with: git worktree add $path main" >&2
 
 ## Dependency checks
 
-Preflight-check external commands before using them:
+Preflight-check external commands before using them, exiting with the missing-command code:
 
 ```bash
 for cmd in wt jq; do
@@ -270,9 +265,8 @@ Build the workspace through the shared helpers in `spec/spec_helper.sh` rather t
 | -------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `set -e` alone                         | Use `set -euo pipefail`: `-u` catches typos in variable names, `pipefail` catches mid-pipeline failures      |
 | `usage()` as function name             | Use `show_usage()`: Functions start with verbs                                                               |
-| `show_usage` always exits 1            | Accept exit code parameter: `exit "${1:-1}"`                                                                 |
+| `show_usage` always exits 1            | Accept an exit-code parameter, and write to stdout when it is 0                                              |
 | `which cmd` to check availability      | Use `command -v cmd` (POSIX-portable)                                                                        |
-| Error messages to stdout               | Always `>&2`                                                                                                 |
 | Interpolating user input into `jq`     | Use `jq --arg name "$value"` for safe binding                                                                |
 | `${var//pat/repl}` with dynamic `repl` | Add `shopt -u patsub_replacement 2>/dev/null \|\| true`; bash 5.2+ expands `&` in `repl` to the matched text |
 | Hard-coded values that vary            | Accept as arguments or use `readonly` defaults at the top                                                    |
