@@ -1,10 +1,11 @@
 /** Renders the dispositions comment and the per-issue comments from a dispositions record. */
+import { orderItems } from './order.ts';
 import { type DispositionsRecord, hasTicketItem, type Item } from './schemas.ts';
 
 /** The text that stands in for a ticket number that step 7 has not yet assigned. */
 export const PENDING = '(pending)';
 
-/** Renders the comment that the skill posts on the triage ticket: the table, the challenge, and the notes. */
+/** Renders the comment that the skill posts on the triage ticket: the table in display order, the challenge, and the notes. */
 export function renderDispositionsComment(record: DispositionsRecord): string {
   const umbrella = record.umbrella === null ? PENDING : `#${record.umbrella}`;
   const umbrellaSentence = hasTicketItem(record) ? ` The umbrella for the new tickets is ${umbrella}.` : '';
@@ -15,7 +16,7 @@ export function renderDispositionsComment(record: DispositionsRecord): string {
     '',
     '| Item | Disposition | Confidence | Value | Where | Reason |',
     '| --- | --- | --- | --- | --- | --- |',
-    ...record.items.map((item) => renderRow(item)),
+    ...orderItems(record).map((item) => renderRow(item)),
     '',
     '## Challenge',
     '',

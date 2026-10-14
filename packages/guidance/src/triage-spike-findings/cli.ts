@@ -16,6 +16,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { checkLabels, runCommand } from './labels.ts';
+import { orderItems } from './order.ts';
 import { renderDispositionsComment, renderIssueComments } from './render.ts';
 import { checkGate, type DispositionsRecord, findMissingTickets, RecordSchema } from './schemas.ts';
 import type { CommandRunner } from './types.ts';
@@ -126,7 +127,7 @@ function runRender(flags: ParsedFlags, context: CommandContext): CommandResult {
   return { ok: true, preview: flags.has('preview'), dispositionsComment: commentPath, issueComments };
 }
 
-/** Parses the record at `--file`, applies the gate, and reports the item counts per disposition and per grade. */
+/** Parses the record at `--file`, applies the gate, and reports the item counts and the items' display order. */
 function runValidate(flags: ParsedFlags, context: CommandContext): CommandResult {
   const record = readRecord(flags, context);
   return {
@@ -136,6 +137,7 @@ function runValidate(flags: ParsedFlags, context: CommandContext): CommandResult
     byConfidence: countBy(record.items.map((item) => item.confidence)),
     byValue: countBy(record.items.map((item) => item.value)),
     missingTickets: findMissingTickets(record),
+    order: orderItems(record).map((item) => item.id),
   };
 }
 

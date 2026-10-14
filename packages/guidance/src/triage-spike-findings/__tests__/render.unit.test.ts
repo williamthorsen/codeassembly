@@ -25,6 +25,22 @@ describe(renderDispositionsComment, () => {
     expect(comment).not.toContain('## Labels and follow-ups');
   });
 
+  it('renders the rows in display order rather than record order', () => {
+    const comment = renderDispositionsComment(
+      buildRecord({
+        items: [
+          buildItem({ id: '16', disposition: 'drop', confidence: 'low' }),
+          buildItem({ id: '10', value: 'nice-to-have' }),
+          buildItem({ id: '27', disposition: 'merge', target: '12' }),
+          buildItem({ id: '12', value: 'must-have' }),
+        ],
+      }),
+    );
+
+    const rows = comment.split('\n').filter((line) => /^\| \d+ /.test(line));
+    expect(rows.map((row) => row.split(' ', 2)[1])).toEqual(['12', '27', '10', '16']);
+  });
+
   it('renders placeholders for the numbers that step 7 has not assigned', () => {
     const comment = renderDispositionsComment(buildRecord());
 
