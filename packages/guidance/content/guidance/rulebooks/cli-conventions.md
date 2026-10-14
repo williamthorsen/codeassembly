@@ -14,7 +14,7 @@ These rules apply whatever language the tool is written in.
 ## Help
 
 - **Every command and subcommand answers `--help` and `-h`.** A subcommand prints its own help, not the top level's.
-- **Help is recognized before any other parsing.** `<bin> deploy --help` prints help even when `deploy` would reject the rest of its arguments, and never fails with "Unknown option".
+- **`--help` is an option of every command, and it is handled before arguments are validated.** `<bin> deploy --help` prints the help of `deploy`, never "Unknown option", and prints it even when a required argument of `deploy` is missing.
 - **Help states** the one-line purpose, the usage synopsis, the arguments, the options, and at least one example. A tool that needs an external program names it.
 - **Requested help goes to stdout and exits 0**, so that it can be piped to a pager or a search.
 - **Usage printed after an error goes to stderr and exits non-zero**, so that it does not mix with the command's output.

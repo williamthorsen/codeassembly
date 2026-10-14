@@ -121,7 +121,7 @@ USAGE
 }
 ```
 
-Call sites: `show_usage 0` for help requests, `show_usage` (bare) for errors.
+Call sites: `show_usage 0` for help requests, `show_usage 2` for an unknown command, and `show_usage` (bare) for other errors.
 
 ### `--help` must be handled manually
 
@@ -164,7 +164,7 @@ cmd="$1"; shift
 case "$cmd" in
 list) do_list ;;
 prune) do_prune ;;
-*) echo "$PROG: Unknown command '$cmd'" >&2; show_usage ;;
+*) echo "$PROG: Unknown command '$cmd'" >&2; show_usage 2 ;;
 esac
 ```
 

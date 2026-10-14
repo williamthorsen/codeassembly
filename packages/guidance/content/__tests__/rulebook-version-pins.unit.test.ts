@@ -41,7 +41,7 @@ const PINS = new Map<string, RulebookPin>([
     'accessibility-conventions',
     { bodyHash: 'a36fdbc73a8052a77888144492f3ef612b3f3d78ad97c249b703e725f114d31a', version: '1' },
   ],
-  ['cli-conventions', { bodyHash: '5fffe71fa93c66840906cc5769a7307e5d6049b13fa8af3a33566c284b3752d3', version: '2' }],
+  ['cli-conventions', { bodyHash: 'bc2bc7b32c82bf1b4a095107aa44ad5332eb2da7b3bac3943079c9327f02b04a', version: '2' }],
   [
     'codeassembly-content-specification',
     { bodyHash: 'a4769375db620acc2fd4fa1c0e1ef4657c47bedd6d4b3d961fc3bcdab16fcf23', version: '30' },
@@ -70,7 +70,7 @@ const PINS = new Map<string, RulebookPin>([
     'shared-data-conventions',
     { bodyHash: '4ef8bcab255949016c95f2770267fb3ed787a8988e775d8ecc50cf1d31e9b444', version: '1' },
   ],
-  ['shell-conventions', { bodyHash: '82cb3f51e43a3c7682693513396d1fc3957216ca2a6f86c503d54d54f34322f9', version: '5' }],
+  ['shell-conventions', { bodyHash: 'a42427201adea15a749337e2595b7947620da58c36b0b0675a51aa206c5ef738', version: '5' }],
   [
     'ui-copy-conventions',
     { bodyHash: 'b98bfbdd2ea21aa25be7e1503f701f5c00f3d15bd990eb86eef77ee2d9915798', version: '1' },
