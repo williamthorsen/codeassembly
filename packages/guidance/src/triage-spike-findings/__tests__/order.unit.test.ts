@@ -40,6 +40,31 @@ describe(orderItems, () => {
 
     expect(ids(orderItems(record))).toEqual(['b', 'merge-into-b', 'a', 'merge-into-a', 'drop', 'comment']);
   });
+
+  it('places a blocker before the item that it blocks, taking the ready items by priority', () => {
+    const record = buildRecord({
+      items: [
+        buildItem({ id: 'must', value: 'must-have', blockedBy: ['nice'] }),
+        buildItem({ id: 'should', value: 'should-have' }),
+        buildItem({ id: 'nice', value: 'nice-to-have' }),
+        buildItem({ id: 'merge-into-nice', disposition: 'merge', target: 'nice' }),
+      ],
+    });
+
+    expect(ids(orderItems(record))).toEqual(['should', 'nice', 'merge-into-nice', 'must']);
+  });
+
+  it('orders a chain of blockers whatever the grades, ignoring issues outside the triage', () => {
+    const record = buildRecord({
+      items: [
+        buildItem({ id: 'c', value: 'must-have', blockedBy: ['b', 900] }),
+        buildItem({ id: 'b', value: 'must-have', blockedBy: ['a'] }),
+        buildItem({ id: 'a', value: 'questionable' }),
+      ],
+    });
+
+    expect(ids(orderItems(record))).toEqual(['a', 'b', 'c']);
+  });
 });
 
 // region | Helpers

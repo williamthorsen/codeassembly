@@ -2,7 +2,7 @@
 slug: williamthorsen-ticketing-preferences
 description: William Thorsen's preferences for how work is split across tickets, how the relationships between them are recorded, and which figures a ticket body states.
 delivery: hook
-version: '5'
+version: '6'
 ---
 
 # William Thorsen's ticketing preferences
@@ -15,7 +15,7 @@ A piece earns a ticket when it ships and can be verified on its own, not when it
 
 This governs work already judged to need more than one pull request. Whether work discovered mid-change becomes a ticket at all is decided first by the fold-in default in [scope-and-deferral.md](../../skills/_data/scope-and-deferral.md).
 
-Record the relationships natively when the tracker supports them -- blockers, and parent to child -- rather than as prose in a body.
+Record the relationships natively when the tracker supports them -- blockers, and parent to child -- rather than as prose in a body. Record a blocker when there is some probability that one ticket affects another and should land first, not only when that is certain: A ticket whose design takes another ticket's outcome as an input is blocked by it.
 
 ## Counts in a ticket body
 

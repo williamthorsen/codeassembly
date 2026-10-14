@@ -68,6 +68,46 @@ describe(checkGate, () => {
       { id: 'x', clause: 'a low item does not take a ticket' },
     ]);
   });
+
+  it('passes blockers that name other ticket items and issues outside the triage', () => {
+    const record = buildRecord({
+      items: [buildItem({ id: 'a', blockedBy: ['b', 412] }), buildItem({ id: 'b', blockedBy: [413] })],
+    });
+    expect(checkGate(record)).toEqual([]);
+  });
+
+  it('refuses blockers on an item that does not take a ticket', () => {
+    const record = buildRecord({
+      items: [buildItem({ id: 'a' }), buildItem({ id: 'd', disposition: 'drop', confidence: 'low', blockedBy: ['a'] })],
+    });
+    expect(checkGate(record)).toEqual([{ id: 'd', clause: 'a drop item does not have blockers' }]);
+  });
+
+  it('refuses a blocker that is unknown, not a ticket, the item itself, or listed twice', () => {
+    const record = buildRecord({
+      items: [
+        buildItem({ id: 'a', blockedBy: ['missing', 'd', 'a', 7, 7] }),
+        buildItem({ id: 'd', disposition: 'drop', confidence: 'low' }),
+      ],
+    });
+    expect(checkGate(record).map((violation) => violation.clause)).toEqual([
+      'the blocker missing is not an item',
+      'a blocker is a ticket item, and d is a drop',
+      'an item does not block itself',
+      'the blocker 7 is listed more than once',
+    ]);
+  });
+
+  it('refuses a cycle among the blockers and reports it once', () => {
+    const record = buildRecord({
+      items: [
+        buildItem({ id: 'a', blockedBy: ['b'] }),
+        buildItem({ id: 'b', blockedBy: ['c'] }),
+        buildItem({ id: 'c', blockedBy: ['a'] }),
+      ],
+    });
+    expect(checkGate(record)).toEqual([{ id: 'a', clause: 'a blocked-by cycle: a → b → c → a' }]);
+  });
 });
 
 describe(findMissingTickets, () => {
