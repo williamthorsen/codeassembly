@@ -24,6 +24,8 @@ export const ItemSchema = z.object({
   reason: z.string().min(1),
   target: z.union([PositiveInteger, z.string().min(1), z.null()]),
   ticket: PositiveInteger.nullable(),
+  /** The blockers of a `ticket` item: the ids of other `ticket` items, and the numbers of issues outside the triage. */
+  blockedBy: z.array(z.union([PositiveInteger, z.string().min(1)])).optional(),
   challenge: z.object({
     argument: z.string(),
     outcome: z.enum(CHALLENGE_OUTCOMES),
@@ -56,7 +58,8 @@ export interface GateViolation {
 /**
  * Checks a parsed record against the gate: a `low` item never takes a ticket; a `merge` targets a `ticket` item by id; a
  * `comment` targets an issue number; a `ticket` or `drop` item has no target; only a `ticket` item carries a ticket
- * number; and ids are unique. Returns every violation, so that one run reports them all.
+ * number or blockers; a blocker id names another `ticket` item, once; the blockers form no cycle; and ids are unique.
+ * Returns every violation, so that one run reports them all.
  */
 export function checkGate(record: DispositionsRecord): GateViolation[] {
   const violations: GateViolation[] = [];
@@ -95,7 +98,9 @@ export function checkGate(record: DispositionsRecord): GateViolation[] {
           violations.push({ id: item.id, clause: `a ${item.disposition} item does not have a target` });
         }
     }
+    violations.push(...checkBlockers(item, byId));
   }
+  violations.push(...findCycles(record, byId));
   return violations;
 }
 
@@ -114,3 +119,72 @@ export function findMissingTickets(record: DispositionsRecord): { items: string[
 export function hasTicketItem(record: DispositionsRecord): boolean {
   return record.items.some((item) => item.disposition === 'ticket');
 }
+
+/**
+ * Returns the ids of the `ticket` items that block `item` within the record, skipping every entry that fails the gate,
+ * so that the ordering and the cycle check see only valid relations.
+ */
+export function listInternalBlockers(item: Item, byId: ReadonlyMap<string, Item>): string[] {
+  if (item.disposition !== 'ticket') return [];
+  const blockers = new Set<string>();
+  for (const entry of item.blockedBy ?? []) {
+    if (typeof entry === 'string' && entry !== item.id && byId.get(entry)?.disposition === 'ticket') {
+      blockers.add(entry);
+    }
+  }
+  return [...blockers];
+}
+
+// region | Helpers
+
+/** Checks one item's blockers: only a `ticket` item has any, and each id names another `ticket` item, once. */
+function checkBlockers(item: Item, byId: ReadonlyMap<string, Item>): GateViolation[] {
+  const blockedBy = item.blockedBy ?? [];
+  if (blockedBy.length === 0) return [];
+  if (item.disposition !== 'ticket') {
+    return [{ id: item.id, clause: `a ${item.disposition} item does not have blockers` }];
+  }
+  const violations: GateViolation[] = [];
+  const seen = new Set<number | string>();
+  for (const entry of blockedBy) {
+    if (seen.has(entry))
+      violations.push({ id: item.id, clause: `the blocker ${String(entry)} is listed more than once` });
+    seen.add(entry);
+    if (typeof entry !== 'string') continue;
+    const blocker = byId.get(entry);
+    if (entry === item.id) {
+      violations.push({ id: item.id, clause: 'an item does not block itself' });
+    } else if (blocker === undefined) {
+      violations.push({ id: item.id, clause: `the blocker ${entry} is not an item` });
+    } else if (blocker.disposition !== 'ticket') {
+      violations.push({ id: item.id, clause: `a blocker is a ticket item, and ${entry} is a ${blocker.disposition}` });
+    }
+  }
+  return violations;
+}
+
+/** Reports each cycle among the `ticket` items' blockers once, against the item at which the search re-entered it. */
+function findCycles(record: DispositionsRecord, byId: ReadonlyMap<string, Item>): GateViolation[] {
+  const violations: GateViolation[] = [];
+  const done = new Set<string>();
+  const path: string[] = [];
+  const visit = (id: string): void => {
+    const start = path.indexOf(id);
+    if (start !== -1) {
+      const cycle = [...path.slice(start), id];
+      violations.push({ id, clause: `a blocked-by cycle: ${cycle.join(' → ')}` });
+      return;
+    }
+    if (done.has(id)) return;
+    const item = byId.get(id);
+    if (item === undefined) return;
+    path.push(id);
+    for (const blocker of listInternalBlockers(item, byId)) visit(blocker);
+    path.pop();
+    done.add(id);
+  };
+  for (const item of record.items) visit(item.id);
+  return violations;
+}
+
+// endregion | Helpers
