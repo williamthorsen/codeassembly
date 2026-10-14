@@ -28,7 +28,7 @@ export const HANDLED_KEYWORDS: readonly string[] = [
 export const ANNOTATION_KEYWORDS: readonly string[] = ['$id', '$schema', 'default', 'description', 'title'];
 
 /** Returns every finding for `document` under `schema`, in document order. */
-export function checkPreferences(document: unknown, schema: unknown): Finding[] {
+export function validatePreferences(document: unknown, schema: unknown): Finding[] {
   const findings: Finding[] = [];
   walkValue(document, schema, [], findings);
   return findings;
