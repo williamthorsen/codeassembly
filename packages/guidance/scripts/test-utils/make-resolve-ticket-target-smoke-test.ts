@@ -17,7 +17,7 @@ export function makeResolveTicketTargetSmokeTest(): SmokeTestInvocation {
   const script = [
     `#!${process.execPath}`,
     'const endpoint = process.argv[3];',
-    "if (endpoint === 'repos/acme/widgets') { process.stdout.write('acme/widgets\\n'); }",
+    String.raw`if (endpoint === 'repos/acme/widgets') { process.stdout.write('acme/widgets\n'); }`,
     'else if (endpoint.endsWith(\'/.meta/label-map.json\')) { process.stdout.write(\'{"scopes":{},"types":{}}\'); }',
     'else { process.stdout.write(\'{"message":"Not Found","status":"404"}\'); process.exit(1); }',
   ].join('\n');
