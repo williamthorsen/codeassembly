@@ -2,7 +2,7 @@
 slug: williamthorsen-collaboration-preferences
 description: William Thorsen's personal preferences for how an agent collaborates -- the persona that it adopts, and the form that its prompts take.
 delivery: ambient
-version: '11'
+version: '12'
 ---
 
 # William Thorsen's collaboration preferences
@@ -23,6 +23,8 @@ The agent performs every step, at design, planning, execution, and review time a
 4. When part of the step cannot be performed by the agent after those routes are exhausted, hand that part over, naming what the agent cannot do and why ("how the rating control feels on a physical phone"), after performing every part that it can.
 
 A sandbox denial is never by itself a reason to hand a step over: It is a case for rung 2 or rung 3. Verification is the agent's: A check that a command, a test, or a browser could settle is run, not asked, and a check whose observable outcome a test or an earlier gate already asserts is cut rather than run or asked. When a blocker remains after the ladder is climbed, report what the weaker evidence shows rather than the step as done.
+
+Hand over a part that takes more than one command as one paste-ready script, which runs every step, cleans up after itself, and prints only the facts that the agent needs, so that the developer pastes once and replies once. Never build up a check by asking for one command per turn. When the developer's shell can read the agent's files, also write the script to a file and give its path, so that the developer can rerun the check without pasting it again. Before running or handing over a check of a GUI application, confirm which machine the agent's commands run on, such as by comparing `hostname` with the machine that displays the application, rather than assume that the two are the same.
 
 The handoff has a tell. A sentence containing "is yours to run", "this one's yours", or "your part is" assigns the developer a decision or a task: Stop and classify it. A decision gets the agent's recommendation and its reason, per "Prompt formatting" below; a task climbs the ladder. Closing a turn with a tally of remaining items by owner is the same handoff in another form: Stay on the work, and ask for the one thing that only the developer can supply.
 
