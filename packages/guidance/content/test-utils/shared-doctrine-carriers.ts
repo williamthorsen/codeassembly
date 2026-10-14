@@ -44,7 +44,7 @@ export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<str
 
 /** Returns the subagents that originate or validate a technical approach. */
 function listApproachChoosingSubagents(): ReadonlyArray<string> {
-  return ['plan-reviewer', 'plan-reviser'];
+  return ['plan-reviewer', 'plan-reviser', 'ticket-assessor'];
 }
 
 // endregion | Helpers

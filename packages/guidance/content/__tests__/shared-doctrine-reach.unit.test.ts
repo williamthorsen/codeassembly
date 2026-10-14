@@ -73,7 +73,13 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   },
   'technical-recommendations': {
     headline: '## Technical recommendations',
-    phrases: ['Default to current best practices', 'Prefer CLI tools over web UI instructions'],
+    phrases: [
+      'Default to current best practices',
+      'name the solutions that current best practice applies',
+      'Label an option that departs from all of them as non-standard',
+      'rather than an addition that works around the current contract',
+      'Prefer CLI tools over web UI instructions',
+    ],
   },
 };
 

@@ -137,4 +137,6 @@ An empty list is written `[]` rather than omitted.
 
 <!-- include: ../_partials/shell-commands.md / -->
 
+<!-- include: ../_partials/technical-recommendations.md / -->
+
 <!-- guidance-hook: writing-preferences -->
