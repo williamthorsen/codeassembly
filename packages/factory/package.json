@@ -41,7 +41,6 @@
     "eslint": "catalog:",
     "eslint-plugin-react": "catalog:",
     "happy-dom": "catalog:",
-    "jsdom": "catalog:",
     "vite": "catalog:",
     "vitest": "catalog:"
   },
