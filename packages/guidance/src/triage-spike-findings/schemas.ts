@@ -127,7 +127,8 @@ export function hasTicketItem(record: DispositionsRecord): boolean {
 export function listInternalBlockers(item: Item, byId: ReadonlyMap<string, Item>): string[] {
   if (item.disposition !== 'ticket') return [];
   const blockers = new Set<string>();
-  for (const entry of item.blockedBy ?? []) {
+  const entries = item.blockedBy ?? [];
+  for (const entry of entries) {
     if (typeof entry === 'string' && entry !== item.id && byId.get(entry)?.disposition === 'ticket') {
       blockers.add(entry);
     }
@@ -168,7 +169,7 @@ function findCycles(record: DispositionsRecord, byId: ReadonlyMap<string, Item>)
   const violations: GateViolation[] = [];
   const done = new Set<string>();
   const path: string[] = [];
-  const visit = (id: string): void => {
+  function visit(id: string): void {
     const start = path.indexOf(id);
     if (start !== -1) {
       const cycle = [...path.slice(start), id];
@@ -182,7 +183,7 @@ function findCycles(record: DispositionsRecord, byId: ReadonlyMap<string, Item>)
     for (const blocker of listInternalBlockers(item, byId)) visit(blocker);
     path.pop();
     done.add(id);
-  };
+  }
   for (const item of record.items) visit(item.id);
   return violations;
 }
