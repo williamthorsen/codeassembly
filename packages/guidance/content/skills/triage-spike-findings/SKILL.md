@@ -69,7 +69,7 @@ Save the reply as `challenge.md`. Then take each item in turn: Defend the recomm
 
 ### 5. Checkpoint: the dispositions
 
-Present the dispositions as a table (item, disposition, confidence, value, reason, challenge outcome) and the challenge summary, and ask in the action-items block for approval. Revise the record until the developer approves it; re-run `validate` after each change.
+Present the dispositions as a table (item, disposition, confidence, value, reason, challenge outcome), in the order that `validate` reports as `order`, and the challenge summary, and ask in the action-items block for approval. Revise the record until the developer approves it; re-run `validate` after each change.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -89,7 +89,7 @@ Show everything that step 7 will create or post in one block: every body with it
 Nothing before this step writes anything remote. On a failed write, stop and report which item failed; every number already recorded stays in `dispositions.json`, so that a re-run of this step creates only what is still null and checks each issue before posting on it.
 
 1. When at least one item is a `ticket` and `umbrella` is null, create the umbrella with {skill:create-ticket}, and write its number into `umbrella`.
-2. For each `ticket` item, in record order, run {skill:create-ticket} with `--parent {umbrella}` and `--label confidence:{grade},value:{grade}`, and write the returned number into the item's `ticket` as soon as it is returned.
+2. For each `ticket` item, in the order that `validate` reports as `order` for the approved record, run {skill:create-ticket} with `--parent {umbrella}` and `--label confidence:{grade},value:{grade}`, and write the returned number into the item's `ticket` as soon as it is returned.
 3. Run the helper's `render` to `{ticket_dir}/triage/rendered/`, without `--preview`.
 4. Post each `comment-{issue}.md` on its issue, and then `dispositions-comment.md` on the triage ticket. Before each post, read the issue's comments with `gh issue view {issue} --json comments`, and skip the post when a comment already opens with the first line of the rendered file:
 
@@ -103,6 +103,6 @@ Nothing before this step writes anything remote. On a failed write, stop and rep
 
 ### 8. Report
 
-Report the umbrella when one was created, each child with its grades, each issue commented on, and the artifact's path. The triage ticket stays open: Closing it is the developer's call, once they have read the record.
+Report the umbrella when one was created, each child with its grades in the order in which step 7 created them, each issue commented on, and the artifact's path. The triage ticket stays open: Closing it is the developer's call, once they have read the record.
 
 <!-- include: ../_partials/gh-body-file.md / -->
