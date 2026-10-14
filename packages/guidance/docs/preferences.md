@@ -14,7 +14,7 @@ The reference for the keys of `.agents/preferences.yaml`. The [README](../README
 | `project.slug`              | string                                | Bare directory name of the working directory | Project identifier used for namespacing artifacts under `{base_dir}/projects/{slug}/`.                                                                                                                                                                                                |
 | `project.ticket_ref_prefix` | string                                | `''`                                         | Prefix that appears at the start of `ticket_ref`. Use `#` for GitHub issues (added at render time, omitted from file paths) or a Jira project key like `MAC-` (part of the canonical ticket ID, included in file paths and templates).                                                |
 
-`project.maturity`, `project.sensitivity`, and `project.audience` declare the project's stage, which the design skills treat as the premise of every security, availability, and infrastructure decision. They are read from the project file only, never from `~/.agents/preferences.yaml`, and `derive-session-context` reports each as `project_maturity`, `project_sensitivity`, or `project_audience`, `null` when undeclared. The `validate-preferences.mjs` script, deployed to each harness's `scripts/` directory, validates a preferences file: It exits 1 on an invalid value or a missing required key, and reports an unrecognized key as a warning naming the nearest known key.
+`project.maturity`, `project.sensitivity`, and `project.audience` declare the project's stage, which the design skills treat as the premise of every security, availability, and infrastructure decision. They are read from the project file only, never from `~/.agents/preferences.yaml`, and `derive-session-context` reports each as `project_maturity`, `project_sensitivity`, or `project_audience`, `null` when undeclared.
 
 ### `artifacts`
 
@@ -195,6 +195,19 @@ editors:
 | `editors[].name`       | string | Display name of the editor.                                            |
 | `editors[].command`    | string | Shell command to open files. The file path is appended as an argument. |
 | `editors[].extensions` | string | Glob pattern for file types this editor handles.                       |
+
+## Validation
+
+`codeassembly-validate-preferences`, a bin of this package, validates preferences files against the schema bundled with the installed release, without network access. Each harness's `scripts/` directory contains the same helper as `validate-preferences.mjs`.
+
+```sh
+codeassembly-validate-preferences [--json] [--strict] [file...]
+```
+
+- A file named on the command line must exist, and a missing or unparsable file is an error. With no file named, the command validates `.agents/preferences.yaml` under the working directory and accepts its absence, because that file is optional.
+- An invalid value, a value of the wrong type, and a missing required key are errors. An unrecognized key is a warning that names the nearest known key, because other tools may add keys to a preferences file. `--strict` treats a warning as an error.
+- By default, the command prints one line per finding, as `<file>: <key path>: <level>: <message>`, then a summary line. `--json` prints one `{ file, present, valid, findings }` object per file instead.
+- The command exits 1 when any file is invalid, and 0 otherwise.
 
 ## Full example
 
