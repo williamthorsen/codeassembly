@@ -48,6 +48,8 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    Check the shape as you read: A plan with `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
 
+   Then, when a ticket governs the run, read its open blockers per [Open blockers](../_data/ticket-source-resolution.md#open-blockers). When it has one, report it and ask the user to confirm that implementation should start despite it, as a `👍🏼👎🏼` confirmation. Do not start the first task without a clear affirmation.
+
 5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Audit the comments that you write along the way per [Comment discipline](#comment-discipline).
 
    Raise material divergence to the user before proceeding, rather than rerouting silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach that the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation; carry on and note it in the closing summary.

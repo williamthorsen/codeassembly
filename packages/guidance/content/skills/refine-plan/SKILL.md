@@ -31,9 +31,13 @@ Before every {tool:Task} call and after every phase completion, output a status 
 1. Read the plan file. If not found, report an error and stop.
 2. Parse YAML frontmatter from the plan content. If a `provenance` block is present, store it as `{input-provenance}`. If the plan does not have frontmatter or a `provenance` block, set `{input-provenance}` to empty.
 3. Resolve the ticket source:
-   - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body {url}` via Bash to fetch content.
+   - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body,blockedBy {url}` via Bash to fetch content.
    - File path -> Read the file.
+   - Jira URL or key -> Fetch per the Jira entry in [platform-specific fetch](../_data/ticket-source-resolution.md#platform-specific-fetch).
    - Other URL -> Fetch the URL content.
+
+   Then report the ticket's open blockers per [Open blockers](../_data/ticket-source-resolution.md#open-blockers), and continue: A blocker does not stop the review.
+
 4. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
 5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 6. `mkdir -p {artifact_dir}`
