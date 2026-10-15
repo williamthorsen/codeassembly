@@ -174,7 +174,7 @@ After resolution, store the following metadata for use by the calling skill:
 - **Issue number**: The numeric identifier, if applicable
 - **Last-updated date**: The ticket's last-modified timestamp, if available from the platform
 - **Ticket content**: The title, body, labels, and any other retrieved fields
-- **Open blockers**: Each open blocker's reference and title, read per [Open blockers](#open-blockers)
+- **Open blockers**: For a skill that checks them, each open blocker's reference and title, read per [Open blockers](#open-blockers)
 - **Ticket URL**: Persisted across sessions in the branch manifest's `ticket_url` field, written through the deriver's mutation flags; see [Stored ticket URL](#stored-ticket-url)
 
 <!-- include: ../_partials/gh-body-file.md / -->
