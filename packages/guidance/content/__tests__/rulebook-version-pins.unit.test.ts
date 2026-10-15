@@ -39,7 +39,7 @@ interface RulePin {
 const PINS = new Map<string, RulebookPin>([
   [
     'accessibility-conventions',
-    { bodyHash: 'ed77df24c1fc46360f79a9541042bedf8e3012d98043d30af2a9c5d16e20135d', version: '2' },
+    { bodyHash: 'e9dd01235d2ed850a1b06714bcf7eee68e4c8dbfd52b85b45c7ef03e3eb762c2', version: '3' },
   ],
   ['cli-conventions', { bodyHash: 'bc2bc7b32c82bf1b4a095107aa44ad5332eb2da7b3bac3943079c9327f02b04a', version: '2' }],
   [
