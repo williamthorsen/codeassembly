@@ -118,7 +118,9 @@ Name a blocker `#N` when its URL has the same `owner/repo` as the ticket's, and 
 
 **Jira.** Read the links through the clients that [Jira](#jira) ranks, after the same site check: `acli jira workitem view {key} --json --fields issuelinks`, or a connected read tool asked for the `issuelinks` field. A blocker is a link whose `type.name` is `Blocks`, or whose `type.inward` reads `is blocked by`, and that has an `inwardIssue`. It is open while `inwardIssue.fields.status.statusCategory.key` is not `done`. Name it by its key and `fields.summary`.
 
-**Other sources.** A ticket that resolved from a file, from plain text, or from another platform is not checked, and the skill says nothing about blockers. A project hosted on Bitbucket keeps its tickets in Jira, so its tickets are checked as Jira tickets.
+**A file.** A ticket artifact copies a remote ticket, so a ticket that resolved from a file is checked against the remote ticket that its frontmatter `ticket_ref` names, resolved per [shorthand reference resolution](#shorthand-reference-resolution). A file without a `ticket_ref` is not checked.
+
+**Other sources.** A ticket that resolved from plain text or from another platform is not checked, and the skill says nothing about blockers. A project hosted on Bitbucket keeps its tickets in Jira, so its tickets are checked as Jira tickets.
 
 **Report.** When the ticket has open blockers, report them in one line, each by reference and title: `⚠️ {ticket_ref} is blocked by {blocker_ref} ({title}), …`. When it has none, report nothing. When the read fails or no client can make it, report in one line that the blocker check did not run, and why; never report the ticket as unblocked. The calling skill states what follows the report.
 
