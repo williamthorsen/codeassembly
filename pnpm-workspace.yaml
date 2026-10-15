@@ -39,3 +39,6 @@ allowBuilds:
 savePrefix: ''
 
 minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
+
+minimumReleaseAgeExclude:
+  - '@williamthorsen/nmr@0.47.0'

@@ -81,7 +81,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-collaboration-preferences',
-    { bodyHash: '875cc5d69676b8aff88baa73cacc44371e6022ac136aa941bd93dbc50fb90520', version: '12' },
+    { bodyHash: '62c1c15cf87500d33a1bce27db8aa168dcfe130437e7ae584ac994dee4cffe13', version: '13' },
   ],
   [
     'williamthorsen-comment-preferences',
@@ -97,7 +97,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-tooling-preferences',
-    { bodyHash: '93d4984f451f95de6fff980eb3d92ea88bc4393ab849fe4a401a69b04ef042f6', version: '3' },
+    { bodyHash: '0f2fdaf71df7aafc1a0a327e7ad6718a914f22324c466957ad9fc89531fea92d', version: '4' },
   ],
   [
     'williamthorsen-typescript-preferences',
