@@ -34,7 +34,7 @@ Do NOT generate the implementation plan until the ticket has been approved. This
 
 ### Phase 1: Resolve task source and assess relevancy
 
-1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 5's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument.
+1. **Resolve the task source** using the [ticket source resolution](../_data/ticket-source-resolution.md) table. Request the `updatedAt` field for use in the relevancy check. Store the resolved metadata for use in the relevancy check and Phase 5's optional remote update. When the source resolves to a URL, persist it to the branch manifest per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url) so that a later session does not need a ticket argument. Then report the ticket's open blockers per [Open blockers](../_data/ticket-source-resolution.md#open-blockers), whether or not the relevancy check runs, and continue: A blocker does not stop design.
 
 2. **Assess relevancy**: Determine whether the ticket may be stale and, if so, verify it is still relevant.
 
