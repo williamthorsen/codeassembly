@@ -169,6 +169,8 @@ The body following the frontmatter has this structure:
 
 ## Technical assessment
 
+{Why the change is correct and adequately tested. For a change to a visible component, what the browser check in {rulebook:accessibility-conventions} found, or that it did not run and which elements it would have covered.}
+
 ## Conclusion
 
 Score: X/10
@@ -260,7 +262,7 @@ None.
 
 ## Technical assessment
 
-{Why the change is correct and adequately tested.}
+{Why the change is correct and adequately tested. For a change to a visible component, what the browser check in {rulebook:accessibility-conventions} found, or that it did not run and which elements it would have covered.}
 
 ## Conclusion
 

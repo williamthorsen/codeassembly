@@ -16,7 +16,7 @@ Evaluation criteria for code review. Apply proportionally: Match depth to risk.
 
 - **Correctness**: Logic errors, unhandled error paths, data loss risks
 - **Data changes**: A change that removes or renames data that deployed code still reads, or that depends on a migration run before merge (see {rulebook:shared-data-conventions})
-- **Interfaces**: A change that defines or changes colour tokens, text styles, or a page or UI component (see {rulebook:accessibility-conventions})
+- **Interfaces**: A change that defines or changes colour tokens, text styles, or a page or UI component (see {rulebook:accessibility-conventions}). For each new or changed interactive element, ask whether it shows that it is interactive, by the states that the rulebook names, and check it in a browser as the rulebook requires rather than by reading the diff alone
 - **Conventions**: Adherence to codebase patterns and project standards
 - **Edge cases**: Boundary conditions, empty collections, zero values, undefined states
 - **Test coverage**: Adequate tests for new functionality; tests that verify behavior and earn their place, not just coverage
