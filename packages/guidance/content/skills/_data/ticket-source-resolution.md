@@ -116,7 +116,7 @@ gh issue view {number} --json blockedBy --jq '.blockedBy.nodes[] | select(.state
 
 Name a blocker `#N` when its URL has the same `owner/repo` as the ticket's, and `owner/repo#N` otherwise.
 
-**Jira.** Read the links through the clients that [Jira](#jira) ranks, after the same site check: `acli jira workitem view {key} --json --fields issuelinks`, or a connected read tool asked for the `issuelinks` field. A blocker is a link whose `type.name` is `Blocks`, or whose `type.inward` reads `is blocked by`, and that has an `inwardIssue`. It is open while `inwardIssue.fields.status.statusCategory.key` is not `done`. Name it by its key and `fields.summary`.
+**Jira.** Read the links through the Jira clients that [platform-specific fetch](#platform-specific-fetch) ranks, after the same site check: `acli jira workitem view {key} --json --fields issuelinks`, or a connected read tool asked for the `issuelinks` field. A blocker is a link whose `type.name` is `Blocks`, or whose `type.inward` reads `is blocked by`, and that has an `inwardIssue`. It is open while `inwardIssue.fields.status.statusCategory.key` is not `done`. Name it by its key and `fields.summary`.
 
 **A file.** A ticket artifact copies a remote ticket, so a ticket that resolved from a file is checked against the remote ticket that its frontmatter `ticket_ref` names, resolved per [shorthand reference resolution](#shorthand-reference-resolution). A file without a `ticket_ref` is not checked.
 

@@ -33,7 +33,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
 3. Resolve the ticket source:
    - GitHub URL (`github.com/.../issues/...`) -> use `gh issue view --json title,body,blockedBy {url}` via Bash to fetch content.
    - File path -> Read the file.
-   - Jira URL or key -> Fetch per [Jira](../_data/ticket-source-resolution.md#jira).
+   - Jira URL or key -> Fetch per the Jira entry in [platform-specific fetch](../_data/ticket-source-resolution.md#platform-specific-fetch).
    - Other URL -> Fetch the URL content.
 
    Then report the ticket's open blockers per [Open blockers](../_data/ticket-source-resolution.md#open-blockers), and continue: A blocker does not stop the review.
