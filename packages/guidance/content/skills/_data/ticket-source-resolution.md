@@ -104,6 +104,24 @@ When a skill needs structured metadata, such as the `updated` timestamp for a st
 
 The stored URL applies throughout: A Jira ticket URL resolved once is reused on later sessions, and it is invalidated like any other stored URL when it does not yield the expected ticket (see [Stored ticket URL](#stored-ticket-url)). A site mismatch does not show that the ticket is missing, so it does not invalidate the stored URL.
 
+## Open blockers
+
+A ticket's open blockers are the tickets recorded natively as blocking it that are not yet done. Read them each time a skill resolves the ticket, even when the ticket is already in context, because a blocker can close or appear during a session.
+
+**GitHub.** A blocker is open while its `state` is `OPEN`, so one closed as not planned counts as resolved. A blocker can be in another repository:
+
+```
+gh issue view {number} --json blockedBy --jq '.blockedBy.nodes[] | select(.state == "OPEN") | [.url, .title] | @tsv'
+```
+
+Name a blocker `#N` when its URL has the same `owner/repo` as the ticket's, and `owner/repo#N` otherwise.
+
+**Jira.** Read the links through the clients that [Jira](#jira) ranks, after the same site check: `acli jira workitem view {key} --json --fields issuelinks`, or a connected read tool asked for the `issuelinks` field. A blocker is a link whose `type.name` is `Blocks`, or whose `type.inward` reads `is blocked by`, and that has an `inwardIssue`. It is open while `inwardIssue.fields.status.statusCategory.key` is not `done`. Name it by its key and `fields.summary`.
+
+**Other sources.** A ticket that resolved from a file, from plain text, or from another platform is not checked, and the skill says nothing about blockers. A project hosted on Bitbucket keeps its tickets in Jira, so its tickets are checked as Jira tickets.
+
+**Report.** When the ticket has open blockers, report them in one line, each by reference and title: `⚠️ {ticket_ref} is blocked by {blocker_ref} ({title}), …`. When it has none, report nothing. When the read fails or no client can make it, report in one line that the blocker check did not run, and why; never report the ticket as unblocked. The calling skill states what follows the report.
+
 ## Platform-specific write
 
 Write a revision back to the ticket of record, which the caller names; when the caller does not name a ticket, it is the ticket from which the revision's source came. The platform is `scm` from the session-context manifest, falling back to the [platform resolution cascade](#platform-resolution-cascade) when the manifest does not set `scm`. Under that default, a ticket that resolved from a file is written back to that file, and one that resolved from plain text does not have a write target.
@@ -154,6 +172,7 @@ After resolution, store the following metadata for use by the calling skill:
 - **Issue number**: The numeric identifier, if applicable
 - **Last-updated date**: The ticket's last-modified timestamp, if available from the platform
 - **Ticket content**: The title, body, labels, and any other retrieved fields
+- **Open blockers**: Each open blocker's reference and title, read per [Open blockers](#open-blockers)
 - **Ticket URL**: Persisted across sessions in the branch manifest's `ticket_url` field, written through the deriver's mutation flags; see [Stored ticket URL](#stored-ticket-url)
 
 <!-- include: ../_partials/gh-body-file.md / -->
