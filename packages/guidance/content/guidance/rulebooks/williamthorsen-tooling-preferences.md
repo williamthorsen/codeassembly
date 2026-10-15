@@ -1,13 +1,13 @@
 ---
 slug: williamthorsen-tooling-preferences
-description: William Thorsen's preferences for which command-line tool an agent reaches for, how it invokes it, how it obtains a tool or resource that is missing, and how it logs into the app under work.
+description: William Thorsen's preferences for which command-line tool an agent reaches for, how it invokes it, and how it obtains a tool or resource that is missing.
 delivery: ambient
 version: '4'
 ---
 
 # William Thorsen's tooling preferences
 
-Which command-line tool to reach for, how to invoke it, how to obtain one that is missing, and how to log into the app under work.
+Which command-line tool to reach for, how to invoke it, and how to obtain one that is missing.
 
 ## Searching and finding files
 
@@ -27,18 +27,10 @@ Before reporting a tool, dependency, or service as missing, exhaust the routes t
 
 Never hand over a command that the sandbox refuses. When the resource that it reaches is within what the task was given, retry the command through the permission gate, which approves or refuses the retry. When the resource is not within the task, or when the retry is refused, ask once for the grant that clears it, propose the durable grant that removes the block for later sessions, with its tradeoff in one line (the grant widens what every later sandboxed command may reach), and run the command once the grant lands.
 
-Ask for the resource when none of those routes works, when the missing resource is a credential or access, or when the stopped service is one that the project does not define. Name the resource and the command that will run once it arrives, and keep the task: Never restate the task as an action item for the developer. The "Handoffs" section of William Thorsen's collaboration preferences states the ladder on which this ask is the third rung. A credential or access that is already present is the task's to use only when the task's plan or the developer names the command that reads it. Never look for or use any other: It belongs to the developer. An app's local development login is not such a credential; "Logging into the app under work" below covers it.
+Ask for the resource when none of those routes works, when the missing resource is a credential or access, or when the stopped service is one that the project does not define. Name the resource and the command that will run once it arrives, and keep the task: Never restate the task as an action item for the developer. The "Handoffs" section of William Thorsen's collaboration preferences states the ladder on which this ask is the third rung. A credential or access that is already present is the task's to use only when the task's plan or the developer names the command that reads it. Never look for or use any other: It belongs to the developer. An app's local development login is not such a credential: Log into a local instance of the app under work without asking, and set a development credential in an untracked local config file when the app needs one.
 
 This rule runs before any fallback that a skill names for an unavailable tool. A skill's "unavailable" means unavailable once these routes are exhausted, and the skill's fallback applies from that point.
 
-The rule does not license any write. Acquiring a resource in a way that mutates shared state, such as installing a tool globally, restarting a service that the project does not define, minting a credential, or widening a sandbox grant, still needs the developer's authorization, and the ask is how to obtain it. Setting a local development credential, as "Logging into the app under work" describes, is not minting one.
+The rule does not license any write. Acquiring a resource in a way that mutates shared state, such as installing a tool globally, restarting a service that the project does not define, minting a credential, or widening a sandbox grant, still needs the developer's authorization, and the ask is how to obtain it. Setting that local development credential is not minting one.
 
 Where a `sandbox-conventions` rulebook is deployed, consult it first for a denial that misreports itself as a missing resource.
-
-## Logging into the app under work
-
-Log into a local instance of the app under work without the developer. Its local development login is not the developer's credential: It exists so that whoever develops the app can use it, and the agent develops the app too. A production login, an API key for a remote service, and the developer's own accounts remain the developer's, under the credential rule above.
-
-An app with a login offers a local-only way in for development, such as a seeded account or a password hash that the agent writes to an untracked local config file, or an auth bypass that works only in development and that a production build cannot enable. The way in does not require a second factor, the developer's production secrets, or a write to a shared store, so that an agent can start the app and log in alone.
-
-When the app lacks such a way in, report that gap as the blocker and recommend adding one. Never ask the developer to log in.

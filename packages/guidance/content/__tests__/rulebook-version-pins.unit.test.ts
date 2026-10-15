@@ -39,7 +39,7 @@ interface RulePin {
 const PINS = new Map<string, RulebookPin>([
   [
     'accessibility-conventions',
-    { bodyHash: 'e9dd01235d2ed850a1b06714bcf7eee68e4c8dbfd52b85b45c7ef03e3eb762c2', version: '3' },
+    { bodyHash: 'ed77df24c1fc46360f79a9541042bedf8e3012d98043d30af2a9c5d16e20135d', version: '2' },
   ],
   ['cli-conventions', { bodyHash: 'bc2bc7b32c82bf1b4a095107aa44ad5332eb2da7b3bac3943079c9327f02b04a', version: '2' }],
   [
@@ -97,7 +97,7 @@ const PINS = new Map<string, RulebookPin>([
   ],
   [
     'williamthorsen-tooling-preferences',
-    { bodyHash: 'e8a8a6798c424ab7e346d415273a9a954ad2742054edaa6306ab14c3c09c46f2', version: '4' },
+    { bodyHash: '0f2fdaf71df7aafc1a0a327e7ad6718a914f22324c466957ad9fc89531fea92d', version: '4' },
   ],
   [
     'williamthorsen-typescript-preferences',

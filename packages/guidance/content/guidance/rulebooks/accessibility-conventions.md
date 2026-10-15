@@ -2,7 +2,7 @@
 slug: accessibility-conventions
 description: 'Accessibility of interfaces: usability before style, contrast and size floors for text, the states that show an element is interactive, and the browser check of a visible change. Consult before writing an artifact page, a prototype, or a mockup, before defining or changing colour tokens, before writing CSS or a UI component, and before finishing or reviewing a change to a visible component.'
 delivery: [skill]
-version: '3'
+version: '2'
 ---
 
 # Accessibility conventions
@@ -34,7 +34,5 @@ Put the states in a base style or a shared component rather than setting them at
 ## Checking in a browser
 
 Check every change to a visible component in a browser before reporting it finished or reviewed. Open the page, then hover over and tab through each new or changed interactive element, and confirm the three states above, or their absence on a disabled element. A test that renders HTML, or a reading of the diff, does not replace this check: Neither shows what the element looks like under the pointer or with focus.
-
-A page behind a login does not excuse the check. Log into a local instance of the app through its development-only way in, without asking the developer. When the app lacks such a way in, report that gap as what blocked the check, and recommend adding a local login that requires neither the developer's secrets nor a second factor.
 
 When a browser is not available, report that the check did not run and name the elements that it would have covered. Never report it as passed.
