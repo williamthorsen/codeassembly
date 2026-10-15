@@ -1,8 +1,8 @@
 ---
 slug: accessibility-conventions
-description: 'Accessibility of interfaces: usability before style, and contrast and size floors for text. Consult before writing an artifact page, a prototype, or a mockup, before defining or changing colour tokens, and before writing CSS or a UI component.'
+description: 'Accessibility of interfaces: usability before style, contrast and size floors for text, the states that show an element is interactive, and the browser check of a visible change. Consult before writing an artifact page, a prototype, or a mockup, before defining or changing colour tokens, before writing CSS or a UI component, and before finishing or reviewing a change to a visible component.'
 delivery: [skill]
-version: '1'
+version: '2'
 ---
 
 # Accessibility conventions
@@ -18,3 +18,21 @@ The standard is WCAG 2.2 AA. This rulebook restates only the values that an agen
 - **Tiers.** Use two text colours, primary and secondary. Add a third only if it meets the same contrast floor; a third tier that passes sits within a few shades of the second and adds little.
 
 Check contrast whenever colour tokens are defined or changed. Compute the WCAG contrast ratio of each text token against each surface token on which it is used, in each theme, compositing any translucent colour or `opacity` over its surface first. Report every failing pair with its ratio, and fix it before presenting the page.
+
+## Interaction states
+
+Every element that responds to a click or a key shows that it does:
+
+- **Pointer.** The cursor is a pointer over it.
+- **Hover.** Its appearance changes while the pointer is over it.
+- **Focus.** A visible indicator marks it while it has keyboard focus, per SC 2.4.7, and the indicator meets the 3:1 non-text contrast of SC 1.4.11 against its surface.
+
+A disabled element, whether disabled by the native attribute or by `aria-disabled`, shows neither the hover state nor the pointer.
+
+Put the states in a base style or a shared component rather than setting them at each call site, so that a new element has them without anyone remembering to add them. Do not rely on a framework's or a reset's defaults: Some remove the pointer from a button.
+
+## Checking in a browser
+
+Check every change to a visible component in a browser before reporting it finished or reviewed. Open the page, then hover over and tab through each new or changed interactive element, and confirm the three states above, or their absence on a disabled element. A test that renders HTML, or a reading of the diff, does not replace this check: Neither shows what the element looks like under the pointer or with focus.
+
+When a browser is not available, report that the check did not run and name the elements that it would have covered. Never report it as passed.
