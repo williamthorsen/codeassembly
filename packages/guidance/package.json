@@ -50,7 +50,7 @@
     "test:smoke": "node scripts/__tests__/smoke-test-skill-helpers.ts"
   },
   "devDependencies": {
-    "@hyperjump/json-schema": "1.17.8",
+    "@hyperjump/json-schema": "1.18.0",
     "@types/node": "catalog:",
     "@williamthorsen/change-grammar": "catalog:",
     "@williamthorsen/kb": "workspace:*",
