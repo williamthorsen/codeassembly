@@ -1,8 +1,8 @@
 ---
 slug: cli-conventions
-description: 'How a command-line tool talks to its user: help on every command, exit codes, error messages, progress and outcome reports, and help topics. Consult before writing or changing any command-line tool, in any language.'
+description: 'How a command-line tool talks to its user: subcommand names, help on every command, exit codes, error messages, progress and outcome reports, and help topics. Consult before writing or changing any command-line tool, in any language.'
 delivery: skill
-version: '2'
+version: '3'
 ---
 
 # CLI conventions
@@ -10,6 +10,17 @@ version: '2'
 A CLI has two kinds of reader. A person at a terminal reads its help and its messages, and a script or an agent reads its exit code and its streams. A terminal cannot follow a link, and a script cannot read a message, so each rule below serves one of the two without breaking the other.
 
 These rules apply whatever language the tool is written in.
+
+## Subcommand names
+
+- **A subcommand that acts names its action and its object**, so that a reader of the bare command line can tell what it does. The object may be left out when the tool acts on only one, as in `<bin> deploy`.
+- **A flat verb-object name fits while the object has one action**: `<bin> show-instance-page`. **A noun group with verb subcommands fits once the object has several**: `<bin> instance-page show`, `<bin> instance-page reload`.
+- **An existing name that breaks these rules is not precedent for a new one.**
+
+Example, for a subcommand that prints the page of the running instance:
+
+- ❌ `<bin> page`
+- ✅ `<bin> show-instance-page`, which becomes `<bin> instance-page show` once the instance page has a second action
 
 ## Help
 
