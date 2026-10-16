@@ -147,6 +147,7 @@ On `ok: false`, act on the `error` code:
 - `no-kb-resolvable`: The explicit `--kb <name>` did not match any entry in the `kb.yaml` registry. Report the message and propose a corrected name (or, in auto mode, fail visibly with the categorical reason).
 - `missing-destination`: The helper did not discover a `.kb/`, and the invocation did not pass `--kb`. Ask the user where the note should go, passing `--kb <name>` for a specific KB or `--kb @default` for the registry default (or, in auto mode, fail visibly with the categorical reason).
 - `no-default`: `--kb @default` was given but `kb.yaml` does not configure a `default_kb`. Report the message; have the user name a KB explicitly or configure a default.
+- `readonly-kb`: The resolved KB is marked `readonly: true` in `kb.yaml`, so the write was refused. Report the message; have the user choose a writable KB with `--kb <name>`.
 - `invalid-args` / `invalid-title`: Report the helper's message and propose a corrected invocation.
 - `invalid-config`: A survey found a malformed `.kb/config.yaml` or `.kb/taxonomy.yaml`. The message names the file; report it and have the user repair it before capturing.
 - `collision`: A note already exists at the target path. Decide whether to re-title, append the new material to the existing note (read it first, then write a follow-up edit), or abort.

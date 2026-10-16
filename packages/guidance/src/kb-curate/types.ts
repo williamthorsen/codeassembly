@@ -2,7 +2,7 @@
 
 import type { Finding } from '@williamthorsen/kb';
 
-import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
+import type { KbResolutionErrorCode, ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 
 /** The run mode: a read-only report, or a report plus the curated safe fixes. */
 export type CurateMode = 'report' | 'apply';
@@ -54,7 +54,7 @@ export interface CurateSuccess {
 }
 
 /** Categorical error codes that the helper can return without an unexpected throw. */
-export type CurateErrorCode = 'invalid-args' | 'invalid-config' | 'no-kb-resolvable' | 'readonly-kb';
+export type CurateErrorCode = KbResolutionErrorCode | 'invalid-args' | 'invalid-config';
 
 /** The helper's stdout payload on a recoverable failure. */
 export interface CurateFailure {

@@ -1,9 +1,9 @@
 import { join } from 'node:path';
 
 import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it } from 'vitest';
 
-import { resolveWritableKb } from '../resolve-writable-kb.ts';
+import { type DiscoverKbOutcome, discoverWritableKb, resolveWritableKb } from '../resolve-writable-kb.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const PROJECT_KB = join(FIXTURES, 'project-kb');
@@ -294,5 +294,70 @@ describe(resolveWritableKb, () => {
       ok: true,
       kb: { name: 'also-writable', path: VAULT_B, source: 'explicit' },
     });
+  });
+});
+
+describe(discoverWritableKb, () => {
+  it('returns the discovered KB, annotated with its registry name', async () => {
+    const result = await discoverWritableKb({ startDir: VAULT_A, home: HOME_WITH_DEFAULT });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'named-vault-a', path: VAULT_A, source: 'discovered' },
+    });
+  });
+
+  it('refuses with missing-destination without a .kb/, ignoring a configured registry default', async () => {
+    const result = await discoverWritableKb({ startDir: '/', home: HOME_WITH_DEFAULT });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'missing-destination',
+      registeredKbs: ['global-vault', 'named-vault-a'],
+      defaultName: 'global-vault',
+    });
+  });
+
+  it('includes the registry error and warns when the registry is malformed', async () => {
+    using stdio = captureStdio();
+    const result = await discoverWritableKb({ startDir: '/', home: HOME_MALFORMED });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'missing-destination',
+      registeredKbs: [],
+      registryError: expect.any(String),
+    });
+    expect(stdio.stderr).toContain('could not load kb.yaml registry:');
+  });
+
+  it('refuses a discovered KB whose path matches a readonly registry entry with readonly-kb', async () => {
+    const result = await discoverWritableKb({ startDir: VAULT_READONLY, home: HOME_READONLY_NAMED });
+
+    expect(result).toEqual({
+      ok: false,
+      reason: 'readonly-kb',
+      kbName: 'readonly-named',
+      kbPath: VAULT_READONLY,
+    });
+  });
+
+  it('resolves a discovered readonly KB for a caller that does not require a writable one', async () => {
+    const result = await discoverWritableKb({
+      startDir: VAULT_READONLY,
+      requireWritable: false,
+      home: HOME_READONLY_NAMED,
+    });
+
+    expect(result).toEqual({
+      ok: true,
+      kb: { name: 'readonly-named', path: VAULT_READONLY, source: 'discovered' },
+    });
+  });
+
+  it('admits only the failures that discovery can produce', () => {
+    expectTypeOf<Extract<DiscoverKbOutcome, { ok: false }>['reason']>().toEqualTypeOf<
+      'missing-destination' | 'readonly-kb'
+    >();
   });
 });

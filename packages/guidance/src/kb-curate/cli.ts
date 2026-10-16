@@ -9,7 +9,7 @@ import { check, type EnumeratedNote } from '@williamthorsen/kb/check';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
+import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-failure.ts';
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { applyFixes } from './apply.ts';
 import { detectCurateFindings, sortFindings } from './detect.ts';
@@ -205,47 +205,7 @@ async function resolveKb(input: {
     return { ok: true, kb: resolved.kb };
   }
 
-  switch (resolved.reason) {
-    case 'no-kb-resolvable':
-      return {
-        ok: false,
-        failure: {
-          ok: false,
-          error: 'no-kb-resolvable',
-          message: `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
-        },
-      };
-    case 'missing-destination':
-      return {
-        ok: false,
-        failure: { ok: false, error: 'no-kb-resolvable', message: formatMissingDestinationMessage(resolved) },
-      };
-    case 'no-default':
-      return {
-        ok: false,
-        failure: {
-          ok: false,
-          error: 'no-kb-resolvable',
-          message:
-            resolved.registryError !== undefined
-              ? `could not resolve the default knowledge base: ${resolved.registryError}`
-              : '--kb @default was given but kb.yaml does not configure default_kb',
-        },
-      };
-    case 'readonly-kb':
-      return {
-        ok: false,
-        failure: {
-          ok: false,
-          error: 'readonly-kb',
-          message: `knowledge base "${resolved.kbName}" is marked readonly in kb.yaml; --apply is refused`,
-        },
-      };
-    default: {
-      const _exhaustive: never = resolved;
-      throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
-    }
-  }
+  return { ok: false, failure: { ok: false, error: resolved.reason, message: formatKbResolutionFailure(resolved) } };
 }
 
 /** Matches a value-bearing flag in either `--flag value` or `--flag=value` form. Returns `null` when `arg` is not it. */

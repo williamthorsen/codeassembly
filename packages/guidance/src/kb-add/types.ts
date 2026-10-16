@@ -6,7 +6,7 @@
 
 import type { KbAssertion } from '@williamthorsen/kb/records';
 
-import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
+import type { KbResolutionErrorCode, ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import type { DomainPlacement } from './declare-domain.ts';
 import type { KbSurvey } from './survey.ts';
 
@@ -80,15 +80,7 @@ export interface AddFailure {
 }
 
 /** Categorical error codes that the helper can return without an unexpected throw. */
-export type AddErrorCode =
-  | 'no-kb-resolvable'
-  | 'missing-destination'
-  | 'no-default'
-  | 'invalid-args'
-  | 'invalid-config'
-  | 'invalid-title'
-  | 'collision'
-  | 'readonly-kb';
+export type AddErrorCode = KbResolutionErrorCode | 'collision' | 'invalid-args' | 'invalid-config' | 'invalid-title';
 
 /** Per-error structured details. */
 export interface AddErrorDetails {

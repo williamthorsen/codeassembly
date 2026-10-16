@@ -26,7 +26,7 @@ A value-bearing flag accepts both `--kb coding` and `--kb=coding`. Without flags
 
 ### KB selection
 
-The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` takes precedence over a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. When `--kb` is not given and a `.kb/` folder is not discoverable, the run is refused rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Each run curates a single KB: Wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
+The knowledge base is resolved the same way as `kb-add`: A concrete `--kb <name>` takes precedence over a discovered `.kb/` folder, and the registry's `default_kb` is reachable only via `--kb @default`. A `--kb <name>` that matches no registry entry is refused with `no-kb-resolvable`, and `--kb @default` without a configured `default_kb` with `no-default`. When `--kb` is not given and a `.kb/` folder is not discoverable, the run is refused with `missing-destination` rather than defaulting. A read-only report run accepts a KB marked `readonly: true` in `kb.yaml`; `--apply` against a readonly KB is refused with `readonly-kb`. Each run curates a single KB: Wikilink resolution and supersede chains are only valid within one vault, so curating several vaults is a shell loop over `--kb`.
 
 The store's `.kb/config.yaml` decides which notes are curated: By default, only notes under `content/` are enumerated. A store with a different layout overrides the `targets` glob in its `config.yaml`. A malformed `config.yaml`, `tag-aliases.yaml`, or `taxonomy.yaml` fails the run with `invalid-config` rather than being silently ignored.
 
@@ -103,12 +103,14 @@ The helper prints a JSON object to stdout. On success the payload contains `ok: 
 
 On failure, `ok: false` plus a categorical `error` code:
 
-| Code               | What it means                                                                                                                                                                | What to do                                                                   |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| `invalid-args`     | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                                                                                                      | Correct the invocation. The message names the specific defect.               |
-| `invalid-config`   | A malformed `.kb/config.yaml`, `.kb/tag-aliases.yaml`, or `.kb/taxonomy.yaml` in the store.                                                                                  | Fix the named file. The message names the offending file.                    |
-| `no-kb-resolvable` | A KB could not be resolved: `--kb` did not match an entry, or `--kb` was absent and `.kb/` was not discoverable, or `--kb @default` was passed without a configured default. | Confirm the `--kb` name, run from inside the vault, or pass `--kb @default`. |
-| `readonly-kb`      | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                                                                                                        | Drop `--apply` for a read-only report, or use a writable KB.                 |
+| Code                  | What it means                                                                               | What to do                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `invalid-args`        | Unknown flag, missing value, or a non-positive-integer `--stale-after`.                     | Correct the invocation. The message names the specific defect.        |
+| `invalid-config`      | A malformed `.kb/config.yaml`, `.kb/tag-aliases.yaml`, or `.kb/taxonomy.yaml` in the store. | Fix the named file. The message names the offending file.             |
+| `no-kb-resolvable`    | `--kb <name>` did not match any entry in the `kb.yaml` registry.                            | Confirm the `--kb` name against the registry.                         |
+| `missing-destination` | `--kb` was not given, and the helper did not discover a `.kb/`.                             | Run from inside the vault, or pass `--kb <name>` or `--kb @default`.  |
+| `no-default`          | `--kb @default` was given, but `kb.yaml` does not configure a `default_kb`.                 | Name a KB with `--kb <name>`, or configure `default_kb` in `kb.yaml`. |
+| `readonly-kb`         | `--apply` was used against a KB marked `readonly: true` in `kb.yaml`.                       | Drop `--apply` for a read-only report, or use a writable KB.          |
 
 System failures (out-of-disk, permission denied) print to stderr and exit non-zero. They are out of band and never appear as a structured `error` code.
 

@@ -11,7 +11,7 @@ import { resolveKbDir } from '@williamthorsen/kb/layout';
 import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { formatMissingDestinationMessage } from '../kb-shared/format-missing-destination.ts';
+import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-failure.ts';
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { readAll } from '../lib/stream-helpers.ts';
@@ -295,43 +295,17 @@ async function resolveKb(input: {
     return { ok: true, kb: resolved.kb };
   }
 
+  const failure: AddFailure = { ok: false, error: resolved.reason, message: formatKbResolutionFailure(resolved) };
   switch (resolved.reason) {
     case 'no-kb-resolvable':
-      return {
-        ok: false,
-        failure: {
-          ok: false,
-          error: 'no-kb-resolvable',
-          message: `--kb "${resolved.requestedKb}" does not match any registered knowledge base`,
-          details: { requestedKb: resolved.requestedKb },
-        },
-      };
+      return { ok: false, failure: { ...failure, details: { requestedKb: resolved.requestedKb } } };
     case 'missing-destination':
-      return {
-        ok: false,
-        failure: { ok: false, error: 'missing-destination', message: formatMissingDestinationMessage(resolved) },
-      };
     case 'no-default':
-      return {
-        ok: false,
-        failure: {
-          ok: false,
-          error: 'no-default',
-          message:
-            resolved.registryError !== undefined
-              ? `could not resolve the default knowledge base: ${resolved.registryError}`
-              : '--kb @default was given but kb.yaml does not configure default_kb',
-        },
-      };
+      return { ok: false, failure };
     case 'readonly-kb':
       return {
         ok: false,
-        failure: {
-          ok: false,
-          error: 'readonly-kb',
-          message: `knowledge base "${resolved.kbName}" is marked readonly in kb.yaml; writes are refused`,
-          details: { readonlyKbName: resolved.kbName, readonlyKbPath: resolved.kbPath },
-        },
+        failure: { ...failure, details: { readonlyKbName: resolved.kbName, readonlyKbPath: resolved.kbPath } },
       };
     default: {
       const _exhaustive: never = resolved;
