@@ -1,6 +1,6 @@
 import process from 'node:process';
 
-import { findKbRoot, tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
+import { findKbRoot, type KbRegistry, tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 
 import { DEFAULT_KB_SENTINEL } from './kb-role-sentinels.ts';
 
@@ -28,6 +28,34 @@ export type ResolveKbOutcome =
   | { ok: false; reason: 'no-default'; registryError?: string }
   | { ok: false; reason: 'readonly-kb'; kbName: string; kbPath: string };
 
+/** A resolution failure: the single source of the error codes that the KB skills report. */
+export type KbResolutionFailure = Extract<ResolveKbOutcome, { ok: false }>;
+
+/** An error code that a KB skill reports when it cannot resolve a knowledge base. */
+export type KbResolutionErrorCode = KbResolutionFailure['reason'];
+
+/** A failure that discovery alone can produce, without `--kb` or the `@default` sentinel. */
+export type KbDiscoveryFailure = Extract<KbResolutionFailure, { reason: 'missing-destination' | 'readonly-kb' }>;
+
+/** An error code that a discovery-only KB skill reports when it cannot resolve a knowledge base. */
+export type KbDiscoveryErrorCode = KbDiscoveryFailure['reason'];
+
+/** The selection outcome of discovery alone. */
+export type DiscoverKbOutcome = KbDiscoveryFailure | { ok: true; kb: ResolvedKb };
+
+/**
+ * Resolves the knowledge base that contains `startDir` by walking up for a `.kb/`, refusing a read-only KB to a caller
+ * that intends to write. Takes the same `requireWritable` and `home` options as `resolveWritableKb`.
+ */
+export async function discoverWritableKb(input: {
+  startDir: string;
+  requireWritable?: boolean;
+  home?: string;
+}): Promise<DiscoverKbOutcome> {
+  const registry = await loadRegistry(input);
+  return discoverInRegistry({ ...registry, startDir: input.startDir, requireWritable: input.requireWritable ?? true });
+}
+
 /**
  * Resolves the single knowledge base on which a command operates, refusing a read-only KB to a caller that intends to
  * write.
@@ -50,15 +78,7 @@ export async function resolveWritableKb(input: {
   home?: string;
 }): Promise<ResolveKbOutcome> {
   const requireWritable = input.requireWritable ?? true;
-
-  // Warn to stderr so that a permission error or a YAML defect is distinguishable from "no config file at all".
-  const { config, error: registryError } = await tryLoadKbRegistry({
-    projectDir: input.startDir,
-    ...(input.home !== undefined && { home: input.home }),
-  });
-  if (registryError !== undefined) {
-    process.stderr.write(`kb-shared: warning: could not load kb.yaml registry: ${registryError}\n`);
-  }
+  const { config, registryError } = await loadRegistry(input);
 
   // Check the sentinel before the by-name lookup, so that a KB literally named "@default" cannot shadow it.
   if (input.explicitKb === DEFAULT_KB_SENTINEL) {
@@ -83,10 +103,23 @@ export async function resolveWritableKb(input: {
     return { ok: true, kb: { name: match.name, path: match.path, source: 'explicit' } };
   }
 
+  return discoverInRegistry({ config, registryError, startDir: input.startDir, requireWritable });
+}
+
+// region | Helpers
+
+/** Runs `.kb/` discovery from `startDir` against an already-loaded registry. */
+async function discoverInRegistry(input: {
+  config: KbRegistry;
+  registryError: string | undefined;
+  startDir: string;
+  requireWritable: boolean;
+}): Promise<DiscoverKbOutcome> {
+  const { config, registryError } = input;
   const discovered = await findKbRoot({ startDir: input.startDir });
   if (discovered !== null) {
     const registryMatch = config.entries.find((entry) => entry.path === discovered.path);
-    if (registryMatch !== undefined && refusesAsReadonly(registryMatch.readonly, requireWritable)) {
+    if (registryMatch !== undefined && refusesAsReadonly(registryMatch.readonly, input.requireWritable)) {
       return { ok: false, reason: 'readonly-kb', kbName: registryMatch.name, kbPath: registryMatch.path };
     }
     return {
@@ -109,7 +142,21 @@ export async function resolveWritableKb(input: {
   };
 }
 
-// region | Helpers
+/** Loads the KB registry, warning on stderr when it cannot be read. */
+async function loadRegistry(input: {
+  startDir: string;
+  home?: string;
+}): Promise<{ config: KbRegistry; registryError: string | undefined }> {
+  // Warn to stderr so that a permission error or a YAML defect is distinguishable from "no config file at all".
+  const { config, error: registryError } = await tryLoadKbRegistry({
+    projectDir: input.startDir,
+    ...(input.home !== undefined && { home: input.home }),
+  });
+  if (registryError !== undefined) {
+    process.stderr.write(`kb-shared: warning: could not load kb.yaml registry: ${registryError}\n`);
+  }
+  return { config, registryError };
+}
 
 /** Reports whether to refuse this caller because of a store's `readonly` flag. */
 function refusesAsReadonly(isReadonly: boolean | undefined, requireWritable: boolean): boolean {
