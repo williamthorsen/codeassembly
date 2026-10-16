@@ -70,7 +70,7 @@ describe(runCurate, () => {
     vi.mocked(check).mockClear();
   });
 
-  it("returns no-kb-resolvable when the lookup doesn't find any KB and argv doesn't request one", async () => {
+  it("returns missing-destination when the lookup doesn't find any KB and argv doesn't request one", async () => {
     const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
     const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
 
@@ -78,7 +78,7 @@ describe(runCurate, () => {
 
     expect(result).toEqual({
       ok: false,
-      error: 'no-kb-resolvable',
+      error: 'missing-destination',
       message: expect.stringContaining('discovery did not find any .kb/'),
     });
   });
@@ -106,7 +106,7 @@ describe(runCurate, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('no-kb-resolvable');
+      expect(result.error).toBe('missing-destination');
       expect(result.message).toContain('primary');
       expect(result.message).toContain('--kb @default');
     }
@@ -128,9 +128,24 @@ describe(runCurate, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('no-kb-resolvable');
+      expect(result.error).toBe('no-default');
       expect(result.message).toContain('could not resolve the default');
     }
+  });
+
+  it('returns no-default when --kb @default is given but kb.yaml does not configure default_kb', async () => {
+    const home = await mkdtemp(join(tmpdir(), 'kb-curate-home-'));
+    await mkdir(join(home, '.agents'), { recursive: true });
+    await writeFile(join(home, '.agents', 'kb.yaml'), `kbs:\n  real:\n    path: ${home}/real\n`, 'utf8');
+    const startDir = await mkdtemp(join(tmpdir(), 'kb-curate-empty-'));
+
+    const result = await runCurate({ argv: ['--kb', '@default'], startDir, now: NOW, home });
+
+    expect(result).toEqual({
+      ok: false,
+      error: 'no-default',
+      message: '--kb @default was given but kb.yaml does not configure default_kb',
+    });
   });
 
   it('refuses --apply against a readonly KB', async () => {
