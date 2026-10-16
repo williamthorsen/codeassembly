@@ -25,14 +25,6 @@ export type BranchCurrency =
       gained: GainedCommit[];
     };
 
-/** The git queries that the currency check makes, each run in the given working tree. */
-export interface CurrencyGit {
-  /** Fetches `branch` from `remote`, returning git's trimmed stderr on failure. */
-  fetch(cwd: string, remote: string, branch: string): { ok: true } | { ok: false; error: string };
-  /** Runs a read-only git command and returns its trimmed stdout, or `undefined` when git exits non-zero. */
-  read(cwd: string, args: readonly string[]): string | undefined;
-}
-
 /** Inputs to a currency check. */
 export interface CheckOptions {
   /** The remote-qualified default branch, such as `origin/main`. */
@@ -42,30 +34,25 @@ export interface CheckOptions {
   paths: readonly string[];
 }
 
-/** The adapter that runs git. */
-export const realCurrencyGit: CurrencyGit = {
-  fetch: fetchBranch,
-  read: readGit,
-};
-
 /**
  * Fetches the base and reports how far the branch is behind and ahead of it, whether its tree is clean, whether its
- * upstream holds any of its own commits, and which commits the base gained.
+ * upstream holds any of its own commits, and which commits the base gained. Throws when a git command after the fetch
+ * fails, so that a failure never reads as a result.
  */
-export function checkBranchCurrency(options: CheckOptions, git: CurrencyGit = realCurrencyGit): BranchCurrency {
+export function checkBranchCurrency(options: CheckOptions): BranchCurrency {
   const { base, cwd, paths } = options;
   const { remote, branch } = splitBase(base);
 
-  const fetched = git.fetch(cwd, remote, branch);
+  const fetched = fetchBranch(cwd, remote, branch);
   if (!fetched.ok) {
     return { fetched: false, error: fetched.error };
   }
 
-  const behind = countCommits(git, cwd, `HEAD..${base}`);
-  const ahead = countCommits(git, cwd, `${base}..HEAD`);
-  const clean = (git.read(cwd, ['status', '--porcelain']) ?? '') === '';
-  const pushed = hasPushedOwnCommits(git, cwd, base);
-  const gained = listGainedCommits(git, cwd, base, paths);
+  const behind = countCommits(cwd, `HEAD..${base}`);
+  const ahead = countCommits(cwd, `${base}..HEAD`);
+  const clean = readGit(cwd, ['status', '--porcelain']) === '';
+  const pushed = hasPushedOwnCommits(cwd, base);
+  const gained = listGainedCommits(cwd, base, paths);
 
   return { fetched: true, base, behind, ahead, clean, pushed, gained };
 }
@@ -86,13 +73,9 @@ export function splitBase(base: string): { remote: string; branch: string } {
 /** The revision syntax that names the checked-out branch's upstream. */
 const UPSTREAM = '@{u}';
 
-/** Returns the number of commits in `range`; throws when git cannot resolve it. */
-function countCommits(git: CurrencyGit, cwd: string, range: string): number {
-  const output = git.read(cwd, ['rev-list', '--count', range]);
-  if (output === undefined) {
-    throw new Error(`git could not count the commits in ${range}`);
-  }
-  return Number.parseInt(output, 10);
+/** Returns the number of commits in `range`. */
+function countCommits(cwd: string, range: string): number {
+  return Number.parseInt(readGit(cwd, ['rev-list', '--count', range]), 10);
 }
 
 /** Extracts git's own message from a failed `execFileSync` call, falling back to the thrown error's own text. */
@@ -119,17 +102,27 @@ function fetchBranch(cwd: string, remote: string, branch: string): { ok: true } 
 }
 
 /** Returns true when the branch has an upstream that contains commits beyond the base. */
-function hasPushedOwnCommits(git: CurrencyGit, cwd: string, base: string): boolean {
-  if (git.read(cwd, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', UPSTREAM]) === undefined) {
+function hasPushedOwnCommits(cwd: string, base: string): boolean {
+  if (!hasUpstream(cwd)) {
     return false;
   }
-  return countCommits(git, cwd, base + '..' + UPSTREAM) > 0;
+  return countCommits(cwd, base + '..' + UPSTREAM) > 0;
+}
+
+/** Returns true when the checked-out branch has an upstream, which git reports by failing to resolve `@{u}`. */
+function hasUpstream(cwd: string): boolean {
+  try {
+    readGit(cwd, ['rev-parse', '--abbrev-ref', '--symbolic-full-name', UPSTREAM]);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Lists the commits in the base that HEAD lacks, newest first, marking those that touch the given paths. */
-function listGainedCommits(git: CurrencyGit, cwd: string, base: string, paths: readonly string[]): GainedCommit[] {
+function listGainedCommits(cwd: string, base: string, paths: readonly string[]): GainedCommit[] {
   const range = `HEAD..${base}`;
-  const log = git.read(cwd, ['log', '--format=%H%x09%s', range]) ?? '';
+  const log = readGit(cwd, ['log', '--format=%H%x09%s', range]);
   const commits = log === '' ? [] : log.split('\n').map((line) => parseLogLine(line));
 
   if (paths.length === 0) {
@@ -138,7 +131,7 @@ function listGainedCommits(git: CurrencyGit, cwd: string, base: string, paths: r
 
   // Anchor each pathspec at the repository root and match it literally, whatever directory the helper runs in.
   const pathspecs = paths.map((workPath) => `:(top,literal)${workPath}`);
-  const touching = new Set((git.read(cwd, ['log', '--format=%H', range, '--', ...pathspecs]) ?? '').split('\n'));
+  const touching = new Set(readGit(cwd, ['log', '--format=%H', range, '--', ...pathspecs]).split('\n'));
   return commits.map((commit) => ({ ...commit, touchesWork: touching.has(commit.sha) }));
 }
 
@@ -148,15 +141,15 @@ function parseLogLine(line: string): { sha: string; subject: string } {
   return { sha: line.slice(0, tabIndex), subject: line.slice(tabIndex + 1) };
 }
 
-/** Runs git and returns its trimmed stdout, or `undefined` when git exits non-zero. */
-function readGit(cwd: string, args: readonly string[]): string | undefined {
+/** Runs a read-only git command and returns its trimmed stdout. Throws with git's message when git exits non-zero. */
+function readGit(cwd: string, args: readonly string[]): string {
   try {
     return execFileSync('git', ['-C', cwd, ...args], {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     }).trim();
-  } catch {
-    return undefined;
+  } catch (error) {
+    throw new Error(`git ${args.join(' ')} failed: ${describeGitFailure(error)}`, { cause: error });
   }
 }
 

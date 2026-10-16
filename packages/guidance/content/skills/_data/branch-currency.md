@@ -12,11 +12,11 @@ Check a branch other than the default branch, before the work starts. Skip the c
 node {harness_home_dir}/scripts/check-branch-currency.mjs --base {default_branch} [--path {path}]...
 ```
 
-Pass one `--path` for each file or directory that the work touches, relative to the repository root, as the calling skill names them. Pass only paths that exist in the tree; a ticket that describes its area in prose does not supply any. The helper fetches the default branch, which is read-only, and prints one JSON object. It exits non-zero only on a usage error.
+Pass one `--path` for each file or directory that the work touches, relative to the repository root, as the calling skill names them. Pass only paths that exist in the tree; a ticket that describes its area in prose does not supply any. The helper fetches the default branch, which is read-only, and prints one JSON object. It exits non-zero on a usage error, or when git fails after the fetch; act on a non-zero exit as on `fetched: false`, with the helper's stderr as the error.
 
 ## Acting on the result
 
-**`fetched: false`.** Report in one line that the branch check did not run, with the `error`, and continue. Never report the branch as current. Before reading the error as a missing credential or an unreachable network, consult /consult-sandbox-conventions.
+**`fetched: false`.** Report in one line that the branch check did not run, with the `error`, and continue. Never report the branch as current. Where the `consult-sandbox-conventions` skill is deployed, consult it before reading the error as a missing credential or an unreachable network.
 
 **`behind: 0`.** Say nothing.
 

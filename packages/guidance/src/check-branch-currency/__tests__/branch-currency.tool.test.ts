@@ -124,6 +124,15 @@ describe(checkBranchCurrency, () => {
     expect(result.fetched).toBe(false);
     expect(!result.fetched && result.error).toContain('missing.git');
   });
+
+  it('throws when the fetch succeeds but the base does not resolve', () => {
+    git(fixture.work, 'config', 'remote.origin.fetch', '+refs/heads/other:refs/remotes/origin/other');
+    git(fixture.work, 'update-ref', '-d', 'refs/remotes/origin/main');
+
+    expect(() => checkBranchCurrency({ base: 'origin/main', cwd: fixture.work, paths: [] })).toThrow(
+      /rev-list --count HEAD\.\.origin\/main failed/,
+    );
+  });
 });
 
 // region | Helpers
