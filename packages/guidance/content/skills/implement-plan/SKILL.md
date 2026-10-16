@@ -27,7 +27,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 ## Process
 
-1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `default_branch`, `ticket_id`, `ticket_ref`, `ticket_url`, `scm`, `project_slug`, and `artifact_base_dir` from it.
+1. **Get context**: Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `branch_name`, `default_branch`, `ticket_id`, `ticket_ref`, `ticket_url`, `scm`, `project_slug`, and `artifact_base_dir` from it.
 
 2. **Resolve the plan**: Stop at the first source that yields one:
    - **Explicit `--plan=<path>`**: Read it.
@@ -49,6 +49,8 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
    Check the shape as you read: A plan with `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
 
    Then, when a ticket governs the run, read its open blockers per [Open blockers](../_data/ticket-source-resolution.md#open-blockers). When it has one, report it and ask the user to confirm that implementation should start despite it, as a `👍🏼👎🏼` confirmation. Do not start the first task without a clear affirmation.
+
+   Then check the branch per [branch currency](../_data/branch-currency.md), passing the paths in the plan's **Files:** lists. Do not start the first task while a question about the gap is unanswered.
 
 5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Audit the comments that you write along the way per [Comment discipline](#comment-discipline).
 

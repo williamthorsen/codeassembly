@@ -38,7 +38,7 @@ Before every {tool:Task} call and after every phase completion, output a status 
 
    Then report the ticket's open blockers per [Open blockers](../_data/ticket-source-resolution.md#open-blockers), and continue: A blocker does not stop the review.
 
-4. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout.
+4. Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash to obtain `branch_name`, `default_branch`, `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout. Then check the branch per [branch currency](../_data/branch-currency.md), passing the paths in the plan's **Files:** lists, before the review starts.
 5. Resolve artifact directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`
 6. `mkdir -p {artifact_dir}`
 
