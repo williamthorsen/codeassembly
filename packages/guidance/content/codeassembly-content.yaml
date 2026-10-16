@@ -53,3 +53,5 @@ helpers:
     out: skills/create-ticket/resolve-ticket-target.mjs
   - entry: ../src/triage-spike-findings/cli.ts
     out: skills/triage-spike-findings/triage-spike-findings.mjs
+  - entry: ../src/check-branch-currency/cli.ts
+    out: scripts/check-branch-currency.mjs
