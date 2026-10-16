@@ -12,8 +12,9 @@ import type { KbAssertion } from '@williamthorsen/kb/records';
 import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-failure.ts';
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
-import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { discoverWritableKb, type ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
@@ -183,25 +184,20 @@ async function resolveKbForPath(input: {
   notePath: string;
   home?: string;
 }): Promise<{ ok: true; kb: ResolvedKb } | { ok: false; failure: EditResult }> {
-  const resolved = await resolveWritableKb({
+  const resolved = await discoverWritableKb({
     startDir: dirname(input.notePath),
-    explicitKb: null,
     ...(input.home !== undefined && { home: input.home }),
   });
   if (resolved.ok) {
     return { ok: true, kb: resolved.kb };
   }
   switch (resolved.reason) {
-    // Because kb-edit never passes --kb, of the three reasons grouped here only `missing-destination` can arise. The
-    // other two are mapped alongside it, which keeps the switch total against the shared resolver's outcome union.
     case 'missing-destination':
-    case 'no-kb-resolvable':
-    case 'no-default':
       return {
         ok: false,
         failure: {
           ok: false,
-          error: 'no-kb-resolvable',
+          error: 'missing-destination',
           message: `did not discover any .kb/ for note at ${input.notePath}`,
         },
       };
@@ -211,13 +207,13 @@ async function resolveKbForPath(input: {
         failure: {
           ok: false,
           error: 'readonly-kb',
-          message: `knowledge base "${resolved.kbName}" is marked readonly in kb.yaml; writes are refused`,
+          message: formatKbResolutionFailure(resolved),
           details: { readonlyKbName: resolved.kbName, readonlyKbPath: resolved.kbPath },
         },
       };
     default: {
       const _exhaustive: never = resolved;
-      throw new Error(`unhandled resolveWritableKb failure: ${JSON.stringify(_exhaustive)}`);
+      throw new Error(`unhandled discoverWritableKb failure: ${JSON.stringify(_exhaustive)}`);
     }
   }
 }

@@ -32,7 +32,7 @@ A value-bearing flag accepts both `--retag node,react` and `--retag=node,react`.
 
 ### KB selection
 
-The destination knowledge base is inferred by walking up from the note's directory for a `.kb/` folder. The helper does not accept a `--kb` override: The note's location is the selector. The helper refuses to write into a KB whose `kb.yaml` entry sets `readonly: true`, reporting `readonly-kb`.
+The destination knowledge base is inferred by walking up from the note's directory for a `.kb/` folder. The helper does not accept a `--kb` override: The note's location is the selector, and a note outside any discoverable `.kb/` is refused with `missing-destination`. The helper refuses to write into a KB whose `kb.yaml` entry sets `readonly: true`, reporting `readonly-kb`.
 
 ## Runtime dependencies
 
@@ -113,7 +113,7 @@ On failure, `ok: false` plus a categorical `error` code:
 | Code                       | What it means                                                                                                                                                         | What to do                                                                                        |
 | -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
 | `invalid-args`             | Missing/extra flags, unknown flag, a second path for a single-target op, empty `--append` stdin, an empty `--add-addressed-by` reference list, or cross-KB supersede. | Correct the invocation. The message names the specific defect.                                    |
-| `no-kb-resolvable`         | The note's path is not inside any discoverable `.kb/`.                                                                                                                | Confirm the path; the note may be outside a KB or the wrong path was supplied.                    |
+| `missing-destination`      | The note's path is not inside any discoverable `.kb/`.                                                                                                                | Confirm the path; the note may be outside a KB or the wrong path was supplied.                    |
 | `note-not-found`           | The path does not exist.                                                                                                                                              | Confirm the path. For `--supersede-with`, the _new_ path gets `supersede-target-missing` instead. |
 | `note-parse`               | The note's frontmatter is malformed or does not satisfy the assertion contract (YAML error, missing block, or a missing/ill-typed field).                             | Repair the frontmatter manually; the helper rewrites a note only if it parses as an assertion.    |
 | `validation`               | The edited record's rendered frontmatter did not re-parse as an assertion (a defensive guard; should not occur for a well-formed note).                               | Inspect `details.errors`; report the note, which was left unmodified.                             |

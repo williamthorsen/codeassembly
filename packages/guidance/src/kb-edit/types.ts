@@ -5,7 +5,7 @@
 
 import type { KbAssertion } from '@williamthorsen/kb/records';
 
-import type { ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
+import type { KbDiscoveryErrorCode, ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 
 export type OperationName = 'bump-updated' | 'verify' | 'retag' | 'append' | 'add-addressed-by' | 'supersede-with';
 
@@ -82,14 +82,13 @@ export interface EditFailure {
 
 /** Categorical error codes that the helper can return without an unexpected throw. */
 export type EditErrorCode =
+  | KbDiscoveryErrorCode
   | 'invalid-args'
-  | 'no-kb-resolvable'
   | 'note-not-found'
   | 'note-parse'
-  | 'validation'
-  | 'readonly-kb'
+  | 'partial-supersede'
   | 'supersede-target-missing'
-  | 'partial-supersede';
+  | 'validation';
 
 export interface EditErrorDetails {
   /** Path that failed to resolve, set when `error: 'note-not-found'` or `'supersede-target-missing'`. */

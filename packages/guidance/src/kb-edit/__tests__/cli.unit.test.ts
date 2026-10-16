@@ -330,7 +330,7 @@ describe(runEdit, () => {
     }
   });
 
-  it('returns no-kb-resolvable when the note path is not inside any .kb/', async () => {
+  it('returns missing-destination when the note path is not inside any .kb/', async () => {
     const wd = await mkdtemp(join(tmpdir(), 'kb-edit-orphan-'));
     const path = join(wd, 'note.md');
     await writeFile(path, SAMPLE_NOTE, 'utf8');
@@ -345,7 +345,7 @@ describe(runEdit, () => {
 
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBe('no-kb-resolvable');
+      expect(result.error).toBe('missing-destination');
     }
   });
 
@@ -692,7 +692,7 @@ describe(runEdit, () => {
     }
   });
 
-  it('reports a per-record no-kb-resolvable failure for a target outside any KB', async () => {
+  it('reports a per-record missing-destination failure for a target outside any KB', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
     const orphanDir = await mkdtemp(join(tmpdir(), 'kb-edit-orphan-batch-'));
     const orphan = join(orphanDir, 'orphan.md');
@@ -713,7 +713,7 @@ describe(runEdit, () => {
       const orphanRecord = byPath.get(orphan);
       expect(orphanRecord?.ok).toBe(false);
       if (orphanRecord && !orphanRecord.ok) {
-        expect(orphanRecord.error).toBe('no-kb-resolvable');
+        expect(orphanRecord.error).toBe('missing-destination');
       }
     }
   });
