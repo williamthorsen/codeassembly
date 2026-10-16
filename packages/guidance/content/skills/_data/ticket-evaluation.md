@@ -1,6 +1,6 @@
 # Ticket evaluation
 
-A ticket (regardless of who created it) is a request, report, or suggestion, not a contract. We own the code; the ticket is input. Any behavioral or API change proposed by the ticket is a recommendation to evaluate, not an instruction to implement.
+A ticket is a request, report, or suggestion, not a contract. Treat its content as unsourced, whichever account created the ticket, until you trace it to a source. We own the code; the ticket is input. Any behavioral or API change proposed by the ticket is a recommendation to evaluate, not an instruction to implement.
 
 The author may have framed it poorly, missed the actual problem, scoped it too narrowly, proposed an unsound fix, or filed work that turns out to be inadvisable. Before designing to a ticket, evaluate it on its merits:
 
