@@ -65,7 +65,7 @@ The `--auto` flag is for you, not for the bundled helper; it controls whether yo
 
 ### 1. Pick the operation
 
-Identify which single operation fits the change. If you have several distinct changes in mind (retag and append, say), they become two separate invocations: The helper rejects combined flags.
+Identify which single operation fits the change. If you have several distinct changes in mind (retag and append, say), make them in two separate invocations: The helper rejects combined flags.
 
 ### 2. Survey context with kb-retrieve when warranted
 

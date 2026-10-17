@@ -23,7 +23,7 @@ Internal delegate that merges a pull request on Bitbucket. Called by `merge-pr` 
 
 ## Bitbucket access
 
-Every Bitbucket call below goes through the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). Coordinates come from that document's cascade: the PR URL when `merge-pr` resolved one, and the git remote when it was handed a bare `--pr {n}` instead.
+Make every Bitbucket call below with the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). Coordinates come from that document's cascade: the PR URL when `merge-pr` resolved one, and the git remote when it was handed a bare `--pr {n}` instead.
 
 ## Process
 

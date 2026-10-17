@@ -74,4 +74,4 @@ On `ok: false`, act on the `error` code:
 
 ## Completion
 
-Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: The helper writes the events that succeed and reports the ids that fail, leaving those untouched. These `addressed-by`/`tags`/`impact` annotations are curatorial; substantive content edits go through `capture-event --amend`.
+Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: The helper writes the events that succeed and reports the ids that fail, leaving those untouched. These `addressed-by`/`tags`/`impact` annotations are curatorial; make substantive content edits with `capture-event --amend`.
