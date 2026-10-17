@@ -1,13 +1,12 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-import { realpathSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { COPY_PROBE_SCRIPT } from './copy-probe.ts';
@@ -88,7 +87,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'index-prototypes')) {
   await main();
 }
 
@@ -214,23 +213,6 @@ function fail(error: IndexPrototypesFailure['error'], message: string): IndexPro
 /** Returns true when `value` names a helper command. */
 function isCommand(value: string): value is Command {
   return COMMAND_NAMES.has(value);
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`index-prototypes: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Returns true when `value` parses as an http or https URL. */

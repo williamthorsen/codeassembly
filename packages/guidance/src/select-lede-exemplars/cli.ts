@@ -1,12 +1,11 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { DEFAULT_KB_SENTINEL, FEEDBACK_KB_SENTINEL } from '../kb-shared/kb-role-sentinels.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
@@ -69,7 +68,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'select-lede-exemplars')) {
   await main();
 }
 
@@ -192,25 +191,6 @@ function describeEmptyResult(storeName: string, minQuality: LedeQuality | null):
   return minQuality === null
     ? `${corpus} does not contain any lede decisions`
     : `${corpus} does not contain any lede decisions rated ${minQuality} or better`;
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    const message = describeError(error);
-    process.stderr.write(`select-lede-exemplars: warning: could not determine entry point: ${message}\n`);
-    return false;
-  }
 }
 
 /** Reads the `--count` value as a positive whole number, throwing a usage-style message for anything else. */

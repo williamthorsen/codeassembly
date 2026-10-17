@@ -1,6 +1,6 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
-import { existsSync, realpathSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { ulid } from 'ulid';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { writeEvent } from '../capture-event/write-event.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
@@ -97,7 +98,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'capture-lede-decision')) {
   await main();
 }
 
@@ -303,25 +304,6 @@ function describeStoreFailure(resolved: Extract<Awaited<ReturnType<typeof resolv
       const _exhaustive: never = resolved;
       throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);
     }
-  }
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    const message = describeError(error);
-    process.stderr.write(`capture-lede-decision: warning: could not determine entry point: ${message}\n`);
-    return false;
   }
 }
 

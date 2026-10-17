@@ -1,11 +1,9 @@
 /* eslint n/no-process-exit: off */
 /* eslint unicorn/no-process-exit: off */
-import { realpathSync } from 'node:fs';
 import { readFile, stat, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import {
   applyOverrides,
@@ -23,6 +21,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parseDocument } from 'yaml';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, type MatchedFlag, scanFlags, type ScanResult, valueFlagMap } from '../lib/parse-flags.ts';
 import { describeTaxonomyLocation, loadTaxonomy, loadWorkTypeHeadings } from '../lib/work-types.ts';
 import { amendEntry, type EntryAmendment } from './amend-entry.ts';
@@ -178,7 +177,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, PROGRAM)) {
   await main();
 }
 
@@ -365,24 +364,6 @@ function findLossyTemplates(templates: Record<Surface, string>, taxonomy: Taxono
   return SURFACES.filter((surface) => templates[surface] !== '').flatMap((surface) =>
     findLossyRenders(templates[surface], taxonomy).map((warning) => `${surface}.title_format: ${warning}`),
   );
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`${PROGRAM}: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Reports whether `value` names one of the helper's subcommands. */

@@ -2,12 +2,11 @@
 /* eslint unicorn/no-process-exit: off -- same as above. */
 // CLI entry point for the resolve-review-run helper: finds or opens a ticket's active review run, or finds its newest review.
 
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { findActiveRun, findLatestReview, openRun } from './review-run.ts';
 
@@ -32,29 +31,11 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'resolve-review-run')) {
   await main();
 }
 
 // region | Helpers
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`resolve-review-run: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
-}
 
 /** Throws when `--timestamp` is passed to a subcommand that does not take it. */
 function rejectTimestamp(values: Record<string, string>, command: string): void {

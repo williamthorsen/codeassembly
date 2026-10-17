@@ -1,8 +1,6 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import type { AliasMap, KbRoot } from '@williamthorsen/kb';
 import { resolveEventPath, resolveKbDir } from '@williamthorsen/kb/layout';
@@ -11,6 +9,7 @@ import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEve
 import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
 import { isSafeEventId, splitCommaList } from '../kb-shared/note-helpers.ts';
@@ -42,7 +41,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'kb-update-events')) {
   await main();
 }
 
@@ -207,21 +206,6 @@ async function editOne(input: {
 
   await writeNote(path, rendered.fields, rendered.body);
   return { ok: true, id, path };
-}
-
-/** Returns true when this module is the process entry point, resolving both sides through `realpathSync` so that a symlinked invocation still matches. */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    const message = describeError(error);
-    process.stderr.write(`kb-update-events: warning: could not determine entry point: ${message}\n`);
-    return false;
-  }
 }
 
 /**

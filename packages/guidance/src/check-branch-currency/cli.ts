@@ -2,12 +2,11 @@
 /* eslint unicorn/no-process-exit: off -- same as above. */
 // CLI entry point for the check-branch-currency helper: fetches the default branch and reports the branch's position against it.
 
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { type BranchCurrency, checkBranchCurrency, splitBase } from './branch-currency.ts';
 
@@ -29,29 +28,11 @@ function main(): void {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'check-branch-currency')) {
   main();
 }
 
 // region | Helpers
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`check-branch-currency: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
-}
 
 /** Parses argv and runs the check. Throws on a positional argument, a missing or repeated `--base`, or a malformed one. */
 function runCommand(argv: readonly string[]): BranchCurrency {

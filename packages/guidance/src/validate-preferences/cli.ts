@@ -3,16 +3,15 @@
 // CLI entry point for the validate-preferences helper: validates `preferences.yaml` files against the schema bundled
 // with this release, printing the findings and exiting 1 when any file is invalid.
 
-import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { isEnoent } from '../lib/type-guards.ts';
 import preferencesSchema from '../schemas/preferences.v1.json' with { type: 'json' };
 import { type Finding, validatePreferences } from './validate-preferences.ts';
@@ -66,7 +65,7 @@ export async function runValidatePreferences(
   return results.every((result) => result.valid) ? 0 : 1;
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'validate-preferences')) {
   const programName = deriveProgramName(process.argv[1]);
   try {
     process.exit(await runValidatePreferences(process.argv.slice(2), process.cwd(), programName));
@@ -129,24 +128,6 @@ function formatText(results: readonly FileResult[], cwd: string, programName: st
       : `${programName}: ${invalidCount} of ${results.length} file(s) invalid`,
   );
   return `${lines.join('\n')}\n`;
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`validate-preferences: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Parses the options and file arguments, throwing on an unknown option. */

@@ -7,13 +7,13 @@
  * per-issue comments from a record. The helper does not write anything remote: The skill creates the tickets through
  * `create-ticket` and posts the comments.
  */
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { checkLabels, runCommand } from './labels.ts';
 import { orderItems } from './order.ts';
@@ -63,7 +63,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'triage-spike-findings')) {
   await main();
 }
 
@@ -151,18 +151,6 @@ function countBy(values: readonly string[]): Record<string, number> {
   const counts: Record<string, number> = {};
   for (const value of values) counts[value] = (counts[value] ?? 0) + 1;
   return counts;
-}
-
-/** Returns whether this module is the process's entry point. */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) return false;
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`triage-spike-findings: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Scans the command's flags, refusing a positional argument and a repeated flag. */

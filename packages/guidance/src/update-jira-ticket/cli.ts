@@ -5,12 +5,11 @@
 // The exit code reports whether the invocation worked, not whether the payload is clean: The checker exits 0 for a
 // payload with findings as it does for a clean one, and exits 1 only when stdin cannot be read.
 
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { check } from './check.ts';
 
@@ -27,25 +26,6 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'update-jira-ticket')) {
   await main();
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    const message = describeError(error);
-    process.stderr.write(`update-jira-ticket: warning: could not determine entry point: ${message}\n`);
-    return false;
-  }
 }
