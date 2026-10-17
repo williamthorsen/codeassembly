@@ -28,8 +28,8 @@ Resolve the ticket directory per {skill:save-artifact}, and create `{ticket_dir}
 
 Under `browser`:
 
-- **The browser.** The lenses share one browser that the Playwright MCP server drives, so they run one after another. Confirm that the browser answers before anything else; when it does not, ask the developer for one and stop.
-- **The local stack.** When a target is local, confirm that it runs, and start it by the repository's own scripts when it does not. Use a development build that reaches only the local stack, never a script that reaches a hosted service.
+- **The browser.** The lenses share one browser that the Playwright MCP server drives, so they run one after another. Confirm that the browser responds before anything else; when it does not, ask the developer for one and stop.
+- **The local stack.** When a target is local, confirm that it runs, and start it by the repository's own scripts when it does not. Use a development build that connects only to the local stack, never a script that connects to a hosted service.
 - **Sign-in state.** For each hosted target, find out whether the browser profile is signed in on it. A lens opens its own browser context for a signed-out view; nothing signs the profile out.
 
 Under `cli`:
@@ -41,7 +41,7 @@ Under `cli`:
 
 ### 2. Write the brief
 
-Compose the brief with these sections. Each names its `browser` form, then its `cli` form where the two differ.
+Compose the brief with these sections. Each names its `browser` form, then its `cli` form when the two differ.
 
 1. **Product.** What the product is and whom it serves, in two or three sentences.
 2. **Targets.** One row per target: its URL, its write rule, its sign-in state, and the method by which a lens grants itself a role or an approval there. A target is read-only unless it is on `localhost` or the developer names it as disposable, per {rulebook:shared-data-conventions}. Writes go to a writable target, with `@example.com` accounts that the lens creates. Under `cli`, one row per target: the binary and its invocation, its write rule, its network and credential state, and what a lens may install. The checkout and every remote source are read-only; each lens's fixture is writable, and its git author is the only identity.
