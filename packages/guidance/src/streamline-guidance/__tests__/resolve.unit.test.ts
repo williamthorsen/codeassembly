@@ -228,14 +228,14 @@ describe(runResolve, () => {
       expect(result.targets).toMatchObject([{ bytes: source.length, deployedBytes: 'xy\n\nab\n'.length }]);
     });
 
-    it("reports a partial's deployed bytes as its own bytes times the documents that it reaches", async () => {
+    it("reports a partial's deployed bytes as its own bytes times the documents that include it", async () => {
       await changeFiles({
         'lib/skills/second/SKILL.md': '<!-- include: ../../_partials/shared.md / -->\n',
       });
 
       const result = expectSuccess(await resolve('lib/_partials/inner.md'));
 
-      // Both skills reach the partial, the second of them through `shared.md`.
+      // Both skills include the partial, the second of them through `shared.md`.
       expect(result.targets).toMatchObject([
         { bytes: 'Inner text.\n'.length, deployedBytes: 'Inner text.\n'.length * 2 },
       ]);
@@ -250,7 +250,7 @@ describe(runResolve, () => {
         shape: 'an include cycle',
         body: ['Text.', '<!-- include: ../../_partials/loop.md / -->', ''].join('\n'),
       },
-    ])('omits the field for a file carrying $shape, and keeps it a target', async ({ body }) => {
+    ])('omits the field for a file containing $shape, and keeps it a target', async ({ body }) => {
       await changeFiles({
         'lib/_partials/loop.md': '<!-- include: ./loop-back.md / -->\n',
         'lib/_partials/loop-back.md': '<!-- include: ./loop.md / -->\n',

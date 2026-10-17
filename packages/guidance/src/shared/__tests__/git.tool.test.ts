@@ -60,7 +60,7 @@ describe('realGit', () => {
       await expect(realGit.findRemoteUrl(scratch, 'upstream')).resolves.toBe('git@github.com:owner/upstream.git');
     });
 
-    it('lists no remotes in a repository without any', async () => {
+    it('returns an empty list in a repository without any remotes', async () => {
       git('init', '--quiet');
 
       await expect(realGit.listRemotes(scratch)).resolves.toStrictEqual([]);

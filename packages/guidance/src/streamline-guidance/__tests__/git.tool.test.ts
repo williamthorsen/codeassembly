@@ -95,7 +95,7 @@ describe('realGit', () => {
       expect([...changed].toSorted()).toStrictEqual(['modified.md', 'renamed.md', 'untracked.md']);
     });
 
-    it('returns an empty set when given no files', async () => {
+    it('returns an empty set when given an empty list of files', async () => {
       await writeFiles({ 'modified.md': 'After.\n' });
 
       expect(realGit.listChangedFiles(repository, [])).toStrictEqual(new Set());
