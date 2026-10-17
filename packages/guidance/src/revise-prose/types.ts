@@ -177,10 +177,20 @@ export interface SiteText {
   content: string;
 }
 
+/** What the record stores for one swept file. */
+export interface FileCoverage {
+  /** The hash of the file's extracted prose when it was last swept. */
+  hash: string;
+  /** The versioned rules swept against the prose that `hash` identifies. */
+  rules: readonly string[];
+}
+
 /** The per-repository sweep record. */
 export interface ProseRecord {
   /** Coverage by rule name. */
   rules: Record<string, RuleCoverage>;
+  /** Coverage by repository-relative file path; absent from a record written before files were hashed. */
+  files?: Record<string, FileCoverage>;
   rejections: readonly RecordedRejection[];
 }
 

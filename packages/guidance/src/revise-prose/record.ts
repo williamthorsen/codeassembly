@@ -2,11 +2,12 @@
  * The per-repository sweep record, `.agents/revise-prose.yaml`.
  *
  * The record answers two questions on a later run: which paths a rule has already been swept over at its current
- * sweep version and whether its detector ran, and which sites an adjudicator has already rejected. A rejected site need
- * not be one that a detector reports, so the second answer applies to a rule whose sites are not nominated by any
- * candidate. Because a raised sweep version marks that rule's rejections stale rather than deleting them, a rule's
- * revision re-opens its rejections for review instead of discarding the judgment behind them. A sweep at the new
- * version is that review, and recording it retires the stale rejections under its roots.
+ * sweep version, whether its detector ran, and whether each file's prose is unchanged since then; and which sites an
+ * adjudicator has already rejected. A rejected site need not be one that a detector reports, so the second answer
+ * applies to a rule whose sites are not nominated by any candidate. Because a raised sweep version marks that rule's
+ * rejections stale rather than deleting them, a rule's revision re-opens its rejections for review instead of
+ * discarding the judgment behind them. A sweep at the new version is that review, and recording it retires the stale
+ * rejections under its roots.
  *
  * A rejection resolves to a site by containment, so that a phrase is what a reader locates the site by rather than a
  * string that the detector must reproduce. Retiring one entry for another is the stricter test, two spans that merely
@@ -15,7 +16,7 @@
  * Only {@link composeRecord} and {@link stringifyRecord} produce a record. The helper's `record` command is the one
  * write path, which is what keeps the YAML deterministic rather than hand-edited into drift.
  */
-import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { Document, isMap, parse as parseYaml } from 'yaml';
 import { z } from 'zod';
 
 import { convertLegacyRecord } from './convert-record.ts';
@@ -23,6 +24,7 @@ import { maskCodeSpans } from './mask-code-spans.ts';
 import { flattenWhitespace } from './span-text.ts';
 import type {
   Candidate,
+  FileCoverage,
   PriorRejection,
   ProseRecord,
   RecordedRejection,
@@ -59,6 +61,11 @@ const RuleCoverageSchema = z.object({
   roots: z.array(z.string().min(1)).min(1),
 });
 
+const FileCoverageSchema = z.object({
+  hash: z.string().min(1),
+  rules: z.array(RuleNameSchema),
+});
+
 /** One rejection, resolved to a site by its rule, its file, and its phrase. */
 const RejectionSchema = z.object({
   rule: RuleNameSchema,
@@ -68,9 +75,13 @@ const RejectionSchema = z.object({
   ground: z.string().min(1),
 });
 
-/** The whole record. Both keys default to empty, so a record naming one of them parses. */
+/**
+ * The whole record. `rules` and `rejections` default to empty, so a record naming one of them parses; `files` stays
+ * absent from a record written before files were hashed, which {@link seedFiles} tells apart from an empty table.
+ */
 const ProseRecordSchema = z.object({
   rules: z.record(RuleNameSchema, RuleCoverageSchema).default({}),
+  files: z.record(z.string().min(1), FileCoverageSchema).optional(),
   rejections: z.array(RejectionSchema).default([]),
 });
 
@@ -184,6 +195,11 @@ export function applyRejections(
  * changed, and does the same when the detector state differs, the recorded roots having been swept with a different
  * set of candidates.
  *
+ * `hashes` holds the current prose hash of each file that the run's scan yielded under its roots. Each such file is
+ * recorded at that hash: with its recorded rules and the run's when its prose is unchanged, and with the run's alone
+ * when it changed, the recorded rules having been swept against other prose. A recorded file under the run's roots that
+ * the scan no longer yields is dropped, and every file outside them is carried.
+ *
  * A prior rejection under the roots that the run swept, for a rule that the run versioned, is kept at the rule's
  * current version while `hasSite` still finds its site, since a sweeper reports nothing for an inherited rejection and
  * the agent never dispatches a batch that the record already covers. One at an older version is retired: The run
@@ -196,6 +212,7 @@ export function composeRecord(
   fold: RunFold,
   hasSite: (rejection: RecordedRejection) => boolean,
   hasDetector: (rule: string) => boolean,
+  hashes: ReadonlyMap<string, string>,
 ): ProseRecord {
   const rules = { ...prior.rules };
   for (const [rule, { version }] of Object.entries(fold.rules)) {
@@ -206,6 +223,18 @@ export function composeRecord(
         ? priorCoverage.roots
         : [];
     rules[rule] = { version, 'swept-at': fold.sweptAt, detected, roots: mergeRoots(keptRoots, fold.roots) };
+  }
+
+  const runRules = Object.keys(fold.rules);
+  const priorFiles = prior.files ?? {};
+  const files: Record<string, FileCoverage> = {};
+  for (const [file, coverage] of Object.entries(priorFiles)) {
+    if (fold.roots.every((root) => !isUnderRoot(file, root))) files[file] = coverage;
+  }
+  for (const [file, hash] of hashes) {
+    const priorFile = priorFiles[file];
+    const fileRules = priorFile?.hash === hash ? [...new Set([...priorFile.rules, ...runRules])] : runRules;
+    files[file] = { hash, rules: fileRules.toSorted() };
   }
 
   const recorded: RecordedRejection[] = fold.rejections.map((rejection) => {
@@ -228,7 +257,7 @@ export function composeRecord(
     return rejection['rule-version'] === swept.version && hasSite(rejection);
   });
 
-  return { rules, rejections: sortRejections([...carried, ...recorded]) };
+  return { rules, files, rejections: sortRejections([...carried, ...recorded]) };
 }
 
 /**
@@ -250,17 +279,23 @@ export function isStaleRejection(rejection: RecordedRejection, ruleVersions: Rea
 
 /**
  * Lists the rules that the run versions and for which the record does not cover `file`, in the run's order. A rule
- * covers the file at the rule's current version, under one of its roots, and, if the helper has a detector for the
- * rule, with that detector having run. A rule recorded at another version covers nothing, its sweep having been taken
- * against a rule that has since changed; a sweep that ran without a rule's detector never saw that rule's candidates.
+ * covers the file at the rule's current version, under one of its roots, if the helper has a detector for the rule
+ * with that detector having run, and with the file recorded for the rule at `hash`, its current prose hash. A file
+ * without a hash, or one that the record does not list, is covered by no rule, its prose never having been swept as it
+ * reads now. A rule recorded at another version covers nothing, its sweep having been taken against a rule that has
+ * since changed; a sweep that ran without a rule's detector never saw that rule's candidates.
  */
 export function listUnsweptRules(
   record: ProseRecord,
   ruleVersions: ReadonlyMap<string, string>,
   hasDetector: (rule: string) => boolean,
   file: string,
+  hash: string | undefined,
 ): string[] {
   const unswept: string[] = [];
+  const fileCoverage = record.files?.[file];
+  const sweptRules =
+    hash !== undefined && fileCoverage?.hash === hash ? new Set(fileCoverage.rules) : new Set<string>();
 
   for (const [rule, version] of ruleVersions) {
     const coverage = record.rules[rule];
@@ -268,7 +303,8 @@ export function listUnsweptRules(
       coverage !== undefined &&
       coverage.version === version &&
       (coverage.detected || !hasDetector(rule)) &&
-      coverage.roots.some((root) => isUnderRoot(file, root));
+      coverage.roots.some((root) => isUnderRoot(file, root)) &&
+      sweptRules.has(rule);
     if (!isCovered) unswept.push(rule);
   }
 
@@ -298,7 +334,8 @@ export function parseRecord(content: string, versions: SweepVersions, sourceLabe
   const result = ProseRecordSchema.safeParse(parsed);
   if (!result.success) throw new Error(`Invalid sweep record in ${sourceLabel}: ${describeIssues(result.error)}`);
 
-  return result.data;
+  const { files, ...record } = result.data;
+  return files === undefined ? record : { ...record, files };
 }
 
 /**
@@ -317,6 +354,26 @@ export function parseRunFold(json: string): RunFold {
   if (!result.success) throw new Error(`Invalid run fold: ${describeIssues(result.error)}`);
 
   return result.data;
+}
+
+/**
+ * Returns the record with a `files` table seeded from `hashes`, unless it already has one. A record written before
+ * files were hashed is taken as a baseline: Each file is recorded at its current hash for the rules whose roots contain
+ * it, which keeps the coverage that the record already claimed. A file under no rule's roots is not recorded.
+ */
+export function seedFiles(record: ProseRecord, hashes: ReadonlyMap<string, string>): ProseRecord {
+  if (record.files !== undefined) return record;
+
+  const files: Record<string, FileCoverage> = {};
+  for (const [file, hash] of hashes) {
+    const rules = Object.entries(record.rules)
+      .filter(([, coverage]) => coverage.roots.some((root) => isUnderRoot(file, root)))
+      .map(([rule]) => rule)
+      .toSorted();
+    if (rules.length > 0) files[file] = { hash, rules };
+  }
+
+  return { ...record, files };
 }
 
 /**
@@ -348,8 +405,8 @@ export function selectPriorRejections(
 }
 
 /**
- * Renders a record as YAML in a fixed key order. Re-writing an unchanged record is byte-identical, which keeps the
- * file out of the diff.
+ * Renders a record as YAML in a fixed key order, each file's coverage on one line. Re-writing an unchanged record is
+ * byte-identical, which keeps the file out of the diff.
  */
 export function stringifyRecord(record: ProseRecord): string {
   const rules = Object.fromEntries(
@@ -365,6 +422,14 @@ export function stringifyRecord(record: ProseRecord): string {
         },
       ]),
   );
+  const files =
+    record.files === undefined
+      ? undefined
+      : Object.fromEntries(
+          Object.entries(record.files)
+            .toSorted(([left], [right]) => left.localeCompare(right))
+            .map(([file, coverage]) => [file, { hash: coverage.hash, rules: coverage.rules }]),
+        );
   const rejections = sortRejections(record.rejections).map((rejection) => ({
     rule: rejection.rule,
     'rule-version': rejection['rule-version'],
@@ -373,7 +438,18 @@ export function stringifyRecord(record: ProseRecord): string {
     ground: rejection.ground,
   }));
 
-  return stringifyYaml({ rules, rejections }, { aliasDuplicateObjects: false, lineWidth: 0 });
+  const document = new Document(
+    { rules, ...(files !== undefined && { files }), rejections },
+    { aliasDuplicateObjects: false },
+  );
+  const filesNode = document.get('files');
+  if (isMap(filesNode)) {
+    for (const pair of filesNode.items) {
+      if (isMap(pair.value)) pair.value.flow = true;
+    }
+  }
+
+  return document.toString({ lineWidth: 0 });
 }
 
 // region | Helpers

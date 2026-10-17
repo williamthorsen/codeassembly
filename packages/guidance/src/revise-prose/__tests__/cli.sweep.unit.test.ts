@@ -3,13 +3,22 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { stringify as stringifyYaml } from 'yaml';
+import { parse as parseYaml, stringify as stringifyYaml } from 'yaml';
+import { z } from 'zod';
 
 import { runDetect, runRecord } from '../cli.ts';
 import { LEGACY_STALE_VERSION } from '../convert-record.ts';
 import { parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
 import { makeFakeGit } from '../test-utils/make-fake-git.ts';
-import type { DetectResult, DetectSuccess, LegacyRecord, ProseRecord, RunFold, SweepVersions } from '../types.ts';
+import type {
+  DetectResult,
+  DetectSuccess,
+  LegacyRecord,
+  ProseRecord,
+  RecordResult,
+  RunFold,
+  SweepVersions,
+} from '../types.ts';
 
 /** The detector rules that `bothRules` names under unit `writing`. */
 const BOTH_RULES: ReadonlyArray<string> = ['em-dash', 'reduced-object-relative'];
@@ -31,6 +40,25 @@ const FIXTURE_FILES: Readonly<Record<string, string>> = {
   'docs/guide.md': `${OBJECT_RELATIVE}\n`,
   'src/notes.md': `${EM_DASH_SENTENCE}\n`,
 };
+
+/**
+ * The record schema of the helper deployed before files were hashed, frozen here so that a record written now is checked
+ * against what that helper reads: non-strict objects, requiring `swept-at` and `roots` on each rule.
+ */
+const PRIOR_RECORD_SCHEMA = z.object({
+  rules: z
+    .record(
+      z.string(),
+      z.object({
+        version: z.string().min(1),
+        'swept-at': z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        detected: z.boolean(),
+        roots: z.array(z.string().min(1)).min(1),
+      }),
+    )
+    .default({}),
+  rejections: z.array(z.object({ rule: z.string(), 'rule-version': z.string(), file: z.string() })).default([]),
+});
 
 /** Every field that the helper's candidates included before rules were introduced. */
 const LEGACY_CANDIDATE_FIELDS: ReadonlyArray<string> = [
@@ -365,7 +393,7 @@ describe(runDetect, () => {
       const phrase = await rejectedPhrase();
       await writeLegacyRecord(legacyRecordFor(phrase));
 
-      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+      await recordFold(JSON.stringify(await foldRejectingNothing()));
 
       const content = await readFile(path.join(scratch, RECORD_PATH), 'utf8');
       expect(content).not.toMatch(/^units:/m);
@@ -377,7 +405,7 @@ describe(runDetect, () => {
 
   describe(runRecord, () => {
     it('writes a record that the next run reads back', async () => {
-      const result = runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
+      const result = await recordFold(JSON.stringify(await fold()));
 
       expect(result).toMatchObject({ ok: true, path: RECORD_PATH, rules: 2, rejections: 1 });
       const written = parseRecord(await readFile(path.join(scratch, RECORD_PATH), 'utf8'), NO_VERSIONS);
@@ -389,15 +417,15 @@ describe(runDetect, () => {
     });
 
     it('writes the same bytes for the same fold, so a re-record does not leave a diff', async () => {
-      runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
+      await recordFold(JSON.stringify(await fold()));
       const first = await readFile(path.join(scratch, RECORD_PATH), 'utf8');
-      runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
+      await recordFold(JSON.stringify(await fold()));
 
       expect(await readFile(path.join(scratch, RECORD_PATH), 'utf8')).toBe(first);
     });
 
     it('reports a malformed fold as a structured failure and writes nothing', async () => {
-      const result = runRecord({ foldJson: '{"sweptAt": "yesterday"}', root: scratch });
+      const result = await recordFold('{"sweptAt": "yesterday"}');
 
       expect(result).toMatchObject({ ok: false, error: 'invalid-record' });
       await expect(readFile(path.join(scratch, RECORD_PATH), 'utf8')).rejects.toThrow();
@@ -407,7 +435,7 @@ describe(runDetect, () => {
       const base = await fold();
       const unversioned = { ...base, rejections: [{ ...base.rejections[0], rule: 'sentence-case' }] };
 
-      expect(runRecord({ foldJson: JSON.stringify(unversioned), root: scratch })).toMatchObject({
+      expect(await recordFold(JSON.stringify(unversioned))).toMatchObject({
         ok: false,
         error: 'invalid-record',
       });
@@ -418,7 +446,7 @@ describe(runDetect, () => {
       const phrase = await rejectedPhrase();
       await writeRecord(recordFor(phrase));
 
-      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+      await recordFold(JSON.stringify(await foldRejectingNothing()));
 
       expect(await readRecordedPhrases()).toStrictEqual([phrase]);
     });
@@ -428,7 +456,7 @@ describe(runDetect, () => {
       const foldJson = JSON.stringify(await foldRejectingNothing());
       await writeFile(path.join(scratch, 'docs/guide.md'), 'The helper reports the source that it names.\n', 'utf8');
 
-      runRecord({ foldJson, root: scratch });
+      await recordFold(foldJson);
 
       expect(await readRecordedPhrases()).toStrictEqual([]);
     });
@@ -438,7 +466,7 @@ describe(runDetect, () => {
       const foldJson = JSON.stringify(await foldRejectingNothing());
       await rm(path.join(scratch, 'docs/guide.md'));
 
-      runRecord({ foldJson, root: scratch });
+      await recordFold(foldJson);
 
       expect(await readRecordedPhrases()).toStrictEqual([]);
     });
@@ -452,7 +480,7 @@ describe(runDetect, () => {
       );
       await writeRecord(recordFor('the source it names', '1', file));
 
-      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+      await recordFold(JSON.stringify(await foldRejectingNothing()));
 
       expect(await readRecordedPhrases()).toStrictEqual(['the source it names']);
     });
@@ -463,7 +491,7 @@ describe(runDetect, () => {
       await writeFile(path.join(scratch, file), 'Each check reports the `unavailable` reasons it lists.\n', 'utf8');
       await writeRecord(recordFor(phrase, '1', file));
 
-      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+      await recordFold(JSON.stringify(await foldRejectingNothing()));
 
       expect(await readRecordedPhrases()).toStrictEqual([phrase]);
     });
@@ -474,7 +502,7 @@ describe(runDetect, () => {
       await writeFile(path.join(scratch, file), `Each check reports ${phrase}.\n`, 'utf8');
       await writeRecord(recordFor(phrase, '1', file));
 
-      runRecord({ foldJson: JSON.stringify(await foldRejectingNothing()), root: scratch });
+      await recordFold(JSON.stringify(await foldRejectingNothing()));
 
       expect(await readRecordedPhrases()).toStrictEqual([phrase]);
     });
@@ -482,7 +510,7 @@ describe(runDetect, () => {
     it('closes the loop: Recording a run suppresses its candidate on the next sweep', async () => {
       expect(expectSuccess(await sweep(bothRules())).summary.byRule['reduced-object-relative']).toBe(1);
 
-      runRecord({ foldJson: JSON.stringify(await fold()), root: scratch });
+      await recordFold(JSON.stringify(await fold()));
 
       expect(expectSuccess(await sweep(bothRules())).summary.byRule['reduced-object-relative']).toBe(0);
     });
@@ -490,7 +518,7 @@ describe(runDetect, () => {
     it("records whether each rule's detector ran, and a rejection under a rule without a detector", async () => {
       const undetected = await foldNamingUndetected();
 
-      runRecord({ foldJson: JSON.stringify(undetected), root: scratch });
+      await recordFold(JSON.stringify(undetected));
 
       const written = parseRecord(await readFile(path.join(scratch, RECORD_PATH), 'utf8'), NO_VERSIONS);
       expect(written.rules['em-dash']?.detected).toBe(true);
@@ -501,7 +529,7 @@ describe(runDetect, () => {
     it('closes the loop for a run naming a rule without a detector: The next sweep skips what it covered', async () => {
       const argv = [...bothRules(), '--rule', 'sentence-case@1=writing'];
 
-      runRecord({ foldJson: JSON.stringify(await foldNamingUndetected()), root: scratch });
+      await recordFold(JSON.stringify(await foldNamingUndetected()));
 
       const { summary } = expectSuccess(await sweep(argv));
       expect(summary.batchesSkipped).toBe(summary.batchesPlanned);
@@ -513,6 +541,65 @@ describe(runDetect, () => {
     const result = await runDetect({ argv: [], root: scratch, home: scratch }, makeFakeGit({ notARepository: true }));
 
     expect(result).toMatchObject({ ok: false, error: 'not-a-repository' });
+  });
+
+  describe('file coverage', () => {
+    it('reports a file whose prose changed after its sweep, though the sweep was dated the same day', async () => {
+      await recordFold(JSON.stringify(await foldRejectingNothing()));
+      expect(expectSuccess(await sweep(bothRules())).batches).toStrictEqual([]);
+
+      await writeFile(path.join(scratch, 'docs/guide.md'), `${OBJECT_RELATIVE}\nA sentence added later.\n`, 'utf8');
+      // A budget below either file's size gives each file a batch of its own, so that coverage is observed per file.
+      const { batches } = expectSuccess(await sweep([...bothRules(), '--batch-budget', '1']));
+
+      expect(batches.map((batch) => batch.files)).toStrictEqual([['docs/guide.md']]);
+      expect(batches[0]?.unswept).toStrictEqual(BOTH_RULES);
+    });
+
+    it('keeps a file covered after an edit outside its prose', async () => {
+      await writeFile(path.join(scratch, 'src/tool.ts'), '// Reads the cache.\nexport const size = 1;\n', 'utf8');
+      await recordFold(JSON.stringify(await foldRejectingNothing()));
+
+      await writeFile(path.join(scratch, 'src/tool.ts'), '// Reads the cache.\nexport const size = 2;\n', 'utf8');
+      const { batches, summary } = expectSuccess(await sweep(bothRules()));
+
+      expect(summary.filesScanned).toBe(3);
+      expect(batches).toStrictEqual([]);
+    });
+
+    it('keeps the coverage of a record without a file table, which the next record seeds for rules that the run did not sweep', async () => {
+      const record = recordFor(await rejectedPhrase());
+      record.rules['sentence-case'] = { version: '1', 'swept-at': '2026-09-02', detected: false, roots: ['.'] };
+      await writeRecord(record);
+      expect(expectSuccess(await sweep([...bothRules(), '--rule', 'sentence-case@1=writing'])).batches).toStrictEqual(
+        [],
+      );
+
+      await recordFold(JSON.stringify({ ...(await foldRejectingNothing()), roots: ['docs'] }));
+
+      const written = parseRecord(await readFile(path.join(scratch, RECORD_PATH), 'utf8'), NO_VERSIONS);
+      const allRules = [...BOTH_RULES, 'sentence-case'];
+      expect(written.files?.['docs/guide.md']?.rules).toStrictEqual(allRules);
+      expect(written.files?.['src/notes.md']?.rules).toStrictEqual(allRules);
+    });
+
+    it('writes a record that the helper deployed before files were hashed still parses', async () => {
+      await recordFold(JSON.stringify(await fold()));
+
+      const content = await readFile(path.join(scratch, RECORD_PATH), 'utf8');
+      expect(content).toMatch(/^files:/m);
+      expect(PRIOR_RECORD_SCHEMA.safeParse(parseYaml(content)).success).toBe(true);
+    });
+
+    it('reports a record outside a git working tree as a structured failure and writes nothing', async () => {
+      const result = await runRecord(
+        { foldJson: JSON.stringify(await fold()), root: scratch, home: scratch },
+        makeFakeGit({ notARepository: true }),
+      );
+
+      expect(result).toMatchObject({ ok: false, error: 'not-a-repository' });
+      await expect(readFile(path.join(scratch, RECORD_PATH), 'utf8')).rejects.toThrow();
+    });
   });
 
   // region | Helpers
@@ -579,6 +666,11 @@ describe(runDetect, () => {
   /** The invocation naming both rules under unit `writing`, with `em-dash` raised to sweep version 2. */
   function raisedEmDash(): string[] {
     return ['--unit', 'writing=2', '--rule', 'em-dash@2=writing', '--rule', 'reduced-object-relative@1=writing'];
+  }
+
+  /** Records a fold into the fixture tree through the fake git adapter, anchoring `home` as `sweep` does. */
+  async function recordFold(foldJson: string): Promise<RecordResult> {
+    return runRecord({ foldJson, root: scratch, home: scratch }, makeFakeGit({ files: await listTree(scratch) }));
   }
 
   /** Reads back the phrases of the rejections in the written record. */

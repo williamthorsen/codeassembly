@@ -9,6 +9,7 @@ import {
   parseRecord,
   parseRunFold,
   RECORD_PATH,
+  seedFiles,
   selectPriorRejections,
   stringifyRecord,
 } from '../record.ts';
@@ -24,6 +25,12 @@ import type {
 } from '../types.ts';
 
 const EMPTY: ProseRecord = { rules: {}, rejections: [] };
+
+/** The hashes of a run whose scan yielded no file, for the assertions that do not turn on file coverage. */
+const NO_HASHES: ReadonlyMap<string, string> = new Map();
+
+/** The prose hash at which {@link coveredRecord} records its files. */
+const HASH = 'a1b2c3d4e5f60718';
 
 const NO_VERSIONS: SweepVersions = { units: new Map(), rules: new Map() };
 
@@ -223,8 +230,62 @@ describe(applyRejections, () => {
 });
 
 describe(composeRecord, () => {
+  it("adds the run's rules to those recorded for a file whose prose is unchanged", () => {
+    const prior: ProseRecord = { ...EMPTY, files: { 'docs/a.md': { hash: HASH, rules: ['sentence-case'] } } };
+
+    const record = composeRecord(prior, fold({}), hasEverySite, hasEmDashDetector, new Map([['docs/a.md', HASH]]));
+
+    expect(record.files?.['docs/a.md']).toStrictEqual({ hash: HASH, rules: ['em-dash', 'sentence-case'] });
+  });
+
+  it("replaces the rules recorded for a file whose prose changed with the run's", () => {
+    const prior: ProseRecord = { ...EMPTY, files: { 'docs/a.md': { hash: HASH, rules: ['sentence-case'] } } };
+
+    const record = composeRecord(
+      prior,
+      fold({}),
+      hasEverySite,
+      hasEmDashDetector,
+      new Map([['docs/a.md', 'f'.repeat(16)]]),
+    );
+
+    expect(record.files?.['docs/a.md']).toStrictEqual({ hash: 'f'.repeat(16), rules: ['em-dash'] });
+  });
+
+  it("drops a recorded file under the run's roots that the scan no longer yields, and carries one outside them", () => {
+    const prior: ProseRecord = {
+      ...EMPTY,
+      files: { 'docs/gone.md': { hash: HASH, rules: ['em-dash'] }, 'src/kept.ts': { hash: HASH, rules: ['em-dash'] } },
+    };
+
+    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasEverySite, hasEmDashDetector, NO_HASHES);
+
+    expect(record.files).toStrictEqual({ 'src/kept.ts': { hash: HASH, rules: ['em-dash'] } });
+  });
+
+  it('records files from the hashes when the prior record has no file table', () => {
+    const record = composeRecord(EMPTY, fold({}), hasEverySite, hasEmDashDetector, new Map([['docs/a.md', HASH]]));
+
+    expect(record.files).toStrictEqual({ 'docs/a.md': { hash: HASH, rules: ['em-dash'] } });
+  });
+
+  it("keeps a file edited after a wider sweep unswept when a narrowed run's roots do not contain it", () => {
+    const wide = composeRecord(EMPTY, fold({}), hasEverySite, hasEmDashDetector, new Map([['src/notes.md', HASH]]));
+    const narrowed = composeRecord(
+      wide,
+      fold({ roots: ['docs'] }),
+      hasEverySite,
+      hasEmDashDetector,
+      new Map([['docs/a.md', HASH]]),
+    );
+
+    expect(
+      listUnsweptRules(narrowed, new Map([['em-dash', '1']]), hasEmDashDetector, 'src/notes.md', 'e'.repeat(16)),
+    ).toStrictEqual(['em-dash']);
+  });
+
   it('records each rule that the run versioned, with whether the helper has its detector', () => {
-    const record = composeRecord(EMPTY, fold({ rules: WRITING_RULES }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(EMPTY, fold({ rules: WRITING_RULES }), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rules).toStrictEqual({
       'em-dash': { version: '1', 'swept-at': '2026-09-02', detected: true, roots: ['.'] },
@@ -233,7 +294,7 @@ describe(composeRecord, () => {
   });
 
   it('sorts the roots that it records, so a rewrite does not depend on the order of the run', () => {
-    const record = composeRecord(EMPTY, fold({ roots: ['src', 'docs'] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(EMPTY, fold({ roots: ['src', 'docs'] }), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rules['em-dash']?.roots).toStrictEqual(['docs', 'src']);
   });
@@ -241,7 +302,7 @@ describe(composeRecord, () => {
   it("joins a narrowed run's roots onto those already recorded at the same version", () => {
     const prior: ProseRecord = { rules: { 'em-dash': coverage({ roots: ['docs'] }) }, rejections: [] };
 
-    const record = composeRecord(prior, fold({ roots: ['src'] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({ roots: ['src'] }), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rules['em-dash']).toStrictEqual(coverage({ 'swept-at': '2026-09-02', roots: ['docs', 'src'] }));
   });
@@ -249,7 +310,7 @@ describe(composeRecord, () => {
   it('drops a joined root that another one already contains', () => {
     const prior: ProseRecord = { rules: { 'em-dash': coverage({ roots: ['.'] }) }, rejections: [] };
 
-    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rules['em-dash']?.roots).toStrictEqual(['.']);
   });
@@ -262,6 +323,7 @@ describe(composeRecord, () => {
       fold({ roots: ['docs'], rules: { 'em-dash': { unit: 'writing', version: '2' } } }),
       hasEverySite,
       hasEmDashDetector,
+      NO_HASHES,
     );
 
     expect(record.rules['em-dash']).toMatchObject({ version: '2', roots: ['docs'] });
@@ -270,7 +332,7 @@ describe(composeRecord, () => {
   it('replaces the recorded roots when the detector state differs, the earlier sweep having seen other candidates', () => {
     const prior: ProseRecord = { rules: { 'em-dash': coverage({ detected: false, roots: ['docs'] }) }, rejections: [] };
 
-    const record = composeRecord(prior, fold({ roots: ['src'] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({ roots: ['src'] }), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rules['em-dash']).toMatchObject({ detected: true, roots: ['src'] });
   });
@@ -281,7 +343,7 @@ describe(composeRecord, () => {
       rejections: [rejection({ rule: 'plain-speech', 'rule-version': '5' })],
     };
 
-    const record = composeRecord(prior, fold({}), hasNoSite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({}), hasNoSite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rules['plain-speech']).toStrictEqual(prior.rules['plain-speech']);
     expect(record.rejections).toContainEqual(prior.rejections[0]);
@@ -297,6 +359,7 @@ describe(composeRecord, () => {
       fold({ roots: ['docs'] }),
       (site) => site.file === 'docs/a.md',
       hasEmDashDetector,
+      NO_HASHES,
     );
 
     expect(record.rejections).toStrictEqual([standing]);
@@ -307,7 +370,7 @@ describe(composeRecord, () => {
     const inSource = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
     const prior: ProseRecord = { rules: {}, rejections: [inDocs, inSource] };
 
-    const record = composeRecord(prior, fold({}), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({}), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rejections).toStrictEqual([inDocs, inSource]);
   });
@@ -333,6 +396,7 @@ describe(composeRecord, () => {
         return true;
       },
       hasEmDashDetector,
+      NO_HASHES,
     );
 
     expect(consulted).toStrictEqual([current]);
@@ -344,6 +408,7 @@ describe(composeRecord, () => {
       fold({ rejections: [foldRejection({ phrase: 'The cache is cold, as a heading might read' })] }),
       hasEverySite,
       hasEmDashDetector,
+      NO_HASHES,
     );
 
     expect(record.rejections[0]).toMatchObject({
@@ -359,6 +424,7 @@ describe(composeRecord, () => {
         fold({ rejections: [foldRejection({ rule: 'plain-speech' })] }),
         hasEverySite,
         hasEmDashDetector,
+        NO_HASHES,
       ),
     ).toThrow(/which the fold does not version/);
   });
@@ -367,7 +433,13 @@ describe(composeRecord, () => {
     const standing = rejection({ phrase: 'The cache\n  is cold', ground: 'an earlier ground' });
     const prior: ProseRecord = { rules: {}, rejections: [standing] };
 
-    const record = composeRecord(prior, fold({ rejections: [foldRejection()] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(
+      prior,
+      fold({ rejections: [foldRejection()] }),
+      hasEverySite,
+      hasEmDashDetector,
+      NO_HASHES,
+    );
 
     expect(record.rejections).toStrictEqual([rejection()]);
   });
@@ -376,7 +448,13 @@ describe(composeRecord, () => {
     const older = rejection({ 'rule-version': '0' });
     const prior: ProseRecord = { rules: {}, rejections: [older] };
 
-    const record = composeRecord(prior, fold({ rejections: [foldRejection()] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(
+      prior,
+      fold({ rejections: [foldRejection()] }),
+      hasEverySite,
+      hasEmDashDetector,
+      NO_HASHES,
+    );
 
     expect(record.rejections).toHaveLength(1);
     expect(record.rejections[0]).toMatchObject({ 'rule-version': '1' });
@@ -387,7 +465,7 @@ describe(composeRecord, () => {
     const outside = rejection({ file: 'src/b.ts', phrase: 'the level against which it is probed' });
     const prior: ProseRecord = { rules: {}, rejections: [inside, outside] };
 
-    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasNoSite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasNoSite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rejections).toStrictEqual([outside]);
   });
@@ -395,7 +473,7 @@ describe(composeRecord, () => {
   it('retires a rejection recorded at an older version under the swept roots, the run having reviewed it', () => {
     const prior: ProseRecord = { rules: {}, rejections: [rejection({ 'rule-version': '0' })] };
 
-    const record = composeRecord(prior, fold({}), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({}), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rejections).toStrictEqual([]);
   });
@@ -404,7 +482,7 @@ describe(composeRecord, () => {
     const older = rejection({ file: 'src/b.ts', 'rule-version': '0' });
     const prior: ProseRecord = { rules: {}, rejections: [older] };
 
-    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(prior, fold({ roots: ['docs'] }), hasEverySite, hasEmDashDetector, NO_HASHES);
 
     expect(record.rejections).toStrictEqual([older]);
   });
@@ -430,28 +508,59 @@ describe(listUnsweptRules, () => {
     ['sentence-case', '1'],
   ]);
 
+  it('lists every rule for a file whose prose hash differs from the recorded one', () => {
+    const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage() });
+
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md', 'f'.repeat(16))).toStrictEqual([
+      'em-dash',
+      'sentence-case',
+    ]);
+  });
+
+  it('lists every rule for a file without a hash, or one that the file table does not list', () => {
+    const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage() });
+
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md', undefined)).toHaveLength(2);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/new.md', HASH)).toHaveLength(2);
+  });
+
+  it('lists a rule that the file entry does not name, though its roots contain the file', () => {
+    const record: ProseRecord = {
+      ...coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage() }),
+      files: { 'docs/guide.md': { hash: HASH, rules: ['em-dash'] } },
+    };
+
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md', HASH)).toStrictEqual([
+      'sentence-case',
+    ]);
+  });
+
   it("returns an empty list for a file under a recorded root at each rule's current version, with each available detector having run", () => {
     const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage({ detected: false }) });
 
-    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual([]);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md', HASH)).toStrictEqual([]);
   });
 
   it('lists a rule whose recorded sweep did not run the detector that the helper now has', () => {
     const record = coveredRecord({ 'em-dash': coverage({ detected: false }), 'sentence-case': coverage() });
 
-    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual(['em-dash']);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md', HASH)).toStrictEqual(['em-dash']);
   });
 
   it('lists a rule recorded at another version alone, the other rule still covering the file', () => {
     const record = coveredRecord({ 'em-dash': coverage(), 'sentence-case': coverage({ version: '2' }) });
 
-    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual(['sentence-case']);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md', HASH)).toStrictEqual([
+      'sentence-case',
+    ]);
   });
 
   it('lists a rule that the record does not name', () => {
     const record = coveredRecord({ 'em-dash': coverage() });
 
-    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md')).toStrictEqual(['sentence-case']);
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'docs/guide.md', HASH)).toStrictEqual([
+      'sentence-case',
+    ]);
   });
 
   it('lists every rule for a file outside every recorded root', () => {
@@ -460,7 +569,7 @@ describe(listUnsweptRules, () => {
       'sentence-case': coverage({ detected: false, roots: ['docs'] }),
     });
 
-    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'src/notes.md')).toStrictEqual([
+    expect(listUnsweptRules(record, versions, hasEmDashDetector, 'src/notes.md', HASH)).toStrictEqual([
       'em-dash',
       'sentence-case',
     ]);
@@ -469,7 +578,7 @@ describe(listUnsweptRules, () => {
   it('returns an empty list for a run that does not version any rule', () => {
     const record = coveredRecord({ 'em-dash': coverage() });
 
-    expect(listUnsweptRules(record, new Map(), hasEmDashDetector, 'docs/guide.md')).toStrictEqual([]);
+    expect(listUnsweptRules(record, new Map(), hasEmDashDetector, 'docs/guide.md', HASH)).toStrictEqual([]);
   });
 });
 
@@ -556,9 +665,70 @@ describe(selectPriorRejections, () => {
   });
 });
 
+describe(seedFiles, () => {
+  it('records each file at its hash for the rules whose roots contain it, and skips a file under no root', () => {
+    const record: ProseRecord = {
+      ...EMPTY,
+      rules: { 'em-dash': coverage({ roots: ['docs'] }), 'sentence-case': coverage({ roots: ['.'] }) },
+    };
+
+    const seeded = seedFiles(
+      record,
+      new Map([
+        ['docs/a.md', HASH],
+        ['src/b.ts', HASH],
+      ]),
+    );
+
+    expect(seeded.files).toStrictEqual({
+      'docs/a.md': { hash: HASH, rules: ['em-dash', 'sentence-case'] },
+      'src/b.ts': { hash: HASH, rules: ['sentence-case'] },
+    });
+    expect(
+      seedFiles({ ...EMPTY, rules: { 'em-dash': coverage({ roots: ['docs'] }) } }, new Map([['src/b.ts', HASH]])).files,
+    ).toStrictEqual({});
+  });
+
+  it('returns a record that already has a file table unchanged', () => {
+    const record: ProseRecord = { ...EMPTY, files: {} };
+
+    expect(seedFiles(record, new Map([['docs/a.md', HASH]]))).toBe(record);
+  });
+});
+
 describe(stringifyRecord, () => {
+  it('writes each file on one line and round-trips hashes that read as numbers', () => {
+    const record: ProseRecord = {
+      rules: { 'em-dash': coverage() },
+      files: {
+        'docs/a.md': { hash: '1234567890123456', rules: ['em-dash', 'so'] },
+        'docs/b.md': { hash: '123456789012e456', rules: ['em-dash'] },
+      },
+      rejections: [],
+    };
+
+    const yaml = stringifyRecord(record);
+
+    expect(yaml).toContain('  docs/a.md: { hash: "1234567890123456", rules: [ em-dash, so ] }\n');
+    expect(parseRecord(yaml, NO_VERSIONS)).toStrictEqual(record);
+    expect(stringifyRecord(parseRecord(yaml, NO_VERSIONS))).toBe(yaml);
+  });
+
+  it('omits the file table from a record that has none, which parses back without one', () => {
+    const yaml = stringifyRecord({ rules: { 'em-dash': coverage() }, rejections: [] });
+
+    expect(yaml).not.toContain('files');
+    expect(parseRecord(yaml, NO_VERSIONS)).not.toHaveProperty('files');
+  });
+
   it('round-trips without drift', () => {
-    const record = composeRecord(EMPTY, fold({ rejections: [foldRejection()] }), hasEverySite, hasEmDashDetector);
+    const record = composeRecord(
+      EMPTY,
+      fold({ rejections: [foldRejection()] }),
+      hasEverySite,
+      hasEmDashDetector,
+      NO_HASHES,
+    );
 
     expect(parseRecord(stringifyRecord(record), NO_VERSIONS)).toStrictEqual(record);
   });
@@ -573,6 +743,7 @@ describe(stringifyRecord, () => {
       }),
       hasEverySite,
       hasEmDashDetector,
+      NO_HASHES,
     );
 
     expect(record.rejections[0]).toMatchObject({ rule: 'plain-speech', 'rule-version': '6' });
@@ -635,9 +806,13 @@ function coverage(overrides: Partial<RuleCoverage> = {}): RuleCoverage {
   return { version: '1', 'swept-at': '2026-09-01', detected: true, roots: ['.'], ...overrides };
 }
 
-/** Builds a record containing the given coverage and an empty rejection list. */
+/**
+ * Builds a record containing the given coverage, with `docs/guide.md` and `src/notes.md` recorded at {@link HASH} for
+ * every rule that it names, and an empty rejection list.
+ */
 function coveredRecord(rules: ProseRecord['rules']): ProseRecord {
-  return { rules, rejections: [] };
+  const fileCoverage = { hash: HASH, rules: Object.keys(rules).toSorted() };
+  return { rules, files: { 'docs/guide.md': fileCoverage, 'src/notes.md': fileCoverage }, rejections: [] };
 }
 
 /** Builds a run fold over the whole repository versioning `em-dash`, overriding whichever fields an assertion turns on. */
