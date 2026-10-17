@@ -13,8 +13,8 @@ const ROUND_TRIP_OPTIONS = { flowCollectionPadding: false, lineWidth: 0 } as con
 
 /**
  * Compiles a subagent's `rulebooks:` declaration into the `skills:` list that the harness reads: The injection adds
- * each declared rulebook's deploy name to that list and drops the source key, since a spent instruction left in
- * generated output reads as a live one. The merged list is deduplicated and alphabetized, matching the frontmatter
+ * each declared rulebook's deploy name to that list and drops the source key, since an already-applied instruction left
+ * in generated output reads as a live one. The merged list is deduplicated and alphabetized, matching the frontmatter
  * list convention.
  *
  * Authored entries keep their own nodes, so a structured `{ name, ... }` entry is written to the deployed file with

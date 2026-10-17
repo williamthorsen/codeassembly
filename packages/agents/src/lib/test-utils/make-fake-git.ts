@@ -23,7 +23,7 @@ export interface FakeGitAnswers {
   verifiedRefs?: readonly string[];
 }
 
-/** Builds a git adapter that answers from fixed values. */
+/** Builds a git adapter that returns fixed values. */
 export function makeFakeGit(answers: FakeGitAnswers = {}): AgentsGit {
   const { headFiles, remotes } = answers;
   return {

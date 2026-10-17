@@ -9,11 +9,11 @@ import { type RenderedSkillEntry, renderSupportEntry, type SkillDeployContext } 
 import { isEnoent } from './type-guards.ts';
 
 /**
- * Renders every skill support entry that a source ships, flattened into one tree keyed relative to that source's
+ * Renders every skill support entry that a source provides, flattened into one tree keyed relative to that source's
  * namespace directory.
  *
- * A source that doesn't ship a `skills/` directory renders to nothing, which is the ordinary case: most sources ship
- * skills and subagents alone.
+ * A source that doesn't contain a `skills/` directory renders to nothing, which is the ordinary case: most sources
+ * provide skills and subagents alone.
  */
 export async function renderSourceSupport(
   sourceDir: string,
@@ -54,7 +54,7 @@ export async function deploySourceSupport(destDir: string, entries: ReadonlyArra
 
 /**
  * Removes the namespace directories under `sourcesRoot` that aren't claimed by any declared source, then the root
- * itself once it holds nothing, so that dropping a source retracts what it delivered.
+ * itself once it is empty, so that dropping a source retracts what it delivered.
  *
  * Source names may contain a `/` when a scoped package nests as its own segments; a directory on the way to a
  * surviving name is kept and descended rather than removed. A missing root is a no-op.
@@ -75,7 +75,7 @@ export async function retractUndeclaredSourceSupport(
 
 /**
  * What delivery leaves behind, which decides what is left for retraction to remove. `surviving` names the sources that
- * will hold content afterwards, `emptied` those whose namespace delivery removes because they render nothing.
+ * will have content afterwards, `emptied` those whose namespace delivery removes because they render nothing.
  */
 export interface SourceSupportOutcome {
   readonly surviving: ReadonlyArray<string>;
@@ -110,8 +110,8 @@ export async function listUndeclaredSourceSupport(
 
 /**
  * Walks one level under `sourcesRoot`, accumulating what isn't claimed by any surviving source and recursing into any
- * directory that leads to one. Reports whether the level is absent, holds something a source claims, or survives
- * holding nothing. The last of these lets a caller retire a scope directory emptied by its final package.
+ * directory that leads to one. Reports whether the level is absent, contains something that a source claims, or
+ * survives empty. The last of these lets a caller retire a scope directory emptied by its final package.
  *
  * A level counts as retained when a surviving name is at or under it, whether or not that name is on disk yet, so
  * the answer describes the tree after delivery rather than before it.
