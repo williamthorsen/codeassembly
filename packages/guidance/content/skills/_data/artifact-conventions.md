@@ -55,7 +55,7 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
 
 ### Project slug
 
-Always present under `projects/`, even when `{base_dir}/` is inside the project. Constant structure enables simple directory sync for export. Invoke the bundled session-context deriver to obtain `project_slug`.
+Always present under `projects/`, even when `{base_dir}/` is inside the project, so that an artifact's path has the same shape wherever `base_dir` lies. Invoke the bundled session-context deriver to obtain `project_slug`.
 
 ### Ticket ID
 
@@ -92,10 +92,6 @@ projects/{project-slug}/tickets/{ticket-id}/{run-id}/
 Example: `20260221-034100Z-interactive`
 
 A ticket's **active run** is its newest run directory of mode `interactive`, by the timestamp in its name. A review is saved into the active run, and the author's response is saved into the run that contains the review, so a review, the response, and a re-review share one run. A new run directory is created, when the review is written, only when the ticket directory does not contain an active run. A run of mode `orchestrated` is never active. `resolve-review-run` applies this definition.
-
-### Persistent export destination
-
-Artifacts under `{base_dir}/` are ephemeral when `base_dir` is a git-ignored path (the default). In worktrees, they are lost on deletion. The `export-ai-artifacts.sh` script copies them to `~/ai-artifacts/projects/{project-slug}/` for long-term retention, preserving the same directory structure. Exported artifacts are immutable (first export wins).
 
 ## Path resolution
 
