@@ -223,7 +223,7 @@ describe(runIndexPrototypes, () => {
     expect(await readManifestFile(setDir)).toMatchObject({ entries: [{ slug: 'dense' }, { slug: 'airy' }] });
   });
 
-  it('resolves ids for a set that has no manifest yet', async () => {
+  it('resolves ids for a set that does not have a manifest yet', async () => {
     const setDir = await makeSetDir();
 
     await expect(

@@ -112,7 +112,7 @@ describe(renderIndexPage, () => {
     expect(page).not.toContain('<section class="set-summary"');
   });
 
-  it("renders a card's notes as a definition list in order, and none when it has no notes", () => {
+  it("renders a card's notes as a definition list in order, and omits the list for a card without notes", () => {
     const page = renderIndexPage({
       title: 'T',
       summary: null,
