@@ -8,9 +8,9 @@ user-invocable: true
 
 Append a `change-record` block to a pull request whose body has none, so that the merge publishes the change entries.
 
-The block is drafted by `{skill:summarize-change}`, which consolidates the branch, draws the entries, audits them, and renders the block. This skill lifts the rendered block from the summary that the run saved and appends it to the pull-request body; it drafts nothing of its own.
+The block is drafted by `{skill:summarize-change}`, which consolidates the branch, draws the entries, audits them, and renders the block. This skill copies the rendered block from the summary that the run saved and appends it to the pull-request body; it drafts nothing of its own.
 
-**A block that is already written is never replaced.** A readable block, a malformed one, and one that does not record an entry are all left for the author to repair by hand, as [the change record](../_data/change-record.md#where-the-record-is-read) states. This skill adds a block only where there is none.
+**A block that is already written is never replaced.** A readable block, a malformed one, and one that does not record an entry are all left for the author to repair by hand, as [the change record](../_data/change-record.md#where-the-record-is-read) states. This skill adds a block only to a body that does not contain one.
 
 ## Arguments
 

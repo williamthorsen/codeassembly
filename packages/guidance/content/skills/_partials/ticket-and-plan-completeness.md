@@ -24,7 +24,7 @@ plan: {plan draft path}
 root: {repository root}
 ```
 
-The block contains scalars only, and only these keys. Do not compose any prose into it: A sentence written here carries the session's knowledge into the reader, and the pass is worth nothing once the reader shares what the writer knows.
+The block contains scalars only, and only these keys. Do not compose any prose into it: A sentence written here gives the reader the session's knowledge, and the pass is worth nothing once the reader shares what the writer knows.
 
 **A reply that lacks the `Phase: handoff-review` return block is a reviewer stopped by its turn limit.** Resume that reviewer once, asking only for its report; on Claude Code, send it a message with `SendMessage`, addressed by the agent ID that its dispatch returned. The resumption continues the same dispatch, so it is not the second dispatch that the pass forbids. When the harness cannot resume a subagent, or the resumed reviewer still does not return a report, do not dispatch again: Save the drafts without the pass, and report that the handoff pass did not return a report, even when the sweep found nothing.
 
