@@ -15,9 +15,9 @@ export interface NoteScopeMatcher {
 }
 
 /**
- * Builds the note-membership predicates for a KB config, the single definition of "a note". Both axes match with
- * `picomatch`'s `dot:false`, so dot-directories (`.kb`, `.git`, `.agents`) are excluded implicitly without naming them
- * in `exclude`.
+ * Builds the note-membership predicates for a KB config, the single definition of "a note". Both `targets` and
+ * `exclude` match with `picomatch`'s `dot:false`, so dot-directories (`.kb`, `.git`, `.agents`) are excluded
+ * implicitly without naming them in `exclude`.
  *
  * The matcher applies `targets` and `exclude` alone: Each caller applies its own `.md` extension gate.
  */
