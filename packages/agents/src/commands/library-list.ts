@@ -74,7 +74,10 @@ const HEADERS = {
 } as const;
 
 const COLUMN_GAP = 2;
-/** Floor for the description column so that a narrow terminal still wraps rather than collapses it. */
+/**
+ * Floor for the description column so that, on a narrow terminal, the table still wraps the description rather than
+ * collapsing the column.
+ */
 const MIN_DESCRIPTION_WIDTH = 20;
 
 /**

@@ -33,11 +33,11 @@ rulebooks:
 
 # sources declares the content directories from which artifacts resolve, each a { name, path } pair or a { package }
 # entry naming an installed package whose content this project picks from. sync resolves from these and from the
-# packages declared under packages: alone, and stops when neither declares a usable source. A package source deploys
-# only what this file names, while packages: deploys a package's whole catalog. A relative path resolves against this
-# .agents/ directory (~ and absolute paths are also allowed); a later-declared source shadows an earlier one. Commit
-# only repo-relative paths here; keep machine-specific paths in codeassembly.local.yaml. Sources resolve every
-# artifact type: rulebooks, skills, subagents, and collections.
+# packages declared under packages: alone, and stops when neither declares a usable source. From a package source, sync
+# deploys only what this file names; from packages:, it deploys a package's whole catalog. A relative path resolves
+# against this .agents/ directory (~ and absolute paths are also allowed); a later-declared source shadows an earlier
+# one. Commit only repo-relative paths here; keep machine-specific paths in codeassembly.local.yaml. Sources resolve
+# every artifact type: rulebooks, skills, subagents, and collections.
 # sources:
 #   - package: codeassembly-guidance
 #   - name: org-guidance
@@ -70,7 +70,7 @@ const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt
 #     path: ~/repos/codeassembly/packages/guidance/content
 #
 # Each collection makes a claim about its members: \`recommended\` is vetted and generally applicable, and \`triage\`
-# holds what nobody has examined yet. Add any other collection shipped by a declared source, or declare \`all\` in
+# contains what nobody has examined yet. Add any other collection shipped by a declared source, or declare \`all\` in
 # their place to take the whole catalog, including the artifacts that every collection deliberately omits.
 collections:
   use:
