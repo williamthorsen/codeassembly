@@ -10,7 +10,7 @@ export interface FakeGitAnswers {
 }
 
 /**
- * Builds a git adapter that answers from fixed values. A missing answer is the one that git gives outside a working
+ * Builds a git adapter that returns fixed values. A missing answer is the one that git gives outside a working
  * tree, except `listChangedFiles`, which defaults to an empty change set.
  */
 export function makeFakeGit(answers: FakeGitAnswers = {}): KbGit {
