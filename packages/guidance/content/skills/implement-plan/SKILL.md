@@ -21,7 +21,7 @@ This skill implements a feature plan, the `## Tasks` / `## Verification` shape d
 
 ## The contract
 
-The ticket's acceptance criteria are the contract; the plan is the mechanism by which they are met. When the plan and the facts on the ground disagree, the acceptance criteria decide: A plan step that no longer serves them is the one to abandon.
+The ticket's acceptance criteria are the contract; the plan is the mechanism by which they are met. When the plan and the facts found during implementation disagree, the acceptance criteria decide: A plan step that no longer serves them is the one to abandon.
 
 The plan artifact is read-only. It is a record of what was decided at plan time, and a later reader compares it against the diff to see how implementation departed from it. Never edit it to match what was built: The commits themselves record progress.
 
@@ -35,7 +35,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
    - **Newest plan for the ticket**: The newest of `*_plan.md` and `*_plan-v*.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` (run subdirectories included), by the greatest `YYYYMMDD-HHMMSSZ` filename prefix. Both forms have that prefix, so they sort chronologically together and the lexicographically greatest is the newest across the two. Because `refine-plan` writes its revision as `_plan-v2.md` under a later prefix than the plan that it revises, matching both forms lets a refined plan take precedence over the original that it supersedes. Do not widen to `*_plan*.md`, which also matches the `_plan-review.md` artifact written beside the revision.
    - **Ask**: The sources above do not resolve a plan. Ask the user for a path rather than implementing from the ticket alone: A caller who invoked this skill has a plan in mind.
 
-   Announce the resolved path and its timestamp before executing anything. Several plans can exist for one ticket, and the newest is not always the intended one: This announcement is how the user catches a superseded plan while the choice is still free. It is not ceremony, and it is not skippable when the resolution was unambiguous.
+   Announce the resolved path and its timestamp before executing anything. Several plans can exist for one ticket, and the newest is not always the intended one: This announcement is how the user catches a superseded plan while the choice can still change without cost. It is not ceremony, and it is not skippable when the resolution was unambiguous.
 
 3. **Resolve the ticket**: Stop at the first source that yields one:
    - **Explicit `--ticket=<source>`**: Resolve per [ticket source resolution](../_data/ticket-source-resolution.md).
@@ -44,7 +44,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
    - **Plan provenance**: The plan's frontmatter `ticket_ref` / `ticket_id`, resolved per [auto-resolve](../_data/ticket-source-resolution.md#auto-resolve).
    - **No ticket**: Every source failed; the plan was produced from a free-form description, or the ticket is unreachable. Announce that a ticket does not govern the run and execute against the plan as the sole contract. Do not stall on a missing ticket; do not silently substitute the plan for one without saying so.
 
-4. **Read the plan and the ticket** in full before touching code, including the plan's `## Risks` section: It names where the author expected the work to need adaptation.
+4. **Read the plan and the ticket** in full before touching code, including the plan's `## Risks` section: It names the parts of the work that the author expected to need adaptation.
 
    Check the shape as you read: A plan with `## Investigation steps` rather than `## Tasks` is a spike, which this skill does not implement (see [Scope](#scope)). Stop and tell the user the plan is a spike, to be carried out directly rather than implemented here.
 
@@ -54,7 +54,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Audit the comments that you write along the way per [Comment discipline](#comment-discipline).
 
-   Raise material divergence to the user before proceeding, rather than rerouting silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach that the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation; carry on and note it in the closing summary.
+   Raise material divergence to the user before proceeding, rather than departing from the plan silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach that the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation; continue and note it in the closing summary.
 
    A task step or a verification check that writes to shared state from the branch is material divergence, even when the plan directs it: Do not run it; report the conflict, citing {rulebook:shared-data-conventions}.
 
@@ -64,9 +64,9 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
 6. **Audit the diff** per [Diff audit](#diff-audit). Because the audit runs over the work of every task, ahead of the gates, a repair that it forces is itself covered by them. A repair made once the tasks are committed, whether the audit forces it or a gate does, is committed the same way: amended into the commit that it corrects, or made as a commit of its own, composed with the `{skill:create-commit}` skill.
 
-7. **Run the plan's verification gates.** Execute the `## Verification` section's checks yourself and report the actual results, including a browser check through a debug browser where the environment provides one. When the change touches a visible component, run the browser check in {rulebook:accessibility-conventions} whether or not `## Verification` lists it, and run it once when it does. Retry a command that the sandbox refuses through the permission gate, and cut a check whose observable outcome a gate already asserts rather than run it. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass, and never turn a check into a developer action item.
+7. **Run the plan's verification gates.** Execute the `## Verification` section's checks yourself and report the actual results, including a browser check through a debug browser when the environment provides one. When the change touches a visible component, run the browser check in {rulebook:accessibility-conventions} whether or not `## Verification` lists it, and run it once when it does. Retry a command that the sandbox refuses through the permission gate, and cut a check whose observable outcome a gate already asserts rather than run it. A gate that fails is not done: Fix the cause, or report the failure. Never claim a gate passed without having seen it pass, and never turn a check into a developer action item.
 
-8. **Report completion.** Route each fact surfaced by the run per [Fact routing](#fact-routing), then summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. For a change to a visible component, the summary states what the browser check found, or reports that it did not run as that rulebook requires. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met. The report lists what was verified and never a step for the developer to run; the "Handoffs" section of the collaboration preferences states when a step may leave your hands.
+8. **Report completion.** Record each fact found during the run per [Fact routing](#fact-routing), then summarize what was built against the ticket's acceptance criteria, naming any criterion left unmet and any divergence from the plan. For a change to a visible component, the summary states what the browser check found, or reports that it did not run as that rulebook requires. Every sentence of that summary is read back from the diff per [Diff audit](#diff-audit), a criterion reported unmet as much as one reported met. The report lists what was verified and never a step for the developer to run; the "Handoffs" section of the collaboration preferences states when you may hand a step over.
 
 9. **Present next steps** following [next-steps options](#next-steps-options).
 
@@ -80,7 +80,7 @@ The audience decides where a fact goes. A fact that the user acts on, such as a 
 
 The failure that this prevents is visible in the phrasing: Any wording that treats the reader as an intermediary, such as "worth a reviewer's attention", "flag this in review", or "mention that...", marks a fact that belongs in an artifact. When one is found after the artifact is written, amend the artifact rather than narrate the gap.
 
-None of this suppresses the closing report. Reporting what was built, which acceptance criteria are met, and what diverged from the plan is owed to the user, whose call it is what happens next.
+None of this suppresses the closing report. Reporting what was built, which acceptance criteria are met, and what diverged from the plan is owed to the user, who decides what happens next.
 
 <!-- guidance-hook: implementation-preferences -->
 
@@ -88,11 +88,11 @@ None of this suppresses the closing report. Reporting what was built, which acce
 
 ### Options
 
-| #   | Emoji | Option                   | Description                                               |
-| --- | ----- | ------------------------ | --------------------------------------------------------- |
-| 1   | 🚢    | Create PR without review | Open the PR straight from the implementation              |
-| 2   | ✂️    | Split the branch         | Cut the branch at a seam into pieces that each ship alone |
-| 3   | 🔍    | Review branch            | Run a single end-of-work review pass over the branch      |
+| #   | Emoji | Option                   | Description                                                |
+| --- | ----- | ------------------------ | ---------------------------------------------------------- |
+| 1   | 🚢    | Create PR without review | Open the PR straight from the implementation               |
+| 2   | ✂️    | Split the branch         | Cut the branch at a seam into pieces that each merge alone |
+| 3   | 🔍    | Review branch            | Run a single end-of-work review pass over the branch       |
 
 ### Output format
 
@@ -129,9 +129,9 @@ Skill names for each option:
 Select the recommended option by checking these rules in order and stopping at the first match. Judge the diff that you actually produced, not the work predicted by the plan's author: A plan-time estimate of how much review the work would need was made before anyone knew what the code would look like, and that estimate is corrected at this menu.
 
 1. **Create PR without review**: The realized diff is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](../_data/complexity-classification.md)): a mechanical rename, a typo fix, a single-file change without a behavioral surface.
-2. **Split the branch**: Recommend only when the realized diff is too large for one `review-branch` pass, and its commits contain a seam: a prefix of commits that ships on its own and that you expect to pass the plan's verification gates at its last commit. Both halves are required: Too large without a seam is not a match, and a seam in a diff that one pass would carry is not one either. Pieces whose commits interleave are not a seam, because separating them would take a rebase.
+2. **Split the branch**: Recommend only when the realized diff is too large for one `review-branch` pass, and its commits contain a seam: a prefix of commits that can be merged on its own and that you expect to pass the plan's verification gates at its last commit. Both halves are required: Too large without a seam is not a match, and a seam in a diff that one pass could review is not one either. Pieces whose commits interleave are not a seam, because separating them would take a rebase.
 
-   Structural properties (the diff spans packages or module boundaries, changes a shared contract, or has consequences that ripple past the change sites) make a diff _more likely_ to be too large. They are evidence to weigh, and none of them matches rule 2 on its own.
+   Structural properties (the diff spans packages or module boundaries, changes a shared contract, or has consequences that extend beyond the change sites) make a diff _more likely_ to be too large. They are evidence to weigh, and none of them matches rule 2 on its own.
 
    With two pieces, rule 2 also fails when any commit after the seam is already on the branch's remote: The split resets the current branch to the seam, and removing a pushed commit would take a force-push.
 
@@ -145,7 +145,7 @@ The selected option's marker follows how cleanly its rule matched: ■■■ whe
 
 #### Splitting the branch
 
-**Pre-check.** Record the original `HEAD` SHA. Confirm that `git status --porcelain` prints nothing; ignored files, such as installed dependencies, are left alone. With two pieces, confirm that no commit after the seam is on a local remote-tracking ref, without fetching; a branch without an upstream counts as not pushed. When a check fails, report it and stop.
+**Pre-check.** Record the original `HEAD` SHA. Confirm that `git status --porcelain` prints nothing; ignored files, such as installed dependencies, are left alone. With two pieces, confirm that a local remote-tracking ref does not contain any commit after the seam, without fetching; a branch without an upstream counts as not pushed. When a check fails, report it and stop.
 
 <!-- include: ../_partials/split-ticket-compose.md / -->
 
@@ -157,7 +157,7 @@ The confirmation also lists each piece's commit range and boundary SHA, each bra
 
 <!-- include: ../_partials/split-ticket-create.md / -->
 
-**Create the branches.** Create a branch for each piece that the current branch does not keep, at its piece's boundary commit, named per [branch format](../_data/branch-format.md) from the piece's ticket reference and a kebab-case description of its title. With two pieces, the current branch keeps the first piece: The second piece's branch is created at the original `HEAD`, and the current branch is then reset to the seam, so that it holds the first piece under the originating ticket. When no ticket governs the work, the first piece's new ticket does not get a branch of its own; the report names that ticket, which the current branch's name does not encode. With three or more, every piece gets a new branch, and the current branch stays at the original `HEAD` as the umbrella's branch, which is never opened as a pull request.
+**Create the branches.** Create a branch for each piece that the current branch does not keep, at its piece's boundary commit, named per [branch format](../_data/branch-format.md) from the piece's ticket reference and a kebab-case description of its title. With two pieces, the current branch keeps the first piece: The second piece's branch is created at the original `HEAD`, and the current branch is then reset to the seam, so that it contains the first piece under the originating ticket. When a ticket does not govern the work, the first piece's new ticket does not get a branch of its own; the report names that ticket, which the current branch's name does not encode. With three or more, every piece gets a new branch, and the current branch stays at the original `HEAD` as the umbrella's branch, which is never opened as a pull request.
 
 Never push, force-push, or delete a remote branch, never create a worktree, and never check out a new branch. The resets above are the only history operations, and the recorded SHA and the new branches keep every commit reachable.
 

@@ -33,7 +33,7 @@ Otherwise, resolve the target before step 1:
 node {harness_home_dir}/skills/create-ticket/resolve-ticket-target.mjs --repo {OWNER/REPO}
 ```
 
-It prints `{"repo": "...", "projectRoot": "...", "projectSlug": "...", "ticketRefPrefix": "...", "missing": [...]}`. `repo` is the canonical `OWNER/REPO`, used as `{target_repo}` below. `projectRoot` is a directory that holds the target's `.meta/label-map.json` and `.agents/preferences.yaml` as its default branch contains them; `missing` names each that it does not contain, and the completion output reports each. On a non-zero exit, nothing has been created: Report the helper's stderr and stop.
+It prints `{"repo": "...", "projectRoot": "...", "projectSlug": "...", "ticketRefPrefix": "...", "missing": [...]}`. `repo` is the canonical `OWNER/REPO`, used as `{target_repo}` below. `projectRoot` is a directory that contains the target's `.meta/label-map.json` and `.agents/preferences.yaml` as they appear on its default branch; `missing` names each that it does not contain, and the completion output reports each. On a non-zero exit, nothing has been created: Report the helper's stderr and stop.
 
 The steps below state what changes for a target repository. A step that does not mention it runs unchanged.
 
@@ -92,12 +92,12 @@ Determine where to create the remote ticket:
 - If exactly one integration is enabled → use it
 - If multiple enabled → ask
 
-2. **Git remote**: if the preferences do not explicitly enable any integration:
+2. **Git remote**: If the preferences do not explicitly enable any integration:
 
 - `git remote get-url origin` pointing to `github.com` → GitHub
 - Other hosts → ask
 
-3. **Ask**: if platform cannot be determined
+3. **Ask**: If platform cannot be determined
 
 ### 4. Decide relationships
 
@@ -109,11 +109,11 @@ Three relationships are available, each stated from the new ticket's side:
 
 Decide which apply from the reason this ticket is being created, narrowed by `branch_ticket_id` (step 1): Work split out of the current branch's ticket relates to it, and a backlog idea raised in passing does not. An argument supplied by the caller replaces the inference for its own relationship.
 
-For a [target repository](#another-repository), do not infer any relationship from `branch_ticket_id`, which identifies a ticket in the session's repository; apply only those that the arguments state. A reference resolves in the target, so a ticket in any other repository is passed as its URL.
+For a [target repository](#another-repository), do not infer any relationship from `branch_ticket_id`, which identifies a ticket in the session's repository; apply only those that the arguments state. A reference resolves in the target, so pass a ticket in any other repository as its URL.
 
 **Most tickets have none, and for those, say nothing.** When nothing applies, continue to step 5 without asking.
 
-When one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so that a wrong target is visible while it is still free to correct. A relationship supplied through an argument is one that the caller has already confirmed: State it in the completion output and do not ask about it; the confirmation covers the inferred relationships alone. If the platform resolved in step 3 cannot express one of them, say so here rather than leaving it to appear as a skip in step 7.
+When one or more apply, state each relationship and its target in the project's own reference form and confirm before anything is created, so that a wrong target is visible while it is still free to correct. A relationship supplied through an argument is one that the caller has already confirmed: State it in the completion output and do not ask about it; the confirmation covers the inferred relationships alone. If the platform resolved in step 3 cannot express one of them, say so here rather than reporting it as a skip in step 7.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -131,7 +131,7 @@ Read `labels` from the output, `{"labels":["feature","breaking","scope:agents"]}
 
 Append the labels given through `--label` to the returned list; they add to the resolved scope and type labels and never replace them. `gh issue create` fails on a label that the repository does not have, so the caller of `--label` checks that each label exists before invoking this skill. On the Jira path, `--label` is not applied: Report it skipped in the completion output.
 
-Render one `--label "{label_name}"` flag per label in the combined list, and write them into the create call in step 6 as literal text. A shell variable does not survive the Bash invocation that assigns it, so a call that reads one from an earlier call does not apply any labels at all.
+Render one `--label "{label_name}"` flag per label in the combined list, and write them into the create call in step 6 as literal text. Because a shell variable does not survive the Bash invocation that assigns it, a call that reads one from an earlier call does not apply any labels at all.
 
 ### 6. Create remote ticket
 
@@ -232,7 +232,7 @@ Persist the new ticket's URL into the branch manifest so that later sessions reu
 
 The deriver refuses the write on the default branch regardless, per [Stored ticket URL](../_data/ticket-source-resolution.md#stored-ticket-url). Deciding it here produces the reported skip rather than a stderr diagnostic that never appears in the completion output.
 
-Compare `ticket_id` rather than a bare issue number. `branch_ticket_id` comes from the same deriver logic that the GitHub path's construction mirrors, so the two agree in form on every project: bare when `ticket_ref_prefix` is `#` or absent, prefixed when it is a project key. Comparing a bare number holds only in the first case and silently skips every persist in the second.
+Compare `ticket_id` rather than a bare issue number. `branch_ticket_id` comes from the same deriver logic that the GitHub path's construction mirrors, so the two agree in form on every project: bare when `ticket_ref_prefix` is `#` or absent, prefixed when it is a project key. Comparing a bare number works only in the first case and silently skips every persist in the second.
 
 Skip this section entirely when step 6 did not resolve a URL; there is nothing to store.
 
@@ -240,7 +240,7 @@ Skip this section entirely when step 6 did not resolve a URL; there is nothing t
 
 Skip this step when step 4 decided none.
 
-When step 6 did not create a remote ticket (the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship that step 4 decided, each with that as its reason, and report them. A relationship confirmed by the user never disappears without a line in the completion output.
+When step 6 did not create a remote ticket (the [no-remote fallback](#fallback-no-remote-platform)), there is nothing to link. Skip every relationship that step 4 decided, each with that as its reason, and report them. Never drop a relationship confirmed by the user without a line in the completion output.
 
 Otherwise apply relationships after the ticket exists rather than as part of creating it. A reference rejected by the platform then fails only the link; the same reference passed to the creation call would fail the creation of the ticket. Jira's clients force an exception for the parent, and the Jira path below states what replaces the guarantee there.
 
@@ -254,7 +254,7 @@ gh issue edit {number} --parent "{parent}" --add-blocked-by "{blocked_by}" --add
 
 Omit the flag for any relationship that step 4 did not decide. Each takes issue numbers or URLs, comma-separated for the two that accept several.
 
-These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number; reaching for that endpoint is the detour that this note exists to prevent.
+These flags are native to `gh` 2.94 and later. They are not the REST dependencies endpoint, which takes an issue's database `id` rather than its number; using that endpoint is the mistake that this note exists to prevent.
 
 #### Jira path
 
@@ -268,7 +268,7 @@ Through a connected tool, use the link type named `Blocks`, falling back to a ty
 
 The two clients take opposite argument orders for the same relationship: `acli --out` names the blocker, whereas a connected tool's `inwardIssue` does. A link type's inward and outward descriptions describe how Jira stores the link, and only `acli`'s argument names follow that orientation, so take each client's mapping from its own documentation and the descriptions only to select the type.
 
-Through `acli`, after a create through `acli`, the work item is on the active site, so link without a further check. After a create through another client, first compare the active site with `ticket_base_url` (step 1) when it is set, and report each link skipped with the helper's stderr line when it exits non-zero:
+After a create through `acli`, the work item is on the active site; link through `acli` without a further check. After a create through another client, first compare the active site with `ticket_base_url` (step 1) when it is set, and report each link skipped with the helper's stderr line when it exits non-zero:
 
 ```bash
 node {harness_home_dir}/scripts/manage-jira-ticket.mjs check-site --target {ticket_base_url}
@@ -347,7 +347,7 @@ gh issue comment {number} --body-file "$body_path" {repo_flag}
 
 **Jira.** Comment through the client that created the work item, in the format assigned to that client by {skill?:update-jira-ticket}: a connected tool's own comment surface, or `acli` reading the comment as ADF from a scratch file. Flatten task lists for a connected tool as [Create the work item](#create-the-work-item) states.
 
-The scratch file follows [gh body file](#gh-body-file), whose rules are about the path rather than the platform: `acli` reads a file the same way `gh` does, and a path carried between Bash invocations resolves to nothing either way.
+The scratch file follows [gh body file](#gh-body-file), whose rules are about the path rather than the platform: `acli` reads a file the same way `gh` does, and a path passed between Bash invocations resolves to nothing either way.
 
 ```bash
 adf_path="{absolute path from the write step}"

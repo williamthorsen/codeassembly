@@ -7,7 +7,7 @@ supported-harnesses: [claude]
 
 # Index prototypes
 
-Publish one index page for a ticket's prototypes instead of one link per prototype. Each card shows a screenshot that links to the prototype, its metadata, and verdict controls. The developer rejects, ranks, and picks a winner on the page, and the page saves those verdicts through the `db` capability, where you read them back with the ArtifactData tool.
+Publish one index page for a ticket's prototypes instead of one link per prototype. Each card shows a screenshot that links to the prototype, its metadata, and verdict controls. The developer rejects, ranks, and picks a winner on the page, and the page saves those verdicts through the `db` capability, from which you read them back with the ArtifactData tool.
 
 ## The set
 
@@ -24,7 +24,7 @@ A later round of prototypes revises the same set: A new idea takes a new slug, a
 
 A slug matches `[a-z0-9][a-z0-9-]{0,39}`. You choose each slug, before any prototype is built.
 
-The helper gives each slug a number at its first registration, and every later version of the slug keeps it. A version's id is `{number}.{version}`, and it is how the developer refers to a version: Name each one to them as `{id} {title}`, such as `3.2 Catalog first`; the index card leads with the same form, and the page itself states it as the first line of its `data-demo` band. A bare number names the slug whose entries have that number, at its latest version. When no entry has it, ask which prototype they mean rather than guess. The slug stays the key in the manifest and in the verdicts.
+The helper gives each slug a number at its first registration, and every later version of the slug keeps it. A version's id is `{number}.{version}`, and it is how the developer refers to a version: Name each one to them as `{id} {title}`, such as `3.2 Catalog first`; the index card leads with the same form, and the page itself states it as the first line of its `data-demo` band. A bare number names the slug whose entries have that number, at its latest version. When the manifest does not contain an entry with that number, ask which prototype they mean rather than guess. The slug stays the key in the manifest and in the verdicts.
 
 Resolve the ids before anything is built, and pass each number through when you register:
 
@@ -56,7 +56,7 @@ Choose a slug for each prototype, resolve the ids, and choose the set's note lab
 
 1. Write the page source to `{set_dir}/{slug}-v{n}.html`, with `{id} {title}` as the first line of its `data-demo` band.
 2. Publish that file with the Artifact tool.
-3. Report the artifact URL, a short title, the lens (the angle or constraint that distinguishes this prototype), the inputs it drew on, a one-sentence description, and one line per note label as `{label}: {value}`.
+3. Report the artifact URL, a short title, the lens (the angle or constraint that distinguishes this prototype), the inputs on which it drew, a one-sentence description, and one line per note label as `{label}: {value}`.
 
 Build a prototype in the main session the same way.
 
@@ -100,7 +100,7 @@ node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs register \
   --screenshot "{working_dir}/.playwright-mcp/{slug}-v{n}.png"
 ```
 
-Pass `--number` with the number that `resolve-ids` gave the slug. Pass one `--note` per note label, in the set's label order. Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already held another version of the slug, so rename the source to match.
+Pass `--number` with the number that `resolve-ids` gave the slug. Pass one `--note` per note label, in the set's label order. Omit any optional flag that does not have a value. The result's `entry.version` must equal the `{n}` in the source's name; when it does not, the manifest already contained another version of the slug, so rename the source to match.
 
 ### 5. Describe the set
 
@@ -138,8 +138,8 @@ node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs render \
 
 Report a `warning` or a non-empty `missingShots` to the developer. Then publish the rendered file with the Artifact tool:
 
-- **First publish** (`indexUrl` is `null`): pass `icon: "gallery"`, a one-sentence `description`, and `capabilities: {db: {}, user: {}}`.
-- **Republish** (`indexUrl` is set): pass `url` set to `indexUrl` and omit `capabilities` and `icon`, so that the page keeps its declaration, its icon, and its verdicts. In a session that has not yet read or published the index, read it with the Artifact tool's `read` action first.
+- **First publish** (`indexUrl` is `null`): Pass `icon: "gallery"`, a one-sentence `description`, and `capabilities: {db: {}, user: {}}`.
+- **Republish** (`indexUrl` is set): Pass `url` set to `indexUrl` and omit `capabilities` and `icon`, so that the page keeps its declaration, its icon, and its verdicts. In a session that has not yet read or published the index, read it with the Artifact tool's `read` action first.
 
 ### 7. Record the index URL
 
@@ -161,10 +161,10 @@ Read the verdicts at the start of any later step that acts on the set, such as r
 
 Report each prototype as `{id} {title}`, taking the number, version, and title from the slug's latest manifest entry:
 
-- **Winner**: the document with `winner: true` that is not rejected; when two claim it, the one with the later `updatedAt`.
-- **Ranking**: the remaining unrejected documents with a `rank`, in ascending rank.
-- **Rejections**: the documents with `rejected: true`.
-- **Stale verdicts**: documents whose slug is not in the manifest, left out of the ranking.
+- **Winner**: The document with `winner: true` that is not rejected; when two claim it, the one with the later `updatedAt`.
+- **Ranking**: The remaining unrejected documents with a `rank`, in ascending rank.
+- **Rejections**: The documents with `rejected: true`.
+- **Stale verdicts**: Documents whose slug is not in the manifest, left out of the ranking.
 
 When the collection is empty, report that nothing has been decided yet.
 
@@ -178,7 +178,7 @@ When a caller needs each prototype's product copy, get the probe once per round:
 node {harness_home_dir}/skills/index-prototypes/index-prototypes.mjs copy-probe
 ```
 
-Then, in step 3, after each screenshot, pass the result's `function` to `browser_evaluate`. It returns the page's strings of four or more words in document order, without duplicates, and it leaves out everything inside an element that carries `data-demo`.
+Then, in step 3, after each screenshot, pass the result's `function` to `browser_evaluate`. It returns the page's strings of four or more words in document order, without duplicates, and it leaves out everything inside an element that has `data-demo`.
 
 ## Helper results
 
@@ -186,7 +186,7 @@ Every command prints one JSON object. A success has `ok: true`. A failure has `o
 
 | `error`                | Meaning                                                                                                                  |
 | ---------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `invalid-args`         | Unknown command, a flag the command does not take, a missing required flag, or a `--note` that is not `{label}: {value}` |
+| `invalid-args`         | Unknown command, a flag that this command rejects, a missing required flag, or a `--note` that is not `{label}: {value}` |
 | `invalid-manifest`     | `manifest.json` is not valid JSON or does not have the manifest layout                                                   |
 | `invalid-slug`         | The slug does not match `[a-z0-9][a-z0-9-]{0,39}`                                                                        |
 | `invalid-summary`      | The summary file is not valid JSON or does not have the summary layout                                                   |

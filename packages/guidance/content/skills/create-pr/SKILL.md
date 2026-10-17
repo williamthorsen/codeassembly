@@ -8,7 +8,7 @@ user-invocable: true
 
 Create a pull request on the appropriate platform. This is the user-facing entry point that orchestrates the full PR creation flow, delegating platform-specific API calls to internal skills (`create-gh-pr`, `create-bitbucket-pr`).
 
-The pull request carries the change's entries and overrides in the `change-record` block that the change summary's body ends with, as [the change record](../_data/change-record.md) states them.
+The pull request contains the change's entries and overrides in the `change-record` block that the change summary's body ends with, as [the change record](../_data/change-record.md) states them.
 
 ## Optional arguments
 
@@ -111,15 +111,15 @@ Read `scm` from the session context manifest:
 
 ### 9. Insert the closing line above the record block
 
-The body copied from the change summary already ends with the rendered `change-record` block, which `summarize-change` writes from the change entries. Carry it through unchanged: Do not render a block here, and never re-render one from the frontmatter, which does not record any entries.
+The body copied from the change summary already ends with the rendered `change-record` block, which `summarize-change` writes from the change entries. Keep it unchanged: Do not render a block here, and never re-render one from the frontmatter, which does not record any entries.
 
-If `ticket_ref` is non-null, insert `Closes {ticket_ref}` above that block, separated from the text before it and from the block by one blank line each. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when an auto-close integration is not wired up, the line documents the linkage and gives reviewers a clickable cross-reference.
+If `ticket_ref` is non-null, insert `Closes {ticket_ref}` above that block, separated from the text before it and from the block by one blank line each. The `Closes` keyword auto-closes the linked ticket when the PR merges (GitHub for numeric same-repo refs; Jira/Linear for prefixed IDs when their respective integrations are configured). Even when an auto-close integration is not configured, the line documents the linkage and gives reviewers a clickable cross-reference.
 
 If `ticket_ref` is null, skip: no closing line.
 
-The closing line goes above the block rather than below it because the block is the body's last element, as [The `change-record` block](../_data/change-record.md#the-change-record-block) states. A merge reads the last `change-record` fence wherever it sits, so the order costs nothing to keep and the convention stays true.
+The closing line goes above the block rather than below it because the block is the body's last element, as [The `change-record` block](../_data/change-record.md#the-change-record-block) states. A merge reads the last `change-record` fence wherever it is in the body, so keeping this order does not affect the merge, and the convention stays true.
 
-If the change summary's body does not end with a block, append the closing line as the body's last line and say that the pull request does not contain a change record, naming `{skill:add-change-record}` as the skill that adds one. A body reaches this step without one when `summarize-change` reported that `render-block` was unavailable or failed.
+If the change summary's body does not end with a block, append the closing line as the body's last line and say that the pull request does not contain a change record, naming `{skill:add-change-record}` as the skill that adds one. The change summary's body does not end with a block when `summarize-change` reported that `render-block` was unavailable or failed.
 
 ### 10. Call delegate
 
