@@ -51,11 +51,21 @@ These options mean the same thing in every tool, so that a reader who knows one 
 
 Every tool responds to `--version`, so that a bug report can name the version that produced it.
 
+Example, for a tool that reads its input from a file:
+
+- ❌ `<bin> -f input.json`, with `-f` meaning `--file`
+- ✅ `<bin> --file input.json`, which leaves `-f` to mean `--force`
+
 ## Configuration
 
 - **A tool that reads a config file accepts `--config <path>`, short `-c`.** A relative path resolves against the working directory, as every other path argument does.
 - **A setting resolves in the order flag, environment variable, config file, built-in default.** The value given closest to the invocation wins, so that one run can override a project's setting without editing the file.
 - **A path given to `--config` that does not exist is an error.** Falling back to defaults would run the command with settings that the caller did not ask for. A config file that the tool looks up by itself may be absent; then the defaults apply.
+
+Example, for `<bin> --config ./ci.yaml` run in a directory that does not contain `ci.yaml`:
+
+- ❌ The command runs with the built-in defaults and reports success.
+- ✅ `<bin>: --config ./ci.yaml: file not found` on stderr, with exit 2
 
 ## Writing modes
 
@@ -109,6 +119,11 @@ Example, for an invalid value:
 - ❌ `<bin>: invalid --format`
 - ✅ `<bin>: --format accepts text or json, not yaml`
 
+Example, for a command that needs an access token:
+
+- ❌ `<bin> publish --token <value>`
+- ✅ `<bin> publish --token-file <path>`, or the token piped to `<bin> publish --token-stdin`
+
 ## JSON output
 
 - **A command whose output a script or an agent may read supports `--json`.** Parsing text written for a person breaks when its wording changes.
@@ -140,6 +155,11 @@ Example, for `<bin> deploy`:
 
 - **Color and other terminal styling appear only when the stream is a terminal.** Escape codes written to a file or a pipe corrupt the text that the reader receives.
 - **A set `NO_COLOR` environment variable, or `--no-color`, turns styling off** even on a terminal.
+
+Example, for `<bin> list > list.txt`:
+
+- ❌ `list.txt` contains `\e[32mok\e[0m deploy`
+- ✅ `list.txt` contains `ok deploy`
 
 ## Logic and presentation
 
