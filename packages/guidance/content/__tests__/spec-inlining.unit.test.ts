@@ -88,7 +88,7 @@ const OPTION_FORMAT: Spec = {
     // the gate to which it is appended, which is how a combine-or-split call lost its recommendation.
     'When the order changes the code or the total effort',
     // What the gate requires of the menu that it produces for a timing-only ordering. Without it a menu satisfies the
-    // gate while carrying the agent's lean, which the marker table's ■■□ row licenses.
+    // gate while still showing the agent's lean, which the marker table's ■■□ row licenses.
     'render the options unmarked',
   ],
 };
@@ -130,7 +130,7 @@ const IMPLEMENT_PLAN_MENU: Spec = {
     'its marker follows how squarely rules 1 and 2 failed',
     '| 2   | ✂️    | Split the branch         |',
     // Rule 2's test. Without both halves the rule matches on size alone, which splits a large diff that has no seam,
-    // or on any seam, which cuts diffs that one pass would carry.
+    // or on any seam, which cuts diffs that one pass would handle.
     'Recommend only when the realized diff is too large for one `review-branch` pass, and its commits contain a seam',
     // The demotion of the structural triggers. Without it a multi-package diff is split on structure alone.
     'none of them matches rule 2 on its own',
@@ -169,7 +169,7 @@ const SPLIT_LAUNCH_PROMPTS: Spec = {
   heading: '**Launch prompts.**',
   rules: [
     // Which tickets get a prompt. Without it a two-piece split omits the originating ticket, which keeps the first
-    // piece, or an umbrella gets a prompt for work that it does not hold.
+    // piece, or an umbrella gets a prompt for work that it does not own.
     'With two pieces, the originating ticket gets one; an umbrella does not get one',
     // Work order. Without it the developer has to work out which prompts can run before which.
     'A ticket comes after every ticket that blocks it',
@@ -198,7 +198,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // What "unsettled" means. Without them the term is undefined and the agent falls back to instinct.
     'when it was ratified interactively',
     'from prior design work, verified against source, or copied from an established pattern',
-    // Why a refine pass cannot resolve an empirical unknown, which is what sends such plans past rule 1.
+    // Why a refine pass cannot resolve an empirical unknown, which is why rule 1 does not match such plans.
     'A refine pass re-reads the plan and structurally cannot answer those',
     // The demotion of the structural triggers. Without it they are sufficient again, and every substantive plan
     // trips them.
@@ -207,7 +207,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // render the recommendation. Without it rule 1 is only advice.
     '`➕` line naming the specific unsettled decision that the pass would raise',
     // Rule 2's test. Without both halves the rule matches on size alone, which splits a large plan that has no
-    // independent pieces, or on any seam, which cuts plans that one pass would carry.
+    // independent pieces, or on any seam, which cuts plans that one pass would handle.
     'Recommend only when the plan is too large for one implement-and-review pass, and it holds two or more pieces that each ship and can be verified on their own',
     // The same demotion for rule 2. Without it a multi-package plan is split on structure alone.
     'none of them matches rule 2 on its own',
@@ -239,7 +239,7 @@ const NEXT_STEPS_AFTER_REVIEW: Spec = {
     // suppresses the preview again, which is the consent-blind render that this spec exists to prevent.
     'It never suppresses the proposed-edit preview, which is required content',
     // The directive that keeps the Deviations edit inside the criteria that it previews. Without it the option does not
-    // name a bound, and the delegate's own scope is the only thing holding the edit to what the preview showed.
+    // name a bound, and the delegate's own scope is the only thing limiting the edit to what the preview showed.
     'which revises acceptance criteria alone',
     // The trigger's computation order. Without it the sub-block renders off the compliance status rows again,
     // prompting for a ticket edit wherever a criterion's wording merely differs from what was built.

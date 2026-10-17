@@ -9,16 +9,19 @@ import { readContentFile } from '../test-utils/read-content-file.ts';
 import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
 
 // Two routes deliver these rules, and each is asserted where it can be: The ambient route is a `delivery` value on the
-// rulebook, checked here, and the hook route is a row in `guidance-hook-reach.unit.test.ts`. Both rest on each rule
-// having one statement home, which the last assertion checks. A second statement elsewhere in the corpus is drift that
+// rulebook, checked here, and the hook route is a row in `guidance-hook-reach.unit.test.ts`. Both depend on each rule
+// being stated in one file alone, which the last assertion checks. A second statement elsewhere in the corpus is drift that
 // separates a rule from its rulebook.
 const RULEBOOK = 'guidance/rulebooks/williamthorsen-writing-preferences.md';
 const SLUG = 'williamthorsen-writing-preferences';
 
-/** The partial inlined by the rulebook, so a rule stated there reaches the rulebook without being written into it. */
+/**
+ * The partial inlined by the rulebook, so a rule stated there appears in the expanded rulebook without being written
+ * into it.
+ */
 const PARTIAL = '_partials/reduced-object-relative.md';
 
-/** A rule carried by the rulebook: the one file permitted to state it, and phrases that must survive an edit to it. */
+/** A rule stated by the rulebook: the one file permitted to state it, and phrases that must survive an edit to it. */
 interface Rule {
   readonly home: string;
   readonly phrases: ReadonlyArray<string>;
@@ -68,7 +71,7 @@ describe('writing-preferences reach', () => {
   it('declares ambient delivery', async () => {
     const delivery = await readFrontmatterList('rulebook', SLUG, 'delivery');
 
-    const message = `${SLUG} drops its ambient route, so an interactive session loses these rules; the hook route reaches subagents alone`;
+    const message = `${SLUG} drops its ambient route, so an interactive session loses these rules; the hook route delivers them to subagents alone`;
     expect(delivery, message).toContain('ambient');
   });
 
@@ -97,7 +100,7 @@ describe('writing-preferences reach', () => {
 
 // region | Helpers
 
-/** Returns the rulebook with its includes expanded, so an inlined rule counts as reaching it. */
+/** Returns the rulebook with its includes expanded, so an inlined rule counts as stated in it. */
 async function readExpandedRulebook(): Promise<string> {
   return readContentFile(RULEBOOK);
 }

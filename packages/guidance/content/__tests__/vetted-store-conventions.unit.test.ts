@@ -161,7 +161,7 @@ function isPermittedStoreValue(value: string): boolean {
 /**
  * Lists the Markdown files of the vetted collection's closure, relative to `contentDir`. A skill contributes every
  * Markdown file under its directory; the committed helper bundles beside them are minified to single lines, so a
- * line-based report would dump one, and a bundle is fixed upstream in `src/` regardless.
+ * line-based report would print a whole bundle, and a bundle is fixed upstream in `src/` regardless.
  */
 async function listClosureFiles(contentDir: string): Promise<ReadonlyArray<string>> {
   const closure = await resolveClosure(contentDir, { collection: [VETTED_COLLECTION] });

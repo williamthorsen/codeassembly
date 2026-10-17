@@ -75,7 +75,7 @@ describe('live work-types.json', () => {
     // FLAG output is the stable assertion target; it returns only `{ valid }`. On failure,
     // re-validate with `BASIC` (from `/experimental`) so that the failure message includes per-keyword
     // error locations instead of an opaque `{ valid: false }`. The diagnostic is computed only
-    // when the assertion fails, so the second `validate()` call is paid for only on the failure path.
+    // when the assertion fails, so the second `validate()` call runs only on the failure path.
     let diagnosticMessage = '';
     if (!output.valid) {
       const diagnostic = await validate(schemaId, jsonValue, BASIC);
