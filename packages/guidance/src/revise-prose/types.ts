@@ -23,8 +23,8 @@ export interface CandidateBase {
   /** 1-indexed line on which the sentence begins. */
   line: number;
   /**
-   * The span that a repair rewrites. Distinctive within its file, which is what lets a recorded rejection resolve to
-   * one site without a line number that the next edit invalidates. A rule whose site is one character or one word
+   * The span that a repair rewrites. Distinctive within its file, which lets a recorded rejection resolve to one
+   * site without a line number that the next edit invalidates. A rule whose site is one character or one word
    * takes the whole sentence, nothing shorter being distinctive.
    */
   phrase: string;
@@ -292,7 +292,7 @@ export interface NamedRule {
   version: string | undefined;
 }
 
-/** How many candidates a file contributes, so that a large sweep can be narrowed before adjudication is paid for. */
+/** How many candidates a file contributes, so that a large sweep can be narrowed before it is adjudicated. */
 export interface FileCount {
   file: string;
   count: number;
@@ -339,7 +339,7 @@ export interface DetectSuccess {
    * the run does not version, is absent, and its site is judged afresh.
    */
   rejections: readonly PriorRejection[];
-  /** The batches left to adjudicate, those that the record already covers for every versioned rule having been dropped. */
+  /** The batches left to adjudicate, without those that the record already covers for every versioned rule. */
   batches: readonly ReportedBatch[];
   /**
    * The rules that the run detected, and the named rules for which the helper does not have a detector, each sorted. A

@@ -27,8 +27,8 @@ export function buildSchemaDocuments(version: string): SchemaDocument[] {
 /**
  * Builds the URL at which `fileName` is served from the npm release at `version`.
  *
- * A release never changes, so the URL names one schema permanently; a later release that ships the same
- * major version carries it under its own URL.
+ * A release never changes, so the URL names one schema permanently; a later release that publishes the same
+ * major version serves it under its own URL.
  */
 export function buildSchemaUrl(fileName: string, version: string): string {
   return `https://unpkg.com/codeassembly-guidance@${version}/schemas/${fileName}`;

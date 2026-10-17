@@ -10,7 +10,7 @@ import {
 import type { SelectResult, SelectSuccess } from '../types.ts';
 
 const STORE_NAME = 'codeassembly';
-// A registry name that the helper does not serve, so an assertion on it cannot be satisfied by the bound default.
+// A registry name that the helper does not serve, so that an assertion on it cannot be satisfied by the bound default.
 const OTHER_STORE_NAME = 'some-other-corpus';
 
 const CORPUS: readonly DecisionSpec[] = [
@@ -155,7 +155,7 @@ describe(runSelect, () => {
     expect(success.diagnostic).toContain('does not contain any lede decisions');
   });
 
-  it('reports the floor applied by a request, so an empty draw names its cause', async () => {
+  it('reports the floor applied by a request, so that an empty result names its cause', async () => {
     const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', quality: 'adequate' }];
     const fixture = await createCorpusFixture({ decisions });
 

@@ -36,8 +36,8 @@ type RecordOutcome =
  *
  * The scan runs over `content/events/` in descending filename order. Filenames are ULID stems, so that order is
  * newest-first without reading a byte, and the scan stops as soon as the request's own matches have filled the count:
- * Only a request too scarce to fill it pays for a full pass. The assembled result is then ordered by each record's own
- * `captured-at`, so a stem that is not a ULID cannot silently reorder what is emitted.
+ * Only a request too scarce to fill it reads every file. The assembled result is then ordered by each record's own
+ * `captured-at`, so that a stem that is not a ULID cannot silently reorder what is emitted.
  *
  * Each of the three buckets is capped at `count`, and the fill takes the exact matches first. Widening only ever makes
  * up a shortfall and never displaces an exact match with a newer tier-mate.
@@ -147,7 +147,7 @@ function compareDescending(left: string, right: string): number {
 
 /**
  * Reads one event file as an exemplar candidate. A record that parses and does not have a `lede-decision` tag belongs
- * to another capture path and is passed over in silence. Everything else that cannot be read as an exemplar is
+ * to another capture path and is skipped without a warning. Everything else that cannot be read as an exemplar is
  * reported so that the run goes on without it, unparseable frontmatter included: A record whose tags cannot be read
  * might be a decision.
  */

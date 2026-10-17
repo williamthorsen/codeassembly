@@ -247,9 +247,9 @@ function parseRequest(raw: { type: string | undefined; tier: string | undefined 
 }
 
 /**
- * Resolves the corpus by registry name alone, without `.kb/` discovery or an ancestor walk, so a project-local store
- * that the invocation happened to run inside cannot stand in for the corpus. A store marked `readonly` resolves like
- * any other, since that marker refuses writes and nothing here writes.
+ * Resolves the corpus by registry name alone, without `.kb/` discovery or an ancestor walk, so that a project-local
+ * store that the invocation happened to run inside cannot stand in for the corpus. A store marked `readonly` resolves
+ * like any other, since that marker refuses writes and nothing here writes.
  */
 async function resolveCorpus(input: {
   name: string;
