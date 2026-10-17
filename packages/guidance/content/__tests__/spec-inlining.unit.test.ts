@@ -208,7 +208,7 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     '`➕` line naming the specific unsettled decision that the pass would raise',
     // Rule 2's test. Without both halves the rule matches on size alone, which splits a large plan that has no
     // independent pieces, or on any seam, which cuts plans that one pass would handle.
-    'Recommend only when the plan is too large for one implement-and-review pass, and it holds two or more pieces that each ship and can be verified on their own',
+    'Recommend only when the plan is too large for one implement-and-review pass, and it contains two or more pieces that can each be merged and verified on their own',
     // The same demotion for rule 2. Without it a multi-package plan is split on structure alone.
     'none of them matches rule 2 on its own',
     // The same obligation for rule 2. Without it the seam stays a hunch that the developer has to ask about.
