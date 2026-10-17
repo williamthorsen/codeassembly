@@ -103,7 +103,7 @@ async function runCheckLabels(flags: ParsedFlags, context: CommandContext): Prom
 
 /**
  * Writes the dispositions comment and one comment per issue named by a `comment` disposition under `--out`. Without
- * `--preview`, refuses while a `ticket` item or the umbrella has no number, and writes nothing.
+ * `--preview`, refuses while a `ticket` item or the umbrella does not have a number, and writes nothing.
  */
 function runRender(flags: ParsedFlags, context: CommandContext): CommandResult {
   const record = readRecord(flags, context);
