@@ -7,9 +7,9 @@ version: '1'
 
 # UI copy conventions
 
-A tool page is written for the person who uses it every week, not for a first-time visitor. Copy that introduces the page, sells it, or walks through it is text that this person reads past on every visit, and a sentence that declares the task finished decides something that is theirs to decide. These conventions apply to a prototype or a mockup exactly as they apply to a shipped interface.
+A tool page is written for the person who uses it every week, not for a first-time visitor. Copy that introduces the page, sells it, or walks through it is text that this person reads past on every visit, and a sentence that declares the task finished decides something that is theirs to decide. These conventions apply to a prototype or a mockup exactly as they apply to a released interface.
 
-When a project names its own content guidelines, such as a design system's, those guidelines take precedence where the two conflict.
+When a project names its own content guidelines, such as a design system's, those guidelines take precedence when the two conflict.
 
 ## Rules
 

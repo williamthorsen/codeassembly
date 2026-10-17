@@ -255,7 +255,7 @@ setup_workspace() {
 }
 ```
 
-Return non-zero rather than calling `exit`: `return` is what shellspec reads as a failed hook. Because a failed `BeforeEach` aborts the example body and `AfterEach` does not run after one, a cleanup helper never sees a half-built workspace.
+Return non-zero rather than calling `exit`: Shellspec reads a non-zero `return` as a failed hook. Because a failed `BeforeEach` aborts the example body and `AfterEach` does not run after one, a cleanup helper never sees a half-built workspace.
 
 Build the workspace through the shared helpers in `spec/spec_helper.sh` rather than calling `mktemp` in the hook. `make_tmpdir` and `remove_tmpdir` create and remove a temporary directory; `enter_tmpdir` and `leave_tmpdir` additionally make it the working directory and restore the previous one.
 

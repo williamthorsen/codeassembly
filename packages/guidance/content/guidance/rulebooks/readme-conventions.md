@@ -11,7 +11,7 @@ A README answers two questions for a reader who arrived a moment ago: whether th
 
 ## Audience
 
-A README is written for people. `AGENTS.md` is the agent-facing companion, and it takes the context that an agent needs and a human reader does not: exact test invocations, constraints on what to modify, conventions that a contributor absorbs from the code but that an agent must be told.
+A README is written for people. `AGENTS.md` is the agent-facing companion, and it contains the context that an agent needs and a human reader does not: exact test invocations, constraints on what to modify, conventions that a contributor absorbs from the code but that an agent must be told.
 
 The split is not a matter of taste. An agent loads `AGENTS.md` in full at every session, so a line there takes up context every time, whereas a human reads a README once and skims it later. Assigning content to a file by who reads it keeps both files short.
 
@@ -47,7 +47,7 @@ The opening makes up to three moves, in order. The first applies to every type; 
 2. **How to get it running.** The install command, the import line, or the bootstrap command, whichever the type calls for.
 3. **The smallest thing that works.** One example, short enough to read without scrolling, that a reader can run unchanged.
 
-A README that reaches its second heading before making the moves that apply to it has buried its answer.
+If the moves that apply to a README come after its second heading, the README presents its answer too late.
 
 ## Moving detail out of the README
 
@@ -71,4 +71,4 @@ These share a failure mode: Each stays wrong without a test failing or a reader 
 
 ## Adding a type
 
-The table extends by rows. A new row is justified when it produces a README that its neighbors would get wrong, and it states four things: the slug that its marker takes, what the README leads with, what it keeps that the others drop, and what it omits that the others keep. A row differing from its neighbor only in wording is evidence that the distinction is not real; merge the two.
+Extend the table by adding a row. A new row is justified when it produces a README that its neighbors would get wrong, and it states four things: the slug that its marker takes, what the README leads with, what it keeps that the others drop, and what it omits that the others keep. A row differing from its neighbor only in wording is evidence that the distinction is not real; merge the two.

@@ -47,7 +47,7 @@ function isConfig(value: unknown): value is Config {
 }
 ```
 
-Two exceptions, each with a comment saying why: a TypeScript limitation in which the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.
+Two exceptions, each with a comment saying why: a TypeScript limitation in which the type is guaranteed but uninferable, such as `Object.keys()`; and test code in which precise typing of an external API would obscure the test.
 
 Never use `any`, a non-null assertion (use a runtime assertion instead), or a generic parameter that claims a guarantee that the function cannot deliver. Model known variants as a union, and validate external data with a type guard or a schema library.
 
