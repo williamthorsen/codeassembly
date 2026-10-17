@@ -138,8 +138,8 @@ describe('overused-word watchlist', () => {
   it("holds the helper's word list equal to the calibration's", async () => {
     const listed = new Set(readWatchlist(await readContentFile(CALIBRATION)));
     const detected = new Set(OVERUSED_WORDS.keys());
-    const undetected = [...listed].filter((word) => !detected.has(word));
-    const unlisted = [...detected].filter((word) => !listed.has(word));
+    const undetected = [...listed.difference(detected)];
+    const unlisted = [...detected.difference(listed)];
 
     expect(listed.size, `${CALIBRATION} does not list any word under "${WATCHLIST_HEADING}"`).toBeGreaterThan(0);
     expect(
@@ -243,7 +243,7 @@ function readWatchlist(body: string): string[] {
   const start = body.indexOf(WATCHLIST_HEADING);
   if (start === -1) return [];
 
-  const section = body.slice(start + WATCHLIST_HEADING.length).split(/^#{1,3} /m)[0] ?? '';
+  const section = body.slice(start + WATCHLIST_HEADING.length).split(/^#{1,3} /m, 1)[0] ?? '';
   return section
     .matchAll(WATCHLIST_ENTRY_REGEX)
     .map(([, word]) => word)

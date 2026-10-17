@@ -17,7 +17,7 @@ const CALIBRATION = '_partials/plain-speech-calibration.md';
 const RULE = '_partials/plain-speech.md';
 
 /** The calibration text that this suite pins. */
-const PINNED_CALIBRATION_HASH = '3da1ee8e2a17e22424d3da29dab199ed72e81cd59167c62e17f9a9169da167e2';
+const PINNED_CALIBRATION_HASH = 'b1c67d8242695367af97fe301d24179242ae7c07fe20088d01b5f372e0d82e1b';
 
 /** The version declared by the calibration, and the rule text against which that version was calibrated. */
 const PINNED_RULE_HASH = 'e5e10e47bbef290e9a1a02afe220bb1e767c23a5630d9caeb7411ec0b2011955';

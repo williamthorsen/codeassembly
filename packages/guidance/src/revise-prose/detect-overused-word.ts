@@ -45,7 +45,7 @@ const BASE_BY_FORM: ReadonlyMap<string, string> = new Map(
  * Any form as a whole word, in any case. The word boundaries leave out a derivative such as `standard` or `costly`,
  * which the list does not name.
  */
-const FORM_PATTERN = new RegExp(`\\b(?:${[...BASE_BY_FORM.keys()].join('|')})\\b`, 'giu');
+const FORM_PATTERN = new RegExp(String.raw`\b(?:${BASE_BY_FORM.keys().toArray().join('|')})\b`, 'giu');
 
 /** The rest of the fixed phrase "stand in for", read from just past a form of `stand`. */
 const STAND_IN_FOR = /^\s+in\s+for\b/iu;
