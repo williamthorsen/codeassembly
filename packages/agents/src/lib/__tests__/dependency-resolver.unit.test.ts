@@ -141,6 +141,36 @@ describe(resolveClosure, () => {
     expect(closure.skills).toEqual(['shared']);
   });
 
+  it('resolves an @unclaimed collection to the artifacts that no disposition claims', async () => {
+    await writeArtifact(contentDir, 'skill', 'vetted');
+    await writeArtifact(contentDir, 'skill', 'bundled');
+    await writeArtifact(contentDir, 'skill', 'unexamined');
+    await writeRawArtifact(contentDir, 'subagent', 'proof', 'standalone: exercises a mechanism');
+    await writeRawArtifact(
+      contentDir,
+      'collection',
+      'recommended',
+      'disposition: public\nmembers:\n  skills:\n    - vetted',
+    );
+    await writeArtifact(contentDir, 'collection', 'bundle', { skill: ['bundled'] });
+    await writeRawArtifact(contentDir, 'collection', 'triage', "members: '@unclaimed'");
+
+    const closure = await resolveClosure({ collection: ['triage'] }, buildSingleSourceResolver(contentDir));
+
+    expect(closure.skills.toSorted()).toEqual(['bundled', 'unexamined']);
+    expect(closure.subagents).toEqual([]);
+  });
+
+  it('refuses to expand @unclaimed while a claim in the root is unreadable, naming its file', async () => {
+    await writeArtifact(contentDir, 'skill', 'unexamined');
+    await writeRawArtifact(contentDir, 'skill', 'proof', "standalone: ''");
+    await writeRawArtifact(contentDir, 'collection', 'triage', "members: '@unclaimed'");
+
+    await expect(resolveClosure({ collection: ['triage'] }, buildSingleSourceResolver(contentDir))).rejects.toThrow(
+      /skills\/proof\/SKILL\.md/,
+    );
+  });
+
   it('throws naming the collection on an unrecognized members token', async () => {
     const filePath = path.join(contentDir, artifactFrontmatterPath('collection', 'bad'));
     await mkdir(path.dirname(filePath), { recursive: true });
@@ -639,6 +669,18 @@ async function writeArtifactWithBody(
   const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
   await mkdir(path.dirname(filePath), { recursive: true });
   await writeFile(filePath, `---\nname: ${slug}\n${renderEdges(type, edges)}---\n\n${body}\n`, 'utf8');
+}
+
+/** Writes an artifact whose frontmatter, after its `name:`, is `frontmatter` verbatim. */
+async function writeRawArtifact(
+  contentDir: string,
+  type: ArtifactType,
+  slug: string,
+  frontmatter: string,
+): Promise<void> {
+  const filePath = path.join(contentDir, artifactFrontmatterPath(type, slug));
+  await mkdir(path.dirname(filePath), { recursive: true });
+  await writeFile(filePath, `---\nname: ${slug}\n${frontmatter}\n---\n\n# ${slug}\n`, 'utf8');
 }
 
 /**

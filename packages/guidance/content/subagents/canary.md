@@ -1,6 +1,7 @@
 ---
 name: canary
 description: Deployment canary for the declared-subagent mechanism; not meant to be invoked.
+standalone: exercises the declared-subagent mechanism rather than doing work of its own
 tools: [Read]
 ---
 

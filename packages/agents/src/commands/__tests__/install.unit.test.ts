@@ -58,10 +58,10 @@ describe(installCommand, () => {
 
   it('refuses a content root declaring an unsupported format, writing nothing', async () => {
     const claudeHome = await setupClaudeHome();
-    await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
+    await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 4\n', 'utf8');
 
     await expect(installCommand(makeOptions({ harness: 'claude' }), tempDir, fakeGit)).rejects.toThrow(
-      /Unsupported content format.*3.*supports content formats 1 and 2/s,
+      /Unsupported content format.*4.*supports content formats 1, 2, and 3/s,
     );
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(false);
     expect(existsSync(getManifestPath(tempDir))).toBe(false);
@@ -69,7 +69,7 @@ describe(installCommand, () => {
 
   it('refuses a dry run exactly as it refuses the real one', async () => {
     await setupClaudeHome();
-    await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
+    await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 4\n', 'utf8');
 
     await expect(installCommand(makeOptions({ harness: 'claude', dryRun: true }), tempDir, fakeGit)).rejects.toThrow(
       /Unsupported content format/,

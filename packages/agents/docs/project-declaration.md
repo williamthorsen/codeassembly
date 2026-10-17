@@ -150,10 +150,10 @@ The library includes five collections, each making a claim that a reader can act
 | `atlassian`      | Examined and found fitted to Bitbucket and Jira. Nothing outside it reaches its members, so only declaring it deploys them.        |
 | `recommended`    | Examined and found generally applicable: no personal doctrine, no coupling to one author's environment.                            |
 | `williamthorsen` | Examined and found deliberately personal: one author's preferences, environment, and domain.                                       |
-| `triage`         | Not yet examined, and where new content starts. It shrinks by promotion.                                                           |
+| `triage`         | Not yet examined. Computed by `'@unclaimed'`, so a new artifact is a member until it is promoted or declares `standalone:`.        |
 | `all`            | The whole catalog, computed. It doesn't make any claim about its members, and is the escape hatch rather than the expected choice. |
 
-An artifact in none of them is standalone: deliberate, declared directly where wanted, and either too rarely invoked to justify a standing line in the skill index or wanted only in specific projects. The criteria deciding which disposition an artifact takes are recorded in this repository's `codeassembly-repo-conventions` rulebook (`.agents/content/guidance/rulebooks/`), under "Collection dispositions".
+An artifact that declares `standalone:` is in none of them: deliberate, declared directly where wanted, and either too rarely invoked to justify a standing line in the skill index or wanted only in specific projects. Each vetted collection declares its claim as a `disposition:`, which `codeassembly validate` checks; the content specification's "Collections" section specifies both keys. The criteria deciding which disposition an artifact takes are recorded in this repository's `codeassembly-repo-conventions` rulebook (`.agents/content/guidance/rulebooks/`), under "Collection dispositions".
 
 `codeassembly init --global` seeds the user-global declaration (`~/.agents/codeassembly.yaml`) with `recommended` and `triage`; add any other collection to that file by hand. A project adds a collection for repo deployment by declaring it explicitly.
 
@@ -162,6 +162,12 @@ An artifact in none of them is standalone: deliberate, declared directly where w
 A collection whose `members:` is the string `'@library'` resolves to every deployable artifact (all rulebooks, skills, and subagents) in the content root from which the collection resolves: the declared source from which the collection resolved, and no other. It is computed at resolution time so that the resolver includes a newly added artifact automatically without an edit to the collection. The `@` sigil marks a computed directive rather than a literal slug, so the value must be YAML-quoted (`'@library'`). Collections are excluded from the result: The resolver never emits them, and "every collection" would be self-referential.
 
 The built-in `all` collection declares `'@library'`; declaring `collections: use: [all]` deploys the whole catalog.
+
+### The `@unclaimed` token
+
+A collection whose `members:` is the string `'@unclaimed'` resolves like `'@library'`, minus each artifact that declares `standalone:` and each member of a collection in the same root that declares a `disposition:`. A collection that does not declare a disposition claims nothing, so its members stay in the result. The token needs content format 3; see [Content-format version](#content-format-version).
+
+The built-in `triage` collection declares `'@unclaimed'`, so a newly added library artifact deploys through it until it is promoted or declares `standalone:`.
 
 ## Dependencies
 
@@ -346,6 +352,7 @@ Unknown keys pass through. A later tool can read a key that an older one ignores
 | ------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | 1      | The contract documented here.                                                                                                   |
 | 2      | Adds the optional invocation-token form, `{skill?:<slug>}` and `{subagent?:<slug>}`, which names a target without deploying it. |
+| 3      | Adds the computed `'@unclaimed'` members token.                                                                                 |
 
 ## Scopes
 

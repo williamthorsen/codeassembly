@@ -4,6 +4,7 @@ import path from 'node:path';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from './artifact-types.ts';
+import { listUnclaimedArtifacts, readDispositionClaims } from './collection-dispositions.ts';
 import type { ContentDefect } from './content-defects.ts';
 import { describeSearchedLocations, type SourceResolver } from './content-sources.ts';
 import {
@@ -167,6 +168,19 @@ async function assertOptionalTargetsResolve(body: string, referrer: string, reso
 }
 
 /**
+ * Expands an `'@unclaimed'` collection into the slugs of `root` that no disposition claims. A claim that cannot be read
+ * throws, because the expansion would otherwise deploy an artifact whose claim it failed to see.
+ */
+async function expandUnclaimedMembers(root: string, label: string): Promise<ArtifactDependencies> {
+  const claims = await readDispositionClaims(root);
+  const [problem] = claims.problems;
+  if (problem !== undefined) {
+    throw new Error(`Cannot expand '@unclaimed' for ${label}: ${problem.file}: ${problem.detail}`);
+  }
+  return listUnclaimedArtifacts(claims);
+}
+
+/**
  * Reads one artifact's outgoing edges, resolving its owning directory through `resolver`. Throws a clear error naming
  * every location searched when the artifact does not resolve from any source, plus the artifact that
  * named it when `trail` contains one. A seed's trail is empty, and naming where a seed came from is its caller's job.
@@ -199,9 +213,16 @@ async function readArtifactEdges(
   const label = `${type} ${slug}`;
   if (type === 'collection') {
     const members = readMembers(content, label);
-    // `'@library'` enumerates the content root from which the collection resolved, so a collection expands its own
-    // source rather than every declared source.
-    return members.kind === 'library' ? await enumerateCatalogSlugs(resolved.dir) : members.edges;
+    // A computed token enumerates the content root from which the collection resolved, so a collection expands its
+    // own source rather than every declared source.
+    switch (members.kind) {
+      case 'explicit':
+        return members.edges;
+      case 'library':
+        return await enumerateCatalogSlugs(resolved.dir);
+      case 'unclaimed':
+        return await expandUnclaimedMembers(resolved.dir, label);
+    }
   }
 
   const dependencies = readDependencies(content, label);

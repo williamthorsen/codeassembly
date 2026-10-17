@@ -2,7 +2,7 @@
 slug: codeassembly-repo-conventions
 description: Conventions for authoring content in the CodeAssembly repository itself -- the library's own tests, collection dispositions, sweep doctrine, skill-local reinforcement, model declarations, and artifact naming.
 delivery: skill
-version: '2'
+version: '3'
 ---
 
 # CodeAssembly repository conventions
@@ -22,7 +22,7 @@ Some rules in the specification read as conventions there, because nothing check
 
 A collection enumerates every member, not just its dependency roots. Roots-only membership would let an unexamined artifact enter through an edge and be treated as examined, which is the outcome that the dispositions below exist to prevent.
 
-Declaring a collection is a claim about its members, so every artifact has at least one disposition recording the claims that it is under; an artifact under none is an oversight rather than a decision. Membership is many-to-many -- i.e., the vetted collections may overlap -- and a collection outside this scheme is a plain bundle whose membership claims nothing: It neither satisfies coverage nor conflicts with any disposition. The two dispositions that assert an absence do not tolerate any conflicting claim: Standalone means that an artifact does not belong to any collection, and triage excludes vetted membership. An opt-in collection asserts an absence of its own: Nothing outside it reaches its members. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+Declaring a collection is a claim about its members, so every artifact here is under a disposition: Each vetted collection declares one (`recommended` is `public`, `williamthorsen` is `personal`, and `atlassian` is `opt-in`), an artifact deliberately outside every collection declares `standalone:` with its reason, and `triage` computes the rest through `members: '@unclaimed'`. Membership is many-to-many, i.e., the vetted collections may overlap. The keys, the reach that each disposition permits, and the checks that `codeassembly validate` runs are specified in the content specification's `## Collections`. _(Enforced by `codeassembly validate`.)_
 
 Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
 
@@ -49,13 +49,13 @@ Deciding a disposition takes two reading passes, and the second is the one that 
 - Its closure contains only opt-in and public members.
 - A consumer declares it only if that vendor's products are in use, since each member takes a line in the skill index of every session.
 
-The first criterion is enforced rather than observed, because a single invocation token restored to its required form would undo it silently. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+The first criterion is enforced rather than observed, because a single invocation token restored to its required form would undo it silently. _(Enforced by `codeassembly validate`.)_
 
-**Standalone** is the absence of any collection membership: deliberate, declared directly where wanted, and recorded so that the coverage check reads it as a decision rather than an omission. An artifact belongs here when it is deliberate but rarely invoked, or wanted only in specific projects. Every deployed skill takes a line in the skill index at every session, and a rarely-invoked artifact does not justify that line.
+**Standalone** is the absence of any collection membership: deliberate, declared directly where wanted, and stated by the artifact's `standalone:` reason, which `triage` reads as a decision rather than an omission. An artifact belongs here when it is deliberate but rarely invoked, or wanted only in specific projects. Every deployed skill takes a line in the skill index at every session, and a rarely-invoked artifact does not justify that line.
 
-**Triage** (`triage` here) contains what has not been examined. It is where new content starts, and it shrinks by promotion rather than growing.
+**Triage** (`triage` here) contains what has not been examined. A new artifact is a member from the moment that it is added, and an existing member leaves only by promotion or by declaring `standalone:`.
 
-A vetted collection is closed under its dependency edges, which makes the vetting real: Without closure, a vetted collection deploys unexamined content through an edge. Promoting an artifact therefore means promoting everything its closure contains. _(Enforced by `collection-dispositions.unit.test.ts`.)_
+A vetted collection is closed under its dependency edges, which makes the vetting real: Without closure, a vetted collection deploys unexamined content through an edge. Promoting an artifact therefore means promoting everything its closure contains. _(Enforced by `codeassembly validate`.)_
 
 ## Shared partials
 

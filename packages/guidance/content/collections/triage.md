@@ -1,82 +1,13 @@
 ---
 name: triage
 description: The not-yet-examined set, the default home for library content awaiting a disposition.
-members:
-  rulebooks:
-    - commit-conventions
-    - shell-conventions
-  skills:
-    - add-change-record
-    - add-test-ids
-    - align-ticket-with-implementation
-    - anti-patterns
-    - assess-ticket
-    - assess-usability
-    - brainstorming
-    - capture-lede-decision
-    - classify-complexity
-    - collaborate
-    - condense-branch
-    - create-commit
-    - create-devlog
-    - create-gh-pr
-    - create-pr
-    - create-ticket
-    - design-and-plan
-    - development-workflows
-    - get-ticket-id
-    - groom-backlog
-    - implement-plan
-    - index-prototypes
-    - kb-add
-    - kb-curate
-    - kb-edit
-    - kb-retrieve
-    - kb-retrieve-events
-    - kb-update-events
-    - merge-gh-pr
-    - merge-pr
-    - plan
-    - prepare-prototype-brief
-    - pull-from-backlog
-    - refine-plan
-    - refine-prototype
-    - respond-to-review
-    - review-branch
-    - review-criteria
-    - review-gh-pr
-    - review-permissions
-    - review-pr
-    - revise-comments
-    - revise-prose
-    - save-artifact
-    - save-plan
-    - software-engineering
-    - streamline-guidance
-    - summarize-change
-    - summarize-chat
-    - systematic-debugging
-    - testing-conventions
-    - triage-spike-findings
-    - typescript-testing-conventions
-    - update-project-guidance
-    - upgrade-dependencies
-    - wrap-up
-  subagents:
-    - disposition-challenger
-    - entry-drafter
-    - handoff-reviewer
-    - plan-reviewer
-    - plan-reviser
-    - prose-reviser
-    - ticket-assessor
-    - usability-assessor
+members: '@unclaimed'
 ---
 
 # Triage
 
 The not-yet-examined collection, and where new content starts. Membership claims nothing about an artifact beyond its existence: Nobody has yet read it for personal doctrine or for coupling to one author's environment, so it can be neither offered as generally applicable nor vouched for as deliberately personal.
 
-Declaring it deploys the catalog minus the vetted collections and the artifacts recorded standalone. That is the honest way to keep everything while the vetting proceeds, and it is why the vetted collections are usable before the vetting examines a single artifact.
+`members: '@unclaimed'` computes the membership: every artifact of this content root that no collection with a `disposition:` enumerates and that does not declare `standalone:`. A newly added artifact is therefore a member without an edit here. Declaring the collection is the honest way to keep everything while the vetting proceeds, and it is why the vetted collections are usable before the vetting examines a single artifact.
 
-This collection only shrinks. An artifact leaves it by promotion into a public or personal collection, by moving into an opt-in collection once it turns out to be wanted often but only on the machines using one vendor's ecosystem, or by being recorded standalone once it turns out to be deliberate but rarely wanted; nothing is ever moved back in. Several members contain general and personal guidance in one file and become decidable only after a rewrite splits them.
+An artifact leaves this collection by promotion into a public or personal collection, by moving into an opt-in collection once it turns out to be wanted often but only on the machines using one vendor's ecosystem, or by declaring `standalone:` once it turns out to be deliberate but rarely wanted. Nothing that has left is ever moved back in. Several members contain general and personal guidance in one file and become decidable only after a rewrite splits them.

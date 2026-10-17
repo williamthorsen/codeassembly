@@ -191,16 +191,16 @@ describe(syncCommand, () => {
     );
 
     it('fails the run when a declared source declares an unsupported content format', async () => {
-      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 4\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
       await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(
-        /Unsupported content format.*"org".*3.*supports content formats 1 and 2/s,
+        /Unsupported content format.*"org".*4.*supports content formats 1, 2, and 3/s,
       );
     });
 
     it('fails a dry run, writing nothing, when a declared source declares an unsupported content format', async () => {
-      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
+      await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 4\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
@@ -210,7 +210,7 @@ describe(syncCommand, () => {
     });
 
     it('fails the run when a lower-precedence declared source declares an unsupported content format', async () => {
-      await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
+      await writeFile(path.join(contentDir, 'codeassembly-content.yaml'), 'format: 4\n', 'utf8');
       await declareWithSource('rulebooks:\n  use: []\n');
 
       await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(

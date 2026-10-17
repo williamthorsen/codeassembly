@@ -1,6 +1,7 @@
 ---
 name: williamthorsen
 description: The vetted personal set (artifacts that deliberately encode William Thorsen's preferences, environment, and domain).
+disposition: personal
 members:
   rulebooks:
     - williamthorsen-code-layout-preferences

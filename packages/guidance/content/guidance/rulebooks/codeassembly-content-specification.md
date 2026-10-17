@@ -1,8 +1,9 @@
 ---
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, how broad a guidance change goes, and when a procedure belongs in a helper.
+standalone: wanted by repositories that author CodeAssembly content, which declare it directly
 delivery: skill
-version: '30'
+version: '31'
 ---
 
 # CodeAssembly content specification
@@ -13,7 +14,7 @@ The declaration contract for CodeAssembly artifacts -- skills, subagents, rulebo
 
 Every rule below belongs to one of three classes, marked where it appears.
 
-**Validated on parse.** A malformed `slug` or `skill-name`, a rulebook without `delivery`, a `delivery` value outside `ambient`/`hook`/`skill`, an empty `delivery` list, an unknown artifact-type key, a non-list value under one, and a `members:` block on anything but a collection each fail the run with an error naming the source file. Seven more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, whether it names that artifact as a dependency or optionally; a rulebook link target outside a linkable root fails the run before anything is written; a rulebook token naming a target that does not deploy a skill to invoke fails the same pre-write pass, and so does a rulebook token written in the optional form, which does not have a name to render; an anchor-only link target that does not name any heading in its own body fails wherever that body is rendered or installed, and so does a code fence that nothing closes; and a harness that does not declare a sigil is a type error at its `HarnessConfig` literal, so the build fails.
+**Validated on parse.** A malformed `slug` or `skill-name`, a rulebook without `delivery`, a `delivery` value outside `ambient`/`hook`/`skill`, an empty `delivery` list, an unknown artifact-type key, a non-list value under one, a `members:` block or a `disposition:` on anything but a collection, and a `standalone:` on a collection each fail the run with an error naming the source file. Seven more fail outside the parser: a token naming an artifact that does not exist fails the run with an error naming the slug and the directories searched, whether it names that artifact as a dependency or optionally; a rulebook link target outside a linkable root fails the run before anything is written; a rulebook token naming a target that does not deploy a skill to invoke fails the same pre-write pass, and so does a rulebook token written in the optional form, which does not have a name to render; an anchor-only link target that does not name any heading in its own body fails wherever that body is rendered or installed, and so does a code fence that nothing closes; and a harness that does not declare a sigil is a type error at its `HarnessConfig` literal, so the build fails.
 
 **Enforced by `validate`.** `codeassembly validate` checks a content root against these rules without deploying it. Such a rule names `validate`.
 
@@ -87,7 +88,10 @@ A heading containing a token cannot be anchored: It renders to a different slug 
 
 ## Collections
 
-A collection's only payload is a `members:` block -- the constituents that it pulls into the deployed closure. List them per type (the same shape that `dependencies:` uses), or use the computed token `'@library'` for every rulebook, skill, and subagent in the content root to which the collection belongs, the source from which it resolved:
+A collection's payload is a `members:` block -- the constituents that it pulls into the deployed closure -- and an optional `disposition:`. List the members per type (the same shape that `dependencies:` uses), or name a computed token, which expands within the content root to which the collection belongs, the source from which it resolved:
+
+- `'@library'`: every rulebook, skill, and subagent in that root.
+- `'@unclaimed'`: every rulebook, skill, and subagent in that root that does not declare `standalone:` and is not enumerated by any collection with a `disposition:`. The root must declare content format 3 or later.
 
 ```yaml
 members:
@@ -99,16 +103,35 @@ members:
 
 `members:` is collections-only; rulebooks, skills, and subagents use `dependencies:` instead. Declaring `dependencies:` on a collection, or `members:` on any other type, is an error. The resolver follows both keys identically -- the split is semantic: A collection contains members, an artifact depends on prerequisites.
 
+### Dispositions
+
+A `disposition:` states what membership in a collection that enumerates its members claims about them, and `codeassembly validate` holds the root to that claim. A collection without one is a plain bundle: Its membership does not claim anything, so it neither covers an artifact nor conflicts with a disposition.
+
+- `public`: Its members are generally fit. Its closure may reach only the members of public collections.
+- `personal`: Its members are fitted to one author. Its closure may reach the members of personal and public collections.
+- `opt-in`: Its members are fitted to one vendor ecosystem. Its closure may reach its own members and the members of public collections, and the closure of every other collection, other than an `'@library'` one, must not reach its members, so that only a consumer declaring it deploys them.
+
+An artifact that is deliberately outside every collection declares `standalone:` in its own frontmatter, with the reason as the value. A collection must not enumerate it, and the closure of a collection, other than an `'@library'` one, must not reach it. An artifact that several collections claim is within a closure's reach when any one of its claims is. `disposition:` on a collection whose members are computed, `standalone:` on a collection, and `disposition:` on any other type are errors.
+
+`validate` checks a root that declares a disposition, a standalone artifact, or an `'@unclaimed'` collection, and reports each of these as a `disposition` defect:
+
+- a standalone artifact that a collection enumerates, or that the closure of a collection other than an `'@library'` one reaches
+- a collection with a disposition whose closure reaches an artifact outside its reach
+- a collection, other than an `'@library'` one, whose closure reaches a member of an opt-in collection other than itself
+- in a root without an `'@unclaimed'` collection, an artifact that is not covered by any disposition
+- a `disposition:` or `standalone:` value that cannot be read
+
 ## Frontmatter fields
 
 - **Rulebooks:** `slug`, optional `description`, required `delivery` (`ambient`, `hook`, `skill`, or a non-empty list of them; `ambient` only when nearly every session needs the content, since an ambient rulebook is loaded by every session that declares it, and `skill` or `hook` otherwise), optional `skill-name`, optional `supported-harnesses` (a harness id or list restricting every delivery mode to those harnesses; absent deploys to all), optional `version`. A declared `version` is an opaque string, never parsed as semver, and every route that delivers the rulebook names it on a `<!-- rulebook-version: <version> -->` line directly below the marker that names the slug, so that an agent can read which version of a rulebook it has. A route omits the line for a rulebook that does not declare a version. Quote the value: YAML reads an unquoted `1.10` as the number `1.1`, and the schema rejects a non-string rather than deploying the digits that it lost. It rejects a value that the version line cannot contain on its own, which is a blank one, a multi-line one, and one containing `-->`.
 - **Skills:** `name`, `description`, optional `user-invocable` (defaults to `true`), optional `supported-harnesses` (a harness id or list restricting deployment to those harnesses; absent deploys to all). The deploy writes every other key to every harness unchanged, so a key that only one harness reads, such as Claude's `context` or `model`, is also written to the others, which ignore it.
 - **Subagents:** `name`, `description`, optional `tools`, optional `disallowedTools`, optional `maxTurns`, optional `skills` (skills injected into the subagent's context), optional `rulebooks` (rulebooks injected the same way, named by slug rather than by deploy name, so that a `skill-name` override on the target stays correct). `sync` pulls both lists into the deploy closure, merges each injected rulebook's deploy name into the deployed `skills:`, and drops the `rulebooks:` key from what it writes.
-- **Collections:** `name`, `description`, and a `members:` block -- the collection's only payload.
+- **Collections:** `name`, `description`, a `members:` block, and an optional `disposition`; see [Dispositions](#dispositions).
+- **Rulebooks, skills, and subagents** also take an optional `standalone`, the reason that the artifact is outside every collection; see [Dispositions](#dispositions).
 
 A subagent's tool grant is either named or inherited. `tools` names the grant outright; a subagent that omits it inherits the harness's whole subagent tool pool, and `disallowedTools` then removes names from whatever pool results. Use inheritance when the subagent needs a tool that an allowlist cannot name -- an MCP tool whose name varies by machine -- and weigh the consequence: A denylist names tools the same way an allowlist does, so it removes the listed names and nothing else. The residual grant is whatever the machine supplies, and the subagent's own instructions limit the rest. Choose inheritance when that residual is acceptable, and name a `tools` allowlist when it is not. Claude applies the denylist. Rovo does not read it, and its overlay names a `tools` allowlist for every subagent, so a subagent relying on inheritance states its Rovo grant in that overlay. _(Convention; not enforced.)_
 
-Only the rulebook row is validated on parse; a `members:` block is validated wherever it appears. The other rows are read leniently: A field consumed by a deploy pass takes effect, and an absent one falls back to a default rather than failing. A skill without a `description` appears in Rovo's prompt index with an empty one. _(Convention; not enforced.)_
+Only the rulebook row is validated on parse; a `members:` block is validated wherever it appears, and `validate` reads every `disposition` and `standalone` in the root. The other rows are read leniently: A field consumed by a deploy pass takes effect, and an absent one falls back to a default rather than failing. A skill without a `description` appears in Rovo's prompt index with an empty one. _(Convention; not enforced.)_
 
 ### Version bumps
 

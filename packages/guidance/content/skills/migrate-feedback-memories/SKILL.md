@@ -1,6 +1,7 @@
 ---
 name: migrate-feedback-memories
 description: Dispose of this machine's per-project feedback memories (capture the propagating ones as capture-feedback candidates, delete the redundant, retain the genuinely local) via a bundled enumerator with a confirm-by-default batch flow and an --auto escape hatch
+standalone: wanted once per machine, too rarely to justify a standing skill-index line
 user-invocable: true
 ---
 

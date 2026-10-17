@@ -277,7 +277,7 @@ describe(validateContentRoot, () => {
 
   // The root also contains a defect that the later stages would report, so a second entry would mean they ran anyway.
   it('reports an unsupported content format on its own, naming the declared and supported formats', async () => {
-    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 3\n');
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 4\n');
     await writeCollection(root, 'starter', { skills: ['no-such-skill'] });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
@@ -286,7 +286,7 @@ describe(validateContentRoot, () => {
       {
         file: '.',
         kind: 'root',
-        detail: 'Content root declares content format 3; this codeassembly supports content formats 1 and 2.',
+        detail: 'Content root declares content format 4; this codeassembly supports content formats 1, 2, and 3.',
       },
     ]);
   });
@@ -319,6 +319,26 @@ describe(validateContentRoot, () => {
     expect(defects[0]).toMatchObject({ file: 'skills/create-pr/SKILL.md', kind: 'root' });
     expect(defects[0]?.detail).toContain('{skill?:alpha}');
     expect(defects[0]?.detail).toContain('Declare format 2');
+  });
+
+  it('reports an @unclaimed collection under a format that predates the token, naming the remedy', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 2\n');
+    await writeSkill(root, 'alpha');
+    await writeFileAt(root, 'collections/triage.md', "---\nname: triage\nmembers: '@unclaimed'\n---\n\n# Triage\n");
+
+    const defects = await validateContentRoot(root, ALL_HARNESS_IDS);
+
+    expect(defects).toHaveLength(1);
+    expect(defects[0]).toMatchObject({ file: 'collections/triage.md', kind: 'root' });
+    expect(defects[0]?.detail).toContain('Declare format 3');
+  });
+
+  it('accepts an @unclaimed collection under format 3', async () => {
+    await writeFileAt(root, 'codeassembly-content.yaml', 'format: 3\n');
+    await writeSkill(root, 'alpha');
+    await writeFileAt(root, 'collections/triage.md', "---\nname: triage\nmembers: '@unclaimed'\n---\n\n# Triage\n");
+
+    expect(await validateContentRoot(root, ALL_HARNESS_IDS)).toEqual([]);
   });
 
   it('reports an optional token that a root contains only in an unreferenced partial', async () => {

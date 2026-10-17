@@ -15,6 +15,7 @@ export type ContentDefectKind =
   | 'codepoint'
   | 'collision'
   | 'dependency'
+  | 'disposition'
   | 'frontmatter'
   | 'heading'
   | 'invocation'

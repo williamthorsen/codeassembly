@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { readDependencies, readInjectedRulebooks, readInjectedSkills, readMembers } from '../dependency-frontmatter.ts';
+import {
+  readCollectionDisposition,
+  readDependencies,
+  readInjectedRulebooks,
+  readInjectedSkills,
+  readMembers,
+  readStandaloneReason,
+} from '../dependency-frontmatter.ts';
 
 /** Wraps a frontmatter body in `---` delimiters with a throwaway markdown body. */
 function withFrontmatter(frontmatter: string): string {
@@ -64,11 +71,21 @@ describe(readDependencies, () => {
 
     expect(() => readDependencies(content, 'skills/people-report/SKILL.md')).toThrow(/people-report.*members/s);
   });
+
+  it('throws when a non-collection declares a disposition, naming the source', () => {
+    const content = withFrontmatter('disposition: public');
+
+    expect(() => readDependencies(content, 'skills/people-report/SKILL.md')).toThrow(/people-report.*disposition/s);
+  });
 });
 
 describe(readMembers, () => {
   it('reads the @library token as a library directive', () => {
     expect(readMembers(withFrontmatter("name: all\nmembers: '@library'"))).toEqual({ kind: 'library' });
+  });
+
+  it('reads the @unclaimed token as an unclaimed directive', () => {
+    expect(readMembers(withFrontmatter("name: triage\nmembers: '@unclaimed'"))).toEqual({ kind: 'unclaimed' });
   });
 
   it('reads an explicit per-type members block as edges', () => {
@@ -99,6 +116,12 @@ describe(readMembers, () => {
     const content = withFrontmatter("members: '@library'\ndependencies:\n  skills:\n    - people-report");
 
     expect(() => readMembers(content, 'collections/all.md')).toThrow(/all\.md.*dependencies/s);
+  });
+
+  it('throws when a collection declares standalone, naming the source', () => {
+    const content = withFrontmatter('standalone: rarely wanted\nmembers:\n  skills:\n    - people-report');
+
+    expect(() => readMembers(content, 'collections/personal.md')).toThrow(/personal\.md.*standalone/s);
   });
 });
 
@@ -154,5 +177,50 @@ describe(readInjectedSkills, () => {
     expect(() => readInjectedSkills(content, 'subagents/orchestrated-coder.md')).toThrow(
       /orchestrated-coder\.md.*list/s,
     );
+  });
+});
+
+describe(readCollectionDisposition, () => {
+  it('reads each supported disposition of an enumerated collection', () => {
+    for (const disposition of ['opt-in', 'personal', 'public']) {
+      const content = withFrontmatter(`disposition: ${disposition}\nmembers:\n  skills:\n    - people-report`);
+
+      expect(readCollectionDisposition(content)).toBe(disposition);
+    }
+  });
+
+  it('returns undefined for a plain bundle', () => {
+    expect(readCollectionDisposition(withFrontmatter('members:\n  skills:\n    - people-report'))).toBeUndefined();
+  });
+
+  it('throws naming the value and source on an unknown disposition', () => {
+    const content = withFrontmatter('disposition: vetted\nmembers:\n  skills:\n    - people-report');
+
+    expect(() => readCollectionDisposition(content, 'collections/team.md')).toThrow(/team\.md.*vetted/s);
+  });
+
+  it.each(['@library', '@unclaimed'])('throws on a disposition declared by a %s collection', (token) => {
+    const content = withFrontmatter(`disposition: public\nmembers: '${token}'`);
+
+    expect(() => readCollectionDisposition(content, 'collections/computed.md')).toThrow(/computed\.md.*computed/s);
+  });
+});
+
+describe(readStandaloneReason, () => {
+  it('reads the reason', () => {
+    expect(readStandaloneReason(withFrontmatter('standalone: wanted once per machine'))).toBe(
+      'wanted once per machine',
+    );
+  });
+
+  it('returns undefined when the artifact does not declare one', () => {
+    expect(readStandaloneReason(withFrontmatter('name: canary'))).toBeUndefined();
+    expect(readStandaloneReason('# No frontmatter\n')).toBeUndefined();
+  });
+
+  it.each(["''", 'true', '\n  - a list'])('throws naming the source on the value %s', (value) => {
+    const content = withFrontmatter(`standalone: ${value}`);
+
+    expect(() => readStandaloneReason(content, 'subagents/canary.md')).toThrow(/canary\.md.*non-empty string/s);
   });
 });
