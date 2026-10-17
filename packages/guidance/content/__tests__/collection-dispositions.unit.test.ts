@@ -5,10 +5,10 @@ import { describe, expect, it } from 'vitest';
 
 import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 
-// Declaring a collection is a claim about its members, so an artifact in none of them is deploying under a claim that
-// nobody made. These two checks are what make the claim real rather than nominal: Coverage catches the artifact that
-// was added without a disposition, and closure catches the unexamined artifact that a vetted collection reaches through
-// an edge. Neither can be replaced by reading the collection files, because both defects are invisible there.
+// Declaring a collection is a claim about its members, so an artifact in none of them is deployed under a claim that
+// nobody made. These two checks make the claim real rather than nominal: Coverage catches the artifact that was added
+// without a disposition, and closure catches the unexamined artifact that a vetted collection reaches through an edge.
+// Neither can be replaced by reading the collection files, because both defects are invisible there.
 
 /** An artifact addressed as `<type>:<slug>`, the form used by the resolver's own errors. */
 type ArtifactId = string;
@@ -40,7 +40,7 @@ const TRIAGE_DISPOSITION = 'triage';
 const STANDALONE: Readonly<Record<ArtifactId, string>> = {
   'rulebook:codeassembly-content-specification':
     'wanted by repositories that author CodeAssembly content, which declare it directly',
-  'rulebook:live-worktree-policy': 'wanted in the repositories carrying a `live` worktree, which declare it directly',
+  'rulebook:live-worktree-policy': 'wanted in the repositories that have a `live` worktree, which declare it directly',
   'skill:migrate-feedback-memories': 'wanted once per machine, too rarely to justify a standing skill-index line',
   'subagent:canary': 'exercises the declared-subagent mechanism rather than doing work of its own',
 };
@@ -111,17 +111,17 @@ describe('collection dispositions', () => {
     expect(defects).toEqual([]);
   });
 
-  // An opt-in member costs a skill-index line on every machine that deploys it, and the collection's whole claim is
+  // An opt-in member adds a skill-index line on every machine that deploys it, and the collection's whole claim is
   // that only a machine declaring it deploys one. One restored invocation token undoes that silently: The general PR,
   // merge, review, and ticket skills each address a member through an optional token, and writing one in its required
-  // form hands the members back to every consumer of those skills.
+  // form makes every consumer of those skills deploy the members.
   it.each(OPT_IN_COLLECTIONS)('keeps %s out of every other collection’s closure', async (optIn) => {
     const collections = await readExplicitCollections(contentDir);
     const members = listArtifactIds(collections.get(optIn) ?? {});
     const defects: Array<string> = [];
 
     // A slug that does not name a collection leaves the member list empty, and the loop below does not report a leak
-    // for an empty list. Failing here is what keeps a renamed or mistyped entry from retiring the check in silence.
+    // for an empty list. Failing here keeps a renamed or mistyped entry from disabling the check silently.
     expect(
       members,
       `${optIn} does not name a collection with members, so the check below would pass vacuously.`,

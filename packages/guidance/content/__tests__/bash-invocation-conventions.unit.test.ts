@@ -6,17 +6,17 @@ import { describe, expect, it } from 'vitest';
 import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
-// Three conventions bind the Bash invocations in agent-facing content, and all three exist because one invocation
-// is the whole world that a call gets: Nothing it assigns survives to the next call, and only what it prints reaches
-// the agent.
+// Three conventions apply to the Bash invocations in agent-facing content, and all three exist because a call's shell
+// state lasts only one invocation: Nothing it assigns survives to the next call, and the agent sees only what it
+// prints.
 //
 // A sandbox `excludedCommands` pattern is matched against a top-level segment of the command as written, from that
-// segment's start. `url=$(gh pr create …)` leads with an assignment, so a `gh *` entry does not reach the `gh` inside
+// segment's start. `url=$(gh pr create …)` leads with an assignment, so a `gh *` entry does not match the `gh` inside
 // it: The call runs contained, its TLS verification is denied, and it fails as
 // `tls: failed to verify certificate: x509: OSStatus -26276`, which names a certificate rather than the boundary.
 //
-// A fence whose last statement is an assignment prints nothing at all. Prose directing the agent to read a value
-// from the command's output has nothing to read. The repair is to let the terminal command print.
+// A fence whose last statement is an assignment prints nothing at all. When prose directs the agent to read a value
+// from the command's output, the agent has nothing to read. The repair is to let the terminal command print.
 //
 // A variable that an invocation reads but does not assign expands to nothing, however carefully the prose above the
 // call establishes the name. An agent-supplied value takes a brace placeholder that the agent substitutes as literal
@@ -30,7 +30,7 @@ const EXCLUDED_COMMANDS: ReadonlyArray<string> = ['codeassembly', 'gh'];
 // and awk's `$4` inside a quoted program, fall outside the identifier shape matched by `VARIABLE_READ`.
 const ALLOWED_VARIABLES: ReadonlySet<string> = new Set(['HOME', 'PWD', 'TMPDIR', 'USER']);
 
-// Content not authored by the corpus is out of every rule's reach here: The extract is marked do-not-edit. A
+// The rules here do not apply to content that the corpus does not author: The extract is marked do-not-edit. A
 // violation in one does not have an available repair. `banned-codepoints` exempts the same files by path and pairs them
 // with a stale-entry check; because the marker is the predicate that those paths stand for, reading it needs neither.
 const EXTRACTION_MARKER = '<!-- Extracted verbatim from the superpowers plugin. Do not edit. -->';
@@ -42,7 +42,7 @@ const EXTRACTION_MARKER = '<!-- Extracted verbatim from the superpowers plugin. 
 const INVOCATION_OPENINGS: ReadonlyArray<string> = ['git ', 'node ', '{harness_home_dir}'];
 
 // `_partials` holds content that the expander inlines into skills and subagents at install time. A fence there
-// reaches the same place as one written in the skill itself.
+// ends up in the same file as one written in the skill itself.
 const SCANNED_DIRS: ReadonlyArray<string> = ['_partials', 'skills', 'subagents'];
 
 // A fence's delimiter is a run of three or more backticks, and it closes on a run at least as long without an info
@@ -106,7 +106,7 @@ describe('bash-invocation conventions', () => {
     );
     const message =
       `Found ${violations.length} command substitution(s) wrapping a sandbox-excluded command ` +
-      `(${EXCLUDED_COMMANDS.join(', ')}). A substitution takes the call back inside the sandbox, where it fails on ` +
+      `(${EXCLUDED_COMMANDS.join(', ')}). A substitution runs the call inside the sandbox, where it fails on ` +
       `TLS verification. Invoke the command as its own segment and read the result from its output.`;
     expect(violations, formatViolations(violations, message)).toEqual([]);
   });
@@ -118,7 +118,7 @@ describe('bash-invocation conventions', () => {
     });
     const message =
       `Found ${violations.length} bash fence(s) whose last statement is an assignment. An assignment prints ` +
-      `nothing, and a shell variable does not survive the invocation, so the value never reaches the agent. Let the ` +
+      `nothing, and a shell variable does not survive the invocation, so the agent never sees the value. Let the ` +
       `terminal command print instead.`;
     expect(violations, formatViolations(violations, message)).toEqual([]);
   });

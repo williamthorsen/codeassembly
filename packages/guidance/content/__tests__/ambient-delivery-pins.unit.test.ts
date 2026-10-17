@@ -17,7 +17,7 @@ const AMBIENT_PINS = new Map<string, string>([
   ],
   [
     'live-worktree-policy',
-    'Any write may land in a repo that deploys from `live`, and a write through `.live` changes the deployed tree.',
+    'Any session may write to a repo that deploys from `live`, and a write through `.live` changes the deployed tree.',
   ],
   ['williamthorsen-collaboration-preferences', 'Governs every interactive turn.'],
   ['williamthorsen-comment-preferences', 'Nearly every session writes or edits source.'],

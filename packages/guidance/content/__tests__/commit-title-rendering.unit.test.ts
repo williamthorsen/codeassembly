@@ -9,7 +9,7 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // One statement of the `describe-change.mjs` invocation keeps a correction to its contract, such as the flags, the
 // JSON parse, and the fallback, from having to be applied in every skill that invokes it.
 
-/** The one file permitted to state the invocation; every consumer reaches it through an include. */
+/** The one file permitted to state the invocation; every consumer includes it. */
 const PARTIAL = 'skills/_partials/commit-title-rendering.md';
 
 /**

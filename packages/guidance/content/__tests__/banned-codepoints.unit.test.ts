@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 
-// Fixture data is authored to hold the defects that other suites assert on, so a ban would report a fixture as an
+// Fixture data is authored to contain the defects that other suites assert on, so a ban would report a fixture as an
 // offender.
 const EXCLUDED_PREFIX = '__tests__/fixtures/';
 
@@ -33,12 +33,12 @@ interface Offender {
   readonly line: number;
 }
 
-// Each codepoint is written as an escape: The scan reads this file, so a literal would report the guard itself. The
-// non-breaking-space ban is a `validate` rule, which `library-validation` runs over this tree.
+// Each codepoint is written as an escape: The scan reads this file, so a literal would make the scan report the guard
+// itself. The non-breaking-space ban is a `validate` rule, which `library-validation` runs over this tree.
 const BANS: ReadonlyArray<Ban> = [
   {
     // A whole file is exempt only when the corpus does not author it. `brainstorming` is a verbatim superpowers
-    // extract marked do-not-edit, so its prose is out of the rule's reach entirely. `update-jira-ticket` is ordinary
+    // extract marked do-not-edit, so the rule does not apply to its prose at all. `update-jira-ticket` is ordinary
     // skill guidance that happens to document the character. Only the row documenting it is exempt, and a new
     // em-dash anywhere else in the file still fails.
     allowlist: [
@@ -101,7 +101,7 @@ async function findOffenders(ban: Ban): Promise<ReadonlyArray<Offender>> {
   return offenders;
 }
 
-/** Returns a description of each exemption that no longer covers a site, naming why it is spent. */
+/** Returns a description of each exemption that no longer covers a site, naming why it is stale. */
 async function findStaleExemptions(ban: Ban): Promise<ReadonlyArray<string>> {
   const present = new Set(await listScannedFiles());
   const stale: Array<string> = [];

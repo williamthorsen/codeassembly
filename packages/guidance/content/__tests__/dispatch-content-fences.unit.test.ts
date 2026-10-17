@@ -7,17 +7,16 @@ import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 
 // A content fence is the one channel that hands a subagent text rather than scalars: the passages that a redispatched
-// drafter revises. Everything the fence carries is copied from a subagent's own earlier return, so the caller writes
-// none of it. A sentence templated here would seed the subagent
-// exactly as a prose scalar in the dispatch block does, which `dispatch-block-scalars` forbids by holding that
-// block's keys to a closed set. Because neither failure shows at runtime -- each yields a plausible lede carrying the
-// caller's weighting -- the guard has to be here.
+// drafter revises. Everything in the fence is copied from a subagent's own earlier return, so the caller writes none of
+// it. A sentence templated here would seed the subagent exactly as a prose scalar in the dispatch block does, which
+// `dispatch-block-scalars` forbids by holding that block's keys to a closed set. Because neither failure shows at
+// runtime -- each yields a plausible lede reflecting the caller's weighting -- the guard has to be here.
 
-/** Every info string that a content fence may carry. A channel absent from this set is one that nothing reviewed. */
+/** Every info string that a content fence may have. A channel absent from this set is one that nothing reviewed. */
 const DECLARED_FENCES: ReadonlySet<string> = new Set(['rejected']);
 
 /**
- * A line that a content fence may carry: a bullet whose whole content is one placeholder filled by the caller at
+ * A line that a content fence may contain: a bullet whose whole content is one placeholder filled by the caller at
  * dispatch.
  */
 const PLACEHOLDER_LINE = /^- \{[^{}]*\}$/;
@@ -42,7 +41,7 @@ describe('content fences', () => {
     expect(missing, message).toEqual([]);
   });
 
-  it('carry placeholders alone', async () => {
+  it('contain placeholders alone', async () => {
     const violations = (await FENCES)
       .filter((fence) => DECLARED_FENCES.has(fence.info))
       .flatMap((fence) =>
@@ -52,19 +51,19 @@ describe('content fences', () => {
       );
 
     const message =
-      "A content fence carries placeholders that the caller fills with a subagent's own earlier text, and does not carry prose:" +
+      "A content fence contains placeholders that the caller fills with a subagent's own earlier text, and does not contain prose:" +
       'A sentence templated here makes the caller the author of the facts, which is the arrangement replaced by the ' +
       `fresh-context dispatch. These lines are not placeholder bullets:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 
-  it('declare every info string that carries placeholders', async () => {
+  it('declare every info string that contains placeholders', async () => {
     const violations = (await FENCES)
       .filter((fence) => !DECLARED_FENCES.has(fence.info) && isPlaceholderFence(fence))
       .map((fence) => ({ line: fence.firstLine - 1, relativePath: fence.relativePath, text: fence.info }));
 
     const message =
-      'A fence carrying placeholder bullets is a content channel whatever it is named, and an undeclared one is a ' +
+      'A fence containing placeholder bullets is a content channel whatever it is named, and an undeclared one is a ' +
       'channel that reached a subagent without review. Add it to DECLARED_FENCES if a subagent reads it, and ' +
       `drop the fence if none does:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
@@ -133,7 +132,7 @@ function findFences(content: string, relativePath: string): ReadonlyArray<Fence>
   return fences;
 }
 
-/** Reports whether every line that a fence carries, blank lines aside, is a placeholder bullet. */
+/** Reports whether every line that a fence contains, blank lines aside, is a placeholder bullet. */
 function isPlaceholderFence(fence: Fence): boolean {
   return fence.lines.filter((text) => text !== '').every((text) => PLACEHOLDER_LINE.test(text));
 }
