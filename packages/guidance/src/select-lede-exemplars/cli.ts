@@ -5,9 +5,9 @@ import process from 'node:process';
 import { tryLoadKbRegistry } from '@williamthorsen/kb/discovery';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { DEFAULT_KB_SENTINEL, FEEDBACK_KB_SENTINEL } from '../kb-shared/kb-role-sentinels.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { describeTaxonomyLocation, loadWorkTypes, resolveWorkType, type WorkType } from '../lib/work-types.ts';
 import { selectExemplars } from './select-exemplars.ts';

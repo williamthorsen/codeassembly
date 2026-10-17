@@ -16,12 +16,12 @@ import {
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { ulid } from 'ulid';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
 import { formatUtcTimestamp, isSafeEventId } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { isEnoent } from '../lib/type-guards.ts';

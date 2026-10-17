@@ -12,8 +12,8 @@ import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { readPreferences, readProjectPreferences } from '../derive-session-context/read-preferences.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { loadWorkTypes } from '../lib/work-types.ts';

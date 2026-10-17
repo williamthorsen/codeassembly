@@ -7,9 +7,9 @@ import { check, type EnumeratedNote } from '@williamthorsen/kb/check';
 import { isKbLoaderError } from '@williamthorsen/kb/config';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-failure.ts';
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { applyFixes } from './apply.ts';
 import { detectCurateFindings, sortFindings } from './detect.ts';
 import type { CurateResult, CurateSummary, ParsedArgs } from './types.ts';

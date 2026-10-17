@@ -9,12 +9,12 @@ import { EVENT_IMPACT_LEVELS, isEventImpact, type KbEvent, parseEvent, renderEve
 import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
 import { isSafeEventId, splitCommaList } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget, type ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
 import { addAddressedBy } from './operations/add-addressed-by.ts';

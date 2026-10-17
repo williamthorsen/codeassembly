@@ -4,10 +4,10 @@ import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import type { RecallFn } from '../kb-search/recall.ts';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';
 import type { RecallFilters } from '../kb-search/types.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { normalizeHits } from './normalize.ts';
 import { collectTypelessCandidates } from './typeless-tolerance.ts';

@@ -10,11 +10,11 @@ import type { KbAssertion } from '@williamthorsen/kb/records';
 import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-failure.ts';
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
 import { discoverWritableKb, type ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { commitSupersede } from './commit-supersede.ts';

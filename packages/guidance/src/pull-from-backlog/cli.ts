@@ -11,7 +11,6 @@ import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { readProjectPreferences } from '../derive-session-context/read-preferences.ts';
 import {
   fetchMilestones,
@@ -25,6 +24,7 @@ import { detectInProgress } from '../groom-backlog/in-progress.ts';
 import { appendRecords, readLedger, resolveLedgerPaths } from '../groom-backlog/ledger.ts';
 import type { LedgerRecord } from '../groom-backlog/schemas.ts';
 import type { CommandRunner } from '../groom-backlog/types.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { isRecord } from '../lib/type-guards.ts';
 import { type PullConfig, PullConfigSchema } from './schemas.ts';

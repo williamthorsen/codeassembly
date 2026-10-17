@@ -9,10 +9,10 @@ import { resolveKbDir } from '@williamthorsen/kb/layout';
 import { loadAliases } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-failure.ts';
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { declareDomain } from './declare-domain.ts';
 import { prepareNote } from './prepare-note.ts';

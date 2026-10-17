@@ -10,8 +10,8 @@ import { parseArgs } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import packageJson from '../../package.json' with { type: 'json' };
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { findNearestKey } from '../validate-preferences/find-nearest-key.ts';
 import { checkProse, renderCheckJson, renderCheckText } from './check-prose.ts';
 

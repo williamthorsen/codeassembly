@@ -9,7 +9,6 @@ import { fileURLToPath } from 'node:url';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { ulid } from 'ulid';
 
-import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { writeEvent } from '../capture-event/write-event.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
 import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
@@ -17,6 +16,7 @@ import { DEFAULT_KB_SENTINEL, FEEDBACK_KB_SENTINEL } from '../kb-shared/kb-role-
 import { formatUtcTimestamp } from '../kb-shared/note-helpers.ts';
 import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { isLedeQuality, LEDE_QUALITY_LEVELS, type LedeQuality } from '../lede-corpus/lede-quality.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import type { SharedGit } from '../shared/git.ts';
