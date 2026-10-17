@@ -115,8 +115,11 @@ const NAMING_RULE_PHRASES: ReadonlyArray<string> = [
   'what the reader consumes decides the marking',
 ];
 
-/** The phrase binding the exemplar call to each entry's own type rather than to the branch's one dispatched type. */
-const PER_TYPE_EXEMPLAR_PHRASE = 'once per distinct type among your entries';
+/**
+ * The phrase binding the exemplar call to each entry's own type and breaking marker rather than to the branch's one
+ * dispatched type.
+ */
+const PER_TYPE_EXEMPLAR_PHRASE = 'once per distinct pair of `type` and `breaking` among your entries';
 
 /** A connective prescribed nowhere by the drafter, pinned as a literal because a rewording is how it returns. */
 const PRESCRIBED_CONNECTIVE = 'Separately,';
@@ -523,11 +526,11 @@ describe('entry-drafter contract', () => {
     expect(await EXPANDED, message).toContain(TAXONOMY_FILENAME);
   });
 
-  it('draws exemplars once per type among the entries', async () => {
+  it('draws exemplars once per type and breaking marker among the entries', async () => {
     const message =
       '`## Details` contains a bullet under every type the branch touches, so one call for the branch calibrates ' +
       'every entry against the highest-ranking type and miscalibrates all but one of them. Each type was rated by ' +
-      'the author for its own reader.';
+      'the author for its own reader, and a breaking lede contains a `Migration:` paragraph that no other lede has.';
     expect(await EXPANDED, message).toContain(PER_TYPE_EXEMPLAR_PHRASE);
   });
 });
