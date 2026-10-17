@@ -60,7 +60,7 @@ describe(surveyKb, () => {
     ]);
   });
 
-  it('reports a folder holding notes that the taxonomy does not declare as a domain', async () => {
+  it('reports a folder containing notes that the taxonomy does not declare as a domain', async () => {
     const kbPath = await makeStore({
       '.kb/taxonomy.yaml': 'domains:\n  engineering: Practice\n',
       'content/assertions/engineering/Tooling.md': NOTE,
@@ -83,7 +83,7 @@ describe(surveyKb, () => {
     expect(survey.undeclaredFolders).toEqual([{ path: 'engineering/tooling', noteCount: 1 }]);
   });
 
-  it('reports every folder holding notes and an empty domain list when the store does not declare a taxonomy', async () => {
+  it('reports every folder containing notes and an empty domain list when the store does not declare a taxonomy', async () => {
     const kbPath = await makeStore({
       'content/assertions/engineering/Tooling.md': NOTE,
       'content/assertions/languages/Types.md': NOTE,

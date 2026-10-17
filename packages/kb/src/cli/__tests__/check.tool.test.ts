@@ -72,7 +72,7 @@ describe(run, () => {
     expect(fromFlag.stdout).toBe('PASS no findings (1 notes checked)\n');
   });
 
-  it('exits 2 for an --output-style value that names no style', async () => {
+  it('exits 2 for an --output-style value that does not name any style', async () => {
     const result = await run({ argv: ['check', '--output-style', 'fancy'], cwd: process.cwd() });
 
     expect(result.exitCode).toBe(2);
@@ -360,8 +360,8 @@ describe('kb check targeting', () => {
   });
 
   it('checks only the changed metacharacter-named note, not its glob-expanded siblings', async () => {
-    // `Draft2.md` is unchanged and erroring; as a glob, `Draft[v2].md` would also match it, so a
-    // `--vs` run that touched only the clean `Draft[v2].md` must not be failed by the sibling.
+    // `Draft2.md` is unchanged and erroring; as a glob, `Draft[v2].md` would also match it, so the
+    // sibling must not fail a `--vs` run whose only changed note is the clean `Draft[v2].md`.
     const store = await makeStore({ 'content/Draft2.md': UNRESOLVED_LINK, 'content/Draft[v2].md': VALID });
     const git = await makeChangedFilesGit(store, ['content/Draft[v2].md']);
 

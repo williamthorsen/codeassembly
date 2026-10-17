@@ -55,7 +55,7 @@ Exit codes:
  * The command writes nothing to the store, so it ignores the registry's `readonly` flag. `check` throws a
  * `KbLoaderError` for a structural defect in a store file that it loads, and the command maps that error to exit 2;
  * any other error from `check` propagates to the caller as a real crash. `style` sets the human report's glyphs, and
- * defaults to plain. `git` answers the run's repository queries, and defaults to running git.
+ * defaults to plain. `git` performs the run's repository queries, and defaults to running git.
  */
 export async function runCheck(input: {
   argv: readonly string[];
@@ -202,7 +202,7 @@ type SelectionOutcome =
 
 /**
  * Narrows a whole-vault `CheckResult` to the notes targeted by the run. A bare run passes through unchanged; `--vs`
- * resolves changed paths via git (a bad ref fails for exit 2), and pattern selection drops non-notes while reporting
+ * resolves changed paths via git (a bad ref fails with exit 2), and pattern selection drops non-notes while reporting
  * a path that matches nothing real as a usage error. Note-scoped findings are filtered to the selected notes by their
  * absolute path, so cross-references stay resolved against the whole vault while the report and exit code cover only
  * the selection. Because vault-scoped findings describe the store rather than any one note, the filter keeps them,

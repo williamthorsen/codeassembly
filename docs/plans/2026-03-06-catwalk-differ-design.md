@@ -10,9 +10,9 @@ Create a structural differ that compares old and new `CatwalkSceneConfig` snapsh
 
 We evaluated three approaches:
 
-1. **Structured diff object** (chosen) — strongly typed fields per sub-config, each produced by a focused sub-differ
-2. **Change descriptor list** — flat discriminated-union array, natural for sequential animation but harder to query
-3. **Hybrid** — both representations; deferred because animation sequencing belongs in a future choreographer layer
+1. **Structured diff object** (chosen): Strongly typed fields per sub-config, each produced by a focused sub-differ
+2. **Change descriptor list**: Flat discriminated-union array, natural for sequential animation but harder to query
+3. **Hybrid**: Both representations; deferred because animation sequencing belongs in a future choreographer layer
 
 The structured approach provides the strongest typing, the cleanest test boundaries, and avoids prematurely solving animation sequencing.
 
@@ -55,11 +55,11 @@ interface CatwalkDiff {
 
 ### Design rationale
 
-- **Stations excluded** — derived from phase decisions at run start; static within a run.
-- **Gates are monotonic** — only transition closed→open within a run. `GateDiffs` only has `opened`.
-- **Artifacts are append-only** — `ArtifactDiffs` only has `added`.
-- **`carriedArtifacts`/`codeBadge` omitted** — Milestone 3/4 fields, currently always empty. Trivial to add later as new fields on `OrchestratorDiff`.
-- **`hasChanges`** — convenience boolean for short-circuiting when nothing changed.
+- **Stations excluded**: Derived from phase decisions at run start; static within a run.
+- **Gates are monotonic**: Only transition closed→open within a run. `GateDiffs` only has `opened`.
+- **Artifacts are append-only**: `ArtifactDiffs` only has `added`.
+- **`carriedArtifacts`/`codeBadge` omitted**: Milestone 3/4 fields, currently always empty. Trivial to add later as new fields on `OrchestratorDiff`.
+- **`hasChanges`**: Convenience boolean for short-circuiting when nothing changed.
 
 ## Sub-differ functions
 
@@ -71,14 +71,14 @@ Compare `stationIndex` and `working` fields. Emit `moved` and/or `workingChanged
 
 Build id-keyed maps for both snapshots.
 
-- **Added**: ids in next but not prev.
-- **Removed**: ids in prev but not next.
-- **State changed**: ids in both where `state` differs.
+- **Added**: Ids in next but not prev.
+- **Removed**: Ids in prev but not next.
+- **State changed**: Ids in both whose `state` differs.
 - Slot/position changes are ignored (layout concern, not animation trigger).
 
 ### `diffGates(prev, next) → GateDiffs`
 
-Pair gates by array index (gate count is stable within a run). Collect gates where `open` transitioned `false → true`.
+Pair gates by array index (gate count is stable within a run). Collect gates whose `open` transitioned `false → true`.
 
 ### `diffArtifacts(prev, next) → ArtifactDiffs`
 
@@ -113,6 +113,6 @@ Tests use inline `CatwalkSceneConfig` fixtures (not `createMockRunStatus`, since
 
 ## Scope exclusions
 
-- Animation choreography (future milestone — consumes diff to build animation queue)
+- Animation choreography (future milestone; consumes diff to build animation queue)
 - `carriedArtifacts` / `codeBadge` diffing (Milestone 3/4)
 - Station diffing (static within a run)

@@ -30,7 +30,7 @@ Exit codes:
 `;
 
 /**
- * Runs `kb set-default`: sets, clears, or interactively selects the user-global `default_kb`. Resolution reads the
+ * Runs `kb set-default`: sets, clears, or interactively selects the user-global `default_kb`. The command reads the
  * user-global registry only, without any project overlay, so the chosen default resolves in every project context.
  * The picker is injected via `selectKb`, keeping the dispatcher free of terminal I/O; its absence means stdin is
  * non-interactive, making the no-argument form a usage error rather than a hang.

@@ -39,10 +39,10 @@ export async function selectNotes(input: {
   for (const rawPattern of input.patterns) {
     const pattern = normalizePattern(rawPattern);
 
-    // Because an exact note-path match wins, a literal path is matched verbatim, even one that contains glob
-    // metacharacters (a `--vs` git path or a shell-expanded name like `content/Draft[v2].md`), which
-    // as a pattern would over-match its character-class siblings. Both sides compare in composed form,
-    // since git reports a path composed whereas the walk reports it decomposed.
+    // Because an exact note-path match takes precedence, a literal path is matched verbatim, even one that
+    // contains glob metacharacters (a `--vs` git path or a shell-expanded name like `content/Draft[v2].md`),
+    // which as a pattern would over-match its character-class siblings. Both sides are compared in composed
+    // form, since git reports a path composed whereas the walk reports it decomposed.
     const exactPath = pathsByComposedForm.get(pattern.normalize('NFC'));
     if (exactPath !== undefined) {
       selectedPaths.add(exactPath);

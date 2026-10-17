@@ -73,7 +73,7 @@ describe(loadKbRegistry, () => {
     expect(userOnly?.path).toBe(join(HOME, 'user-only-kb'));
   });
 
-  it('resolves default_kb with the project value winning over the user value', async () => {
+  it('resolves default_kb with the project value taking precedence over the user value', async () => {
     const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
 
     expect(config.defaultKb?.name).toBe('project-only');
@@ -86,7 +86,7 @@ describe(loadKbRegistry, () => {
     expect(config.defaultKb).toBeUndefined();
   });
 
-  it('resolves feedback_kb with the project value winning over the user value', async () => {
+  it('resolves feedback_kb with the project value taking precedence over the user value', async () => {
     const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
 
     expect(config.feedbackKb?.name).toBe('shared');

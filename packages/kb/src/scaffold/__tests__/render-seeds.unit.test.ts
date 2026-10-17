@@ -92,7 +92,8 @@ describe(renderPrettierSeed, () => {
 // region | Helpers
 
 /**
- * Creates a temp store holding both rendered formatting seeds and one note whose `tags` list exceeds the print width.
+ * Creates a temp store containing both rendered formatting seeds and one note whose `tags` list exceeds the print
+ * width.
  */
 async function makeSeededStore(): Promise<string> {
   const storePath = await makeTempDir('kb-prettier-');

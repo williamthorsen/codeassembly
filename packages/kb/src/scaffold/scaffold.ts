@@ -63,8 +63,8 @@ export async function scaffold(input: { storePath: string; force?: boolean }): P
 
 // region | Helpers
 
-// The canonical set: what a store holds regardless of when it was created. `kb create` and `kb scaffold` both write it
-// from here, so a file added to either list is written by both commands and neither can drift from the other.
+// The canonical set: what a store contains regardless of when it was created. `kb create` and `kb scaffold` both write
+// it from here, so a file added to either list is written by both commands and neither can drift from the other.
 //
 // `.kb/taxonomy.yaml` is not canonical: `kb taxonomy init` derives its content from a store's notes rather
 // than writing a fixed template. Nor is `content/assertions/`: `kb-add` creates its target folder on demand.

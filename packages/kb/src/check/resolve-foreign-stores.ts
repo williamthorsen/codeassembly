@@ -14,7 +14,7 @@ import { enumerateNotePaths } from './enumerate.ts';
 
 /**
  * Collects the distinct store names that a note set's wikilinks qualify, so that a check run consults only the stores
- * that its own links name. It reads {@link scanWikilinks}, the same walk that later evaluates the links, so a
+ * that its own links name. It calls {@link scanWikilinks}, the same walk that later evaluates the links, so a
  * store-shaped prefix inside a code sample doesn't select any store and the two cannot disagree on what counts as a
  * qualified link.
  */

@@ -57,7 +57,7 @@ describe(parseNoteContent, () => {
     expect(note.frontmatter?.tags).toEqual(['git', 'whitespace']);
   });
 
-  it('when a note carries optional fields, preserves them in the extra map', async () => {
+  it('when a note has optional fields, preserves them in the extra map', async () => {
     const note = parseNoteContent({ content: await readFixture('with-extra-fields.md') });
 
     expect(note.frontmatter?.extra).toEqual({

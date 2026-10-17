@@ -22,7 +22,7 @@ readonly LIVE_BRANCH_REF="refs/heads/live"
 _self="${BASH_SOURCE[0]}"
 [[ "$_self" != */* ]] && _self="$(command -v "$_self")"
 # `readlink` reports an unresolvable path with exit 1 and no message, and an older one rejects -f outright; `|| true`
-# keeps either from exiting before the check below can name the path.
+# keeps either failure from ending the script before the check below can name the path.
 _self="$(readlink -f "$_self")" || true
 if [[ -z "$_self" ]]; then
   echo "$PROG: cannot resolve its own path from ${BASH_SOURCE[0]}" >&2

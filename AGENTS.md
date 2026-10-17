@@ -14,7 +14,7 @@ A pnpm monorepo centered on deploying agent guidance: the `codeassembly` CLI, th
 - **kb** (`packages/kb/`): Knowledge-base foundation library. See `packages/kb/README.md`.
 - **run-core** (`packages/run-core/`): Canonical domain model, schemas, and run-data parsing. See `packages/run-core/README.md`.
 
-The dependency chain: factory depends on run-core, and guidance on agents and kb. Guidance reaches agents only through the `codeassembly` CLI and `codeassembly/api`, and agents does not read anything from guidance.
+The dependency chain: factory depends on run-core, and guidance on agents and kb. Guidance depends on agents only through the `codeassembly` CLI and `codeassembly/api`, and agents does not read anything from guidance.
 
 ## Content authoring
 

@@ -14,7 +14,7 @@ describe(taxonomyFindings, () => {
     expect(findings).toEqual([]);
   });
 
-  it('reports nothing when every folder holding notes is declared', () => {
+  it('reports nothing when every folder containing notes is declared', () => {
     const findings = run({
       notes: ['engineering/note.md', 'engineering/tooling/note.md'],
       declared: ['engineering', 'engineering/tooling'],
@@ -23,7 +23,7 @@ describe(taxonomyFindings, () => {
     expect(findings).toEqual([]);
   });
 
-  it('reports a folder holding notes that the taxonomy does not declare as a domain', () => {
+  it('reports a folder containing notes that the taxonomy does not declare as a domain', () => {
     const findings = run({ notes: ['engineering/note.md'], declared: ['languages'] });
 
     expect(rulesIn(findings)).toContain('taxonomy.undeclared');

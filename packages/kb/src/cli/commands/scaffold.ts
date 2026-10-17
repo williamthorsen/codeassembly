@@ -42,8 +42,8 @@ Exit codes:
  * Runs `kb scaffold`: parses options, resolves the store, and writes the canonical files that it lacks.
  *
  * A store that the registry marks `readonly` is refused. A resolved path without a `.kb/` is refused too: The
- * command back-fills a store rather than creating one, and a registry entry names a path without proving a store is
- * there.
+ * command back-fills a store rather than creating one, and a registry entry names a path without guaranteeing that a
+ * store exists there.
  */
 export async function runScaffold(input: {
   argv: readonly string[];

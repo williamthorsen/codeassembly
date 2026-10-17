@@ -118,7 +118,7 @@ Writing is type-blind and lives in `@williamthorsen/kb/note-io`. `readNote(path)
 
 `checkVaultIntegrity(notes)` runs whole-vault, type-blind checks over a `{ path, body, bodyStartLine }[]` note set: An unresolved `[[link]]` is an error (`wikilinks.unresolved`), and a basename shared by two or more notes is one vault-wide warning (`wikilinks.basename`). `buildVaultIndex(notes)` builds the basename → paths index shared by the layer and curate's wikilink rewriter.
 
-A second argument, `{ foreignStores, sourceVisibility }`, resolves [store-qualified links](#linking-into-another-store) against the stores that they name; supplied none, the layer treats every target as store-local, which is what `buildVaultIndex`'s other consumers get.
+A second argument, `{ foreignStores, sourceVisibility }`, resolves [store-qualified links](#linking-into-another-store) against the stores that they name; when the caller doesn't supply any stores, the layer treats every target as store-local, which is what `buildVaultIndex`'s other consumers get.
 
 `scanWikilinks(body)` yields each link in a note body, with its store qualifier and target separated, and is the single definition of what counts as a link. `lookupKey(target)` reduces a target to the key that `VaultIndex` uses. The subpath exports `checkVaultIntegrity`, `buildVaultIndex`, `scanWikilinks`, and `lookupKey`, and not the parse primitives from which they are built: A consumer that detects or rewrites links calls `scanWikilinks`.
 
@@ -171,7 +171,7 @@ Matching uses dotfile-insensitive globbing, so dot-directories (`.kb`, `.git`, `
 
 #### Ignored notes
 
-When the store is in a git working tree, the repository's ignore rules narrow the selection further. A note is enumerated when git tracks it, or when the repository's ignore rules don't cover it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so a link pointing at one reports `wikilinks.unresolved`. That is the correct reading: Such a link is broken for every clone but the author's. This lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
+When the store is in a git working tree, the repository's ignore rules narrow the selection further. A note is enumerated when git tracks it, or when the repository's ignore rules don't cover it. A note that the repository ignores is therefore neither checked nor available as a wikilink target, so the check reports a link pointing at one as `wikilinks.unresolved`. That is the correct reading: Such a link is broken for every clone but the author's. This lets a store gitignore a scratch area (`local/`, `*.local.md`) and keep uncommitted notes there without the store's lints gating them.
 
 A store outside a git working tree, or a machine without git installed, keeps the filesystem walk alone. So does a `git` adapter whose `listScope` returns `undefined`. When the repository ignores every note that the walk found, which happens when a parent repository ignores the store's own directory, the run says so on stderr rather than reporting an empty note set as clean.
 
@@ -211,7 +211,7 @@ provisional:
 
 Two disjoint maps of domain path to one-line description. `domains` contains reviewed declarations and `provisional` contains those declared but not yet reviewed; promotion is writing a description and moving the line up. A domain may be declared without a description, as `languages` is above.
 
-Keys are relative to `content/assertions/` and may nest to any depth. Parents are not implied: declaring `engineering/tooling` does not declare `engineering`. A path declared in both maps fails the load, as does a malformed key: one that restates the `content/assertions/` prefix, or that has a leading or trailing slash, an empty segment, or a `.`/`..` segment.
+Keys are relative to `content/assertions/` and may nest to any depth. Parents are not implied: Declaring `engineering/tooling` does not declare `engineering`. A path declared in both maps fails the load, as does a malformed key: one that restates the `content/assertions/` prefix, or that has a leading or trailing slash, an empty segment, or a `.`/`..` segment.
 
 An absent taxonomy, and one present but declaring nothing, are both valid and report nothing, so the rules apply only to a store that has adopted a taxonomy. Three warnings report drift once one has:
 
@@ -252,7 +252,7 @@ It creates these files and directories:
 
 The check config is serialized from the in-package `defaultKbConfig` and the Prettier config from `canonicalPrettierConfig`, so a new store cannot drift from the bundled values.
 
-The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. `--description` sets the new entry's description, and requires registration: combining it with `--no-register` is a usage error. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, which tidies a registry that has drifted out of order as stores are added. `kb create` refuses to overwrite: It exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered. Use `kb scaffold` to add canonical files to a store that already exists.
+The name defaults to the directory's base name; `--name` overrides it and `--no-register` scaffolds without writing the registry. `--description` sets the new entry's description, and requires registration: Combining it with `--no-register` is a usage error. The registry write preserves any existing comments in `kb.yaml` and leaves the `kbs:` entries alphabetically ordered, which tidies a registry that has drifted out of order as stores are added. `kb create` refuses to overwrite: It exits 2 if the directory already contains a `.kb/` store, or if the chosen name is already registered. Use `kb scaffold` to add canonical files to a store that already exists.
 
 `kb create` also keeps a default knowledge base set. When the registry's top-level `default_kb` pointer is unset and the new store is the only registered KB, it becomes the default. When other KBs are already registered and `default_kb` is unset, `kb create` prompts for one on an interactive terminal, and points to `kb set-default` when stdin is not interactive. An existing `default_kb` is never overwritten.
 
@@ -268,9 +268,9 @@ kb scaffold --force          # replace every canonical file with a fresh seed
 
 The canonical set is the one that `kb create` writes, defined once and shared by both commands so that neither can drift from the other. `.kb/taxonomy.yaml` is not part of it: `kb taxonomy init` derives that file's content from the notes that a store already contains rather than writing a fixed template.
 
-An existing file is left untouched unless `--force` is given, which replaces it with a fresh seed and discards any edits. A directory doesn't have content to replace, so `--force` governs files alone. The command reports each canonical path as `created`, `present`, or `replaced`.
+An existing file is left untouched unless `--force` is given, which replaces it with a fresh seed and discards any edits. A directory doesn't have content to replace, so `--force` applies to files alone. The command reports each canonical path as `created`, `present`, or `replaced`.
 
-Store resolution matches `kb check`: the nearest ancestor `.kb/` directory, or a `--kb <name>` entry in the merged `kb.yaml` registry. The command exits 2 on three grounds: the store doesn't resolve, the registry marks the resolved store `readonly`, or the resolved path doesn't contain a `.kb/`. The last keeps the command to back-filling a store rather than creating one, which is `kb create`'s job; a registry entry names a path without proving a store is there.
+Store resolution matches `kb check`: the nearest ancestor `.kb/` directory, or a `--kb <name>` entry in the merged `kb.yaml` registry. The command exits 2 on three grounds: the store doesn't resolve, the registry marks the resolved store `readonly`, or the resolved path doesn't contain a `.kb/`. The last keeps the command to back-filling a store rather than creating one, which is `kb create`'s job; a registry entry names a path without guaranteeing that a store exists there.
 
 ### kb set-default
 
@@ -302,7 +302,7 @@ kb check --vs=main             # check only the notes changed since a ref
 **Targeting.** Path arguments and `--vs` each scope the run to a subset of notes; they are mutually exclusive, and both compose with `--kb` and `--json`. Cross-note rules always resolve against the whole store, and a store-qualified link against the whole store that it names, so a targeted run never misreports a link to an unselected note; only the report and the exit code narrow to the selection.
 
 - **`[paths...]`**: One or more glob patterns, files, or directories (store-root-relative). Because the command expands globs itself, a quoted glob behaves the same as a shell-expanded one. A directory checks every note beneath it. A path that doesn't match any note is a usage error, unless it names a real non-note (a README, a triage note, or a file that `exclude` or git rules out), which is skipped silently.
-- **`--vs <ref>`**: The notes changed between the working tree and the merge-base of `<ref>` and HEAD. The diff follows renames (checking the destination), includes uncommitted edits to tracked notes, and excludes deletions, so a `git mv`-heavy migration batch reports the notes that it actually touched.
+- **`--vs <ref>`**: The notes changed between the working tree and the merge-base of `<ref>` and HEAD. The diff follows renames (checking the destination), includes uncommitted edits to tracked notes, and excludes deletions, so a run over a `git mv`-heavy migration batch reports the notes that the batch actually touched.
 
 Because the exit code reflects only the selected notes, a per-batch or pre-commit gate can pass while the rest of the vault still has a migration backlog.
 
@@ -326,7 +326,7 @@ kb taxonomy init --kb coding # back-fill the named store from the kb.yaml regist
 kb taxonomy init --merge     # add only the domains that an existing taxonomy omits
 ```
 
-Every derived domain is written under `provisional:` without a description: The command cannot invent descriptions, and provisional already means "declared, not yet reviewed". Because the derivation reads the same enumeration that `kb check` reads, a back-filled store doesn't report any taxonomy drift.
+Every derived domain is written under `provisional:` without a description: The command cannot invent descriptions, and provisional already means "declared, not yet reviewed". Because the command derives the domains from the same enumeration that `kb check` reads, a later `kb check` doesn't report any taxonomy drift for a back-filled store.
 
 Without `--merge`, a store that already declares a taxonomy is left untouched and the command exits 2.
 
@@ -371,9 +371,9 @@ The `[*.md]` exemption is the one entry that is not self-explanatory. Two traili
 embeddedLanguageFormatting: off
 ```
 
-It is not stylistic, and the scaffolded file states this reasoning in its own header so that the reasoning stays with the store. `embeddedLanguageFormatting: off` leaves a note's YAML frontmatter unformatted. Formatted, a long `tags` or `addressed-by` list breaks across several lines, which `renderNote` puts back onto one the next time anything writes the note. Without this option the formatter and the note writer rewrite each other's output without end, and every note with a list past the print width is rewritten on each pass.
+It is not stylistic, and the scaffolded file states this reasoning in its own header so that the reasoning stays with the store. `embeddedLanguageFormatting: off` leaves a note's YAML frontmatter unformatted. If Prettier formatted the frontmatter, it would break a long `tags` or `addressed-by` list across several lines, which `renderNote` would put back onto one the next time anything writes the note. Without this option the formatter and the note writer rewrite each other's output without end, and every note with a list past the print width is rewritten on each pass.
 
-A store that must keep a file that it cannot format, such as a lockfile or a fixture whose defect is the point, names it in a `.prettierignore`. That file is the one exemption and is not scaffolded, since a fresh store has nothing to put in it.
+A store that must keep a file that Prettier cannot format, such as a lockfile or a fixture whose defect is the point, names it in a `.prettierignore`. That file is the one exemption and is not scaffolded, since a fresh store has nothing to put in it.
 
 ### Migrating a store off a `package.json` toolchain
 
@@ -382,12 +382,12 @@ A store that keeps a `package.json` only to obtain Prettier can retire it.
 1. Install Prettier where the store is edited, if it is not already there: `pnpm add --global prettier`.
 2. Run `kb scaffold` in the store to write `.editorconfig` and `.prettierrc.yaml`. An `.editorconfig` that the store already has is reported as `present` and left alone, so compare it against the canonical file above and reconcile the two by hand; `kb scaffold --force` replaces it outright.
 3. Delete `package.json`, the lockfile, `pnpm-workspace.yaml`, `.npmrc`, and any `eslint.config.*`, `tsconfig.json`, and dependency-upgrade config. Delete the superseded `.prettierrc.*` too; keep `.prettierignore` if it names anything still present.
-4. Check that `.editorconfig` still governs the width. Prettier reads it for every key that the Prettier config leaves unset, so a store whose `max_line_length` disagrees with the canonical 120 formats to its own value, and two stores that disagree format differently.
+4. Check that `.editorconfig` still sets the width. Prettier reads it for every key that the Prettier config leaves unset, so a store whose `max_line_length` disagrees with the canonical 120 is formatted to its own value, and two stores that disagree are formatted differently.
 5. Repoint the pre-commit hook. A hook running `pnpm exec prettier --write {staged_files}` becomes `prettier --write {staged_files}`. Under lefthook, `stage_fixed: true` continues to apply. Note that lefthook was installed by `package.json`'s `prepare` script, so it now needs installing on the machine and enabling in the store with `lefthook install`.
 6. Repoint CI. A workflow calling `pnpm run check` needs a command that doesn't assume a `package.json`: `prettier --check .`, plus `kb check` for the store's own rules.
 7. Format once: `prettier --write .`. Commit the result on its own, so that the reformatting does not obscure later diffs.
 
-A store with its own note checker needs one more step before it is retired: compare its rules against what `kb check` covers, and port anything missing. `kb check` validates wikilinks, tag aliases, hardcoded home paths, and taxonomy drift, and deliberately leaves frontmatter validity to the record types that own it at write time.
+A store with its own note checker needs one more step before it is retired: Compare its rules against what `kb check` covers, and port anything missing. `kb check` validates wikilinks, tag aliases, hardcoded home paths, and taxonomy drift, and deliberately leaves frontmatter validity to the record types that own it at write time.
 
 A store without a `package.json` runs steps 1, 2, and 7, and skips 3 through 6: It has nothing to retire, only Prettier to install, the config to adopt, and a first format to run.
 

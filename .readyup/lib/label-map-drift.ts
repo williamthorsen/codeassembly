@@ -2,11 +2,11 @@
  * Pure drift-detection helpers for the label-map readyup checks.
  *
  * The kit's check closures read the filesystem and delegate the comparison
- * logic here, so it stays unit-testable without touching disk. The check is an
- * independent verifier of the committed map: it re-derives the expected scope
- * set rather than consuming the generator's derivation, which would keep it
- * from detecting a bug in that derivation and couple the root-level kit to the
- * agents package.
+ * logic here, so that it stays unit-testable without touching disk. The check
+ * is an independent verifier of the committed map: It re-derives the expected
+ * scope set rather than consuming the generator's derivation, which would keep
+ * it from detecting a bug in that derivation and couple the root-level kit to
+ * the agents package.
  */
 
 import { compareVersions } from 'readyup/check-utils';

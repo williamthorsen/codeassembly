@@ -13,7 +13,7 @@ export interface TaxonomyNote {
 
 /**
  * Reports each disagreement between a store's assertion folders and its declared taxonomy: `taxonomy.undeclared` for a
- * folder holding notes outside every declared domain, `taxonomy.unused` for a declared domain without a note at or
+ * folder containing notes outside every declared domain, `taxonomy.unused` for a declared domain without a note at or
  * beneath it, and `taxonomy.orphan` for a declared domain whose parent is undeclared. All are warnings, so drift is
  * reported without failing the run. All are vault-scoped: A run narrowed to selected notes still reports them.
  *
