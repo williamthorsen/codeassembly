@@ -38,7 +38,7 @@ interface LiveLine {
 
 type Token = Heading | Injection;
 
-/** The shallowest heading level that each partial contributes, memoized for one run since a partial reaches many hosts. */
+/** The shallowest heading level that each partial contributes, memoized for one run since many hosts include a partial. */
 type PartialLevels = Map<string, number | undefined>;
 
 /**
@@ -114,7 +114,7 @@ async function readPartialLevel(partialPath: string, root: string, levels: Parti
 /**
  * Yields the lines of a body that contribute structure, skipping every line inside a fenced block. A fenced directive
  * is skipped too: The expander still expands it, but the fence turns the headings that it injects into literal text,
- * which adopts nothing.
+ * under which a following section does not nest.
  */
 function* readLiveLines(body: string): Generator<LiveLine> {
   let openFence: string | undefined;

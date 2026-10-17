@@ -51,7 +51,7 @@ describe(findSupportEntryTokenDefects, () => {
       );
     });
 
-    it('reports a host that links the section carrying a required token and declares none of it', async () => {
+    it('reports a host that links the section containing a required token and declares none of it', async () => {
       await writeSkill('host', '# Host\n\nFollow [the section](../_data/entry.md#the-section).\n');
 
       const defects = await findSupportEntryTokenDefects(buildRuleContext(root));
@@ -61,7 +61,7 @@ describe(findSupportEntryTokenDefects, () => {
       expect(defects[0]?.detail).toContain('skill:target');
     });
 
-    it('reports a host that links an ancestor of the section carrying the token', async () => {
+    it('reports a host that links an ancestor of the section containing the token', async () => {
       await writeSkill('host', '# Host\n\nFollow [the entry](../_data/entry.md#entry).\n');
 
       const defects = await findSupportEntryTokenDefects(buildRuleContext(root));
@@ -75,13 +75,13 @@ describe(findSupportEntryTokenDefects, () => {
       expect(await findSupportEntryTokenDefects(buildRuleContext(root))).toEqual([]);
     });
 
-    it('does not carry a requirement for a bare link to the file', async () => {
+    it('does not impose a requirement for a bare link to the file', async () => {
       await writeSkill('host', '# Host\n\nRead [the entry](../_data/entry.md).\n');
 
       expect(await findSupportEntryTokenDefects(buildRuleContext(root))).toEqual([]);
     });
 
-    it('does not carry a requirement for an optional token', async () => {
+    it('does not impose a requirement for an optional token', async () => {
       await writeFileAt(
         root,
         'skills/_data/entry.md',

@@ -64,7 +64,7 @@ describe(findScriptInvocationDefects, () => {
     expect(await findScriptInvocationDefects(buildRuleContext(root))).toEqual([]);
   });
 
-  it('reports nothing when the root does not ship any scripts', async () => {
+  it('reports nothing when the root does not contain any scripts', async () => {
     const bare = await createTempRoot('script-invocation-bare');
     try {
       await writeFileAt(bare, 'skills/alpha/SKILL.md', 'node describe.mjs --flag\n');

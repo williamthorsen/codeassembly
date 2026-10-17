@@ -34,8 +34,8 @@ const HOME_REFERENCE_REGEX =
  * such a reference names a file by its place in the content tree.
  *
  * A relative target resolves against the host's own directory, as `rewriteMarkdownPaths` resolves it. A `_partials/`
- * file is never a host. Its links are authored against the host that inlines it, and expansion reaches
- * them there.
+ * file is never a host. Its links are authored against the host that inlines it, and the scan checks them in that
+ * host's expanded body.
  *
  * Anchor-only targets and an unterminated fence are left to the render pass, which rejects both in every host that it
  * renders. A host with an open fence is skipped, since its links below the fence are not the ones that it contains.
