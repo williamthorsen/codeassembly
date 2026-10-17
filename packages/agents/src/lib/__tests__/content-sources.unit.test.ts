@@ -12,7 +12,7 @@ import {
   type SourceResolver,
 } from '../content-sources.ts';
 
-/** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
+/** True on a platform that lets the process lower a directory's permissions and be blocked by them (i.e. non-root). */
 const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
 
 describe(createSourceResolver, () => {
@@ -133,7 +133,7 @@ describe(findShadowedSources, () => {
     return createSourceResolver(names.map((name) => ({ name, dir: path.join(root, name) })));
   }
 
-  it('names every lower-precedence source that also ships the slug, in precedence order', async () => {
+  it('names every lower-precedence source that also provides the slug, in precedence order', async () => {
     for (const name of ['high', 'mid', 'low']) {
       await writeArtifact(path.join(root, name), 'rulebook', 'alpha');
     }
@@ -144,7 +144,7 @@ describe(findShadowedSources, () => {
     ]);
   });
 
-  it('ignores a higher-precedence source than the winner even when it ships the slug', async () => {
+  it('ignores a higher-precedence source than the winner even when it provides the slug', async () => {
     for (const name of ['high', 'mid', 'low']) {
       await writeArtifact(path.join(root, name), 'rulebook', 'alpha');
     }
@@ -154,7 +154,7 @@ describe(findShadowedSources, () => {
     ]);
   });
 
-  it('leaves out a lower-precedence source that does not ship the slug', async () => {
+  it('leaves out a lower-precedence source that does not provide the slug', async () => {
     await writeArtifact(path.join(root, 'high'), 'skill', 'alpha');
     await writeArtifact(path.join(root, 'mid'), 'skill', 'beta');
     await writeArtifact(path.join(root, 'low'), 'skill', 'alpha');
@@ -162,7 +162,7 @@ describe(findShadowedSources, () => {
     expect(await findShadowedSources(buildResolver(['high', 'mid', 'low']), 'skill', 'alpha', 'high')).toEqual(['low']);
   });
 
-  it('distinguishes artifact types, so a lower source shipping the slug as another type is not shadowed', async () => {
+  it('distinguishes artifact types, so a lower source providing the slug as another type is not shadowed', async () => {
     await writeArtifact(path.join(root, 'high'), 'rulebook', 'alpha');
     await writeArtifact(path.join(root, 'low'), 'skill', 'alpha');
 

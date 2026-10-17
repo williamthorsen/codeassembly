@@ -14,7 +14,7 @@ import type { DeployedFile, SizeSnapshot } from '../../deployed-sizes/types.ts';
 import { makeFakeGit } from '../../lib/test-utils/make-fake-git.ts';
 import { renderSizesReport, sizesCommand } from '../sizes.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 describe(renderSizesReport, () => {
@@ -137,7 +137,7 @@ describe(sizesCommand, () => {
 
 // region | Helpers
 
-/** Aggregates stating zero throughout, overridden per assertion. */
+/** Aggregates set to zero throughout, overridden per assertion. */
 function aggregates(overrides: Partial<SizeSnapshot['aggregates']> = {}): SizeSnapshot['aggregates'] {
   return {
     alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },
@@ -147,7 +147,7 @@ function aggregates(overrides: Partial<SizeSnapshot['aggregates']> = {}): SizeSn
   };
 }
 
-/** A snapshot stating `files` as its size vector. */
+/** A snapshot whose size vector is `files`. */
 function buildSnapshot(files: Record<string, DeployedFile>): SizeSnapshot {
   return {
     schemaVersion: SNAPSHOT_SCHEMA_VERSION,

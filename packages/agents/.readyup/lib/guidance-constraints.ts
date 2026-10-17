@@ -1,6 +1,6 @@
 /**
  * Detection of the two constraints that the repository-root guidance file must meet by virtue of being
- * harness-neutral: It does not reach into any harness-owned directory, and it does not host any rulebook marker.
+ * harness-neutral: It does not refer to any harness-owned directory, and it does not contain any rulebook marker.
  *
  * Every function is a pure string transform without filesystem access.
  */
@@ -22,7 +22,7 @@ export function describeViolations(violations: ReadonlyArray<GuidanceViolation>)
   return violations.map((violation) => `line ${violation.lineNumber}: ${violation.text.trim()}`).join('; ');
 }
 
-/** Finds every line reaching into a harness-owned directory, home-anchored or repository-local. */
+/** Finds every line referring to a harness-owned directory, home-anchored or repository-local. */
 export function findHarnessScopedPaths(content: string): ReadonlyArray<GuidanceViolation> {
   return findMatchingLines(content, HARNESS_PATH_REGEX);
 }

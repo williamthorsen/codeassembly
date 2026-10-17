@@ -58,7 +58,7 @@ const execFileAsync = promisify(execFile);
  */
 const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
 
-/** How long a lookup on the sync path may take before it answers with nothing. */
+/** How long a lookup on the sync path may take before it times out without a result. */
 const GIT_LOOKUP_TIMEOUT_MS = 5_000;
 
 /** `git check-ignore`'s exit status for a path that it does not ignore, as distinct from a failure to answer at all. */

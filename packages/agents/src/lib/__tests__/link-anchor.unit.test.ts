@@ -72,7 +72,7 @@ describe(createSkillLinkAnchor, () => {
 });
 
 describe(createContentRootLinkAnchor, () => {
-  it('anchors a scripts target at the harness home, the only tree that deploys it', () => {
+  it('anchors a scripts target at the harness home, the only tree to which scripts are deployed', () => {
     const anchor = createContentRootLinkAnchor(buildContext({ domainBase: PROJECT_BASE }));
     expect(anchor('scripts/describe-change.mjs')).toBe('~/.claude/scripts/describe-change.mjs');
   });
@@ -82,7 +82,7 @@ describe(createContentRootLinkAnchor, () => {
     expect(anchor('skills/commit/SKILL.md')).toBe('/repo/project/.claude/skills/commit/SKILL.md');
   });
 
-  it("hands a support entry target to the skills anchor, reaching the owning source's namespace", () => {
+  it("hands a support entry target to the skills anchor, which anchors it in the owning source's namespace", () => {
     const anchor = createContentRootLinkAnchor(buildContext({ domainBase: PROJECT_BASE }));
     expect(anchor('skills/_data/house-style.md')).toBe(
       '/repo/project/.claude/skills/_sources/org/_data/house-style.md',
@@ -94,7 +94,8 @@ describe(createContentRootLinkAnchor, () => {
     expect(anchor('skills/wrap-up/SKILL.md')).toBe('~/.claude/skills/wrap-up/SKILL.md');
   });
 
-  // The namespace addresses support content under `skills/`, so a sibling tree keeps the harness home.
+  // The namespace applies only to support content under `skills/`, so a target in a sibling tree stays anchored at
+  // the harness home.
   it('keeps a scripts target at the harness home whatever the owning source', () => {
     const anchor = createContentRootLinkAnchor(buildContext({ domainBase: PROJECT_BASE, supportNamespace: 'other' }));
     expect(anchor('scripts/describe-change.mjs')).toBe('~/.claude/scripts/describe-change.mjs');

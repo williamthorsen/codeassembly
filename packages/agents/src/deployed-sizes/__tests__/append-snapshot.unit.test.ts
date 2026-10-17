@@ -62,7 +62,7 @@ describe(appendSnapshot, () => {
   it('prunes to under the threshold when the retained count alone would leave the record over it', async () => {
     const bulky = buildBulkySnapshot();
     const lineBytes = Buffer.byteLength(`${JSON.stringify(bulky)}\n`, 'utf8');
-    // States that the count limit is not what bounds this record: the byte limit is.
+    // Assert that the byte limit bounds this record and the count limit does not.
     expect(lineBytes * RETAINED_LINES).toBeGreaterThan(PRUNE_THRESHOLD_BYTES);
     const appends = Math.ceil(PRUNE_THRESHOLD_BYTES / lineBytes) + 1;
 
@@ -78,8 +78,8 @@ describe(appendSnapshot, () => {
 // region | Helpers
 
 /**
- * A snapshot of a deployment large enough that `RETAINED_LINES` of its lines weigh more than the threshold,
- * which is the case the byte bound exists for.
+ * A snapshot of a deployment large enough that `RETAINED_LINES` of its lines together exceed the threshold,
+ * which is the case for which the byte bound exists.
  */
 function buildBulkySnapshot(): SizeSnapshot {
   const files: Record<string, { bytes: number; kind: 'document' }> = {};
@@ -105,7 +105,7 @@ function buildSnapshot(onInvocation: number): SizeSnapshot {
   };
 }
 
-/** The on-invocation total of every line the record holds, in the order that it holds them. */
+/** The on-invocation total of every line that the record contains, in the order in which it contains them. */
 async function readTotals(recordPath: string): Promise<ReadonlyArray<number>> {
   const raw = await readFile(recordPath, 'utf8');
   return raw

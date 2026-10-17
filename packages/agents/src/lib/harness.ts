@@ -87,8 +87,8 @@ export function artifactTargetsHarness(
 
 /**
  * Detects which harnesses are installed for this user, by the presence of their home directories. The argument is a
- * home directory and nothing else: A harness home is created by that harness's own installer, so passing any other
- * base asks a question that this cannot answer.
+ * home directory and nothing else: A harness home is created by that harness's own installer, so the result for any
+ * other base does not show whether a harness is installed.
  */
 export function detectHarnesses(homeDir: string = homedir()): ReadonlyArray<HarnessId> {
   return ALL_HARNESS_IDS.filter((id) => {

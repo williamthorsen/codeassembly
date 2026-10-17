@@ -58,7 +58,7 @@ describe(listDeclaredGuidanceHooks, () => {
     expect(declared.has('impl')).toBe(true);
   });
 
-  it('ignores a declaration in a file that the skill walk passes over', async () => {
+  it('ignores a declaration in a file that the skill walk skips', async () => {
     const skill = await writeSkill(contentDir, 'orchestrate', 'Run the pipeline.\n');
     await writeSkillFile(contentDir, 'orchestrate', '_partials/fragment.md', '<!-- guidance-hook: impl -->\n');
     await writeSkillFile(contentDir, 'orchestrate', '__tests__/case.md', '<!-- guidance-hook: other -->\n');

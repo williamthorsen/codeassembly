@@ -17,7 +17,7 @@ import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 import { uninstallCommand } from '../uninstall.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -59,7 +59,8 @@ describe('guidance installation', () => {
   /**
    * Recreates what a previous version left behind: a `~/.agents/AGENTS.md` and the `shared` manifest tier tracking it.
    * `contentOnDisk` writes different bytes than the tracked hash records, which is how a hand-modified copy is staged;
-   * `linked` stages the entry as a `--link` symlink, which drift detection reads as current whatever its target holds.
+   * `linked` stages the entry as a `--link` symlink, which drift detection reads as current whatever its target
+   * contains.
    */
   async function seedRetiredSharedGuidance(
     options: { contentOnDisk?: string; linked?: boolean } = {},
@@ -223,7 +224,7 @@ describe('guidance installation', () => {
   });
 
   describe('harness-specific guidance', () => {
-    it('installs each harness the guidance file supplied by its own content directory', async () => {
+    it('installs for each harness the guidance file supplied by its own content directory', async () => {
       for (const harnessId of ALL_HARNESS_IDS) {
         await mkdir(path.join(tempDir, HARNESSES[harnessId].homeDir), { recursive: true });
       }
@@ -360,10 +361,10 @@ describe('guidance installation', () => {
       expect(extractAmbientRegionContent(content)).toBe(AMBIENT_REGION_CONTENT);
     });
 
-    // The note lives in the region body rather than in `renderRegion`, so that `extractAmbientRegionContent` returns
+    // The note is in the region body rather than in `renderRegion`, so that `extractAmbientRegionContent` returns
     // it and the splice puts back what it took out. A note added by the wrapper instead would survive extraction and
     // be prepended a second time on re-injection.
-    it('carries a note in the region body through a re-render exactly once', async () => {
+    it('preserves exactly one copy of a note in the region body through a re-render', async () => {
       const claudeHome = await setupClaudeHome();
       await installCommand(makeOptions(), tempDir, fakeGit);
       const claudeMd = path.join(claudeHome, 'CLAUDE.md');

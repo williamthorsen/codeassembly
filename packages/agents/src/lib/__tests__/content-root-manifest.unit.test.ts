@@ -159,8 +159,8 @@ describe(assertSupportedContentFormats, () => {
     );
   });
 
-  // A manifest that will not parse does not have a declared version to compare, so it raises on its own rather than
-  // being folded into the version mismatch that a reader would then be told to fix by upgrading.
+  // A manifest that will not parse does not have a declared version to compare, so the check raises it on its own
+  // rather than folding it into the version mismatch that a reader would then be told to fix by upgrading.
   it('raises a malformed manifest separately from an unsupported format', async () => {
     const malformed = await makeRoot(baseDir, 'malformed', 'format: [1\n');
     const unsupported = await makeRoot(baseDir, 'unsupported', 'format: 3\n');

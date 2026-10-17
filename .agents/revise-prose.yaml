@@ -1,7 +1,7 @@
 rules:
   apostrophes:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: true
     roots:
       - .agents
@@ -26,6 +26,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
+      - packages/agents
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/kb
       - packages/run-core
@@ -39,7 +40,7 @@ rules:
       - vitest.root.config.ts
   capitalization-after-colon:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: false
     roots:
       - .agents
@@ -64,21 +65,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -248,7 +235,7 @@ rules:
       - vitest.root.config.ts
   doc-descriptions:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: false
     roots:
       - .agents
@@ -273,21 +260,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -457,7 +430,7 @@ rules:
       - vitest.root.config.ts
   em-dash:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: true
     roots:
       - .agents
@@ -482,21 +455,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -666,7 +625,7 @@ rules:
       - vitest.root.config.ts
   inline-comments:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: false
     roots:
       - .agents
@@ -691,21 +650,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -875,7 +820,7 @@ rules:
       - vitest.root.config.ts
   line-wrapping:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: false
     roots:
       - .agents
@@ -900,6 +845,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
+      - packages/agents
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/kb
       - packages/run-core
@@ -913,7 +859,7 @@ rules:
       - vitest.root.config.ts
   negative-quantifier:
     version: '2'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: true
     roots:
       - .agents
@@ -938,21 +884,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -1027,7 +959,7 @@ rules:
       - vitest.root.config.ts
   plain-speech:
     version: '9'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: false
     roots:
       - .agents
@@ -1052,6 +984,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
+      - packages/agents
       - packages/guidance/content/skills/_data/title-voice.md
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/subagents/entry-drafter.md
@@ -1067,7 +1000,7 @@ rules:
       - vitest.root.config.ts
   reduced-object-relative:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: true
     roots:
       - .agents
@@ -1092,21 +1025,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -1276,7 +1195,7 @@ rules:
       - vitest.root.config.ts
   second-person:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: true
     roots:
       - .agents
@@ -1301,21 +1220,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -1485,7 +1390,7 @@ rules:
       - vitest.root.config.ts
   sentence-case:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: false
     roots:
       - .agents
@@ -1510,21 +1415,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -1694,7 +1585,7 @@ rules:
       - vitest.root.config.ts
   so:
     version: '1'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: true
     roots:
       - .agents
@@ -1719,21 +1610,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
-      - packages/agents/.meta
-      - packages/agents/.readyup
-      - packages/agents/LICENSE
-      - packages/agents/README.md
-      - packages/agents/bin
-      - packages/agents/docs
-      - packages/agents/eslint.config.ts
-      - packages/agents/package.json
-      - packages/agents/scripts
-      - packages/agents/src/__tests__
-      - packages/agents/src/cli.ts
-      - packages/agents/src/commands
-      - packages/agents/src/lib
-      - packages/agents/src/shared
-      - packages/agents/tsconfig.json
+      - packages/agents
       - packages/fleet/.prettierignore
       - packages/fleet/README.md
       - packages/fleet/eslint.config.ts
@@ -1903,7 +1780,7 @@ rules:
       - vitest.root.config.ts
   where:
     version: '2'
-    swept-at: 2026-10-16
+    swept-at: 2026-10-17
     detected: true
     roots:
       - .agents
@@ -1928,6 +1805,7 @@ rules:
       - eslint.config.ts
       - lefthook.yml
       - package.json
+      - packages/agents
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/kb
       - packages/run-core
@@ -1940,6 +1818,11 @@ rules:
       - vitest.config.ts
       - vitest.root.config.ts
 rejections:
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/agents/src/commands/__tests__/install-guidance.unit.test.ts
+    phrase: My own notes.
+    ground: 'not the construction: `own` follows the possessive `My`, and the string is fixture data'
   - rule: capitalization-after-colon
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-review.md
@@ -1965,11 +1848,6 @@ rejections:
     file: docs/plans/2026-03-06-catwalk-differ-plan.md
     phrase: // Diff types — produced by catwalk-differ.ts
     ground: 'not prose: code inside a sample block that the plan directs to paste verbatim'
-  - rule: em-dash
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: '| `repository.slug` | string | — |'
-    ground: 'not prose: a table placeholder standing for an absent default rather than punctuation'
   - rule: em-dash
     rule-version: '1'
     file: packages/agents/src/commands/library-list.ts
@@ -2077,46 +1955,6 @@ rejections:
     ground: 'not prose: fixture content inside a test data literal'
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
-    phrase: No outbound Markdown links.
-    ground: a status label without a finite verb, left as a verbless label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/content/__tests__/shared-guidance-references.unit.test.ts
-    phrase: in no particular order
-    ground: fixed idiom
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/README.md
-    phrase: 'Bare title (no prefix):'
-    ground: verbless label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/README.md
-    phrase: is no different from authoring library content
-    ground: 'not the construction: "no" modifies an adjective, not a noun'
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/README.md
-    phrase: No `{pr_number}`
-    ground: verbless table cell
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/README.md
-    phrase: No `{scope}`
-    ground: verbless table cell
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/README.md
-    phrase: No `{ticket_ref}`
-    ground: verbless table cell
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/README.md
-    phrase: no personal doctrine, no coupling to one author's environment.
-    ground: verbless fragment in a table cell
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/agents/src/commands/__tests__/install-retraction.unit.test.ts
     phrase: Targeting no harnesses (declared).
     ground: 'not prose: the test asserts on this literal CLI output, and the CLI source that emits it is outside the batch'
@@ -2125,31 +1963,6 @@ rejections:
     file: packages/agents/src/commands/__tests__/install-sources.unit.test.ts
     phrase: Org claude preamble, no ambient region.
     ground: 'not prose: fixture content'
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/__tests__/install.unit.test.ts
-    phrase: No skills directory found
-    ground: "not prose: an assertion literal matched against the command's warning output"
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/configure-hooks.ts
-    phrase: No target harnesses detected.
-    ground: a status label without a finite verb, left as a verbless label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/install.ts
-    phrase: (no installable entries)
-    ground: a verbless parenthetical label in a status line
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/install.ts
-    phrase: No skills directory found at
-    ground: a status label without a finite verb, left as a verbless label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/install.ts
-    phrase: 'Single-file non-`.md` skill entries: plain copy, no expansion.'
-    ground: a verbless label comment
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/agents/src/commands/status.ts
@@ -2162,21 +1975,6 @@ rejections:
     ground: a verbless describe label
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/agents/src/commands/sync/__tests__/sync-guidance-hooks.unit.test.ts
-    phrase: Prose carrying no directive.
-    ground: 'not prose: fixture body content written into a test skill'
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: no ambient region
-    ground: 'not prose: the test asserts on this literal substring of CLI output'
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: Targeting no harnesses (declared).
-    ground: 'not prose: the test asserts on this literal CLI output, and the CLI source that emits it is outside the batch'
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/agents/src/commands/uninstall.ts
     phrase: No installed items tracked for this harness.
     ground: a status label without a finite verb, left as a verbless label
@@ -2185,11 +1983,6 @@ rejections:
     file: packages/agents/src/commands/uninstall.ts
     phrase: No target harnesses detected.
     ground: a status label without a finite verb, left as a verbless label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/agents/src/commands/validate.ts
-    phrase: 'No content root to validate:'
-    ground: a verbless label before the colon
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/agents/src/commands/validate.ts
@@ -3421,100 +3214,25 @@ rejections:
     phrase: "ENOENT: no such file or directory, open '${path}'"
     ground: a fixture reproducing the system error text
   - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/.readyup/lib/guidance-constraints.ts
-    phrase: It reaches into no harness-owned directory
-    ground: settled vocabulary in this module for naming a path under a harness-owned directory; the same phrasing states the check name, the function description, and the kit's fix text
+    rule-version: '9'
+    file: packages/agents/src/lib/__tests__/skill-transform.unit.test.ts
+    phrase: makes that unauthorable rather than live on one harness and dead on the other
+    ground: '`live` is a settled term, and the sentence parses on one pass'
   - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
-    phrase: conventions travel through the skill chain
-    ground: the repair would resolve an ambiguity that the original leaves open; rejected by the author
+    rule-version: '9'
+    file: packages/agents/src/lib/__tests__/skill-transform.unit.test.ts
+    phrase: would pass a gate
+    ground: '`gate` is a settled term'
   - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: A drafter holding its reasons for a bullet defends the bullet.
-    ground: the repair would pick the memory reading, and the next sentence suggests the original means attachment as well
+    rule-version: '9'
+    file: packages/agents/src/lib/subagent-transform.ts
+    phrase: because they answer different questions
+    ground: a common idiom, not a figure built for the sentence; the next clause states each field's purpose literally
   - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: when every candidate earns its place, keep them all
-    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/commands/sync/__tests__/report.unit.test.ts
-    phrase: a binding reaches no body at all
-    ground: 'settled domain term: the advisory kind is `bound-unreached`, and the test name echoes that vocabulary'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/commands/sync/__tests__/sync-guidance-hooks.unit.test.ts
-    phrase: Prose carrying no directive.
-    ground: 'not prose: fixture body text written into a temp skill file'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/commands/sync/__tests__/sync-packages.tool.test.ts
-    phrase: a source shipping no overlay
-    ground: 'settled corpus vocabulary: `ship` here means to include in the distributed package, not the release sense that the word list flags'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: retract source support ${path.join(sourcesRoot, 'org')} (source ships none)
-    ground: an expected-output literal composed in sync's own source; `ships` here is the distribution sense rather than the release sense the word list names
-  - rule: plain-speech
-    rule-version: '7'
-    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
-    phrase: would beg the question
-    ground: 'the developer kept the phrase: it is used in its technical sense from logic'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/ambient-region.ts
-    phrase: text that the region does not own back into it
-    ground: the motion sense of `carry`, not the possession sense that the word list names
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/artifact-types.ts
-    phrase: live here, so no consumer hardcodes the spelling
-    ground: '`live` is settled vocabulary named by the calibration'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/content-resolver.ts
-    phrase: two levels up reaches the directory containing
-    ground: the traversal sense, not the delivery sense that the word list names
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/content-validation.ts
-    phrase: carries the key into deployed output
-    ground: the transport sense with a destination, not `carry` standing in for contains
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/content-validation.ts
-    phrase: surfaces naming the harnesses that it affects
-    ground: intransitive `surface`, not the transitive reporting sense that the word list names
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/content-validation.ts
-    phrase: that only a whole root can see
-    ground: settled idiom for a check's scope of visibility
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/declared-sources.ts
-    phrase: the order is load-bearing
-    ground: settled engineering vocabulary in this corpus, not a figure built for the sentence
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/source-validation.ts
-    phrase: when no declared artifact happens to reach into it
-    ground: 'the spatial sense: the resolver descends into the directory'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/agents/src/lib/tool-name-rewriter.ts
-    phrase: throws `ToolNameRewriteError`
-    ground: the actor is the documented function; "an input throws X" is the settled doc idiom
-  - rule: plain-speech
-    rule-version: '7'
-    file: packages/agents/src/relay-hook-event/__tests__/cli.tool.test.ts
-    phrase: would beg the question
-    ground: 'the developer kept the phrase: it is used in its technical sense from logic'
+    rule-version: '9'
+    file: packages/agents/src/lib/test-utils/make-fake-git.ts
+    phrase: a function field answers per argument
+    ground: the verb matches the noun that the interface's type names (`FakeGitAnswers`)
   - rule: plain-speech
     rule-version: '6'
     file: packages/guidance/content/skills/_data/design-priorities.md
@@ -3662,164 +3380,34 @@ rejections:
     ground: 'not the construction: a reduced passive, not an object relative'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/.readyup/lib/guidance-constraints.ts
-    phrase: '`~/.claude/skills/` and `.claude/` name directories belonging to the same harness'
-    ground: "not the construction: `name` is the clause's own verb, not a relative clause's"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
-    phrase: Renders every shipped rulebook the way `sync` does
-    ground: 'outside the rule: a manner adjunct whose gap fills no argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
-    phrase: Resolving every link the way the installer does
-    ground: 'outside the rule: a manner adjunct whose gap fills no argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
-    phrase: Skills reach their inlined output-shaping specs
-    ground: 'not the construction: "reach" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
-    phrase: the injected content's shallowest one renders
-    ground: 'not the construction: "renders" is the sentence''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
-    phrase: whichever rulebook the local binding supplied
-    ground: 'outside the rule: a fused relative headed by "whichever", which admits no relativizer'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
-    phrase: granting the cutter license to reword would lose
-    ground: 'not the construction: "cutter" is the indirect object of "granting", and the clause has no relative gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
-    phrase: the last three write artifacts
-    ground: 'not the construction: "write" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
-    phrase: wherever it appears
-    ground: 'outside the rule: an adverbial free relative, not a lexical head with an argument gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/shared-guidance-references.unit.test.ts
-    phrase: This pins an exclusion beside the inclusion above.
-    ground: 'not the construction: no relative clause in the sentence'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: renders wherever a support entry does
-    ground: 'not the construction: "wherever" is no lexical head and the clause has no argument gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: these two fixtures are what prove the walk still judges correctly
-    ground: 'not the construction: "what" is a fused head, and "prove" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: codebase it changed
-    ground: 'not the construction: "which part of the codebase it changed" is an embedded interrogative, which admits no relativizer'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: entry a few seconds
-    ground: 'not the construction: "give the entry a few seconds" is ditransitive, with both noun phrases arguments of the same verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/content/subagents/lede-cutter.md
-    phrase: worth the reader's seconds
-    ground: 'not the construction: "worth" heads a predicative adjective phrase, and "the reader''s seconds" is its complement'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: any combination of the supported tokens listed below
-    ground: "not the construction: the head's modifier is a passive participle"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: At those moments no skill is running
-    ground: 'not the construction: a fronted prepositional phrase followed by the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/agents/README.md
     phrase: grouped by file the way `validate` reports a content root
     ground: 'outside the rule: an adjunct relative on `the way`, whose gap fills no argument position'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/README.md
-    phrase: In the home domain the host is each targeted harness's guidance file
-    ground: 'not the construction: a fronted prepositional phrase followed by the main clause'
+    file: packages/agents/src/api.ts
+    phrase: content root's deployed
+    ground: 'not the construction: "deployed" is a participle modifying "files"'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/README.md
-    phrase: In the repo domain the host is each targeted harness's machine-local project guidance file
-    ground: 'not the construction: a fronted prepositional phrase followed by the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: pays only the second run's startup
-    ground: "not the construction: `pays` is the clause's own verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: so instead a producer says where its content lives
-    ground: "not the construction: `says` is the clause's own verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: The criteria deciding which disposition an artifact takes
-    ground: 'not the construction: an embedded interrogative, not a relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: The last two are not defects.
-    ground: "not the construction: the verb is the sentence's own"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: The three tiers therefore state three different things
-    ground: "not the construction: the verb is the sentence's own"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: two packages that ship the same slug resolve by precedence
-    ground: 'not the construction: the relativizer `that` is already present'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: whether or not the rulebook names the route
-    ground: 'not the construction: a complement clause, not a relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: within a tier the last declared wins
-    ground: 'not the construction: a fronted prepositional phrase followed by the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/scripts/bundle-skill-helpers.ts
-    phrase: commit the regenerated bundles
-    ground: 'not the construction: a coordinated imperative with its own object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/scripts/test-utils/make-emit-event-smoke-test.ts
-    phrase: expected exactly one appended line
-    ground: 'not the construction: `appended` is a participial modifier inside the noun phrase `one appended line`, not a verb with an object gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/scripts/test-utils/make-relay-hook-event-smoke-test.ts
-    phrase: expected exactly one appended line
-    ground: 'not the construction: `appended` is a participial modifier inside the noun phrase `one appended line`, not a verb with an object gap'
+    file: packages/agents/src/api.ts
+    phrase: documents each included file reaches
+    ground: 'not the construction: an embedded "how many" question, not a relative clause, and it cannot take a relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/cli.ts
-    phrase: Print the hook entries
-    ground: "not the construction: `Print` is the help line's leading verb, not a head noun"
+    phrase: Bundle the helpers declared
+    ground: 'not the construction: a passive participle with an agentive by-phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/cli.ts
+    phrase: List each declared source's
+    ground: 'not the construction: "declared" is an adjectival participle in a possessive'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/cli.ts
+    phrase: Rank the last recorded
+    ground: 'not the construction: "recorded" is a participle modifying "deployment"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/cli.ts
@@ -3828,13 +3416,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/cli.ts
-    phrase: Write the session-lifecycle hook entries
-    ground: "not the construction: `Write` is the help line's leading verb, not a head noun, and `entries` is its object rather than an embedded verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/__tests__/configure-hooks.unit.test.ts
-    phrase: what the render functions emit
-    ground: 'not the construction: a fused head (`what`) is its own relative pronoun and admits no relativizer'
+    phrase: Write the home domain from an installation not designated
+    ground: 'not the construction: a passive participle with an agentive by-phrase'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/commands/__tests__/install.unit.test.ts
@@ -3842,44 +3425,9 @@ rejections:
     ground: "not the construction: a prepositional phrase whose object is `the shell scripts`, with `scripts` a noun rather than the embedded clause's verb"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/commands/__tests__/library-list.unit.test.ts
-    phrase: With gaps of 2 the description starts at column 8 + 2 + 4 + 2 + 8 + 2 = 26
-    ground: 'not the construction: `2` heads no relative clause; the numeral closes the adjunct `With gaps of 2` and `the description starts` is the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/__tests__/status.unit.test.ts
-    phrase: alongside the installed items
-    ground: 'not the construction: a prepositional phrase whose object is `the installed items`, with `items` a noun rather than a verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/configure-hooks.ts
-    phrase: No target harnesses detected.
-    ground: 'not the construction: the head is a past participle modifying `harnesses`, not an embedded clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/configure-hooks.ts
-    phrase: On Rovo, prints the restart reminder after a change
-    ground: "not the construction: `On Rovo` is a prepositional phrase and what follows is the sentence's own main clause"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/configure-hooks.ts
-    phrase: One relayed hook's installed state in a harness config
-    ground: 'not the construction: a noun phrase with two participial modifiers and no embedded clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/init.ts
-    phrase: The home directory to scaffold under
-    ground: 'not the construction: an infinitival relative, with no finite embedded clause and no relativizer to restore'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/agents/src/commands/install.ts
     phrase: capture the existing destination's region content first
     ground: 'not the construction: the detector split a possessive noun phrase; there is no relative clause and no gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/status.ts
-    phrase: for the deployed guidance's reported age
-    ground: 'not the construction: a possessive noun phrase with a participial modifier, no embedded clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/commands/status.ts
@@ -3895,21 +3443,6 @@ rejections:
     file: packages/agents/src/commands/sync/__tests__/report.unit.test.ts
     phrase: each guidance-hook advisory's rendered line
     ground: 'not the construction: a possessive noun phrase with no relative clause and no gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync-global.unit.test.ts
-    phrase: The three ticket-emitting skills share the ticket-authoring partials
-    ground: "not the construction: `share` is the sentence's own main verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: when no home declaration exists to act on
-    ground: 'not the construction: an infinitival modifier with no embedded subject, so no relativizer restores to it'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: when the legacy GLOBAL.md contains only sync-owned blocks
-    ground: 'not the construction: a `when` clause whose verb is its own, with no relative gap'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/commands/sync/ambient-hosts.ts
@@ -3947,11 +3480,6 @@ rejections:
     ground: 'outside the rule: a fused-head free relative, which admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/commands/sync/legacy-retirement.ts
-    phrase: would otherwise carry the stale blocks into the new location for good
-    ground: "not the construction: `carry` is the clause's own verb, used in its motion sense"
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/agents/src/commands/sync/owned-artifacts.ts
     phrase: the scans that recover the owned skills and subagents
     ground: 'not the construction: the relative clause already has an overt `that`'
@@ -3960,16 +3488,6 @@ rejections:
     file: packages/agents/src/commands/sync/report.ts
     phrase: a declaration gets checked before it is committed to
     ground: "not the construction: `gets checked` is the clause's own passive verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/report.ts
-    phrase: a host whose ambient region no transform may touch
-    ground: 'not the construction: `whose ambient region` is an overt relativizer fronting the gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/report.ts
-    phrase: each dropped harness whose ambient host the sweep declines to touch
-    ground: 'not the construction: `whose ambient host` is an overt relativizer fronting the gap'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/commands/sync/report.ts
@@ -3997,11 +3515,6 @@ rejections:
     ground: "not the construction: `share` is the sentence's own verb and `skills dirs` its object"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/commands/sync/sync.ts
-    phrase: unreadable one fails
-    ground: "not the construction: `one` is the sentence's subject and `fails` its own verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/agents/src/commands/uninstall.ts
     phrase: No installed items tracked for this harness.
     ground: 'not the construction: `tracked` is a past participle modifying `items`, not an embedded clause'
@@ -4012,19 +3525,124 @@ rejections:
     ground: 'not the construction: the head is a past participle modifying `harnesses`'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/commands/validate.ts
-    phrase: When neither yields one, the error names both routes
-    ground: "not the construction: the detector's head and subject were parts of a gerund phrase; the sentence was separately recast under plain speech"
+    file: packages/agents/src/deployed-sizes/__tests__/append-snapshot.unit.test.ts
+    phrase: Without the byte bound
+    ground: "not the construction: 'bound' is the noun ending 'Without the byte bound', and 'the prune would return' is the main clause"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
-    phrase: back every envelope appended
-    ground: 'not the construction: `appended` is a passive participle, and `back` is a particle, not a head noun'
+    file: packages/agents/src/deployed-sizes/__tests__/build-size-report.unit.test.ts
+    phrase: attribution assertions need
+    ground: "not the construction: 'all that the attribution assertions need' already contains the relativizer"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/emit-event/cli.ts
-    phrase: failure the function emits
-    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+    file: packages/agents/src/deployed-sizes/__tests__/build-size-report.unit.test.ts
+    phrase: changed partials explain
+    ground: "outside the rule: 'what its changed partials explain' is a fused-head relative"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/__tests__/build-size-report.unit.test.ts
+    phrase: previous bytes negated
+    ground: "not the construction: 'negated' is a participle modifying 'its previous bytes'"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/__tests__/build-size-report.unit.test.ts
+    phrase: state each unit's
+    ground: "not the construction: 'state' is the main verb, and 'each unit's own bytes' is its object"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/__tests__/measure-deployment.unit.test.ts
+    phrase: rewrote its other keys
+    ground: "not the construction: 'rewrote' is the verb of the 'whose overlay' relative clause, and 'its other keys' is its object"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/__tests__/measure-expansions.unit.test.ts
+    phrase: bytes it expands
+    ground: 'not prose: fixture file content inside a data literal whose byte length the tests measure'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/__tests__/should-append.unit.test.ts
+    phrase: file the same size
+    ground: "not the construction: 'leaves its file the same size' is a resultative complement, not a relative clause"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/__tests__/should-append.unit.test.ts
+    phrase: reach the attribution cases
+    ground: "not the construction: the clause is introduced by 'whose'"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/append-snapshot.ts
+    phrase: event log's is
+    ground: 'not the construction: a comparative clause, not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/append-snapshot.ts
+    phrase: moment it runs
+    ground: 'outside the rule: a temporal adjunct relative, whose gap is not in an argument position'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/append-snapshot.ts
+    phrase: whenever a prune returns
+    ground: "not the construction: 'whenever' is a conjunction, not a head noun"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/build-size-report.ts
+    phrase: changed expansions in this document's closure account
+    ground: "not the construction: the relativizer 'that' is already present"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/build-size-report.ts
+    phrase: current closures would count
+    ground: "not the construction: 'would count' is the main verb of the clause"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/build-size-report.ts
+    phrase: installed dependency's artifact
+    ground: 'not the construction: a possessive noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/build-size-report.ts
+    phrase: least one document's
+    ground: "not the construction: 'at least one' is a quantifier phrase"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/build-size-report.ts
+    phrase: previous bytes negated
+    ground: "not the construction: 'negated' is a participle"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/measure-deployment.ts
+    phrase: not anything invokes
+    ground: "not the construction: 'whether or not' clause, not a relative clause"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/measure-expansions.ts
+    phrase: content root's include
+    ground: 'not the construction: a possessive noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/should-append.ts
+    phrase: feature branch's deployment
+    ground: 'not the construction: a possessive noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/should-append.ts
+    phrase: state the same files
+    ground: "not the construction: 'state' is the main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/should-append.ts
+    phrase: state the same totals
+    ground: "not the construction: 'state' is the main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/should-append.ts
+    phrase: state the same units
+    ground: "not the construction: 'state' is the main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/agents/src/deployed-sizes/types.ts
+    phrase: report derives compare
+    ground: "not the construction: the relativizer 'that' is already present"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/__tests__/ambient-region.unit.test.ts
@@ -4108,18 +3726,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/codeassembly-schema.ts
-    phrase: a `{ name, path }` pair with any unknown keys preserved
-    ground: 'not the construction: `preserved` is a participle, not an embedded clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/codeassembly-schema.ts
     phrase: Which tier pair a declaration file belongs to.
     ground: an embedded wh-interrogative clause, not a relative clause on a lexical head
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/content-validation.ts
-    phrase: whatever value it holds
-    ground: fused head (whatever-series), which admits no relativizer and is outside the rule
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/declared-sources.ts
@@ -4130,11 +3738,6 @@ rejections:
     file: packages/agents/src/lib/dependency-frontmatter.ts
     phrase: which namespace their slugs resolve against
     ground: 'not the construction: an indirect question, with no external lexical head'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/dependency-resolver.ts
-    phrase: a library collection's resolved directory
-    ground: 'not the construction: "resolved" is a participial adjective'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/dependency-resolver.ts
@@ -4162,11 +3765,6 @@ rejections:
     ground: 'not the construction: "without one" plus a main clause'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/lib/directive-expander.ts
-    phrase: This preserves the previous expander's behavior
-    ground: "not the construction: the candidate's verb is the sentence's own"
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/agents/src/lib/guidance-hooks.ts
     phrase: A body with its guidance hooks resolved
     ground: 'not the construction: an absolute with a passive participle'
@@ -4175,11 +3773,6 @@ rejections:
     file: packages/agents/src/lib/guidance-hooks.ts
     phrase: to tell them which one they wrote
     ground: 'not the construction: an embedded interrogative'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/harness.ts
-    phrase: harnessId The harness to resolve paths
-    ground: 'not the construction: a `@param` tag followed by an infinitival'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/home-provenance.ts
@@ -4227,29 +3820,9 @@ rejections:
     ground: not the construction; `unchanged` is a predicative adjective, not a relative clause
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/agents/src/lib/rendered-tree.ts
-    phrase: the one place a rendered tree meets the filesystem
-    ground: adjunct relative on `place`; the gap fills no argument position
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/rovo-config-hooks.ts
-    phrase: match the desired entries
-    ground: not the construction; `match` is the sentence's own verb
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/rovo-config-hooks.ts
-    phrase: more than this module writes
-    ground: not the construction; a comparative clause with no head noun
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/agents/src/lib/rovo-config-hooks.ts
     phrase: the owned items deleted
     ground: not the construction; `deleted` is a passive participle, not a relative clause
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/rulebook-deploy.ts
-    phrase: which version it holds
-    ground: embedded interrogative after `read`, not a relative clause
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/rulebook-schema.ts
@@ -4265,16 +3838,6 @@ rejections:
     file: packages/agents/src/lib/running-package.ts
     phrase: running package's declared
     ground: not the construction; a possessive followed by a participial modifier
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/shared-guidance-retirement.ts
-    phrase: whichever the user reaches for
-    ground: fused head; `whichever` is its own relative pronoun and admits no relativizer
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/skill-transform.ts
-    phrase: entry the way an install materializes
-    ground: adjunct relative on `the way`; the gap fills no argument position
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/lib/skill-transform.ts
@@ -4300,31 +3863,6 @@ rejections:
     file: packages/agents/src/lib/support-deploy.ts
     phrase: a scope directory emptied by its final package
     ground: 'not the construction: a passive participle modifier'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/lib/support-deploy.ts
-    phrase: holds something a source claims
-    ground: 'outside the rule: an indefinite-pronoun head'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/relay-hook-event/__tests__/cli.tool.test.ts
-    phrase: back every envelope appended
-    ground: 'not the construction: `appended` is a passive participle, and `back` is a particle, not a head noun'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/relay-hook-event/cli.ts
-    phrase: failure the function emits
-    ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/relay-hook-event/cli.ts
-    phrase: not a string counts
-    ground: "not the construction: `counts` is the sentence's own verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/agents/src/relay-hook-event/types.ts
-    phrase: payload keys copied
-    ground: 'not the construction: a passive participle modifying the noun, with no embedded subject'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/src/shared/parse-remote-url.ts
@@ -7457,21 +6995,6 @@ rejections:
     ground: "not the construction: `this repo's tsconfigs` is the subject of a main clause, and `declare` is that clause's own verb"
   - rule: second-person
     rule-version: '1'
-    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
-    phrase: you never add a candidate
-    ground: "not prose: a literal pinned to the lede-cutter subagent body's wording"
-  - rule: second-person
-    rule-version: '1'
-    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
-    phrase: you never merge two candidates
-    ground: "not prose: a literal pinned to the lede-cutter subagent body's wording"
-  - rule: second-person
-    rule-version: '1'
-    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
-    phrase: you never reword a candidate
-    ground: "not prose: a literal pinned to the lede-cutter subagent body's own wording, which the assertion matches character for character"
-  - rule: second-person
-    rule-version: '1'
     file: packages/agents/src/lib/__tests__/marker-injector.unit.test.ts
     phrase: /Users/you/repos/org-guidance/content
     ground: 'not prose: a home-directory placeholder inside an asserted fixture path'
@@ -7842,134 +7365,9 @@ rejections:
     ground: states a direct result; the `so` it repeated was the bare one at line 7, now repaired to `so that`, and three sentences separate it from the one at line 3
   - rule: so
     rule-version: '1'
-    file: packages/agents/content/__tests__/content-link-resolution.unit.test.ts
-    phrase: The deployed tree unions library content
-    ground: the `so` it repeated was repaired earlier in the block; this lone `so` states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
-    phrase: Hooks resolve after includes expand, so such a hook fills inside the host
-    ground: states a direct result, and the previous `so` is in another function's doc comment
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/injection-point-placement.unit.test.ts
-    phrase: turns them into example text, so they contribute no token
-    ground: states a direct result, and the previous `so` is in another function's doc comment
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/lede-cutter-contract.unit.test.ts
-    phrase: A redispatch hands the cutter a code and nothing else, so a code that the caller sends and this file does not
-    ground: states a direct result; the nearest earlier `so` is in a separate assertion message
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
-    phrase: write artifacts that carry no frontmatter at all, so for them the marker opens the file
-    ground: states a direct result, and more than three sentences separate it from the previous clause-joining `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/shared-guidance-references.unit.test.ts
-    phrase: Shared guidance serves every harness, so a skill received by only some of them is as dead a pointer there as one that does not exist.
-    ground: states a direct result, and more than three sentences separate it from the previous clause-joining `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: A heading opens a section that runs until the next heading of its level or shallower, so the open headings at any point are the chain
-    ground: states a direct result; the nearest earlier `so` is in another function's doc block
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: A support entry is a directory or a plain file, so the walk decides on what the entry is rather than on its name
-    ground: states a direct result; the nearest earlier `so` is in another function's doc block
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: A token is attributed to its own section and to every section enclosing it, so a link to an ancestor heading carries the same requirement
-    ground: states a direct result; the only earlier `so` in this block opens a sentence and joins no clauses
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: is listed under both, so a host linking either heading carries the same requirement
-    ground: states a direct result; the nearest earlier `so` is in another function's doc block
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: resolves a support entry's tokens, so it ships as a rendered pointer to nothing
-    ground: a lone `so` stating a direct result once the earlier repeat was repaired
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/__tests__/support-entry-tokens.unit.test.ts
-    phrase: The assertion above only ever reports what it fails to find, so a walk that silently returned nothing would leave the suite green and the guard gone.
-    ground: states a direct result; the nearest earlier `so` is in a separate assertion message rather than this paragraph
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/content/skills/emit-event/SKILL.md
-    phrase: marks the resume, so the skill has nothing to add
-    ground: the earlier so on line 48 is now 'so that', so this is a lone so after a comma that states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: '`install` reads no `guidance-hooks:` block, so every hook that it meets is unbound'
-    ground: states a direct result; the `so` it repeated was the bare one at line 240, now repaired to `so that`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: deploy into a namespace of their own, under `skills/_sources/<source-name>/`, so the built-in library and any number of packages can each ship
-    ground: states a direct result, and the repairs at lines 405 and 407 leave more than three sentences before it
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: is reported and skipped, so a misquoted template falls through to the next source
-    ground: states a direct result; the `so` it repeated was the bare one at line 607, now repaired to `so that`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: Its catalog is read from the filesystem, so a version that adds an artifact deploys it
-    ground: states a direct result, and repairing the reported repeat at line 381 leaves three sentences before it
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: marks a computed directive rather than a literal slug, so the value must be YAML-quoted
-    ground: states a direct result; the `so` it repeated was the bare one in the same line, now repaired to `so that`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: No whitespace pass runs after substitution, so each group contains its own separators
-    ground: states a direct result, and repairing the reported repeat at line 613 leaves more than three sentences before it
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: Re-running `sync` on unchanged content rewrites nothing, so a repo with reason to wire both
-    ground: states a direct result, and the repair at line 543 leaves more than three sentences before it
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: so it rises when content authored against the new contract would deploy wrongly
-    ground: states a direct result, and repairing the reported repeat at line 453 leaves three sentences before it
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: still deploys by its own `delivery:`, so binding it and declaring it are one act
-    ground: states a direct result, and repairing the reported repeat at line 230 leaves more than three sentences before it
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: The attempt is recorded only past the designated-writer guard, so an installation refused by the guard
-    ground: states a direct result, and repairing the reported repeat earlier in the line leaves three sentences before it
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/scripts/bundle-skill-helpers.ts
-    phrase: The bundles are tracked files, so `--check` guards them
-    ground: states a direct result, with more than three sentences since the nearest clause-joining `so`
-  - rule: so
-    rule-version: '1'
     file: packages/agents/src/commands/__tests__/init.unit.test.ts
     phrase: An empty list is honored as "target nothing", so scaffolding one under a comment promising the fallback would disable every deployment for a reader who uncommented it verbatim.
     ground: a lone `so` stating a direct result once the earlier repeat in the same file was repaired
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/commands/__tests__/install-prune.unit.test.ts
-    phrase: without a `SKILL.md`, so install treats them as support directories
-    ground: a lone `so` stating a direct result once the earlier repeat in the same comment was repaired
   - rule: so
     rule-version: '1'
     file: packages/agents/src/commands/sync/ambient-hosts.ts
@@ -7992,18 +7390,8 @@ rejections:
     ground: states a direct result, and it is the only clause-joining `so` in its doc comment
   - rule: so
     rule-version: '1'
-    file: packages/agents/src/commands/sync/harness-retraction.ts
-    phrase: A dropped harness keeps no source, so nothing under the root survives and the listing collapses to the root.
-    ground: states a direct result; the nearest earlier `so` is in a separate doc comment, not the same paragraph
-  - rule: so
-    rule-version: '1'
     file: packages/agents/src/commands/sync/owned-artifacts.ts
     phrase: Reads only the declared-skill marker, so it never claims a rulebook-skill dir or a hand-authored skill.
-    ground: states a direct result, and it is the only clause-joining `so` in its doc comment
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/pre-write-gates.ts
-    phrase: Bound guidance is spliced as rendered, so a hook inside it has no pass left that could fill it.
     ground: states a direct result, and it is the only clause-joining `so` in its doc comment
   - rule: so
     rule-version: '1'
@@ -8033,11 +7421,6 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/agents/src/commands/sync/sync.ts
-    phrase: A binding seeds the closure, so a bound rulebook resolving from nowhere belongs in the declared set skipped by the walk.
-    ground: states a direct result, with more than three sentences since the nearest clause-joining `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/sync.ts
     phrase: each reading only its own marker, so neither ever claims the other's
     ground: states a direct result; the two nearer `so`s were repaired to `so that`
   - rule: so
@@ -8055,16 +7438,6 @@ rejections:
     file: packages/agents/src/commands/sync/sync.ts
     phrase: would clobber, so reject the overlap before any write
     ground: states a direct result, and three sentences separate it from the nearest clause-joining `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/commands/test-utils/build-content-tree.ts
-    phrase: contains a relative `../_data/` link, so the install exercises path
-    ground: states a direct result; the preceding `so` was repaired to `so that`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/emit-event/cli.ts
-    phrase: Both sides are resolved through `realpathSync`, so a symlinked invocation path still matches.
-    ground: 'outside the rule: a lone `so` stating a direct result; the merged entry points keep the same sentence'
   - rule: so
     rule-version: '1'
     file: packages/agents/src/lib/anchor-resolution.ts
@@ -8133,11 +7506,6 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/agents/src/lib/dependency-resolver.ts
-    phrase: is not dropped, so it still errors
-    ground: after the repair at line 165, three sentences separate it from the previous clause-joining `so`, and it states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/dependency-resolver.ts
     phrase: Only a same-kind, same-slug token self-collides, so filter per kind.
     ground: lone `so` within its comment, stating a direct result
   - rule: so
@@ -8182,50 +7550,8 @@ rejections:
     ground: after the repairs above, four sentences separate it from the previous clause-joining `so`
   - rule: so
     rule-version: '1'
-    file: packages/agents/src/lib/library-catalog.ts
-    phrase: even when it holds a `SKILL.md`, so it never
-    ground: more than three sentences separate it from the previous clause-joining `so`, and it states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/library-catalog.ts
-    phrase: The rule decides what ships, so
-    ground: after the repairs at lines 75 and 78, three sentences separate it from the previous clause-joining `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/package-sources.ts
-    phrase: A suggestion is never worth failing a run for, so any surprise here yields no advice rather than an error.
-    ground: lone direct result in its own inline comment, separated from the previous `so` by code
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/path-rewriter.ts
-    phrase: |-
-      so a
-        // substitution value carrying one of them would be rewritten into the match
-    ground: direct result, in a separate inline comment from the previous `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/prompts-yml-region.ts
-    phrase: An empty flow sequence holds no foreign items, so rewrite it
-    ground: a lone `so` that states a direct result
-  - rule: so
-    rule-version: '1'
     file: packages/agents/src/lib/rulebook-transform.ts
     phrase: so it identifies a rulebook the way it identifies them
-    ground: a lone `so` that states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/skill-deploy.ts
-    phrase: either it names no harnesses (so all of them) or lists this one
-    ground: 'outside the rule: the parenthetical joins no clause, and read as one it states a direct result'
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/skill-transform.ts
-    phrase: so the pass that checks a support entry and the pass that ships it run the same one
-    ground: direct result; after the repairs above, five sentences separate it from the previous clause-joining `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/agents/src/lib/support-deploy.ts
-    phrase: so no name is freed for another to claim
     ground: a lone `so` that states a direct result
   - rule: so
     rule-version: '1'
@@ -8742,355 +8068,395 @@ rejections:
     phrase: where each cell is either a hex color or empty string for transparency
     ground: 'definition: states what a value in the preceding expression stands for'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/.readyup/kits/default.ts
     phrase: Names where a document's imports point
-    ground: 'names a place: the filesystem target that an import resolves to'
+    ground: 'where names a place: the filesystem target of the imports'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/.readyup/lib/guidance-import.ts
     phrase: says nothing about where it points
-    ground: 'names a place: the directory an import resolves against'
+    ground: 'where names a place: the path to which an import resolves'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/.readyup/lib/guidance-import.ts
-    phrase: Where a document's raw `@` imports point
-    ground: 'names a place: the targets that the imports resolve to'
+    rule-version: '2'
+    file: packages/agents/docs/bundling-helpers.md
+    phrase: where none of its dependencies are installed
+    ground: where names a place (the directory)
   - rule: where
-    rule-version: '1'
-    file: packages/agents/content/__tests__/sealed-artifact-marker-reach.unit.test.ts
-    phrase: which are in list items where an include directive cannot be placed
-    ground: 'outside the rule: the word names a place, the list items'
+    rule-version: '2'
+    file: packages/agents/docs/content-api.md
+    phrase: where a harness deploys
+    ground: where names a place (the deployment location)
   - rule: where
-    rule-version: '1'
-    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
-    phrase: where `rewriteMarkdownPaths` resolves a link
-    ground: 'outside the rule: the word names a place, the deployed guidance file'
+    rule-version: '2'
+    file: packages/agents/docs/deployed-sizes.md
+    phrase: where `{source}` names the declared source
+    ground: where defines placeholders in the expression before it
   - rule: where
-    rule-version: '1'
-    file: packages/agents/content/__tests__/shared-guidance-policy.unit.test.ts
-    phrase: without depending on where the file is written
-    ground: 'outside the rule: the word names a place'
+    rule-version: '2'
+    file: packages/agents/docs/deployed-sizes.md
+    phrase: Where the record lives
+    ground: where names a place (the record's location)
   - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: a `{breaking}` placed where the `!` cannot be told from its neighbour
-    ground: 'outside the rule: the word names a position in the template'
+    rule-version: '2'
+    file: packages/agents/docs/deployed-sizes.md
+    phrase: which puts a large removal where a large addition would be
+    ground: where names a place (a position in the ranked list)
   - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
     phrase: A package declares where its content lives
-    ground: 'outside the rule: the word names a directory'
+    ground: where names a place (a directory)
   - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: A package ships them by placing them where the library does
-    ground: 'outside the rule: the word names a place in the content tree'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
     phrase: a producer says where its content lives
-    ground: 'outside the rule: the word names a directory'
+    ground: where names a place (a directory)
   - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: A third, `harnesses`, names where they go
-    ground: 'outside the rule: the word names a place'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
     phrase: declared directly where wanted
-    ground: 'outside the rule: the word names the place a declaration goes'
+    ground: where names a place (the project that wants the artifact)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
+    phrase: names where they go
+    ground: where names a place (the deployment target)
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
+    phrase: Not yet examined, and where new content starts.
+    ground: where names a place (the collection in which new content is placed)
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
+    phrase: Two further top-level keys name where artifacts come from
+    ground: where names a place (the origin of artifacts)
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
+    phrase: where `<path>` is its place under the content root's `skills/`
+    ground: where defines a placeholder in the expression before it
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
+    phrase: which is where a `codeassembly` predating `lastWrite` reads them
+    ground: where names a place (the top level of the file)
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/docs/project-declaration.md
+    phrase: which is where that change is visible
+    ground: where names a place (the resolution report)
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/README.md
+    phrase: declaring where the content is
+    ground: "where names a place: the content's location"
+  - rule: where
+    rule-version: '2'
     file: packages/agents/README.md
     phrase: depending on where the content comes from
-    ground: 'outside the rule: the word names the place content comes from'
+    ground: "where names a place: the content's source"
   - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: Not yet examined, and where new content starts.
-    ground: 'outside the rule: the collection is the place new content starts'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: the relay never has to infer where it was called from
-    ground: 'outside the rule: the word names a place, the hook it was called from'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: Two further top-level keys name where artifacts come from
-    ground: 'outside the rule: the word names the place an artifact comes from'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: which is where a `codeassembly` predating `lastWrite` reads them
-    ground: 'outside the rule: the top level of the file is a place'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: which is where that change is visible
-    ground: 'outside the rule: the resolution report is the place the change is visible'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/README.md
-    phrase: Write the home directory out in full where the snippet shows `/Users/you`
-    ground: 'outside the rule: the word names a place in the snippet'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/__tests__/install-retraction.unit.test.ts
-    phrase: which is where `install` reads the `harnesses:` block from
-    ground: 'outside the rule: the word names a place, the declaration file that `install` reads from'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/__tests__/install-targeting.unit.test.ts
-    phrase: which is where `install` reads the `harnesses:` block from
-    ground: 'outside the rule: the word names a place, the declaration file that `install` reads from'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/__tests__/validate.unit.test.ts
-    phrase: which is where the command writes the defect report
-    ground: 'outside the rule: `where` names the destination that receives the report, a place use'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/commands/install.ts
-    phrase: let a repository decide where the home domain deploys
-    ground: 'outside the rule: the word names a place, the directory tree into which the home domain is deployed'
+    phrase: decide where the home domain deploys
+    ground: 'where names a place: the location to which the home domain is deployed'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: Anchored in the project, where this same run deployed the target
-    ground: 'the word names a place: the project tree in which the run wrote the target'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.global.unit.test.ts
     phrase: at the harness home, where the home domain writes it
-    ground: 'the word names a place: the harness home directory'
+    ground: '`where` names a place: the harness home, into which the home domain writes the skill'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: in the project, where the same run deploys the target
-    ground: 'the word names a place: the project tree in which the run deploys the target'
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.harness-targeting.unit.test.ts
+    phrase: in a body that deploys only where it does
+    ground: 'names a place: the harness directories to which the named rulebook deploys'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.rulebooks.unit.test.ts
     phrase: in the project, where the same run writes it
-    ground: 'the word names a place: the project tree in which the run writes the target'
+    ground: 'names a place: the project directory into which the run writes the skill'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: so it is where a home domain anchored anywhere but `~` would show itself
-    ground: 'the word names a place: the one deployed target in which the misanchoring would appear'
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.sizes.unit.test.ts
+    phrase: A file where the record's directory belongs
+    ground: "`where` names a place: the path that the record's directory should occupy"
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: the harness home is where an installed copy can still answer it
-    ground: 'the word names a place: the harness home directory'
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.skills.unit.test.ts
+    phrase: Anchored in the project, where this same run deployed the target
+    ground: '`where` names a place: the project directory'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
-    phrase: True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root).
-    ground: 'the word names a place: the platform on which the process runs'
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.skills.unit.test.ts
+    phrase: resolves each inline harness-home reference to where its target deploys
+    ground: '`where` names a place: the deployment location'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/__tests__/sync.tool.test.ts
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.skills.unit.test.ts
     phrase: while keeping it where it still does
-    ground: 'the word names a place: the harness directory that the skill still targets'
+    ground: '`where` names a place: the harness directories that the skill still targets'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/__tests__/sync.subagents.unit.test.ts
+    phrase: in the project, where the same run deploys the target
+    ground: '`where` names a place: the project directory'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/commands/sync/collect-deployed-paths.ts
+    phrase: 'One deployed file: where it is'
+    ground: "`where` names a place: the file's location"
+  - rule: where
+    rule-version: '2'
     file: packages/agents/src/commands/sync/pre-write-gates.ts
-    phrase: The declaring file is the half that says where to go and fix it
-    ground: 'outside the rule: `where` names a place, the file to open'
+    phrase: where to go and fix it
+    ground: '`where` names a place: the location to go to'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/commands/sync/pre-write-gates.ts
-    phrase: the half that says where to go and fix it
-    ground: 'outside the rule: `where` names a place, the file to open'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/commands/sync/report.ts
     phrase: where it deployed
-    ground: 'outside the rule: `where` names a place, the deployment locations'
+    ground: 'names a place: the location to which the run deployed'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/commands/sync/report.ts
     phrase: where it would deploy
-    ground: 'outside the rule: `where` names a place, the deployment locations'
+    ground: 'names a place: the location to which the run deploys'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/commands/sync/source-support.ts
     phrase: pairing each result with where it deploys
-    ground: 'outside the rule: `where` names a place, the destination directory'
+    ground: 'names a place: the namespace directory to which each result deploys'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/commands/sync/sync-domain.ts
-    phrase: and where sync writes ambient blocks
-    ground: 'outside the rule: `where` names a place, the host file for the blocks'
+    phrase: where sync writes ambient blocks
+    ground: 'names a place: the host to which sync writes'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/commands/sync/sync.ts
-    phrase: cannot disagree about where a link target lands
-    ground: 'outside the rule: `where` names a place, the deployed path of the link target'
+    phrase: cannot disagree about where a
+    ground: 'names a place: the deployed location of a link target'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
-    phrase: reports where it was written
-    ground: 'outside the rule: `where` names a place, the path of the log'
+    rule-version: '2'
+    file: packages/agents/src/deployed-sizes/__tests__/build-size-report.unit.test.ts
+    phrase: putting a large removal where a large addition would be
+    ground: "outside the rule: 'where' names a position in the ordered list"
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/emit-event/__tests__/cli.tool.test.ts
-    phrase: Write a regular file where the events root needs a directory
-    ground: 'outside the rule: `where` names a place, a filesystem location'
+    rule-version: '2'
+    file: packages/agents/src/deployed-sizes/__tests__/measure-expansions.unit.test.ts
+    phrase: A file where the content root belongs
+    ground: "outside the rule: 'where' names a place in the file system"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/agents/src/deployed-sizes/build-size-report.ts
+    phrase: large removal where a large addition would be
+    ground: "outside the rule: 'where' names a place, the position in the sorted list"
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/deployed-sizes/render-aggregates.ts
+    phrase: must say so where the block is placed
+    ground: "outside the rule: 'where' names a place in the report"
+  - rule: where
+    rule-version: '2'
     file: packages/agents/src/lib/__tests__/codeassembly-schema.unit.test.ts
     phrase: naming the file and where the key belongs
-    ground: 'outside the rule: the word names a place'
+    ground: 'outside the rule: an indirect question naming a place, the file in which the key belongs'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/lib/__tests__/content-sources.unit.test.ts
-    phrase: on a platform where the process can lower a directory
-    ground: 'outside the rule: the word names a place, the platform'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/__tests__/link-anchor.unit.test.ts
-    phrase: where the same sync run writes it
-    ground: 'outside the rule: the word names a place, the project tree'
+    phrase: under the project, where the same sync run writes it
+    ground: 'names a place: the location under the project'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/__tests__/rulebook-deploy.unit.test.ts
-    phrase: where a rulebook body's relative include resolves it
-    ground: 'outside the rule: the word names a place, the directory beside the rulebooks'
+    phrase: beside the rulebooks, where a rulebook body's relative include resolves it
+    ground: 'names a place: the location beside the rulebooks'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/anchor-resolution.ts
     phrase: each with the index where its line begins
-    ground: 'locative: an index is a position in the body'
+    ground: 'names a place: a position in the body'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/anchor-resolution.ts
     phrase: the index in the body where its line begins
-    ground: 'locative: an index is a position in the body'
+    ground: 'names a place: a position in the body'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/agents/src/lib/codeassembly-manifest.ts
+    phrase: at every call site downstream, where presence means that
+    ground: 'names a place: the call sites'
+  - rule: where
+    rule-version: '2'
     file: packages/agents/src/lib/codeassembly-schema.ts
-    phrase: "Invalid codeassembly.yaml${where}: \\`home-writer\\` names the machine's home-domain writer and is read only "
-    ground: 'not prose: `where` is a local identifier interpolated into the template literal'
+    phrase: governs where a run deploys
+    ground: 'names a place: the deploy destination'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/codeassembly-schema.ts
     phrase: 'Invalid codeassembly.yaml${where}: ${detail}'
-    ground: 'not prose: `where` is a local identifier interpolated into the template literal'
+    ground: 'not prose: `where` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/codeassembly-schema.ts
     phrase: 'Invalid codeassembly.yaml${where}: malformed YAML'
-    ground: 'not prose: `where` is a local identifier interpolated into the template literal'
+    ground: 'not prose: `where` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/agents/src/lib/codeassembly-schema.ts
+    phrase: is rejected where it is written
+    ground: 'names a place: the file in which the key is written'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/codeassembly-schema.ts
+    phrase: names the machine's home-domain writer and is read only
+    ground: 'not prose: `where` is a template variable'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/codeassembly-schema.ts
+    phrase: only in the home domain, where the guard on
+    ground: 'names a place: the home domain as a scope'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/codeassembly-schema.ts
+    phrase: where the block is resolved
+    ground: 'names a place: the code location that resolves the block'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/content-rules/shared-guidance-links.ts
+    phrase: flat guidance file, where a link resolves against the destination
+    ground: '`where` names a place: the guidance file in which the link resolves'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/content-rules/shared-guidance-links.ts
+    phrase: guidance file, where the target names nothing
+    ground: '`where` names a place: the guidance file in which the target is read'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/content-rules/shared-guidance-links.ts
+    phrase: without depending on where the file is written
+    ground: '`where` names a place: the location to which the file is written'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/content-sources.ts
+    phrase: Where a `(type, slug)` artifact resolved from
+    ground: 'names a place: the location from which the artifact resolved'
+  - rule: where
+    rule-version: '2'
     file: packages/agents/src/lib/dependency-frontmatter.ts
-    phrase: 'Invalid ${key}${where}:'
-    ground: 'not prose: `${where}` interpolates a local identifier'
+    phrase: 'Invalid ${key}${where}: "${key}" must be a list of slugs.'
+    ground: 'not prose: `${where}` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/dependency-frontmatter.ts
-    phrase: 'Invalid dependencies${where}:'
-    ground: 'not prose: `${where}` interpolates a local identifier'
+    phrase: 'Invalid dependencies${where}: expected a mapping'
+    ground: 'not prose: `${where}` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/dependency-frontmatter.ts
-    phrase: 'Invalid frontmatter${where}:'
-    ground: 'not prose: `${where}` interpolates a local identifier, not the English word'
+    phrase: 'Invalid frontmatter${where}: "members:" is only valid on collections'
+    ground: 'not prose: `${where}` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/dependency-frontmatter.ts
-    phrase: 'Invalid frontmatter${where}:'
-    ground: 'not prose: `${where}` interpolates a local identifier'
+    phrase: 'Invalid frontmatter${where}: a collection declares its constituents'
+    ground: 'not prose: `${where}` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/dependency-frontmatter.ts
-    phrase: 'Invalid members${where}:'
-    ground: 'not prose: `${where}` interpolates a local identifier'
+    phrase: 'Invalid members${where}: expected'
+    ground: 'not prose: `${where}` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/dependency-frontmatter.ts
-    phrase: 'Invalid members${where}:'
-    ground: 'not prose: `${where}` interpolates a local identifier'
+    phrase: 'Invalid members${where}: unrecognized token'
+    ground: 'not prose: `${where}` is a template variable'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/dependency-resolver.ts
-    phrase: naming where a seed came from
-    ground: 'outside the rule: the word names an origin, a place'
+    phrase: naming where a seed came from is its caller's job
+    ground: "names a place: the seed's origin"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/guidance-hooks.ts
     phrase: Move the directive below the frontmatter, where its guidance can be read.
-    ground: 'outside the rule: the word names a place'
+    ground: 'names a place: below the frontmatter'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/guidance-hooks.ts
     phrase: where a splice would break the
-    ground: 'outside the rule: locative, referring to the frontmatter block'
+    ground: 'names a place: inside the frontmatter block'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/harness.ts
     phrase: because that is where each harness loads its
-    ground: 'outside the rule: the word names a place, the project root'
+    ground: 'names a place: the project root'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/agents/src/lib/helper-manifest.ts
+    phrase: is already the output of an earlier helper
+    ground: 'not prose: `where` is a code variable'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/helper-manifest.ts
+    phrase: must be inside the content root
+    ground: 'not prose: `where` is a code variable'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/helper-manifest.ts
+    phrase: must end in .mjs
+    ground: 'not prose: `where` is a code variable'
+  - rule: where
+    rule-version: '2'
     file: packages/agents/src/lib/home-provenance.ts
-    phrase: which build, from where, by which command, and when
-    ground: 'outside the rule: the word names a place, the source path'
+    phrase: from where
+    ground: 'names a place: the source location of the build'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/invocation-tokens.ts
-    phrase: each with the index where it begins
-    ground: 'outside the rule: an index is a position, a place'
+    phrase: this reports where
+    ground: interrogative where asking for a location, not a relative where
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/lib/invocation-tokens.ts
-    phrase: this answers where
-    ground: 'outside the rule: the word names a position in the body'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/link-anchor.ts
     phrase: because that is where the run just wrote it
-    ground: 'outside the rule: the word names a place'
+    ground: 'names a place: the deploying domain'
   - rule: where
-    rule-version: '1'
-    file: packages/agents/src/lib/link-anchor.ts
-    phrase: the library's stay where `install` puts
-    ground: 'outside the rule: the word names a place'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/src/lib/manifest.ts
-    phrase: Resolves the absolute path to `~/.agents/`, where a previous version deployed the cross-harness guidance tier.
-    ground: '`where` names a place: the directory `~/.agents/`'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/marker-injector.ts
     phrase: naming where its content came from
-    ground: '`where` names a place: the source location the content came from'
+    ground: 'names a place: the source location'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/agents/src/lib/package-sources.ts
+    phrase: states where its content lives
+    ground: 'names a place: the content directory'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/path-rewriter.ts
+    phrase: to where `<path>` deploys
+    ground: 'names a place: the deployed location'
+  - rule: where
+    rule-version: '2'
+    file: packages/agents/src/lib/render-content-root.ts
+    phrase: '`destPath` is where the entry deploys relative to the harness home.'
+    ground: 'outside the rule: `where` names a place, the deployed location'
+  - rule: where
+    rule-version: '2'
     file: packages/agents/src/lib/rovo-config-hooks.ts
-    phrase: where `name` is the hook event (several items may share one)
-    ground: 'definition after an expression: states what the symbol `name` stands for'
+    phrase: list of `{name, commands}` items, where
+    ground: 'outside the rule: `where` defines a symbol in the expression before it'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/rulebook-schema.ts
     phrase: 'Invalid rulebook frontmatter${where}: ${detail}'
-    ground: not prose; `where` is a local identifier interpolated into a template literal
+    ground: 'not prose: `where` is an identifier in a template literal'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/agents/src/lib/running-package.ts
     phrase: which is where the walk has run out of ancestors
-    ground: '`where` names a place: the filesystem root, the antecedent of `which`'
-  - rule: where
-    rule-version: '1'
-    file: packages/agents/src/relay-hook-event/__tests__/cli.tool.test.ts
-    phrase: Write a regular file where the events root needs a directory
-    ground: 'outside the rule: `where` names a place, a filesystem location'
+    ground: 'outside the rule: `where` names a place, the filesystem root'
   - rule: where
     rule-version: '1'
     file: packages/guidance/content/__tests__/bash-invocation-conventions.unit.test.ts

@@ -1,8 +1,8 @@
 import type { ResolveLinkAnchor } from './path-rewriter.ts';
 
 /**
- * Directory under a harness skills dir holding each declared source's support entries, one subtree per source. Kept out
- * of the skills dir's flat namespace so that a source's `_data` can never mask another source's.
+ * Directory under a harness skills dir containing each declared source's support entries, one subtree per source. Kept
+ * out of the skills dir's flat namespace so that a source's `_data` can never mask another source's.
  */
 export const SOURCE_SUPPORT_DIR = '_sources';
 
@@ -27,10 +27,10 @@ export interface LinkAnchorContext {
   readonly homeDir: string;
   /** Skills directory name within the harness home (e.g. `skills`). */
   readonly skillsDirName: string;
-  /** Names of the support entries that the owning source ships directly under its `skills/` directory. */
+  /** Names of the support entries that the owning source contains directly under its `skills/` directory. */
   readonly supportEntries: ReadonlySet<string>;
   /**
-   * Name of the declared source that owns the body being rendered. A source ships its own support entries, which
+   * Name of the declared source that owns the body being rendered. A source provides its own support entries, which
    * deploy into a namespace of its own, so a support target resolves into the namespace of the body's owner.
    */
   readonly supportNamespace: string;
@@ -38,7 +38,7 @@ export interface LinkAnchorContext {
 
 /**
  * Anchors targets written relative to a content root, the form that a rulebook or subagent body uses (`skills/…`,
- * `scripts/…`). A target reaching into `skills/` is handed to the skills anchor; anything else keeps the harness home,
+ * `scripts/…`). A target under `skills/` is resolved by the skills anchor; anything else keeps the harness home,
  * since `scripts/` and its siblings deploy there and nowhere else.
  */
 export function createContentRootLinkAnchor(context: LinkAnchorContext): ResolveLinkAnchor {

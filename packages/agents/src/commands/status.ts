@@ -70,9 +70,10 @@ function countDaysSince(timestamp: string): number | undefined {
 
 /**
  * Reports which installation last wrote the home domain, and leads with the last attempt when it failed. A write
- * timestamp alone cannot separate a current deployment from one left behind by an abandoned run, so the failed attempt
- * is what says the deployed guidance is stale rather than merely old. Stays silent when it doesn't find a stamp, since
- * a home domain last written by a build predating the stamp has nothing to report rather than something to warn about.
+ * timestamp alone cannot separate a current deployment from one left behind by an abandoned run, so only the failed
+ * attempt shows that the deployed guidance is stale rather than merely old. Stays silent when it doesn't find a stamp,
+ * since a home domain last written by a build predating the stamp gives it nothing to report rather than something to
+ * warn about.
  */
 async function reportHomeProvenance(baseDir?: string): Promise<void> {
   const provenance = await readHomeProvenance(baseDir);

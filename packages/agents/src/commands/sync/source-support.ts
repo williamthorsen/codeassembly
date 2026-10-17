@@ -55,7 +55,7 @@ export async function reconcileSourceSupport(
  *
  * Rendering is the step that reveals a defect in a package's reference content, so calling this ahead of every write
  * fails the run, dry-run included, before anything is written. The gate, the dry-run preview, and the delivery pass
- * all read this one result, which keeps them from disagreeing about what a source ships and from rendering the same
+ * all read this one result, which keeps them from disagreeing about what a source provides and from rendering the same
  * content more than once.
  */
 export async function renderSourceSupportPlans(
@@ -116,7 +116,7 @@ export interface SourceSupportPlan {
 
 // region | Helpers
 
-/** Groups one support root's plans into what delivery leaves there: the namespaces that hold content, and the rest. */
+/** Groups one support root's plans into what delivery leaves there: the namespaces with content, and the rest. */
 function resolveSupportOutcome(plans: ReadonlyArray<SourceSupportPlan>, sourcesRoot: string): SourceSupportOutcome {
   const rooted = plans.filter((plan) => plan.sourcesRoot === sourcesRoot);
   return {
@@ -130,7 +130,9 @@ function resolveSupportRoots(targets: ReadonlyArray<HarnessSkillTarget>): Readon
   return targets.map((target) => path.join(target.skillsDir, SOURCE_SUPPORT_DIR));
 }
 
-/** Names what delivery does at a namespace directory, given whether its source ships content and whether it exists. */
+/**
+ * Names what delivery does at a namespace directory, given whether its source provides content and whether it exists.
+ */
 function resolveSupportVerdict(shipsContent: boolean, destExists: boolean): SourceSupportPlan['kind'] {
   if (shipsContent) {
     return 'deliver';

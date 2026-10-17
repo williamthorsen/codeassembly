@@ -558,8 +558,8 @@ describe(resolveDeclaration, () => {
 // region | Helpers
 
 /**
- * Drops the per-slug declaring files from a resolved declaration, so that an assertion about the resolved slug sets is not
- * restated as absolute temp-directory paths. Provenance has its own coverage.
+ * Drops the per-slug declaring files from a resolved declaration, so that an assertion about the resolved slug sets is
+ * not restated as absolute temp-directory paths. Provenance has its own coverage.
  */
 function withoutDeclaredIn(declaration: ResolvedDeclaration | undefined): Omit<ResolvedDeclaration, 'declaredIn'> {
   if (declaration === undefined) {

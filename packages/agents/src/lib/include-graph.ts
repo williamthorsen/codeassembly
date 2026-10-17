@@ -3,8 +3,8 @@
  * included file reaches.
  *
  * A document is a Markdown file that deploys as itself; a file that another file includes deploys inside that file
- * instead, so its reach is what a change to it costs. Which of the two a file is therefore depends on the whole root
- * rather than on the file, which is why the graph is built over the root and then queried.
+ * instead, so its reach is the number of documents that a change to it affects. Which of the two a file is therefore
+ * depends on the whole root rather than on the file, which is why the graph is built over the root and then queried.
  */
 import path from 'node:path';
 

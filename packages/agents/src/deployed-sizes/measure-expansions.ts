@@ -9,18 +9,18 @@ import type { ExpansionUnit } from './types.ts';
 export interface ExpansionMeasurement {
   /** Every unit that a deployed document inlines, keyed by `{kind}:{source}/{relPath}`. */
   readonly expansions: Record<string, ExpansionUnit>;
-  /** The expansion keys inlined by each deployed document, keyed by deployed path. Recorded by no snapshot. */
+  /** The expansion keys inlined by each deployed document, keyed by deployed path. A snapshot does not record them. */
   readonly documentExpansions: Record<string, ReadonlyArray<string>>;
 }
 
 /**
  * Measures the partials that the deployed documents inline: each one's own bytes on disk, the deployed documents that
- * it reaches, and which keys each document holds.
+ * it reaches, and which keys each document includes.
  *
  * One include graph is built per distinct content root and reused across that root's documents, because
  * `buildIncludeGraph` walks every `.md` under the root and building per document would re-walk the root once per
- * skill. A root whose graph cannot be built contributes no expansion and raises nothing, so a source that a later
- * command made unreadable leaves the deployment measured and its partials unattributed.
+ * skill. A root whose graph cannot be built does not contribute any expansion and raises nothing, so a source that a
+ * later command made unreadable leaves the deployment measured and its partials unattributed.
  *
  * Reach counts deployed documents rather than source documents, so that one skill deployed to two harnesses counts
  * twice and the number matches the document lines that the report's collapse removes.
@@ -75,7 +75,7 @@ async function buildGraphOrDrop(contentRoot: string): Promise<IncludeGraph | und
 /**
  * The keys of the units that one deployed document inlines, recording each key's file in `pathsByKey` so that the
  * bytes behind a key are read once however many documents reach it. A closure member that deploys as a document of
- * its own contributes no key, and neither does the document's own authored file.
+ * its own does not contribute a key, and neither does the document's own authored file.
  */
 function listExpansionKeys(
   graph: IncludeGraph,

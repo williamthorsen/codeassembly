@@ -32,7 +32,7 @@ npx codeassembly sync --global
 
 `install` deploys the harness guidance files and scripts. `sync --global` deploys the artifacts that the home declaration names, with each source's support files under `skills/_sources/<name>/`. Both commands stop without writing anything until a source is declared.
 
-A project declares its own sources and artifacts in `.agents/codeassembly.yaml` (`codeassembly init` scaffolds one), and `sync` materializes exactly what it declares, including guidance shipped by its dependencies (see [Packages](docs/project-declaration.md#packages)). Add the tool to a project when the repo ships guidance of its own, or wants `sync` to run from a script:
+A project declares its own sources and artifacts in `.agents/codeassembly.yaml` (`codeassembly init` scaffolds one), and `sync` materializes exactly what it declares, including guidance that its dependencies provide (see [Packages](docs/project-declaration.md#packages)). Add the tool to a project when the repo provides guidance of its own, or wants `sync` to run from a script:
 
 ```bash
 pnpm add --save-dev codeassembly
@@ -64,7 +64,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
 | `sizes`             | Rank the last recorded deployment's documents by size, with the context aggregates beneath them            |
 | `status`            | Show the current state of installed items                                                                  |
-| `validate`          | Check a content root for defects that reach a consumer; writes nothing                                     |
+| `validate`          | Check a content root for defects that would affect a consumer; writes nothing                              |
 | `bundle-helpers`    | Bundle the helpers that a content root declares; `--check` fails on a stale bundle                         |
 | `library list`      | List each declared source's artifacts, marking those that a higher-precedence source shadows               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`, whose scopes come from `pnpm-workspace.yaml`)            |
@@ -75,14 +75,14 @@ Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--fo
 
 A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts that the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains: the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `recommended` and `triage` collections. See [Scopes](docs/project-declaration.md#scopes).
 
-Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) live in the library's `codeassembly-content-specification` rulebook ([`codeassembly-content-specification.md`](../guidance/content/guidance/rulebooks/codeassembly-content-specification.md)). [Project declaration](docs/project-declaration.md) documents the declaration mechanism itself:
+Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) are stated in the library's `codeassembly-content-specification` rulebook ([`codeassembly-content-specification.md`](../guidance/content/guidance/rulebooks/codeassembly-content-specification.md)). [Project declaration](docs/project-declaration.md) documents the declaration mechanism itself:
 
 - [Format](docs/project-declaration.md#format): the `use` and `drop` lists, harness targeting, and guidance hooks.
 - [Collections](docs/project-declaration.md#collections): aggregates that pull in their members, and the `@library` token.
 - [Dependencies](docs/project-declaration.md#dependencies): artifacts that a declared artifact pulls in.
 - [Sources](docs/project-declaration.md#sources): the content roots from which every artifact resolves, and how one shadows another.
-- [Packages](docs/project-declaration.md#packages): guidance shipped by a dependency.
-- [References](docs/project-declaration.md#references): documentation that a dependency ships for agents.
+- [Packages](docs/project-declaration.md#packages): guidance provided by a dependency.
+- [References](docs/project-declaration.md#references): documentation that a dependency provides for agents.
 - [Content-format version](docs/project-declaration.md#content-format-version): the format contract that a content root declares.
 - [Scopes](docs/project-declaration.md#scopes): the repo and home domains, the designated home-domain writer, and home-domain provenance.
 
@@ -90,12 +90,12 @@ A content root's own tests read it as consumers receive it through the `codeasse
 
 ## Keeping deployed guidance current
 
-`sync` writes what the declaration resolved at the moment it ran, and nothing re-runs it on its own. The rule is to sync when the content that it renders last changed, and that moment falls in a different place depending on where the content comes from:
+`sync` writes what the declaration resolved at the moment it ran, and nothing re-runs it on its own. The rule is to sync when the content that it renders last changed, and that moment differs depending on where the content comes from:
 
-| Role                                     | Content is ready when      | Trigger            | On failure   |
-| ---------------------------------------- | -------------------------- | ------------------ | ------------ |
-| Consumer of a guidance-shipping package  | the dependency is unpacked | root `postinstall` | warn, exit 0 |
-| Provider whose content is a build output | its build finishes         | after the build    | fail         |
+| Role                                         | Content is ready when      | Trigger            | On failure   |
+| -------------------------------------------- | -------------------------- | ------------------ | ------------ |
+| Consumer of a package that provides guidance | the dependency is unpacked | root `postinstall` | warn, exit 0 |
+| Provider whose content is a build output     | its build finishes         | after the build    | fail         |
 
 **Consumer.** A project whose declared artifacts come from [packages](docs/project-declaration.md#packages) can sync as soon as `pnpm install` finishes, so wire it there:
 
@@ -111,7 +111,7 @@ A failed `sync` reports every defect found by its pre-write gates, grouped by fi
 
 `--warn-only` reports a failure and exits 0, and it belongs on this trigger specifically. `sync` fails closed on an unusable declared source, an unresolvable slug, a foreign-owned target, or a damaged ambient region; without the flag, any of those aborts `pnpm install` for everything downstream, which is far more disruptive than the stale guidance that it guards against. `pnpm install --ignore-scripts` skips the hook, so a tree installed that way keeps whatever the last sync left.
 
-**Provider.** A repo that produces its own artifacts syncs after the build that produces them, and fails on error: The build has already succeeded by then. The tree is usable, and a non-zero exit is the signal rather than a broken checkout. Invoke the built bin rather than a source runner, so that a sync reached before the build stops at the `codeassembly` wrapper's build-output gate instead of deploying skill directories without the helper bundles that the build produces. That same gate is why this trigger cannot move to `postinstall`: Pre-build content is incomplete, and the wrapper exits before it parses `--warn-only` when the build output is absent.
+**Provider.** A repo that produces its own artifacts syncs after the build that produces them, and fails on error: The build has already succeeded by then. The tree is usable, and a non-zero exit is the signal rather than a broken checkout. Invoke the built bin rather than a source runner, so that a sync run before the build stops at the `codeassembly` wrapper's build-output gate instead of deploying skill directories without the helper bundles that the build produces. That same gate is why this trigger cannot move to `postinstall`: Pre-build content is incomplete, and the wrapper exits before it parses `--warn-only` when the build output is absent.
 
 A repo whose bootstrap always follows its install needs only the post-build trigger, which covers its package-borne artifacts too. Re-running `sync` on unchanged content rewrites nothing, so wiring both adds only the second run's startup. Either trigger is a no-op in a project that doesn't declare any artifacts.
 

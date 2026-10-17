@@ -11,12 +11,13 @@ import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/decl
 import { syncCommand } from '../sync.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
-// Exercises the `packages:` declaration: A package's content dir joins the source search order and its catalog seeds
-// the closure, so naming the package is the whole declaration. Fixture packages live under the temp project's own
-// `node_modules`, which is the first directory that Node's resolver searches from there (without a real install).
+// Exercises the `packages:` declaration: The sync adds a package's content dir to the source search order and seeds
+// the closure from its catalog, so naming the package is the whole declaration. Fixture packages live under the temp
+// project's own `node_modules`, which is the first directory that Node's resolver searches from there (without a real
+// install).
 describe('sync with a declared package', () => {
   const PACKAGE_NAME = '@ca-fixture/guide';
 
@@ -156,7 +157,7 @@ describe('sync with a declared package', () => {
     expect(await readFile(subagentPath('pkg-agent'), 'utf8')).not.toContain('model:');
   });
 
-  it('merges a library subagent against the library overlay when a source ships its own', async () => {
+  it('merges a library subagent against the library overlay when a source contains its own', async () => {
     await writeSubagent(contentDir, 'lib-agent');
     await writeOverlay(packageContent(), '_defaults:\n  model: haiku\n');
     await declare(`packages:\n  use:\n    - '${PACKAGE_NAME}'\nsubagents:\n  use:\n    - lib-agent\n`);
@@ -166,7 +167,7 @@ describe('sync with a declared package', () => {
     expect(await readFile(subagentPath('lib-agent'), 'utf8')).toContain('model: sonnet');
   });
 
-  it('deploys every deployable artifact shipped by the package, from the package name alone', async () => {
+  it('deploys every deployable artifact in the package, from the package name alone', async () => {
     await writeRulebook(packageContent(), 'pkg-rules', 'delivery: skill\ndescription: From the package.', 'Pkg rules.');
     await writeSkill(packageContent(), 'pkg-skill');
     await writeSubagent(packageContent(), 'pkg-agent');
@@ -448,7 +449,7 @@ describe('sync with a declared package', () => {
     expect(existsSync(path.join(projectRoot, '.agents', 'rulebooks'))).toBe(false);
   });
 
-  it('warns and completes when a declared package points at a content directory that it does not ship', async () => {
+  it('warns and completes when a declared package points at a content directory that it does not contain', async () => {
     await installPackage('@ca-fixture/empty', 'missing-dir');
     await declare("packages:\n  use:\n    - '@ca-fixture/empty'\n");
 

@@ -12,7 +12,7 @@ import { syncCommand } from '../sync.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -177,7 +177,7 @@ describe(syncCommand, () => {
     });
 
     it('fails a real sync before the ambient host is written when a subagent body names an ambient-only rulebook', async () => {
-      // Subagents deploy last, so this pins the failure ahead of the earlier ambient and skill write passes.
+      // Subagents deploy last, so this asserts that the failure precedes the earlier ambient and skill write passes.
       await writeOverlays();
       await writeFixtureRulebook('alpha', 'delivery: ambient', 'Alpha rules.');
       await writeFixtureRulebook('nmr-scripts', 'delivery: ambient', 'Run scripts with nmr.');

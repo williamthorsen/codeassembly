@@ -111,7 +111,7 @@ function isOwnedItem(item: unknown, isOwned: HookSentinelMatcher): boolean {
 /**
  * Reads a YAML list item as an entry, or undefined when it is not a well-formed entry: a map containing a string
  * `name` and a `commands` list whose every item is a map with a string `command`. Reading is lenient about extra keys:
- * An item carrying more than these keys must still be recognizable, or the ownership check would miss it.
+ * An item containing more than these keys must still be recognizable, or the ownership check would miss it.
  */
 function readItem(item: unknown): HookEntry | undefined {
   if (!isMap(item)) {

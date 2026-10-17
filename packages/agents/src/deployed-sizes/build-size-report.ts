@@ -4,7 +4,7 @@ import type { DeployedPathSet } from '../commands/sync/collect-deployed-paths.ts
 import type { DeploymentMeasurement } from './measure-deployment.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from './types.ts';
 
-/** Size at or above which a document that has just grown past it draws a warning. */
+/** Size at or above which the report warns about a document that has just grown past it. */
 export const GROWTH_CEILING_BYTES = 5 * 1_024;
 
 /** Directory name whose presence in a source's path marks it as an installed dependency rather than the reader's own. */
@@ -43,7 +43,7 @@ export interface ExpansionChange {
 /** One entry of the change list: a document's own change, or the fan-out of one expansion unit. */
 export type SizeChange = DocumentChange | ExpansionChange;
 
-/** One unit whose own bytes this deployment moved: the bytes that it now holds, and by how much they moved. */
+/** One unit whose own bytes this deployment moved: its bytes after this deployment, and by how much they moved. */
 interface ChangedUnit {
   readonly bytes: number;
   readonly delta: number;
@@ -69,7 +69,10 @@ export interface SizeReport {
   readonly warnings: ReadonlyArray<GrowthWarning>;
   readonly aggregates: SizeAggregates;
   readonly documentCount: number;
-  /** Whether the record held no previous snapshot, which leaves this deployment with nothing to compare against. */
+  /**
+   * Whether the record did not contain a previous snapshot, which leaves this deployment with nothing to compare
+   * against.
+   */
   readonly isFirstRecorded: boolean;
 }
 
@@ -78,23 +81,24 @@ export interface SizeReport {
  * document that this deployment added, removed, or resized, ordered by the bytes that each change accounts for, and a
  * warning for each document that has just reached the growth ceiling.
  *
- * Assets contribute no change, matching what the `sizes` command ranks: A helper bundle loads into no context, so
- * its growth says nothing about what a session costs.
+ * Assets do not contribute any change, matching what the `sizes` command ranks: A helper bundle does not load into
+ * any agent's context, so its growth does not affect the bytes that a session loads.
  *
  * A changed expansion unit enters the list once and accounts for its own delta across the resized documents whose
  * delta it explains. A resized document's delta is reduced by what the changed units in its closure explain, and a
- * document explained in full contributes no entry, which is what keeps a one-byte partial edit from printing one line
- * per includer. A unit that explains no document's delta contributes no entry either: Extracting a partial from text
- * that already stood in its includers leaves every deployed document byte-identical, and a line claiming the
- * extracted bytes as growth would head a block that states what a deployment cost. A previous snapshot stating no
- * `expansions` suppresses the whole pass, leaving every document to report its own change.
+ * document explained in full does not contribute an entry, which keeps the report from printing one line per includer
+ * for a one-byte partial edit. A unit that does not explain any document's delta does not contribute an entry either:
+ * Extracting a partial from text that was already in its includers leaves every deployed document byte-identical,
+ * and a line claiming the extracted bytes as growth would head a block that states how a deployment changed the
+ * deployed bytes. A previous snapshot without `expansions` suppresses the whole pass, leaving every document to report
+ * its own change.
  *
- * A warning fires on a crossing rather than on a standing comparison, so that a document keeps warning no more than
- * once per record. A first recorded deployment has no crossing to observe, and warns not at all rather than warning
- * on every document that is already large.
+ * A warning fires on a crossing rather than on a standing comparison, so that the report warns about a document at
+ * most once per record. A first recorded deployment does not have any crossing to observe, and the report does not
+ * warn about it at all rather than warning on every document that is already large.
  *
- * Pure, and takes no I/O: `repoRoot` and each file's `sourceRoot` are canonical paths that the caller resolved, so
- * containment here is lexical.
+ * Pure, and does not perform any I/O: `repoRoot` and each file's `sourceRoot` are canonical paths that the caller
+ * resolved, so containment here is lexical.
  */
 export function buildSizeReport(input: {
   measured: DeploymentMeasurement;
@@ -202,7 +206,7 @@ function collapseDocuments(input: {
 }
 
 /**
- * Orders two changes by the bytes that each accounts for, largest first, and by key where two are equal. A partial
+ * Orders two changes by the bytes that each accounts for, largest first, and by key when two are equal. A partial
  * therefore sorts by the deployment that its edit caused rather than by the edit's own size.
  */
 function compareChanges(left: SizeChange, right: SizeChange): number {
@@ -212,9 +216,9 @@ function compareChanges(left: SizeChange, right: SizeChange): number {
 }
 
 /**
- * Reports whether the reader of this repository can edit the source at `sourceRoot`: It sits inside the repository
- * and outside `node_modules`. The vendor exclusion is what keeps an installed dependency's artifact from being named
- * as the reader's to reduce, since it resolves under the repository root and is not theirs.
+ * Reports whether the reader of this repository can edit the source at `sourceRoot`: It is inside the repository and
+ * outside `node_modules`. The vendor exclusion keeps the report from naming an installed dependency's artifact as
+ * the reader's to reduce, since the artifact resolves under the repository root and is not theirs.
  */
 function isReaderOwned(sourceRoot: string | undefined, repoRoot: string | undefined): boolean {
   if (sourceRoot === undefined || repoRoot === undefined) {
@@ -228,14 +232,15 @@ function isReaderOwned(sourceRoot: string | undefined, repoRoot: string | undefi
 }
 
 /**
- * The units whose own bytes this deployment changed, each with the bytes that it now holds, keyed as the snapshot
- * keys them. A unit that the previous snapshot did not hold counts its whole bytes as its delta, which the documents
- * that it grew then attribute; a unit that grew no document is dropped by the caller rather than here.
+ * The units whose own bytes this deployment changed, each with its bytes after this deployment, keyed as the
+ * snapshot keys them. A unit that the previous snapshot did not record counts its whole bytes as its delta, which the
+ * documents that it grew then attribute; a unit that did not grow any document is dropped by the caller rather than
+ * here.
  *
- * A previous snapshot stating no `expansions` suppresses the pass: The block did not exist when that line was
- * written, so nothing can be attributed against it. A key that the previous snapshot held and this one does not is
- * skipped, because attributing a deleted unit needs each document's previous closure, which no snapshot records, and
- * crediting it against the current closures would count the same bytes twice.
+ * A previous snapshot without `expansions` suppresses the pass: The block did not exist when that line was written,
+ * so nothing can be attributed against it. A key that the previous snapshot recorded and this one does not is
+ * skipped, because attributing a deleted unit needs each document's previous closure, which a snapshot does not
+ * record, and crediting it against the current closures would count the same bytes twice.
  */
 function listChangedUnits(
   expansions: Readonly<Record<string, ExpansionUnit>>,

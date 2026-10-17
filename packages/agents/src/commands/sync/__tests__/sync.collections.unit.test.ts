@@ -10,7 +10,7 @@ import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import { syncCommand } from '../sync.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 describe('syncCommand with a declared collection', () => {

@@ -21,8 +21,8 @@ export interface MissingDeclaration {
 
 /**
  * One deployed artifact's resolution outcome: its type and slug, the source from which it resolved, and the
- * lower-precedence sources that ship the same slug. Drives both the dry-run resolution report and the real-run shadow
- * warning.
+ * lower-precedence sources that provide the same slug. Drives both the dry-run resolution report and the real-run
+ * shadow warning.
  */
 export interface ResolutionEntry {
   readonly type: ArtifactType;
@@ -34,17 +34,17 @@ export interface ResolutionEntry {
 /**
  * What a sync resolved and what it did, or what it would have done under `--dry-run`.
  *
- * `sizes` rides the outcome rather than the plan, because the plan describes what a sync resolved and would do, and
- * a dry run shares it; sizes exist only on a live run, which is the one that deployed something to measure.
+ * `sizes` belongs to the outcome rather than the plan, because the plan describes what a sync resolved and would do,
+ * and a dry run shares it; sizes exist only on a live run, which is the one that deployed something to measure.
  */
 export type SyncOutcome =
   MissingDeclaration | { readonly kind: 'reconciled'; readonly plan: SyncPlan; readonly sizes?: SizeReportOutcome };
 
 /**
  * Everything a sync resolved, and every write, retraction, and warning that it produced. Both reports render from this
- * one plan, so a condition that either can describe reaches the other in the same terms. The closing summary's counts
- * are derived from these same fields rather than stored alongside them, which keeps a count and the enumeration that
- * it summarizes from disagreeing.
+ * one plan, so any condition that one report describes is available to the other in the same terms. The closing
+ * summary's counts are derived from these same fields rather than stored alongside them, which keeps a count and the
+ * enumeration that it summarizes from disagreeing.
  */
 export interface SyncPlan {
   readonly targets: ResolvedHarnessTargets;
@@ -80,7 +80,7 @@ export interface SyncPlan {
   readonly promptsYmlPaths: ReadonlyArray<string>;
   /** Declared sources whose directory does not exist, and so contribute nothing to resolution. */
   readonly missingSources: ReadonlyArray<DeclaredSource>;
-  /** Dependencies shipping guidance that the project has not declared. */
+  /** Dependencies providing guidance that the project has not declared. */
   readonly undeclaredPackages: ReadonlyArray<string>;
   /** Disagreements between the declaration's guidance-hook bindings and what those bindings reach. */
   readonly guidanceHookAdvisories: ReadonlyArray<GuidanceHookAdvisory>;

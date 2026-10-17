@@ -18,7 +18,7 @@ import { syncCommand, syncGlobalCommand } from '../sync.ts';
 import { SyncValidationError } from '../sync-validation-error.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 // Syncs a project that draws artifacts from a declared source alongside a lower-precedence library source, to catch
@@ -156,7 +156,7 @@ describe('sync with a declared source over the library source', () => {
 });
 
 // Syncs declarations that leave the run without any readable source, and declarations whose sources compete for the
-// same artifact, to pin what a run resolves from and what it refuses before writing.
+// same artifact, to assert what a run resolves from and what it refuses before writing.
 describe('sync source resolution', () => {
   let homeDir: string;
   let projectRoot: string;
@@ -232,7 +232,7 @@ describe('sync source resolution', () => {
     function expectNothingWrittenToHome(): void {
       expect(existsSync(path.join(homeDir, '.claude'))).toBe(false);
       expect(existsSync(path.join(homeDir, '.agents', 'rulebooks'))).toBe(false);
-      // A failed attempt would be recorded in the provenance stamp; a refusal for want of a source records nothing.
+      // A failed attempt would be recorded in the provenance stamp; a run refused for lack of a source records nothing.
       expect(existsSync(getHomeProvenancePath(homeDir))).toBe(false);
     }
 
@@ -273,7 +273,7 @@ describe('sync source resolution', () => {
     beforeEach(async () => {
       await writeRulebook(lowDir, 'shared-rules', 'Low-precedence guidance.');
       await writeRulebook(highDir, 'shared-rules', 'High-precedence guidance.');
-      // A later `sources:` entry outranks an earlier one, so `high` wins the slug that both ship.
+      // A later `sources:` entry outranks an earlier one, so `high` wins the slug that both provide.
       await declareFixtureSource(
         projectRoot,
         libraryDir,
@@ -323,7 +323,7 @@ describe('sync source resolution', () => {
       expect(existsSync(path.join(projectRoot, '.claude'))).toBe(false);
     });
 
-    it('does not resolve an artifact shipped only by a home-chain source', async () => {
+    it('does not resolve an artifact provided only by a home-chain source', async () => {
       await writeRulebook(lowDir, 'org-rules', 'Org guidance.');
       await writeFile(
         path.join(projectRoot, '.agents', 'codeassembly.yaml'),

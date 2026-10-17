@@ -18,7 +18,7 @@ import { ambientRegionNote } from '../test-utils/ambient-region-note.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -120,9 +120,9 @@ describe(syncGlobalCommand, () => {
     expect(skill).toContain('<!-- codeassembly-skill:people-report -->');
   });
 
-  // A link to a skill deployed by the run is the one target whose anchor reads the domain base, so it is where a home
-  // domain anchored anywhere but `~` would show itself. Every other target is tilde-anchored outright and would
-  // survive such a change unmarked.
+  // A link to a skill deployed by the run is the one target whose anchor reads the domain base, so it is the only
+  // target that would reveal a home domain anchored anywhere but `~`. Every other target is tilde-anchored outright
+  // and would not reveal such a change.
   it('anchors a link to a delivered skill at the harness home, where the home domain writes it', async () => {
     await writeFixtureRulebook('alpha', 'delivery: skill', 'See [beta](../../skills/consult-beta/SKILL.md).');
     await writeFixtureRulebook('beta', 'delivery: skill', 'Beta body.');

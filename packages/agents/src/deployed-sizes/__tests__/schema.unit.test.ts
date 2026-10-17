@@ -23,13 +23,13 @@ describe(parseSnapshotLine, () => {
     expect(parseSnapshotLine(JSON.stringify(SNAPSHOT))).toEqual(SNAPSHOT);
   });
 
-  it('parses a snapshot recorded from a source tree with no commit', () => {
+  it('parses a snapshot recorded from a source tree without a commit', () => {
     const { sourceCommit, ...withoutCommit } = SNAPSHOT;
 
     expect(parseSnapshotLine(JSON.stringify(withoutCommit))).toEqual(withoutCommit);
   });
 
-  it('parses a snapshot line that states no expansions, as one written before the block existed does', () => {
+  it('parses a snapshot line that does not state any expansions, as one written before the block existed does not', () => {
     const { expansions, ...withoutExpansions } = SNAPSHOT;
 
     expect(parseSnapshotLine(JSON.stringify(withoutExpansions))).toEqual(withoutExpansions);

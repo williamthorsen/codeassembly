@@ -20,7 +20,7 @@ const REFRESH_FIX = `Run \`/update-project-guidance\` to refresh ${GUIDANCE_PATH
  * Guidance checks published by the `codeassembly` package to every repository that consumes it.
  *
  * They cover the convention that the package's own tooling authors: project guidance at the repository-root
- * `AGENTS.md`, which Rovo Dev loads unaided and Claude Code reaches through one import.
+ * `AGENTS.md`, which Rovo Dev loads unaided and Claude Code loads through one import.
  */
 export default defineRdyKit({
   description: 'Project-guidance wiring, freshness, and size',
@@ -104,7 +104,7 @@ export default defineRdyKit({
             }
             return { ok: false, detail: describeViolations(violations) };
           },
-          fix: `Delete the marked region and its markers; \`sync\` strips a complete pair from ${GUIDANCE_PATH} on its next run, and an unpaired marker escapes that sweep and lingers`,
+          fix: `Delete the marked region and its markers; \`sync\` strips a complete pair from ${GUIDANCE_PATH} on its next run, but does not remove an unpaired marker`,
         },
         {
           name: `${GUIDANCE_PATH} is within the ambient budget`,

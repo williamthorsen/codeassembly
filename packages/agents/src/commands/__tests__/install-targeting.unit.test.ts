@@ -13,7 +13,7 @@ import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -80,7 +80,7 @@ describe('install harness targeting', () => {
 
   // region | Helpers
 
-  /** Writes the home tier's declaration file, which is where `install` reads the `harnesses:` block from. */
+  /** Writes the home tier's declaration file, from which `install` reads the `harnesses:` block. */
   async function declareHarnesses(body: string): Promise<void> {
     await declareFixtureSource(tempDir, contentDir, body);
   }

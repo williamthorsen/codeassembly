@@ -6,7 +6,7 @@ import type { HarnessId } from './types.ts';
  * Matches `{rulebook:<slug>}`, `{skill:<slug>}`, and `{subagent:<slug>}` invocation tokens, each in a required form and
  * an optional one marked `?` before the colon. The slug is kebab-case and letter-led (`[a-z][a-z0-9-]*`). The pattern
  * only captures well-formed tokens; a slug that does not name any declared artifact is caught downstream by the
- * resolver's missing-artifact check, so the grammar does not police existence.
+ * resolver's missing-artifact check, so the grammar does not check existence.
  *
  * Because `{rulebook?:<slug>}` matches although a body must not contain one, `rewriteInvocationTokens` rejects it by
  * name. A pattern that skipped it would leave the literal text in the deployed body instead of failing the run.
@@ -37,7 +37,7 @@ export interface RulebookInvocationTarget {
 /**
  * The rulebooks that a body deployed to one harness may address by token, keyed by slug. Supplied by every host that
  * resolves a declaration and so knows the deployed set -- a rulebook, skill, or subagent body under `sync` or
- * `validate`. A support entry under `skills/` renders without one, because `install` ships it without resolving any
+ * `validate`. A support entry under `skills/` renders without one, because `install` deploys it without resolving any
  * declaration, which makes a `{rulebook:<slug>}` token there fail rather than pass through.
  */
 export type RulebookInvocationCatalog = ReadonlyMap<string, RulebookInvocationTarget>;
@@ -79,8 +79,8 @@ export interface InvocationSigils {
 }
 
 /**
- * One invocation token in a body: what it invokes, the slug that it names, whether it is optional, and the index where
- * the token begins.
+ * One invocation token in a body: what it invokes, the slug that it names, whether it is optional, and the index at
+ * which the token begins.
  */
 export interface InvocationToken {
   readonly kind: 'rulebook' | 'skill' | 'subagent';
@@ -133,8 +133,8 @@ export function extractInvocationEdges(content: string): InvocationEdges {
 /**
  * Collects the optional invocation tokens in `content`, grouping slugs by kind. An optional token names a target that
  * must exist but need not deploy, so a caller resolves these for existence and keeps them out of the closure. Optional
- * rulebook tokens are dropped here; the render pass rejects them, and returning them would invite a caller to treat one
- * as a live target.
+ * rulebook tokens are dropped here; the render pass rejects them, and returning them would let a caller treat one as a
+ * live target.
  */
 export function extractOptionalInvocationTargets(content: string): OptionalInvocationTargets {
   const skills: Array<string> = [];
@@ -153,8 +153,8 @@ export function extractOptionalInvocationTargets(content: string): OptionalInvoc
 }
 
 /**
- * Lists every invocation token in `content` in source order, each with the index where it begins.
- * `extractInvocationEdges` answers what a body invokes; this answers where, which a caller needs in order to attribute
+ * Lists every invocation token in `content` in source order, each with the index at which it begins.
+ * `extractInvocationEdges` reports what a body invokes; this reports where, which a caller needs in order to attribute
  * a token to the passage containing it. Slugs repeat, for the reason that function gives.
  */
 export function locateInvocationTokens(content: string): ReadonlyArray<InvocationToken> {
@@ -210,7 +210,7 @@ export function resolveRulebookToken(
 
 /**
  * Replaces every invocation token in `content` with its harness sigil followed by the slug that it invokes. An optional
- * token renders exactly as its required form does: The marker governs whether the target deploys, not how the
+ * token renders exactly as its required form does: The marker decides whether the target deploys, not how the
  * invocation reads. A `{rulebook:<slug>}` token renders the skill sigil and the target's deployed skill name, resolved
  * through `rulebooks` -- so a rulebook is addressed by the name under which it actually deploys, not by its slug.
  *
@@ -232,7 +232,7 @@ export function rewriteInvocationTokens(
         if (marker !== undefined) {
           throw new Error(
             `Unusable invocation token {rulebook?:${slug}} in ${sourceLabel}: A rulebook token renders the skill ` +
-              'name under which its target deploys, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
+              'name under which its target deploys, which an undeployed target does not have; only {skill?:<slug>} and ' +
               '{subagent?:<slug>} have an optional form.',
           );
         }

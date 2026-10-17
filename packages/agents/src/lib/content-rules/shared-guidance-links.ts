@@ -36,7 +36,7 @@ export async function findSharedGuidanceLinkDefects({ root }: RuleContext): Prom
           kind: 'link',
           detail:
             `Links to \`${target}\`, a relative target, but shared guidance is inlined into each harness's ` +
-            'guidance file, where the target names nothing. Name the skill that carries the convention instead.',
+            'guidance file, where the target names nothing. Name the skill that states the convention instead.',
         });
       }
     }

@@ -137,7 +137,7 @@ describe(buildIncludeGraph, () => {
       expect(graph.countReach(path.join(root, '_partials/shared.md'))).toBe(2);
     });
 
-    it('reports a file whose unresolved directive lies in something that it includes', async () => {
+    it('reports a file whose unresolved directive is in something that it includes', async () => {
       await writeFiles(root, { '_partials/inner.md': '<!-- include: ./absent.md / -->\n' });
       const graph = await buildIncludeGraph(root);
 

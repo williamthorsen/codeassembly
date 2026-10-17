@@ -49,7 +49,7 @@ export async function removeClaudeHookEntries(
 
 // region | Helpers
 
-/** Reads the indent unit from the first indented line; a single-line document demonstrates compact style and keeps it. */
+/** Reads the indent unit from the first indented line; a single-line document uses compact style and keeps it. */
 function detectIndent(body: string): string | number {
   const unit = /\n([ \t]+)\S/.exec(body)?.[1];
   if (unit !== undefined) {

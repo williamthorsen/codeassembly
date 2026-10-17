@@ -9,7 +9,8 @@ export interface OutputStyles {
   readonly stdout: OutputStyle;
 }
 
-// Plain until the CLI entry point resolves the styles, so output written without a configured style carries no emoji.
+// Plain until the CLI entry point resolves the styles, so output written without a configured style doesn't contain
+// any emoji.
 const configured: { styles: OutputStyles } = { styles: { stderr: 'plain', stdout: 'plain' } };
 
 /** Sets the glyph style of each stream for every line emitted afterwards. */

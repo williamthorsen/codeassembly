@@ -43,13 +43,13 @@ import type {
 import { retractDroppedHarnesses } from './harness-retraction.ts';
 
 /**
- * The extensions that ship from `content/scripts/` to a harness home: `.sh` shell helpers and `.mjs` TypeScript
- * bundles, either kind invoked by a skill, a subagent, or the harness itself. Anything else there (the README)
- * documents the directory rather than shipping from it.
+ * The extensions of the files that `install` deploys from `content/scripts/` to a harness home: `.sh` shell helpers
+ * and `.mjs` TypeScript bundles, either kind invoked by a skill, a subagent, or the harness itself. Anything else
+ * there (the README) documents the directory and is not deployed from it.
  */
 const SCRIPT_EXTENSIONS: ReadonlyArray<string> = ['.mjs', '.sh'];
 
-/** One content root shipping a harness's guidance template, and the file names that it installs from there. */
+/** One content root providing a harness's guidance template, and the file names that it installs from there. */
 interface TemplateRoot {
   readonly root: ContentRootRef;
   readonly fileNames: ReadonlyArray<string>;
@@ -107,8 +107,8 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
   // target any harness still contains whatever a previous install left in `~/.agents/`.
   const didRetire = await retireSharedGuidance(manifest, options, baseDir);
 
-  // Above the no-target return for the same reason: A declaration resolving to an empty set targets nothing and still
-  // has to clear what a previous run deployed.
+  // Above the no-target return for the same reason: A declaration resolving to an empty set targets nothing, and the
+  // run still has to clear what a previous run deployed.
   const retraction = await retractDroppedHarnesses({ manifest, targets, baseDir, install: options });
   emitReport(retraction.lines);
 
@@ -210,8 +210,8 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
 
 /**
  * Installs script files from every content root's `scripts/` directory into the target scripts directory.
- * Scripts are flat files without frontmatter or harness-specific variants, so the roots merge by file name rather than
- * one root owning the directory.
+ * Scripts are flat files without frontmatter or harness-specific variants, so this function merges the roots' scripts
+ * by file name rather than letting one root own the directory.
  * Copied scripts receive the executable bit (0o755); symlinked scripts inherit the source's permissions.
  */
 async function installScripts(
@@ -307,7 +307,7 @@ async function installHarnessGuidance(
         indent: 2,
         level: 'warn',
         text:
-          `The ${harnessId} guidance template is shipped by more than one content root: installing it from ` +
+          `The ${harnessId} guidance template is provided by more than one content root: installing it from ` +
           `${describeContentRoot(owner.root)} and ignoring ${shadowed.map((shipping) => describeContentRoot(shipping.root)).join(', ')}.`,
       },
     ]);
@@ -321,8 +321,8 @@ async function installHarnessGuidance(
     const srcPath = path.join(guidanceSrcDir, entry);
     const destPath = path.join(harnessPaths.harnessHome, entry);
 
-    // Render before the dry-run gate so that missing include targets, cycles, out-of-tree references, malformed hooks,
-    // and dead in-body locators surface even when the dry run doesn't write any files.
+    // Render before the dry-run gate so that the render reports missing include targets, cycles, out-of-tree
+    // references, malformed hooks, and dead in-body locators even when the dry run doesn't write any files.
     const renderedContent = entry.endsWith('.md')
       ? await renderGuidanceTemplateFile(owner.root, harnessId, entry)
       : undefined;
@@ -380,12 +380,12 @@ async function installHarnessGuidance(
 
 /**
  * Collects the installable scripts across `roots`, keyed by file name, taking each name from the highest-precedence
- * root that ships it. A name also shipped by a lower-precedence root is dropped and reported: Scripts deploy into one
- * flat directory, and their file names are undeclared, so a collision states none of the override intent that a
- * declared artifact's slug does.
+ * root that provides it. A name also provided by a lower-precedence root is dropped and reported: Scripts are deployed
+ * into one flat directory, and their file names are undeclared, so a collision states none of the override intent that
+ * a declared artifact's slug does.
  *
- * `foundDirectory` distinguishes a run in which the roots don't ship any `scripts/` directory at all from one in which
- * the directories exist and hold nothing installable, because only the first is worth a warning.
+ * `foundDirectory` distinguishes a run in which the roots don't contain any `scripts/` directory at all from one in
+ * which the directories exist but contain nothing installable, because only the first is worth a warning.
  */
 async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promise<{
   claims: ReadonlyMap<string, string>;
@@ -432,7 +432,7 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
           indent: 2,
           level: 'warn',
           text:
-            `Script ${entry} is shipped by more than one content root: installing it from ` +
+            `Script ${entry} is provided by more than one content root: installing it from ` +
             `${describeContentRoot(claimant)} and ignoring ${describeContentRoot(root)}.`,
         });
         continue;
@@ -446,16 +446,16 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
 }
 
 /**
- * Reports the roots shipping a guidance template for `harnessId`, highest precedence first, each paired with the file
- * names that it installs. A root ships a template when its `guidance/_harnesses/<harnessId>/` directory holds at least
- * one such file; a directory that is absent, or holds only dotfiles and subdirectories, ships nothing, so it cannot
- * shadow the root that would otherwise supply the harness.
+ * Reports the roots providing a guidance template for `harnessId`, highest precedence first, each paired with the file
+ * names that it installs. A root provides a template when its `guidance/_harnesses/<harnessId>/` directory contains at
+ * least one such file; a directory that is absent, or contains only dotfiles and subdirectories, provides nothing, so
+ * it cannot shadow the root that would otherwise supply the harness.
  *
  * The file names are returned with the root so that selection and installation apply one definition of an installable
  * entry. Because `copyItem` copies a directory recursively and `computeContentHash` reads a file, an entry that the
  * two passes classified differently would be written to the harness home and then fail the hash that records it.
  *
- * Ownership is whole-directory rather than per file, which is what keeps the template's `guidance/shared/AGENTS.md`
+ * Ownership is whole-directory rather than per file, which keeps the template's `guidance/shared/AGENTS.md`
  * include resolving inside the one root from which the template came.
  */
 async function findTemplateRoots(

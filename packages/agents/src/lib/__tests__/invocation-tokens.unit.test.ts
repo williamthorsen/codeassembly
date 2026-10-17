@@ -275,7 +275,7 @@ describe(rewriteInvocationTokens, () => {
   it('rejects an optional rulebook token, naming the forms that have one', () => {
     expect(() => rewriteInvocationTokens('See {rulebook?:nmr-scripts}.', CLAUDE_SIGILS, HOST, RULEBOOKS)).toThrow(
       'Unusable invocation token {rulebook?:nmr-scripts} in skills/wrap-up/SKILL.md: A rulebook token renders the ' +
-        'skill name under which its target deploys, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
+        'skill name under which its target deploys, which an undeployed target does not have; only {skill?:<slug>} and ' +
         '{subagent?:<slug>} have an optional form.',
     );
   });

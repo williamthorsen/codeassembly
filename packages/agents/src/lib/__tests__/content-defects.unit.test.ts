@@ -22,7 +22,7 @@ describe('formatContentDefects', () => {
     );
   });
 
-  it('orders files, then kinds, then details, so two runs read alike', () => {
+  it('orders files, then kinds, then details, so two runs produce identical output', () => {
     const defects: ReadonlyArray<ContentDefect> = [
       { file: 'b.md', kind: 'root', detail: 'z' },
       { file: 'a.md', kind: 'resolution', detail: 'b' },

@@ -15,8 +15,8 @@ import { resolveRepo } from '../shared/resolve-repo.ts';
  * Reports the latest snapshot of the domain matching the working directory, or of the home domain under `--global`,
  * ranking its documents by descending size with the three aggregates beneath them.
  *
- * It reads the record rather than the deployed tree, so it answers from a worktree that never deploys. An absent
- * record is the ordinary case for such a worktree, so it prints the sync that would create one rather than failing.
+ * It reads the record rather than the deployed tree, so it works in a worktree that never deploys. An absent record is
+ * the ordinary case for such a worktree, so it prints the `sync` command that would create one rather than failing.
  */
 export async function sizesCommand(
   options: { global: boolean },
@@ -33,8 +33,9 @@ export async function sizesCommand(
 }
 
 /**
- * Renders what the command reports: the ranking and the aggregates, or the sync that would create an absent record.
- * Assets are excluded from the ranking, which answers what a session loads, and reported as the asset total alone.
+ * Renders what the command reports: the ranking and the aggregates, or the `sync` command that would create an
+ * absent record. Assets are excluded from the ranking, which shows what a session loads, and reported as the asset
+ * total alone.
  */
 export function renderSizesReport(snapshot: SizeSnapshot | undefined, global: boolean): ReadonlyArray<ReportLine> {
   if (snapshot === undefined) {

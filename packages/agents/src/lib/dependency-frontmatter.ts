@@ -36,7 +36,7 @@ export function readDependencies(content: string, sourceLabel?: string): Artifac
   }
 
   const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
-  // `members:` belongs to collections; a rulebook, skill, or subagent carrying it has misplaced a key, not an edge.
+  // `members:` belongs to collections; a rulebook, skill, or subagent declaring it has misplaced a key, not an edge.
   if (parsed.members !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: "members:" is only valid on collections; declare prerequisite edges via "dependencies:".`,
@@ -87,7 +87,8 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
   }
 
   const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
-  // A collection's constituents live under `members:`; a `dependencies:` key there is a misplaced key, not an edge.
+  // A collection's constituents are declared under `members:`; a `dependencies:` key there is a misplaced key, not
+  // an edge.
   if (parsed.dependencies !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: a collection declares its constituents via "members:", not "dependencies:".`,

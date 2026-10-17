@@ -5,7 +5,7 @@ import path from 'node:path';
 import { createSourceResolver } from '../../content-sources.ts';
 import type { RuleContext } from '../rule-context.ts';
 
-/** Builds the context that `validateContentRoot` hands a rule, resolving against `root` alone as it does. */
+/** Builds the context that `validateContentRoot` passes to a rule, resolving against `root` alone as it does. */
 export function buildRuleContext(root: string): RuleContext {
   return { root, resolver: createSourceResolver([{ name: path.basename(root), dir: root }]) };
 }

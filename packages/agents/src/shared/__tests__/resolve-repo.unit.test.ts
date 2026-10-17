@@ -24,15 +24,15 @@ describe(resolveRepo, () => {
     expect(await resolveRepo('/repo', git)).toBe('acme/upstream');
   });
 
-  it('answers with nothing for a repository without a remote', async () => {
+  it('returns undefined for a repository without a remote', async () => {
     expect(await resolveRepo('/repo', makeFakeGit({ remotes: {} }))).toBeUndefined();
   });
 
-  it('answers with nothing for a remote URL that does not parse', async () => {
+  it('returns undefined for a remote URL that does not parse', async () => {
     expect(await resolveRepo('/repo', makeFakeGit({ remotes: { origin: 'not a url' } }))).toBeUndefined();
   });
 
-  it('warns once when git is not available, and answers with nothing', async () => {
+  it('warns once when git is not available, and returns undefined', async () => {
     const stderr = vi.spyOn(process.stderr, 'write').mockReturnValue(true);
     const missing = Object.assign(new Error('spawn git ENOENT'), { code: 'ENOENT' });
 

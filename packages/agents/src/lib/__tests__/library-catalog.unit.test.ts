@@ -163,7 +163,7 @@ describe(listSupportEntries, () => {
   });
 
   // `_data` establishes that a `_` prefix marks support content rather than an exclusion, so `__tests__` needs one of
-  // its own or it installs into every harness home alongside the reference files that skills actually read.
+  // its own or it is installed into every harness home alongside the reference files that skills actually read.
   it('excludes a test directory, which shares the support-content prefix without being installed', async () => {
     const skillsDir = path.join(contentDir, 'skills');
     await writeSkill(contentDir, 'people-report');

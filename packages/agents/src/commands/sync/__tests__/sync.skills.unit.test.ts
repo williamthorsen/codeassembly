@@ -11,7 +11,7 @@ import { syncCommand } from '../sync.ts';
 import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -233,7 +233,8 @@ describe(syncCommand, () => {
       await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
 
       // The target exists in the content root but is undeclared, so it isn't in any project tree. Re-pointing the link
-      // there would make it unresolvable outright; the harness home is where an installed copy can still answer it.
+      // there would make it unresolvable outright; at the harness home, the link can still resolve to an installed
+      // copy.
       expect(await readFile(skillPath('demo'), 'utf8')).toContain(
         '[the other one](~/.claude/skills/undeclared-skill/SKILL.md)',
       );

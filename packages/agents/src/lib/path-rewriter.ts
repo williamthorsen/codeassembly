@@ -124,7 +124,7 @@ export function rewriteSkillsReferences(content: string, resolveWithinSkills: Re
  */
 export function rewriteTemplateVariables(content: string, variables: TemplateVariables): string {
   // Replacer functions, not strings: A string replacement expands `$$`, `$&`, `` $` ``, and `$'`, so a
-  // substitution value carrying one of them would be rewritten into the match that it was meant to replace.
+  // substitution value containing one of them would be rewritten into the match that it was meant to replace.
   return content
     .replaceAll('{harness_guidance_file}', () => variables.guidanceFileName)
     .replaceAll('{harness_home_dir}', () => `~/${variables.homeDir}`)

@@ -12,7 +12,7 @@ interface RetirementOptions {
 /**
  * Retires the withdrawn shared-guidance tier: removes the copies that the manifest records under `~/.agents/` and
  * reports whether the manifest's `shared` record should be dropped. Nothing deploys there, so a lingering copy
- * presents as current guidance a file that isn't loaded by any harness.
+ * looks like current guidance but isn't loaded by any harness.
  *
  * Retirement is driven by the manifest alone, which makes it safe: A `~/.agents/AGENTS.md` never deployed by this CLI
  * doesn't have an entry in the manifest and is left untouched. Of the entries that it does have, an unmodified copy and

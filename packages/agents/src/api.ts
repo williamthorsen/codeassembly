@@ -19,7 +19,7 @@ import { isRecord } from './lib/type-guards.ts';
 export { DirectiveExpansionError } from './lib/directive-expander.ts';
 export type { IncludeClosure, IncludeEdge, IncludeGraph } from './lib/include-graph.ts';
 
-/** A kind of artifact that a content root ships. */
+/** A kind of artifact that a content root provides. */
 export type ArtifactType = InternalArtifactType;
 
 /** One artifact's source, as `readArtifact` reads it. */
@@ -101,7 +101,7 @@ export function isHarnessDeployPath(file: string): boolean {
 }
 
 /**
- * Lists every artifact that `root` ships, per type, collections included. Slugs are filesystem basenames: a skill's
+ * Lists every artifact that `root` provides, per type, collections included. Slugs are filesystem basenames: a skill's
  * directory name, and every other type's file name without `.md`.
  */
 export async function listCatalog(root: string): Promise<Catalog> {
@@ -118,7 +118,7 @@ export async function readArtifact(root: string, type: ArtifactType, slug: strin
 }
 
 /**
- * Renders everything that `root` ships for one harness, as a consumer declaring all of it receives it: skills with
+ * Renders everything that `root` provides for one harness, as a consumer declaring all of it receives it: skills with
  * their support files, rulebook-delivered skills, subagents, `skills/` support entries, and the harness guidance file
  * with the root's ambient rulebooks in its ambient region, deployment markers included. The root resolves alone, so a
  * dependency edge to an artifact that it does not contain fails.

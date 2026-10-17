@@ -66,7 +66,7 @@ export function describeMissingSource(source: DeclaredSource): ReportLine {
  * declares no source, or declares only sources whose directories are missing, because the run would otherwise resolve
  * nothing and retract everything that it deployed before.
  *
- * The checks run in a fixed order, and the order is load-bearing: an unreadable source directory must report as
+ * The checks run in a fixed order, and the order matters: an unreadable source directory must report as
  * unreadable rather than as a failed content-manifest read. Every caller shares this one entry point rather than the
  * individual checks, so two commands cannot come to disagree about that order.
  */
@@ -104,7 +104,7 @@ export async function resolveDeclaredSources(options: {
   }
 
   // Checked after the source checks above, so an unreadable directory reports as unreadable rather than as a failed
-  // manifest read; a source whose directory is missing does not contain a manifest and stays the warning that it is.
+  // manifest read; a source whose directory is missing does not contain a manifest and is still reported as a warning.
   await assertSupportedContentFormats(roots);
 
   return { sources, missingSources, roots };
@@ -136,7 +136,8 @@ function describeNoSource(baseDir: string, missing: ReadonlyArray<DeclaredSource
  *
  * A shared name would let both claim one support namespace, so the source that wins artifact resolution and the one
  * whose support files survive delivery are different sources, and links rendered for the first point at the second's
- * files. Failing here, before any write, forces the conflict to be resolved by renaming rather than by delivery order.
+ * files. Throwing here, before any write, makes the user resolve the conflict by renaming a source rather than leaving
+ * it to delivery order.
  */
 function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
   const dirsByName = new Map<string, Array<string>>();
@@ -161,7 +162,7 @@ function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: s
 /**
  * Throws when a declared source's name cannot serve as the directory segments under which its support entries deploy,
  * so a name that would escape its namespace fails the run (dry-run included) before any file is written. Every
- * offending name is reported together, and a declaration with two of them takes one fix rather than two runs.
+ * offending name is reported together, and a declaration with two of them needs one fix rather than two runs.
  */
 function assertUsableSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
   const unusable = sources

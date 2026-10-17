@@ -27,8 +27,8 @@ interface ArtifactEntry {
 }
 
 /**
- * A listing row: an artifact entry tagged with its type, the source that ships it, that source's rank in precedence
- * order (0 = highest), and whether a higher-precedence source ships the same `(type, slug)`.
+ * A listing row: an artifact entry tagged with its type, the source that provides it, that source's rank in precedence
+ * order (0 = highest), and whether a higher-precedence source provides the same `(type, slug)`.
  */
 export interface LibraryRow extends ArtifactEntry {
   readonly type: ArtifactType;
@@ -74,7 +74,10 @@ const HEADERS = {
 } as const;
 
 const COLUMN_GAP = 2;
-/** Floor for the description column so that a narrow terminal still wraps rather than collapses it. */
+/**
+ * Floor for the description column so that, on a narrow terminal, the table still wraps the description rather than
+ * collapsing the column.
+ */
 const MIN_DESCRIPTION_WIDTH = 20;
 
 /**
@@ -196,7 +199,9 @@ function compareRows(a: LibraryRow, b: LibraryRow): number {
   return a.slug.localeCompare(b.slug) || a.precedence - b.precedence;
 }
 
-/** Builds a row's source cell: the source name, followed by `(shadowed)` when a higher-precedence source ships it. */
+/**
+ * Builds a row's source cell: the source name, followed by `(shadowed)` when a higher-precedence source provides it.
+ */
 function formatSourceCell(row: LibraryRow): string {
   return row.isShadowed ? `${row.source} (shadowed)` : row.source;
 }

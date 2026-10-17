@@ -15,7 +15,7 @@ export interface InstalledPackage {
 /**
  * Locates the installed directory of `name`, with its parsed `package.json`, by probing each candidate directory that
  * Node's resolver would search from `baseDir`. Probes the filesystem rather than resolving a package subpath: A modern
- * `exports` map does not expose `./package.json`, so `require.resolve` cannot reach it, and a guidance-only package
+ * `exports` map does not expose `./package.json`, so `require.resolve` cannot resolve it, and a guidance-only package
  * does not have an importable entry to resolve instead.
  *
  * The directory is the probed path, not its real path. Under pnpm a package's own dependencies are siblings of its
@@ -53,7 +53,7 @@ function parsePackageManifest(name: string, raw: string): unknown {
 
 /**
  * Reads `filePath`, resolving to `undefined` when it is absent. Rethrows any other failure (e.g. `EACCES` on an
- * unreadable `node_modules` directory), so a permission problem surfaces instead of reading as a bare absence and
+ * unreadable `node_modules` directory), so a permission problem is raised instead of reading as a bare absence and
  * sending resolution on to the next candidate.
  */
 async function readFileIfPresent(filePath: string): Promise<string | undefined> {

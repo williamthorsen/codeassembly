@@ -180,7 +180,7 @@ describe('source support delivery', () => {
   });
 
   describe(listUndeclaredSourceSupport, () => {
-    it('names a dropped namespace without naming what removing it already covers', async () => {
+    it('names a dropped namespace but not the paths beneath it', async () => {
       await mkdir(path.join(destParent, 'dropped', '_data'), { recursive: true });
       await writeFile(path.join(destParent, 'dropped', '_data', 'b.md'), '# B\n', 'utf8');
       await mkdir(path.join(destParent, 'kept'), { recursive: true });
@@ -225,7 +225,7 @@ describe('source support delivery', () => {
       expect(await listUndeclaredSourceSupport(destParent, { surviving: ['kept'], emptied: ['emptied'] })).toEqual([]);
     });
 
-    it('names a scope directory whose only package delivery empties', async () => {
+    it('names a scope directory whose only package is emptied by delivery', async () => {
       await mkdir(path.join(destParent, '@acme', 'gone'), { recursive: true });
       await mkdir(path.join(destParent, 'kept'), { recursive: true });
 

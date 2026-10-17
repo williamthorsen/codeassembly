@@ -13,7 +13,7 @@ import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -48,7 +48,7 @@ describe('install with declared sources', () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
-  it('deploys a script shipped only by the source', async () => {
+  it('deploys a script provided only by the source', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       scripts: { 'org-only.sh': '#!/usr/bin/env bash\necho org\n' },
     });
@@ -83,7 +83,7 @@ describe('install with declared sources', () => {
 
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo from-source');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /demo\.sh is shipped by more than one content root.*source "codeassembly"/s,
+      /demo\.sh is provided by more than one content root.*source "codeassembly"/s,
     );
   });
 
@@ -105,7 +105,7 @@ describe('install with declared sources', () => {
 
     expect(await readScript(tempDir, 'contested.sh')).toContain('echo higher');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /contested\.sh is shipped by more than one content root.*"lower"/s,
+      /contested\.sh is provided by more than one content root.*"lower"/s,
     );
   });
 
@@ -179,7 +179,7 @@ describe('install with declared sources', () => {
     );
   });
 
-  it('fails when a source ships a template but not the shared guidance that it includes', async () => {
+  it('fails when a source provides a template but not the shared guidance that it includes', async () => {
     const sourceDir = await makeSource(tempDir, 'org', {
       claudeGuidance: { 'CLAUDE.md': SOURCE_CLAUDE_TEMPLATE },
     });
@@ -202,7 +202,7 @@ describe('install with declared sources', () => {
     await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /claude guidance template is shipped by more than one content root.*source "codeassembly"/s,
+      /claude guidance template is provided by more than one content root.*source "codeassembly"/s,
     );
   });
 
@@ -242,7 +242,7 @@ describe('install with declared sources', () => {
     expect(existsSync(path.join(tempDir, '.claude', 'fragments'))).toBe(false);
   });
 
-  it('falls back to the lower-precedence source when a source ships only a subdirectory for the harness', async () => {
+  it('falls back to the lower-precedence source when a source provides only a subdirectory for the harness', async () => {
     const sourceDir = path.join(tempDir, 'sources', 'org');
     await mkdir(path.join(sourceDir, 'guidance', '_harnesses', 'claude', 'fragments'), { recursive: true });
     await writeFile(
@@ -258,7 +258,7 @@ describe('install with declared sources', () => {
     expect(await readGuidance(tempDir)).toContain('Fixture claude preamble.');
   });
 
-  it('retracts a template file not shipped by the owning source', async () => {
+  it('retracts a template file not provided by the owning source', async () => {
     using _silent = silenceConsole(['info', 'warn']);
     await installCommand(makeOptions({ harness: 'rovo' }), tempDir, fakeGit);
     expect(existsSync(path.join(tempDir, ROVO_HOME, 'codeassembly-guidance.md'))).toBe(true);

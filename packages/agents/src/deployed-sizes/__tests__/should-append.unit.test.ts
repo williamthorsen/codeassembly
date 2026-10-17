@@ -15,14 +15,14 @@ const VECTOR: Record<string, DeployedFile> = {
   'claude/skills/plan/run.mjs': { bytes: 400, kind: 'asset' },
 };
 
-/** A source tree whose `HEAD` sits on the default branch, which `origin/HEAD` names. */
+/** A source tree whose `HEAD` is on the default branch, which `origin/HEAD` names. */
 const ON_DEFAULT_BRANCH = makeFakeGit({ ancestor: true, originHead: 'origin/main' });
 
 describe(shouldAppend, () => {
   const sourceRoot = '/source';
   const git = ON_DEFAULT_BRANCH;
 
-  it('appends the first vector, which no previous snapshot can equal', async () => {
+  it('appends the first vector, which does not have a previous snapshot to equal', async () => {
     expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git })).toBe(true);
   });
 
@@ -56,7 +56,7 @@ describe(shouldAppend, () => {
     ).toBe(true);
   });
 
-  it('appends an ambient-region edit, which changes an aggregate and no file', async () => {
+  it('appends an ambient-region edit, which changes an aggregate but does not change any file', async () => {
     const previous = snapshotOf(measure(VECTOR, { ambientRegions: 2_000 }));
     const edited = measure(VECTOR, { ambientRegions: 2_400 });
 
@@ -83,7 +83,7 @@ describe(shouldAppend, () => {
     expect(await shouldAppend({ measured, previous, sourceRoot, git })).toBe(false);
   });
 
-  it('appends a rewiring that moves a reach without moving any bytes', async () => {
+  it('appends a rewiring that changes a reach without changing any bytes', async () => {
     const previous = snapshotOf(measure(VECTOR, {}, { [SHARED]: { bytes: 300, reach: 4 } }));
     const rewired = measure(VECTOR, {}, { [SHARED]: { bytes: 300, reach: 5 } });
 
@@ -125,7 +125,7 @@ describe(shouldAppend, () => {
     );
   });
 
-  it('appends from a clone whose remote names no default branch', async () => {
+  it('appends from a clone whose remote does not name a default branch', async () => {
     const noDefault = makeFakeGit({ ancestor: false, verifiedRefs: ['HEAD'] });
 
     expect(await shouldAppend({ measured: measure(VECTOR), previous: undefined, sourceRoot, git: noDefault })).toBe(
@@ -133,7 +133,7 @@ describe(shouldAppend, () => {
     );
   });
 
-  it('reads origin/main when the remote records no origin/HEAD', async () => {
+  it('reads origin/main when the remote does not record an origin/HEAD', async () => {
     const isAncestor = vi.fn<AgentsGit['isAncestor']>().mockResolvedValue(false);
     const fallback = { ...makeFakeGit({ verifiedRefs: ['origin/main'] }), isAncestor };
 

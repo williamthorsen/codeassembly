@@ -37,8 +37,8 @@ export type { ContentDefect, ContentDefectKind } from './content-defects.ts';
 
 /**
  * The frontmatter key that `supported-harnesses:` replaced. Nothing reads it any more, so a skill left declaring it
- * deploys to every harness and carries the key into deployed output. Neither of those raises anything on its own,
- * which is why this pass reports it.
+ * deploys to every harness and the deploy copies the key into its output. Neither of those raises anything on its
+ * own, which is why this pass reports it.
  */
 const RETIRED_HARNESSES_KEY = 'harnesses';
 
@@ -49,11 +49,12 @@ const RETIRED_HARNESSES_KEY = 'harnesses';
 const RETIRED_TOOLS_KEY = '_tools';
 
 /**
- * Validates everything `root` ships that reaches a consumer, returning every defect found rather than stopping at the
+ * Validates everything that `root` delivers to a consumer, returning every defect found rather than stopping at the
  * first. Runs the checks that a consumer's `sync` runs before writing (dependency closure, artifact resolution,
  * delivery collisions, and a per-harness render) over a whole content root instead of over one consumer's declared
- * closure, plus the passes for which `sync` does not have a counterpart: the retired frontmatter key, which reaches a
- * consumer intact rather than failing there, and the content rules, each a convention that holds for any root.
+ * closure, plus the passes for which `sync` does not have a counterpart: the retired frontmatter key, which is
+ * deployed to a consumer intact rather than failing there, and the content rules, each a convention that holds for any
+ * root.
  *
  * Nothing here reads a `codeassembly.yaml`. The root is resolved alone, as a declared source with nothing behind it,
  * so a producing package without a consuming project anywhere on its path validates the same way on every machine. A
@@ -82,7 +83,7 @@ export async function validateContentRoot(
   const context: RuleContext = { root, resolver };
 
   // A body-local defect raises the same message on every harness, so the fold below collapses it to one line; a
-  // harness-specific one (a skill scoped to one harness) surfaces naming the harnesses that it affects.
+  // harness-specific one (a skill scoped to one harness) is reported with the harnesses that it affects.
   const rendered: Array<HarnessDefect> = [];
   for (const harnessId of harnessIds) {
     const { failures } = await renderResolvedContentRoot(harnessId, root, artifacts);
@@ -110,7 +111,7 @@ export async function validateContentRoot(
 
 // region | Helpers
 
-/** True when a skill's frontmatter still declares the retired harness-narrowing key, whatever value it holds. */
+/** True when a skill's frontmatter still declares the retired harness-narrowing key, whatever its value. */
 function declaresRetiredHarnessesKey(content: string): boolean {
   const { lines } = parseFrontmatter(content);
   const parsed: unknown = parseYaml(lines.join('\n'));
@@ -162,8 +163,8 @@ function findCollisionDefects(artifacts: ResolvedRootArtifacts): ReadonlyArray<C
 }
 
 /**
- * Reports every skill whose frontmatter still declares the retired harness-narrowing key. The rename is
- * silent at deploy time in both directions (the skill stops narrowing and reaches every harness, and the key survives
+ * Reports every skill whose frontmatter still declares the retired harness-narrowing key. The rename is silent at
+ * deploy time in both directions (the skill stops narrowing and is deployed to every harness, and the key survives
  * into the deployed `SKILL.md` because the strip pattern no longer matches it), so this pass reports it.
  *
  * Being harness-independent, it runs once over the resolved artifacts rather than inside the per-harness render.
@@ -188,9 +189,9 @@ async function findRetiredKeyDefects(artifacts: ResolvedRootArtifacts): Promise<
 }
 
 /**
- * Reports every overlay shipped by the root that still declares the retired `_tools:` mapping, one defect per harness
- * whose overlay declares it. Read from the root's own tree rather than through the resolver, because an overlay is a
- * file that a content root ships rather than an artifact to which a slug resolves. An overlay this cannot parse is
+ * Reports every overlay in the root that still declares the retired `_tools:` mapping, one defect per harness whose
+ * overlay declares it. Read from the root's own tree rather than through the resolver, because an overlay is a file
+ * that a content root contains rather than an artifact to which a slug resolves. An overlay this cannot parse is
  * reported as its own defect, since `validate` returns a report rather than throwing.
  */
 async function findRetiredOverlayKeyDefects(
@@ -225,7 +226,7 @@ async function findRetiredOverlayKeyDefects(
  * Reports every body that uses a form that the root's declared content format predates. The optional invocation-token
  * form needs format 2, so a root containing one under a lower format deploys its literal text on a tool implementing
  * only that contract, which is the outcome that the format field exists to prevent. The walk reads files rather than
- * resolved bodies: A partial carries a token into every body that inlines it, and a partial resolves only within its
+ * resolved bodies: A partial's token appears in every body that inlines it, and a partial resolves only within its
  * own root.
  */
 async function findUnderdeclaredFormatDefects(root: string): Promise<ReadonlyArray<ContentDefect>> {

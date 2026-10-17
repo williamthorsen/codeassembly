@@ -185,9 +185,9 @@ function describeChangeDetail(change: DocumentChange): string {
 }
 
 /**
- * The warning for each dropped harness whose ambient host the sweep declines to touch. Emitted at the report's top
- * level, beside the ambient-delivery skips that it mirrors, rather than inside the harness's block: Nothing was
- * retracted there, and a run that says only what it removed reads clean over guidance withdrawn by the declaration.
+ * The warning for each dropped harness whose ambient host the sweep skips. Emitted at the report's top level, beside
+ * the ambient-delivery skips that it mirrors, rather than inside the harness's block: Nothing was retracted there, and
+ * a run that reports only what it removed looks clean while guidance that the declaration withdrew still loads.
  */
 function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> {
   return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> =>
@@ -240,8 +240,8 @@ function describeDocumentChange(change: DocumentChange, deltaWidth: number): Rep
 }
 
 /**
- * The lines naming what one dropped harness still holds: one for each path removed and each region stripped. `verbs`
- * supplies the tense, so a preview reads as what a run would do and a run as what it did.
+ * The lines naming what one dropped harness still contains: one for each path removed and each region stripped.
+ * `verbs` supplies the tense, so a preview reads as what a run would do and a run as what it did.
  */
 function describeDroppedHarness(retraction: DroppedHarnessRetraction, verbs: RetractionVerbs): ReadonlyArray<string> {
   const lines = [
@@ -288,8 +288,8 @@ function describeExpansionChange(change: ExpansionChange, deltaWidth: number): R
 }
 
 /**
- * The warning for one document that has just reached the growth ceiling. It names `streamline-guidance` only where
- * the reader maintains the source behind the document; elsewhere the crossing is worth stating and the remedy is not
+ * The warning for one document that has just reached the growth ceiling. It names `streamline-guidance` only when
+ * the reader maintains the source behind the document; otherwise the crossing is worth stating and the remedy is not
  * theirs to apply.
  */
 function describeGrowthWarning(warning: GrowthWarning): ReportLine {
@@ -471,9 +471,9 @@ function describeSizeChangeLine(change: SizeChange, deltaWidth: number, name: st
  * The size block that closes a live run's report: what changed, what has just grown past the ceiling, the three
  * aggregates, and the command that ranks every deployed document.
  *
- * The aggregates don't carry an overlap disclaimer here. The block labels the three totals separately and doesn't
- * print a combined total, so nothing implies that they sum, and the closing line points at the command that carries
- * the explanation.
+ * The aggregates don't include an overlap disclaimer here. The block labels the three totals separately and doesn't
+ * print a combined total, so nothing implies that they sum, and the closing line points at the command that gives the
+ * explanation.
  */
 function describeSizes(sizes: SizeReportOutcome | undefined): ReadonlyArray<ReportLine> {
   if (sizes === undefined) {
@@ -492,7 +492,7 @@ function describeSourceNames(names: ReadonlyArray<string>): string {
 
 /**
  * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
- * because their source ships nothing, and which ones retraction removes because they aren't claimed by any source.
+ * because their source provides nothing, and which ones retraction removes because they aren't claimed by any source.
  */
 function describeSourceSupport(
   plans: ReadonlyArray<SourceSupportPlan>,
@@ -503,7 +503,7 @@ function describeSourceSupport(
     .map((plan) =>
       plan.kind === 'deliver'
         ? `  deliver ${plan.entries.length} source support file(s) to ${plan.destDir}`
-        : `  retract source support ${plan.destDir} (source ships none)`,
+        : `  retract source support ${plan.destDir} (source provides none)`,
     );
   return [...lines, ...retractions.map((retraction) => `  retract source support ${retraction} (no longer declared)`)];
 }
@@ -532,12 +532,12 @@ function describeUnignoredHost(hostPath: string): ReportLine {
 }
 
 /**
- * Renders the advice naming each dependency that ships content that the project has not declared, as the `packages:`
+ * Renders the advice naming each dependency that provides content that the project has not declared, as the `packages:`
  * block that adopts them. Emitted as the block rather than as prose so that it can be pasted rather than transcribed,
  * on a line of its own so that the glyph's gutter does not indent it.
  */
 function renderPackageAdvice(names: ReadonlyArray<string>): ReadonlyArray<ReportLine> {
-  const subject = names.length === 1 ? 'dependency ships' : 'dependencies ship';
+  const subject = names.length === 1 ? 'dependency provides' : 'dependencies provide';
   const entries = names.map((name) => `    - '${name}'`).join('\n');
   return [
     {
@@ -590,7 +590,7 @@ function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
   if (report.isFirstRecorded) {
     lines.push({ level: 'info', text: '  This is the first recorded deployment here, so nothing is compared to it.' });
   }
-  // Computed across both kinds of change, so that the column stays aligned where the two interleave.
+  // Computed across both kinds of change, so that the column stays aligned when the two interleave.
   const deltaWidth = Math.max(0, ...report.changes.map((change) => formatDelta(countAccountedBytes(change)).length));
   lines.push(
     ...report.changes.map((change) =>

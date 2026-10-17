@@ -32,7 +32,8 @@ export interface SubagentRenderContext extends TemplateVariables {
   readonly rulebooks: RulebookInvocationCatalog;
   /**
    * Guidance bound to each hook that the subagent's body may declare. Absent for every caller that doesn't
-   * resolve a declaration (`install` and `validate`), which keeps them stripping.
+   * resolve a declaration (`install` and `validate`), so that the transform strips every hook directive from their
+   * output.
    */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
 }
@@ -42,15 +43,15 @@ export interface SubagentRenderContext extends TemplateVariables {
  * declarations, compiles any `rulebooks:` injection into `skills:`, merges the harness overlay frontmatter, rewrites
  * `{tool:NAME}` placeholders, rewrites relative Markdown links, then expands template variables.
  *
- * The injection precedes the overlay merge, so that the overlay stays the last word on deployed frontmatter and its
+ * The injection precedes the overlay merge, so that the overlay takes precedence in the deployed frontmatter and its
  * line-based replacement runs over the re-serialized text rather than being undone by it. Pure string in,
  * marker-free string out: Both `install` and `sync` compose ownership/provenance marking around it. In-body anchors
  * are validated on the resolved text, ahead of every rewrite, so that the verdict holds for every harness and a
  * collision between host and bound guidance is caught.
  *
- * Hooks resolve here rather than beside the caller's include expansion, so that every path that renders a subagent
- * body passes through them. The fill precedes the frontmatter merge, and a directive written inside the frontmatter
- * block fails rather than splicing prose into YAML.
+ * This function resolves hooks, rather than the caller beside its include expansion, so that every path that renders
+ * a subagent body passes through them. The fill precedes the frontmatter merge, and a directive written inside the
+ * frontmatter block fails rather than splicing prose into YAML.
  *
  * `anchor` and `homeDir` are distinct fields because they answer different questions: The anchor places a link
  * target, or a `{harness_home_dir}/skills/` reference, in whichever tree deploys it, while `homeDir` expands every

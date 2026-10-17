@@ -11,16 +11,16 @@ const FALLBACK_DEFAULT_BRANCH = 'origin/main';
  * snapshot, and the tree whose content was deployed is on a commit that the remote-tracking default branch contains.
  *
  * The compared vector is the measurement entire: files, expansions, and aggregates alike. An ambient region is a span
- * inside a guidance file that the deployment does not own outright, so it reaches `aggregates.alwaysLoaded` and no
- * file row; comparing the aggregates is what lets an edit confined to one be recorded. Any later measured quantity
- * that no single file backs is covered by the same comparison. Comparing the expansions covers a rewiring that moves
- * a partial's reach without moving anyone's bytes, and it makes the first measurement after the block existed differ
- * from a previous snapshot that states none.
+ * inside a guidance file that the deployment does not own outright, so its bytes count toward
+ * `aggregates.alwaysLoaded` and not toward any file row; comparing the aggregates lets an edit confined to one be
+ * recorded. Any later measured quantity that is not backed by any single file is covered by the same comparison.
+ * Comparing the expansions covers a rewiring that moves a partial's reach without moving anyone's bytes, and it makes
+ * the first measurement after the block existed differ from a previous snapshot that states none.
  *
  * The ancestry condition keeps a feature branch's deployment out of the record, so that the record tracks the
  * default branch's sizes rather than those of each branch under development. A source tree that is not a git tree
- * has no branch to be wrong about, and a published install is exactly that case, so an unanswerable ancestry test
- * lets the append through: Refusing there would stop the record entirely.
+ * does not have a branch to be wrong about, and a published install is exactly that case, so an unanswerable ancestry
+ * test lets the append through: Refusing there would stop the record entirely.
  */
 export async function shouldAppend(input: {
   measured: DeploymentMeasurement;
@@ -70,7 +70,7 @@ function haveSameExpansions(
 
 /**
  * Reports whether two file vectors state the same files, each at the same bytes and the same kind. Compared field by
- * field rather than by serializing, since key order is what a serialized comparison would turn on.
+ * field rather than by serializing, since a serialized comparison would depend on key order.
  */
 function haveSameFiles(
   files: Readonly<Record<string, DeployedFile>>,
@@ -114,7 +114,7 @@ function isUnchanged(measured: DeploymentMeasurement, previous: SizeSnapshot): b
 /**
  * Resolves the remote-tracking default branch, preferring what `origin/HEAD` records and falling back to
  * `origin/main`. Returns `undefined` when neither resolves, which is the answer for a source tree that is not a git
- * tree and for a clone whose remote names no default branch.
+ * tree and for a clone whose remote does not name a default branch.
  */
 async function resolveDefaultBranch(sourceRoot: string, git: AgentsGit): Promise<string | undefined> {
   // `origin/HEAD` is unset in many clones, so the fallback is probed before the gate gives up.

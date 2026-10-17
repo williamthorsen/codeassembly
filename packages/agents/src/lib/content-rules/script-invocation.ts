@@ -99,7 +99,7 @@ function containsBareInvocation(line: string, script: string): boolean {
 }
 
 /**
- * Lists the script names shipped directly under the root's `scripts/`, sorted. A Markdown file there documents the
+ * Lists the names of the scripts directly under the root's `scripts/`, sorted. A Markdown file there documents the
  * scripts rather than being one.
  */
 async function listKnownScripts(root: string): Promise<ReadonlyArray<string>> {

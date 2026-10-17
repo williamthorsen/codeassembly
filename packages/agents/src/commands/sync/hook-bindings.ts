@@ -2,8 +2,9 @@ import { indexRulebooksBySlug, type ResolvedRulebook } from '../../lib/rulebook-
 
 /**
  * Collects every disagreement between the rulebooks bound by a declaration and the delivery that those rulebooks
- * declare. A disagreement does not throw: Each is reported to the reader as a line, because a binding and a
- * `delivery` are written by different people and a run whose output is correct must not fail over their disagreement.
+ * declare. The function does not throw on a disagreement: Each is reported to the reader as a line, because a binding
+ * and a `delivery` are written by different people and a run whose output is correct must not fail over their
+ * disagreement.
  *
  * Order is fixed so that both reports render alike: The bound findings follow the bindings in declaration order, each
  * hook's own finding ahead of its rulebooks', and the unbound ones follow `resolved`, whose order the closure walk
@@ -33,7 +34,7 @@ export function findGuidanceHookAdvisories(
   }
 
   for (const rulebook of resolved) {
-    // Measured against every hook's bindings at once: A rulebook bound anywhere has taken the route that it declares.
+    // Measured against every hook's bindings at once: A rulebook bound anywhere is delivered by a hook, as it declares.
     if (rulebook.hook && !boundSlugs.has(rulebook.slug)) {
       advisories.push({ kind: 'declared-unbound', slug: rulebook.slug });
     }
@@ -69,7 +70,7 @@ function readBoundRulebook(
 ): ResolvedRulebook {
   const rulebook = bySlug.get(slug);
   if (rulebook === undefined) {
-    throw new Error(`Rulebook "${slug}", bound to guidance hook "${hook}", did not reach the deploy closure.`);
+    throw new Error(`Rulebook "${slug}", bound to guidance hook "${hook}", is not in the deploy closure.`);
   }
   return rulebook;
 }

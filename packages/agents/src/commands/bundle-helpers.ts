@@ -68,7 +68,7 @@ async function assertDirectory(root: string): Promise<void> {
   try {
     isDirectory = (await stat(root)).isDirectory();
   } catch {
-    // An unreadable or absent root reports the same way as a file in its place.
+    // Report an unreadable or absent root the same way as a file in its place.
   }
   if (!isDirectory) {
     throw new Error(`Content root ${path.normalize(root)} is not a directory.`);

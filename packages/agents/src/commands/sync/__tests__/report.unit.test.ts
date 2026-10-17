@@ -27,7 +27,7 @@ function reconciled(overrides: Partial<SyncPlan> = {}): SyncOutcome {
   return { kind: 'reconciled', plan: buildSyncPlan(overrides) };
 }
 
-/** Aggregates stating zero throughout, which a size assertion overrides where it reads them. */
+/** Aggregates stating zero throughout, which a size assertion overrides when it reads them. */
 function zeroAggregates(): SizeAggregates {
   return {
     alwaysLoaded: { total: 0, ambientRegions: 0, skillDescriptions: 0, subagentDescriptions: 0 },
@@ -36,7 +36,7 @@ function zeroAggregates(): SizeAggregates {
   };
 }
 
-/** A reconciled outcome carrying one measured size report, stated only in the fields that an assertion reads. */
+/** A reconciled outcome containing one measured size report, stated only in the fields that an assertion reads. */
 function withSizes(report: Partial<SizeReport>): SyncOutcome {
   const sizes: SizeReportOutcome = {
     kind: 'measured',

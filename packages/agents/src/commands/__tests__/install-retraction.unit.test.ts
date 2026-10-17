@@ -15,7 +15,7 @@ import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 import { RETIRED_ROVO_CONFIG } from '../test-utils/retired-hook-configs.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -178,7 +178,7 @@ describe('install retraction of a de-declared harness', () => {
 
   const EDITED_SCRIPT = '#!/usr/bin/env bash\necho edited\n';
 
-  /** Writes the home tier's declaration file, which is where `install` reads the `harnesses:` block from. */
+  /** Writes the home tier's declaration file, from which `install` reads the `harnesses:` block. */
   async function declareHarnesses(body: string): Promise<void> {
     await declareFixtureSource(tempDir, contentDir, body);
   }
@@ -194,7 +194,7 @@ describe('install retraction of a de-declared harness', () => {
     return { harness: 'all', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  /** A content-hashed entry in the rovo home, which is what drift detection can see an edit in. */
+  /** A content-hashed entry in the rovo home, in which drift detection can see an edit. */
   function modifiedScriptPath(): string {
     return path.join(tempDir, ROVO_HOME, 'scripts', 'demo.sh');
   }

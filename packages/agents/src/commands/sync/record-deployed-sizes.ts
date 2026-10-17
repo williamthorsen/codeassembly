@@ -27,14 +27,14 @@ export type SizeReportOutcome =
  * record when the gate allows it.
  *
  * The measurement, the report, and the append are independent: The report is produced whether or not the gate lets
- * the append through, which is what lets an unchanged deployment state its aggregates and a feature branch state its
- * diff against the last default-branch snapshot.
+ * the append through, which lets an unchanged deployment state its aggregates and a feature branch state its diff
+ * against the last default-branch snapshot.
  *
  * `packageRoot` is the source tree from which the deploying binary ran. It stamps every snapshot's `sourceCommit`,
  * and it is the tree that the append gate judges in the home domain, whose content comes from that package.
  *
  * Every failure is caught and reported as the `failed` outcome rather than thrown. The pass runs after the last
- * write, where a throw would report a completed deployment as a failure, and a size condition must never fail a sync.
+ * write, when a throw would report a completed deployment as a failure, and a size condition must never fail a sync.
  */
 export async function recordDeployedSizes(input: {
   plan: DeployedPathSources;

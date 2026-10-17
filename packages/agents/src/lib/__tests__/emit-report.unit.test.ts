@@ -9,7 +9,7 @@ afterEach(() => {
 
 describe(emitReport, () => {
   // This module is the console boundary, so spying on it here is the assertion rather than a workaround.
-  it('routes each line to the stream named by its level, in the order given', () => {
+  it('writes each line to the stream named by its level, in the order given', () => {
     using silent = silenceConsole(['error', 'info', 'warn']);
 
     emitReport([

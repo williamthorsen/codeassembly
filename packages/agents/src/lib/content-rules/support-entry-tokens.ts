@@ -18,7 +18,7 @@ import { type RuleContext, toRootRelative } from './rule-context.ts';
 /** An artifact addressed as `<type>:<slug>`, the form used by the resolver's own errors. */
 type ArtifactId = string;
 
-/** A skill or subagent that can link into a support entry, with the file that holds its body. */
+/** A skill or subagent that can link into a support entry, with the file that contains its body. */
 interface Host {
   readonly type: 'skill' | 'subagent';
   readonly slug: string;
@@ -32,16 +32,18 @@ type CarrierLookup = (file: string) => SectionCarriers | undefined;
 type SectionCarriers = ReadonlyMap<string, ReadonlySet<ArtifactId>>;
 
 /**
- * Reports the two ways in which a support entry's invocation token can ship a pointer to nothing. The closure walk
- * never reads a support entry, because one is reached by a link rather than inlined, so neither is caught elsewhere.
+ * Reports the two ways in which a support entry's invocation token can point to nothing once deployed. The closure
+ * walk never reads a support entry, because a host links to one rather than inlining it, so neither is caught
+ * elsewhere.
  *
  * - A `{skill:…}` or `{subagent:…}` token, required or optional, that the root does not contain, reported against the
  *   entry.
- * - A skill or subagent whose include-expanded body links into a support-entry section carrying a required token, and
- *   whose closure does not reach the token's target, reported against the host. A support entry ships
- *   unconditionally, so the host's `dependencies:` declaration is what brings the target along. A token counts in its
- *   own section and every section enclosing it, since a link to an ancestor heading reaches it too. An optional token
- *   does not carry any requirement: Compelling a declaration would deploy the target that the marker exists to leave out.
+ * - A skill or subagent whose include-expanded body links into a support-entry section containing a required token,
+ *   and whose closure does not reach the token's target, reported against the host. A support entry deploys
+ *   unconditionally, so the target deploys only when the host declares it under `dependencies:`. A token counts in its
+ *   own section and every section enclosing it, since a link to an ancestor heading also covers it. An optional token
+ *   does not impose any requirement: Compelling a declaration would deploy the target that the marker exists to
+ *   leave out.
  *
  * `{rulebook:…}` tokens are out of scope: The render pass rejects one in a support entry outright.
  */
@@ -74,7 +76,7 @@ export async function findSupportEntryTokenDefects({
 // region | Helpers
 
 /**
- * Collects the artifacts that a host must reach because it links into a support-entry section carrying a required
+ * Collects the artifacts that a host must reach because it links into a support-entry section containing a required
  * token, each mapped to the first link target that requires it.
  */
 async function collectRequiredTargets(
@@ -147,7 +149,7 @@ async function findUndeclaredTargets(
           kind: 'dependency',
           detail:
             `Links to \`${link}\`, a support-entry section invoking ${id}, which this artifact's closure does not ` +
-            'reach, so the entry ships a pointer to an artifact that a consumer does not install. Declare it under ' +
+            'reach, so the deployed entry points to an artifact that a consumer does not install. Declare it under ' +
             '`dependencies:`.',
         });
       }
@@ -203,7 +205,7 @@ function listEnclosingSlugs(headings: ReadonlyArray<HeadingPosition>, index: num
   return open.map((heading) => heading.slug);
 }
 
-/** Lists the root's skills and subagents, each with the file that holds its body. */
+/** Lists the root's skills and subagents, each with the file that contains its body. */
 async function listHosts(root: string): Promise<ReadonlyArray<Host>> {
   const skillsDir = path.join(root, 'skills');
   const subagentsDir = path.join(root, 'subagents');
@@ -222,7 +224,7 @@ async function listHosts(root: string): Promise<ReadonlyArray<Host>> {
 }
 
 /**
- * Lists every Markdown file under `skills/` that ships as a support entry rather than as part of a skill. An entry is
+ * Lists every Markdown file under `skills/` that deploys as a support entry rather than as part of a skill. An entry is
  * a directory or a plain file, so the walk decides on what the entry is rather than on its name.
  */
 async function listSupportEntryFiles(root: string): Promise<ReadonlyArray<string>> {

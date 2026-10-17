@@ -4,17 +4,17 @@
  * `<!-- codeassembly-ambient:end -->` markers. Its location is `install`'s authority (the guidance templates contain
  * an empty region); its content is `sync`'s (regenerated wholesale from the resolved ambient rulebooks on each run).
  * Every function is a pure string transform that does not access the filesystem, and every one depends on the host
- * holding at most one region.
+ * containing at most one region.
  */
 
 export const AMBIENT_OPEN_MARKER = '<!-- codeassembly-ambient:start -->';
 export const AMBIENT_CLOSE_MARKER = '<!-- codeassembly-ambient:end -->';
 
-/** How a host's ambient region stands: no markers at all, exactly one well-formed region, or anything else. */
+/** The state of a host's ambient region: no markers at all, exactly one well-formed region, or anything else. */
 export type AmbientRegionState = 'absent' | 'complete' | 'malformed';
 
 /**
- * The span of one well-formed region. Anchored and lazy, so on content holding a stray marker above a well-formed
+ * The span of one well-formed region. Anchored and lazy, so on content containing a stray marker above a well-formed
  * region it matches from the stray marker through the region's close marker: Replacing that match discards every line
  * between them.
  */
@@ -29,7 +29,7 @@ const CLOSE_MARKER_LINE = /^<!-- codeassembly-ambient:end -->[ \t]*$/gm;
  * Appends a region containing `body` to `content`, separated from any existing text by a blank line. Content that is
  * blank yields the region alone. For a host that `sync` owns but did not necessarily create, this adds the region
  * without disturbing what the user wrote above it. The caller must have established that `content` does not
- * contain a region: Appending to content that already holds one produces a malformed host.
+ * contain a region: Appending to content that already contains one produces a malformed host.
  */
 export function appendAmbientRegion(content: string, body: string): string {
   const region = `${renderRegion(body)}\n`;
@@ -37,8 +37,8 @@ export function appendAmbientRegion(content: string, body: string): string {
 }
 
 /**
- * Reports whether `content` doesn't hold any markers, holds exactly one well-formed region, or holds a region that a
- * transform must not touch. Malformed covers an unmatched marker, a close marker preceding its open, and any
+ * Reports whether `content` doesn't contain any markers, contains exactly one well-formed region, or contains a region
+ * that a transform must not touch. Malformed covers an unmatched marker, a close marker preceding its open, and any
  * duplication: two regions, or a stray marker beside a well-formed one. Each of those either destroys text on the next
  * injection or leaves a second region permanently stale, so they are one category: The caller must repair the host
  * rather than write to it.
@@ -55,7 +55,7 @@ export function classifyAmbientRegion(content: string): AmbientRegionState {
 /**
  * Returns the region's inner content without surrounding newlines (an empty string for an empty region), or
  * `undefined` unless exactly one well-formed region is present. A damaged host yields `undefined` rather than the
- * widened span matched there by `REGION_PATTERN`. A caller preserving region content across a re-render cannot carry
+ * widened span matched there by `REGION_PATTERN`. A caller preserving region content across a re-render cannot copy
  * text that the region does not own back into it.
  */
 export function extractAmbientRegionContent(content: string): string | undefined {
@@ -66,7 +66,7 @@ export function extractAmbientRegionContent(content: string): string | undefined
   return (match[1] ?? '').replace(/\n+$/, '');
 }
 
-/** True when the content holds exactly one well-formed ambient region. */
+/** True when the content contains exactly one well-formed ambient region. */
 export function hasAmbientRegion(content: string): boolean {
   return classifyAmbientRegion(content) === 'complete';
 }
@@ -74,7 +74,7 @@ export function hasAmbientRegion(content: string): boolean {
 /**
  * Replaces the ambient region's content with `body`, keeping the markers. Throws unless exactly one well-formed
  * region is present: A missing region means `install` has not rendered one and the caller should report that rather
- * than invent a location, and a malformed one means the replacement span reaches text that the region does not own.
+ * than invent a location, and a malformed one means the replacement span includes text that the region does not own.
  * Re-injecting an identical body yields byte-identical content, which keeps `sync` diff-free on re-run.
  */
 export function injectAmbientRegion(content: string, body: string): string {
@@ -89,7 +89,7 @@ export function injectAmbientRegion(content: string, body: string): string {
 
 /**
  * Removes the ambient region along with its markers, closing the gap that it leaves: Text on either side is rejoined
- * by a single blank line, and content holding nothing but the region yields the empty string. Content without a
+ * by a single blank line, and content containing nothing but the region yields the empty string. Content without a
  * complete region is returned unchanged.
  */
 export function removeAmbientRegion(content: string): string {

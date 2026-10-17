@@ -56,8 +56,7 @@ export interface DeployedPath {
   /**
    * Canonical directory of the source from which the artifact resolved, or `undefined` for a file not backed by any
    * declared artifact: an install-manifest entry or a source-support delivery. Report-time provenance alone, which
-   * is what lets a report decide whether the reader can edit what a deployed file came from; a snapshot does not
-   * record it.
+   * lets a report decide whether the reader can edit what a deployed file came from; a snapshot does not record it.
    */
   readonly sourceRoot: string | undefined;
   /**
@@ -108,7 +107,7 @@ interface CollectionContext {
   readonly harnessId: HarnessId;
   readonly base: string;
   readonly sourceRoot: string | undefined;
-  /** The authored source that the pass attributes its one authored body to, absent where the pass has none. */
+  /** The authored source that the pass attributes its one authored body to, absent when the pass has none. */
   readonly authored: AuthoredSource | undefined;
 }
 
@@ -122,7 +121,7 @@ export interface DeployedPathSet {
 /**
  * Collects the set of deployed files to measure, from the sync plan and, in the home domain, from the install
  * manifest. Membership comes from what the two commands recorded writing rather than from a walk of the harness tree,
- * which holds far more than CodeAssembly deploys.
+ * which contains far more than CodeAssembly deploys.
  *
  * A skill deploys as a directory, so the entries inside each directory that the plan names are read. That walk is
  * bounded by the directories that the plan already owns, which leaves a plugin skill and a hand-authored one
@@ -232,7 +231,7 @@ function classifyFile(absPath: string): DeployedFileKind {
 /**
  * Records every file inside one deployed directory, at every depth. An absent directory contributes nothing.
  *
- * `skillRoot` marks the directory as a deployed skill, whose `SKILL.md` carries the description that a harness lists;
+ * `skillRoot` marks the directory as a deployed skill, whose `SKILL.md` contains the description that a harness lists;
  * a directory walked from the install manifest does not name a skill and passes it as false.
  */
 async function collectDirectory(
@@ -289,8 +288,8 @@ function describeAuthoredSource(artifact: {
 }
 
 /**
- * Resolves the key under which a deployed file is recorded. The harness prefix is what keeps two harnesses' copies of
- * one skill distinct, which a bare deployed path would merge.
+ * Resolves the key under which a deployed file is recorded. The harness prefix keeps two harnesses' copies of one
+ * skill distinct, which a bare deployed path would merge.
  */
 function resolveKey(absPath: string, harnessId: HarnessId, base: string): string {
   const { harnessHome } = resolveHarnessPaths(harnessId, base);

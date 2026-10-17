@@ -101,7 +101,7 @@ export async function detectDrift(
     return 'missing';
   }
 
-  // A directory entry carries a sentinel hash and cannot be content-hashed, so its presence is the whole check.
+  // A directory entry has a sentinel hash and cannot be content-hashed, so its presence is the whole check.
   if (entry.contentHash.startsWith('sha256:dir:')) {
     const stats = await stat(filePath);
     return stats.isDirectory() ? 'current' : 'modified';

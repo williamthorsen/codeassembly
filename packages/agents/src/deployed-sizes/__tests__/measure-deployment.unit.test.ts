@@ -110,7 +110,7 @@ describe(measureDeployment, () => {
     expect(measured.aggregates.alwaysLoaded.subagentDescriptions).toBe('Revises prose'.length * 2);
   });
 
-  it('contributes zero for a guidance file with no ambient region', async () => {
+  it('contributes zero for a guidance file without an ambient region', async () => {
     const host = await writeDeployed('CLAUDE.md', '# Hand-authored guidance\n');
 
     const measured = await measureDeployment({ files: [], ambientHostPaths: [host] });
@@ -129,7 +129,7 @@ describe(measureDeployment, () => {
     expect(measured.aggregates.alwaysLoaded.ambientRegions).toBe(0);
   });
 
-  it('contributes zero for a deployed skill whose frontmatter declares no description', async () => {
+  it('contributes zero for a deployed skill whose frontmatter does not declare a description', async () => {
     const skill = await writeDeployed('skills/plan/SKILL.md', '---\nname: plan\n---\n\n# Plan\n');
 
     const measured = await measureDeployment({
@@ -190,7 +190,7 @@ function emptySet(): DeployedPathSet {
   return { files: [], ambientHostPaths: [] };
 }
 
-/** One collected file, in the `other` role that contributes to no description total. */
+/** One collected file, in the `other` role that does not contribute to any description total. */
 function file(absPath: string, key: string, kind: 'asset' | 'document'): DeployedPath {
   return { key, absPath, kind, role: 'other', harnessId: 'claude', sourceRoot: undefined, authored: undefined };
 }
@@ -201,7 +201,7 @@ function frontmatter(name: string, description: string, extra?: string): string 
   return `${lines.join('\n')}\n\n# ${name}\n`;
 }
 
-/** A guidance file holding one well-formed ambient region around `body`. */
+/** A guidance file containing one well-formed ambient region around `body`. */
 function withAmbientRegion(body: string): string {
   return `# Guidance\n\n${AMBIENT_OPEN_MARKER}\n${body}\n${AMBIENT_CLOSE_MARKER}\n`;
 }

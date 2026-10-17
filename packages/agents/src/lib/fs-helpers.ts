@@ -5,14 +5,15 @@ import path from 'node:path';
 import { isEnoent, isMissingFile } from './type-guards.ts';
 
 /**
- * The directory names holding test code. Fixture data nests inside `__tests__` rather than having a directory of
- * its own, so that name covers both; `test-utils` holds the helpers that those suites import, which are test code too.
+ * The names of the directories that contain test code. Fixture data nests inside `__tests__` rather than having a
+ * directory of its own, so that name covers both; `test-utils` contains the helpers that those suites import, which
+ * are test code too.
  */
 export const TEST_DIRECTORY_NAMES: ReadonlySet<string> = new Set(['__tests__', 'test-utils']);
 
 /**
- * True when a directory entry holds test code rather than deliverable content. Test code is never published, never
- * installed into a harness home, and never read as content by a check that walks a content tree.
+ * True when a directory entry contains test code rather than deliverable content. Test code is never published,
+ * never installed into a harness home, and never read as content by a check that walks a content tree.
  */
 export function isTestDirectory(name: string): boolean {
   return TEST_DIRECTORY_NAMES.has(name);
@@ -21,7 +22,7 @@ export function isTestDirectory(name: string): boolean {
 /**
  * True when `relativePath` passes through a test directory at any depth. A walk over a content tree drops what this
  * matches: Fixture data is authored for one suite to read, and every other check that walks the tree would otherwise
- * scan it as real content and report a defect against a file deliberately shaped to hold one.
+ * scan it as real content and report a defect against a file deliberately shaped to contain one.
  */
 export function isUnderTestDirectory(relativePath: string): boolean {
   return relativePath.split(/[/\\]/).some((segment) => isTestDirectory(segment));

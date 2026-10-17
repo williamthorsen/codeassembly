@@ -16,7 +16,7 @@ import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 import { RETIRED_CLAUDE_SETTINGS } from '../test-utils/retired-hook-configs.ts';
 import { uninstallCommand } from '../uninstall.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 describe('uninstallCommand', () => {
@@ -192,7 +192,7 @@ describe('uninstallCommand', () => {
 
     await uninstallCommand({ harness: 'claude', force: false }, tempDir);
 
-    // existsSync already reads false for a dangling link, so assert the link entry itself is gone.
+    // existsSync already returns false for a dangling link, so assert the link entry itself is gone.
     expect(() => lstatSync(linkPath)).toThrow();
     const manifest = await readManifest(getManifestPath(tempDir));
     expect(manifest.harnesses.claude).toBeUndefined();

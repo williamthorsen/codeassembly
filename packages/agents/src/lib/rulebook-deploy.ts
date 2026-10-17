@@ -33,7 +33,9 @@ export interface ResolvedRulebook {
   readonly description: string | undefined;
   /** The name of the declared source from which it resolved. */
   readonly source: string;
-  /** The version declared by the rulebook, named in its deployed output so that an agent can read which version it holds. */
+  /**
+   * The version declared by the rulebook, named in its deployed output so that an agent can read which version it has.
+   */
   readonly version: string | undefined;
   /** The harnesses to which the rulebook deploys; absent when it does not narrow them, meaning all harnesses. */
   readonly targetHarnesses?: ReadonlyArray<HarnessId>;
@@ -44,9 +46,9 @@ export interface ResolvedRulebook {
  * include directives against that source's own root, validates its frontmatter, and returns its neutral body and
  * delivery. Throws an error naming the resolving source when the frontmatter file is missing.
  *
- * Expanding here rather than at render puts the hook checks, both delivery modes, and the guidance-hook fills
- * on one inlined body. A hook arriving through a partial would otherwise reach the fill pass unseen by the check that
- * rejects one on a bound rulebook.
+ * Expanding here rather than at render makes the hook checks, both delivery modes, and the guidance-hook fills
+ * operate on one inlined body. Otherwise, the check that rejects a hook on a bound rulebook would not see a hook that
+ * a partial supplies, and the fill pass would still fill it.
  */
 export async function resolveRulebook(slug: string, resolver: SourceResolver): Promise<ResolvedRulebook> {
   const resolved = await resolver.resolve('rulebook', slug);

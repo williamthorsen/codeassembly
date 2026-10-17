@@ -103,7 +103,7 @@ async function main(): Promise<void> {
 
 /**
  * Resolves each stream's glyph style from `--output-style`, then `CODEASSEMBLY_OUTPUT_STYLE`, then the stream's own
- * terminal state, and exits with a usage error when either source names no style.
+ * terminal state, and exits with a usage error when either source names an invalid style.
  */
 function configureStreamStyles(): void {
   const stdout = resolveStreamStyle(process.stdout.isTTY);
@@ -286,14 +286,14 @@ Commands:
   uninstall        Remove installed guidance, skills, and subagents
   sizes            Rank the last recorded deployment's documents by size, with the context aggregates beneath them
   status           Show the current state of installed items
-  validate         Check a content root for defects that reach a consumer; writes nothing
+  validate         Check a content root for defects that would affect a consumer; writes nothing
   bundle-helpers   Bundle the helpers declared by a content root's manifest (needs the optional esbuild peer)
   library list     List each declared source's artifacts (rulebooks, skills, subagents, collections)
   generate <target> Generate a configuration file (e.g., label-map)
 
 Options:
   --content <dir>   Content root to act on; defaults to codeassembly.content in ./package.json (validate and bundle-helpers)
-  --check           Fail on a bundle that differs from a fresh build, is not recorded at HEAD, or has no helper; writes nothing (bundle-helpers only)
+  --check           Fail on a bundle that differs from a fresh build, is not recorded at HEAD, or does not have a helper; writes nothing (bundle-helpers only)
   --harness <name>  Target harness: ${HARNESS_ARG_LIST} (default: all)
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)
@@ -356,8 +356,8 @@ async function runLibrary(subcommand: string, global: boolean): Promise<void> {
 
 /**
  * Dispatches sync to the requested domain. Under `warnOnly`, a failure is reported and the process still exits 0 --
- * the posture that a package-manager lifecycle hook needs, because aborting the install is far more disruptive than stale
- * guidance. The default exits 1, so an explicitly invoked sync still fails closed on every guard raised by the
+ * the behavior that a package-manager lifecycle hook needs, because aborting the install is far more disruptive than
+ * stale guidance. The default exits 1, so an explicitly invoked sync still fails closed on every guard raised by the
  * command.
  */
 async function runSync(options: InstallOptions, global: boolean, warnOnly: boolean): Promise<void> {

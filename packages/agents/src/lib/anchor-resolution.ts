@@ -36,8 +36,8 @@ interface FenceScan {
  * A fence that nothing closes throws too. Everything below it reads as code. The scan cannot check any anchor there,
  * and a silent pass over an unchecked remainder is indistinguishable from a clean one.
  *
- * Callers check `body` before any rewriting, and after include expansion where includes are expanded. Rewriting leaves
- * anchor-only targets untouched, so the verdict holds on every harness, including for a heading carrying a
+ * Callers check `body` before any rewriting, and after include expansion when includes are expanded. Rewriting leaves
+ * anchor-only targets untouched, so the verdict holds on every harness, including for a heading containing a
  * `{tool:NAME}` token, which slugs differently on each one.
  *
  * Only same-body anchors are checked. Because a fragment on a path target resolves against the deployed tree, which
@@ -152,7 +152,7 @@ function blankCodeSpans(content: string): string {
 
 /**
  * Reports the index of the first body line, skipping a leading frontmatter block. A block is recognized only when the
- * first line is exactly `---`, a later `---` closes it, and the lines between carry a top-level YAML key. A body
+ * first line is exactly `---`, a later `---` closes it, and the lines between contain a top-level YAML key. A body
  * opening on a thematic break satisfies the first two and fails the third, so its headings are scanned rather than
  * blanked; an unterminated or empty block counts as body for the same reason, since scanning is the direction that
  * cannot skip the check. A YAML comment is not the discriminator, because `# Text` is also an ATX heading.

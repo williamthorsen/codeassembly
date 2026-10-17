@@ -13,7 +13,7 @@ const IN_REPO_SOURCE = path.join(REPO_ROOT, 'packages', 'agents', 'content');
 const VENDORED_SOURCE = path.join(REPO_ROOT, 'node_modules', 'acme-guidance', 'content');
 const OUTSIDE_SOURCE = path.join('/', 'elsewhere', 'content');
 
-/** Two expansion keys, which the attribution cases vary the bytes of. */
+/** Two expansion keys, whose bytes the attribution cases vary. */
 const INNER = 'partial:codeassembly/_partials/inner.md';
 const SHARED = 'partial:codeassembly/_partials/shared.md';
 
@@ -49,13 +49,13 @@ describe(buildSizeReport, () => {
     ]);
   });
 
-  it('reports no change for a document whose bytes are unchanged', () => {
+  it('does not report a change for a document whose bytes are unchanged', () => {
     const report = build({ measured: { 'a.md': 1_024 }, previous: { 'a.md': 1_024 } });
 
     expect(report.changes).toEqual([]);
   });
 
-  it('leaves assets out of the change list, which answers what a session loads', () => {
+  it('leaves assets out of the change list, which reports what a session loads', () => {
     const report = buildSizeReport({
       measured: measurement({ 'claude/skills/plan/run.mjs': { bytes: 900_000, kind: 'asset' } }),
       previous: snapshot({ 'claude/skills/plan/run.mjs': { bytes: 10, kind: 'asset' } }),
@@ -67,7 +67,7 @@ describe(buildSizeReport, () => {
     expect(report.documentCount).toBe(0);
   });
 
-  it('orders changes by the bytes each accounts for, putting a large removal where a large addition would be', () => {
+  it('orders changes by the bytes that each change accounts for, putting a large removal where a large addition would be', () => {
     const report = build({
       measured: { 'small-growth.md': 1_100, 'large-growth.md': 9_000 },
       previous: { 'small-growth.md': 1_000, 'large-removal.md': 5_000 },
@@ -92,25 +92,25 @@ describe(buildSizeReport, () => {
     expect(report.warnings).toEqual([{ key: 'a.md', bytes: AT_CEILING, mayStreamline: false }]);
   });
 
-  it('warns when a newly deployed document arrives at or above the ceiling', () => {
+  it('warns when a newly deployed document is at or above the ceiling', () => {
     const report = build({ measured: { 'a.md': AT_CEILING }, previous: {} });
 
     expect(report.warnings.map((warning) => warning.key)).toEqual(['a.md']);
   });
 
-  it('raises no warning for a document that was already at or above the ceiling', () => {
+  it('does not raise a warning for a document that was already at or above the ceiling', () => {
     const report = build({ measured: { 'a.md': AT_CEILING * 3 }, previous: { 'a.md': AT_CEILING } });
 
     expect(report.warnings).toEqual([]);
   });
 
-  it('raises no warning for a document that stays below the ceiling', () => {
+  it('does not raise a warning for a document that stays below the ceiling', () => {
     const report = build({ measured: { 'a.md': BELOW_CEILING }, previous: { 'a.md': 10 } });
 
     expect(report.warnings).toEqual([]);
   });
 
-  it('raises no warning at all on a first recorded deployment, which has no crossing to observe', () => {
+  it('does not raise any warning on a first recorded deployment, which does not have a crossing to observe', () => {
     const report = buildSizeReport({
       measured: measurement({ 'a.md': { bytes: AT_CEILING * 10, kind: 'document' } }),
       previous: undefined,
@@ -122,7 +122,7 @@ describe(buildSizeReport, () => {
     expect(report.warnings).toEqual([]);
   });
 
-  it('names the deployment as first recorded only when the record held no previous snapshot', () => {
+  it('names the deployment as first recorded only when the record did not contain a previous snapshot', () => {
     expect(build({ measured: { 'a.md': 1 }, previous: {} }).isFirstRecorded).toBe(false);
   });
 
@@ -159,7 +159,7 @@ describe(buildSizeReport, () => {
     expect(report.warnings[0]?.mayStreamline).toBe(false);
   });
 
-  it('withholds the streamlining skill for a file that no source backs', () => {
+  it('withholds the streamlining skill for a file without a source', () => {
     const report = build({
       measured: { 'a.md': AT_CEILING },
       previous: { 'a.md': BELOW_CEILING },
@@ -204,7 +204,7 @@ describe(buildSizeReport, () => {
     ]);
   });
 
-  it('leaves out a partial extracted from text that already deployed, which grew no document', () => {
+  it('leaves out a partial extracted from text that was already deployed, which did not grow any document', () => {
     const report = build({
       measured: { 'a.md': 1_000, 'b.md': 2_000 },
       previous: { 'a.md': 1_000, 'b.md': 2_000 },
@@ -256,7 +256,7 @@ describe(buildSizeReport, () => {
     ]);
   });
 
-  it('attributes nothing to an added document, whose whole bytes are no change to explain', () => {
+  it('attributes nothing to an added document, whose whole bytes are not a change to explain', () => {
     const report = build({
       measured: { 'a.md': 1_000 },
       previous: {},
@@ -268,7 +268,7 @@ describe(buildSizeReport, () => {
     expect(report.changes).toEqual([{ kind: 'added', key: 'a.md', bytes: 1_000, delta: 1_000, explained: 0 }]);
   });
 
-  it('skips a partial that the previous snapshot held and this measurement does not', () => {
+  it('skips a partial that the previous snapshot contained and this measurement does not', () => {
     const report = build({
       measured: { 'a.md': 900 },
       previous: { 'a.md': 1_000 },
@@ -305,7 +305,7 @@ describe(buildSizeReport, () => {
     expect(report.changes.map((change) => change.key)).toEqual([SHARED, 'big.md']);
   });
 
-  it('keeps the growth warning reading a document whole rather than its residual', () => {
+  it("keeps the growth warning measuring a document's whole size rather than its residual", () => {
     const report = build({
       measured: { 'a.md': AT_CEILING },
       previous: { 'a.md': BELOW_CEILING },
@@ -389,7 +389,7 @@ function bytesByKey(keys: ReadonlyArray<string>, bytes: number): Record<string, 
   return Object.fromEntries(keys.map((key) => [key, bytes]));
 }
 
-/** One collected path, carrying the source root that decides whether the reader may be pointed at it. */
+/** One collected path, with the source root that decides whether the reader may be pointed at it. */
 function collected(key: string, sourceRoot: string | undefined): DeployedPath {
   return {
     key,
@@ -402,7 +402,7 @@ function collected(key: string, sourceRoot: string | undefined): DeployedPath {
   };
 }
 
-/** A measurement stating `files` as its vector, with aggregates that no assertion here reads. */
+/** A measurement stating `files` as its vector, with aggregates that the assertions here do not read. */
 function measurement(files: Record<string, DeployedFile>): DeploymentMeasurement {
   return { files, expansions: {}, documentExpansions: {}, aggregates: aggregates() };
 }

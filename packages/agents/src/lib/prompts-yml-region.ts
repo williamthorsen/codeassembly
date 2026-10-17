@@ -1,7 +1,7 @@
 /**
  * Idempotent management of a single codeassembly-owned region within a Rovo Dev `prompts.yml`. The region lives inside
  * the `prompts:` sequence, delimited by `# codeassembly:managed:start` / `# codeassembly:managed:end` comment markers
- * that double as the ownership marker. Everything outside the region (foreign list items and other top-level keys)
+ * that also serve as the ownership marker. Everything outside the region (foreign list items and other top-level keys)
  * is preserved verbatim. Every function is a pure string transform without filesystem access.
  */
 
@@ -9,7 +9,7 @@ const OPEN_MARKER = '  # codeassembly:managed:start';
 const CLOSE_MARKER = '  # codeassembly:managed:end';
 const REGION_PATTERN = /^[ \t]*# codeassembly:managed:start\n[\s\S]*?^[ \t]*# codeassembly:managed:end[ \t]*$/m;
 
-/** True when the content holds a complete codeassembly region marker pair: the ownership check. */
+/** True when the content contains a complete codeassembly region marker pair: the ownership check. */
 export function hasPromptsRegion(content: string): boolean {
   return REGION_PATTERN.test(content);
 }
@@ -46,7 +46,7 @@ export function injectPromptsRegion(content: string, regionBody: string): string
           "block-style 'prompts:' sequence, then re-run.",
       );
     }
-    // An empty flow sequence does not hold any foreign items, so rewrite it as a block header and insert the region
+    // An empty flow sequence does not contain any foreign items, so rewrite it as a block header and insert the region
     // below.
     lines[promptsIdx] = 'prompts:';
   }
