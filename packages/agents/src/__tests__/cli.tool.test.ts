@@ -279,7 +279,7 @@ describe('CLI sync failure reporting', () => {
 });
 
 describe('CLI output-style flag', () => {
-  it('rejects a value that names no style, naming the accepted ones', async () => {
+  it('rejects a value that does not name a style, naming the accepted ones', async () => {
     const result = await runCli('status', '--output-style', 'fancy');
 
     expect(result.exitCode).toBe(1);

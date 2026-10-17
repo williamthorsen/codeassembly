@@ -1,6 +1,6 @@
 # Bundling helpers
 
-A helper is a TypeScript program that a skill, a subagent, or a harness runs with `node`. It deploys to a directory outside the repository that produced it, where none of its dependencies are installed, so a content root ships each helper as a self-contained `.mjs` bundle beside the content that invokes it. `codeassembly bundle-helpers` builds those bundles, and `--check` confirms that the committed ones are current.
+A helper is a TypeScript program that a skill, a subagent, or a harness runs with `node`. It deploys to a directory outside the repository that produced it, where none of its dependencies are installed, so a content root includes each helper as a self-contained `.mjs` bundle beside the content that invokes it. `codeassembly bundle-helpers` builds those bundles, and `--check` confirms that the committed ones are current.
 
 ## Declaring helpers
 
@@ -45,7 +45,7 @@ codeassembly bundle-helpers --content content --check
 
 - differs from a fresh build,
 - is declared but not recorded at `HEAD`, or
-- is a tracked `.mjs` under the content root that no helper produces.
+- is a tracked `.mjs` under the content root that isn't produced by any helper.
 
 The check needs the content root to be inside a git work tree with at least one commit, and it fails naming the root otherwise. A repository that runs it in CI keeps its committed bundles in step with their source.
 
