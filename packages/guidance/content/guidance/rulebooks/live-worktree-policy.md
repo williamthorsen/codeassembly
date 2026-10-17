@@ -1,6 +1,7 @@
 ---
 slug: live-worktree-policy
 description: How a repository with a `live` worktree deploys, and where changes to it are authored.
+standalone: wanted in the repositories that have a `live` worktree, which declare it directly
 delivery: ambient
 version: '3'
 ---

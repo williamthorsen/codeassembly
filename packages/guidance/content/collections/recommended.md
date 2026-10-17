@@ -1,6 +1,7 @@
 ---
 name: recommended
 description: The vetted, generally applicable set (artifacts any project can declare).
+disposition: public
 members:
   rulebooks:
     - accessibility-conventions

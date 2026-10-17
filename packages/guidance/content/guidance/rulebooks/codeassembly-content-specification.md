@@ -1,6 +1,7 @@
 ---
 slug: codeassembly-content-specification
 description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, how broad a guidance change goes, and when a procedure belongs in a helper.
+standalone: wanted by repositories that author CodeAssembly content, which declare it directly
 delivery: skill
 version: '30'
 ---
