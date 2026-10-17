@@ -30,7 +30,7 @@ describe(resolveCliOutputStyle, () => {
     });
   });
 
-  it('reports a KB_OUTPUT_STYLE value that names no style', () => {
+  it('reports a KB_OUTPUT_STYLE value that does not name any style', () => {
     expect(resolveCliOutputStyle({ argv: ['check'], env: { KB_OUTPUT_STYLE: 'loud' }, isTty: true })).toEqual({
       ok: false,
       message: 'KB_OUTPUT_STYLE must be one of: auto, plain, rich (got "loud")',

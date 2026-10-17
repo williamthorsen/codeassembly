@@ -126,7 +126,7 @@ Movement uses breadth-first search on a 4-connected grid (without diagonal moves
 
 Idle agents wander randomly: pick a random walkable tile, pathfind to it, pause 2–20 seconds, repeat 3–6 times, then rest at their seat for 2–4 minutes. This creates organic-feeling ambient movement without explicit scripting.
 
-**Takeaway:** Factory agents currently move between stations based on workflow state. Adding subtle idle behavior (small movements, looking around) when agents are between tasks would make the scene feel more alive. The "wander N times, then rest" pattern avoids perpetual restlessness.
+**Takeaway:** Factory agents currently move between stations based on workflow state. Adding subtle idle behavior (small movements, looking around) when agents are between tasks would make the scene feel more alive. The "wander N times, then rest" pattern keeps agents from moving constantly.
 
 ## Scene and world management
 
@@ -146,7 +146,7 @@ Seat facing direction is automatically inferred from adjacent desk positions rat
 
 ### 🔌 Passive observation model
 
-Pixel Agents is entirely non-invasive: it watches Claude Code's JSONL transcripts without modifying the tool, making API calls, or intercepting commands. This decoupled architecture means updates to Claude Code don't break Pixel Agents unless the JSONL format changes.
+Pixel Agents is entirely non-invasive: It watches Claude Code's JSONL transcripts without modifying the tool, making API calls, or intercepting commands. This decoupled architecture means updates to Claude Code don't break Pixel Agents unless the JSONL format changes.
 
 **Takeaway:** Factory's server actively reads run data via adapters. The passive observation pattern is elegant for monitoring but limits interactivity. Factory's active architecture is better suited for its needs (selecting runs, navigating projects), but the principle of minimal coupling to the observed system is worth preserving.
 

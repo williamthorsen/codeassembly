@@ -22,7 +22,7 @@ export interface EnumeratedNote {
   body: string;
   /** The full original note content. */
   content: string;
-  /** 1-based file line on which the body begins. */
+  /** 1-based file line where the body begins. */
   bodyStartLine: number;
   /** Frontmatter parse or absence diagnostic, when the block was missing or could not be parsed. */
   error?: string;

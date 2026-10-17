@@ -26,7 +26,7 @@ Declaring a collection is a claim about its members, so every artifact has at le
 
 Deciding a disposition takes two reading passes, and the second is the one that gets skipped:
 
-1. **Read the prose** for personal doctrine -- a preference stated as a rule that another team would answer differently.
+1. **Read the prose** for personal doctrine -- a preference stated as a rule that another team would decide differently.
 2. **Ask what the artifact names that exists only here** -- a store, path, host, repository, tracker, or tool that a consumer would not have. Such coupling appears in a default value or an example rather than in the prose, so the first pass misses it.
 
 **A public collection** (`recommended` here) is one that anyone may declare, and membership in it claims general fitness. Every criterion must hold:

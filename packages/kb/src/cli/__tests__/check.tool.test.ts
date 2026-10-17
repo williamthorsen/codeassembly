@@ -72,7 +72,7 @@ describe(run, () => {
     expect(fromFlag.stdout).toBe('PASS no findings (1 notes checked)\n');
   });
 
-  it('exits 2 for an --output-style value that names no style', async () => {
+  it('exits 2 for an --output-style value that does not name any style', async () => {
     const result = await run({ argv: ['check', '--output-style', 'fancy'], cwd: process.cwd() });
 
     expect(result.exitCode).toBe(2);

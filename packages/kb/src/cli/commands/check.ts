@@ -55,7 +55,7 @@ Exit codes:
  * The command writes nothing to the store, so it ignores the registry's `readonly` flag. `check` throws a
  * `KbLoaderError` for a structural defect in a store file that it loads, and the command maps that error to exit 2;
  * any other error from `check` propagates to the caller as a real crash. `style` sets the human report's glyphs, and
- * defaults to plain. `git` handles the run's repository queries, and defaults to running git.
+ * defaults to plain. `git` performs the run's repository queries, and defaults to running git.
  */
 export async function runCheck(input: {
   argv: readonly string[];

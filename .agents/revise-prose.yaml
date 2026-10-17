@@ -1,13 +1,45 @@
 rules:
   apostrophes:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: true
     roots:
+      - .agents
+      - .claude
+      - .config
+      - .editorconfig
+      - .envrc
+      - .gitattributes
+      - .github
+      - .gitignore
+      - .meta
+      - .prettierignore
+      - .prettierrc.js
+      - .readyup
+      - .tool-versions
+      - AGENTS.md
+      - CHANGELOG.md
+      - LICENSE
+      - README.md
+      - demos
+      - docs
+      - eslint.config.ts
+      - lefthook.yml
+      - package.json
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+      - packages/kb
+      - packages/run-core
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - scripts
+      - taze.config.ts
+      - tsconfig.json
+      - vite.config.ts
+      - vitest.config.ts
+      - vitest.root.config.ts
   capitalization-after-colon:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: false
     roots:
       - .agents
@@ -24,10 +56,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -189,15 +222,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -212,14 +237,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -230,7 +248,7 @@ rules:
       - vitest.root.config.ts
   doc-descriptions:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: false
     roots:
       - .agents
@@ -247,10 +265,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -412,15 +431,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -435,14 +446,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -453,7 +457,7 @@ rules:
       - vitest.root.config.ts
   em-dash:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: true
     roots:
       - .agents
@@ -470,10 +474,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -635,15 +640,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -658,14 +655,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -676,7 +666,7 @@ rules:
       - vitest.root.config.ts
   inline-comments:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: false
     roots:
       - .agents
@@ -693,10 +683,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -858,15 +849,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -881,14 +864,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -899,13 +875,45 @@ rules:
       - vitest.root.config.ts
   line-wrapping:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: false
     roots:
+      - .agents
+      - .claude
+      - .config
+      - .editorconfig
+      - .envrc
+      - .gitattributes
+      - .github
+      - .gitignore
+      - .meta
+      - .prettierignore
+      - .prettierrc.js
+      - .readyup
+      - .tool-versions
+      - AGENTS.md
+      - CHANGELOG.md
+      - LICENSE
+      - README.md
+      - demos
+      - docs
+      - eslint.config.ts
+      - lefthook.yml
+      - package.json
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+      - packages/kb
+      - packages/run-core
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - scripts
+      - taze.config.ts
+      - tsconfig.json
+      - vite.config.ts
+      - vitest.config.ts
+      - vitest.root.config.ts
   negative-quantifier:
     version: '2'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: true
     roots:
       - .agents
@@ -922,10 +930,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -992,15 +1001,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -1015,14 +1016,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -1033,15 +1027,47 @@ rules:
       - vitest.root.config.ts
   plain-speech:
     version: '9'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: false
     roots:
+      - .agents
+      - .claude
+      - .config
+      - .editorconfig
+      - .envrc
+      - .gitattributes
+      - .github
+      - .gitignore
+      - .meta
+      - .prettierignore
+      - .prettierrc.js
+      - .readyup
+      - .tool-versions
+      - AGENTS.md
+      - CHANGELOG.md
+      - LICENSE
+      - README.md
+      - demos
+      - docs
+      - eslint.config.ts
+      - lefthook.yml
+      - package.json
       - packages/guidance/content/skills/_data/title-voice.md
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
       - packages/guidance/content/subagents/entry-drafter.md
+      - packages/kb
+      - packages/run-core
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - scripts
+      - taze.config.ts
+      - tsconfig.json
+      - vite.config.ts
+      - vitest.config.ts
+      - vitest.root.config.ts
   reduced-object-relative:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: true
     roots:
       - .agents
@@ -1058,10 +1084,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -1223,15 +1250,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -1246,14 +1265,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -1264,7 +1276,7 @@ rules:
       - vitest.root.config.ts
   second-person:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: true
     roots:
       - .agents
@@ -1281,10 +1293,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -1446,15 +1459,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -1469,14 +1474,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -1487,7 +1485,7 @@ rules:
       - vitest.root.config.ts
   sentence-case:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: false
     roots:
       - .agents
@@ -1504,10 +1502,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -1669,15 +1668,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -1692,14 +1683,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -1710,7 +1694,7 @@ rules:
       - vitest.root.config.ts
   so:
     version: '1'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: true
     roots:
       - .agents
@@ -1727,10 +1711,11 @@ rules:
       - .readyup
       - .tool-versions
       - AGENTS.md
+      - CHANGELOG.md
       - LICENSE
       - README.md
       - demos
-      - docs/pixel-agents-analysis.md
+      - docs
       - eslint.config.ts
       - lefthook.yml
       - package.json
@@ -1892,15 +1877,7 @@ rules:
       - packages/guidance/src/streamline-guidance
       - packages/guidance/src/test-utils
       - packages/guidance/src/update-jira-ticket
-      - packages/kb/.meta
-      - packages/kb/.prettierignore
-      - packages/kb/LICENSE
-      - packages/kb/README.md
-      - packages/kb/bin
-      - packages/kb/eslint.config.ts
-      - packages/kb/package.json
-      - packages/kb/src
-      - packages/kb/tsconfig.json
+      - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
       - packages/lifecycle/README.md
@@ -1915,14 +1892,7 @@ rules:
       - packages/mcp/package.json
       - packages/mcp/src
       - packages/mcp/tsconfig.json
-      - packages/run-core/.meta
-      - packages/run-core/.prettierignore
-      - packages/run-core/README.md
-      - packages/run-core/eslint.config.ts
-      - packages/run-core/package.json
-      - packages/run-core/scripts
-      - packages/run-core/src
-      - packages/run-core/tsconfig.json
+      - packages/run-core
       - pnpm-lock.yaml
       - pnpm-workspace.yaml
       - scripts
@@ -1933,10 +1903,42 @@ rules:
       - vitest.root.config.ts
   where:
     version: '2'
-    swept-at: 2026-10-09
+    swept-at: 2026-10-16
     detected: true
     roots:
+      - .agents
+      - .claude
+      - .config
+      - .editorconfig
+      - .envrc
+      - .gitattributes
+      - .github
+      - .gitignore
+      - .meta
+      - .prettierignore
+      - .prettierrc.js
+      - .readyup
+      - .tool-versions
+      - AGENTS.md
+      - CHANGELOG.md
+      - LICENSE
+      - README.md
+      - demos
+      - docs
+      - eslint.config.ts
+      - lefthook.yml
+      - package.json
       - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+      - packages/kb
+      - packages/run-core
+      - pnpm-lock.yaml
+      - pnpm-workspace.yaml
+      - scripts
+      - taze.config.ts
+      - tsconfig.json
+      - vite.config.ts
+      - vitest.config.ts
+      - vitest.root.config.ts
 rejections:
   - rule: capitalization-after-colon
     rule-version: '1'
@@ -1958,6 +1960,11 @@ rejections:
     file: packages/guidance/content/skills/update-project-guidance/SKILL.md
     phrase: '`package.json` (root): name, workspaces, scripts, engines, type'
     ground: the words after the colon are package.json field names, which keep their lowercase
+  - rule: em-dash
+    rule-version: '1'
+    file: docs/plans/2026-03-06-catwalk-differ-plan.md
+    phrase: // Diff types — produced by catwalk-differ.ts
+    ground: 'not prose: code inside a sample block that the plan directs to paste verbatim'
   - rule: em-dash
     rule-version: '1'
     file: packages/agents/README.md
@@ -2038,6 +2045,26 @@ rejections:
     file: .agents/skills/office-visual-design/SKILL.md
     phrase: Uniform density, furniture scattered randomly, no breathing room
     ground: a verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: docs/plans/2026-03-06-catwalk-differ-design.md
+    phrase: no change; moved forward
+    ground: verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: docs/plans/2026-03-06-catwalk-differ-design.md
+    phrase: no change; single added
+    ground: verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: docs/plans/2026-03-06-catwalk-differ-design.md
+    phrase: no change; single opened
+    ground: verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: docs/plans/2026-03-06-catwalk-differ-design.md
+    phrase: no change; single state change
+    ground: verbless table cell
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/agents/.readyup/kits/default.ts
@@ -3245,11 +3272,6 @@ rejections:
     ground: a verbless table cell
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/kb/src/cli/__tests__/check.tool.test.ts
-    phrase: ✓ no findings (1 notes checked)
-    ground: asserted CLI output produced by code outside the batch
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/kb/src/cli/__tests__/create.unit.test.ts
     phrase: No changes made.
     ground: asserted CLI output produced by source outside the batch
@@ -3301,13 +3323,38 @@ rejections:
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/kb/src/cli/format.ts
+    phrase: no changed notes to check
+    ground: a verbless printed status line that does not contain a verb to negate
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/kb/src/cli/format.ts
     phrase: no changed notes to check (0 checked)
     ground: a verbless output label
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/kb/src/cli/format.ts
+    phrase: no findings (
+    ground: a verbless printed status line that does not contain a verb to negate
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/kb/src/cli/format.ts
     phrase: no findings (${summary.notes} notes checked)
     ground: a verbless output label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/kb/src/cli/index.ts
+    phrase: no-argument set-default form
+    ground: a hyphenated compound
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/kb/src/cli/resolve-store.ts
+    phrase: no .kb/ directory found in the current directory or any ancestor
+    ground: a verbless printed error label that does not contain a finite verb to negate
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/kb/src/cli/select-kb-prompt.ts
+    phrase: no default
+    ground: a verbless menu label
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/kb/src/cli/select-kb-prompt.ts
@@ -3373,11 +3420,6 @@ rejections:
     file: packages/run-core/src/scanners/__tests__/run-directory-validator.unit.test.ts
     phrase: "ENOENT: no such file or directory, open '${path}'"
     ground: a fixture reproducing the system error text
-  - rule: plain-speech
-    rule-version: '7'
-    file: .agents/skills/office-game-feel/SKILL.md
-    phrase: is the visualization's **heartbeat**
-    ground: the term is the skill's own vocabulary, named by the section heading, and the developer rejected the rename
   - rule: plain-speech
     rule-version: '6'
     file: packages/agents/.readyup/lib/guidance-constraints.ts
@@ -3563,6 +3605,26 @@ rejections:
     file: packages/guidance/src/lib/work-types.ts
     phrase: instead of standing up an install layout
     ground: a common technical idiom rather than a figure built for the sentence
+  - rule: plain-speech
+    rule-version: '9'
+    file: packages/kb/src/frontmatter/__tests__/fixtures/with-extra-fields.md
+    phrase: This note carries optional schema fields beyond the required core.
+    ground: 'not prose: test fixture data'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: .agents/content/guidance/rulebooks/codeassembly-repo-conventions.md
+    phrase: assert an absence do not tolerate
+    ground: "not the construction: 'do not tolerate' is the main verb after a subject relative"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: .agents/content/guidance/rulebooks/codeassembly-repo-conventions.md
+    phrase: collection deploys unexamined
+    ground: "not the construction: 'deploys' is the sentence's own verb, and 'unexamined' modifies 'content'"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: .agents/content/guidance/rulebooks/codeassembly-repo-conventions.md
+    phrase: vetted collections may overlap
+    ground: "not the construction: 'may overlap' is the clause's own verb"
   - rule: reduced-object-relative
     rule-version: '1'
     file: .agents/skills/office-game-feel/SKILL.md
@@ -3588,6 +3650,16 @@ rejections:
     file: docs/pixel-agents-analysis.md
     phrase: first six agents get unique palettes
     ground: 'not the construction: "The first six agents" is the subject and "get" is the sentence''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: docs/pixel-agents-analysis.md
+    phrase: use any audio files
+    ground: "not the construction: the verb is the sentence's own"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: docs/plans/2026-03-06-catwalk-differ-plan.md
+    phrase: factory helpers, since the types are small
+    ground: 'not the construction: a reduced passive, not an object relative'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/agents/.readyup/lib/guidance-constraints.ts
@@ -7231,6 +7303,11 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/kb/README.md
+    phrase: consumer's tests can pass
+    ground: "not the construction: the verb is the sentence's own"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/kb/README.md
     phrase: enumeration drops ignored
     ground: 'not the construction: "drops" is the parenthetical clause''s own verb'
   - rule: reduced-object-relative
@@ -7265,11 +7342,6 @@ rejections:
     ground: 'not the construction: "propagates" is the sentence''s own verb'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/kb/src/check/check.ts
-    phrase: name none reads
-    ground: 'not the construction: "whose" already relativizes the clause, and "reads" is the main verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/kb/src/cli/__tests__/check.tool.test.ts
     phrase: plus one vault-scoped
     ground: 'not the construction: `vault-scoped` is a compound adjective on `finding`, not a relative clause'
@@ -7278,11 +7350,6 @@ rejections:
     file: packages/kb/src/cli/commands/check.ts
     phrase: Check only the notes changed
     ground: 'not the construction: `changed` is a participle with no object gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/kb/src/cli/commands/set-default.ts
-    phrase: knowledge bases registered
-    ground: 'not the construction: `registered` is a participle with no embedded subject'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/kb/src/cli/commands/set-default.ts
@@ -7300,11 +7367,6 @@ rejections:
     ground: 'not the construction: `worded` is a participle with no embedded subject'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/kb/src/cli/targeting/select-notes.ts
-    phrase: empty one simply contributes
-    ground: 'not the construction: "contributes" is the sentence''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/kb/src/config/config-schema.ts
     phrase: field falls back
     ground: 'not the construction: "falls back" is the sentence''s own verb'
@@ -7313,16 +7375,6 @@ rejections:
     file: packages/kb/src/discovery/__tests__/load-registry.unit.test.ts
     phrase: registry contains malformed
     ground: 'not the construction: "contains" is the verb of the "when" clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/kb/src/discovery/load-registry.ts
-    phrase: exists the result has
-    ground: 'not the construction: "the result has no entries" is the main clause after a "when" clause, not a relative'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/kb/src/lints/tag-alias.ts
-    phrase: not a list yields
-    ground: "not the construction: `yields` is the sentence's own verb, and the relative clause already has `that`"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/kb/src/records/__tests__/assertion.unit.test.ts
@@ -8625,11 +8677,6 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/kb/README.md
-    phrase: A directory has no content to replace, so `--force` governs files alone.
-    ground: a lone `so` whose second clause states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/kb/README.md
     phrase: and so does every editor that supports EditorConfig
     ground: 'outside the rule: the `so` stands for a clause'
   - rule: so
@@ -8639,18 +8686,8 @@ rejections:
     ground: 'outside the rule: the `so` stands for a clause'
   - rule: so
     rule-version: '1'
-    file: packages/kb/README.md
-    phrase: No subpath exports the lints, so `check`, and the `kb check` command built on it, is the only way to run them.
-    ground: a lone `so` whose second clause states a direct result
-  - rule: so
-    rule-version: '1'
     file: packages/kb/src/check/enumerate.ts
     phrase: A note that the repository ignores is therefore neither enumerated nor available as a wikilink target, so a link pointing at one resolves to nothing.
-    ground: a lone `so` whose second clause states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/kb/src/check/resolve-foreign-stores.ts
-    phrase: It reads {@link scanWikilinks}, the same walk that later evaluates the links, so a store-shaped prefix inside a code sample selects no store and the two cannot disagree on what counts as a qualified link.
     ground: a lone `so` whose second clause states a direct result
   - rule: so
     rule-version: '1'
@@ -8669,26 +8706,41 @@ rejections:
     ground: a lone `so` that states a direct result
   - rule: so
     rule-version: '1'
-    file: packages/kb/src/scaffold/render-seeds.ts
-    phrase: as shareable as its own or more so
-    ground: 'outside the rule: `so` stands for the preceding phrase, not a clause-joining conjunction'
-  - rule: so
-    rule-version: '1'
     file: packages/kb/src/taxonomy/write-taxonomy.ts
     phrase: |-
       The write goes through the shared `writeAtomic`
        * helper, so an interrupted call cannot truncate the taxonomy.
     ground: a lone `so` stating a direct result
   - rule: where
-    rule-version: '1'
-    file: docs/pixel-agents-analysis.md
-    phrase: (`string[][]`), where each cell is either a hex color or empty string for transparency
-    ground: 'outside the rule: the clause follows an expression and states what a value in it stands for'
+    rule-version: '2'
+    file: .agents/content/guidance/rulebooks/codeassembly-repo-conventions.md
+    phrase: declared directly where wanted
+    ground: "outside the rule: 'where' names a place, the projects in which the artifact is wanted"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: .agents/content/guidance/rulebooks/codeassembly-repo-conventions.md
+    phrase: It deploys where it works
+    ground: "outside the rule: 'where' names a place, the harnesses on which the artifact works"
+  - rule: where
+    rule-version: '2'
+    file: .agents/content/guidance/rulebooks/codeassembly-repo-conventions.md
+    phrase: It is where new content starts
+    ground: "outside the rule: 'where' names a place, the triage collection as the starting location"
+  - rule: where
+    rule-version: '2'
+    file: .agents/content/guidance/rulebooks/codeassembly-repo-conventions.md
+    phrase: Its prerequisites appear where a reader looks before invoking
+    ground: "outside the rule: 'where' names a place in the documentation"
+  - rule: where
+    rule-version: '2'
     file: docs/pixel-agents-analysis.md
     phrase: remember where agents were across sessions
-    ground: 'outside the rule: the word names a place'
+    ground: names a place
+  - rule: where
+    rule-version: '2'
+    file: docs/pixel-agents-analysis.md
+    phrase: where each cell is either a hex color or empty string for transparency
+    ground: 'definition: states what a value in the preceding expression stands for'
   - rule: where
     rule-version: '1'
     file: packages/agents/.readyup/kits/default.ts
@@ -9665,65 +9717,60 @@ rejections:
     phrase: regardless of where the agent happened to invoke it
     ground: 'outside the rule: `where` names a place, the directory of invocation'
   - rule: where
-    rule-version: '1'
-    file: packages/kb/README.md
-    phrase: "`.kb/taxonomy.yaml` states where a store's assertions are meant to live."
-    ground: "outside the rule: the word names a place, a location in the store's folder tree"
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/README.md
     phrase: Install Prettier where the store is edited
-    ground: 'outside the rule: the word names a place, the machine on which the store is edited'
+    ground: names a place, the machine on which the store is edited
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/kb/README.md
+    phrase: states where a store's assertions are meant to live
+    ground: names a place
+  - rule: where
+    rule-version: '2'
     file: packages/kb/src/check/enumerate.ts
     phrase: 1-based file line where the body begins.
-    ground: 'outside the rule: the word names a place, a position in the file'
+    ground: 'names a place: a line in the file'
   - rule: where
-    rule-version: '1'
-    file: packages/kb/src/filesystem/write-atomic.ts
-    phrase: keeping the rename within one filesystem, where it is atomic
-    ground: '`where` names a place: the filesystem within which the rename runs'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/layout/store-layout.ts
     phrase: Located at the store root, where every tool that reads it looks.
-    ground: 'the word names a place: the store root'
+    ground: 'names a place: the store root'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/layout/store-layout.ts
-    phrase: "The store's on-disk layout: where a knowledge base keeps its metadata and its content."
-    ground: 'the word names a place: the on-disk location of the metadata and content'
+    phrase: where a knowledge base keeps its metadata and its content
+    ground: 'names a place: on-disk locations'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/lints/taxonomy.ts
-    phrase: Builds one vault-scoped warning against the taxonomy file, where every one of these findings is remedied.
-    ground: 'the word names a place: the taxonomy file, in which the remedy is made'
+    phrase: where every one of these findings is remedied
+    ground: 'names a place: the file in which the findings are fixed'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/note-io/read-note.ts
-    phrase: 1-based file line where the body begins (line 1 when there is no frontmatter block).
-    ground: 'the word names a place: the line in the file at which the body begins'
+    phrase: 1-based file line where the body begins
+    ground: 'names a place: a line in the file'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/types.ts
     phrase: 1-based line where the body begins.
-    ground: 'the word names a place: a position in the file'
+    ground: 'names a place: a line in the note file'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/vault-integrity/__tests__/check-vault-integrity.unit.test.ts
-    phrase: leaves every newline where it was
-    ground: 'the word names a place: a position in the text'
+    phrase: every newline where it was
+    ground: 'names a place: the position of each newline in the body text'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/vault-integrity/check-vault-integrity.ts
-    phrase: 1-based file line where the body begins
-    ground: 'the word names a place: a position in the file'
+    phrase: 1-based file line where the body begins, so that link findings report file-absolute lines.
+    ground: 'names a place: a line in the file'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/kb/src/vault-integrity/wikilink-parse.ts
-    phrase: leaves every newline where it was
-    ground: 'the word names a place: a position in the text'
+    phrase: every newline where it was
+    ground: "names a place: the newline's position in the body"
   - rule: where
     rule-version: '1'
     file: packages/mcp/src/tools/__tests__/init-run.unit.test.ts
