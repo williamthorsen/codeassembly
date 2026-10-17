@@ -4,6 +4,7 @@ import {
   type CollectionClaim,
   type DispositionClaims,
   listArtifactIds,
+  listExplicitMembers,
   listPermittedReach,
   listUnclaimedArtifacts,
   readDispositionClaims,
@@ -67,7 +68,7 @@ export async function findCollectionDispositionDefects({
 
   const optInMembers = claims.collections
     .filter(({ disposition }) => disposition === 'opt-in')
-    .map((collection) => ({ slug: collection.slug, members: new Set(listCollectionMembers(collection)) }));
+    .map((collection) => ({ slug: collection.slug, members: new Set(listExplicitMembers(collection)) }));
 
   for (const collection of claims.collections) {
     if (collection.members.kind === 'library') {
@@ -99,7 +100,7 @@ function buildClaimMap(claims: DispositionClaims): ReadonlyMap<ArtifactId, Reado
   const unclaimed = listArtifactIds(listUnclaimedArtifacts(claims));
   const claimants: Array<[ReadonlyArray<ArtifactId>, string]> = [
     ...claims.collections.map((collection): [ReadonlyArray<ArtifactId>, string] => [
-      collection.members.kind === 'unclaimed' ? unclaimed : listCollectionMembers(collection),
+      collection.members.kind === 'unclaimed' ? unclaimed : listExplicitMembers(collection),
       collection.slug,
     ]),
     [claims.standalone.keys().toArray(), STANDALONE_CLAIM],
@@ -178,11 +179,6 @@ function isDisposition(claims: DispositionClaims, claim: string): boolean {
   }
   const collection = claims.collections.find(({ slug }) => slug === claim);
   return collection?.disposition !== undefined || collection?.members.kind === 'unclaimed';
-}
-
-/** Lists a collection's enumerated members, empty for a computed one. */
-function listCollectionMembers({ members }: CollectionClaim): Array<ArtifactId> {
-  return members.kind === 'explicit' ? listArtifactIds(members.edges) : [];
 }
 
 /** Narrows the type segment of an artifact id to its artifact type. */

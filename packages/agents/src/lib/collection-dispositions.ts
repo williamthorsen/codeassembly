@@ -52,6 +52,11 @@ export function listArtifactIds(edges: ArtifactDependencies): Array<ArtifactId> 
   return Object.entries(edges).flatMap(([type, slugs]) => slugs.map((slug) => `${type}:${slug}`));
 }
 
+/** Lists a collection's enumerated members, empty for a computed one. */
+export function listExplicitMembers({ members }: CollectionClaim): Array<ArtifactId> {
+  return members.kind === 'explicit' ? listArtifactIds(members.edges) : [];
+}
+
 /**
  * Lists the artifacts that a dispositioned collection's closure may reach: its own members, every public collection's,
  * and, for a personal collection, every personal collection's. An opt-in collection never reaches another opt-in
@@ -135,12 +140,3 @@ export async function readDispositionClaims(root: string): Promise<DispositionCl
 
   return { catalog, collections, standalone, problems };
 }
-
-// region | Helpers
-
-/** Lists a collection's enumerated members, empty for a computed one. */
-function listExplicitMembers({ members }: CollectionClaim): Array<ArtifactId> {
-  return members.kind === 'explicit' ? listArtifactIds(members.edges) : [];
-}
-
-// endregion | Helpers
