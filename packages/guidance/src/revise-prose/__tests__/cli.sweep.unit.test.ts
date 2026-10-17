@@ -163,7 +163,7 @@ describe(runDetect, () => {
       expect(candidates.map((candidate) => candidate.rule)).toStrictEqual(['em-dash']);
     });
 
-    it('suppresses a rejection whose recorded phrase runs wider than the span reported by the detector', async () => {
+    it('suppresses a rejection whose recorded phrase is wider than the span reported by the detector', async () => {
       const wider = OBJECT_RELATIVE.replace(/^The helper reports /, '').replace(/\.$/, '');
       expect(wider).toContain(await rejectedPhrase());
       await writeRecord(uncoveredRecordFor(wider));
@@ -256,7 +256,8 @@ describe(runDetect, () => {
       for (const rule of BOTH_RULES) {
         record.rules[rule] = { version: '1', 'swept-at': '2026-09-02', detected: true, roots: ['docs'] };
       }
-      // Under `em-dash`, the rejection leaves the object-relative candidate in `docs` for the dropped batch to remove.
+      // Under `em-dash`, the rejection leaves the object-relative candidate in `docs` for the run to remove when it
+      // drops the batch.
       await writeRecord({
         ...record,
         rejections: record.rejections.map((rejection) => ({ ...rejection, rule: 'em-dash' })),
@@ -343,7 +344,7 @@ describe(runDetect, () => {
     });
 
     it("reads a rejection at the unit's current version as current for its rule", async () => {
-      // Coverage of `src` alone leaves the batch holding `docs/guide.md` to apply both rules.
+      // Coverage of `src` alone leaves both rules unswept in the batch containing `docs/guide.md`.
       await writeLegacyRecord(legacyRecordFor(await rejectedPhrase(), ['src']));
       const { candidates } = expectSuccess(await sweep(bothRules()));
 
@@ -674,7 +675,10 @@ function recordFor(phrase: string, version = '1', file = 'docs/guide.md'): Prose
   };
 }
 
-/** The record from `recordFor` without coverage, so that the batch holding the rejected site applies both rules. */
+/**
+ * The record from `recordFor` without coverage, so that the sweep applies both rules to the batch containing the
+ * rejected site.
+ */
 function uncoveredRecordFor(phrase: string): ProseRecord {
   return { ...recordFor(phrase), rules: {} };
 }
