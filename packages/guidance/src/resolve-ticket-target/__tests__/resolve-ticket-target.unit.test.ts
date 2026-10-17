@@ -84,7 +84,7 @@ describe(resolveTicketTarget, () => {
 
 /**
  * Builds a `gh` runner that reports the repository as `owner/repo` and serves each file in `files` from the contents
- * API, answering 404 for every other path.
+ * API, returning 404 for every other path.
  */
 function makeGh(files: Readonly<Record<string, string>>): GhRunner {
   return (args) => {

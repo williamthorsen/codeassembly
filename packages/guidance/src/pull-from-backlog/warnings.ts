@@ -36,8 +36,8 @@ export type Warning =
   | { kind: 'now-not-found'; title: string };
 
 /**
- * Assesses the last groom: stale when no groom has run, when it is at least `staleGroomDays` old, or when at least
- * `staleGroomNewTickets` open tickets were created since it. A ripple or a dry run is not a groom.
+ * Assesses the last groom: stale when the ledger does not record a groom, when it is at least `staleGroomDays` old, or
+ * when at least `staleGroomNewTickets` open tickets were created since it. A ripple or a dry run is not a groom.
  */
 export function assessGroomStaleness(input: {
   now: Date;

@@ -44,7 +44,7 @@ export function buildSurvey(input: {
   user: string;
 }): Survey {
   const { config, inProgress, limit, milestones, now, nowFlag, open, records, user } = input;
-  /** Returns whether `issue` carries a `ticket.pull.excludeLabels` label. */
+  /** Returns whether `issue` has a `ticket.pull.excludeLabels` label. */
   function isExcluded(issue: Issue): boolean {
     return hasExcludedLabel(issue, config.excludeLabels);
   }

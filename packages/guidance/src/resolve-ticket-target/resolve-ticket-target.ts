@@ -5,10 +5,10 @@ import { readProjectPreferences } from '../derive-session-context/read-preferenc
 import { isRecord } from '../lib/type-guards.ts';
 
 /**
- * Fetches the configuration that a ticket filed in `repo` resolves against, from the repository's default branch, into a
- * new directory under `tempRoot` that mirrors each file's repository path. Reports the directory, the slug and the
- * reference prefix that the repository's own preferences file declares, and each configuration file that the default
- * branch does not contain.
+ * Fetches the configuration against which a ticket filed in `repo` resolves, from the repository's default branch,
+ * into a new directory under `tempRoot` that mirrors each file's repository path. Reports the directory, the slug and
+ * the reference prefix that the repository's own preferences file declares, and each configuration file that the
+ * default branch does not contain.
  *
  * Throws when `repo` is not in `OWNER/REPO` form, when GitHub does not report the repository, and when a fetch fails for
  * any reason other than a file that is not found.
