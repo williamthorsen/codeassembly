@@ -25,8 +25,8 @@ plan-reviewer: {} # inherits _defaults
 
 plan-reviser: {} # inherits _defaults
 
-# Edits prose in place and creates nothing: `create_file` is dropped, and `bash` with it, the reviser
-# not having any command to run.
+# Edits prose in place and creates nothing: `create_file` is dropped, and `bash` is dropped too, because the
+# reviser does not run any command.
 prose-reviser:
   tools: [expand_code_chunks, expand_folder, find_and_replace_code, grep, open_files]
 
@@ -36,6 +36,6 @@ ticket-assessor:
   tools: [bash, expand_code_chunks, expand_folder, grep, open_files]
 
 # Rovo does not read a denylist, so the read-only grant is named here. The subagent is dispatched only by the
-# Claude-only `assess-usability`, so this grant never runs a lens.
+# Claude-only `assess-usability`, so a lens never runs under this grant.
 usability-assessor:
   tools: [bash, expand_code_chunks, expand_folder, grep, open_files]
