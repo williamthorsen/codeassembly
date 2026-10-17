@@ -17,8 +17,8 @@ export function isEntryPoint(moduleUrl: string, programName: string): boolean {
   try {
     return realpathSync(fileURLToPath(moduleUrl)) === realpathSync(entry);
   } catch (error) {
-    // A resolution failure most plausibly means that this module is the entry point, invoked through a stale link, and
-    // returning `false` would silently no-op the CLI.
+    // A resolution failure most plausibly means that the calling module is the entry point, invoked through a stale
+    // link, and returning `false` would silently no-op the CLI.
     process.stderr.write(`${programName}: warning: could not determine entry point: ${describeError(error)}\n`);
     return true;
   }
