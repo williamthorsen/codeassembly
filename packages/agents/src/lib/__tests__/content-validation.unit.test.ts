@@ -109,7 +109,7 @@ describe(validateContentRoot, () => {
     expect(defects[0]?.detail).not.toContain('claude');
   });
 
-  it('names the affected harnesses when a defect reaches only some of them', async () => {
+  it('names the affected harnesses when a defect occurs in only some of them', async () => {
     await writeSkill(root, 'alpha', { body: 'Invoke {tool:NoSuchTool}.', supportedHarnesses: ['claude'] });
 
     const defects = await validateContentRoot(root, ALL_HARNESS_IDS);

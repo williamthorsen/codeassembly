@@ -49,7 +49,7 @@ describe(assertAnchorsResolve, () => {
     });
 
     it('offers the partial as a conditional lead rather than asserting one was inlined', () => {
-      // Two wiring sites do not expand any includes at all, so a body reaching this error may not have any partial
+      // Two wiring sites do not expand any includes at all, so a body that triggers this error may not have any partial
       // behind it.
       expect(() => assertAnchorsResolve('[a](#nope)\n', LABEL)).toThrow(/If a target was authored in an inlined/);
     });
