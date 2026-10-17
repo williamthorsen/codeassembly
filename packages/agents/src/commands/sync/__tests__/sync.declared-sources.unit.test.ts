@@ -12,10 +12,10 @@ import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
-/** True on a platform where the process can lower a directory's permissions and be blocked by them (i.e. non-root). */
+/** True on a platform that lets the process lower a directory's permissions and be blocked by them (i.e. non-root). */
 const canEnforceDirPermissions = process.getuid !== undefined && process.getuid() !== 0;
 
 describe(syncCommand, () => {
@@ -396,8 +396,8 @@ describe(syncCommand, () => {
       expect(existsSync(path.join(projectRoot, '.claude', 'skills', '_sources'))).toBe(false);
     });
 
-    // The preview is computed before delivery and the run acts after it, so a renamed source is the shape that catches
-    // a preview judging the tree that it is about to change: The incoming namespace does not exist yet.
+    // The preview is computed before delivery and the run acts after it, so a renamed source is the case that detects
+    // a preview computed from the tree that the run is about to change: The incoming namespace does not exist yet.
     it('names only the outgoing namespace when a source is renamed', async () => {
       await writeSourceSupport('_data/house-style.md', '# House style\n');
       await declareWithSource('rulebooks:\n  use: []\n');
@@ -547,7 +547,7 @@ describe(syncCommand, () => {
       );
     });
 
-    it("does not warn on a real run when a lower-precedence source doesn't ship the same slug", async () => {
+    it("does not warn on a real run when a lower-precedence source doesn't provide the same slug", async () => {
       await writeSourceRulebook('source-only', 'delivery: ambient', 'Org rules.');
       await declareWithSource('rulebooks:\n  use:\n    - source-only\n');
 
