@@ -58,7 +58,7 @@ End
 Context "when git cannot resolve the branch"
 setup_unborn_head() {
   # No commit: `git rev-parse --git-dir` succeeds while `--abbrev-ref HEAD` fails, which is the only
-  # condition that reaches the branch diagnostic past the readability probe.
+  # condition that triggers the branch diagnostic once the readability probe passes.
   git init --quiet --initial-branch=main .
 }
 
@@ -202,7 +202,7 @@ The status should be success
 The output should include "changes: [first, second]"
 End
 
-It "keeps an --extra-list-item value carrying a comma whole"
+It "keeps an --extra-list-item value containing a comma whole"
 When run main \
   --skill foo \
   --interactive true \
