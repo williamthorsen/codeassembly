@@ -27,6 +27,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { makeCaptureEventSmokeTest } from '../test-utils/make-capture-event-smoke-test.ts';
 import { makeCheckBranchCurrencySmokeTest } from '../test-utils/make-check-branch-currency-smoke-test.ts';
+import { makeCheckProseSmokeTest } from '../test-utils/make-check-prose-smoke-test.ts';
 import { makeDeriveSessionContextSmokeTest } from '../test-utils/make-derive-session-context-smoke-test.ts';
 import { makeDescribeChangeSmokeTest } from '../test-utils/make-describe-change-smoke-test.ts';
 import { makeFeedbackMemoriesSmokeTest } from '../test-utils/make-feedback-memories-smoke-test.ts';
@@ -57,6 +58,7 @@ import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts
 const smokeTests: Record<string, SmokeTestInvocation> = {
   '../src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
   '../src/check-branch-currency/cli.ts': makeCheckBranchCurrencySmokeTest(),
+  '../src/check-prose/cli.ts': makeCheckProseSmokeTest(),
   '../src/derive-session-context/cli.ts': makeDeriveSessionContextSmokeTest(),
   '../src/describe-change/cli.ts': makeDescribeChangeSmokeTest(),
   '../src/feedback-memories/cli.ts': makeFeedbackMemoriesSmokeTest(),
