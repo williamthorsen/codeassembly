@@ -21,8 +21,8 @@ main() {
     show_usage 0
   fi
 
-  # Consume the pnpm `--` separator if present so that subsequent args reach
-  # shellspec as real options rather than positional paths.
+  # Consume the pnpm `--` separator if present so that shellspec receives
+  # subsequent args as real options rather than positional paths.
   if [[ "${1:-}" == "--" ]]; then
     shift
   fi

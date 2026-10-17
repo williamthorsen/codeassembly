@@ -8,7 +8,7 @@ The CodeAssembly library of agent guidance: rulebooks, skills, and subagents for
 
 ## Using the library
 
-A declaration names the library as a source and adopts what it wants from it, usually through a collection. For the home harness directories, clone the repository and declare its content directory in `~/.agents/codeassembly.yaml`:
+A declaration names the library as a source and selects artifacts from it, usually through a collection. For the home harness directories, clone the repository and declare its content directory in `~/.agents/codeassembly.yaml`:
 
 ```yaml
 sources:
@@ -40,7 +40,7 @@ The `codeassembly-content-specification` rulebook ([`content/guidance/rulebooks/
 
 A skill that needs more than a few lines of shell runs a TypeScript helper. Its source lives under `src/`, `content/codeassembly-content.yaml` declares it, and `codeassembly bundle-helpers` builds it into a tracked `.mjs` bundle beside the skill. Commit a helper's source change together with its rebuilt bundle.
 
-The package's `check` runs the tests, then `codeassembly validate` and `codeassembly bundle-helpers --check`, which fail on content that would reach a consumer broken and on a bundle that is stale.
+The package's `check` runs the tests, then `codeassembly validate` and `codeassembly bundle-helpers --check`, which fail on content that would be deployed to a consumer broken and on a bundle that is stale.
 
 ## Preferences
 
