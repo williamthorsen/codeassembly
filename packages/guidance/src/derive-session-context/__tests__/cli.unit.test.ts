@@ -130,7 +130,7 @@ describe(deriveSessionContext, () => {
     expect(result.branch_name).toBe('main');
   });
 
-  it('carries created_at and a stored URL from an old-format `.manifest.json` to the new-format path', async () => {
+  it('copies created_at and a stored URL from an old-format `.manifest.json` to the new-format path', async () => {
     const agentsDir = path.join(workDir, '.agents');
     await mkdir(agentsDir, { recursive: true });
     const ticketUrl = 'https://github.com/owner/repo/issues/1';
@@ -385,7 +385,7 @@ describe(deriveSessionContext, () => {
     expect(manifest.ticket_url).toBe('https://org.atlassian.net/browse/MAC-130');
   });
 
-  it('carries a stored ticket_url forward across a recompose, overriding the constructed default', async () => {
+  it('keeps a stored ticket_url across a recompose, overriding the constructed default', async () => {
     await writeProjectPrefs(
       workDir,
       'project:\n  slug: my-project\nticket:\n  base_url: https://org.atlassian.net/browse/\n',
@@ -443,7 +443,7 @@ describe(deriveSessionContext, () => {
     expect(manifest.pr_url).toBeNull();
   });
 
-  it('carries a stored pr_url forward across a recompose, overriding the seeded default', async () => {
+  it('keeps a stored pr_url across a recompose, overriding the seeded default', async () => {
     await writeProjectPrefs(workDir, 'project:\n  slug: my-project\n');
     const stored = 'https://github.com/owner/repo/pull/999';
     // A manifest without `explicit_urls`; composition would seed .../pull/950 from the remote and the PR-950 identity.

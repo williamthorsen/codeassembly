@@ -119,7 +119,7 @@ describe('default-branch invariant', () => {
     expect(result.ticket_url).toBeNull();
     expect(result.pr_url).toBeNull();
 
-    // The repair is durable, not a mask over the emitted JSON: The file no longer contains the values.
+    // The repair is written to the file, not applied only to the emitted JSON: The file no longer contains the values.
     const onDisk: unknown = JSON.parse(await readFile(manifestPath, 'utf8'));
     expect(onDisk).toMatchObject({ ticket_url: null, pr_url: null });
   });
