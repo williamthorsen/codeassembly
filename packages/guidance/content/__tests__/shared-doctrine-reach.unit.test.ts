@@ -32,7 +32,11 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   },
   'code-style': {
     headline: '## Style',
-    phrases: ['Code style should adhere to', 'Use long-form CLI options', 'Name functions with a leading verb'],
+    phrases: [
+      'fill new comments to its `max_line_length`',
+      'Use long-form CLI options',
+      'Name functions with a leading verb',
+    ],
   },
   concision: {
     headline: '## Concision',
@@ -86,7 +90,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
 /** The shared file's sections in source order, each with a phrase proving its body arrived rather than its heading. */
 const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string }> = [
   { heading: '## Interactive work', phrase: 'Invoke the `collaborate` skill when working interactively' },
-  { heading: '## Style', phrase: 'Code style should adhere to' },
+  { heading: '## Style', phrase: 'fill new comments to its `max_line_length`' },
   { heading: '## Concision', phrase: "then wastes the reader's attention and hides the signal" },
   { heading: '## Plain speech', phrase: 'Speak plainly in practical documentation' },
   { heading: '## Code descriptions', phrase: 'gets a brief description' },
