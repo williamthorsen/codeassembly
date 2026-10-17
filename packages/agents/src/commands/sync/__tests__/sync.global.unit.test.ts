@@ -244,7 +244,7 @@ describe(syncGlobalCommand, () => {
   it('fails the run when a declared source declares an unsupported content format', async () => {
     const sourceDir = path.join(contentDir, '..', `${path.basename(contentDir)}-source`);
     await mkdir(sourceDir, { recursive: true });
-    await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 3\n', 'utf8');
+    await writeFile(path.join(sourceDir, 'codeassembly-content.yaml'), 'format: 4\n', 'utf8');
     await declareRaw(`sources:\n  - name: org\n    path: ${sourceDir}\nrulebooks:\n  use: []\n`);
 
     try {

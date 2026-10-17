@@ -19,10 +19,16 @@ export const CONTENT_MANIFEST_FILENAME = 'codeassembly-content.yaml';
 export const OPTIONAL_TOKEN_CONTENT_FORMAT = 2;
 
 /**
+ * The format that first supports the computed `'@unclaimed'` members token. A tool implementing only a lower contract
+ * fails to resolve a collection that names it.
+ */
+export const UNCLAIMED_MEMBERS_CONTENT_FORMAT = 3;
+
+/**
  * The content formats that this tool can deploy. A root declaring anything else is refused, because it was authored
  * against a contract that this tool does not implement.
  */
-export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1, 2];
+export const SUPPORTED_CONTENT_FORMATS: ReadonlyArray<number> = [1, 2, 3];
 
 /**
  * The format that a root without a manifest is treated as declaring: the contract that predates the manifest itself.

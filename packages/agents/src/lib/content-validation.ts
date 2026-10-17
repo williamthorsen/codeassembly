@@ -5,6 +5,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { parse as parseYaml } from 'yaml';
 
 import { artifactFrontmatterPath } from './artifact-types.ts';
+import { readDispositionClaims } from './collection-dispositions.ts';
 import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from './content-defects.ts';
 import {
   CONTENT_MANIFEST_FILENAME,
@@ -13,6 +14,7 @@ import {
   findContentFormatProblem,
   OPTIONAL_TOKEN_CONTENT_FORMAT,
   readContentRootManifest,
+  UNCLAIMED_MEMBERS_CONTENT_FORMAT,
 } from './content-root-manifest.ts';
 import { findInjectionPlacementDefects } from './content-rules/injection-placement.ts';
 import { findLinkResolutionDefects } from './content-rules/link-resolution.ts';
@@ -22,6 +24,7 @@ import { findScriptInvocationDefects } from './content-rules/script-invocation.t
 import { findSharedGuidanceLinkDefects } from './content-rules/shared-guidance-links.ts';
 import { findSharedGuidanceReferenceDefects } from './content-rules/shared-guidance-references.ts';
 import { findSupportEntryTokenDefects } from './content-rules/support-entry-tokens.ts';
+import { UNCLAIMED_TOKEN } from './dependency-frontmatter.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from './deploy-collisions.ts';
 import { parseFrontmatter } from './frontmatter-merger.ts';
 import { listMarkdownFilesRecursively } from './fs-helpers.ts';
@@ -223,35 +226,50 @@ async function findRetiredOverlayKeyDefects(
 }
 
 /**
- * Reports every body that uses a form that the root's declared content format predates. The optional invocation-token
- * form needs format 2, so a root containing one under a lower format deploys its literal text on a tool implementing
- * only that contract, which is the outcome that the format field exists to prevent. The walk reads files rather than
- * resolved bodies: A partial's token appears in every body that inlines it, and a partial resolves only within its
- * own root.
+ * Reports every file that uses a form that the root's declared content format predates, which deploys wrongly on a
+ * tool implementing only that lower contract: the outcome that the format field exists to prevent. An optional
+ * invocation token needs format 2, and deploys as literal text below it; the `'@unclaimed'` members token needs
+ * format 3, and fails to resolve below it. The walk reads files rather than resolved bodies: A partial's token appears
+ * in every body that inlines it, and a partial resolves only within its own root.
  */
 async function findUnderdeclaredFormatDefects(root: string): Promise<ReadonlyArray<ContentDefect>> {
   const { format } = await readContentRootManifest(root);
-  if (format >= OPTIONAL_TOKEN_CONTENT_FORMAT) {
-    return [];
+  const defects: Array<ContentDefect> = [];
+
+  if (format < OPTIONAL_TOKEN_CONTENT_FORMAT) {
+    const files = await listMarkdownFilesRecursively(root);
+    for (const file of files) {
+      const carried = locateInvocationTokens(await readFile(file, 'utf8')).filter((token) => token.optional);
+      if (carried.length === 0) {
+        continue;
+      }
+      const named = carried.map((token) => `{${token.kind}?:${token.slug}}`).join(', ');
+      defects.push({
+        file: path.relative(root, file),
+        kind: 'root',
+        detail:
+          `Contains an optional invocation token (${named}) under declared content format ${format}. ` +
+          `Declare format ${OPTIONAL_TOKEN_CONTENT_FORMAT} in ${CONTENT_MANIFEST_FILENAME}, or write the token in its ` +
+          'required form.',
+      });
+    }
   }
 
-  const defects: Array<ContentDefect> = [];
-  const files = await listMarkdownFilesRecursively(root);
-  for (const file of files) {
-    const carried = locateInvocationTokens(await readFile(file, 'utf8')).filter((token) => token.optional);
-    if (carried.length === 0) {
-      continue;
+  if (format < UNCLAIMED_MEMBERS_CONTENT_FORMAT) {
+    const claims = await readDispositionClaims(root);
+    for (const collection of claims.collections) {
+      if (collection.members.kind === 'unclaimed') {
+        defects.push({
+          file: artifactFrontmatterPath('collection', collection.slug),
+          kind: 'root',
+          detail:
+            `Declares members '${UNCLAIMED_TOKEN}' under declared content format ${format}. ` +
+            `Declare format ${UNCLAIMED_MEMBERS_CONTENT_FORMAT} in ${CONTENT_MANIFEST_FILENAME}, or enumerate the members.`,
+        });
+      }
     }
-    const named = carried.map((token) => `{${token.kind}?:${token.slug}}`).join(', ');
-    defects.push({
-      file: path.relative(root, file),
-      kind: 'root',
-      detail:
-        `Contains an optional invocation token (${named}) under declared content format ${format}. ` +
-        `Declare format ${OPTIONAL_TOKEN_CONTENT_FORMAT} in ${CONTENT_MANIFEST_FILENAME}, or write the token in its ` +
-        'required form.',
-    });
   }
+
   return defects;
 }
 
