@@ -38,13 +38,13 @@ describe(findLatestMarker, () => {
     expect(findLatestMarker(comments)?.run).toBe('new');
   });
 
-  it('returns null when no comment has a marker', () => {
+  it('returns null when the comments do not contain a marker', () => {
     expect(findLatestMarker([{ author: 'a', body: 'Hi', createdAt: '2026-01-01T00:00:00Z' }])).toBeNull();
   });
 });
 
 describe(findLatestRunMarkerDate, () => {
-  it("returns the date of the latest comment that carries the run's marker", () => {
+  it("returns the date of the latest comment that contains the run's marker", () => {
     const comments = [
       { author: 'a', body: renderMarker({ run: 'r' }), createdAt: '2026-01-01T00:00:00Z' },
       { author: 'a', body: renderMarker({ run: 'other' }), createdAt: '2026-03-01T00:00:00Z' },

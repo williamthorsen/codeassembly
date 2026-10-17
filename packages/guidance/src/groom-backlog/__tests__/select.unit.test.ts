@@ -21,7 +21,7 @@ describe(applySelectors, () => {
     expect(numbers(['scope:kb', 'agents'])).toStrictEqual([1, 2]);
   });
 
-  it('drops an issue carrying an excluded label, matched exactly', () => {
+  it('drops an issue that has an excluded label, matched exactly', () => {
     const selected = applySelectors(issues, { ...NO_SELECTORS, excludeLabels: ['blocked', 'scope'] }, NOW);
 
     expect(selected.map((issue) => issue.number)).toStrictEqual([1, 3]);
