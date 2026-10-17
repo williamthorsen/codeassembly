@@ -6,7 +6,7 @@ user-invocable: true
 
 # Groom backlog
 
-Sweep a repository's open GitHub issues for tickets whose motivation other work has met, whose premise the codebase has outgrown, or whose fate hinges on another ticket. A bundled helper does the mechanical half: It fetches and selects the tickets, detects which are in progress, finds candidate cross-references, keeps the ledger, classifies each assessment under the policy, proposes an action for each escalation, and renders the digests, the drafted edits, and the comments. You do the rest: one `{subagent:ticket-assessor}` subagent per ticket, one confirmation per digest page, and every write to GitHub.
+Sweep a repository's open GitHub issues for tickets whose motivation other work has met, whose premise the codebase has outgrown, or whose outcome depends on another ticket. A bundled helper does the mechanical half: It fetches and selects the tickets, detects which are in progress, finds candidate cross-references, keeps the ledger, classifies each assessment under the policy, proposes an action for each escalation, and renders the digests, the drafted edits, and the comments. You do the rest: one `{subagent:ticket-assessor}` subagent per ticket, one confirmation per digest page, and every write to GitHub.
 
 The sweep decides by default. Every selected ticket is assessed, and each digest page asks one question: whether to apply the actions that it proposes.
 
@@ -74,7 +74,7 @@ The helper applies the umbrella case in `ingest` and in `comment`.
 
 ## Process
 
-Every helper command prints one JSON result. When a result has `ok: false`, stop and report its `error` and `message`, except where a step below says otherwise. Invoke the helper as:
+Every helper command prints one JSON result. When a result has `ok: false`, stop and report its `error` and `message`, except when a step below says otherwise. Invoke the helper as:
 
 ```bash
 node {harness_home_dir}/skills/groom-backlog/groom-backlog.mjs {command} --run {run} {flags}
@@ -159,7 +159,7 @@ Run `digest` once, and walk the pages of that one result: A `leave` stays undeci
 
 The result contains the run's open escalations, `total`, and `pages`: each escalation whose latest assessment escalated and that does not have a decision recorded after it. Each page's `entries` give each entry's `proposed` action, a `decision` with an optional `supersededBy`. Present one page at a time, verbatim from its `markdown`, and close the turn with an action-items block that asks one question: whether to apply the page's proposed actions. The user answers `yes` to apply them all, or names the entries to change, in the decision vocabulary (`keep`, `update`, `revise`, `split`, `close-complete`, `close-superseded` optionally by `#N`, `close-not-planned`, or `leave`), with an optional reason: `yes, except 3 keep, 5 close-superseded by #40`. Naming a `leave` entry applies what it names. A `no` without changes applies nothing on the page.
 
-Under `--dry-run`, present every page, take no decisions, and go to the summary.
+Under `--dry-run`, present every page, do not take any decisions, and go to the summary.
 
 ### 7. Apply the confirmed actions and summarize
 
@@ -216,7 +216,7 @@ Every action on a ticket follows one order: apply the drafted edit when the deci
 
    Pass `--reason` when the user stated one, `--superseded-by` when the decision names the superseding ticket, and `--children` with the created children's numbers for a split. `--decision` is one of `keep`, `close-complete`, `close-superseded`, `close-not-planned`, `update`, `revise`, and `split`.
 
-   The result's `post` states whether the comment is posted. When it is `false`, the helper writes no body: Skip to step 5.
+   The result's `post` states whether the comment is posted. When it is `false`, the helper does not write a body: Skip to step 5.
 
 3. **Post it**, per [gh body file](#gh-body-file):
 
