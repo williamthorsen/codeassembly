@@ -16,6 +16,7 @@ import {
   readContentRootManifest,
   UNCLAIMED_MEMBERS_CONTENT_FORMAT,
 } from './content-root-manifest.ts';
+import { findCollectionDispositionDefects } from './content-rules/collection-dispositions.ts';
 import { findInjectionPlacementDefects } from './content-rules/injection-placement.ts';
 import { findLinkResolutionDefects } from './content-rules/link-resolution.ts';
 import { findNonBreakingSpaceDefects } from './content-rules/non-breaking-space.ts';
@@ -102,6 +103,7 @@ export async function validateContentRoot(
     ...(await findRetiredKeyDefects(artifacts)),
     ...(await findRetiredOverlayKeyDefects(root, harnessIds)),
     ...foldHarnessDefects(rendered, harnessIds),
+    ...(await findCollectionDispositionDefects(context)),
     ...(await findInjectionPlacementDefects(context)),
     ...(await findLinkResolutionDefects(context)),
     ...(await findNonBreakingSpaceDefects(context)),

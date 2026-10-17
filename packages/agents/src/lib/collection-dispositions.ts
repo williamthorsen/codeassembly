@@ -34,8 +34,17 @@ export interface DispositionClaims {
   readonly collections: ReadonlyArray<CollectionClaim>;
   /** Each artifact declaring `standalone:`, with its reason. */
   readonly standalone: ReadonlyMap<ArtifactId, string>;
-  /** Each file whose disposition frontmatter could not be read, with the reason. */
-  readonly problems: ReadonlyArray<{ readonly file: string; readonly detail: string }>;
+  readonly problems: ReadonlyArray<ClaimProblem>;
+}
+
+/**
+ * A file whose claim could not be read. `cause` separates a collection's unreadable `members:`, which resolution
+ * reports on its own, from an unreadable `disposition:` or `standalone:`, which only the disposition rule reports.
+ */
+export interface ClaimProblem {
+  readonly file: string;
+  readonly cause: 'disposition' | 'members';
+  readonly detail: string;
 }
 
 /** Flattens a per-type slug map into artifact ids. */
@@ -85,22 +94,25 @@ export function listUnclaimedArtifacts(claims: DispositionClaims): ArtifactDepen
  * frontmatter cannot be read is recorded as a problem rather than thrown, so a caller can report every one.
  */
 export async function readDispositionClaims(root: string): Promise<DispositionClaims> {
-  const problems: Array<{ file: string; detail: string }> = [];
+  const problems: Array<ClaimProblem> = [];
 
   const collections: Array<CollectionClaim> = [];
   const collectionFiles = await listVisibleMarkdownFiles(path.join(root, ARTIFACT_TYPES.collection.contentPath));
   for (const file of collectionFiles.toSorted()) {
     const slug = path.basename(file, '.md');
     const relative = artifactFrontmatterPath('collection', slug);
+    const content = await readFile(path.join(root, relative), 'utf8');
+    let members: MembersResult;
     try {
-      const content = await readFile(path.join(root, relative), 'utf8');
-      collections.push({
-        slug,
-        disposition: readCollectionDisposition(content, relative),
-        members: readMembers(content, relative),
-      });
+      members = readMembers(content, relative);
     } catch (error: unknown) {
-      problems.push({ file: relative, detail: describeError(error) });
+      problems.push({ file: relative, cause: 'members', detail: describeError(error) });
+      continue;
+    }
+    try {
+      collections.push({ slug, disposition: readCollectionDisposition(content, relative), members });
+    } catch (error: unknown) {
+      problems.push({ file: relative, cause: 'disposition', detail: describeError(error) });
     }
   }
 
@@ -116,7 +128,7 @@ export async function readDispositionClaims(root: string): Promise<DispositionCl
           standalone.set(`${type}:${slug}`, reason);
         }
       } catch (error: unknown) {
-        problems.push({ file: relative, detail: describeError(error) });
+        problems.push({ file: relative, cause: 'disposition', detail: describeError(error) });
       }
     }
   }
