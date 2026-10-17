@@ -162,6 +162,24 @@ function compareDescending(left: string, right: string): number {
 }
 
 /**
+ * Reads a record's breaking marker. A record captured before the marker was recorded does not contain the field, and
+ * reads as non-breaking; a value other than a boolean is reported and reads as non-breaking too.
+ */
+function readBreaking(input: { extra: Record<string, unknown>; basename: string }): {
+  breaking: boolean;
+  warnings: string[];
+} {
+  const raw = input.extra.breaking;
+  if (raw === undefined || typeof raw === 'boolean') {
+    return { breaking: raw === true, warnings: [] };
+  }
+  return {
+    breaking: false,
+    warnings: [`${input.basename}: names breaking ${JSON.stringify(raw)}, which is not a boolean`],
+  };
+}
+
+/**
  * Reads one event file as an exemplar candidate. A record that parses and does not have a `lede-decision` tag belongs
  * to another capture path and is skipped without a warning. Everything else that cannot be read as an exemplar is
  * reported so that the run goes on without it, unparseable frontmatter included: A record whose tags cannot be read
@@ -214,13 +232,7 @@ async function readDecision(input: {
     };
   }
 
-  // A record captured before the marker was recorded does not contain the field, and reads as non-breaking.
-  const rawBreaking = extra.breaking;
-  const breaking = rawBreaking === true;
-  const breakingWarnings =
-    rawBreaking === undefined || typeof rawBreaking === 'boolean'
-      ? []
-      : [`${basename}: names breaking ${JSON.stringify(rawBreaking)}, which is not a boolean`];
+  const { breaking, warnings: breakingWarnings } = readBreaking({ extra, basename });
 
   // Because an unrated record is the ordinary case for one captured before ratings existed, only a value
   // outside the scale is worth reporting. Either way the candidate stays selectable by a request that does not name a
