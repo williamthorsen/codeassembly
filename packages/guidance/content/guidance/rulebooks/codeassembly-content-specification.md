@@ -109,13 +109,13 @@ A `disposition:` states what membership in a collection that enumerates its memb
 
 - `public`: Its members are generally fit. Its closure may reach only the members of public collections.
 - `personal`: Its members are fitted to one author. Its closure may reach the members of personal and public collections.
-- `opt-in`: Its members are fitted to one vendor ecosystem. Its closure may reach its own members and the members of public collections, and the closure of every other collection must not reach its members, so that only a consumer declaring it deploys them.
+- `opt-in`: Its members are fitted to one vendor ecosystem. Its closure may reach its own members and the members of public collections, and the closure of every other collection, other than an `'@library'` one, must not reach its members, so that only a consumer declaring it deploys them.
 
-An artifact that is deliberately outside every collection declares `standalone:` in its own frontmatter, with the reason as the value. A collection must not enumerate it, and a collection's closure must not reach it. An artifact that several collections claim is within a closure's reach when any one of its claims is. `disposition:` on a collection whose members are computed, `standalone:` on a collection, and `disposition:` on any other type are errors.
+An artifact that is deliberately outside every collection declares `standalone:` in its own frontmatter, with the reason as the value. A collection must not enumerate it, and the closure of a collection, other than an `'@library'` one, must not reach it. An artifact that several collections claim is within a closure's reach when any one of its claims is. `disposition:` on a collection whose members are computed, `standalone:` on a collection, and `disposition:` on any other type are errors.
 
 `validate` checks a root that declares a disposition, a standalone artifact, or an `'@unclaimed'` collection, and reports each of these as a `disposition` defect:
 
-- a standalone artifact that a collection enumerates or a collection's closure reaches
+- a standalone artifact that a collection enumerates, or that the closure of a collection other than an `'@library'` one reaches
 - a collection with a disposition whose closure reaches an artifact outside its reach
 - a collection, other than an `'@library'` one, whose closure reaches a member of an opt-in collection other than itself
 - in a root without an `'@unclaimed'` collection, an artifact that is not covered by any disposition
