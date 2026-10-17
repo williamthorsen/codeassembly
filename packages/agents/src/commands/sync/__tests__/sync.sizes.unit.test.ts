@@ -18,7 +18,7 @@ import { syncCommand } from '../sync.ts';
 import type { SyncDomain } from '../sync-domain.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 /** The commit that the fake reports every source tree to be on. */

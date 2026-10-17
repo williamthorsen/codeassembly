@@ -12,7 +12,7 @@ import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts
 import { syncCommand } from '../sync.ts';
 import { isSyncValidationError } from '../sync-validation-error.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 describe('syncCommand pre-write validation', () => {

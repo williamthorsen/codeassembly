@@ -12,7 +12,7 @@ import { createSyncFixture } from '../test-utils/create-sync-fixture.ts';
 import { renderReportLines } from '../test-utils/render-report-lines.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 describe(syncCommand, () => {

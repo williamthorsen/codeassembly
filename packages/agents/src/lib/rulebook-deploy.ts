@@ -33,7 +33,9 @@ export interface ResolvedRulebook {
   readonly description: string | undefined;
   /** The name of the declared source from which it resolved. */
   readonly source: string;
-  /** The version declared by the rulebook, named in its deployed output so that an agent can read which version it has. */
+  /**
+   * The version declared by the rulebook, named in its deployed output so that an agent can read which version it has.
+   */
   readonly version: string | undefined;
   /** The harnesses to which the rulebook deploys; absent when it does not narrow them, meaning all harnesses. */
   readonly targetHarnesses?: ReadonlyArray<HarnessId>;

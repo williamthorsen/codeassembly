@@ -232,7 +232,7 @@ export function rewriteInvocationTokens(
         if (marker !== undefined) {
           throw new Error(
             `Unusable invocation token {rulebook?:${slug}} in ${sourceLabel}: A rulebook token renders the skill ` +
-              'name under which its target deploys, which an undeployed target supplies nowhere; only {skill?:<slug>} and ' +
+              'name under which its target deploys, which an undeployed target does not have; only {skill?:<slug>} and ' +
               '{subagent?:<slug>} have an optional form.',
           );
         }

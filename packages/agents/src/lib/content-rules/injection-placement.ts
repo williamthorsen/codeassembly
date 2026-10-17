@@ -38,7 +38,9 @@ interface LiveLine {
 
 type Token = Heading | Injection;
 
-/** The shallowest heading level that each partial contributes, memoized for one run since many hosts include a partial. */
+/**
+ * The shallowest heading level that each partial contributes, memoized for one run since many hosts include a partial.
+ */
 type PartialLevels = Map<string, number | undefined>;
 
 /**

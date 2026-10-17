@@ -139,8 +139,8 @@ function hasResidue(retraction: DroppedHarnessRetraction): boolean {
  * Decides what retraction does to one dropped harness's ambient host. The two hosts differ in who owns the region's
  * placement: `install` renders the harness-home region, so sync empties the content that it owns and keeps the markers,
  * while sync owns the project-local host and removes its region entirely, deleting the file once nothing else
- * remains. A damaged region is reported rather than touched, since the span matched there by the pattern includes text that
- * the region does not own; a host without a region at all is nothing to report.
+ * remains. A damaged region is reported rather than touched, since the span matched there by the pattern includes text
+ * that the region does not own; a host without a region at all is nothing to report.
  */
 async function planAmbientRetraction(
   harnessId: HarnessId,

@@ -49,7 +49,7 @@ A reader of snapshots returns the last line whose `kind` is `snapshot` and reads
 
 `files` is keyed by deployed path relative to the harness home, or to the domain base for a file deployed outside it, prefixed by the harness that loads it. The prefix keeps two harnesses' copies of one skill distinct. The key is a path rather than a slug, because a rulebook deploys as `consult-<slug>` and a skill deploys as a directory of several files. Each value is an object rather than a bare number, which leaves room for later constituent fields without a migration.
 
-A file's own `kind` states whether a harness loads it into context. Classification is by extension: `.md` is a document, everything else an asset. A helper bundle does not load into any context, so a ranking that placed it beside a skill body would bury the signal.
+A file's own `kind` states whether a harness loads it into context. Classification is by extension: `.md` is a document, everything else an asset. A helper bundle does not load into any context, so a ranking that placed it beside a skill body would hide the documents that load into context.
 
 ## The expansions block
 
@@ -137,7 +137,7 @@ A changed unit is reported once. For each resized document, the report sums the 
 
 - A document whose delta equals that sum is explained in full and does not contribute a line, which keeps one partial edit from printing one line per includer.
 - A document that moved beyond that sum reports the residual: its line is led by the bytes that its own content accounts for and marked `(residual, …)`.
-- A unit that does not explain any document's delta does not contribute a line either. Extracting a partial from text that was already in its includers leaves every deployed document byte-identical, since the expander inlines a partial to the same bytes that it replaced; a line claiming the extracted bytes as growth would head a block that states what a deployment cost.
+- A unit that does not explain any document's delta does not contribute a line either. Extracting a partial from text that was already in its includers leaves every deployed document byte-identical, since the expander inlines a partial to the same bytes that it replaced; a line claiming the extracted bytes as growth would lead a block that reports how many bytes a deployment added.
 
 A unit's line therefore accounts for the bytes that it removed from the document lines, never for its own delta across every document that contains it. The two kinds of line sum to the deployment's whole document delta: Every byte that one accounts for is a byte that the other does not.
 

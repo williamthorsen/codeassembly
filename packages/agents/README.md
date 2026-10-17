@@ -64,7 +64,7 @@ Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 | `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
 | `sizes`             | Rank the last recorded deployment's documents by size, with the context aggregates beneath them            |
 | `status`            | Show the current state of installed items                                                                  |
-| `validate`          | Check a content root for defects that reach a consumer; writes nothing                                     |
+| `validate`          | Check a content root for defects that would affect a consumer; writes nothing                              |
 | `bundle-helpers`    | Bundle the helpers that a content root declares; `--check` fails on a stale bundle                         |
 | `library list`      | List each declared source's artifacts, marking those that a higher-precedence source shadows               |
 | `generate <target>` | Generate a configuration file (e.g., `label-map`, whose scopes come from `pnpm-workspace.yaml`)            |
@@ -92,10 +92,10 @@ A content root's own tests read it as consumers receive it through the `codeasse
 
 `sync` writes what the declaration resolved at the moment it ran, and nothing re-runs it on its own. The rule is to sync when the content that it renders last changed, and that moment differs depending on where the content comes from:
 
-| Role                                     | Content is ready when      | Trigger            | On failure   |
-| ---------------------------------------- | -------------------------- | ------------------ | ------------ |
-| Consumer of a guidance-shipping package  | the dependency is unpacked | root `postinstall` | warn, exit 0 |
-| Provider whose content is a build output | its build finishes         | after the build    | fail         |
+| Role                                         | Content is ready when      | Trigger            | On failure   |
+| -------------------------------------------- | -------------------------- | ------------------ | ------------ |
+| Consumer of a package that provides guidance | the dependency is unpacked | root `postinstall` | warn, exit 0 |
+| Provider whose content is a build output     | its build finishes         | after the build    | fail         |
 
 **Consumer.** A project whose declared artifacts come from [packages](docs/project-declaration.md#packages) can sync as soon as `pnpm install` finishes, so wire it there:
 

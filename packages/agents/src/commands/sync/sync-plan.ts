@@ -21,8 +21,8 @@ export interface MissingDeclaration {
 
 /**
  * One deployed artifact's resolution outcome: its type and slug, the source from which it resolved, and the
- * lower-precedence sources that ship the same slug. Drives both the dry-run resolution report and the real-run shadow
- * warning.
+ * lower-precedence sources that provide the same slug. Drives both the dry-run resolution report and the real-run
+ * shadow warning.
  */
 export interface ResolutionEntry {
   readonly type: ArtifactType;
@@ -80,7 +80,7 @@ export interface SyncPlan {
   readonly promptsYmlPaths: ReadonlyArray<string>;
   /** Declared sources whose directory does not exist, and so contribute nothing to resolution. */
   readonly missingSources: ReadonlyArray<DeclaredSource>;
-  /** Dependencies shipping guidance that the project has not declared. */
+  /** Dependencies providing guidance that the project has not declared. */
   readonly undeclaredPackages: ReadonlyArray<string>;
   /** Disagreements between the declaration's guidance-hook bindings and what those bindings reach. */
   readonly guidanceHookAdvisories: ReadonlyArray<GuidanceHookAdvisory>;

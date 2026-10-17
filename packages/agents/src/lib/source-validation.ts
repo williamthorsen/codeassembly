@@ -17,7 +17,7 @@ export interface SourceProblem {
  * segments rather than being rejected outright; what is rejected is anything that would escape the namespace or
  * wouldn't name any directory at all.
  *
- * Checked for every source rather than only those shipping support entries: The segment is part of a source's
+ * Checked for every source rather than only those providing support entries: The segment is part of a source's
  * contract, and a check deferred until a producer first adds support files would fail at that producer's consumers
  * rather than at the producer.
  */

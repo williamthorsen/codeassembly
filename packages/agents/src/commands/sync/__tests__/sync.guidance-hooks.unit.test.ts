@@ -11,7 +11,7 @@ import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts
 import type { GuidanceHookAdvisory } from '../hook-bindings.ts';
 import { syncCommand } from '../sync.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 describe('syncCommand with guidance-hook bindings', () => {

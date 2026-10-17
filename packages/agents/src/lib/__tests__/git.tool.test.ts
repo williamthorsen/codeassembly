@@ -184,7 +184,9 @@ describe('realGit', () => {
 
 // region | Helpers
 
-/** Commits every file in the repository, supplying the identity and signing settings that the git config may not set. */
+/**
+ * Commits every file in the repository, supplying the identity and signing settings that the git config may not set.
+ */
 async function commitAll(cwd: string, message: string): Promise<void> {
   await writeFile(path.join(cwd, 'file.txt'), `${message}\n`, 'utf8');
   await git(cwd, ['add', '--all']);

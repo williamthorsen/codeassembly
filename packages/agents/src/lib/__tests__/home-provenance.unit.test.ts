@@ -191,7 +191,10 @@ describe('home provenance', () => {
 
   // region | Helpers
 
-  /** Writes `content` to the stamp path verbatim, so that a test can write a shape that `recordHomeProvenance` never produces. */
+  /**
+   * Writes `content` to the stamp path verbatim, so that a test can write a shape that `recordHomeProvenance` never
+   * produces.
+   */
   async function writeStamp(content: string): Promise<void> {
     const provenancePath = getHomeProvenancePath(homeDir);
     await mkdir(path.dirname(provenancePath), { recursive: true });

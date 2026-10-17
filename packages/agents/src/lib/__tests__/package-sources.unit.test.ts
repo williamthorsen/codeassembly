@@ -33,7 +33,7 @@ describe(resolvePackageSources, () => {
     ]);
   });
 
-  it('resolves a package that does not ship any JavaScript at all', async () => {
+  it('resolves a package that does not include any JavaScript at all', async () => {
     const dir = await installPackage(baseDir, '@ca-fixture/guidance-only', { codeassembly: { content: 'guidance' } });
 
     expect(await resolvePackageSources(['@ca-fixture/guidance-only'], baseDir)).toEqual([
@@ -164,14 +164,14 @@ describe(findUndeclaredGuidancePackages, () => {
     await rm(baseDir, { recursive: true, force: true });
   });
 
-  it('reports a guidance-shipping dependency that the project has not declared', async () => {
+  it('reports an undeclared dependency that provides guidance', async () => {
     await installPackage(baseDir, '@ca-fixture/ships', { codeassembly: { content: 'c' } });
     await writeProjectManifest(baseDir, { dependencies: { '@ca-fixture/ships': '1.0.0' } });
 
     expect(await findUndeclaredGuidancePackages([], baseDir)).toEqual(['@ca-fixture/ships']);
   });
 
-  it('reports a guidance-shipping devDependency', async () => {
+  it('reports a devDependency that provides guidance', async () => {
     await installPackage(baseDir, '@ca-fixture/tooling', { codeassembly: { content: 'c' } });
     await writeProjectManifest(baseDir, { devDependencies: { '@ca-fixture/tooling': '1.0.0' } });
 

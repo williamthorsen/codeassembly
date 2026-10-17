@@ -49,7 +49,7 @@ import { retractDroppedHarnesses } from './harness-retraction.ts';
  */
 const SCRIPT_EXTENSIONS: ReadonlyArray<string> = ['.mjs', '.sh'];
 
-/** One content root shipping a harness's guidance template, and the file names that it installs from there. */
+/** One content root providing a harness's guidance template, and the file names that it installs from there. */
 interface TemplateRoot {
   readonly root: ContentRootRef;
   readonly fileNames: ReadonlyArray<string>;
@@ -307,7 +307,7 @@ async function installHarnessGuidance(
         indent: 2,
         level: 'warn',
         text:
-          `The ${harnessId} guidance template is shipped by more than one content root: installing it from ` +
+          `The ${harnessId} guidance template is provided by more than one content root: installing it from ` +
           `${describeContentRoot(owner.root)} and ignoring ${shadowed.map((shipping) => describeContentRoot(shipping.root)).join(', ')}.`,
       },
     ]);
@@ -380,7 +380,7 @@ async function installHarnessGuidance(
 
 /**
  * Collects the installable scripts across `roots`, keyed by file name, taking each name from the highest-precedence
- * root that ships it. A name also shipped by a lower-precedence root is dropped and reported: Scripts are deployed
+ * root that provides it. A name also provided by a lower-precedence root is dropped and reported: Scripts are deployed
  * into one flat directory, and their file names are undeclared, so a collision states none of the override intent that
  * a declared artifact's slug does.
  *
@@ -432,7 +432,7 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
           indent: 2,
           level: 'warn',
           text:
-            `Script ${entry} is shipped by more than one content root: installing it from ` +
+            `Script ${entry} is provided by more than one content root: installing it from ` +
             `${describeContentRoot(claimant)} and ignoring ${describeContentRoot(root)}.`,
         });
         continue;
@@ -446,10 +446,10 @@ async function collectScriptClaims(roots: ReadonlyArray<ContentRootRef>): Promis
 }
 
 /**
- * Reports the roots shipping a guidance template for `harnessId`, highest precedence first, each paired with the file
- * names that it installs. A root ships a template when its `guidance/_harnesses/<harnessId>/` directory contains at
- * least one such file; a directory that is absent, or contains only dotfiles and subdirectories, ships nothing, so it
- * cannot shadow the root that would otherwise supply the harness.
+ * Reports the roots providing a guidance template for `harnessId`, highest precedence first, each paired with the file
+ * names that it installs. A root provides a template when its `guidance/_harnesses/<harnessId>/` directory contains at
+ * least one such file; a directory that is absent, or contains only dotfiles and subdirectories, provides nothing, so
+ * it cannot shadow the root that would otherwise supply the harness.
  *
  * The file names are returned with the root so that selection and installation apply one definition of an installable
  * entry. Because `copyItem` copies a directory recursively and `computeContentHash` reads a file, an entry that the

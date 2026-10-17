@@ -190,7 +190,7 @@ async function reconcileDomain(
   });
   const resolver = createSourceResolver(sources);
 
-  // Everything a package under `packages:` ships seeds the closure, which makes naming the package the whole
+  // Everything a package under `packages:` provides seeds the closure, which makes naming the package the whole
   // declaration; a package named by a `sources:` entry seeds nothing. A package whose content dir is missing
   // enumerates nothing: The walk reads through a directory listing that doesn't
   // return any entries for an absent directory.
@@ -397,7 +397,7 @@ async function reconcileDomain(
   }
 
   // Attribute each deployed artifact to the source from which it resolved, naming any lower-precedence source that
-  // also ships it. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow
+  // also provides it. Built once, off the write path, and consumed by both the dry-run report and the real-run shadow
   // warning.
   const resolutionReport = await buildResolutionReport(resolver, resolved, resolvedSkills, resolvedSubagents);
 
@@ -501,7 +501,7 @@ async function reconcileDomain(
 
 /**
  * Attributes each deployed rulebook, skill, and subagent to the source from which it resolved, naming the
- * lower-precedence sources that ship the same slug and that it therefore shadows.
+ * lower-precedence sources that provide the same slug and that it therefore shadows.
  */
 async function buildResolutionReport(
   resolver: SourceResolver,
@@ -528,7 +528,7 @@ async function buildResolutionReport(
   );
 }
 
-/** Maps each declared source's name to the support entries that its `skills/` directory ships. */
+/** Maps each declared source's name to the support entries that its `skills/` directory provides. */
 async function listSupportEntriesBySource(
   sources: ReadonlyArray<DeclaredSource>,
 ): Promise<ReadonlyMap<string, ReadonlySet<string>>> {

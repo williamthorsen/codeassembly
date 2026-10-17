@@ -32,7 +32,8 @@ export interface SubagentRenderContext extends TemplateVariables {
   readonly rulebooks: RulebookInvocationCatalog;
   /**
    * Guidance bound to each hook that the subagent's body may declare. Absent for every caller that doesn't
-   * resolve a declaration (`install` and `validate`), which keeps them stripping.
+   * resolve a declaration (`install` and `validate`), so that the transform strips every hook directive from their
+   * output.
    */
   readonly guidanceHookFills?: GuidanceHookFills | undefined;
 }

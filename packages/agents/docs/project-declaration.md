@@ -161,7 +161,7 @@ An artifact in none of them is standalone: deliberate, declared directly where w
 
 A collection whose `members:` is the string `'@library'` resolves to every deployable artifact (all rulebooks, skills, and subagents) in the content root from which the collection resolves: the declared source from which the collection resolved, and no other. It is computed at resolution time so that the resolver includes a newly added artifact automatically without an edit to the collection. The `@` sigil marks a computed directive rather than a literal slug, so the value must be YAML-quoted (`'@library'`). Collections are excluded from the result: The resolver never emits them, and "every collection" would be self-referential.
 
-The shipped `all` collection declares `'@library'`; declaring `collections: use: [all]` deploys the whole catalog.
+The built-in `all` collection declares `'@library'`; declaring `collections: use: [all]` deploys the whole catalog.
 
 ## Dependencies
 
@@ -198,7 +198,7 @@ rulebooks:
 
 Each source is either a `{ name, path }` pair (both required) or a `{ package }` entry that names an installed package; an entry that declares both `path` and `package`, or neither, fails validation. A relative `path` resolves against the declaring file's `.agents/` directory; `~` expands to the home directory, and absolute paths are used as-is. A source may declare the content format against which it was authored; see [Content-format version](#content-format-version). Declaration entries stay bare slugs: Resolution is transparent, so `team-standards` resolves from whichever source provides it, without a per-entry `from:` syntax.
 
-**Package sources.** A `package` entry consumes a library from which the project picks: The package's declared content directory resolves as a [`packages`](#packages) entry's does, through the module resolver and under a `workspace:*` link, but the entry adopts nothing on its own. What deploys is what the declaration's collections, type blocks, and guidance-hook bindings name, together with their dependencies. Its `name` is optional and defaults to the package name, so its support entries deploy under the same namespace as when `packages` adopts the package. Choose `packages` for a tool that ships guidance about itself, whose whole catalog is the declaration, and a `package` source for a library such as `codeassembly-guidance`, whose consumers choose collections from it:
+**Package sources.** A `package` entry consumes a library from which the project picks: The package's declared content directory resolves as a [`packages`](#packages) entry's does, through the module resolver and under a `workspace:*` link, but the entry adopts nothing on its own. What deploys is what the declaration's collections, type blocks, and guidance-hook bindings name, together with their dependencies. Its `name` is optional and defaults to the package name, so its support entries deploy under the same namespace as when `packages` adopts the package. Choose `packages` for a tool that provides guidance about itself, whose whole catalog is the declaration, and a `package` source for a library such as `codeassembly-guidance`, whose consumers choose collections from it:
 
 ```yaml
 sources:
@@ -239,7 +239,7 @@ packages:
 
 **Precedence.** Every `sources` entry, from any tier, outranks every package adopted here, including a `sources` entry that names a package: A source named by hand should win over a dependency's catalog. Among packages the ordinary rule applies: the highest tier wins, and within a tier the last declared wins. Every shadow is reported by the same warning, whichever two sources it is between, and `sync --dry-run` names the source from which each artifact resolved.
 
-**Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain searched by Node itself, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a guidance-shipping package consumes its own guidance through the same declaration that a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or doesn't declare a content directory, fails the run (dry-run included) before any file is written, naming what was searched. One that declares a content directory that it does not include warns rather than failing, like any other missing source. The consumer's declaration doesn't contain a path to correct, so the remedy is to create the directory in a package that the consumer maintains, or report the omission upstream in one that they do not.
+**Resolution.** A declared package resolves through the module resolver, walking the `node_modules` chain searched by Node itself, so it holds under pnpm's hoisting and symlinked layouts. It also holds under a `workspace:*` link, which means a repo that produces a package that provides guidance consumes its own guidance through the same declaration that a third party writes, resolved against the live source tree rather than a packed copy. A declared package that is not installed, or doesn't declare a content directory, fails the run (dry-run included) before any file is written, naming what was searched. One that declares a content directory that it does not include warns rather than failing, like any other missing source. The consumer's declaration doesn't contain a path to correct, so the remedy is to create the directory in a package that the consumer maintains, or report the omission upstream in one that they do not.
 
 **Discovery.** `sync` reports any direct dependency that provides content that the project has not declared, printing the `packages:` block that would adopt it. That is advice, not action: An undeclared dependency contributes nothing. Installing one changes nothing about what an agent reads, and `drop` silences the advice for a package that the project has turned down. A package that a `sources` entry names is not advised either; see [Sources](#sources).
 
@@ -302,7 +302,7 @@ One shape cannot consume its own guidance: A single-package repo whose package i
 
 ## References
 
-A dependency can ship documentation written for agents without including CodeAssembly content. A top-level `references:` list points the agent at it, by package name and a path inside the package:
+A dependency can include documentation written for agents without including CodeAssembly content. A top-level `references:` list points the agent at it, by package name and a path inside the package:
 
 ```yaml
 references:

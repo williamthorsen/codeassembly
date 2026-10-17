@@ -104,7 +104,7 @@ export default defineRdyKit({
             }
             return { ok: false, detail: describeViolations(violations) };
           },
-          fix: `Delete the marked region and its markers; \`sync\` strips a complete pair from ${GUIDANCE_PATH} on its next run, and an unpaired marker escapes that sweep and lingers`,
+          fix: `Delete the marked region and its markers; \`sync\` strips a complete pair from ${GUIDANCE_PATH} on its next run, but does not remove an unpaired marker`,
         },
         {
           name: `${GUIDANCE_PATH} is within the ambient budget`,

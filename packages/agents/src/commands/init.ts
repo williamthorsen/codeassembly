@@ -70,7 +70,7 @@ const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt
 #     path: ~/repos/codeassembly/packages/guidance/content
 #
 # Each collection makes a claim about its members: \`recommended\` is vetted and generally applicable, and \`triage\`
-# contains what nobody has examined yet. Add any other collection shipped by a declared source, or declare \`all\` in
+# contains what nobody has examined yet. Add any other collection provided by a declared source, or declare \`all\` in
 # their place to take the whole catalog, including the artifacts that every collection deliberately omits.
 collections:
   use:

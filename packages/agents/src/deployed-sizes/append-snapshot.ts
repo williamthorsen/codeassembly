@@ -5,7 +5,7 @@ import { isMissingFile } from '../lib/type-guards.ts';
 import type { SizeSnapshot } from './types.ts';
 
 /**
- * Most lines kept when a prune runs. A deployment of a few hundred files states a line of tens of kilobytes, and
+ * Most lines kept when a prune runs. A deployment of a few hundred files produces a line of tens of kilobytes, and
  * every reader loads the record whole, so the record is capped rather than left to grow for as long as the machine
  * deploys.
  */

@@ -286,7 +286,7 @@ Commands:
   uninstall        Remove installed guidance, skills, and subagents
   sizes            Rank the last recorded deployment's documents by size, with the context aggregates beneath them
   status           Show the current state of installed items
-  validate         Check a content root for defects that reach a consumer; writes nothing
+  validate         Check a content root for defects that would affect a consumer; writes nothing
   bundle-helpers   Bundle the helpers declared by a content root's manifest (needs the optional esbuild peer)
   library list     List each declared source's artifacts (rulebooks, skills, subagents, collections)
   generate <target> Generate a configuration file (e.g., label-map)

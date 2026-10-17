@@ -492,7 +492,7 @@ function describeSourceNames(names: ReadonlyArray<string>): string {
 
 /**
  * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
- * because their source ships nothing, and which ones retraction removes because they aren't claimed by any source.
+ * because their source provides nothing, and which ones retraction removes because they aren't claimed by any source.
  */
 function describeSourceSupport(
   plans: ReadonlyArray<SourceSupportPlan>,
@@ -503,7 +503,7 @@ function describeSourceSupport(
     .map((plan) =>
       plan.kind === 'deliver'
         ? `  deliver ${plan.entries.length} source support file(s) to ${plan.destDir}`
-        : `  retract source support ${plan.destDir} (source ships none)`,
+        : `  retract source support ${plan.destDir} (source provides none)`,
     );
   return [...lines, ...retractions.map((retraction) => `  retract source support ${retraction} (no longer declared)`)];
 }
@@ -532,12 +532,12 @@ function describeUnignoredHost(hostPath: string): ReportLine {
 }
 
 /**
- * Renders the advice naming each dependency that ships content that the project has not declared, as the `packages:`
+ * Renders the advice naming each dependency that provides content that the project has not declared, as the `packages:`
  * block that adopts them. Emitted as the block rather than as prose so that it can be pasted rather than transcribed,
  * on a line of its own so that the glyph's gutter does not indent it.
  */
 function renderPackageAdvice(names: ReadonlyArray<string>): ReadonlyArray<ReportLine> {
-  const subject = names.length === 1 ? 'dependency ships' : 'dependencies ship';
+  const subject = names.length === 1 ? 'dependency provides' : 'dependencies provide';
   const entries = names.map((name) => `    - '${name}'`).join('\n');
   return [
     {

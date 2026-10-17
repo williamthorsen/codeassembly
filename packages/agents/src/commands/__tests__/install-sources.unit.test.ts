@@ -83,7 +83,7 @@ describe('install with declared sources', () => {
 
     expect(await readScript(tempDir, 'demo.sh')).toContain('echo from-source');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /demo\.sh is shipped by more than one content root.*source "codeassembly"/s,
+      /demo\.sh is provided by more than one content root.*source "codeassembly"/s,
     );
   });
 
@@ -105,7 +105,7 @@ describe('install with declared sources', () => {
 
     expect(await readScript(tempDir, 'contested.sh')).toContain('echo higher');
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /contested\.sh is shipped by more than one content root.*"lower"/s,
+      /contested\.sh is provided by more than one content root.*"lower"/s,
     );
   });
 
@@ -202,7 +202,7 @@ describe('install with declared sources', () => {
     await installCommand(makeOptions(), tempDir, fakeGit);
 
     expect(warnedLines(silent.warn.mock.calls)).toMatch(
-      /claude guidance template is shipped by more than one content root.*source "codeassembly"/s,
+      /claude guidance template is provided by more than one content root.*source "codeassembly"/s,
     );
   });
 

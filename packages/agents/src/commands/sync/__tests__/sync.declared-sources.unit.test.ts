@@ -430,7 +430,7 @@ describe(syncCommand, () => {
         level: 'info',
       });
 
-      expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (source ships none)`);
+      expect(output).toContain(`retract source support ${path.join(sourcesRoot, 'org')} (source provides none)`);
       await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
       expect(existsSync(path.join(sourcesRoot, 'org'))).toBe(false);
     });

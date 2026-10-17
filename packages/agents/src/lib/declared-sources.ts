@@ -136,7 +136,8 @@ function describeNoSource(baseDir: string, missing: ReadonlyArray<DeclaredSource
  *
  * A shared name would let both claim one support namespace, so the source that wins artifact resolution and the one
  * whose support files survive delivery are different sources, and links rendered for the first point at the second's
- * files. Failing here, before any write, forces the conflict to be resolved by renaming rather than by delivery order.
+ * files. Throwing here, before any write, makes the user resolve the conflict by renaming a source rather than leaving
+ * it to delivery order.
  */
 function assertDistinctSourceNames(sources: ReadonlyArray<{ name: string; dir: string }>): void {
   const dirsByName = new Map<string, Array<string>>();

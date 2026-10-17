@@ -119,7 +119,7 @@ describe(libraryListCommand, () => {
     });
   });
 
-  describe('two declared sources shipping one slug', () => {
+  describe('two declared sources providing one slug', () => {
     let teamDir: string;
 
     beforeEach(async () => {
@@ -155,7 +155,7 @@ describe(libraryListCommand, () => {
       expect(order).toEqual(order.toSorted((a, b) => a - b));
     });
 
-    it('does not mark a slug that only one source ships as shadowed', async () => {
+    it('does not mark a slug that only one source provides as shadowed', async () => {
       const { output } = await captureList({ global: false }, projectDir, homeDir);
       const lines = output.split('\n');
 

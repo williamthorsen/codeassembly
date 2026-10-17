@@ -180,7 +180,7 @@ describe('source support delivery', () => {
   });
 
   describe(listUndeclaredSourceSupport, () => {
-    it('names a dropped namespace without naming what removing it already covers', async () => {
+    it('names a dropped namespace but not the paths beneath it', async () => {
       await mkdir(path.join(destParent, 'dropped', '_data'), { recursive: true });
       await writeFile(path.join(destParent, 'dropped', '_data', 'b.md'), '# B\n', 'utf8');
       await mkdir(path.join(destParent, 'kept'), { recursive: true });

@@ -75,9 +75,9 @@ export interface ResolvedContentRoot {
 }
 
 /**
- * Lists every artifact that a content root ships, per type, collections included. Collections are added explicitly:
+ * Lists every artifact that a content root provides, per type, collections included. Collections are added explicitly:
  * `enumerateCatalogSlugs` drops them as traversal-only nodes, but a collection's hand-listed `members:` slug is a
- * dangling reference that a producer can ship, so it has to be walked from somewhere.
+ * dangling reference that a producer can provide, so it has to be walked from somewhere.
  */
 export async function listContentRootCatalog(root: string): Promise<Record<ArtifactType, ReadonlyArray<string>>> {
   const catalog = await enumerateCatalogSlugs(root);
@@ -92,7 +92,7 @@ export async function listContentRootCatalog(root: string): Promise<Record<Artif
 }
 
 /**
- * Renders what `root` ships for one harness, resolving the root first. `bindings` maps each guidance hook to the
+ * Renders what `root` provides for one harness, resolving the root first. `bindings` maps each guidance hook to the
  * rulebook slugs bound to it, as a declaration's `guidance-hooks:` does; a bound rulebook seeds the closure, so a
  * binding to a rulebook that the root does not contain is a resolution defect.
  */
@@ -252,7 +252,7 @@ export async function renderResolvedContentRoot(
 }
 
 /**
- * Resolves the closure of everything `root` ships, plus `extraSeeds`, against the root alone. An edge to an artifact
+ * Resolves the closure of everything `root` provides, plus `extraSeeds`, against the root alone. An edge to an artifact
  * that the root does not contain is a defect. Every seed and every artifact is resolved independently, so one defect
  * never hides the rest.
  */
