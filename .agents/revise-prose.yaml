@@ -1786,21 +1786,6 @@ rejections:
     ground: a verbless table cell, which does not contain a verb to negate
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/scripts/extract-plugin-skills.sh
-    phrase: no skills directory in $plugin v$latest_version
-    ground: a terse error-message fragment without a verb to negate
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/scripts/extract-plugin-skills.sh
-    phrase: no skills to extract
-    ground: a terse error-message fragment without a finite verb to negate
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/scripts/extract-plugin-skills.sh
-    phrase: 'no versions found for plugin: $plugin'
-    ground: a terse error-message fragment without a finite verb to negate
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/src/capture-event/__tests__/cli.unit.test.ts
     phrase: fails with no-default-store
     ground: an error-code identifier, not prose
