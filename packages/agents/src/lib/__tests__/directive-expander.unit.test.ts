@@ -39,7 +39,7 @@ describe(expandIncludes, () => {
       expect(result).toBe(['Read AGENTS.md.', '', '# Shared instructions', '', 'Be courteous.', ''].join('\n'));
     });
 
-    it('resolves against the directive-bearing file directory, not the entry point directory', async () => {
+    it("resolves against the directory of the file that contains the directive, not the entry point's directory", async () => {
       const host = await writeSource(
         'harnesses/rovo/AGENTS.md',
         ['<!-- include: ./codeassembly-guidance.md / -->', ''].join('\n'),
@@ -219,7 +219,7 @@ describe(expandIncludes, () => {
       expect(result).toBe(['Before', '', 'slot body', 'After', ''].join('\n'));
     });
 
-    it('routes slot content correctly when an open directive is nested inside another open directive', async () => {
+    it('substitutes slot content into the correct partial when an open directive is nested inside another open directive', async () => {
       // The inner frame's expanded output becomes slot content for the outer frame, substituted into the outer
       // partial's `<!-- children -->` placeholder.
       const host = await writeSource(
@@ -255,8 +255,8 @@ describe(expandIncludes, () => {
     });
 
     it('returns to top-level output between two sequential non-nested open/close blocks', async () => {
-      // Between the two pairs the stack is empty, so intervening prose flows to the output buffer rather than being
-      // captured by a stale frame.
+      // Between the two pairs the stack is empty, so the expander writes intervening prose to the output buffer rather
+      // than to a stale frame.
       const host = await writeSource(
         'host.md',
         [

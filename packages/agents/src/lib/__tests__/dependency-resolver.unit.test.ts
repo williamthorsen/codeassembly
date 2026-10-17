@@ -216,7 +216,7 @@ describe(resolveClosure, () => {
       expect(closure.subagents.toSorted()).toEqual(['orchestrator', 'planner']);
     });
 
-    it('pulls a token that arrives via an included partial into the closure', async () => {
+    it('pulls a token in an included partial into the closure', async () => {
       await writeArtifact(contentDir, 'skill', 'capture-event');
       await writeSkillPartial(contentDir, 'wrap-up', 'frag.md', 'Then invoke {skill:capture-event}.');
       await writeArtifactWithBody(contentDir, 'skill', 'wrap-up', '# wrap-up\n\n<!-- include: _partials/frag.md / -->');
@@ -226,7 +226,7 @@ describe(resolveClosure, () => {
       expect(closure.skills.toSorted()).toEqual(['capture-event', 'wrap-up']);
     });
 
-    it('pulls a token that arrives via a rulebook-inlined partial into the closure', async () => {
+    it('pulls a token in a rulebook-inlined partial into the closure', async () => {
       await writeArtifact(contentDir, 'skill', 'capture-event');
       await writeRulebookPartial(contentDir, 'frag.md', 'Then invoke {skill:capture-event}.');
       await writeArtifactWithBody(
@@ -483,7 +483,7 @@ describe(resolveClosure, () => {
       await expect(searched).rejects.toThrow(new RegExp(path.join(contentDir, 'guidance', 'rulebooks', 'ghost.md')));
     });
 
-    it('resolves a source skill, expanding its body against the source root to reach an edge from a lower source', async () => {
+    it('resolves a source skill, expanding its body against the source root to find an edge to a skill in a lower source', async () => {
       await writeSkillPartial(sourceDir, 'source-skill', 'frag.md', 'Invoke {skill:library-helper}.');
       await writeArtifactWithBody(sourceDir, 'skill', 'source-skill', '<!-- include: _partials/frag.md / -->');
       await writeArtifact(contentDir, 'skill', 'library-helper');
