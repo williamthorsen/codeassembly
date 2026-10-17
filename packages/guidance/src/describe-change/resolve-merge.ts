@@ -24,9 +24,9 @@ import type { ConsolidatedRecordOutcome, EffectiveRecordOutcome, Surface } from 
  * Resolves what a pull request merges as: the effective record and the source of each of its fields, the merge title and
  * body, what each source names, the defects that block approval, and the notices that the approval gate shows.
  *
- * The base record is ranked from the block's entries when it records any, and otherwise resolves through
- * `chooseFromLabels`. The block's overrides then apply, and the caller's apply last, through `applyOverrides`, so each field is attributed to the source that set it last. The title
- * resolves on a precedence of its own.
+ * The base record is ranked from the block's entries when the block records any, and is otherwise chosen by
+ * `chooseFromLabels`. The block's overrides then apply, and the caller's apply last, through `applyOverrides`, so each
+ * field is attributed to the source that set it last. The title resolves on a precedence of its own.
  */
 export function resolveMerge(input: MergeInput): ResolveMergeOutcome {
   const { block, notices } = readSources(input);
