@@ -161,6 +161,16 @@ describe(resolveClosure, () => {
     expect(closure.subagents).toEqual([]);
   });
 
+  it('refuses to expand @unclaimed while a claim in the root is unreadable, naming its file', async () => {
+    await writeArtifact(contentDir, 'skill', 'unexamined');
+    await writeRawArtifact(contentDir, 'skill', 'proof', "standalone: ''");
+    await writeRawArtifact(contentDir, 'collection', 'triage', "members: '@unclaimed'");
+
+    await expect(resolveClosure({ collection: ['triage'] }, buildSingleSourceResolver(contentDir))).rejects.toThrow(
+      /skills\/proof\/SKILL\.md/,
+    );
+  });
+
   it('throws naming the collection on an unrecognized members token', async () => {
     const filePath = path.join(contentDir, artifactFrontmatterPath('collection', 'bad'));
     await mkdir(path.dirname(filePath), { recursive: true });
