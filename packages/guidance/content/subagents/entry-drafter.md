@@ -141,6 +141,7 @@ An entry's `text` arrives as `{type}: {passage}`, where `{type}` is a key in the
 
 - **`type-mismatch`**: The passage was written in the form of a type other than the one supplied, such as a `fix` entry's opening on an entry typed `feat`. Rewrite it in the supplied type's form.
 - **`voice`**: A figurative verb or an invented term stood in for the plain one. Name each act with the plainest verb that fits it.
+- **`writing-rule`**: A detector reported a site in the passage, and the caller confirmed that it breaks a rule in your plain-speech or writing guidance. Reread each passage against those rules and restate it.
 - **`subject`**: A passage used a verb that the pull request does not perform. Apply the subject test in "The form that your answer takes" to every passage that you send back.
 - **`unsupported-claim`**: A sentence claimed more than the change supports. Restate the passage within what the diff shows. Returning nothing for it is not the repair: A return short of one replacement per passage cannot be placed.
 - **`unmatched-return`**: The return contained a different number of passages than the fence sent, so the caller could place none of them. Return exactly one replacement per passage, in the order the fence listed them.
