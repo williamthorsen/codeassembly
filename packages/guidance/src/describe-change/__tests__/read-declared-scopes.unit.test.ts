@@ -96,7 +96,7 @@ describe(readDeclaredScopes, () => {
 
 // region | Helpers
 
-/** Indents a YAML list item, including its continuation lines, to sit under `project.scopes`. */
+/** Indents a YAML list item, including its continuation lines, to nest it under `project.scopes`. */
 function indent(entry: string): string {
   return entry
     .split('\n')
@@ -104,7 +104,10 @@ function indent(entry: string): string {
     .join('\n');
 }
 
-/** Writes a fixture root holding the given directories and, when given, an `.agents/preferences.yaml` with `content`. */
+/**
+ * Writes a fixture root containing the given directories and, when given, an `.agents/preferences.yaml` with
+ * `content`.
+ */
 async function writeRoot(dirs: readonly string[], content: string | undefined): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'read-declared-scopes-'));
   for (const dir of dirs) {

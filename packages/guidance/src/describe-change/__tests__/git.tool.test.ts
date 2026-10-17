@@ -60,7 +60,7 @@ describe('realGit', () => {
   });
 
   describe('listCommits', () => {
-    it('reads a subject holding the delimiters used by the commit template itself', async () => {
+    it('reads a subject containing the delimiters used by the commit template itself', async () => {
       await commitMessages(['agents|feat: Add a parser: the reader, the writer, and the verifier']);
 
       const commits = await realGit.listCommits(repository, 'base', 'HEAD');
