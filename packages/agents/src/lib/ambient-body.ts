@@ -45,7 +45,7 @@ export function renderAmbientBody(
     );
   }
   // Prepend rather than seed the loop: Seeding would pass the note through `injectRulebook`, which separates it from
-  // the first block with a blank line and would leave the note standing as the whole body when nothing is ambient.
+  // the first block with a blank line and would leave the note as the whole body when nothing is ambient.
   return body === '' ? '' : `${ambientRegionNote}\n${body}`;
 }
 

@@ -12,8 +12,8 @@ import { isMissingFile } from './type-guards.ts';
 export const CONTENT_MANIFEST_FILENAME = 'codeassembly-content.yaml';
 
 /**
- * The format that first honors the optional invocation-token form. A root containing one under a lower format deploys
- * wrongly on a tool that implements only that lower contract: The token matches nothing, so its literal text is
+ * The format that first supports the optional invocation-token form. A root containing one under a lower format
+ * deploys wrongly on a tool that implements only that lower contract: The token matches nothing, so its literal text is
  * deployed into the body.
  */
 export const OPTIONAL_TOKEN_CONTENT_FORMAT = 2;
@@ -37,7 +37,7 @@ const FORMAT_ERROR = 'format must be a positive integer';
 
 /**
  * The manifest keys that this tool reads. `.loose()` so that an unknown key passes through: A later tool can add one
- * without an older tool rejecting a file that it would otherwise honor, which the `format` gate below exists to
+ * without an older tool rejecting a file that it would otherwise accept, which the `format` gate below exists to
  * decide instead. `format` is required, because a manifest that exists states the contract against which it was
  * authored; the absence of the whole file, not of the key, means format 1.
  */
@@ -66,9 +66,9 @@ export interface ContentRootRef {
 
 /**
  * Throws when any of `roots` declares a content format that this tool does not support, or contains a manifest that it
- * cannot read, so a mismatch fails a run before any file is written rather than surfacing as an unfilled hook or a
+ * cannot read, so a mismatch fails a run before any file is written rather than appearing as an unfilled hook or a
  * dead token. Every offending root is reported together, and a declaration with two of them takes one fix rather than
- * two runs; the two conditions raise separately, because a manifest that will not parse does not have a declared
+ * two runs; the two conditions are reported separately, because a manifest that will not parse does not have a declared
  * version to compare and a reader fixing one is not helped by the other.
  */
 export async function assertSupportedContentFormats(roots: ReadonlyArray<ContentRootRef>): Promise<void> {
@@ -174,8 +174,8 @@ function joinAsProse(items: ReadonlyArray<string>): string {
 
 /**
  * Reads `filePath`, resolving to `undefined` when it is absent. Any other failure -- e.g. `EACCES` on an unreadable
- * manifest -- rethrows, so a permission problem surfaces instead of reading as a bare absence and passing the root as
- * format 1.
+ * manifest -- rethrows, so a permission problem is reported instead of reading as a bare absence and passing the
+ * root as format 1.
  */
 async function readFileIfPresent(filePath: string): Promise<string | undefined> {
   try {

@@ -19,9 +19,9 @@ const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_
 
 /**
  * A declared content source: a directory structured like `packages/guidance/content/`, named either by a `path` or by
- * the installed `package` that ships it. A path source requires `name`; a package source's `name` is optional and
- * defaults to the package name where the declaration is resolved. Unknown keys pass through (`.loose()`) so that a
- * later cut can add per-source config without a breaking change, mirroring `EntrySchema`.
+ * the installed `package` that contains it. A path source requires `name`; a package source's `name` is optional and
+ * defaults to the package name when the declaration is resolved. Unknown keys pass through (`.loose()`) so that a
+ * later version can add per-source config without a breaking change, mirroring `EntrySchema`.
  */
 export const SourceSchema = z
   .object({

@@ -15,8 +15,8 @@ export interface HookEntriesTransform<TResult> {
 }
 
 /**
- * Deletes every owned entry, whichever event holds it, and prunes the structure emptied by the deletion: An event
- * array left empty is dropped, and `hooks` is dropped once it does not hold any events. Ownership rests on the
+ * Deletes every owned entry, whichever event contains it, and prunes the structure emptied by the deletion: An event
+ * array left empty is dropped, and `hooks` is dropped once it does not contain any events. Ownership rests on the
  * sentinel alone, so an owned entry is deleted whatever its content. An event array that was already empty is foreign
  * content and survives.
  */
