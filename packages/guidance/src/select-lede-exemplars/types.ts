@@ -75,6 +75,8 @@ export interface SelectSuccess {
   /** Canonical key of the requested work type, whichever spelling the request used; absent for a tier request. */
   type?: string;
   tier: string;
+  /** Whether the request was marked breaking, by `--breaking` or by a `!` on its work type. */
+  breaking: boolean;
   widening: Widening;
   /** The rating floor that the request applied; `none` when it named none and read every record. */
   minQuality: AppliedFloor;
