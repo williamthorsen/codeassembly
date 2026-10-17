@@ -122,7 +122,7 @@ rules: {rule-id}, {rule-id}
    EOF
    ```
 
-   `sweptAt` is today's ISO calendar date. `roots` lists the invocation's narrowing paths, or `["."]` for a whole-repository sweep. `units` names every unit from step 1 at its current version. `rules` names every rule that step 2 passed with a version, `plain-speech` included, with its unit and its sweep version; the helper records for each whether it holds the rule's detector.
+   `sweptAt` is today's ISO calendar date. `roots` lists the invocation's narrowing paths, or `["."]` for a whole-repository sweep. `units` names every unit from step 1 at its current version. `rules` names every rule that step 2 passed with a version, `plain-speech` included, with its unit and its sweep version; the helper records for each whether it has a detector for the rule.
 
    `rejections` contains every subagent rejection plus every questionable rejected in step 5.1, by you or by the user, each containing `rule`, `file`, `phrase` as the text reads after this run's edits, and `ground`. A rejected questionable's `ground` is the reason recorded for its rejection. Leave out a rejection under a rule that `rules` does not name, which is a rule without a sweep version: Nothing records such a rule, and the helper refuses the fold.
 

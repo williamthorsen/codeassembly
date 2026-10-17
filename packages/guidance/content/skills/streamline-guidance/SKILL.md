@@ -43,7 +43,7 @@ At any level, in any file:
 - An output shape that the agent must reproduce, such as a rendered block or menu, or its skill-local reinforcement: the pointer or the inlined example placed at the step that produces the output.
 - Text that a test asserts.
 - Text that git history shows was added or restored to correct a failure.
-- The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since every description loads into the skill index of every session.
+- The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since the harness loads every description into the skill index of every session.
 - Text inside a generated region, which the next deployment rewrites.
 
 Do not edit any file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 7 updates.
