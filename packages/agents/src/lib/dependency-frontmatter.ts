@@ -9,16 +9,59 @@ import { isRecord } from './type-guards.ts';
 /** The artifacts on which one artifact depends, grouped by type. An absent type does not contribute an edge. */
 export type ArtifactDependencies = Partial<Record<ArtifactType, ReadonlyArray<string>>>;
 
-/** A collection's constituents: every artifact of the collection's own source, or an explicit per-type edge set. */
-export type MembersResult = { kind: 'library' } | { kind: 'explicit'; edges: ArtifactDependencies };
+/** The claim that a collection's membership makes about its members. */
+export type Disposition = (typeof DISPOSITIONS)[number];
+
+/**
+ * A collection's constituents: every artifact of the collection's own source, every artifact of it that no
+ * disposition claims, or an explicit per-type edge set.
+ */
+export type MembersResult =
+  { kind: 'library' } | { kind: 'unclaimed' } | { kind: 'explicit'; edges: ArtifactDependencies };
+
+/** The values that a collection's `disposition:` may declare. */
+export const DISPOSITIONS = ['opt-in', 'personal', 'public'] as const;
 
 /** The computed token that a collection's `members:` may name to mean every deployable artifact in its own source. */
 const LIBRARY_TOKEN = '@library';
+
+/**
+ * The computed token that a collection's `members:` may name to mean every deployable artifact in its own source that
+ * neither a dispositioned collection enumerates nor declares itself standalone.
+ */
+export const UNCLAIMED_TOKEN = '@unclaimed';
 
 /** Maps a plural declaration key (`skills`) back to its artifact type (`skill`), the inverse of `ARTIFACT_TYPES`. */
 const TYPE_BY_KEY: Record<string, ArtifactType> = {};
 for (const meta of Object.values(ARTIFACT_TYPES)) {
   TYPE_BY_KEY[meta.key] = meta.type;
+}
+
+/**
+ * Reads a collection's `disposition:`, or `undefined` for a plain bundle that does not declare one. Throws on a value
+ * outside `DISPOSITIONS`, and on a disposition declared by a collection whose `members:` is computed, since a computed
+ * set does not enumerate anything for the claim to cover.
+ */
+export function readCollectionDisposition(content: string, sourceLabel?: string): Disposition | undefined {
+  const parsed = readFrontmatterRecord(content);
+  const disposition = parsed.disposition;
+  if (disposition === undefined || disposition === null) {
+    return undefined;
+  }
+
+  const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
+  const known = DISPOSITIONS.find((value) => value === disposition);
+  if (known === undefined) {
+    throw new Error(
+      `Invalid disposition${where}: ${JSON.stringify(disposition)}; expected one of ${DISPOSITIONS.join(', ')}.`,
+    );
+  }
+  if (readMembers(content, sourceLabel).kind !== 'explicit') {
+    throw new Error(
+      `Invalid frontmatter${where}: a collection whose members are computed does not declare "disposition:"; only an enumerated membership makes a claim.`,
+    );
+  }
+  return known;
 }
 
 /**
@@ -40,6 +83,11 @@ export function readDependencies(content: string, sourceLabel?: string): Artifac
   if (parsed.members !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: "members:" is only valid on collections; declare prerequisite edges via "dependencies:".`,
+    );
+  }
+  if (parsed.disposition !== undefined) {
+    throw new Error(
+      `Invalid frontmatter${where}: "disposition:" is only valid on collections; an artifact outside every collection declares "standalone:".`,
     );
   }
   if (parsed.dependencies === undefined || parsed.dependencies === null) {
@@ -94,6 +142,11 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
       `Invalid frontmatter${where}: a collection declares its constituents via "members:", not "dependencies:".`,
     );
   }
+  if (parsed.standalone !== undefined) {
+    throw new Error(
+      `Invalid frontmatter${where}: "standalone:" is only valid on an artifact that no collection contains, not on a collection.`,
+    );
+  }
 
   const members = parsed.members;
   if (members === undefined || members === null) {
@@ -103,16 +156,37 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
     if (members === LIBRARY_TOKEN) {
       return { kind: 'library' };
     }
+    if (members === UNCLAIMED_TOKEN) {
+      return { kind: 'unclaimed' };
+    }
     throw new Error(
-      `Invalid members${where}: unrecognized token "${members}"; the only supported token is '${LIBRARY_TOKEN}'.`,
+      `Invalid members${where}: unrecognized token "${members}"; the supported tokens are '${LIBRARY_TOKEN}' and '${UNCLAIMED_TOKEN}'.`,
     );
   }
   if (isRecord(members)) {
     return { kind: 'explicit', edges: parseTypeBlock(members, `Invalid members${where}`) };
   }
   throw new Error(
-    `Invalid members${where}: expected '${LIBRARY_TOKEN}' or a mapping of artifact type to a list of slugs.`,
+    `Invalid members${where}: expected '${LIBRARY_TOKEN}', '${UNCLAIMED_TOKEN}', or a mapping of artifact type to a list of slugs.`,
   );
+}
+
+/**
+ * Reads a rulebook's, skill's, or subagent's `standalone:` reason, or `undefined` when it does not declare one. The
+ * reason is what makes the absence from every collection a decision, so a value that is not a non-empty string throws.
+ */
+export function readStandaloneReason(content: string, sourceLabel?: string): string | undefined {
+  const reason = readFrontmatterRecord(content).standalone;
+  if (reason === undefined) {
+    return undefined;
+  }
+  if (typeof reason !== 'string' || reason.trim() === '') {
+    const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
+    throw new Error(
+      `Invalid standalone${where}: expected the reason that the artifact stands alone, as a non-empty string.`,
+    );
+  }
+  return reason;
 }
 
 // region | Helpers
@@ -142,6 +216,12 @@ function parseTypeBlock(block: Record<string, unknown>, errorPrefix: string): Ar
     edges[type] = entries.data.map((entry) => entry.name);
   }
   return edges;
+}
+
+/** Parses the frontmatter block into a record, empty when the content does not have one. */
+function readFrontmatterRecord(content: string): Record<string, unknown> {
+  const parsed: unknown = parseYaml(parseFrontmatter(content).lines.join('\n'));
+  return isRecord(parsed) ? parsed : {};
 }
 
 /**
