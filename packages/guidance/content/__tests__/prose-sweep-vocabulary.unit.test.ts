@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
+import { OVERUSED_WORDS } from '../../src/revise-prose/detect-overused-word.ts';
 import { RULE_IDS } from '../../src/revise-prose/rules.ts';
 import type { ReportedBatch } from '../../src/revise-prose/types.ts';
 import { CONTENT_ROOT } from '../test-utils/content-root.ts';
@@ -58,6 +59,12 @@ const UNIT_VERSION_REGEX = /^<!--\s*unit-version:\s*(\S+)\s+\S+\s*-->$/m;
 
 /** The helper's per-batch field from which the skill composes each dispatch's rules, held to the type that declares it. */
 const UNSWEPT_FIELD = 'unswept' satisfies keyof ReportedBatch;
+
+/** Matches each watchlist entry's bullet, whose captured group is the word. */
+const WATCHLIST_ENTRY_REGEX = /^- \*\*([a-z]+)\*\*:/gm;
+
+/** The calibration heading above the watchlist that the `overused-word` detector matches. */
+const WATCHLIST_HEADING = '### Words to look for';
 
 const RESOLVED = resolveEveryRulebook(CONTENT_ROOT);
 
@@ -124,6 +131,21 @@ describe('prose-sweep rule vocabulary', () => {
 
     const message = `${missing.join(', ')} is not declared by any \`<!-- rule: <id> <version> -->\` marker, so step 1 of ${SKILL} does not name it to any run: Its detector never fires, every sweep reports clean for it, and the record still lists it as covered. Restore the marker in the rule's own document, or say here why the registry lists a rule that is not declared by any document`;
     expect(missing, message).toEqual([]);
+  });
+});
+
+describe('overused-word watchlist', () => {
+  it("holds the helper's word list equal to the calibration's", async () => {
+    const listed = new Set(readWatchlist(await readContentFile(CALIBRATION)));
+    const detected = new Set(OVERUSED_WORDS.keys());
+    const undetected = [...listed].filter((word) => !detected.has(word));
+    const unlisted = [...detected].filter((word) => !listed.has(word));
+
+    expect(listed.size, `${CALIBRATION} does not list any word under "${WATCHLIST_HEADING}"`).toBeGreaterThan(0);
+    expect(
+      { undetected, unlisted },
+      `The \`overused-word\` detector and ${CALIBRATION} name different words: Update \`OVERUSED_WORDS\` in the helper and rebuild its bundle, or the list`,
+    ).toStrictEqual({ undetected: [], unlisted: [] });
   });
 });
 
@@ -214,6 +236,19 @@ async function readPlainSpeechId(): Promise<string> {
   const id = UNIT_VERSION_REGEX.exec(await readContentFile(CALIBRATION))?.[1];
   if (id === undefined) throw new Error(`${CALIBRATION} does not have a unit-version line naming its unit`);
   return id;
+}
+
+/** Returns the words listed under the calibration's watchlist heading, up to the next heading. */
+function readWatchlist(body: string): string[] {
+  const start = body.indexOf(WATCHLIST_HEADING);
+  if (start === -1) return [];
+
+  const section = body.slice(start + WATCHLIST_HEADING.length).split(/^#{1,3} /m)[0] ?? '';
+  return section
+    .matchAll(WATCHLIST_ENTRY_REGEX)
+    .map(([, word]) => word)
+    .filter((word) => word !== undefined)
+    .toArray();
 }
 
 // endregion | Helpers
