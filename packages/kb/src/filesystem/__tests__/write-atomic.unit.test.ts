@@ -61,7 +61,7 @@ describe(writeAtomic, () => {
     expect(await pathExists(path)).toBe(false);
   });
 
-  it('surfaces the rename error when the cleanup also fails', async () => {
+  it('rethrows the rename error when the cleanup also fails', async () => {
     const path = join(await makeTempDir('kb-write-atomic-'), 'target.txt');
     const renameError = new Error('EXDEV: cross-device link not permitted');
     vi.mocked(rename).mockRejectedValueOnce(renameError);

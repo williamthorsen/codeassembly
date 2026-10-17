@@ -34,7 +34,7 @@ export async function pathExists(path: string, options: ExistsOptions = {}): Pro
 const DEFAULT_ABSENT_CODES: readonly string[] = ['ENOENT'];
 
 /**
- * Stats `path` and projects success through `onStats`. Maps an "absent" stat failure to `false` per `options`;
+ * Stats `path` and returns the result of `onStats` on success. Maps an "absent" stat failure to `false` per `options`;
  * re-throws every other failure so that it is reported rather than being indistinguishable from absence.
  */
 async function statExists(path: string, options: ExistsOptions, onStats: (stats: Stats) => boolean): Promise<boolean> {

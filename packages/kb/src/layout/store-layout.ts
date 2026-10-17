@@ -9,10 +9,10 @@ import { join } from 'node:path';
 /** The store's metadata directory. Its presence marks a directory as a KB root. */
 export const KB_DIR = '.kb';
 
-/** The directory holding the store's notes. */
+/** The directory containing the store's notes. */
 export const CONTENT_DIR = 'content';
 
-/** The `content/` subdirectory holding assertion records. Named on its own because a caller may need to recognize the segment, not just the path. */
+/** The `content/` subdirectory containing assertion records. Named on its own because a caller may need to recognize the segment, not just the path. */
 export const ASSERTIONS_SEGMENT = 'assertions';
 
 export const ALIASES_FILE = `${KB_DIR}/tag-aliases.yaml`;
