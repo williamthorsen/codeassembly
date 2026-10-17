@@ -1,4 +1,4 @@
-/** Reads and writes the `codeassembly-triage` marker that a sweep leaves in each ticket comment it posts. */
+/** Reads and writes the `codeassembly-triage` marker that a sweep leaves in each ticket comment that it posts. */
 import { type Marker, MarkerSchema } from './schemas.ts';
 import type { IssueComment } from './types.ts';
 

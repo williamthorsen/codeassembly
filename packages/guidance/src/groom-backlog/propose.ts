@@ -1,4 +1,4 @@
-/** Proposes the action that a digest entry applies when the user confirms its page. */
+/** Proposes the action that the skill applies to a digest entry when the user confirms its page. */
 import type { OverlapGroup } from './digest.ts';
 import type { DECISIONS } from './schemas.ts';
 import type { Escalation } from './types.ts';

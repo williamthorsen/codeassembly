@@ -1,6 +1,6 @@
 /**
  * Renders a run's open escalations as digest pages. Escalations that hinge on one open ticket are kept together and,
- * when a page holds two or more of them, shown once under that ticket as a hub; overlapping tickets are merged into
+ * when a page contains two or more of them, shown once under that ticket as a hub; overlapping tickets are merged into
  * one group with a survivor.
  */
 import { proposeAction, type ProposedAction } from './propose.ts';
@@ -188,7 +188,7 @@ function renderEntry(index: number, escalation: Escalation, isUnderHub: boolean,
   return lines.join('\n');
 }
 
-/** Renders one page, with a heading for each hub and each overlap group that the page holds. */
+/** Renders one page, with a heading for each hub and each overlap group that the page contains. */
 function renderPage(input: {
   groupOf: ReadonlyMap<number, OverlapGroup>;
   members: readonly Escalation[];
