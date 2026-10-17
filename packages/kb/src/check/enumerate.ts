@@ -22,7 +22,7 @@ export interface EnumeratedNote {
   body: string;
   /** The full original note content. */
   content: string;
-  /** 1-based file line where the body begins. */
+  /** 1-based file line on which the body begins. */
   bodyStartLine: number;
   /** Frontmatter parse or absence diagnostic, when the block was missing or could not be parsed. */
   error?: string;
@@ -53,7 +53,7 @@ export async function enumerateNotePaths(input: { kbRoot: string; config: KbConf
  * If the store is in a git working tree, the enumeration keeps only the notes that git tracks and the untracked
  * notes that the repository's ignore rules don't cover. A note that the repository ignores is therefore neither
  * enumerated nor available as a wikilink target, so a link pointing at one resolves to nothing. A store outside a
- * working tree, or a machine without git installed, keeps what the walk alone found. `git` answers the repository
+ * working tree, or a machine without git installed, keeps what the walk alone found. `git` performs the repository
  * queries, and defaults to running git.
  *
  * Notes with malformed or absent frontmatter are kept: `readNoteContent` records the parse error in `error` and

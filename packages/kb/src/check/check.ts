@@ -45,7 +45,7 @@ export interface CheckResult {
  * to report it. Any other error from enumeration or the checks propagates unchanged; it is never relabeled as a
  * config defect.
  *
- * `git` answers the repository queries for this store and every qualified store, and defaults to running git.
+ * `git` performs the repository queries for this store and every qualified store, and defaults to running git.
  */
 export async function check(input: { kbRoot: string; cwd?: string; home?: string; git?: KbGit }): Promise<CheckResult> {
   const git = input.git ?? realGit;
