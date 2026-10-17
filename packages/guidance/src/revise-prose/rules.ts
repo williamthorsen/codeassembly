@@ -9,6 +9,7 @@ import { detectDroppedApostrophes } from './detect-apostrophes.ts';
 import { detectEmDashes } from './detect-em-dash.ts';
 import { detectNegativeQuantifiers } from './detect-negative-quantifier.ts';
 import { detectObjectRelatives } from './detect-object-relative.ts';
+import { detectOverusedWords } from './detect-overused-word.ts';
 import { detectSecondPersonPronouns } from './detect-second-person.ts';
 import { detectSoUses } from './detect-so.ts';
 import { detectWhereUses } from './detect-where.ts';
@@ -19,6 +20,7 @@ export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[
   apostrophes: detectDroppedApostrophes,
   'em-dash': detectEmDashes,
   'negative-quantifier': detectNegativeQuantifiers,
+  'overused-word': detectOverusedWords,
   'reduced-object-relative': detectObjectRelatives,
   'second-person': detectSecondPersonPronouns,
   so: detectSoUses,
@@ -32,6 +34,7 @@ export const RULE_IDS: ReadonlyArray<RuleId> = [
   'apostrophes',
   'em-dash',
   'negative-quantifier',
+  'overused-word',
   'reduced-object-relative',
   'second-person',
   'so',
