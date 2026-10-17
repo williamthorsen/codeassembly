@@ -43,7 +43,7 @@ describe(recordDeployedSizes, () => {
     consumerRoot = path.join(scratch, 'consumer');
     await mkdir(homeDir, { recursive: true });
     await mkdir(projectRoot, { recursive: true });
-    // Every tree sits on the default branch except the consumer, which is on an unmerged feature branch.
+    // Every tree is on the default branch except the consumer, which is on an unmerged feature branch.
     git = makeFakeGit({
       ancestor: (cwd) => cwd !== consumerRoot,
       headCommit: SOURCE_COMMIT,
@@ -76,7 +76,7 @@ describe(recordDeployedSizes, () => {
     });
   });
 
-  it("carries the deployed documents' partials in the snapshot that it appends", async () => {
+  it("includes the deployed documents' partials in the snapshot that it appends", async () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
     const contentRoot = path.join(scratch, 'content');
@@ -126,7 +126,7 @@ describe(recordDeployedSizes, () => {
     expect(selectLatestSnapshot(await readRecordLines(repoRecord))?.files).not.toEqual({});
   });
 
-  it('stamps each snapshot with the deploying build and the commit that its source sat on', async () => {
+  it('stamps each snapshot with the deploying build and the commit that its source was on', async () => {
     const { skillsDir } = resolveHarnessPaths('claude', homeDir);
     await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
 
@@ -366,7 +366,7 @@ function recordRoot(home: string): string {
   return path.join(home, '.codeassembly', 'deployed-sizes');
 }
 
-/** Counts the lines that a record holds, which is how many snapshots the gate let through. */
+/** Counts the lines that a record contains, which is how many snapshots the gate let through. */
 async function countLines(recordPath: string): Promise<number> {
   const raw = await readFile(recordPath, 'utf8');
   return raw.split('\n').filter((line) => line.trim() !== '').length;
