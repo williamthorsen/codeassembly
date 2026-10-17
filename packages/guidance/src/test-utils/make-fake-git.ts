@@ -17,7 +17,7 @@ export function makeEnoentError(): Error {
 }
 
 /**
- * Builds a shared git adapter that answers from fixed values. An omitted `topLevel` answers as a directory outside any
+ * Builds a shared git adapter that returns fixed values. An omitted `topLevel` answers as a directory outside any
  * repository, and `findRemoteUrl` throws for a remote that `remotes` does not list, as git does.
  */
 export function makeFakeGit(answers: FakeGitAnswers = {}): SharedGit {

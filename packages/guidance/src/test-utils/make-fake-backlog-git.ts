@@ -17,7 +17,7 @@ export interface FakeBacklogGitAnswers {
 }
 
 /**
- * Builds a git adapter that answers from fixed values. A missing `commonDir` or `shortSha` rejects, as git would fail;
+ * Builds a git adapter that returns fixed values. A missing `commonDir` or `shortSha` rejects, as git would fail;
  * every other missing answer reads as absent.
  */
 export function makeFakeBacklogGit(answers: FakeBacklogGitAnswers): BacklogGit {

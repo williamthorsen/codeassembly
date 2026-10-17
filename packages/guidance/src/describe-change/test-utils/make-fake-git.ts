@@ -15,7 +15,7 @@ export interface FakeGit extends DescribeChangeGit {
   listedHeads: string[];
 }
 
-/** Builds a git adapter that answers from fixed values. */
+/** Builds a git adapter that returns fixed values. */
 export function makeFakeGit(answers: FakeGitAnswers = {}): FakeGit {
   const knownRefs = answers.knownRefs === undefined ? undefined : new Set(answers.knownRefs);
   const listedHeads: string[] = [];

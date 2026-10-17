@@ -13,7 +13,7 @@ export interface FakeGitAnswers {
 }
 
 /**
- * Builds a git adapter that answers from fixed values. Its listing honors the pathspec forms that the helper passes:
+ * Builds a git adapter that returns fixed values. Its listing honors the pathspec forms that the helper passes:
  * `.`, a directory, and `*name`, which matches a path ending in `name`.
  */
 export function makeFakeGit(answers: FakeGitAnswers): StreamlineGit {
