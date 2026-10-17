@@ -15,7 +15,7 @@ import { type ChangeEntry, findEntryComment, readChangeEntries } from './change-
  *
  * A defective `entries` list is the one departure from the block's all-or-nothing rule: The block reads with its
  * entries absent and the defect reported alongside it, since its title and its overrides are still usable. A block
- * that loses either of those has nothing left to resolve from, so every other field keeps the rule.
+ * that loses either of those has nothing left to resolve from, so the rule still applies to every other field.
  */
 export function readChangeRecordBlock(body: string): ChangeRecordBlockReading {
   const parsed = parseLastBlock(body);
