@@ -19,14 +19,14 @@ export interface CreateRequest {
   summary: string;
 }
 
-/** The fields reported for every run that reached the create call. `key` is null when it could not be read. */
+/** The fields reported for every run that made the create call. `key` is null when it could not be read. */
 export interface CreateResult {
   key: string | null;
   parentSkipped: boolean;
   rawOutput: string;
 }
 
-/** A create run's result, and the diagnostics to report on stderr. `ok` is false when the result has no key. */
+/** A create run's result, and the diagnostics to report on stderr. `ok` is false when the result's key is null. */
 export interface CreateOutcome {
   diagnostics: string[];
   ok: boolean;
@@ -39,7 +39,7 @@ export interface CreateOutcome {
  * call that can set one.
  *
  * The create command runs exactly once. When it fails, or its output does not yield a top-level `key`, the outcome is
- * not ok and carries the raw output, from which the caller reads the key: A second create would duplicate the item.
+ * not ok and contains the raw output, from which the caller reads the key: A second create would duplicate the item.
  */
 export async function createWorkItem(request: CreateRequest, runAcli: RunAcli): Promise<CreateOutcome> {
   const diagnostics: string[] = [];

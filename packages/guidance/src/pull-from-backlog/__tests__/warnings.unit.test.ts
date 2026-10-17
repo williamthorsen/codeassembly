@@ -15,7 +15,7 @@ const FRESH: GroomStaleness = {
 };
 
 describe(assessGroomStaleness, () => {
-  it('is stale when no groom has run, ignoring ripples and dry runs', () => {
+  it('is stale when the ledger does not record any groom, ignoring ripples and dry runs', () => {
     const records = [policy('ripple-5', '2026-09-30T00:00:00Z'), policy('r-dry-run', '2026-09-30T00:00:00Z')];
 
     expect(assess(records, [])).toMatchObject({ lastGroomAt: null, reasons: ['never'], stale: true });

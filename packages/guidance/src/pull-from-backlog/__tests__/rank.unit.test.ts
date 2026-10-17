@@ -98,7 +98,7 @@ describe(rankCandidates, () => {
     expect(ranked.map((candidate) => candidate.umbrella?.number)).toStrictEqual([52, 50, 51]);
   });
 
-  it('ranks by the open tickets blocked, then by priority, then oldest first', () => {
+  it('ranks by the number of open tickets that each candidate blocks, then by priority, then oldest first', () => {
     const blocker = buildIssue({ number: 1, createdAt: '2026-06-01T00:00:00Z' });
     const high = buildIssue({
       number: 2,

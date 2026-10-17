@@ -46,7 +46,7 @@ export function parseActiveSite(statusOutput: string): string | null {
   }
 }
 
-/** Runs `acli jira auth status` and compares its active site with `target`; a failed status call reads as no site. */
+/** Runs `acli jira auth status` and compares its active site with `target`; a failed status call yields a null site. */
 export async function readSiteCheck(target: string, runAcli: RunAcli): Promise<SiteCheck> {
   const targetSite = normalizeSite(target);
   const status = await runAcli(['jira', 'auth', 'status']);

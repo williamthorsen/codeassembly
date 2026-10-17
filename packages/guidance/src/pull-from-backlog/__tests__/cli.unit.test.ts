@@ -202,7 +202,7 @@ function policy(recordedAt: string): Record<string, unknown> {
   return { run: 'groom', kind: 'policy', decisions: {}, decidedBy: 'user', recordedAt };
 }
 
-/** Builds a git adapter answering for a repository at `root` on `main`, with ticket 13's branch two commits ahead. */
+/** Builds a git adapter that reports a repository at `root` on `main`, with ticket 13's branch two commits ahead. */
 function makeFakeRepository(root: string): BacklogGit {
   return makeFakeBacklogGit({
     commitsAhead: { 'refs/heads/main..refs/heads/13-branch': 2 },
@@ -214,7 +214,7 @@ function makeFakeRepository(root: string): BacklogGit {
   });
 }
 
-/** Answers the fake runner's `gh` calls. */
+/** Returns the output for the fake runner's `gh` calls. */
 function respond(call: RunnerCall): string | undefined {
   const [first, second] = call.args;
   if (first === 'repo') return JSON.stringify({ nameWithOwner: 'owner/repo', defaultBranchRef: { name: 'main' } });

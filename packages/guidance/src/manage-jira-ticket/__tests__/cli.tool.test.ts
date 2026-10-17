@@ -34,8 +34,8 @@ if (args[1] === 'auth' && args[2] === 'status') {
 }
 `;
 
-// A `git` stand-in: The CLI resolves its project root through `git -C <dir> rev-parse --show-toplevel`, which it
-// answers with `STUB_GIT_TOPLEVEL`; it fails every other invocation.
+// A `git` stand-in: The CLI resolves its project root through `git -C <dir> rev-parse --show-toplevel`, for which the
+// stand-in prints `STUB_GIT_TOPLEVEL`; it fails every other invocation.
 const GIT_STUB = String.raw`#!${process.execPath}
 const args = process.argv.slice(2);
 if (args[0] === '-C' && args[2] === 'rev-parse' && args[3] === '--show-toplevel') {
@@ -157,7 +157,7 @@ describe('manage-jira-ticket CLI', () => {
     expect(await readCalls()).toEqual([]);
   });
 
-  it('prints the fallback and exits non-zero without calling acli when no project key is configured', async () => {
+  it('prints the fallback and exits non-zero without calling acli when the preferences do not set a project key', async () => {
     const bodyFile = await writeInput('body.md', 'Body\n');
 
     const result = await runCli(['create', '--summary', 'Fix it', '--body-file', bodyFile, '--work-type', 'fix']);

@@ -22,7 +22,7 @@ const SQUASH_REQUEST: MergeRequest = {
 
 describe(mergePullRequest, () => {
   describe('merge arguments', () => {
-    it('passes the subject, body file, and no deletion flag for a squash with remote deletion', async () => {
+    it('passes the subject and body file without a deletion flag for a squash with remote deletion', async () => {
       const gh = makeFakeGh();
 
       await mergePullRequest(SQUASH_REQUEST, gh.run);
@@ -171,7 +171,7 @@ function fail(stderr: string): GhResult {
   return { exitCode: 1, stderr, stdout: '' };
 }
 
-/** Returns a `gh` runner that answers by subcommand and records every argument array that it receives. */
+/** Returns a `gh` runner that responds by subcommand and records every argument array that it receives. */
 function makeFakeGh(responses: FakeGhResponses = {}): {
   calls: string[][];
   run: (args: readonly string[]) => Promise<GhResult>;

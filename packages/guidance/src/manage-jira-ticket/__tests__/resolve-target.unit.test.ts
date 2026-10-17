@@ -61,7 +61,7 @@ describe(resolveTarget, () => {
     expect(target).toHaveProperty('issueType', 'Bug');
   });
 
-  it('takes the default entry when no entry names the work type', () => {
+  it('takes the default entry when the map does not contain an entry naming the work type', () => {
     const target = resolveTarget(
       'feat',
       preferences({ projectKey: 'ABC', issueTypes: { default: 'Story', fix: 'Bug' } }),

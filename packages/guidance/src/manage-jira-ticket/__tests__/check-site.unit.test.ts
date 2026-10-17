@@ -71,7 +71,7 @@ describe(readSiteCheck, () => {
     expect(check.match).toBe(true);
   });
 
-  it('reports no active site when the status call fails', async () => {
+  it('reports a null active site when the status call fails', async () => {
     const check = await readSiteCheck('example.atlassian.net', () => Promise.resolve(result(1, '', UNAUTHENTICATED)));
 
     expect(check).toEqual({ activeSite: null, match: false, targetSite: 'example.atlassian.net' });
