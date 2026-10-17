@@ -8,8 +8,8 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
  * Puts a `gh` stand-in first on `PATH`, then returns an invocation that resolves `acme/widgets` through it. The stand-in
- * reports the repository, serves its label map, and answers 404 for its preferences file, so the run exercises a fetch
- * and a missing file without reaching GitHub.
+ * reports the repository, serves its label map, and returns 404 for its preferences file, so the run exercises a fetch
+ * and a missing file without contacting GitHub.
  */
 export function makeResolveTicketTargetSmokeTest(): SmokeTestInvocation {
   const binDir = mkdtempSync(path.join(tmpdir(), 'resolve-ticket-target-bin-'));

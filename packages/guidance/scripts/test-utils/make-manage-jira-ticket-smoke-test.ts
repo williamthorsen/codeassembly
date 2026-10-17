@@ -7,7 +7,7 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 
 /**
  * Returns an invocation that converts a Markdown task list to ADF, which exercises the bundled Markdown converter
- * without reaching Jira.
+ * without contacting Jira.
  */
 export function makeManageJiraTicketSmokeTest(): SmokeTestInvocation {
   const dir = mkdtempSync(path.join(tmpdir(), 'manage-jira-ticket-smoke-'));

@@ -10,7 +10,7 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 /**
  * Builds a throwaway git repository and returns an invocation that appends one note to its ledger. Exercises the
  * ledger's resolution through git and its first append, neither of which needs `gh`.
- * The invocation runs the shipped bundle end to end, which cannot take a fake git adapter, so the bundle's real
+ * The invocation runs the built bundle end to end, which cannot take a fake git adapter, so the bundle's real
  * adapter needs a real repository to read.
  */
 export function makeGroomBacklogSmokeTest(): SmokeTestInvocation {
