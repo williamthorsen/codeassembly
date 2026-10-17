@@ -27,7 +27,7 @@ export async function resolveRepoPath(
 /**
  * Searches depth-first for a segmentation of `segments[index..]` that names an existing directory chain under `prefix`.
  * At each position it consumes the fewest segments first, lengthening only when the shorter name fails to resolve the
- * remainder, so a multi-segment directory name such as `node-monorepo-tools` is reassembled only where the filesystem
+ * remainder, so a multi-segment directory name such as `node-monorepo-tools` is reassembled only when the filesystem
  * requires it. Returns the full path once every segment is consumed, else null.
  */
 async function searchSegments(input: {
