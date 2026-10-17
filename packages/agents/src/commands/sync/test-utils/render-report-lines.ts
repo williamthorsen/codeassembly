@@ -4,8 +4,8 @@ import type { SyncOutcome } from '../sync-plan.ts';
 
 /**
  * The lines that one sync outcome reports, a glyph line led by its glyph's name in brackets. `dryRun` picks the
- * renderer that the CLI would pick, and `level` narrows to a single stream for a suite asserting what reaches only
- * stdout or only stderr.
+ * renderer that the CLI would pick, and `level` narrows to a single stream for a suite asserting what is written only
+ * to stdout or only to stderr.
  */
 export function renderReportLines(
   outcome: SyncOutcome,

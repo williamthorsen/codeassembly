@@ -110,7 +110,7 @@ export async function syncGlobalCommand(
   homeDir: string = homedir(),
   git: AgentsGit = realGit,
 ): Promise<SyncOutcome> {
-  // Runs first, and before the dry-run gate: A preview must refuse wherever the real run would.
+  // Runs first, and before the dry-run gate: A preview must refuse whenever the real run would.
   await assertDesignatedWriter({
     command: 'sync --global',
     homeDir,
@@ -212,8 +212,8 @@ async function reconcileDomain(
     resolver,
   );
   defects.add(declared.defects);
-  // A binding seeds the closure, so a bound rulebook resolving from nowhere belongs in the declared set skipped by
-  // the walk.
+  // A binding seeds the closure, so a bound rulebook that does not resolve from any source belongs in the declared
+  // set skipped by the walk.
   const unresolvable: UnresolvableSlugs = {
     ...declared.unresolvable,
     rulebook: new Set([...declared.unresolvable.rulebook, ...bound.unresolvable]),
@@ -288,7 +288,7 @@ async function reconcileDomain(
   const desiredSkillDirs = buildDesiredRulebookSkillDirs(resolved, harnessIds);
 
   // Resolved before every render gate, so that the gates and the writes that they guard cannot disagree about where a
-  // link target lands. The deployed skill dirs that it reads are settled above: `resolvedSkills` and
+  // link target is deployed. The deployed skill dirs that it reads are settled above: `resolvedSkills` and
   // `desiredSkillDirs` name everything this run writes into a domain skills dir, and the collision gate has already
   // proven them disjoint.
   const resolveAnchorContext = createAnchorContextResolver(

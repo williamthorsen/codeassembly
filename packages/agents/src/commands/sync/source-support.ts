@@ -116,7 +116,7 @@ export interface SourceSupportPlan {
 
 // region | Helpers
 
-/** Groups one support root's plans into what delivery leaves there: the namespaces that hold content, and the rest. */
+/** Groups one support root's plans into what delivery leaves there: the namespaces with content, and the rest. */
 function resolveSupportOutcome(plans: ReadonlyArray<SourceSupportPlan>, sourcesRoot: string): SourceSupportOutcome {
   const rooted = plans.filter((plan) => plan.sourcesRoot === sourcesRoot);
   return {

@@ -53,7 +53,7 @@ export function homeDomain(homeDir: string): SyncDomain {
   return { baseDir: homeDir, ambient: 'harness-home', anchorBase: '~' };
 }
 
-/** The repo domain, rooted at the project directory under which the harness trees sit. */
+/** The repo domain, rooted at the project directory that contains the harness trees. */
 export function projectDomain(projectRoot: string): SyncDomain {
   return { baseDir: projectRoot, ambient: 'project-local', anchorBase: projectRoot };
 }
