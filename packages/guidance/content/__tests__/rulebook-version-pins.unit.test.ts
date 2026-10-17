@@ -72,7 +72,7 @@ const PINS = new Map<string, RulebookPin>([
     'shared-data-conventions',
     { bodyHash: '7df0859f8c754b01418dd453af186f1c1df14b4825ad336d30a82bc3024369c2', version: '1' },
   ],
-  ['shell-conventions', { bodyHash: '910554451ebbad3de59d329206748f0b8dfc4e6a6059d829f5397b70928de0c8', version: '5' }],
+  ['shell-conventions', { bodyHash: '59c0361c59977741a30b72f9d6b5203314cc939909d930a21e0da037f39da900', version: '6' }],
   [
     'ui-copy-conventions',
     { bodyHash: '5b51c17ba5ef81a4507bdeb82c81f3e7195d4d02cb8a62b00d35f6ca1430e7fb', version: '1' },

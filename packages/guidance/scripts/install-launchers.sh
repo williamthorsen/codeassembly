@@ -133,7 +133,9 @@ resolve_script_dir() {
 
 # Displays command-line syntax.
 show_usage() {
-  cat >&2 <<USAGE
+  local code="${1:-2}" fd=2
+  ((code == 0)) && fd=1
+  cat >&"$fd" <<USAGE
 Symlink agent launcher scripts into a directory on PATH.
 
 Creates a symlink for feedback-memories.sh in the target directory. Uses
@@ -154,7 +156,7 @@ Examples:
   $PROG --prefix ~/.local/bin
   $PROG --force
 USAGE
-  exit "${1:-1}"
+  exit "$code"
 }
 # endregion | Helper functions
 

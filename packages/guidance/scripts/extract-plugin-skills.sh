@@ -114,7 +114,9 @@ main() {
 
 # Displays command-line syntax.
 show_usage() {
-  cat >&2 <<USAGE
+  local code="${1:-2}" fd=2
+  ((code == 0)) && fd=1
+  cat >&"$fd" <<USAGE
 Extract skills from Claude Code plugins for Rovo Dev.
 
 Usage:
@@ -133,7 +135,7 @@ Examples:
   $PROG superpowers brainstorming
   $PROG superpowers brainstorming writing-plans
 USAGE
-  exit "${1:-1}"
+  exit "$code"
 }
 # endregion | Helper functions
 

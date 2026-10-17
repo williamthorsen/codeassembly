@@ -2,7 +2,7 @@
 slug: shell-conventions
 description: Conventions for writing production-quality bash scripts in this repository.
 delivery: skill
-version: '5'
+version: '6'
 ---
 
 # Shell script conventions
@@ -61,7 +61,7 @@ main() {
 
 # Displays command-line syntax: to stdout for a help request (exit 0), to stderr otherwise.
 show_usage() {
-  local code="${1:-1}" fd=2
+  local code="${1:-2}" fd=2
   ((code == 0)) && fd=1
   cat >&"$fd" <<USAGE
 One-line purpose.
@@ -108,11 +108,11 @@ Read a path that must be non-empty as `${dir:?message}`, which aborts, whereas t
 
 ## Help and exit codes
 
-The exit codes and the destination of help output are stated in the CLI conventions linked above. `show_usage` takes the exit code as an optional parameter, defaulting to 1, and chooses the stream from it:
+The exit codes and the destination of help output are stated in the CLI conventions linked above. `show_usage` takes the exit code as an optional parameter, defaulting to 2, and chooses the stream from it:
 
 ```bash
 show_usage() {
-  local code="${1:-1}" fd=2
+  local code="${1:-2}" fd=2
   ((code == 0)) && fd=1
   cat >&"$fd" <<USAGE
 ...
@@ -121,7 +121,7 @@ USAGE
 }
 ```
 
-Call sites: `show_usage 0` for help requests, `show_usage 2` for an unknown command, and `show_usage` (bare) for other errors.
+Call sites: `show_usage 0` for a help request, and `show_usage` (bare) for a usage error.
 
 ### `--help` must be handled manually
 
@@ -164,7 +164,7 @@ cmd="$1"; shift
 case "$cmd" in
 list) do_list ;;
 prune) do_prune ;;
-*) echo "$PROG: Unknown command '$cmd'" >&2; show_usage 2 ;;
+*) echo "$PROG: Unknown command '$cmd'" >&2; show_usage ;;
 esac
 ```
 
