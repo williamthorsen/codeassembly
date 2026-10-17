@@ -128,7 +128,7 @@ describe(runCli, () => {
       expect(readFileSync(path.join(root, 'out', 'comment-272.md'), 'utf8')).toContain('Sign-in error pattern');
     });
 
-    it('renders without an umbrella when no item takes a ticket', async () => {
+    it('renders without an umbrella when the record does not have any item that takes a ticket', async () => {
       const record = buildRecord({ items: [buildItem({ disposition: 'comment', target: 272 })] });
 
       const result = await runCli(['render', '--file', writeRecord(root, record), '--out', 'out'], context);

@@ -52,8 +52,8 @@ const GuidanceRecordSchema = z.object({
  * Merges one run's declined cuts and reviews into the record and drops every entry that is no longer live: a declined
  * cut whose file no longer contains its phrase, and a review of a file that no longer exists. A cut declined again
  * replaces the entry that it repeats, and a file reviewed again replaces its earlier review. `readFile` returns a
- * repository-relative file's content, or undefined when the file no longer exists; `deployedBytes` holds the measured
- * bytes of the run's reviewed files.
+ * repository-relative file's content, or undefined when the file no longer exists; `deployedBytes` contains the
+ * measured bytes of the run's reviewed files.
  */
 export function composeRecord(
   prior: GuidanceRecord,

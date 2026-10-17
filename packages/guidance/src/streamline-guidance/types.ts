@@ -47,7 +47,7 @@ export interface GuidanceFile {
   dirty: boolean;
   /** Line ranges that a deployment rewrites, such as an ambient region, inside which a run may not cut. */
   generatedRegions: LineRange[];
-  /** The file's most recent review in the record, absent for a file that the record does not hold a review for. */
+  /** The file's most recent review in the record, absent for a file for which the record does not contain a review. */
   lastReview?: LastReview;
   /** The path as the caller named it, when that path was a deployed copy of this file. */
   redirectedFrom?: string;

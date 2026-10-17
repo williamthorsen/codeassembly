@@ -66,7 +66,7 @@ describe(renderDispositionsComment, () => {
     expect(comment).toContain(`| ${PENDING} | ${PENDING} |`);
   });
 
-  it('omits the umbrella sentence when no item takes a ticket', () => {
+  it('omits the umbrella sentence when the record does not have any item that takes a ticket', () => {
     const comment = renderDispositionsComment(
       buildRecord({ items: [buildItem({ disposition: 'drop', confidence: 'low' })] }),
     );
@@ -104,7 +104,7 @@ describe(renderIssueComments, () => {
     expect(comments.get(119)).not.toContain('First');
   });
 
-  it('renders nothing when no item is a comment', () => {
+  it('renders nothing when the record does not have any comment item', () => {
     expect(renderIssueComments(buildRecord({ items: [buildItem()] })).size).toBe(0);
   });
 });
