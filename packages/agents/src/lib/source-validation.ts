@@ -45,8 +45,8 @@ export function describeSourceNameProblem(name: string): string | undefined {
  * Reports what disqualifies `dir` as a content source (that it is missing, not a directory, or unreadable) or
  * `undefined` when valid. Validity requires both that `dir` is a directory and that the process can read and traverse
  * it, because `stat` alone passes a directory that is itself unreadable (`stat` needs only search permission on the
- * parent chain, not on `dir`). Any permission failure (from the `stat` or the read-and-traverse access probe) folds
- * into the "unreadable" case so that it is reported through a message naming `dir`.
+ * parent chain, not on `dir`). Any permission failure (from the `stat` or the read-and-traverse access probe) is
+ * classified as the "unreadable" case so that it is reported through a message naming `dir`.
  *
  * The condition is reported as a `kind` beside the phrase describing it, so a caller that treats the conditions
  * differently branches on the classification rather than on prose written for a reader.

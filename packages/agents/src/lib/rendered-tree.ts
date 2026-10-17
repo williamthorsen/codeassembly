@@ -12,7 +12,7 @@ import { isEnoent } from './type-guards.ts';
  * The write is byte-stable, so re-deploying unchanged content does not change the filesystem: Unchanged files are left
  * untouched, and destination files that the source no longer contains (along with any directory left empty by their
  * removal) are pruned. Callers wanting a marker or any other per-file transform apply it to the entries first. This
- * stays the one place a rendered tree meets the filesystem.
+ * function stays the one place that writes a rendered tree to the filesystem.
  */
 export async function writeRenderedTree(destDir: string, entries: ReadonlyArray<RenderedSkillEntry>): Promise<void> {
   await mkdir(destDir, { recursive: true });

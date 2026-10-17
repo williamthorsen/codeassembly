@@ -92,11 +92,11 @@ export async function renderSkillDirectory(
  * apply to the Markdown that it contains.
  *
  * A support entry never fills a hook, whichever route it takes, so any fills that the caller supplies are dropped
- * here. A support entry is reached by a link rather than inlined, and guidance behind a link is what the hook
- * mechanism exists to route around. Its rulebook catalog is dropped for a different reason: A source's support entries
- * deliver to every consumer of the source, whichever rulebooks that consumer declares, so a `{rulebook:<slug>}` token in
- * one could name a rulebook that the consumer does not deploy. Dropping both here rather than at each call site keeps
- * every route agreeing on what a support entry is.
+ * here. A support entry is reached by a link rather than inlined, and the hook mechanism exists so that guidance is
+ * inlined rather than linked. Its rulebook catalog is dropped for a different reason: A source's support entries
+ * deliver to every consumer of the source, whichever rulebooks that consumer declares, so a `{rulebook:<slug>}` token
+ * in one could name a rulebook that the consumer does not deploy. Dropping both here rather than at each call site
+ * keeps every route agreeing on what a support entry is.
  *
  * `destName` is the entry's deployed name, which anchors link rewriting: the directory that contains a directory
  * entry's files, and the file's own name for a Markdown file entry.
@@ -121,8 +121,8 @@ export async function renderSupportEntry(
 
 /**
  * Recursively walks `dir`, skipping `_partials/`, test directories, and dotfiles, accumulating rendered entries keyed
- * by relative path. It collects exactly what is deployed to a harness home; a skill's own tests are not part of what
- * it ships.
+ * by relative path. It collects exactly what is deployed to a harness home; a skill's own tests are not deployed with
+ * it.
  */
 async function collectEntries(
   dir: string,
@@ -160,8 +160,8 @@ async function collectEntries(
  * link, so path rewriting leaves it untouched).
  *
  * Hooks resolve after includes expand, which makes a hook declared in a partial a declaration by every body
- * that inlines it. A bound body arrives already rendered, and the rewrites below leave it alone: Its link targets are
- * absolute by then, and its tokens are spent.
+ * that inlines it. The fill inserts a bound body that is already rendered, and the rewrites below leave it alone: Its
+ * link targets are absolute by then, and its tokens are already rewritten.
  *
  * In-body anchors are validated on the filled text, ahead of every rewrite: An anchor-only target is never rewritten.
  * The verdict holds for every harness, and a heading containing a `{tool:NAME}` token is correctly unaddressable.

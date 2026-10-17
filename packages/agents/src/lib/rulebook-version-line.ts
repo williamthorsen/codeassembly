@@ -1,6 +1,6 @@
 /**
  * The one grammar for the line naming a delivered rulebook's version. Every route that puts a rulebook in front of an
- * agent -- an ambient block, a guidance-hook fill, a rulebook skill file -- renders it here, so a reader meets one
+ * agent -- an ambient block, a guidance-hook fill, a rulebook skill file -- renders it here, so a reader sees one
  * form and the provenance recipe is checked against a single producer.
  */
 

@@ -79,7 +79,8 @@ export async function renderDeployedSkill(
   context: SkillDeployContext,
 ): Promise<ReadonlyArray<RenderedSkillEntry>> {
   const entries = await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, context);
-  // The directive steers deployment, not the harness, which would otherwise receive a frontmatter key that it ignores.
+  // The directive is for deployment, not for the harness, which would otherwise receive a frontmatter key that it
+  // ignores.
   return entries.map((entry) =>
     entry.kind === 'markdown' && entry.relPath === 'SKILL.md'
       ? { ...entry, content: skillMarker.injectMarker(stripHarnessesDirective(entry.content), skill.slug) }
