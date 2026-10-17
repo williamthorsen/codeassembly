@@ -48,7 +48,7 @@ export async function runValidatePreferences(
     return 1;
   }
 
-  // With no file named, the default file is optional, so its absence is valid.
+  // When the arguments do not name a file, the default file is optional, so its absence is valid.
   const isDefault = options.files.length === 0;
   const files = isDefault ? [path.join('.agents', 'preferences.yaml')] : options.files;
   const results: FileResult[] = [];
@@ -193,7 +193,7 @@ async function validateFile(
     return { file: filePath, present: true, valid: false, findings: [finding] };
   }
 
-  // An empty document declares no keys.
+  // An empty document does not declare any keys.
   const findings = validatePreferences(document ?? {}, preferencesSchema);
   const valid = isStrict ? findings.length === 0 : findings.every((finding) => finding.level !== 'error');
   return { file: filePath, present: true, valid, findings };
