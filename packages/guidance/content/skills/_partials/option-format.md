@@ -1,6 +1,6 @@
 ## Option format
 
-**Earn the menu before rendering it.** Mark the options first, check the leader as "Check the leader before rendering" below states, then read the markers: Render the menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class below. Decide every other field: State the decision in one line with its reason, record it, and proceed. Decide an all-■□□ field too. An unmarked list is a pure-preference call, and a preference is in the gated class. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
+**Confirm that the menu is needed before rendering it.** Mark the options first, check the leader as "Check the leader before rendering" below states, then read the markers: Render the menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class below. Decide every other field: State the decision in one line with its reason, record it, and proceed. Decide an all-■□□ field too. An unmarked list is a pure-preference call, and a preference is in the gated class. The rejected alternative belongs in a clause ("X rather than Y, because Z"), never as a numbered option awaiting selection.
 
 A determination that has one right answer under a governing document, such as a change's work type under the work-type test, is not a fork. Resolve doubt about which answer the test yields by applying the test and picking: Two options marked ■■□ are a fork between acceptable options, not doubt about a fact. The developer holds less of the evidence than the agent, so handing the doubt back produces a worse-informed answer.
 
@@ -14,7 +14,7 @@ The gated class is closed. Ask about these decisions whatever the markers say:
 
 Decide everything else yourself by default. Never decide a gated action in your own voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; hold the gated action itself until the developer authorizes it. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you do not hold any evidence. Verification is never in the gated class: Run a check that a command, a test, or a browser could settle.
 
-**Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only where the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it ⏳ as "Record what you did not ask" states, and ask at the checkpoint; revise if overruled. In a skill without a phase structure, treat the skill's own approval gate, or the end of its work, as the checkpoint.
+**Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only when the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it ⏳ as "Record what you did not ask" states, and ask at the checkpoint; revise if overruled. In a skill without a phase structure, treat the skill's own approval gate, or the end of its work, as the checkpoint.
 
 **Batch, never stream.** Collect the asks that survive the gate into one review at the checkpoint, not one per turn.
 
@@ -64,7 +64,7 @@ Keep on a `□□□` option the `➖` that explains why you ruled it out. Under
 **Check the leader before rendering.** Once you have drafted the bullets, and before you read the markers against the gate:
 
 1. For each `➖` on the strongest-marked option, name the reader who would choose differently because of it. Cut the bullet if there is none.
-2. Re-mark the options. When every alternative carries a disqualifying `➖`, mark the leader ■■■. The observed bias is a marker set too weak, not one set too strong.
+2. Re-mark the options. When every alternative has a disqualifying `➖`, mark the leader ■■■. The observed bias is a marker set too weak, not one set too strong.
 3. Re-apply the gate. Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and do not render a menu.
 
 **Identify each question** when a single response contains 2 or more option-style questions: Prefix them `Q1`, `Q2`, and so on, so that the user can reference answers unambiguously. When the underlying data already has stable identifiers (plan-review findings such as `C1` or `X2`), use those in place of `Q1`/`Q2`. For a single option-style question, omit the identifier. Inside an [action-items block](../_data/action-items.md), identifiers are mandatory whenever the block contains more than one item (or more than one independently-numbered list), and they distinguish actions (`A`) from questions (`Q`).

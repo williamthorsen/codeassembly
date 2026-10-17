@@ -41,7 +41,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   concision: {
     headline: '## Concision',
     // `skills/_data/concision.md` states the full principle that this section summarizes, and the two share sentences.
-    // These are the summary's own, so the single-statement check below reads as a duplicate rather than the pairing.
+    // These are the summary's own, so the single-statement check below would report a duplicate rather than accept the pairing.
     phrases: [
       "then wastes the reader's attention and hides the signal",
       'Lead with the minimal skeleton and add a sentence only when it changes what the reader does',
@@ -126,7 +126,7 @@ describe('shared-doctrine reach', () => {
   describe.each(Object.entries(SECTIONS))('%s', (name, { headline, phrases }) => {
     const carriers = SHARED_DOCTRINE_CARRIERS[name] ?? [];
 
-    it.each(carriers)('reaches %s', async (slug) => {
+    it.each(carriers)('is inlined into %s', async (slug) => {
       const expanded = await expandSubagent(slug);
 
       for (const phrase of phrases) {
@@ -135,7 +135,7 @@ describe('shared-doctrine reach', () => {
       expect(countOccurrences(expanded, headline)).toBe(1);
     });
 
-    it('does not reach any subagent that the section does not govern', async () => {
+    it('is not inlined into any subagent that the section does not govern', async () => {
       const others = listGovernedSubagents().filter((slug) => !carriers.includes(slug));
       const violations: Array<string> = [];
 

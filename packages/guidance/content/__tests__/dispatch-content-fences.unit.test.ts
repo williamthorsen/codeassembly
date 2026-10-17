@@ -51,7 +51,7 @@ describe('content fences', () => {
       );
 
     const message =
-      "A content fence contains placeholders that the caller fills with a subagent's own earlier text, and does not contain prose:" +
+      "A content fence contains placeholders that the caller fills with a subagent's own earlier text, and does not contain prose: " +
       'A sentence templated here makes the caller the author of the facts, which is the arrangement replaced by the ' +
       `fresh-context dispatch. These lines are not placeholder bullets:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
@@ -64,7 +64,7 @@ describe('content fences', () => {
 
     const message =
       'A fence containing placeholder bullets is a content channel whatever it is named, and an undeclared one is a ' +
-      'channel that reached a subagent without review. Add it to DECLARED_FENCES if a subagent reads it, and ' +
+      'channel through which a skill sent text to a subagent without review. Add it to DECLARED_FENCES if a subagent reads it, and ' +
       `drop the fence if none does:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });

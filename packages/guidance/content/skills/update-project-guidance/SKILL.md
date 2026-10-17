@@ -163,7 +163,7 @@ Scan the baseline for a harness-scoped path and for any `<!-- rulebook:` marker.
 Two tiers, because a mature file contains more claims than one exhaustive pass can cover. A 35-line file decomposes into dozens of independently checkable assertions, and one at the line budget into several hundred.
 
 - **Tier 1: Every checkable token, exhaustively.** Paths, filenames, command strings, counts, package and symbol names. Drift appears in these tokens: a directory listing that has gained an entry, a count off by two, a tool named one hop from what runs.
-- **Tier 2: Narrative claims, in the sections touched by the gap-scan window.** Unquantified prose is audited where the repo has moved under it, not everywhere.
+- **Tier 2: Narrative claims, in the sections touched by the gap-scan window.** Audit unquantified prose only in the sections whose subject the repo has changed, not everywhere.
 
 Check the claim, not the section. A stale listing looks entirely plausible and is wrong only once the directory is listed, so recognizing a section's shape is the signal to slow down rather than to move on.
 

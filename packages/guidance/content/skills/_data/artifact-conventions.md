@@ -65,15 +65,15 @@ A `project.ticket_ref_prefix` other than `#` is part of the ticket ID, so it nam
 
 ### Prototype sets
 
-`prototypes/` holds the ticket's one prototype set: the sources, the stored screenshots, and the manifest from which `index-prototypes` renders the set's index page. The page itself is rendered into the session's scratch directory for publishing and is not kept here.
+`prototypes/` contains the ticket's one prototype set: the sources, the stored screenshots, and the manifest from which `index-prototypes` renders the set's index page. The page itself is rendered into the session's scratch directory for publishing and is not kept here.
 
 ### Usability evidence
 
-`usability/` holds the working files of the ticket's usability assessment: each lens's report and each lens's evidence, which is screenshots in a browser assessment and transcripts in a CLI assessment. The `usability-findings` artifact cites the evidence by paths relative to the ticket directory, so it stays beside it. A CLI assessment's fixtures are scratch directories outside the ticket directory, and nothing keeps them.
+`usability/` contains the working files of the ticket's usability assessment: each lens's report and each lens's evidence, which is screenshots in a browser assessment and transcripts in a CLI assessment. The `usability-findings` artifact cites the evidence by paths relative to the ticket directory, so the evidence stays in the ticket directory. A CLI assessment's fixtures are scratch directories outside the ticket directory, and nothing keeps them.
 
 ### Triage working files
 
-`triage/` holds the working files of a triage of the ticket's findings: a local copy of the findings when they came from an artifact URL, the inventory, the recommendations that the challenger reads, the challenger's reply, the dispositions record from which the `dispositions` artifact is rendered, and the comments rendered from that record: `preview/` with placeholders for the confirmation, `rendered/` with every number for posting. The record stays here as a working file; the artifact is the rendered text.
+`triage/` contains the working files of a triage of the ticket's findings: a local copy of the findings when they came from an artifact URL, the inventory, the recommendations that the challenger reads, the challenger's reply, the dispositions record from which the `dispositions` artifact is rendered, and the comments rendered from that record: `preview/` with placeholders for the confirmation, `rendered/` with every number for posting. The record stays here as a working file; the artifact is the rendered text.
 
 ### Run directories
 
@@ -91,7 +91,7 @@ projects/{project-slug}/tickets/{ticket-id}/{run-id}/
 
 Example: `20260221-034100Z-interactive`
 
-A ticket's **active run** is its newest run directory of mode `interactive`, by the timestamp in its name. A review saves into the active run, and the author's response saves into the run that holds the review, so a review, the response, and a re-review share one run. A new run directory is created, when the review is written, only when the ticket directory does not contain an active run. A run of mode `orchestrated` is never active. `resolve-review-run` applies this definition.
+A ticket's **active run** is its newest run directory of mode `interactive`, by the timestamp in its name. A review is saved into the active run, and the author's response is saved into the run that contains the review, so a review, the response, and a re-review share one run. A new run directory is created, when the review is written, only when the ticket directory does not contain an active run. A run of mode `orchestrated` is never active. `resolve-review-run` applies this definition.
 
 ### Persistent export destination
 
@@ -156,7 +156,7 @@ Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in sess
 - **slug**: Kebab-case descriptor drawn from work context, e.g., branch description (`improve-artifact-naming`) or commit subject (`fix-login-validation`). Max 60 chars, filesystem-safe.
 - **artifact-type**: One of the registered types (see below)
 
-When the ticket directory already contains artifacts for this change, reuse their slug; derive a fresh one only when the change's descriptor has moved. One change has one name, which keeps it legible where the enclosing path is not in view: an editor tab, a search result, an export.
+When the ticket directory already contains artifacts for this change, reuse their slug; derive a fresh one only when the change's descriptor has changed. One change has one name, which keeps it legible where the enclosing path is not in view: an editor tab, a search result, an export.
 
 ### Run artifacts (review workflow)
 
@@ -267,7 +267,7 @@ Invocation surface:
 node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs
 ```
 
-The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect. Every invocation recomposes the derived fields from the current preferences and git state, so a preference change takes effect on the next call. The file keeps `created_at` and the URLs written by the mutation flags (recorded in `explicit_urls`), and the deriver rewrites it only when its content changes. On the default branch, the deriver drops any stored `ticket_url` or `pr_url` per [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
+The deriver prints the manifest JSON to stdout and writes it to `.agents/{sanitized-branch}.branch-manifest.json` as a side effect. Because every invocation recomposes the derived fields from the current preferences and git state, a preference change takes effect on the next call. The file keeps `created_at` and the URLs written by the mutation flags (recorded in `explicit_urls`), and the deriver rewrites it only when its content changes. On the default branch, the deriver drops any stored `ticket_url` or `pr_url` per [Stored ticket URL](ticket-source-resolution.md#stored-ticket-url). Diagnostics are printed to stderr; exit 0 on success, 1 on hard failure (corrupt preferences, detached HEAD, schema-validation error).
 
 When authoring a new skill that needs session-context fields: Invoke the bundled deriver and read the fields from the emitted JSON. Do not rely on any other caller having populated the manifest first: The deriver is the single derivation surface and is safe to call from any context.
 
@@ -332,7 +332,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 Each override is recorded beside the field that it overrides rather than in its place. A skill that needs the effective record reads it from [`resolve-effective-record`](title-templates.md#resolve-effective-record) rather than applying the overrides itself.
 
-**The change summary's body ends with the rendered `change-record` block**, which carries the change entries and the consolidated record to the pull request. `create-pr` copies the body from `## What` onward, so the block reaches the pull-request body without being rendered again.
+**The change summary's body ends with the rendered `change-record` block**, which contains the change entries and the consolidated record for the pull request. `create-pr` copies the body from `## What` onward, so the block is copied into the pull-request body without being rendered again.
 
 The frontmatter stays flat, whereas the `change-record` block nests the consolidated record, the overrides, and the entries, because the artifact store is an Obsidian vault and Obsidian's Properties editor does not handle nested maps. That is also why the entries are recorded in the block rather than as a nested frontmatter field.
 
@@ -354,7 +354,7 @@ This artifact uses the [universal artifact frontmatter](#universal-artifact-fron
 
 ## run-index.json
 
-Machine-readable metadata for a run directory. The retired orchestration engine wrote it, and no current skill does. `run-core` parses it.
+Machine-readable metadata for a run directory. The retired orchestration engine wrote it; the current skills do not. `run-core` parses it.
 
 Every example and value list in this section and in [V3 format](#v3-format-event-sourced-runs) describes runs written by the retired engine, so its roles, agents, phases, and modes are historical values.
 
@@ -738,7 +738,7 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 
 - `brief`: The shared brief that a round of prototype builders receives; `prepare-prototype-brief` saves it at its checkpoint
 - `change-summary`: Branch change summary for PRs
-- `comparison`: Findings across a round of prototypes: where they agree, where they diverge, a table of every distinctive idea with an empty decision, and which decisions the round leaves open; `prepare-prototype-brief` saves it after the index
+- `comparison`: Findings across a round of prototypes: the points on which they agree and those on which they diverge, a table of every distinctive idea with an empty decision, and which decisions the round leaves open; `prepare-prototype-brief` saves it after the index
 - `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when a ticket is not in session)
 - `dispositions`: The rendered dispositions of a triage of findings, the text that `triage-spike-findings` posts on the triage ticket: every item with its disposition, its confidence and value, where it went, and its reason, with the challenge's summary; the JSON record from which it is rendered stays in `triage/`
 - `devlog`: Development log entry (falls back to non-ticket path when a ticket is not in session)
@@ -933,9 +933,9 @@ Insights never have criticality, never block a merge, and never count toward a r
 
 A saved artifact is a point-in-time record of what its author produced at the moment of writing. Correct one that got its own subject wrong; never edit one toward what has happened since, whether a later human edit to the remote to which it was published, a rebase that leaves `baseSha` and `commit` unresolvable, or a subsequent turn of the session that wrote it. Divergence from current state is the artifact doing its job, so it is never reported as a defect or raised as a repair for the user to weigh. A step that discloses which of two candidate sources it measured against is reporting its own input, not proposing a reconciliation.
 
-The `pull-request` and `merge` records carry a marker that directs a reading agent to leave the record unedited, stated in the file rather than left to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. The other artifacts do not have one.
+The `pull-request` and `merge` records contain a marker that directs a reading agent to leave the record unedited, stated in the file rather than left to standing guidance, because `capture-lede-decision` reads them and a rewrite corrupts it silently. The other artifacts do not have one.
 
-A flow still composing its own artifact has reached nothing downstream of it, so overwriting that artifact finishes its record rather than revising a finished one.
+A flow still composing its own artifact has not yet passed it to anything downstream, so overwriting that artifact finishes its record rather than revising a finished one.
 
 A later flow that revises a finished record writes a new artifact rather than editing the old one. `refine-plan` saves its output as `plan-v2` under a later timestamp, leaving the plan that it refines intact.
 

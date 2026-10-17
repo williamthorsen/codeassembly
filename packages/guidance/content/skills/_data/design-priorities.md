@@ -25,7 +25,7 @@ Rank options on correctness. Convenience is secondary: a tiebreaker among correc
 
 ## Why
 
-Correctness determines what it costs to live with the system over its remaining life. A clean design can be evolved; a wrong one accumulates patches around its wrongness. Convenience is paid once, at the moment of change.
+Correctness determines what it costs to live with the system over its remaining life. A clean design can be evolved; a wrong one accumulates patches around its wrongness. Convenience saves effort only once, at the moment of change.
 
 ## Before / after
 

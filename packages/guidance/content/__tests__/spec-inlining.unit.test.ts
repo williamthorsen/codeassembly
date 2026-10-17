@@ -42,7 +42,7 @@ const OPTION_FORMAT: Spec = {
     'Apply this even when an option has only one pro or con.',
     // The gate that decides whether a menu exists at all. Without it the block reads as a formatting spec, and a
     // settled call gets rendered as a fork that the reader has to evaluate.
-    '**Earn the menu before rendering it.**',
+    '**Confirm that the menu is needed before rendering it.**',
     // The gate's test, stated on the markers. Without it the gate is a judgment call again, which a skill step that
     // says to ask overrides.
     'Render the menu only when the two strongest options are both ■■□',
@@ -80,7 +80,7 @@ const OPTION_FORMAT: Spec = {
     // The check that corrects markers set too weak. The gate reads only the markers, so without it a weak marker
     // renders a menu that the gate would have decided.
     '**Check the leader before rendering.**',
-    'When every alternative carries a disqualifying `➖`, mark the leader ■■■',
+    'When every alternative has a disqualifying `➖`, mark the leader ■■■',
     // The gate's one observed blind spot. Without it the agent measures each option by its own elapsed time and
     // round trips, which are scarce to it, and treats having measured one as license to rank.
     '**Never rank the options by your own elapsed time, round trips, or effort.**',
@@ -126,7 +126,7 @@ const IMPLEMENT_PLAN_MENU: Spec = {
     "The selected option's marker follows how cleanly its rule matched",
     // The fallthrough's own marker rule. Without it the fallthrough is either capped at ■■□, demoting a Review
     // branch that nothing else came close to, or free to claim ■■■ unearned.
-    "Rule 3 is the cascade's fallthrough rather than a positive match",
+    "rule 3 is the cascade's fallthrough rather than a positive match",
     'its marker follows how squarely rules 1 and 2 failed',
     '| 2   | ✂️    | Split the branch         |',
     // Rule 2's test. Without both halves the rule matches on size alone, which splits a large diff that has no seam,

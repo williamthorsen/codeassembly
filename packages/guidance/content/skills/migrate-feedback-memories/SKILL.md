@@ -1,12 +1,12 @@
 ---
 name: migrate-feedback-memories
-description: Route this machine's per-project feedback memories to their proper home (capture the propagating ones as capture-feedback candidates, delete the redundant, retain the genuinely local) via a bundled enumerator with a confirm-by-default batch flow and an --auto escape hatch
+description: Dispose of this machine's per-project feedback memories (capture the propagating ones as capture-feedback candidates, delete the redundant, retain the genuinely local) via a bundled enumerator with a confirm-by-default batch flow and an --auto escape hatch
 user-invocable: true
 ---
 
 # Migrate feedback memories
 
-Route every `feedback`-type agent memory on this machine to its proper home. A bundled helper does the mechanical work: It enumerates feedback memories across every memory store, and executes deletions with `MEMORY.md` reconciliation. You do the judgment work: Classify each memory, dedup capture candidates against the knowledge base, and compose each capture.
+Decide where every `feedback`-type agent memory on this machine belongs, and move it there. A bundled helper does the mechanical work: It enumerates feedback memories across every memory store, and executes deletions with `MEMORY.md` reconciliation. You do the judgment work: Classify each memory, dedup capture candidates against the knowledge base, and compose each capture.
 
 A **memory store** is one project's memory directory under `~/.claude/projects/`. It is not a **KB store** (the `~/.agents/kb.yaml` registry entry that `capture-event` and the `kb-*` skills select with `--store`). This procedure uses both: The helper's `--memory-store` names the origin (step 1), and `capture-event`'s `--store` names the destination (step 5).
 

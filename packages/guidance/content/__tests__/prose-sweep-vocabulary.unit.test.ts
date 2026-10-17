@@ -122,7 +122,7 @@ describe('prose-sweep rule vocabulary', () => {
     const declared = new Set(await readDeclaredIds());
     const missing = RULE_IDS.filter((rule) => !declared.has(rule));
 
-    const message = `${missing.join(', ')} is not declared by any \`<!-- rule: <id> <version> -->\` marker, so step 1 of ${SKILL} does not name it to any run: Its detector never fires, every sweep reports clean for it, and the record stamps coverage anyway. Restore the marker in the rule's own document, or say here why the registry lists a rule that is not declared by any document`;
+    const message = `${missing.join(', ')} is not declared by any \`<!-- rule: <id> <version> -->\` marker, so step 1 of ${SKILL} does not name it to any run: Its detector never fires, every sweep reports clean for it, and the record still lists it as covered. Restore the marker in the rule's own document, or say here why the registry lists a rule that is not declared by any document`;
     expect(missing, message).toEqual([]);
   });
 });

@@ -18,7 +18,7 @@ The rating grades the lede in the merged pull request, whoever wrote it: the mer
 
 `poor`, `adequate`, `good`, `strong`, `exemplary`
 
-The middle of the scale is what the corpus most needs and most easily loses: a lede good enough that editing it is not worth the time, and not good enough that the author wants their imprimatur on it. Record such a lede at the level that it deserves rather than rounding it up.
+The corpus most needs ratings from the middle of the scale, and those are the ratings most easily lost: a lede good enough that editing it is not worth the time, and not good enough that the author wants their imprimatur on it. Record such a lede at the level that it deserves rather than rounding it up.
 
 The verdict, `accepted` or `revised`, is not asked. The helper derives it from whether the two ledes differ and records it beside the rating.
 

@@ -165,8 +165,8 @@ describe('summarize-change contract', () => {
     ].toSorted();
 
     const message =
-      'Each dispatch runs a fresh context over the whole change, which is what the pipeline pays for. A second one ' +
-      'on the lede path doubles that cost to rework text that the first already wrote for the same reader. These ' +
+      "Each dispatch runs a fresh context over the whole change, which is the pipeline's main expense. A second one " +
+      'on the lede path doubles that expense to rework text that the first already wrote for the same reader. These ' +
       `subagents are dispatched:\n  ${dispatched.join('\n  ')}`;
     expect(dispatched, message).toEqual([...PERMITTED_SUBAGENTS].toSorted());
   });

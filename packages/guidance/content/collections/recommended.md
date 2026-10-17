@@ -29,7 +29,7 @@ The skills belong here on different grounds. A rulebook of the personal collecti
 
 `cli-conventions` qualifies on its own terms as well. What it asks of a CLI's help, exit codes, errors, and progress reports follows from who reads them, a person at a terminal that cannot follow a link and a script or an agent that reads the exit code and the streams, rather than from a preference. It does not name any author, repository, language, or tool. Its body does not contain any invocation token, so its closure is empty.
 
-`command-output-conventions` qualifies on its own terms too. What it states follows from a mechanism that every agent session meets, the cost of output kept in the context window, rather than from a preference, and it does not name any tool, host, or store. Its body does not contain any invocation token, so its closure is empty.
+`command-output-conventions` qualifies on its own terms too. What it states follows from a mechanism that every agent session meets, the context-window space that retained output takes up, rather than from a preference, and it does not name any tool, host, or store. Its body does not contain any invocation token, so its closure is empty.
 
 `readme-conventions` qualifies on its own terms as well. It does not name any repository, tool, or path belonging to one author, and what it asks of a README follows from who reads the file rather than from a preference about how a README should read. Its body does not contain any invocation token, so its closure is empty and admitting it does not add any other artifact to what this collection deploys.
 

@@ -22,7 +22,7 @@ The gate and the marker are one rule seen twice. A menu that passes the gate is 
 
 Bullets in an option list are weighted equally by construction; the format does not provide a minor bullet. Placing a line under `➖` asserts that the reader should weigh it, so they spend attention deciding how much it matters. For a manufactured con the answer is none, and the reader spends that attention before discovering that the con is worthless. That makes it waste rather than merely noise.
 
-The con is also load-bearing for the menu's existence: Because an option recommended without a drawback reads as a decision rather than an option, presenting a settled call as a fork requires inventing a drawback. A fabricated con is the sign that the gate above was skipped, not an independent formatting slip.
+The menu's existence also depends on the con: Because an option recommended without a drawback reads as a decision rather than an option, presenting a settled call as a fork requires inventing a drawback. A fabricated con is the sign that the gate above was skipped, not an independent formatting slip.
 
 When the honest cost is hard to find, that difficulty is itself evidence the option is strong. Spend the effort on finding the real cost or on omitting the bullet, never on manufacturing a plausible-sounding one.
 

@@ -66,7 +66,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
 2. **Split the ticket**: Recommend only when the plan is too large for one implement-and-review pass, and it contains two or more pieces that each ship and can be verified on their own. Both halves are required: Too large without a seam is not a match, and a seam in a plan that one pass would cover is not one either.
 
-   A piece earns a ticket when it ships and can be verified on its own, not when it looks large enough to deserve one. The `➕` line names the size and the pieces, each with the tasks that it takes: `➕ eleven tasks across three packages, and two pieces ship on their own: the schema change (tasks 1–4), then the reader that consumes it (tasks 5–11)`.
+   A piece gets its own ticket when it can be merged and verified on its own, not when it looks large enough to deserve one. The `➕` line names the size and the pieces, each with the tasks that it takes: `➕ eleven tasks across three packages, and two pieces ship on their own: the schema change (tasks 1–4), then the reader that consumes it (tasks 5–11)`.
 
    Structural properties (new module boundaries, changed interfaces, several packages) make a plan _more likely_ to be too large. They are evidence to weigh, and none of them matches rule 2 on its own.
 
@@ -78,7 +78,7 @@ Select the recommended option by checking these rules in order and stopping at t
 
 #### Marker strengths
 
-The selected option's marker follows how cleanly its rule matched: ■■■ when the rule's test is met squarely and the alternatives are worse on the criteria that decided it, ■■□ when the fit is good but an alternative stays defensible, ■□□ when little separates the options. Rule 3 is the cascade's fallthrough rather than a positive match, so its marker follows how squarely rules 1 and 2 failed: ■■■ when neither came close, ■■□ when one stayed defensible. The unselected options take ■□□ by default, and □□□ when one has a clear drawback in the current context.
+The selected option's marker follows how cleanly its rule matched: ■■■ when the rule's test is met squarely and the alternatives are worse on the criteria that decided it, ■■□ when the fit is good but an alternative stays defensible, ■□□ when little separates the options. Because rule 3 is the cascade's fallthrough rather than a positive match, its marker follows how squarely rules 1 and 2 failed: ■■■ when neither came close, ■■□ when one stayed defensible. The unselected options take ■□□ by default, and □□□ when one has a clear drawback in the current context.
 
 Each skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). That context applies to rule 1's settled/unsettled test.
 
@@ -96,4 +96,4 @@ Each skill supplies its own recommendation context (e.g., whether the plan was d
 
 <!-- include: split-launch-prompts.md / -->
 
-See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) is about work that comes up alongside the plan; rule 2 is about the plan's own work, and its seam test comes from the ticketing preferences: A piece earns a ticket when it ships and can be verified on its own.
+See [`scope-and-deferral.md`](../_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) is about work that comes up alongside the plan; rule 2 is about the plan's own work, and its seam test comes from the ticketing preferences: A piece gets its own ticket when it can be merged and verified on its own.
