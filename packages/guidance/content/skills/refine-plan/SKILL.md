@@ -161,7 +161,7 @@ Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --format json` via Bash. 
 
 The `provenance:` block is **not** populated from the script. Construct it manually per the case branches below.
 
-**Round-trip preservation:** The top-level canonical fields (`branch`, `commit`, etc.) are always re-resolved from current session context via the script; they are not carried forward from `{input-provenance}`. This is correct: The output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write; the keys are not renamed. Provenance fields carried forward from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches).
+**Round-trip preservation:** The top-level canonical fields (`branch`, `commit`, etc.) are always re-resolved from current session context via the script; they are not copied from `{input-provenance}`. This is correct: The output is a new artifact at a new point in time on a potentially different branch. The `provenance:` block's camelCase convention (`baseSha`, `isInteractive`, `refinedBy`) is preserved as-is on both read and write; the keys are not renamed. Provenance fields copied from the input are `skill`, `baseSha`, `isInteractive`, and `iteration` (per the case branches).
 
 **When `{input-provenance}` is non-empty:**
 

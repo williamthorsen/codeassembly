@@ -1,15 +1,15 @@
 ---
 name: refine-prototype
-description: Refine one prototype page at sketch speed, between the verdict on a round and the end vision, or sketch a variant of a built product the same way. Carries the kept and adapted ideas of the round onto the base, applies the developer's commands in batches while the page reloads in their browser, snapshots each accepted version into the ticket's prototype set with its id on the page, and records every accepted change in a refinement log that the end vision reads. Use when the developer wants to refine, combine, or vary prototypes before a ticket is written.
+description: Refine one prototype page at sketch speed, between the verdict on a round and the end vision, or sketch a variant of a built product the same way. Applies the kept and adapted ideas of the round to the base, applies the developer's commands in batches while the page reloads in their browser, snapshots each accepted version into the ticket's prototype set with its id on the page, and records every accepted change in a refinement log that the end vision reads. Use when the developer wants to refine, combine, or vary prototypes before a ticket is written.
 user-invocable: true
 supported-harnesses: [claude]
 ---
 
 # Refine prototype
 
-Work one prototype page the way a designer works a sketch: The developer gives commands, you apply them to the page, their browser shows the result, and nothing else runs. The development gates are off on purpose. A sketch is the reference for the ticket that follows, never the implementation, and it earns its speed by skipping what a change to the product needs.
+Work one prototype page the way a designer works a sketch: The developer gives commands, you apply them to the page, their browser shows the result, and nothing else runs. The development gates are off on purpose. A sketch is the reference for the ticket that follows, never the implementation, and it is fast because it skips what a change to the product needs.
 
-The page lives in the ticket's prototype set, per {skill:index-prototypes}, and every accepted version joins the set under its id: Each snapshot replaces the slug's card on the index under the new id, and the manifest and the refinement log keep the earlier versions.
+The page is in the ticket's prototype set, per {skill:index-prototypes}, and each snapshot adds the accepted version to the set under its id: The snapshot replaces the slug's card on the index under the new id, and the manifest and the refinement log keep the earlier versions.
 
 ## Inputs
 
@@ -28,11 +28,11 @@ Off:
 
 On:
 
-- The page is self-contained and opens from `file://`, with its demo chrome in a band whose every part is inside an element that carries `data-demo`, as the brief that built it required.
+- The page is self-contained and opens from `file://`, with its demo chrome in a band whose every part is inside an element that has `data-demo`, as the brief that built it required.
 - The band's first line is the page's id and title, `{number}.{version} {title}`, so that the developer reads which version they have open without returning to the index.
 - {rulebook:accessibility-conventions} is the floor: Check contrast and size when a command changes a colour or a text size.
 - A new string on the product surface follows {rulebook:ui-copy-conventions}.
-- One working file. A batch edits it in place; a fork writes beside it and is deleted once the developer picks.
+- One working file. A batch edits it in place; a fork is written next to it and is deleted once the developer picks.
 
 ## Process
 
@@ -64,7 +64,7 @@ Read the host and port from the server's `Local:` line; when `pnpm` is absent, r
 
 The verdict picked the base; it did not pick the base's ideas over the others. From the `idea-decisions` table, list every row whose decision is `keep` and whose sources do not include the base, and every row whose decision is `adapt`, and propose them as the first batch in one action-items block, ordered so that a structural change comes before the changes that depend on it. The developer trims or reorders the list.
 
-A transplant moves the mechanism, not the look: Read the source prototype's file, and carry over the markup, the styles, and the script that make the idea work, fitted to the base. Rebuilding an idea from its screenshot is a defect, because a screenshot does not show what the mechanism does.
+A transplant moves the mechanism, not the look: Read the source prototype's file, and copy the markup, the styles, and the script that make the idea work, fitted to the base. Rebuilding an idea from its screenshot is a defect, because a screenshot does not show what the mechanism does.
 
 <!-- include: ../_partials/action-items.md / -->
 
@@ -82,11 +82,11 @@ Propose a new number when a batch replaces the layout or the model to the point 
 
 ### 5. Snapshot
 
-Snapshot when the developer asks for one, in any words ("snapshot", "keep this", "version it"), and at the end of the session before stopping. A snapshot is what makes a version: Until then the working file is unregistered, and a session that stops without one loses the work since the last.
+Snapshot when the developer asks for one, in any words ("snapshot", "keep this", "version it"), and at the end of the session before stopping. A snapshot creates a version: Until then the working file is unregistered, and a session that stops without one loses the work since the last.
 
 1. Copy the working file to `{set_dir}/{slug}-v{n}.html`.
 2. Publish it with the Artifact tool: to the slug's existing artifact URL when the manifest's latest entry for the slug has one, so that the index card's link stays current, or as a new artifact for a new slug.
-3. Capture its screenshots per {skill:index-prototypes} step 3, and register it per its step 4 with `--number {number}`, `--source`, the set's note labels (carried from the latest entry and changed where the batches changed them), and, for a new slug, a `--description` that names the version from which it came.
+3. Capture its screenshots per {skill:index-prototypes} step 3, and register it per its step 4 with `--number {number}`, `--source`, the set's note labels (copied from the latest entry, with any change that the batches made to them), and, for a new slug, a `--description` that names the version from which it came.
 4. Update the set's summary per {skill:index-prototypes} step 5, naming the version in `changes`, then render and republish the index per its step 6.
 5. The next batch opens the next version: Copy the snapshot to `{scratch_dir}/{slug}-v{n+1}.html` and set the band's id.
 

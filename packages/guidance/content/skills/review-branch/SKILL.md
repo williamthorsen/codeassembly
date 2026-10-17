@@ -181,7 +181,7 @@ Score: X/10
 
 ### {source.label}
 
-{The label is `{source_type}: {short identifier}`, for example, `ticket: #553` or `pr_description: PR #1024`. Use the source's natural identifier so a reader can tell at a glance which specification a row evaluates against.}
+{The label is `{source_type}: {short identifier}`, for example, `ticket: #553` or `pr_description: PR #1024`. Use the source's natural identifier so that a reader can tell at a glance which specification a row evaluates against.}
 
 **Source:** {Render the source's `provenance` and `last_updated` (echoed verbatim; `last_updated` is already ISO 8601) so that the reader knows what contract this section measured against, e.g. `remote issue (last updated 2026-06-07T01:56:34Z)`, ``local snapshot `20260606-090337Z_..._ticket.md` (last updated 2026-06-06T09:03:37Z)``, or `local source (last updated …)` for an explicit file/plain-text `--ticket` that has no snapshot filename. Omit the "last updated" clause when `last_updated` is null.}
 
