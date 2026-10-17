@@ -56,7 +56,7 @@ describe(checkGate, () => {
 
   it('refuses a ticket number on an item that does not take a ticket', () => {
     const record = buildRecord({ items: [buildItem({ disposition: 'drop', ticket: 300 })] });
-    expect(checkGate(record)).toEqual([{ id: '10', clause: 'a drop item does not carry a ticket number' }]);
+    expect(checkGate(record)).toEqual([{ id: '10', clause: 'a drop item does not have a ticket number' }]);
   });
 
   it('refuses a duplicate id and reports every violation of a record', () => {

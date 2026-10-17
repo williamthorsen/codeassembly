@@ -32,7 +32,7 @@ export interface WriteArgs {
   diataxis: string | null;
   /** The note title; also used as the filename stem. */
   title: string;
-  /** The proposed tag list, in the order the agent supplied them. */
+  /** The proposed tag list, in the order in which the agent supplied them. */
   tags: string[];
   /** Description for a domain that the write declares; with `null`, the write declares it bare. */
   domainDescription: string | null;

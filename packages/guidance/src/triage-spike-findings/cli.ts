@@ -113,7 +113,7 @@ function runRender(flags: ParsedFlags, context: CommandContext): CommandResult {
     const parts = [...(missing.umbrella ? ['the umbrella'] : []), ...missing.items];
     throw new CommandError(
       'tickets-missing',
-      `${parts.join(', ')} ${parts.length === 1 ? 'has' : 'have'} no ticket number; pass --preview to render placeholders`,
+      `${parts.join(', ')} ${parts.length === 1 ? 'does not have' : 'do not have'} a ticket number; pass --preview to render placeholders`,
     );
   }
   mkdirSync(out, { recursive: true });

@@ -115,7 +115,7 @@ describe(prepareDecision, () => {
     expect(content).toContain('## Comment\n\nCut the setup clause.');
   });
 
-  it('omits every optional field the episode and context did not supply', () => {
+  it('omits every optional field that the episode and context did not supply', () => {
     const content = expectContent(prepareDecision(decisionFor({})));
 
     expect(content).not.toMatch(/^ticket:/m);

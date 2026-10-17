@@ -33,7 +33,7 @@ const LEDE_DECISION_STORE = 'codeassembly';
 
 /**
  * How many exemplars a request returns when the invocation omits `--count`. Exemplars calibrate a drafter, and a larger
- * set dilutes toward an average while spending the drafter's context.
+ * set moves the drafter's output toward an average lede and uses more of the drafter's context.
  */
 const DEFAULT_COUNT = 5;
 

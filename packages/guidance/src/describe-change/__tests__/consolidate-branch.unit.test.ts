@@ -129,7 +129,7 @@ describe(consolidateBranch, () => {
     expect(result.consolidatedRecord).toStrictEqual({ scope: 'agents', type: 'feat' });
   });
 
-  it('reads a trailer naming several scopes as one entry that carries them all', () => {
+  it('reads a trailer naming several scopes as one entry that includes them all', () => {
     const commits: RawCommit[] = [
       { hash: 'condensed', subject: 'agents|feat: Squashed', trailers: ['agents,kb|feat: Add the reader'] },
     ];

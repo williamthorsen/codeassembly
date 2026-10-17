@@ -63,7 +63,7 @@ describe('resolve-review-run CLI', () => {
 
     expect(result.exitCode).toBe(1);
     expect(result.stdout).toBe('');
-    expect(result.stderr).toContain(`no interactive run directory found in ${ticketDir}`);
+    expect(result.stderr).toContain(`${ticketDir} does not contain an interactive run directory`);
   });
 
   it.each([

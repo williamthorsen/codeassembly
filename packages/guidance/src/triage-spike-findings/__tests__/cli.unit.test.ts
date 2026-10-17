@@ -112,7 +112,7 @@ describe(runCli, () => {
       expect(result).toMatchObject({
         ok: false,
         error: 'tickets-missing',
-        message: expect.stringContaining('the umbrella, 10 have no ticket number'),
+        message: expect.stringContaining('the umbrella, 10 do not have a ticket number'),
       });
       expect(existsSync(path.join(root, 'out'))).toBe(false);
     });

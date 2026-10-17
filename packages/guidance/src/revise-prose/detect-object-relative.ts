@@ -675,7 +675,7 @@ function buildCandidate(input: {
  *
  * The nearer head is the sounder one only when every competing anchor opens a real subject, which is what
  * {@link opensDegreeAdverbial} secures: An anchor whose subject is adverbial takes the site's own subject as its
- * head, and would win on nearness alone.
+ * head, and would be kept only for being nearest.
  */
 function detectInSpan(span: ProseSpan): ObjectRelativeCandidate[] {
   const tokens = tokenize(span.text);

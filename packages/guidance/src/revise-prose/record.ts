@@ -286,7 +286,7 @@ export function parseRecord(content: string, versions: SweepVersions, sourceLabe
   const isLegacy = typeof parsed === 'object' && parsed !== null && Object.hasOwn(parsed, 'units');
 
   if (isLegacy && Object.hasOwn(parsed, 'rules')) {
-    throw new Error(`Invalid sweep record in ${sourceLabel}: (root): holds both units and rules`);
+    throw new Error(`Invalid sweep record in ${sourceLabel}: (root): contains both units and rules`);
   }
 
   if (isLegacy) {
@@ -329,8 +329,8 @@ export function parseRunFold(json: string): RunFold {
  *
  * The projection hands over the rule, the file, and the phrase alone, dropping the rule version and the `ground`. A
  * standing rejection tells the sweeper to leave the site alone, and that instruction doesn't need a reason. The
- * `ground` would reach a sweeper only on the run that re-opens the site, and that is the one run that has to adjudicate
- * it without a prior reason in hand.
+ * `ground` would be useful to a sweeper only on the run that re-opens the site, and that is the one run that has to
+ * adjudicate it without a prior reason in hand.
  */
 export function selectPriorRejections(
   record: ProseRecord,

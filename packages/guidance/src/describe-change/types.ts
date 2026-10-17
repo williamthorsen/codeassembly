@@ -146,7 +146,7 @@ export type Subcommand = ParsedArgs['subcommand'];
 /** One surface for which a title template is configured. */
 export type Surface = (typeof SURFACES)[number];
 
-/** The surfaces for which a title is configured, in the order the rendered output names them. */
+/** The surfaces for which a title is configured, in the order in which the rendered output names them. */
 export const SURFACES = ['commit', 'ticket', 'pr', 'merge'] as const;
 
 /** The work type that a ticket's labels name, under the key that the JSON output names. */
@@ -156,7 +156,7 @@ export interface TicketTypeOutcome {
 
 // region | Helpers
 
-/** The surface names widened to strings, so a membership test accepts an arbitrary one. */
+/** The surface names widened to strings, so that a membership test accepts an arbitrary one. */
 const SURFACE_NAMES: readonly string[] = SURFACES;
 
 // endregion | Helpers

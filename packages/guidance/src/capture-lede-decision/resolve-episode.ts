@@ -158,7 +158,7 @@ async function findNewestArtifact(input: { artifactDir: string; suffix: string }
 
 /**
  * Digests the subagent bodies that govern a draft. Each body is hashed on its own and the digests are hashed
- * together, so a change to any of them changes the result and content cannot straddle the boundary between two.
+ * together, so a change to any of them changes the result, and so does moving content from one body into the next.
  */
 async function hashDoctrine(subagentsDir: string): Promise<DoctrineHashOutcome> {
   const digests: string[] = [];

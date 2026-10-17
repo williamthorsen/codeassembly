@@ -98,7 +98,7 @@ describe(renderIssueComments, () => {
     );
 
     expect(comments.keys().toArray()).toEqual([272, 119]);
-    expect(comments.get(272)).toContain('(#278) routes the following to this issue:');
+    expect(comments.get(272)).toContain('(#278) assigns the following to this issue:');
     expect(comments.get(272)).toContain('- **First** (confidence medium, value should-have):');
     expect(comments.get(272)).toContain('- **Second**');
     expect(comments.get(119)).not.toContain('First');

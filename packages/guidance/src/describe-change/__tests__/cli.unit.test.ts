@@ -244,7 +244,7 @@ describe('render-titles', () => {
     expect(warnings).toStrictEqual([]);
   });
 
-  it('stops the run on a template the engine cannot round-trip, naming the surface and the defect', async () => {
+  it('stops the run on a template that the engine cannot round-trip, naming the surface and the defect', async () => {
     const { cwd, git, home } = await makeRepo(DEFECTIVE_TEMPLATES);
 
     await expect(runDescribe({ argv: ['render-titles'], cwd, git, dataDir: DATA_DIR, home })).rejects.toThrow(
@@ -357,7 +357,7 @@ describe('parse-title', () => {
     ).rejects.toThrow(/commit\.title_format is empty/);
   });
 
-  it('resolves the type through the embedded taxonomy when no data directory is named', async () => {
+  it('resolves the type through the embedded taxonomy when the invocation does not name a data directory', async () => {
     const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
 
     const { output } = await runDescribe({ argv: ['parse-title', 'commit', 'agents|tests: Add foo'], cwd, git, home });
@@ -1118,8 +1118,8 @@ describe('resolve-labels', () => {
 
     expect(output).toStrictEqual({ labels: ['breaking'] });
     expect(warnings).toStrictEqual([
-      `label map ${mapPath} does not define type "docs"; no label applied`,
-      `label map ${mapPath} does not define scope "guidance"; no label applied`,
+      `label map ${mapPath} does not define type "docs"; leaving it unlabeled`,
+      `label map ${mapPath} does not define scope "guidance"; leaving it unlabeled`,
     ]);
   });
 
@@ -1991,7 +1991,7 @@ async function consolidateMessages(messages: readonly string[]): Promise<Consoli
   return output;
 }
 
-/** Creates a project whose fake git lists one commit per message, so `consolidate-branch` reads exactly those. */
+/** Creates a project whose fake git lists one commit per message, so that `consolidate-branch` reads exactly those. */
 async function makeCommittedRepo(messages: readonly string[]): Promise<{ cwd: string; git: FakeGit; home: string }> {
   const { cwd, home } = await makeRepo(HOUSE_TEMPLATES);
   const git = makeFakeGit({ commits: messages.map(makeRawCommit), topLevel: cwd });
@@ -2035,7 +2035,7 @@ async function makeRepo(content: string): Promise<{ cwd: string; git: FakeGit; h
 
 /**
  * Creates a project declaring `packages/*` as its workspaces, with `packages/agents` and `packages/kb`
- * holding a manifest and `packages/scripts` holding none.
+ * containing a manifest and `packages/scripts` containing none.
  */
 async function makeWorkspaceRepo(): Promise<{ cwd: string; git: FakeGit; home: string }> {
   const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);

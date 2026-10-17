@@ -469,7 +469,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('The sweep covers the sources this prose about the idioms has.')).toStrictEqual([]);
     });
 
-    it('holds a partitive `of` to neither the raised ceiling nor the gate that pays for it', () => {
+    it('gives a partitive `of` neither the wider window nor the stranded-preposition gate of a prepositional phrase', () => {
       const candidates = detect('The wrapping two of them apply is identical.');
 
       expect(candidates).toHaveLength(1);
@@ -601,7 +601,7 @@ describe(detectObjectRelatives, () => {
     it.each([
       { sentence: 'The report drops the entries the sweep no longer holds.', head: 'entries', verb: 'holds' },
       { sentence: 'Compare it against the body the user most recently approved.', head: 'body', verb: 'approved' },
-    ])('passes over an adverbial that would win the site on nearness: $head', ({ sentence, head, verb }) => {
+    ])('passes over an adverbial that would otherwise be kept for being nearest: $head', ({ sentence, head, verb }) => {
       const candidates = detect(sentence);
 
       expect(candidates).toHaveLength(1);
@@ -635,7 +635,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ head: 'source', subject: 'one', verb: 'names' });
     });
 
-    it('leaves a quantified subject that opens a real noun phrase to win on nearness', () => {
+    it('keeps the nearest reading when a quantified subject opens a real noun phrase', () => {
       const candidates = detect('Then retract the namespaces no source claims.');
 
       expect(candidates).toHaveLength(1);

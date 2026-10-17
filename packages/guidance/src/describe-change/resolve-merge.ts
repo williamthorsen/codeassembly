@@ -125,7 +125,7 @@ export interface MergeInput {
   ticketRef?: string;
 }
 
-/** Something the approval gate shows the author without blocking approval. */
+/** Something that the approval gate shows the author without blocking approval. */
 export type MergeNotice =
   | { kind: 'absent-block' }
   | { kind: 'commits-unavailable'; reason: string }

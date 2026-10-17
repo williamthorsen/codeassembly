@@ -108,20 +108,24 @@ describe('findLatestReview', () => {
     const emptyRun = path.join(ticketDir, '20261002-090000Z-interactive');
     await mkdir(emptyRun);
 
-    await expect(findLatestReview(ticketDir)).rejects.toThrow(`no reviewer or overseer review found in ${emptyRun}`);
+    await expect(findLatestReview(ticketDir)).rejects.toThrow(
+      `${emptyRun} does not contain a reviewer or overseer review`,
+    );
   });
 
   it('fails naming the ticket directory when it does not contain an interactive run', async () => {
     await mkdir(path.join(ticketDir, 'prototypes'));
     await mkdir(path.join(ticketDir, '20261003-090000Z-orchestrated'));
 
-    await expect(findLatestReview(ticketDir)).rejects.toThrow(`no interactive run directory found in ${ticketDir}`);
+    await expect(findLatestReview(ticketDir)).rejects.toThrow(
+      `${ticketDir} does not contain an interactive run directory`,
+    );
   });
 
   it('fails naming the ticket directory when the directory does not exist', async () => {
     const missing = path.join(ticketDir, 'missing');
 
-    await expect(findLatestReview(missing)).rejects.toThrow(`no interactive run directory found in ${missing}`);
+    await expect(findLatestReview(missing)).rejects.toThrow(`${missing} does not contain an interactive run directory`);
   });
 
   // region | Helpers

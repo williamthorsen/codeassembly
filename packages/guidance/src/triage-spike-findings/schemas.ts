@@ -76,7 +76,7 @@ export function checkGate(record: DispositionsRecord): GateViolation[] {
       violations.push({ id: item.id, clause: 'a low item does not take a ticket' });
     }
     if (item.disposition !== 'ticket' && item.ticket !== null) {
-      violations.push({ id: item.id, clause: `a ${item.disposition} item does not carry a ticket number` });
+      violations.push({ id: item.id, clause: `a ${item.disposition} item does not have a ticket number` });
     }
     switch (item.disposition) {
       case 'comment':
