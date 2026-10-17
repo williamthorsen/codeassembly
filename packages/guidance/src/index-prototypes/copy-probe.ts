@@ -4,7 +4,7 @@ export const COPY_MIN_WORDS = 4;
 /**
  * A function, as source for the Playwright MCP's `browser_evaluate`, that returns a page's product-surface strings in
  * document order without duplicates. A string is the text gathered under one container: the nearest block container or
- * `div`, except that an inline container nested inside that `div` wins, else the nearest inline container, else the
+ * `div`, except that an inline container nested inside that `div` takes precedence, else the nearest inline container, else the
  * parent element; a `placeholder` value is a string of its own. Text inside `[data-demo]`, `script`, `style`, or
  * `template` is skipped, and so is a string under `COPY_MIN_WORDS` words. Hidden elements count, because a hidden
  * state is still product copy.

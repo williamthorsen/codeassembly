@@ -49,7 +49,7 @@ export function nextVersion(manifest: Manifest | null, slug: string): number {
 
 /**
  * Reads and validates the manifest in `setDir`. A manifest written before a field existed reads with that field's
- * default: numbers assigned in order of each slug's first registration, no summary, and no notes.
+ * default: numbers assigned in order of each slug's first registration, a `null` summary, and an empty list of notes.
  */
 export async function readManifest(setDir: string): Promise<ManifestRead> {
   const manifestPath = resolveManifestPath(setDir);
