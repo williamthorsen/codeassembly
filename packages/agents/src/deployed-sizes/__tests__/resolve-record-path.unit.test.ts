@@ -15,7 +15,7 @@ describe(resolveRecordPath, () => {
     );
   });
 
-  it('resolves the home domain to the record that belongs to no repo', () => {
+  it('resolves the home domain to the record that does not belong to any repo', () => {
     expect(resolveRecordPath({ home: HOME, domain: 'home' })).toBe(path.join(ROOT, '_home.jsonl'));
   });
 

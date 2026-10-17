@@ -30,7 +30,7 @@ describe(readRecordLines, () => {
     await rm(recordDir, { recursive: true, force: true });
   });
 
-  it('returns no lines when the record has never been written', async () => {
+  it('returns an empty list when the record has never been written', async () => {
     expect(await readRecordLines(recordPath)).toEqual([]);
   });
 
@@ -65,7 +65,7 @@ describe(selectLatestSnapshot, () => {
     expect(selectLatestSnapshot(await readRecordLines(recordPath))).toEqual(snapshot);
   });
 
-  it('returns the last snapshot when the record holds several', async () => {
+  it('returns the last snapshot when the record contains several', async () => {
     await appendSnapshot(recordPath, buildSnapshot({ onInvocation: 10 }));
     const latest = buildSnapshot({ onInvocation: 20 });
     await appendSnapshot(recordPath, latest);
@@ -91,7 +91,7 @@ describe(selectLatestSnapshot, () => {
     expect(selectLatestSnapshot(await readRecordLines(recordPath))).toEqual(latest);
   });
 
-  it('returns undefined when no line in the record parses as a snapshot', async () => {
+  it('returns undefined when the record does not contain a line that parses as a snapshot', async () => {
     await appendSnapshot(recordPath, buildSnapshot({ onInvocation: 10 }));
     await writeFile(recordPath, 'not json at all\n', { flag: 'w' });
 

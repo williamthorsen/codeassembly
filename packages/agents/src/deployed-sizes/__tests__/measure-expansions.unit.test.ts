@@ -56,7 +56,7 @@ describe(measureExpansions, () => {
     expect(measured.expansions['partial:codeassembly/_partials/shared.md']?.reach).toBe(2);
   });
 
-  it('names the expansion keys that each deployed document holds', async () => {
+  it('names the expansion keys that each deployed document contains', async () => {
     const measured = await measureExpansions([
       skillBody(contentRoot, 'claude/skills/demo/SKILL.md', 'demo'),
       skillBody(contentRoot, 'claude/skills/plain/SKILL.md', 'plain'),
@@ -82,7 +82,7 @@ describe(measureExpansions, () => {
     ]);
   });
 
-  it('leaves the document itself out of the expansions that it holds', async () => {
+  it('leaves the document itself out of the expansions that it contains', async () => {
     const measured = await measureExpansions([skillBody(contentRoot, 'claude/skills/plain/SKILL.md', 'plain')]);
 
     expect(measured.expansions).toStrictEqual({});
@@ -112,7 +112,7 @@ describe(measureExpansions, () => {
     }
   });
 
-  it('states no expansion and raises nothing for a content root that cannot be read', async () => {
+  it('does not state any expansion or raise anything for a content root that cannot be read', async () => {
     // A file where the content root belongs, so that the walk that builds the graph fails rather than finding nothing.
     const unreadableRoot = path.join(contentRoot, '_partials', 'inner.md');
 
@@ -122,7 +122,7 @@ describe(measureExpansions, () => {
     expect(measured.documentExpansions).toStrictEqual({});
   });
 
-  it('leaves a file that names no authored source out of the measurement', async () => {
+  it('leaves a file without an authored source out of the measurement', async () => {
     const asset: DeployedPath = {
       key: 'claude/skills/demo/run.mjs',
       absPath: '/deployed/claude/skills/demo/run.mjs',
