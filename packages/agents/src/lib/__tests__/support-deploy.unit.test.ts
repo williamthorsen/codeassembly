@@ -225,7 +225,7 @@ describe('source support delivery', () => {
       expect(await listUndeclaredSourceSupport(destParent, { surviving: ['kept'], emptied: ['emptied'] })).toEqual([]);
     });
 
-    it('names a scope directory whose only package delivery empties', async () => {
+    it('names a scope directory whose only package is emptied by delivery', async () => {
       await mkdir(path.join(destParent, '@acme', 'gone'), { recursive: true });
       await mkdir(path.join(destParent, 'kept'), { recursive: true });
 

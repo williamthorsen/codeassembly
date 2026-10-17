@@ -12,7 +12,10 @@ const DELIVERY_MISSING_MESSAGE =
 /** The rejection required for a non-string version: naming quoting as the fix, not a bare "Invalid input". */
 const VERSION_TYPE_MESSAGE = "version must be quoted (e.g. version: '1.10'); unquoted, 1.10 is read as the number 1.1";
 
-/** The rejection required for a version that cannot occupy its deployed line, distinct from the quoting message. */
+/**
+ * The rejection required for a version that cannot be rendered on its deployed line, distinct from the quoting
+ * message.
+ */
 const VERSION_SHAPE_MESSAGE = "version must be a non-blank single line that does not contain '-->'";
 
 /** Wraps frontmatter and a body into a rulebook source file. */
