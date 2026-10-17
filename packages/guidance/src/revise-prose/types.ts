@@ -10,6 +10,7 @@ export type Candidate =
   | EmDashCandidate
   | NegativeQuantifierCandidate
   | ObjectRelativeCandidate
+  | OverusedWordCandidate
   | SecondPersonCandidate
   | SoCandidate
   | WhereCandidate;
@@ -62,6 +63,13 @@ export interface ObjectRelativeCandidate extends CandidateBase {
   verb: string;
 }
 
+/** One over-inclusive site: a sentence containing at least one watchlist word or an inflection of one. */
+export interface OverusedWordCandidate extends CandidateBase {
+  rule: 'overused-word';
+  /** The watchlist words that the sentence matches, each once, in reading order. */
+  words: string[];
+}
+
 export interface SecondPersonCandidate extends CandidateBase {
   rule: 'second-person';
 }
@@ -84,7 +92,14 @@ export interface WhereCandidate extends CandidateBase {
 
 /** A rule for which the sweep has a detector. A rule without one is named by a plain string, as a unit is. */
 export type RuleId =
-  'apostrophes' | 'em-dash' | 'negative-quantifier' | 'reduced-object-relative' | 'second-person' | 'so' | 'where';
+  | 'apostrophes'
+  | 'em-dash'
+  | 'negative-quantifier'
+  | 'overused-word'
+  | 'reduced-object-relative'
+  | 'second-person'
+  | 'so'
+  | 'where';
 
 /** One dispatch unit: whole files whose combined bytes fit the budget, in the order the sweep resolved them. */
 export interface Batch {

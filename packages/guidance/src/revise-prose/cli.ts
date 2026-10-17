@@ -437,6 +437,7 @@ function summarize(input: {
     apostrophes: 0,
     'em-dash': 0,
     'negative-quantifier': 0,
+    'overused-word': 0,
     'reduced-object-relative': 0,
     'second-person': 0,
     so: 0,
