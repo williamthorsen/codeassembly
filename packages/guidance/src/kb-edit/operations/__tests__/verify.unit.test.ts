@@ -46,7 +46,7 @@ describe(verify, () => {
     expect(result.extra).toEqual({ 'applies-to': 'node 24', sources: ['docs.example.com'] });
   });
 
-  it('advances a born-verified note last-verified to an instant at or after created', () => {
+  it("advances a born-verified note's last-verified to an instant at or after created", () => {
     const born = '2026-05-01T09:00:00Z';
     const result = verify(buildAssertion({ created: born, updated: born, lastVerified: born }), NOW);
 

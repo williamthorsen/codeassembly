@@ -570,7 +570,7 @@ describe(runEdit, () => {
     }
   });
 
-  it('appends a reference to a single record addressed-by list', async () => {
+  it("appends a reference to a single record's addressed-by list", async () => {
     const { kbPath, notePath } = await makeKbWithNote();
 
     const result = await runEdit({
