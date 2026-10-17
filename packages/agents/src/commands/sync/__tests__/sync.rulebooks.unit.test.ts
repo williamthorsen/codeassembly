@@ -70,7 +70,7 @@ describe(syncCommand, () => {
     );
   });
 
-  it('delivers a hook-bearing rulebook body without a directive, in both delivery modes', async () => {
+  it('delivers a rulebook body without its guidance-hook directive, in both delivery modes', async () => {
     await writeFixtureRulebook(
       'gamma',
       'delivery: [ambient, skill]',
@@ -158,7 +158,7 @@ describe(syncCommand, () => {
     expect(await readFile(localHostPath(), 'utf8')).toContain('<!-- rulebook:gamma -->');
   });
 
-  it('retracts the prior skill directory when a rulebook resolved skill name changes', async () => {
+  it("retracts the prior skill directory when a rulebook's resolved skill name changes", async () => {
     await writeFixtureRulebook('gamma', 'delivery: skill', 'Gamma rules.');
     await declareRulebooks('gamma');
     await syncCommand(makeOptions(), projectRoot, homeDir, fakeGit);
@@ -353,7 +353,7 @@ describe(syncCommand, () => {
       await expect(syncCommand(makeOptions(), projectRoot, homeDir, fakeGit)).rejects.toThrow(contentDir);
     });
 
-    it('refuses a dry run wherever a real run would', async () => {
+    it('refuses a dry run whenever a real run would', async () => {
       await declareRulebooks('ghost');
 
       await expect(syncCommand(makeOptions({ dryRun: true }), projectRoot, homeDir, fakeGit)).rejects.toThrow(
