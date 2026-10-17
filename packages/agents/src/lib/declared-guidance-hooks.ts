@@ -15,14 +15,14 @@ import type { HarnessId } from './types.ts';
  *
  * A skill declares through any Markdown file reached by its deploy walk, not the entry body alone, because every one
  * of them is filled: `renderSkillDirectory` recurses to each depth and renders each `.md` through the fill. The walk
- * here shares that one's skip rule, so the two cannot come to disagree about what a skill ships. A `skills/_data/`
+ * here shares that one's skip rule, so the two cannot come to disagree about what a skill deploys. A `skills/_data/`
  * support entry stays outside both, since the support route renders with its fills dropped.
  *
  * Because bodies are include-expanded first, a directive that a partial declares counts for every body inlining it,
  * the same reason `resolveRulebook` expands before its own hook checks.
  *
- * Skills are narrowed to those targeting a harness to which this run deploys, since one deployed nowhere does not
- * reach any agent. Subagents deploy to every targeted harness and do not need such a filter.
+ * Skills are narrowed to those targeting a harness to which this run deploys, since one deployed nowhere is not
+ * available to any agent. Subagents deploy to every targeted harness and do not need such a filter.
  */
 export async function listDeclaredGuidanceHooks(
   resolvedSkills: ReadonlyArray<ResolvedSkill>,

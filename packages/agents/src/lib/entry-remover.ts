@@ -17,7 +17,7 @@ interface PruneOptions {
   readonly dryRun: boolean;
 }
 
-/** One orphan considered by a prune pass, and the verdict that it drew. */
+/** One orphan considered by a prune pass, and the verdict that it received. */
 export interface PrunedOrphan {
   readonly entry: ManifestEntry;
   readonly verdict: OwnedEntryVerdict;

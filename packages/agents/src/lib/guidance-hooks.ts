@@ -10,8 +10,8 @@ import { renderRulebookBlock } from './sentinel-inliner.ts';
  *
  * The grammar mirrors the include directive's: A directive occupies a full line, tolerates surrounding whitespace, and
  * is never recognized inline, so a hook named in prose or a code span stays prose. Because it is disjoint from the
- * reserved `slot:` tokens that `_partials/README.md` holds for future named-slot support, neither grammar can absorb
- * the other.
+ * `slot:` tokens that `_partials/README.md` reserves for future named-slot support, neither grammar can match a
+ * directive of the other.
  *
  * A declared hook is inert until a binding fills it. A seam that does not resolve any declaration strips the directive,
  * which makes a hook legal to declare and invisible in deployed output; a seam that does passes the fills through and
@@ -33,11 +33,11 @@ export const HOOK_DIRECTIVE_REGEX = /^[ \t]*<!--[ \t]*guidance-hook:[ \t]*(.*?)[
 /**
  * Matches a full-line comment whose opening token is a near-miss of `guidance-hook:` -- a plural `guidance-hooks:`, a
  * space for the hyphen, a different case, or the token without any name. Tested only once the directive pattern has
- * failed, so a well-formed directive never reaches it.
+ * failed, so it is never tested against a well-formed directive.
  *
  * The plural is the likeliest miss, because `guidance-hooks:` is the key under which a declaration binds. An author
  * moving between the two spellings has nothing but this to tell them which one they wrote. The trailing group admits a
- * payload only behind a colon, which keeps prose that merely mentions a guidance hook from reading as an attempt to
+ * payload only after a colon, which keeps prose that merely mentions a guidance hook from reading as an attempt to
  * declare one.
  */
 const HOOK_LIKE_REGEX = /^[ \t]*<!--[ \t]*guidance[ \t-]?hooks?[ \t]*(?::[^>]*)?-->[ \t]*$/i;
@@ -100,7 +100,7 @@ export interface GuidanceHookFill {
 /**
  * The rulebooks bound to each guidance hook, keyed by hook name and ordered as they fill. An absent key is an unbound
  * hook, and so is the whole map: A seam that does not resolve any declaration passes `undefined` and strips every
- * hook that it meets.
+ * hook that it finds.
  */
 export type GuidanceHookFills = ReadonlyMap<string, ReadonlyArray<GuidanceHookFill>>;
 
@@ -132,10 +132,10 @@ export function assertFilledAnchorsResolve(result: FilledBody, sourceLabel: stri
  * rejects a directive inside the leading frontmatter block that a binding would fill, where a splice would break the
  * YAML rather than add guidance to the body. Such a directive still strips when nothing is bound.
  *
- * Because a bound body arrives already rendered, the splice point is free: Link and token resolution vary with
- * position, and both are settled before the body gets here. Headings are demoted one level as they splice, which
- * keeps a rulebook's h1 title from competing with the host's own structure and does not move any anchor, since a
- * fragment derives from heading text alone.
+ * Because a bound body is rendered before it is passed in, the splice point does not affect it: Link and token
+ * resolution vary with position, and both are already settled. Headings are demoted one level as they are spliced in,
+ * which keeps a rulebook's h1 title from competing with the host's own structure and does not move any anchor, since
+ * a fragment derives from heading text alone.
  */
 export function fillGuidanceHooks(body: string, fills: GuidanceHookFills | undefined, sourceLabel: string): FilledBody {
   // Listing validates: A malformed name, a near-miss directive, or a duplicate declaration fails before anything splices.
@@ -182,7 +182,7 @@ export function isGuidanceHookName(value: string): boolean {
 
 /**
  * Collects every guidance hook that `body` declares, in source order. Throws `GuidanceHookError` for a name outside the slug
- * grammar, for a line that misses the directive shape while plainly reaching for it, and for a hook declared twice,
+ * grammar, for a line that resembles the directive but does not match its shape, and for a hook declared twice,
  * each anchored to `sourceLabel` and the offending line.
  *
  * A duplicate is rejected rather than collapsed because a binding fills a hook by name: Two slots of one name do not
@@ -197,7 +197,7 @@ export function listGuidanceHooks(body: string, sourceLabel: string): ReadonlyAr
     if (name === undefined) {
       if (HOOK_LIKE_REGEX.test(line)) {
         throw new GuidanceHookError(
-          `Line reaches for the guidance-hook directive but misses its shape: ${sourceLabel}:${index + 1} ` +
+          `Line resembles the guidance-hook directive but does not match its shape:${sourceLabel}:${index + 1} ` +
             `line="${line.trim()}" reason=unrecognized-directive. The directive is \`<!-- guidance-hook: name -->\`.`,
           'unrecognized-directive',
         );
@@ -297,8 +297,8 @@ function openHookMarker(name: string): string {
 
 /**
  * Renders one hook's fill: a hook-level marker pair enclosing one attributed block per bound rulebook. The markers
- * begin with the `codeassembly-` prefix that identifies generated content, which also keeps them clear of the
- * directive grammar against which a source body is parsed.
+ * begin with the `codeassembly-` prefix that identifies generated content, which also keeps them from matching
+ * the directive grammar against which a source body is parsed.
  */
 function renderHookFill(name: string, bound: ReadonlyArray<GuidanceHookFill>): string {
   const blocks = bound.map((fill) => renderRulebookBlock(fill.slug, demoteHeadings(fill.body), fill.version));

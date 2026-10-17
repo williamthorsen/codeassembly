@@ -97,7 +97,7 @@ export async function resolveClosureWithCollections(
 
 /**
  * Walks the dependency closure one seed at a time and unions what each reaches. `resolveClosure` throws on the first
- * bad edge, so seeding it with the whole catalog would report one defect and abandon every artifact behind it; per-seed
+ * bad edge, so seeding it with the whole catalog would report one defect and skip every artifact after it; per-seed
  * makes each failure attributable to the artifact that owns the edge and lets the remaining seeds resolve.
  */
 export async function resolveSeedClosures(
@@ -227,7 +227,7 @@ async function readArtifactEdges(
   await assertOptionalTargetsResolve(expanded, `${type}:${slug}`, resolver);
   const tokens = extractInvocationEdges(expanded);
   // A body token that names its own artifact is a render-only self-reference, not a dependency: Drop it before it
-  // becomes an edge and reaches the cycle check. Only a same-kind, same-slug token self-collides, so filter per kind.
+  // becomes an edge and the cycle check sees it. Only a same-kind, same-slug token self-collides, so filter per kind.
   // A self-dependency declared in frontmatter is left untouched and still raises a cycle error.
   const bodySkills = type === 'skill' ? tokens.skills.filter((edge) => edge !== slug) : tokens.skills;
   const bodySubagents = type === 'subagent' ? tokens.subagents.filter((edge) => edge !== slug) : tokens.subagents;

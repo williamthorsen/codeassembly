@@ -27,8 +27,9 @@ export function findCrossNamespaceCollisions(
 }
 
 /**
- * Lists each skill name to which two or more skill-delivery rulebooks resolve, with the slugs that reached it. All but one
- * need a distinct `skill-name` override; without one they would share a directory and the last write would win.
+ * Lists each skill name to which two or more skill-delivery rulebooks resolve, with the slugs that resolve to it. All
+ * but one need a distinct `skill-name` override; without one they would share a directory and the last write would
+ * win.
  */
 export function findSkillNameCollisions(
   rulebooks: ReadonlyArray<SkillDeliveringRulebook>,
