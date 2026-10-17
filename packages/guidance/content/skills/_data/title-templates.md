@@ -50,7 +50,7 @@ The bundle does not have a shebang, so the `node` prefix is required. Each subco
 ### What stops a run and what only warns
 
 - A configured template that the engine cannot invert stops every subcommand that reads the templates, naming the surface, the template, and the defect. `resolve-ticket-type`, `resolve-effective-record`, `render-block`, `render-details`, `consolidate-entries`, `check-merge-body`, `amend-entry`, `resolve-scopes`, and `resolve-labels` read none, so a defective template does not stop them. See [What the grammar refuses](#what-the-grammar-refuses).
-- A configured template that renders a subject it cannot read back, for some record shape that carries a type, causes a warning on stderr from every subcommand that reads the templates, naming the surface, the template, and the record shape. The run continues and its output is unchanged. See [Optional groups](#optional-groups).
+- A configured template that renders a subject it cannot read back, for some record shape that has a type, causes a warning on stderr from every subcommand that reads the templates, naming the surface, the template, and the record shape. The run continues and its output is unchanged. See [Optional groups](#optional-groups).
 - Malformed YAML in a preferences file stops every subcommand that reads the templates, naming the file.
 - Malformed YAML in `pnpm-workspace.yaml` or in the project preferences file stops `resolve-scopes`, naming the file.
 - A `project.scopes` entry that `resolve-scopes` cannot honor causes a warning naming the entry's index and fault, and the run skips that entry and resolves the rest. See [`resolve-scopes`](#resolve-scopes).
@@ -171,7 +171,7 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-branch --base or
 
 **A commit with `Change:` trailers contributes those entries and not its subject.** Because a condensed commit's subject renders the record to which its trailers already consolidate, reading both would count the branch's entries twice. See [The `Change:` trailer](./change-record.md#the-change-trailer).
 
-**The consolidated record ranks; it does not count.** One `feat` outranks three `fix` commits on the same branch, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. Every field of `consolidated_record` is `null` when the run did not find any entry, which is how a caller distinguishes a branch without entries from one whose consolidated record does not name a scope. The consolidated record does not name a title: A caller takes that from the change summary.
+**Consolidation ranks the entries; it does not count them.** One `feat` outranks three `fix` commits on the same branch, breaking outranks non-breaking, and the tier and listing order in [`work-types.json`](./work-types.json) settle the rest. Every field of `consolidated_record` is `null` when the run did not find any entry, which is how a caller distinguishes a branch without entries from one whose consolidated record does not name a scope. The consolidated record does not name a title: A caller takes that from the change summary.
 
 **A subject that does not match any template is listed in `unmatched` rather than dropped**, so a mistyped prefix stays visible instead of silently shrinking the set that the consolidated record is derived from.
 
@@ -181,7 +181,7 @@ The run refuses outright if the taxonomy cannot be read, since the entries have 
 
 ## `consolidate-entries`
 
-`consolidate-entries` reports the record to which a change's [change entries](./change-record.md#terms) consolidate. Its one flag, `--entries-file`, is required and names a YAML file holding a top-level list of entry mappings, in the shape that `entry-drafter` returns.
+`consolidate-entries` reports the record to which a change's [change entries](./change-record.md#terms) consolidate. Its one flag, `--entries-file`, is required and names a YAML file containing a top-level list of entry mappings, in the shape that `entry-drafter` returns.
 
 ```bash
 node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entries-file entries-20260920-223418Z.yaml
@@ -202,11 +202,11 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entrie
 { "consolidated_record": { "breaking": false, "scope": "agents", "type": "feat" } }
 ```
 
-**Each entry expands to one record per scope**, and an entry that does not name a scope expands to one record without a scope, which keeps a change touching nothing scoped rankable on its type. The expanded list is then ranked exactly as `consolidate-branch` ranks the commit entries, so one rule serves both sources: breaking outranks non-breaking, then the tier and listing order in [`work-types.json`](./work-types.json), and exactly one distinct scope survives.
+**Each entry expands to one record per scope**, and an entry that does not name a scope expands to one record without a scope, so that a change that does not touch any scope can still be ranked by its type. The expanded list is then ranked exactly as `consolidate-branch` ranks the commit entries, so one rule serves both sources: breaking outranks non-breaking, then the tier and listing order in [`work-types.json`](./work-types.json), and exactly one distinct scope survives.
 
 **An entry whose `type` the taxonomy does not declare is left as written and is unrankable**, so it does not contribute a type, as an unrankable commit entry does. Every field of `consolidated_record` is `null` for an empty list, which is how a caller distinguishes a change without entries from one whose consolidated record does not name a scope.
 
-**The entries arrive in a file rather than through flags** because `text` is arbitrary prose containing backticks and quotes, which a shell argument would expand or truncate.
+**The run reads the entries from a file rather than from flags** because `text` is arbitrary prose containing backticks and quotes, which a shell argument would expand or truncate.
 
 The run refuses an entries file that cannot be read, that is not valid YAML, or that is malformed, naming the defect: a value that is not a list, an item that is not a mapping, a missing or blank `type` or `text`, a `breaking` that is not a boolean, a `scopes` that is not a list of strings, and a `migration` that is not a string or spans more than one line, and a `text` or `migration` cut short by a YAML comment, which a space followed by `#` opens in an unquoted value; the error names the entry, the field, and the dropped text. A blank or null `migration` reads as absent, and a key that the grammar does not declare is ignored. It also refuses outright if the taxonomy cannot be read, since the entries have nothing to rank against.
 
@@ -323,7 +323,7 @@ The output is JSON whose `details` contains the body, without the `## Details` h
 - **Scope tags.** When the entries do not all name the same set of scopes, each bullet ends with one space and its scopes as bare `#scope` tags, comma-separated and each named once. An entry without scopes does not end with a tag. When every entry names the same set, whatever its order, the bullets do not end with tags, since the consolidated record already names that scope.
 - **Empty list.** An empty list yields an empty `details`, and the caller omits the section.
 
-The run refuses an entry whose `type` the taxonomy does not declare as a key or an alias, `feat!` included, since `breaking` carries the marker; and an entry whose `text` spans more than one line, which would break its bullet. It refuses an entries file exactly as `consolidate-entries` does, and refuses outright if the taxonomy cannot be read or does not declare an `emoji` and a `label` for `markers.breaking` and every type.
+The run refuses an entry whose `type` the taxonomy does not declare as a key or an alias, `feat!` included, since `breaking` records the marker; and an entry whose `text` spans more than one line, which would break its bullet. It refuses an entries file exactly as `consolidate-entries` does, and refuses outright if the taxonomy cannot be read or does not declare an `emoji` and a `label` for `markers.breaking` and every type.
 
 ## `resolve-merge`
 
@@ -513,7 +513,7 @@ project:
 
 **A path is read relative to the repository root**, which git resolves from the invoking directory, so an absolute path and a root-relative one resolve alike whatever subdirectory the caller ran from. A path outside the root resolves to `root`. When git does not resolve a repository root, the run warns and anchors at the invoking directory.
 
-**The subcommand does not define a workspace rule of its own.** It delegates workspace discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/guidance` holds the derived vocabulary to the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the workspace discovery rule belongs upstream, in nmr.
+**The subcommand does not define a workspace rule of its own.** It delegates workspace discovery to `@williamthorsen/nmr/workspace`, whose resolver reads the same `pnpm-workspace.yaml` patterns that release-kit reads to name the workspaces it builds changelogs under. The resolver is bundled into the deployed script, which therefore needs nothing installed in the repository that it runs in. `scope-labels.unit.test.ts` in `packages/guidance` checks the derived vocabulary against the `scope:` labels that `.config/release-kit.config.ts` declares. A change to the workspace discovery rule belongs upstream, in nmr.
 
 ## `resolve-labels`
 
@@ -552,7 +552,7 @@ A template that omits `{title}` produces a title without the bare title text: Th
 
 A `[...]` group renders verbatim when every token directly inside it resolves non-empty. When one is empty, the whole group drops, literals included.
 
-A group containing both `{scope}` and `{type}` therefore drops the type along with an absent scope, and a `*` scope is absent by the time the group decides. When preferences load, the bundle warns of such a template, naming the record shape that loses the type; it warns in the same way of a group that drops `{breaking}`. When the type should stay in the title of a change without a scope, nest the scope in a group of its own, as the piped-scope convention does.
+A group containing both `{scope}` and `{type}` therefore drops the type along with an absent scope, and a `*` scope is absent by the time the renderer decides whether to keep the group. When preferences load, the bundle warns of such a template, naming the record shape that loses the type; it warns in the same way of a group that drops `{breaking}`. When the type should stay in the title of a change without a scope, nest the scope in a group of its own, as the piped-scope convention does.
 
 `{breaking}` never decides a group. A non-breaking change would otherwise drop the very prefix that contains the marker.
 

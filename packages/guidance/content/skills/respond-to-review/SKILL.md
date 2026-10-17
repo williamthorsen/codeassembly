@@ -155,7 +155,7 @@ The disposition conflates two decisions: whether the change belongs (substance),
 
 ## Writing code after a review
 
-Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, which is when that voice enters the comments. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
+Implementing an ACCEPTed finding puts you mid-conversation with the reviewer, which is when comments start to repeat the reviewer's wording. A comment must not narrate the change, retell the reviewer's concern, or cite a finding or acceptance-criterion ID.
 
 **Before** (narrates the review, cites a finding and an acceptance criterion):
 

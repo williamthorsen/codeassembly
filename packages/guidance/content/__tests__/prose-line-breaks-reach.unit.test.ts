@@ -11,7 +11,7 @@ import { readContentFile } from '../test-utils/read-content-file.ts';
 // The rule applies only when it is already in context at the moment prose is composed, so each carrier inlines it
 // rather than linking to it. The single-statement assertion below keeps hand-written variants from drifting apart.
 
-/** The one file permitted to state the rule; every carrier reaches it through an include. */
+/** The one file permitted to state the rule; every carrier includes it. */
 const PARTIAL = '_partials/prose-line-breaks.md';
 
 /** The rule's opening, which the single-statement counts key on. */

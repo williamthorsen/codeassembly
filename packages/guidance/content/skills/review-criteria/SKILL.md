@@ -19,7 +19,7 @@ Evaluation criteria for code review. Apply proportionally: Match depth to risk.
 - **Interfaces**: A change that defines or changes colour tokens, text styles, or a page or UI component (see {rulebook:accessibility-conventions}). For each new or changed interactive element, ask whether it shows that it is interactive, by the states that the rulebook names, and check it in a browser as the rulebook requires rather than by reading the diff alone
 - **Conventions**: Adherence to codebase patterns and project standards
 - **Edge cases**: Boundary conditions, empty collections, zero values, undefined states
-- **Test coverage**: Adequate tests for new functionality; tests that verify behavior and earn their place, not just coverage
+- **Test coverage**: Adequate tests for new functionality; tests that verify behavior and are worth keeping, not just coverage
 - **Clarity**: Naming, documentation, and instructions convey unambiguous intent
 - **Contracts**: Documented behaviors match implementations; implicit assumptions are explicit
 - **Type safety**: Type issues that affect correctness or maintainability
@@ -68,7 +68,7 @@ Comment text that you propose for a source file (a replacement doc comment, a su
 
 "Add a comment explaining X" is a finding only when X is a constraint that the code cannot show. Do not request a comment that the discipline would delete.
 
-## Do not recommend a test that does not earn its place
+## Do not recommend a test that is not worth keeping
 
 Every test that you recommend clears the bar in the `testing-conventions` skill, which states the filters and the authoring-side rule. A recommendation that fails a filter is withdrawn rather than reworded, and absence of a test is not by itself a finding.
 
@@ -76,7 +76,7 @@ The commonest instance is a test asserting that deleted code, text, or behavior 
 
 ## Grown test files
 
-A test file that the change adds to and leaves past the ceiling in the `testing-conventions` skill is a Warning, and its proposed change is a split by aspect as that skill describes. When the file starts expensive setup of its own, such as a database engine, the proposed change shares that setup before the split, so that the split does not add to it. The diff does not show a file's length, so measure each test file that the change adds to. Where the project's lint applies `max-lines` to test files, the lint is the guard, and this is not a finding. A file past the ceiling that the change does not add to is Legacy.
+A test file that the change adds to and leaves past the ceiling in the `testing-conventions` skill is a Warning, and its proposed change is a split by aspect as that skill describes. When the file starts expensive setup of its own, such as a database engine, the proposed change shares that setup before the split, so that the split does not add to it. The diff does not show a file's length, so measure each test file that the change adds to. If the project's lint applies `max-lines` to test files, the lint is the guard, and this is not a finding. A file past the ceiling that the change does not add to is Legacy.
 
 ## Test placement
 

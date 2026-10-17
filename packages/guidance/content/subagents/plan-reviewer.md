@@ -71,7 +71,7 @@ Each finding is tagged with a resolution type:
 | Factual accuracy          | Referenced files, utilities, APIs exist?                                                                                                  | `auto`                                                |
 | Structural soundness      | Dependencies ordered? Steps scoped correctly?                                                                                             | `auto`                                                |
 | Requirements traceability | Every requirement has a step? Every step traces to a requirement?                                                                         | `user` if intentionally omitted; `auto` if overlooked |
-| Blocker handling          | Does a step or risk accept a degraded fallback where it should ask the user for a resource?                                               | `auto`                                                |
+| Blocker handling          | Does a step or risk accept a degraded fallback when it should ask the user for a resource?                                                | `auto`                                                |
 | Actor assignment          | Does a task or verification check name the developer as its actor without a `**Residue:**` line stating what the agent cannot do and why? | `auto`                                                |
 
 <!-- guidance-hook: implementation-preferences -->

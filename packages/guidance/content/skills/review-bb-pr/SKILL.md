@@ -36,7 +36,7 @@ On HEAD mismatch, do not return; exit non-zero with the mismatch error. `review-
 
 ## Bitbucket access
 
-Every Bitbucket call below goes through the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). That document owns the tool, the coordinates, the field vocabulary, and the not-connected stop; this skill states only what it does with them.
+Make every Bitbucket call below with the tool named in [Bitbucket pull-request access](../_data/bitbucket-pr-access.md). That document specifies the tool, the coordinates, the field vocabulary, and the not-connected stop; this skill states only what it does with them.
 
 ## Process
 

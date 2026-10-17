@@ -49,7 +49,7 @@ When aligning to an existing implementation, _the implementation_ is the code on
 
 ### Two branches
 
-What the skill does turns on whether a prior ticket exists, not on how the caller scoped the call.
+What the skill does depends on whether a prior ticket exists, not on how the caller scoped the call.
 
 **Generation, when a prior ticket does not exist.** The work was done on the branch without a ticket, so every section is authored now from the implementation and nothing is overwritten. The skeleton's `## Proposed solution` section is forward-looking by default; here it records the approach that the branch actually took, not a proposal still under consideration.
 
@@ -96,7 +96,7 @@ The skill writes two artifacts: the ticket of record on its platform, and a loca
 
 **`--write-target=local` writes the local artifact alone.** The ticket of record is left as it stands, however it resolved. The override selects the target and nothing else: The mode still bounds the revision, and the no-delta confirmation still precedes the write. `--write-target=remote` states the default explicitly and, when a ticket of record does not resolve, stops and reports the missing target rather than falling back to the local artifact.
 
-**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; when the remote did not resolve, or `--write-target=local` held it back, report that the remote was not updated and which of the two is the reason.
+**Order and reporting.** Write the remote, then save the local artifact, then report. A remote write that fails leaves the artifact saved and is reported as a failure, naming the manual step that remains; when the remote did not resolve, or `--write-target=local` excluded it, report that the remote was not updated and which of the two is the reason.
 
 ### Path resolution
 

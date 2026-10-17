@@ -11,7 +11,7 @@ import { readContentFile } from '../test-utils/read-content-file.ts';
 // An agent choosing a work type follows the test only when it is in context at that moment, so each carrier inlines
 // it rather than linking to the taxonomy.
 
-/** The one file permitted to state the test; every carrier reaches it through an include. */
+/** The one file permitted to state the test; every carrier includes it. */
 const PARTIAL = '_partials/work-type-choice.md';
 
 /** The test's opening, which the single-statement counts key on. */

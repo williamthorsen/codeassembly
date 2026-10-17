@@ -26,7 +26,7 @@ A value-bearing flag accepts both `--retag fix,observation` and `--retag=fix,obs
 
 ### Store selection
 
-`--store` is required: Every edit names its store. The helper resolves the store by registry name only and never walks the working directory for a `.kb/` folder. The store must be registered in `kb.yaml`. Pass `--store <name>` for a named store, `--store @default` for the registry's `default_kb`, or `--store @feedback` for its `feedback_kb`. Omitting `--store` is refused with an error that lists the registered stores.
+`--store` is required: Every edit names its store. The helper resolves the store by registry name only and never walks the working directory for a `.kb/` folder. The store must be registered in `kb.yaml`. Pass `--store <name>` for a named store, `--store @default` for the registry's `default_kb`, or `--store @feedback` for its `feedback_kb`. The helper refuses an edit that omits `--store`, with an error that lists the registered stores.
 
 ## Runtime dependencies
 
@@ -74,4 +74,4 @@ On `ok: false`, act on the `error` code:
 
 ## Completion
 
-Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: The helper writes the events that succeed and reports the ids that fail, leaving those untouched. These `addressed-by`/`tags`/`impact` annotations are curatorial; substantive content edits go through `capture-event --amend`.
+Each named event updated in place and re-validated, written atomically. A mixed batch is partial by design: The helper writes the events that succeed and reports the ids that fail, leaving those untouched. These `addressed-by`/`tags`/`impact` annotations are curatorial; make substantive content edits with `capture-event --amend`.

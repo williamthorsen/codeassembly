@@ -27,7 +27,7 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+      - packages/guidance/content
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -86,102 +86,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -281,102 +186,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -476,102 +286,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -671,102 +386,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -846,7 +466,7 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+      - packages/guidance/content
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -985,9 +605,7 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/subagents/entry-drafter.md
+      - packages/guidance/content
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -1046,102 +664,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -1241,102 +764,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -1436,102 +864,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -1631,102 +964,7 @@ rules:
       - packages/guidance/.shellspec
       - packages/guidance/LICENSE
       - packages/guidance/__tests__
-      - packages/guidance/content/__tests__
-      - packages/guidance/content/_partials
-      - packages/guidance/content/codeassembly-content.yaml
-      - packages/guidance/content/collections
-      - packages/guidance/content/guidance
-      - packages/guidance/content/scripts
-      - packages/guidance/content/skills/_data/action-items.md
-      - packages/guidance/content/skills/_data/artifact-conventions.md
-      - packages/guidance/content/skills/_data/bitbucket-pr-access.md
-      - packages/guidance/content/skills/_data/branch-format.md
-      - packages/guidance/content/skills/_data/change-record.md
-      - packages/guidance/content/skills/_data/complexity-classification.md
-      - packages/guidance/content/skills/_data/concision.md
-      - packages/guidance/content/skills/_data/deployed-file-provenance.md
-      - packages/guidance/content/skills/_data/design-priorities.md
-      - packages/guidance/content/skills/_data/gh-body-file.md
-      - packages/guidance/content/skills/_data/git-commands.md
-      - packages/guidance/content/skills/_data/naming-conventions.md
-      - packages/guidance/content/skills/_data/pr-resolution.md
-      - packages/guidance/content/skills/_data/pr-source-resolution.md
-      - packages/guidance/content/skills/_data/recommendation-gradient.md
-      - packages/guidance/content/skills/_data/scope-and-deferral.md
-      - packages/guidance/content/skills/_data/spike-conventions.md
-      - packages/guidance/content/skills/_data/ticket-evaluation.md
-      - packages/guidance/content/skills/_data/ticket-id-extraction.md
-      - packages/guidance/content/skills/_data/ticket-source-resolution.md
-      - packages/guidance/content/skills/_data/title-templates.md
-      - packages/guidance/content/skills/_data/title-voice.md
-      - packages/guidance/content/skills/_data/work-types.json
-      - packages/guidance/content/skills/_partials
-      - packages/guidance/content/skills/add-test-ids
-      - packages/guidance/content/skills/align-ticket-with-implementation
-      - packages/guidance/content/skills/anti-patterns
-      - packages/guidance/content/skills/assess-ticket
-      - packages/guidance/content/skills/brainstorming
-      - packages/guidance/content/skills/capture-event
-      - packages/guidance/content/skills/capture-feedback
-      - packages/guidance/content/skills/capture-lede-decision
-      - packages/guidance/content/skills/classify-complexity
-      - packages/guidance/content/skills/collaborate
-      - packages/guidance/content/skills/condense-branch
-      - packages/guidance/content/skills/create-bitbucket-pr
-      - packages/guidance/content/skills/create-commit
-      - packages/guidance/content/skills/create-devlog
-      - packages/guidance/content/skills/create-gh-pr
-      - packages/guidance/content/skills/create-pr
-      - packages/guidance/content/skills/create-ticket
-      - packages/guidance/content/skills/derive-session-context
-      - packages/guidance/content/skills/design-and-plan
-      - packages/guidance/content/skills/development-workflows
-      - packages/guidance/content/skills/emit-event
-      - packages/guidance/content/skills/find-orchestration-savings
-      - packages/guidance/content/skills/get-ticket-id
-      - packages/guidance/content/skills/implement-plan
-      - packages/guidance/content/skills/kb-add
-      - packages/guidance/content/skills/kb-curate
-      - packages/guidance/content/skills/kb-edit
-      - packages/guidance/content/skills/kb-retrieve
-      - packages/guidance/content/skills/kb-retrieve-events
-      - packages/guidance/content/skills/kb-update-events
-      - packages/guidance/content/skills/merge-bb-pr
-      - packages/guidance/content/skills/merge-gh-pr
-      - packages/guidance/content/skills/merge-pr
-      - packages/guidance/content/skills/migrate-feedback-memories
-      - packages/guidance/content/skills/orchestrate
-      - packages/guidance/content/skills/orchestrate-dev
-      - packages/guidance/content/skills/orchestrate-review
-      - packages/guidance/content/skills/people-report
-      - packages/guidance/content/skills/plan
-      - packages/guidance/content/skills/plan-orchestrable-steps
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
-      - packages/guidance/content/skills/refine-plan
-      - packages/guidance/content/skills/respond-to-review
-      - packages/guidance/content/skills/review-bb-pr
-      - packages/guidance/content/skills/review-branch
-      - packages/guidance/content/skills/review-criteria
-      - packages/guidance/content/skills/review-gh-pr
-      - packages/guidance/content/skills/review-permissions
-      - packages/guidance/content/skills/review-pr
-      - packages/guidance/content/skills/revise-comments
-      - packages/guidance/content/skills/revise-prose
-      - packages/guidance/content/skills/save-artifact
-      - packages/guidance/content/skills/save-plan
-      - packages/guidance/content/skills/software-engineering
-      - packages/guidance/content/skills/streamline-guidance
-      - packages/guidance/content/skills/summarize-change
-      - packages/guidance/content/skills/summarize-chat
-      - packages/guidance/content/skills/systematic-debugging
-      - packages/guidance/content/skills/testing-conventions
-      - packages/guidance/content/skills/typescript-testing-conventions
-      - packages/guidance/content/skills/update-jira-ticket
-      - packages/guidance/content/skills/update-project-guidance
-      - packages/guidance/content/skills/upgrade-dependencies
-      - packages/guidance/content/skills/wrap-up
-      - packages/guidance/content/subagents
-      - packages/guidance/content/test-utils
+      - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
       - packages/guidance/schemas
@@ -1806,7 +1044,7 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
-      - packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+      - packages/guidance/content
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -1823,6 +1061,16 @@ rejections:
     file: packages/agents/src/commands/__tests__/install-guidance.unit.test.ts
     phrase: My own notes.
     ground: 'not the construction: `own` follows the possessive `My`, and the string is fixture data'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/content/skills/merge-pr/SKILL.md
+    phrase: Delegates own only execution
+    ground: "'own' is a verb whose object is a bare noun"
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-pr/SKILL.md
+    phrase: Delegates own only the platform-specific work
+    ground: '`own` is a verb whose object is a bare noun phrase ("the platform-specific work"), not a possessive missing its apostrophe'
   - rule: capitalization-after-colon
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-review.md
@@ -2100,11 +1348,6 @@ rejections:
     ground: a verbless label in a failure message
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
-    phrase: No hard line breaks
-    ground: a data literal that the test matches against the partial's text, not prose
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/__tests__/prose-line-breaks-reach.unit.test.ts
     phrase: No hard line breaks
     ground: a data literal (RULE_HEADLINE) that quotes the partial's heading, not prose
@@ -2113,11 +1356,6 @@ rejections:
     file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: "'no version'"
     ground: a verbless label in a rendered listing
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/__tests__/reviewer-partials.unit.test.ts
-    phrase: '**No self-disqualifying findings**'
-    ground: 'not prose: a literal that the test asserts appears in deployed content'
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/content/__tests__/rulebook-version-pins.unit.test.ts
@@ -2170,14 +1408,14 @@ rejections:
     ground: a verbless parenthetical list of topics
   - rule: negative-quantifier
     rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
+    phrase: no obscure abbreviations
+    ground: a verbless item in a parenthetical list, without a verb to negate
+  - rule: negative-quantifier
+    rule-version: '2'
     file: packages/guidance/content/scripts/__tests__/get_ticket_id_test.sh
     phrase: legacy comment, no value
     ground: a comment inside a YAML fixture that the test writes as data
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/scripts/__tests__/resolve_frontmatter_test.sh
-    phrase: 'No commit:'
-    ground: a verbless label naming the fixture state
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/content/skills/_data/artifact-conventions.md
@@ -2270,11 +1508,6 @@ rejections:
     ground: a verbless fragment listing what the title omits
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
-    phrase: '"single module with no downstream effects"'
-    ground: a quoted, verbless example
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/skills/_partials/next-steps-after-review.md
     phrase: '**No recommendation**'
     ground: a verbless bold label
@@ -2283,16 +1516,6 @@ rejections:
     file: packages/guidance/content/skills/add-change-record/SKILL.md
     phrase: '"No open pull request found for branch `{branch_name}`.'
     ground: a quoted message that the skill prints verbatim
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/skills/assess-ticket/SKILL.md
-    phrase: green means no concern and red means high concern
-    ground: plain as written; the user rejected the repair
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/skills/assess-ticket/SKILL.md
-    phrase: No concern
-    ground: a verbless table cell
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/content/skills/capture-feedback/SKILL.md
@@ -2350,11 +1573,6 @@ rejections:
     ground: a verbless labelled list item
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/skills/find-orchestration-savings/SKILL.md
-    phrase: '"No completed run found for this context"'
-    ground: a quoted message reported verbatim
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/skills/get-ticket-id/SKILL.md
     phrase: 'Error: No ticket ID found'
     ground: a verbless table cell quoting an error message
@@ -2380,34 +1598,14 @@ rejections:
     ground: a quoted stop message
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/skills/merge-pr/SKILL.md
-    phrase: '{"outcome":"stopped: no Bitbucket write path"}'
-    ground: a payload data literal
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/skills/migrate-feedback-memories/SKILL.md
     phrase: '**Retain**: No action.'
-    ground: a verbless label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/skills/orchestrate-dev/SKILL.md
-    phrase: Discretionary, no ticket.
-    ground: a verbless list fragment
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/skills/orchestrate-review/SKILL.md
-    phrase: '"No changes to review on this branch relative to the diff base."'
-    ground: a quoted error message
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/skills/orchestrate/SKILL.md
-    phrase: (if no companion)
-    ground: a verbless parenthetical inside a step label
+    ground: a verbless label, without a verb to negate
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/content/skills/people-report/SKILL.md
     phrase: '**No external calls**'
-    ground: a verbless label
+    ground: a verbless label, without a verb to negate
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/content/skills/refine-plan/SKILL.md
@@ -2423,6 +1621,11 @@ rejections:
     file: packages/guidance/content/skills/respond-to-review/SKILL.md
     phrase: '"no current evidence against"'
     ground: a quoted hedging phrase that the document quotes rather than composes
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/content/skills/respond-to-review/SKILL.md
+    phrase: A non-manager viewer emits no directReportsOnly narrowing
+    ground: 'code: a source comment inside the fenced code example that the skill shows'
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/content/skills/respond-to-review/SKILL.md
@@ -2490,11 +1693,6 @@ rejections:
     ground: a verbless list fragment
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/skills/update-jira-ticket/SKILL.md
-    phrase: No HTML surface.
-    ground: a verbless label
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/skills/update-project-guidance/SKILL.md
     phrase: '**No `<!-- rulebook:` marker.**'
     ground: a verbless bold constraint label
@@ -2520,106 +1718,6 @@ rejections:
     ground: a verbless table cell
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/subagents/_partials/coder-writes-review-scaffold.md
-    phrase: why no change was made
-    ground: inside a code-span output template
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/_partials/review-finding-actionability-gate.md
-    phrase: '"no action this PR"'
-    ground: a marked exhibit of wording to catch
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/_partials/review-finding-actionability-gate.md
-    phrase: '**No self-disqualifying findings**'
-    ground: a verbless bold label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-code-reviewer.md
-    phrase: '**No false positives**'
-    ground: a verbless bold label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-code-reviewer.md
-    phrase: 'If no findings:'
-    ground: a verbless label introducing an example
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-code-reviewer.md
-    phrase: No praise, no style nits outside project conventions
-    ground: a verbless list fragment
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-code-reviewer.md
-    phrase: see the "If no findings" example
-    ground: quotes the verbless label that stays
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-silent-failure-reviewer.md
-    phrase: '**No false positives**'
-    ground: a verbless bold label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-silent-failure-reviewer.md
-    phrase: No error-handling code in the change, or no findings
-    ground: a verbless list entry defining an enum value
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-silent-failure-reviewer.md
-    phrase: No praise, no generic advice
-    ground: a verbless list fragment
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: '(no authorship signal, or `authored-by-pipeline: false`)'
-    ground: a verbless parenthetical label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: '**No false positives**'
-    ground: a verbless bold label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: New critical functionality with no tests
-    ground: a verbless noun phrase in an enum-value list entry
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: New source code with no corresponding tests
-    ground: a verbless scope-list entry
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: No praise, no generic "add more tests" advice
-    ground: a verbless list fragment
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: No source files requiring test coverage in the change, or no findings
-    ground: a verbless list entry defining an enum value
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/code-simplification-reviewer.md
-    phrase: '**No false positives**'
-    ground: a verbless bold label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/code-simplification-reviewer.md
-    phrase: 'If no findings:'
-    ground: a verbless label introducing an example
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/code-simplification-reviewer.md
-    phrase: No praise, no style nits outside project conventions
-    ground: a verbless list fragment
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/code-simplification-reviewer.md
-    phrase: see the "If no findings" example
-    ground: quotes the verbless label that stays
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/subagents/entry-drafter.md
     phrase: A claim is no stronger than what the change delivers.
     ground: "not the construction: 'no' modifies a comparative adjective, not a noun"
@@ -2635,46 +1733,6 @@ rejections:
     ground: "not the construction: 'no' modifies a comparative adjective, not a noun"
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: No cross-cutting concerns
-    ground: a verbless criteria-list entry
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: No integration points affected
-    ground: a verbless criteria-list entry
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: No new dependencies or interfaces
-    ground: a verbless criteria-list entry
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: No new patterns introduced
-    ground: a verbless criteria-list entry
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: No empty placeholders, no "I didn't find anything to flag" notes.
-    ground: a verbless fragment
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: No extra features, no premature abstractions, no "while I'm here" improvements.
-    ground: a verbless fragment
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-reviewer.md
-    phrase: '**No false positives**'
-    ground: a verbless bold label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/orchestrated-reviewer.md
-    phrase: No praise, no style nits, no "consider doing X" without clear justification
-    ground: a verbless list fragment
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/subagents/prose-reviser.md
     phrase: '"publishes no build output"'
     ground: "a marked exhibit: the rule's own example"
@@ -2683,11 +1741,6 @@ rejections:
     file: packages/guidance/content/subagents/prose-reviser.md
     phrase: '"there''s no Vercel CLI"'
     ground: "a marked exhibit: the rule's own example"
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/content/subagents/savings-analyzer.md
-    phrase: '**zero-risk**: Pure waste, no quality impact'
-    ground: a verbless label definition
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/docs/revise-prose-helper.md
@@ -3234,55 +2287,10 @@ rejections:
     phrase: a function field answers per argument
     ground: the verb matches the noun that the interface's type names (`FakeGitAnswers`)
   - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/skills/_data/design-priorities.md
-    phrase: Convenience is paid once, at the moment of change.
-    ground: literal expense, paired with the sentence on correctness to state the doctrine's argument
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/skills/_data/design-priorities.md
-    phrase: Correctness determines what it costs to live with the system over its remaining life.
-    ground: '"cost" is literal expense here, and with the sentence on convenience it states the doctrine''s argument'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/skills/migrate-feedback-memories/SKILL.md
-    phrase: a needless capture dedups away on the next run
-    ground: the repair names no more of an actor than the original does; the skill does not state what removes the capture
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/skills/respond-to-review/SKILL.md
-    phrase: which is when that voice enters the comments
-    ground: the repair adds a hedge that the original does not make
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/skills/testing-conventions/mistakes.md
-    phrase: Treat timeout increases as a red flag that the test is doing unnecessary work
-    ground: 'a quoted record: a dated log entry'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: the bar that a proposed test must clear to earn its place
-    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: the bar that a proposed test must clear to earn its place
-    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/subagents/orchestrated-planner.md
-    phrase: the bar that a proposed test must clear to earn its place
-    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/subagents/planner.md
-    phrase: the bar that a proposed test must clear to earn its place
-    ground: 'settled corpus vocabulary: the same phrase names the coverage bar in testing-conventions, review-criteria, and four subagent bodies'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/content/subagents/planner.md
-    phrase: These go to the user for input.
-    ground: the repair would name the Risks and Questions sections as the destination, which the original leaves open; it may instead mean the return block
+    rule-version: '9'
+    file: packages/guidance/content/skills/assess-usability/SKILL.md
+    phrase: For each host that the product reaches
+    ground: "'reach' is used in its literal network sense (whether this machine can reach the host)"
   - rule: plain-speech
     rule-version: '6'
     file: packages/guidance/src/change-grammar/__tests__/parse.unit.test.ts
@@ -3920,11 +2928,6 @@ rejections:
     ground: 'not the construction: "superpowers extract" is a noun phrase, and "extract" is its head noun rather than a verb'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/__tests__/banned-codepoints.unit.test.ts
-    phrase: which option its reasoning belongs to
-    ground: 'not the construction: an embedded interrogative, not a relative clause on a head noun'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/__tests__/bash-invocation-conventions.unit.test.ts
     phrase: The call runs contained
     ground: 'not the construction: "runs" is the clause''s own verb and "contained" a participial complement'
@@ -3935,19 +2938,9 @@ rejections:
     ground: 'not the construction: "the read" is the subject of "expands", its own verb'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/__tests__/bash-invocation-conventions.unit.test.ts
-    phrase: Three conventions bind the Bash invocations
-    ground: 'not the construction: "bind" is the sentence''s own verb and "invocations" its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/__tests__/dispatch-block-scalars.unit.test.ts
     phrase: makes the caller the author of the facts
     ground: 'not the construction: object plus predicative complement of "makes"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/dispatch-block-scalars.unit.test.ts
-    phrase: which made the caller the author of the facts
-    ground: 'not the construction: object plus predicative complement of "made"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/dispatch-content-fences.unit.test.ts
@@ -3976,11 +2969,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
-    phrase: the way `sync` fills them
-    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
     phrase: they guard a body dropping off
     ground: 'not the construction: a verb with its object and a participle, no relative clause'
   - rule: reduced-object-relative
@@ -4006,23 +2994,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
-    phrase: every rule id that the library's rulebooks declare
-    ground: 'not the construction: the relativizer "that" is already present'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
-    phrase: leaves the subagent no id to report its sites under
-    ground: 'not the construction: an infinitival complement with no embedded finite subject'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: so the fold's rules leave it out
     ground: 'not the construction: "leave" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/reviewer-partials.unit.test.ts
-    phrase: with their shared partials fully inlined
-    ground: 'not the construction: an absolute `with` phrase whose head is a past participle, not a relative clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/shared-doctrine-reach.unit.test.ts
@@ -4141,13 +3114,13 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/_partials/README.md
-    phrase: use the partial's empty-slot defaults
-    ground: "not the construction: 'use' is an imperative verb with its object"
+    phrase: support entries are delivered
+    ground: 'not the construction: the verb belongs to the main clause'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: dependency no exported tier module imports
-    ground: a marked exhibit of the construction
+    file: packages/guidance/content/_partials/README.md
+    phrase: use the partial's empty-slot defaults
+    ground: "not the construction: 'use' is an imperative verb with its object"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/_partials/reduced-object-relative.md
@@ -4186,11 +3159,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/collections/recommended.md
-    phrase: dependency edges can extend
-    ground: 'not the construction: the relative clause already has "that"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/collections/recommended.md
     phrase: developer goes missing
     ground: 'not the construction: "goes" is the main verb of the clause'
   - rule: reduced-object-relative
@@ -4218,16 +3186,6 @@ rejections:
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: absent one falls
     ground: "not the construction: 'falls back' is the clause's own verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: assert an absence tolerate
-    ground: "not the construction: 'tolerate' is the sentence's own verb after the relative 'that assert an absence'"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: collection deploys unexamined
-    ground: "not the construction: 'deploys' is the clause's own verb"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
@@ -4281,13 +3239,13 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: three-backtick one depends
-    ground: "not the construction: the relative is pied-piped ('on which ... depends')"
+    phrase: support entries are delivered
+    ground: 'not the construction: the verb belongs to the subordinate clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: vetted collections may overlap
-    ground: "not the construction: 'overlap' is the clause's own intransitive verb"
+    phrase: three-backtick one depends
+    ground: "not the construction: the relative is pied-piped ('on which ... depends')"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
@@ -4355,11 +3313,6 @@ rejections:
     ground: 'not the construction: a verb and its object'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: let the developer choose
-    ground: 'not the construction: a causative verb with its object and infinitive'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/williamthorsen-tooling-preferences.md
     phrase: tool an agent reaches
     ground: 'not the construction: an embedded question with interrogative "which"'
@@ -4385,24 +3338,14 @@ rejections:
     ground: 'outside the rule: an adjunct relative on a time point, whose gap fills no argument position'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/guidance/shared/AGENTS.md
-    phrase: written it stays
-    ground: 'not the construction: a reduced adverbial clause followed by the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/scripts/resolve-frontmatter.sh
-    phrase: In production no extra args are needed beyond `--cwd`.
-    ground: 'not the construction: no relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/scripts/resolve-reviewer-context.sh
-    phrase: The script can't infer any package keys from it
-    ground: "not the construction: the candidate's verb is the sentence's own"
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/skills/_data/action-items.md
     phrase: first it separates
     ground: 'not the construction: the first is the object of In, and it is the subject of the main clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/action-items.md
+    phrase: formatting rules never applied
+    ground: "not the construction: `applied` is the sentence's own main verb"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/action-items.md
@@ -4421,6 +3364,16 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/artifact-conventions.md
+    phrase: artifact types listed
+    ground: 'not the construction: `listed` is a passive participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/artifact-conventions.md
+    phrase: branch's commits declared
+    ground: 'not the construction: a fused-head `what` clause, which does not take a relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/artifact-conventions.md
     phrase: clear the Insight gate
     ground: 'not the construction: clear is the verb, and the Insight gate is its object'
   - rule: reduced-object-relative
@@ -4436,8 +3389,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/artifact-conventions.md
-    phrase: first two read the script's
-    ground: 'not the construction: the first two is the subject of read'
+    phrase: edit one toward what has happened
+    ground: 'not the construction: a fused-head `what` clause with a subject gap'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/artifact-conventions.md
@@ -4476,6 +3429,11 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/change-record.md
+    phrase: branch's commits declared
+    ground: 'not the construction: "what" is a fused head, which does not admit a relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/change-record.md
     phrase: exactly one resolves
     ground: 'not the construction: exactly one is the subject of resolves in a conditional clause'
   - rule: reduced-object-relative
@@ -4493,6 +3451,11 @@ rejections:
     file: packages/guidance/content/skills/_data/change-record.md
     phrase: whenever the branch moves
     ground: 'not the construction: an adverbial clause, with no head noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/concision.md
+    phrase: signal it adds
+    ground: 'not the construction: "how much signal it adds" is an embedded question, not a relative clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/design-priorities.md
@@ -4516,8 +3479,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/pr-resolution.md
-    phrase: In ticket-only / direct mode it has no URL
-    ground: 'not the construction: "mode" ends a prepositional adjunct and "it" is the sentence''s subject'
+    phrase: mode it does not have
+    ground: 'not the construction: "mode" is the object of "In", and "it" is the main clause''s subject'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/pr-resolution.md
@@ -4546,23 +3509,18 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/recommendation-gradient.md
-    phrase: enables reuse across the next two call sites
-    ground: 'not the construction: a plain noun phrase'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_data/recommendation-gradient.md
-    phrase: the agent may still hold a strong evidence-based ranking
-    ground: 'not the construction: "hold" is the clause''s own verb with a full object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_data/scope-and-deferral.md
-    phrase: let the user choose
-    ground: 'not the construction: a causative complement'
+    phrase: one the test yields
+    ground: 'not the construction: "which one the test yields" is an embedded question'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/scope-and-deferral.md
     phrase: 'The wrap-up of ticket #466 raised six items.'
     ground: 'not the construction: the verb is the sentence''s own; the plain-speech repair of "surfaced" is recorded separately'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/ticket-source-resolution.md
+    phrase: covers the common case
+    ground: 'not the construction: an ordinary verb and object, followed by an overt "in which"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/ticket-source-resolution.md
@@ -4581,6 +3539,11 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/ticket-source-resolution.md
+    phrase: site it is signed
+    ground: 'not the construction: "whichever site" is a free relative (fused head), which does not admit a relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/ticket-source-resolution.md
     phrase: skill needs structured
     ground: 'not the construction: "needs" is the clause''s own verb'
   - rule: reduced-object-relative
@@ -4593,11 +3556,6 @@ rejections:
     file: packages/guidance/content/skills/_data/title-templates.md
     phrase: including a flag that another subcommand takes
     ground: 'not the construction: the relative already has "that" and "included" was a participle; the plain-speech recast is recorded separately'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_data/title-templates.md
-    phrase: leave a parse no boundary to split on
-    ground: 'not the construction: an infinitival relative with no embedded subject'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_data/title-templates.md
@@ -4620,9 +3578,24 @@ rejections:
     ground: 'not the construction: a possessive noun phrase object, with no relative clause'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/content/skills/_partials/gh-body-file.md
+    phrase: file it publishes
+    ground: "not the construction: 'given an empty file' is a participial phrase, and 'it publishes' is the main clause"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/gh-body-file.md
+    phrase: shell damages composed
+    ground: 'not the construction: a main verb with its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
     phrase: flaw I missed
     ground: 'a marked exhibit: quoted wording that the text displays as a reassurance that fails the test'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
+    phrase: not one does
+    ground: "not the construction: 'whether or not one does'"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
@@ -4631,13 +3604,23 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
+    phrase: plan leaves unsettled
+    ground: the relativizer 'that' is already there
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
     phrase: plan the option is
     ground: 'not the construction: "on a spike plan" is an adverbial and "the option" is the subject'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
-    phrase: rule 3 never fires
-    ground: 'not the construction: "fires" is the clause''s own verb'
+    phrase: sibling table's established
+    ground: 'not the construction: a possessive with an adjective'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/next-steps-after-plan.md
+    phrase: Split the ticket is the selected
+    ground: 'not the construction: an option title used as the subject'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-review.md
@@ -4666,6 +3649,11 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-review.md
+    phrase: recommendation rules do not indicate
+    ground: 'not the construction: a subject with its main verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
     phrase: source the implementation matches
     ground: 'not the construction: an embedded question ("which spec source the implementation matches")'
   - rule: reduced-object-relative
@@ -4686,12 +3674,17 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/option-format.md
-    phrase: let the markers alone convey
-    ground: 'not the construction: causative let with an infinitive complement'
+    phrase: answer the test yields
+    ground: "not the construction: an embedded question ('which answer the test yields'), not a relative clause"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/option-format.md
-    phrase: let the user choose
+    phrase: con its three pros
+    ground: "not the construction: a ditransitive 'give X Y'"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/option-format.md
+    phrase: let the markers alone convey
     ground: 'not the construction: causative let with an infinitive complement'
   - rule: reduced-object-relative
     rule-version: '1'
@@ -4710,9 +3703,19 @@ rejections:
     ground: 'not the construction: "pared down" is a participle'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/content/skills/_partials/plan-template.md
+    phrase: plan's tasks do not invoke
+    ground: the relativizer 'that' is already there
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/content/skills/_partials/ticket-and-plan-completeness.md
     phrase: make the same decisions
     ground: 'not the construction: a verb with a direct object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/ticket-and-plan-completeness.md
+    phrase: sweep's gaps are folded
+    ground: 'not the construction: a passive main clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/ticket-concision.md
@@ -4725,9 +3728,24 @@ rejections:
     ground: 'not the construction: a get-passive main clause'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/content/skills/_partials/ticket-criteria-conventions.md
+    phrase: criteria the corresponding updates
+    ground: 'not the construction: a prepositional phrase followed by the moved object'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/content/skills/_partials/ticket-placement.md
     phrase: column stays pinned
     ground: 'not the construction: a subject and verb in a main clause inside the After exhibit'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/add-change-record/SKILL.md
+    phrase: fence lines included
+    ground: 'not the construction: an absolute phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/add-change-record/SKILL.md
+    phrase: today it documents
+    ground: 'not the construction: an adverb, then a main clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/align-ticket-with-implementation/SKILL.md
@@ -4736,18 +3754,33 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/align-ticket-with-implementation/SKILL.md
+    phrase: ticket stays omitted
+    ground: "not the construction: 'stays' is the sentence's own verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/align-ticket-with-implementation/SKILL.md
     phrase: whichever criteria the implementation falsifies
     ground: 'outside the rule: a free relative headed by whichever, which admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/assess-ticket/SKILL.md
-    phrase: suggest the need may have changed
-    ground: "not the construction: 'suggest' is the clause's own verb taking a complement clause"
+    file: packages/guidance/content/skills/assess-usability/SKILL.md
+    phrase: developer the findings artifact's
+    ground: 'not the construction: a ditransitive with indirect and direct objects'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/assess-ticket/SKILL.md
-    phrase: work follows established
-    ground: "not the construction: 'follows' is the verb of the whether-clause"
+    file: packages/guidance/content/skills/assess-usability/SKILL.md
+    phrase: earlier lenses found
+    ground: "the relativizer is present: 'every screen that the earlier lenses found'"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/assess-usability/SKILL.md
+    phrase: lens uses seeded
+    ground: "not the construction: 'uses' is the main verb with 'every lens' as subject"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/assess-usability/SKILL.md
+    phrase: pass one lens's
+    ground: "not the construction: 'pass' is an imperative verb, not a head noun"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/brainstorming/SKILL.md
@@ -4758,6 +3791,11 @@ rejections:
     file: packages/guidance/content/skills/capture-event/SKILL.md
     phrase: event record's required
     ground: 'not the construction: a possessive noun phrase object of validates'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/capture-feedback/SKILL.md
+    phrase: repository the guidance came
+    ground: "outside the rule: 'whichever repository' is a free relative that does not admit a relativizer"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/capture-feedback/SKILL.md
@@ -4785,9 +3823,19 @@ rejections:
     ground: 'outside the rule: a free relative headed by whichever, which admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/content/skills/collaborate/SKILL.md
+    phrase: collect the surviving asks
+    ground: 'not the construction: verb plus object noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/content/skills/create-devlog/SKILL.md
     phrase: plus the devlog-specific extensions
     ground: 'not the construction: a coordinated noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/create-gh-pr/SKILL.md
+    phrase: step 3 already recorded
+    ground: "not the construction: 'step 3' is the subject of an 'unless' clause, not a relative clause"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/create-pr/SKILL.md
@@ -4801,8 +3849,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/create-pr/SKILL.md
-    phrase: the change summary's consolidated record
-    ground: 'not the construction: a possessive noun phrase'
+    phrase: wherever it is in the body
+    ground: a fused-head relative (wherever), which does not admit a relativizer
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/create-ticket/SKILL.md
@@ -4811,18 +3859,43 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/create-ticket/SKILL.md
+    phrase: available clients do not offer
+    ground: "not the construction: the clause's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/create-ticket/SKILL.md
     phrase: NOT the new ticket's
     ground: 'not the construction: a possessive noun phrase'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/create-ticket/SKILL.md
-    phrase: print both the parsed
-    ground: 'not the construction: a verb and its object'
+    phrase: ranks the creation clients
+    ground: "not the construction: a comparative 'as' clause with its own object"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/create-ticket/SKILL.md
-    phrase: ranks the creation clients
-    ground: "not the construction: a comparative 'as' clause with its own object"
+    phrase: report each link skipped
+    ground: 'not the construction: skipped is an object complement'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/create-ticket/SKILL.md
+    phrase: site it is signed
+    ground: fused-head relative (whichever site), which does not admit a relativizer
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/create-ticket/SKILL.md
+    phrase: step 4 did not decide
+    ground: 'not the construction: the relativizer that is present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/create-ticket/SKILL.md
+    phrase: step 6 did not create
+    ground: "not the construction: step 6 is the clause's subject"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/create-ticket/SKILL.md
+    phrase: step 6 did not resolve
+    ground: "not the construction: step 6 is the clause's subject"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/create-ticket/SKILL.md
@@ -4836,8 +3909,23 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/design-and-plan/SKILL.md
-    phrase: question this session is waiting
-    ground: "not the construction: 'which question this session is waiting on' is an embedded question, not a relative clause"
+    phrase: collect the surviving asks
+    ground: 'not the construction: verb and direct object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/design-and-plan/SKILL.md
+    phrase: launch prompts replace
+    ground: "not the construction: the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/design-and-plan/SKILL.md
+    phrase: not the relevancy check runs
+    ground: 'not the construction: whether-or-not clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/design-and-plan/SKILL.md
+    phrase: report the ticket's open blockers
+    ground: 'not the construction: verb and direct object'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/development-workflows/SKILL.md
@@ -4845,9 +3933,9 @@ rejections:
     ground: 'not the construction: a main clause'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/find-orchestration-savings/SKILL.md
-    phrase: present the top 3 findings
-    ground: 'not the construction: a verb and its object'
+    file: packages/guidance/content/skills/implement-plan/SKILL.md
+    phrase: become the first piece's
+    ground: 'not the construction: copular complement'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/implement-plan/SKILL.md
@@ -4866,6 +3954,11 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/implement-plan/SKILL.md
+    phrase: outcome a gate already asserts
+    ground: 'not the construction: the relative clause has the overt relativizer whose'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/implement-plan/SKILL.md
     phrase: report the actual results
     ground: 'not the construction: no relative clause'
   - rule: reduced-object-relative
@@ -4873,6 +3966,26 @@ rejections:
     file: packages/guidance/content/skills/implement-plan/SKILL.md
     phrase: review the work would need
     ground: 'not the construction: an embedded question ("how much review the work would need")'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/implement-plan/SKILL.md
+    phrase: run the plan's
+    ground: 'not the construction: verb and direct object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/implement-plan/SKILL.md
+    phrase: Split the branch is the selected
+    ground: 'not the construction: option name as subject of a copular clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/index-prototypes/SKILL.md
+    phrase: prototype they mean
+    ground: 'not the construction: an embedded interrogative (which prototype they mean)'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/index-prototypes/SKILL.md
+    phrase: whenever the developer says
+    ground: 'not the construction: adverbial clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/kb-add/SKILL.md
@@ -4896,22 +4009,12 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/kb-edit/SKILL.md
-    phrase: Operations that make no such change leave
-    ground: "not the construction: 'that' is already there and 'leave' is the main verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/kb-edit/SKILL.md
     phrase: The edited record's rendered frontmatter
     ground: 'not the construction: a possessive noun phrase'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/kb-edit/SKILL.md
     phrase: The helper rejects combined flags
-    ground: 'not the construction: a main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/kb-edit/SKILL.md
-    phrase: they become two separate invocations
     ground: 'not the construction: a main clause'
   - rule: reduced-object-relative
     rule-version: '1'
@@ -4955,24 +4058,34 @@ rejections:
     ground: 'not the construction: "keep" is the sentence''s own verb'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/merge-gh-pr/SKILL.md
-    phrase: call the GitHub refs
-    ground: 'not the construction: an imperative verb with its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
     phrase: as step 8 last resolved and the user approved
     ground: 'not the construction: an "as" clause with no lexical head'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
-    phrase: Never offer the merge while `defects` contains an entry.
-    ground: 'not the construction: a "while" adverbial clause with no object gap'
+    phrase: move the record ranked from the entries
+    ground: "not the construction: 'ranked' is a participle"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
     phrase: step 3 reads the PR's
     ground: 'not the construction: "reads" is the verb of its own clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/merge-pr/SKILL.md
+    phrase: step 6 then reports
+    ground: "not the construction: 'reports' is the main verb of the sentence"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/merge-pr/SKILL.md
+    phrase: the drafted one included
+    ground: 'not the construction: an absolute phrase with a participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/merge-pr/SKILL.md
+    phrase: whenever they choose
+    ground: 'outside the rule: an adverbial clause with a fused head, without a lexical head noun'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
@@ -5010,89 +4123,9 @@ rejections:
     ground: 'outside the rule: a fused-head adjunct with no lexical head noun'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate-dev/SKILL.md
-    phrase: effort those tiers still receive
-    ground: 'not the construction: "effort" is the object of "at", and "those tiers" is the subject of the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate-dev/SKILL.md
-    phrase: how much work the run may do
-    ground: 'not the construction: an embedded question headed by "how much"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate-dev/SKILL.md
-    phrase: run-summary contains deferred
-    ground: 'not the construction: "contains" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 4 batch's completed
-    ground: 'not the construction: a possessive with a participial adjective'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: change-summary artifacts produced
-    ground: 'not the construction: "produced" is a passive participle'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: file paths cited
-    ground: 'not the construction: "cited" is a passive participle'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: following reviewers identified
-    ground: 'not the construction: "identified" is the sentence''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: Phase 4 dispatch remains
-    ground: 'not the construction: "remains" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: re-run the reviewer-context assembly steps
-    ground: 'not the construction: a verb and its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: source files changed
-    ground: 'not the construction: "changed" is the table cell''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: use the freshly computed
-    ground: 'not the construction: a verb and its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: whenever the coder acted
-    ground: 'not the construction: an adverbial clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/SKILL.md
-    phrase: engine receives already-resolved
-    ground: 'not the construction: "receives" is the main verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/SKILL.md
-    phrase: model each subagent uses
-    ground: 'not the construction: an embedded question headed by "which"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/SKILL.md
-    phrase: write a reviewer-context sidecar
-    ground: 'not the construction: an imperative verb with its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/skills/people-report/SKILL.md
     phrase: given the available fields
     ground: 'not the construction: a prepositional "given" phrase'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/plan-orchestrable-steps/SKILL.md
-    phrase: Write the updated plan
-    ground: 'not the construction: an imperative verb and its object'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
@@ -5101,8 +4134,23 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: builder's five lines of distinctive ideas
+    ground: 'not the construction: a noun phrase without a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
     phrase: let the builder choose the instrument
     ground: 'not the construction: "let" is an imperative verb with a bare-infinitive complement'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: the copy rules named again
+    ground: "not the construction: 'named' is a participle"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: The idea goes into the design as it is.
+    ground: "not the construction: 'goes' is the main verb, and 'as it is' is an adverbial clause"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
@@ -5125,6 +4173,26 @@ rejections:
     ground: 'not the construction: "says" is the main verb of the "unless" clause'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/content/skills/prepare-prototype-brief/SKILL.md
+    phrase: walk only its open rows
+    ground: 'not the construction: a verb with its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/pull-from-backlog/SKILL.md
+    phrase: eligible open tickets left
+    ground: "not the construction: 'left' is a participle"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/pull-from-backlog/SKILL.md
+    phrase: the open tickets created since it
+    ground: "not the construction: 'created' is a participle"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/pull-from-backlog/SKILL.md
+    phrase: Which ticket the user works on next
+    ground: 'not the construction: an interrogative clause, not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/content/skills/refine-plan/SKILL.md
     phrase: plus the [plan provenance](../_data/artifact-conventions.md#plan-provenance) extensions
     ground: 'not the construction: a coordinated noun phrase'
@@ -5143,6 +4211,41 @@ rejections:
     file: packages/guidance/content/skills/refine-plan/SKILL.md
     phrase: plus the top-level canonical fields
     ground: 'not the construction: a coordinated noun phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/refine-plan/SKILL.md
+    phrase: report the ticket's open blockers
+    ground: 'not the construction: a verb with its object, not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/refine-prototype/SKILL.md
+    phrase: developer the working file's
+    ground: "not the construction: a ditransitive verb's two objects"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/refine-prototype/SKILL.md
+    phrase: keep the earlier versions
+    ground: 'not the construction: a verb with its object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/refine-prototype/SKILL.md
+    phrase: listing its accepted changes
+    ground: 'not the construction: the head is a participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/refine-prototype/SKILL.md
+    phrase: page the way a designer works
+    ground: "outside the rule: an adjunct relative on 'the way'"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/refine-prototype/SKILL.md
+    phrase: sketch a variant of a built
+    ground: 'not the construction: an imperative verb phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/refine-prototype/SKILL.md
+    phrase: version they have open
+    ground: "not the construction: an embedded question introduced by 'which', not a relative clause on a head noun"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/respond-to-review/SKILL.md
@@ -5206,6 +4309,11 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: timestamp it exits
+    ground: "not the construction: 'it exits' is the main clause after a prepositional phrase"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
     phrase: which criteria the specification compliance section marked in conflict with the implementation
     ground: 'not the construction: an embedded question, not a relative clause'
   - rule: reduced-object-relative
@@ -5235,11 +4343,6 @@ rejections:
     ground: 'not the construction: an embedded question with no head noun'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/revise-comments/SKILL.md
-    phrase: alongside the summary rather than repaired
-    ground: 'not the construction: "repaired" is a participle coordinated with "reported"'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/skills/revise-prose/SKILL.md
     phrase: On failure it contains
     ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
@@ -5248,11 +4351,6 @@ rejections:
     file: packages/guidance/content/skills/revise-prose/SKILL.md
     phrase: On success it contains
     ground: 'not the construction: the verb is the sentence''s own, with "it" as its subject'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/revise-prose/SKILL.md
-    phrase: whatever rule it names
-    ground: 'outside the rule: "whatever rule" is a fused head, which admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/revise-prose/SKILL.md
@@ -5301,11 +4399,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/summarize-change/SKILL.md
-    phrase: both cover the same facts
-    ground: 'not the construction: a verb and its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/summarize-change/SKILL.md
     phrase: the same invocation in step 1 already populated the manifest file
     ground: 'not the construction: "populated" is the clause''s own verb'
   - rule: reduced-object-relative
@@ -5330,6 +4423,16 @@ rejections:
     ground: 'outside the rule: "whatever the code now produces" is a fused relative'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/content/skills/triage-spike-findings/SKILL.md
+    phrase: artifact leaves undisposed
+    ground: 'not the construction: the relativizer "that" is present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/triage-spike-findings/SKILL.md
+    phrase: step 7 will create
+    ground: 'not the construction: the relativizer "that" is present'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/content/skills/typescript-testing-conventions/SKILL.md
     phrase: Each test should always run the same number of assertions
     ground: 'not the construction: a verb and its object'
@@ -5338,11 +4441,6 @@ rejections:
     file: packages/guidance/content/skills/update-jira-ticket/SKILL.md
     phrase: removes the evidence needed
     ground: 'not the construction: "needed" is a participle'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/update-jira-ticket/SKILL.md
-    phrase: the failure class remains unidentified
-    ground: 'not the construction: "remains" is the main verb'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/update-jira-ticket/SKILL.md
@@ -5401,11 +4499,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/wrap-up/SKILL.md
-    phrase: outside orchestration, this is the sole structured insight source
-    ground: 'not the construction: "is" is the main verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/wrap-up/SKILL.md
     phrase: post it with the call below
     ground: 'not the construction: a verb and its object'
   - rule: reduced-object-relative
@@ -5413,66 +4506,6 @@ rejections:
     file: packages/guidance/content/skills/wrap-up/SKILL.md
     phrase: whichever the user selected
     ground: 'outside the rule: a fused relative head that admits no relativizer'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/_partials/review-insight-gate.md
-    phrase: '"a thing I noticed" is not one'
-    ground: 'a marked exhibit: a quoted phrase that the sentence says does not qualify'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/_partials/review-insight-gate.md
-    phrase: the moment it implies a change to make now
-    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/_partials/review-writes-hard-gate.md
-    phrase: This guarantees a durable artifact exists at the canonical path
-    ground: 'not the construction: a that-complement of "guarantees", not a relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/_partials/review-writes-interim.md
-    phrase: the current findings appended under `### Findings`
-    ground: 'not the construction: "appended" is a participle modifying "findings"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-code-reviewer.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"; "turns" is the head noun, not a verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-silent-failure-reviewer.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: If you're not confident a test gap matters
-    ground: 'not the construction: a that-complement of "confident", not a relative clause with an object gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: no source files require test coverage
-    ground: 'not the construction: "require" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: no source files required test coverage
-    ground: 'not the construction: "required" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/code-simplification-reviewer.md
-    phrase: If you're not confident a simplification improves the code
-    ground: 'not the construction: a that-complement of "confident"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/code-simplification-reviewer.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/subagents/entry-drafter.md
@@ -5500,79 +4533,14 @@ rejections:
     ground: 'not the construction: a predicative adjective phrase and its complement'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: Changes affect many downstream consumers
-    ground: 'not the construction: "affect" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: No integration points affected
-    ground: 'not the construction: "affected" is a participle modifying the head'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: No new patterns introduced
-    ground: 'not the construction: "introduced" is a participle modifying the head'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-architect.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: During implementation you discovered that
-    ground: 'not the construction: "During implementation" is a prepositional phrase, and "you discovered" is the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: enumerate all finding IDs (F1, F2, W1
-    ground: 'not the construction: "enumerate" is the clause''s own verb and "IDs" its object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: Then write your final structured return block.
-    ground: 'not the construction: "structured" modifies "return block"; there is no relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-planner.md
-    phrase: confirm the approach aligns with established patterns
-    ground: 'not the construction: a that-complement of "confirm"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-planner.md
-    phrase: File paths where you write your plan artifacts
-    ground: 'not the construction: the clause is an adjunct relative introduced by "where", with no argument gap'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-planner.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-reviewer.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-reviewer.md
-    phrase: Which review iteration this is (1, 2, or 3)
-    ground: 'not the construction: an embedded interrogative clause, not a relative clause'
+    file: packages/guidance/content/subagents/handoff-reviewer.md
+    phrase: make the same decisions
+    ground: 'not the construction: a verb and its object'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/subagents/plan-reviewer.md
     phrase: Reserve your last 3 turns
     ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/plan-reviser.md
-    phrase: "Detect and preserve the original plan's format:"
-    ground: 'not the construction: "preserve" is the clause''s own verb'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/subagents/plan-reviser.md
@@ -5585,54 +4553,14 @@ rejections:
     ground: 'not the construction: "take" is the clause''s own verb'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/subagents/planner.md
-    phrase: a complex one might have 8-10
-    ground: 'not the construction: "one" is the subject of its own clause, with no relative clause after it'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/planner.md
-    phrase: Reserve your last 3 turns
-    ground: 'not the construction: an imperative whose object is "your last 3 turns"'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/subagents/prose-reviser.md
     phrase: not a detector covers
     ground: "not the construction: 'covers' is the verb of the clause 'whether or not a detector covers the rule', and 'not' is no head noun"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/subagents/savings-analyzer.md
-    phrase: If all review phases converged to `none`/`low` criticality
-    ground: "not the construction: the candidate's verb is the sentence's own"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/savings-analyzer.md
-    phrase: Were the right resources used?
-    ground: 'not the construction: an interrogative, not a relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/subagents/savings-analyzer.md
-    phrase: You analyze a completed orchestrated run
-    ground: 'not the construction: no relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/test-utils/comment-authoring-subagents.ts
-    phrase: a subagent added to one route and not the other
-    ground: 'not the construction: no relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/test-utils/list-governed-subagents.ts
-    phrase: covered the day it appears
-    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/test-utils/rule-markers.ts
     phrase: a malformed one reads as malformed
     ground: "not the construction: the candidate's verb is the sentence's own"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/test-utils/shared-doctrine-carriers.ts
-    phrase: covered the day it appears
-    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/test-utils/shared-doctrine-carriers.ts
@@ -7015,16 +5943,6 @@ rejections:
     ground: the expected output of the same fixture
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/__tests__/reviewer-partials.unit.test.ts
-    phrase: Then emit your structured return block.
-    ground: "not prose: an assertion literal quoting the deployed subagent body under test, and the pronoun there addresses the subagent's own executor"
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/reviewer-partials.unit.test.ts
-    phrase: your NEXT tool use MUST be a `Write` of the review scaffold
-    ground: "not prose: an assertion literal quoting the deployed subagent body under test, and the pronoun there addresses the subagent's own executor"
-  - rule: second-person
-    rule-version: '1'
     file: packages/guidance/content/__tests__/spec-inlining.unit.test.ts
     phrase: '**Never rank the options by your own elapsed time, round trips, or effort.**'
     ground: "not prose: a literal pinned to the option-format spec's own wording, which the assertion matches exactly"
@@ -7043,11 +5961,6 @@ rejections:
     file: packages/guidance/content/__tests__/spec-inlining.unit.test.ts
     phrase: This audit is bounded by your own edit
     ground: "not prose: a literal pinned to the diff-audit partial's wording"
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/_partials/comment-discipline.md
-    phrase: Apply all three to every comment that you write or keep.
-    ground: the pronoun names the agent that the partial instructs
   - rule: second-person
     rule-version: '1'
     file: packages/guidance/content/_partials/comment-discipline.md
@@ -7110,11 +6023,6 @@ rejections:
     ground: 'a marked exhibit: a quoted search example'
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: 'Two neighboring constructions fall outside the rule, each on a ground of its own: the fused head ("everything I know", "all you need"), which is its own relative pronoun and admits no relativizer, and the adjunct relative ("the reason it fails", "the way it works"), whose gap fills no argument position.'
-    ground: 'a marked exhibit: a quoted example of the fused head'
-  - rule: second-person
-    rule-version: '1'
     file: packages/guidance/content/_partials/technical-recommendations.md
     phrase: When unsure whether your knowledge is current, say so and look it up rather than presenting a possibly outdated approach as the answer.
     ground: the pronoun names the agent that the partial instructs
@@ -7151,21 +6059,6 @@ rejections:
   - rule: second-person
     rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: A menu is for a call that you cannot make.
-    ground: the pronoun names the agent that the ambient rulebook instructs
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: Asking is cheap for you and expensive for them.
-    ground: the pronoun names the agent that the ambient rulebook instructs
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: Elapsed time, round trips, and your effort are measured by you, and that measure counts the developer's context switch and review cycles as nothing, so measuring one does not make the call yours, and a more accurate measurement still cannot rank them.
-    ground: the pronoun names the agent that the ambient rulebook instructs
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
     phrase: Follow best practices and maintain high standards, avoiding any behavior that would endanger your reputation as a highly competent engineer.
     ground: the pronoun names the agent that the ambient rulebook instructs
   - rule: second-person
@@ -7185,26 +6078,6 @@ rejections:
     ground: the pronoun names the agent that the ambient rulebook instructs
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: 'This gate governs judgment asks alone: An ask that authorizes a consequential or hard-to-reverse action is theirs however confident you are, as is a templated next-steps menu.'
-    ground: the pronoun names the agent that the ambient rulebook instructs
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-collaboration-preferences.md
-    phrase: When the ranking follows from evidence that you hold -- correctness, a codebase convention, a governing document that already decided it, or a consequence that you can read in the code, such as coupling, review coherence, or total effort -- state the decision in one line with its reason and proceed, putting the rejected alternative in a clause rather than a numbered option.
-    ground: the pronoun names the agent that the ambient rulebook instructs
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-workflow-preferences.md
-    phrase: When the user asks "Did you do X?", answer the question.
-    ground: "a marked exhibit: the pronoun is inside the user's quoted question"
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-workflow-preferences.md
-    phrase: When work appears that the ticket didn't name, fold it into the current change by default; spin off a separate ticket only for an affirmative reason beyond the ticket's silence, and when you do, create it immediately rather than parking it in the conversation.
-    ground: the pronoun names the agent that the ambient rulebook instructs
-  - rule: second-person
-    rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
     phrase: '**The agentless passive.** Dropping the pronoun by hiding who acted trades one defect for another: "your rules are capped" becomes "the rules are capped", which names nobody.'
     ground: 'a marked exhibit: a quoted example of the failed substitution'
@@ -7220,14 +6093,14 @@ rejections:
     ground: 'a marked exhibit: a quoted example of the failed substitution'
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
-    phrase: 'If no actor belongs in the sentence, recast so that the artifact is the subject of a verb that it performs or one that states a relation, as plain speech requires: "the flag takes a path" rather than "you pass it a path".'
-    ground: 'a marked exhibit: the quoted wording that the rule replaces'
-  - rule: second-person
-    rule-version: '1'
     file: packages/guidance/content/skills/_data/action-items.md
     phrase: '"if you''d like…"'
     ground: 'a marked exhibit: a quoted soft offer in a list of examples'
+  - rule: second-person
+    rule-version: '1'
+    file: packages/guidance/content/skills/_data/action-items.md
+    phrase: '"is yours to run", "this one''s yours", "your part is"'
+    ground: 'quoted text: a marked list of soft-offer phrasings that the sweep looks for'
   - rule: second-person
     rule-version: '1'
     file: packages/guidance/content/skills/_data/action-items.md
@@ -7275,49 +6148,29 @@ rejections:
     ground: the pronoun names the agent that the doctrine instructs; the swept concision partial keeps this sentence verbatim
   - rule: second-person
     rule-version: '1'
+    file: packages/guidance/content/skills/_data/ticket-evaluation.md
+    phrase: until you trace it to a source
+    ground: the pronoun names the agent that the document instructs
+  - rule: second-person
+    rule-version: '1'
     file: packages/guidance/content/skills/_partials/bitbucket-delete-both-refusal.md
     phrase: remove the local branch yourself
     ground: the pronoun addresses the user in a refusal message that the agent relays, not a reader of documentation
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: See your classification guidance for details.
-    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    file: packages/guidance/content/skills/migrate-feedback-memories/SKILL.md
+    phrase: You do the judgment work
+    ground: the pronoun names the agent that the skill instructs
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 'Write your findings to: `{run-dir}/{NN}_code-reviewer_code-review.md`'
-    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    file: packages/guidance/content/skills/people-report/SKILL.md
+    phrase: Paste your employee data below, or provide a file path and I'll read it.
+    ground: a quoted message that the agent says to its user; the skill does not compose it as documentation
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 'Write your findings to: `{run-dir}/{NN}_code-simplification-reviewer_code-simplification-review.md`'
-    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 'Write your findings to: `{run-dir}/{NN}_silent-failure-reviewer_silent-failure-review.md`'
-    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 'Write your findings to: `{run-dir}/{NN}_test-reviewer_test-review.md`'
-    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 'Write your response to: `{run-dir}/{NN}_coder_change-summary.md`'
-    ground: 'outside the rule: the pronoun names the coder subagent that the prompt instructs'
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 'Write your review to: `{run-dir}/{NN}_reviewer_holistic-review.md`'
-    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: 'Write your review to: `{run-dir}/{NN}_reviewer_review.md`'
-    ground: 'outside the rule: the pronoun names the reviewer subagent that the prompt instructs'
+    file: packages/guidance/content/skills/people-report/SKILL.md
+    phrase: 'Your data appears to be missing: {missing fields}.'
+    ground: a quoted message that the agent says to its user; the skill does not compose it as documentation
   - rule: second-person
     rule-version: '1'
     file: packages/guidance/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
@@ -7581,25 +6434,8 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
-    phrase: |-
-      `isSkippedSkillEntry` is
-       * what `sync` applies, so a directive in a skill-local partial counts here only when a deployed body inlines it
-    ground: states a direct result, and the previous `so` is in another function's doc comment
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
-    phrase: and so the one that delivers the hooks that it declares to all of them
-    ground: states a direct result, and the repeat it was reported for was removed by an earlier repair
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
     phrase: Both assertions above read this one population, so neither can drift from the other
     ground: states a direct result, and the previous `so` is in another function's doc comment rather than in this paragraph
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
-    phrase: but declares no ${hook} hook, so a binding cannot reach it
-    ground: a lone `so` stating a direct result in its own assertion message, not a sentence in the paragraph that precedes it
   - rule: so
     rule-version: '1'
     file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
@@ -7609,11 +6445,6 @@ rejections:
     rule-version: '1'
     file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: field, so its dispatch does not take each batch's rules from the helper
-    ground: a lone `so` stating a direct result in its own assertion message
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
-    phrase: marker declares ${missing.join
     ground: a lone `so` stating a direct result in its own assertion message
   - rule: so
     rule-version: '1'
@@ -7632,24 +6463,9 @@ rejections:
     ground: a lone `so` stating a direct result in its own assertion message
   - rule: so
     rule-version: '1'
-    file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
-    phrase: so the sweeper meets a candidate under a rule not described by its own body
-    ground: a lone `so` stating a direct result in its own assertion message
-  - rule: so
-    rule-version: '1'
     file: packages/guidance/content/__tests__/rulebook-version-pins.unit.test.ts
     phrase: Every assertion above is negative, so a hash that stopped varying with the body would leave the suite green.
     ground: states a direct result, and the previous `so` is inside an assertion message rather than in this comment
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/shared-doctrine-reach.unit.test.ts
-    phrase: '`comment-discipline.md` opens with the same words, so the phrase stops at the verb that parts the two.'
-    ground: states a direct result; the `so` it repeated was repaired to "so that" just above, so this one is now a lone `so`
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/work-types-data.unit.test.ts
-    phrase: so the second `validate()` call is paid for only on the failure path
-    ground: a lone `so` that states a direct result
   - rule: so
     rule-version: '1'
     file: packages/guidance/content/__tests__/writing-preferences-reach.unit.test.ts
@@ -7658,28 +6474,13 @@ rejections:
   - rule: so
     rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: and a harness that declares no sigil is a type error at its `HarnessConfig` literal, so the build fails.
-    ground: the earlier uses are 'and so does', which stand for a clause and fall outside the rule; the remaining so states a direct result
+    phrase: and a harness that does not declare a sigil is a type error at its `HarnessConfig` literal, so the build fails.
+    ground: a lone clause-joining so that states a direct result; the nearby "so does" uses stand for a clause and fall outside the rule
   - rule: so
     rule-version: '1'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: the body checked is the expanded one, so an anchor authored in a `_partials/` file resolves against each artifact that inlines it
     ground: the nearby earlier so is 'and so does naming two', which stands for a clause and falls outside the rule; this lone so states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/scripts/__tests__/resolve_frontmatter_test.sh
-    phrase: previously omitted `--cwd`, so the deriver wrote to
-    ground: the only earlier `so` in reach is repaired to "so that", so this is a lone `so` stating a direct result of the omitted flag
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/scripts/get-ticket-id.sh
-    phrase: The greedy `[0-9]+` boundary stops at the first non-digit, so `.N` sub-ticket suffixes and `-description` suffixes are naturally truncated.
-    ground: the earlier `so` it repeated is a bare candidate repaired with "so that", so this is now a lone `so` stating a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/scripts/resolve-reviewer-context.sh
-    phrase: The script can't infer any package keys from it, so the entire lookup mechanism would silently no-op.
-    ground: every earlier `so` it repeated is a bare candidate repaired with "so that", so this is now a lone `so` stating a direct result
   - rule: so
     rule-version: '1'
     file: packages/guidance/content/skills/_data/artifact-conventions.md
@@ -7695,11 +6496,6 @@ rejections:
     file: packages/guidance/content/skills/_data/ticket-source-resolution.md
     phrase: When a base and a `ticket_id` are both known, the deriver seeds `ticket_url` by joining them, so a bare Jira-style reference resolves to a URL without a supplied one.
     ground: 'outside the rule: the only earlier so was a bare candidate repaired with "so that", which leaves a lone so stating a direct result'
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/skills/_data/title-templates.md
-    phrase: A `--scope` of `*` normalizes to no scope, so the sentinel never appears in a rendered title.
-    ground: the earlier so was a bare candidate repaired with "so that"; this lone so states a direct result
   - rule: so
     rule-version: '1'
     file: packages/guidance/content/skills/_data/title-templates.md
@@ -7732,11 +6528,6 @@ rejections:
     ground: the earlier so on line 69 is now 'so that', so this is a lone so after a comma that states a direct result
   - rule: so
     rule-version: '1'
-    file: packages/guidance/content/skills/merge-gh-pr/SKILL.md
-    phrase: Rebased commits retain their original messages, so the composed merge body has nothing to attach to.
-    ground: states a direct result, and no earlier clause-joining so remains within three sentences
-  - rule: so
-    rule-version: '1'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
     phrase: A Bitbucket fork's head cannot be fetched from `{remote}`, so fetch the base branch alone.
     ground: states a direct result, and no earlier clause-joining so remains within three sentences
@@ -7747,34 +6538,9 @@ rejections:
     ground: states a direct result, and no earlier clause-joining so remains within three sentences
   - rule: so
     rule-version: '1'
-    file: packages/guidance/content/skills/migrate-feedback-memories/SKILL.md
-    phrase: It resolves from `~/.agents/kb.yaml` independently of the working directory, so the capture writes the event to the same store wherever it runs.
-    ground: states a direct result, and no earlier clause-joining so remains within three sentences
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/skills/revise-comments/SKILL.md
-    phrase: Line numbers refer to the pre-edit file, so each row is checked against `git diff` output before the table is emitted
-    ground: the repair changes the conjunction and drops the stated reason rather than stating the omitted step
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/skills/summarize-change/SKILL.md
-    phrase: The empty set is a subset, so the comparison above passes
-    ground: states a direct result, and no earlier clause-joining so remains within three sentences
-  - rule: so
-    rule-version: '1'
     file: packages/guidance/content/skills/update-project-guidance/SKILL.md
     phrase: not against the repository root, so an include written in `.claude/CLAUDE.md` must point up
     ground: states a direct result, and no earlier clause-joining so remains within three sentences
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-planner.md
-    phrase: Not so small that they're trivial, not so large that they're hard to verify.
-    ground: 'outside the rule: a degree adverb, not a clause-joining connective'
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/content/test-utils/shared-doctrine-carriers.ts
-    phrase: reaches no subagent and so appears here under no key
-    ground: the earlier `so` it repeated was removed by a repair above, leaving four sentences before this one; it states a direct result
   - rule: so
     rule-version: '1'
     file: packages/guidance/scripts/test-utils/make-streamline-guidance-smoke-test.ts
@@ -8458,475 +7224,510 @@ rejections:
     phrase: which is where the walk has run out of ancestors
     ground: 'outside the rule: `where` names a place, the filesystem root'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/__tests__/bash-invocation-conventions.unit.test.ts
-    phrase: assign the variable inside the invocation where it genuinely runs as written.
-    ground: 'outside the rule: the word names a place, the invocation in which the assignment must sit'
+    phrase: A substitution runs the call inside the sandbox, where it fails on
+    ground: 'outside the rule: `where` names a place, the sandbox'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/__tests__/bash-invocation-conventions.unit.test.ts
-    phrase: back inside the sandbox, where it fails on
-    ground: 'outside the rule: the word names a place, the inside of the sandbox'
+    phrase: or assign the variable inside the invocation where it genuinely runs as written.
+    ground: 'outside the rule: `where` names a place, inside the invocation'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/__tests__/collection-dispositions.unit.test.ts
     phrase: A member is deployed only where its own collection is declared
-    ground: 'outside the rule: the word names the machines to which the member is deployed'
+    ground: 'outside the rule: `where` names a place, the machines on which the collection is declared'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/__tests__/content-path-conventions.unit.test.ts
     phrase: documentation naming where the canonical source is
-    ground: 'outside the rule: the word names a place, the location of the canonical source'
+    ground: "outside the rule: `where` names a place, the source's location"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/__tests__/dispatch-block-scalars.unit.test.ts
     phrase: 'One dispatch block: where it came from, and the lines between its fences.'
-    ground: 'outside the rule: the word names a place, the file and line the block came from'
+    ground: 'outside the rule: `where` names a place, the source file'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/__tests__/dispatch-content-fences.unit.test.ts
-    phrase: 'One fenced block: where it came from, what its info string is'
-    ground: 'outside the rule: the word names a place, the file and line the block came from'
+    phrase: 'One fenced block: where it came from, what its info string is, and the lines between its fences.'
+    ground: 'outside the rule: `where` names a place, the source file'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/__tests__/entry-drafter-contract.unit.test.ts
+    phrase: A commit body or a staged ticket often states where code was copied from and why the work is split across
+    ground: 'outside the rule: an indirect question about a source location, so `where` names a place'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/__tests__/entry-drafter-contract.unit.test.ts
+    phrase: where its code or values were copied from
+    ground: 'not prose: a string literal that the test asserts appears verbatim in subagents/entry-drafter.md; also names a place (a source location)'
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/__tests__/shared-doctrine-reach.unit.test.ts
     phrase: inside `<HARD-GATE>` blocks where a heading would be wrong
-    ground: 'outside the rule: the word names a place, the blocks'
+    ground: '`where` names a place: the position inside those blocks'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/__tests__/writing-preferences-reach.unit.test.ts
     phrase: each is asserted where it can be
-    ground: 'outside the rule: the word names a place, the test file in which each route can be asserted'
+    ground: '`where` names a place: the test file in which each route can be asserted, named next in the sentence'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/_partials/comment-discipline.md
-    phrase: So is any defense of the edit, any counterfactual whose other branch was never possible, and any narration of how or where the code is run.
-    ground: 'names a place: the location in which the code runs'
+    phrase: any narration of how or where the code is run
+    ground: where names a place
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/_partials/comment-discipline.md
-    phrase: 'The one-location test: Is this fact already documented where it belongs?** Then cut it.'
-    ground: 'names a place: the location in the documentation'
+    phrase: Is this fact already documented where it belongs?
+    ground: where names a place (the location of the documentation)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/_partials/plain-speech-calibration.md
-    phrase: 'Two edits belong to no case here: The "When" that replaces "Where" and the relativizer restored in "the action that it governs" come from the writing preferences, which a sweep applies in the same pass.'
-    ground: 'a marked exhibit: the quoted word is mentioned, not used'
+    phrase: The "When" that replaces "Where"
+    ground: the word is quoted, not composed
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/_partials/plain-speech-calibration.md
     phrase: Where the boundary below calls for a restatement, it lands at the step that produces the output.
-    ground: 'a marked exhibit: the Before paragraph of the worked example'
+    ground: "a marked exhibit: the worked example's Before text"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/_partials/plain-speech.md
+    phrase: it hides where the absence was observed
+    ground: where names a place (the scope of observation)
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/_partials/README.md
-    phrase: Declaring a hook is therefore safe anywhere; it simply does nothing where nothing can bind it.
-    ground: "outside the rule: parallels 'anywhere' and names the bodies in which a directive appears"
+    phrase: at the harness home root, where a source-tree-relative target names nothing
+    ground: names a place (the harness home root)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/_partials/README.md
+    phrase: expands to the platform home (e.g., `~/.claude`), where `scripts/` is deployed.
+    ground: names a place (the platform home)
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/_partials/README.md
     phrase: "Inside a partial: Marks where the caller's slot content is substituted."
-    ground: 'outside the rule: names the position in the partial at which slot content is substituted'
+    ground: names a place in the partial
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/_partials/README.md
+    phrase: it simply does nothing where nothing can bind it.
+    ground: names the bodies (places) in which a hook appears
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/_partials/README.md
     phrase: Its nesting is already visible where it is written.
-    ground: 'outside the rule: names the place in the host at which the heading is written'
+    ground: names a place
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/_partials/README.md
     phrase: Place every directive where the next host heading is at or above that level.
-    ground: 'outside the rule: names a position in the host document'
+    ground: names a position in the host body
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/_partials/README.md
-    phrase: That file is inlined into each harness's guidance file at the harness home root, where a source-tree-relative target names nothing, so the template-variable form is the only one that resolves to a file from there.
-    ground: "outside the rule: 'where' refers to the harness home root, a place"
+    phrase: 'the pipeline resolves both to where that file is deployed: A target naming a skill deployed by the same run resolves where that run wrote it'
+    ground: names deployment locations
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/_partials/README.md
-    phrase: This means a deeply nested partial can include a sibling partial without knowing where its caller is.
-    ground: "outside the rule: asks for the caller's location in the source tree"
+    phrase: without knowing where its caller is.
+    ground: names a location
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/collections/recommended.md
-    phrase: "Membership claims that an artifact was examined and found generally applicable: It names nothing specific to one author's environment, states no personal doctrine, declares its prerequisites where a reader looks before invoking, and deploys only where it works."
-    ground: 'both uses name a place: the location that a reader consults, and the environments to which the artifact deploys'
+    phrase: declares its prerequisites where a reader looks before invoking, and deploys only where it works
+    ground: 'both uses name a place: a location in the docs and a deployment environment'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/collections/triage.md
     phrase: The not-yet-examined collection, and where new content starts.
-    ground: 'names a place: the collection in which new content is placed'
+    ground: where names a place (where new content is first placed)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/collections/williamthorsen.md
-    phrase: An artifact that is deliberate but rarely wanted belongs outside every collection, declared directly where it is needed.
-    ground: 'names a place: the consumer in which the declaration is made'
+    phrase: declared directly where it is needed
+    ground: where names a place (the project or machine that needs it)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/cli-conventions.md
+    phrase: never to stdout, where they would be read as output
+    ground: names a place (the output stream)
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/cli-conventions.md
+    phrase: so that a reader can tell where a slow or failed run stopped
+    ground: names a place (the point in the run)
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/cli-conventions.md
+    phrase: so that it still works where it is read as Markdown, such as on a code host
+    ground: names a place (a code host)
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: declared directly where wanted
-    ground: 'outside the rule: names the projects in which the artifact is wanted'
+    phrase: including where one opens a link target.
+    ground: names a position in the body
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: Every rule below belongs to one of three classes, marked where it appears.
-    ground: 'outside the rule: names the place in the document at which each rule appears'
+    phrase: is anchored where that run wrote it
+    ground: names a location on disk
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: expand per harness, including where one opens a link target.
-    ground: 'outside the rule: names a position in the text, the start of a link target'
+    phrase: marked where it appears.
+    ground: names a place in the document
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: 'It deploys where it works:'
-    ground: 'outside the rule: names the deployment destinations, the harnesses'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: It is where new content starts, and it shrinks by promotion rather than growing.
-    ground: 'outside the rule: names a container, the collection in which new content starts'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: Its prerequisites appear where a reader looks before invoking, rather than appearing only on failure.
-    ground: 'outside the rule: names the place at which a reader looks'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: Name such a skill only where the surrounding text already scopes it to that harness.
-    ground: 'outside the rule: names the passages in the body at which the skill may be named'
+    ground: names a place in the text
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
-    phrase: One naming a skill delivered by the same run is anchored where that run wrote it
-    ground: 'outside the rule: names the location to which the run wrote the skill'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: Place every directive where the next host heading is at or above that level.
-    ground: 'outside the rule: names a position in the host document'
+    ground: names a position in the host body
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md
     phrase: the two trees whose source layout matches where they deploy under every harness home.
-    ground: 'outside the rule: names the deployment location under the harness home'
+    ground: names a location
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/live-worktree-policy.md
-    phrase: How a repository with a `live` worktree deploys, and where changes to it are authored.
-    ground: 'names a place: the worktree in which changes are authored'
+    phrase: and where changes to it are authored
+    ground: names a place (the worktree that is written to)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/live-worktree-policy.md
+    phrase: That worktree is named `{path}.live`, where `{path}` is the main worktree's path
+    ground: defines a placeholder in the preceding expression
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/readme-conventions.md
-    phrase: Detail about one symbol's behavior, such as its edge cases, its failure modes, and the reason for a rule that it enforces, belongs in that symbol's doc comment, where a caller reads it while using the symbol.
-    ground: 'names a place: the doc comment as the location a caller reads'
+    phrase: and where detail goes when it leaves
+    ground: names a place (the destination of moved detail)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/readme-conventions.md
-    phrase: Move the section, and leave a link where a reader looking for it would have found it.
-    ground: "names a place: the section's former location"
+    phrase: belongs in that symbol's doc comment, where a caller reads it while using the symbol
+    ground: names a place (the doc comment)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/readme-conventions.md
+    phrase: leave a link where a reader looking for it would have found it
+    ground: names a place in the README
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/readme-conventions.md
     phrase: One bootstrap command, and where each package's README is
-    ground: 'names a place: the location of each README'
+    ground: names a place; verbless table cell
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/readme-conventions.md
-    phrase: What belongs in a README, how its shape follows from what it describes, and where detail goes when it leaves.
-    ground: 'names a place: the destination file for detail'
+    phrase: where its entry points are
+    ground: names a place
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/readme-conventions.md
-    phrase: When agents are the only likely readers, the README states what the thing is and where its entry points are, and stops.
-    ground: 'names a place: the location of the entry points'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/shell-conventions.md
-    phrase: '`cd ""` returns 0 and leaves the working directory where it was, so a script whose directory variable came out empty runs on, and every later relative write goes to the invoking directory instead of the intended one.'
-    ground: "names a place: the working directory's location"
+    phrase: leaves the working directory where it was
+    ground: names a place (the directory)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
     phrase: Test helper code never belongs inside `__tests__/`, where it would go uncovered.
-    ground: 'names a place: the `__tests__/` directory'
+    ground: names a place (a directory)
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
-    phrase: 'Where code lives and what it is called, at three scales: the directory tree, the file, and the declarations inside it.'
-    ground: 'names a place: the location of code'
+    phrase: Where code lives and what it is called, at three scales
+    ground: names a place
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-code-layout-preferences.md
-    phrase: 'Where code lives and what it is called: source layout, test and helper placement, file naming, and declaration order.'
-    ground: 'names a place: the location of code'
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: '"`{NN+1}`, where `{NN}` is the run-summary sequence number"'
+    ground: a marked exhibit in the rule's own examples
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/guidance/rulebooks/williamthorsen-typescript-preferences.md
-    phrase: 'Two exceptions, each with a comment saying why: a TypeScript limitation in which the type is guaranteed but uninferable, such as `Object.keys()`; and test code, where precise typing of an external API would obscure the test.'
-    ground: 'names a place: "test code" names the test files in the codebase'
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: '"Fixes an issue where the report cut a subject"'
+    ground: a marked exhibit in the rule's own examples
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: '"the entry where `role` is `coder`"'
+    ground: a marked exhibit in the rule's own examples
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/scripts/__tests__/resolve-frontmatter.installed-layout.tool.test.ts
+    phrase: which places support entries where `sync` deploys them
+    ground: '`where` names a place: the location to which `sync` deploys support entries'
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/scripts/README.md
     phrase: where [title-templates.md](../skills/_data/title-templates.md#invoking-the-bundle) names the subcommand for each
-    ground: 'outside the rule: the clause follows the invocation expression and states what its `<subcommand>` placeholder stands for'
+    ground: follows an expression and states what its `<subcommand>` placeholder stands for
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/scripts/resolve-frontmatter.sh
-    phrase: matching where the bundled `derive-session-context` helper writes the manifest
-    ground: 'outside the rule: the word names a place, a filesystem path'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/action-items.md
     phrase: the observation stays in the prose, where it is signal; the ask moves to the block, where it can be found and answered
-    ground: 'names a place: the prose and the block are regions of the response, introduced by stays in and moves to'
+    ground: 'names a place: the prose and the block are locations in the response'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/artifact-conventions.md
     phrase: 'Where dropped content goes:'
-    ground: 'names a place: the destinations listed next, a follow-up ticket, a note, or a prose section'
+    ground: 'names a place: the destinations listed after the colon'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/artifact-conventions.md
-    phrase: where the enclosing path is not in view
-    ground: 'names a place: the places where the name is displayed, listed as an editor tab, a search result, and an export'
+    phrase: where it went
+    ground: 'names a place: the destination to which an item was sent'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/_data/change-record.md
-    phrase: where a reader who wants it
-    ground: "names a place: the change summary's frontmatter field, in which the list is found"
+    rule-version: '2'
+    file: packages/guidance/content/skills/_data/artifact-conventions.md
+    phrase: 'where the enclosing path is not in view: an editor tab, a search result, an export'
+    ground: names a place, as the places listed after the colon show
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/change-record.md
     phrase: Where the record is read
-    ground: names the places at which the record is read, as its sibling heading "Where the record is written" names the places at which it is written; the anchor is linked from merge-pr and title-templates
+    ground: 'outside the rule: names the places in which the record is read'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/change-record.md
     phrase: Where the record is written
-    ground: 'names a place: the surfaces listed in the table under the heading'
+    ground: 'outside the rule: names the places (surfaces) in which the record is written'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/concision.md
-    phrase: names where cut detail belongs
-    ground: 'names a place: the part of an artifact that receives the detail'
+    phrase: Each artifact's doctrine names where cut detail belongs.
+    ground: 'outside the rule: names a place'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/deployed-file-provenance.md
     phrase: where its source is
-    ground: 'names a place: the location of the source file'
+    ground: 'outside the rule: names a place'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/skills/_data/project-stage.md
+    phrase: where the work records its decisions
+    ground: "outside the rule: names the places that the colon then lists (a ticket's Context section, a design doc)"
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/recommendation-gradient.md
     phrase: Where these lists appear
-    ground: 'names a place: the position in a response'
+    ground: 'outside the rule: names a place'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/skills/_data/title-templates.md
+    phrase: '[Where the record is read](./change-record.md#where-the-record-is-read)'
+    ground: link text quoting another document's section heading, not composed prose
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/skills/_data/title-templates.md
     phrase: hides where the group begins
-    ground: 'names a place: a position in the subject'
+    ground: '`where` names a place: the position in the template string at which the group begins'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/_data/title-templates.md
-    phrase: resolved as [Where the record is read](./change-record.md#where-the-record-is-read) states
-    ground: 'not composed here: the word is in the quoted title of a linked section, which also recurs on line 300'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_partials/nested-list-indent.md
-    phrase: Markdown inside the repository, where the formatter in use sets the indent
+    phrase: It does not govern Markdown inside the repository, where the formatter in use sets the indent
     ground: 'names a place: inside the repository'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: belongs in the delta, where the user can strike it
-    ground: 'outside the rule: "where" names a place, the delta list in the rendered preview'
+    phrase: A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it.
+    ground: 'names a place: the delta rendered in the output'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/_partials/ticket-and-plan-completeness.md
     phrase: Where the gap came up in conversation does not decide where it goes.
-    ground: 'names a place: the point in the conversation and the artifact that receives the gap'
+    ground: 'both uses name a place: where in the conversation, and where in the artifacts'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/anti-patterns/SKILL.md
-    phrase: an external boundary where the real type can't be known
-    ground: 'names a place: a boundary location in the code'
+    rule-version: '2'
+    file: packages/guidance/content/skills/assess-usability/SKILL.md
+    phrase: Find where a product would lead its users to conclude that it is broken or unfinished.
+    ground: names places in the product (the screens and flows at which users conclude it is broken)
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/brainstorming/SKILL.md
-    phrase: '"Simple" projects are where unexamined assumptions cause the most wasted work.'
-    ground: 'vendored third-party text: the file is marked as extracted verbatim from the superpowers plugin, do not edit'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/create-ticket/SKILL.md
     phrase: 'Determine where to create the remote ticket:'
-    ground: 'names a place: the platform on which the ticket is created'
+    ground: 'where names a place: the platform on which to create the ticket'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/implement-plan/SKILL.md
-    phrase: It names where the author expected the work to need adaptation.
-    ground: 'outside the rule: "where" names places in the work, the areas that the Risks section lists'
+    rule-version: '2'
+    file: packages/guidance/content/skills/groom-backlog/SKILL.md
+    phrase: in each place below where `{scratch}` appears
+    ground: names a place in the text
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/implement-plan/SKILL.md
     phrase: The audience decides where a fact goes.
-    ground: 'outside the rule: "where" names a destination (the response, a commit body, a comment)'
+    ground: 'where names a place: the destination of a fact (response, commit body, artifact)'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/skills/index-prototypes/SKILL.md
+    phrase: such as where search lives or what the home screen shows
+    ground: where names a place in the prototype's interface
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/skills/kb-add/SKILL.md
     phrase: Ask the user where the note should go
-    ground: 'names a place: the destination knowledge base'
+    ground: 'the word names a place: the destination of the note'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
-    phrase: by the rules in [Where the record is read](../_data/change-record.md#where-the-record-is-read)
-    ground: a quoted heading of another document, used as link text
+    phrase: a protected default branch where they cannot be amended
+    ground: 'names a place: the branch to which the squash merge writes'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
-    phrase: by the rules in Where the record is read
-    ground: a quoted heading of another document, used as link text
+    phrase: by the rules in [Where the record is read]
+    ground: the text quotes the title of a heading in another document
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/merge-pr/SKILL.md
     phrase: When a line says where a field came from
-    ground: 'names a place: the origin of a field'
+    ground: an indirect question about origin, which names a place
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate-review/SKILL.md
-    phrase: (where `{merge-base-sha}` is resolved from `--diff-base` or the project's default branch)
-    ground: a definitional where, stating what a placeholder in the preceding expression stands for, which the developer accepts as standard
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/modules/review-cycle.md
-    phrase: (where N is the configured `max-review-rounds`)
-    ground: a definitional where, stating what a variable in the preceding expression stands for, which the developer accepts as standard
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/SKILL.md
-    phrase: (`{NN+1}` where `{NN}` is the run-summary sequence number;
-    ground: a definitional where, stating what a placeholder in the preceding expression stands for, which the developer accepts as standard
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/orchestrate/SKILL.md
-    phrase: '`{ code: bool, silent_failure: bool, test: bool }` where `false` means deactivate, `true` means always activate, absent means'
-    ground: a definitional where, stating what the values in the preceding expression stand for, which the developer accepts as standard
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/respond-to-review/SKILL.md
     phrase: Save into the same run directory where the review was found
-    ground: 'names a place: a directory'
+    ground: "outside the rule: 'where' names a place (a directory)"
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/review-branch/SKILL.md
-    phrase: "`{timestamp}-interactive` where timestamp matches this review's timestamp"
-    ground: a definitional where, stating what a placeholder in the preceding expression stands for, which the developer accepts as standard
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/review-criteria/SKILL.md
-    phrase: where dropped content goes
-    ground: 'names a place: the destination to which content is moved'
+    phrase: 'Full treatment, including where dropped content goes: finding scheme § Actionability gate.'
+    ground: "outside the rule: 'where' asks for a destination, a place"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/skills/testing-conventions/SKILL.md
+    phrase: as [Where a test goes](#where-a-test-goes) states
+    ground: cites a section title, which is not composed prose
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/skills/testing-conventions/SKILL.md
     phrase: Then ask where the expected result comes from.
-    ground: 'names a place: an interrogative asking where the result comes from'
+    ground: names a source or origin, which is a place sense
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/skills/testing-conventions/SKILL.md
+    phrase: Where a test goes
+    ground: a heading that names where a test is placed, which is a place sense
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/skills/triage-spike-findings/SKILL.md
+    phrase: where a disposition is a ticket or a comment that the artifact itself names
+    ground: defines a term in the expression before it
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/skills/triage-spike-findings/SKILL.md
+    phrase: with `(pending)` where a number is not yet known
+    ground: names positions in the rendered comment
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/skills/update-jira-ticket/SKILL.md
+    phrase: where it ranks among these
+    ground: names a position in the preference order, which is a place sense
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/skills/update-project-guidance/SKILL.md
     phrase: and where the rest goes
-    ground: 'names a place: the destination to which content goes'
+    ground: names a destination file, which is a place
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/update-project-guidance/SKILL.md
-    phrase: from where the importing file is
-    ground: 'names a place: the location of the importing file'
+    phrase: Derive the include from where the importing file is
+    ground: names a file location
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/skills/update-project-guidance/SKILL.md
+    phrase: Each command group states where to run it
+    ground: names a directory, which is a place
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/skills/update-project-guidance/SKILL.md
     phrase: Name where each one belongs
-    ground: 'names a place: the destination file for each recommendation'
+    ground: names a destination, which is a place
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/update-project-guidance/SKILL.md
-    phrase: states where to run it
-    ground: 'names a place: the directory in which to run the command'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/skills/update-project-guidance/SKILL.md
-    phrase: Unquantified prose is audited where the repo has moved under it, not everywhere.
-    ground: 'names a place: the sections of the file, in contrast with "everywhere"'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/wrap-up/SKILL.md
-    phrase: determines where it appears in the action menu
+    phrase: Each insight's destination determines where it appears in the action menu.
     ground: 'names a place: the position in the action menu'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/skills/wrap-up/SKILL.md
     phrase: Where to write
-    ground: 'names a place: the artifact path'
+    ground: 'names a place: the artifact path; a verbless heading'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-code-reviewer.md
-    phrase: '**Artifact directory**: Path where you write your output'
-    ground: 'outside the rule: the word names a place, a filesystem path'
+    rule-version: '2'
+    file: packages/guidance/content/subagents/disposition-challenger.md
+    phrase: Work in rounds, where a round is one turn of tool calls.
+    ground: defines a term in the expression before it
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-silent-failure-reviewer.md
-    phrase: '**Artifact directory**: Path where you write your output'
-    ground: 'outside the rule: the word names a place, a filesystem path'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/subagents/aspect-test-reviewer.md
-    phrase: '**Artifact directory**: Path where you write your output'
-    ground: 'outside the rule: the word names a place, a filesystem path'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/subagents/code-simplification-reviewer.md
-    phrase: '**Artifact directory**: Path where you write your output'
-    ground: 'outside the rule: the word names a place, a filesystem path'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/subagents/entry-drafter.md
-    phrase: an exception that the replacement throws where the predecessor returned
-    ground: 'outside the rule: the word names the point in the code path at which the predecessor returned'
+    phrase: "An entry's `text` arrives as `{type}: {passage}`, where `{type}` is a key in the taxonomy"
+    ground: defines a placeholder in the expression before it
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/subagents/entry-drafter.md
     phrase: Everything below says where the facts come from
-    ground: 'outside the rule: the word names a source, the locative use, inside an embedded question'
+    ground: 'names a place: the source of the facts'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-coder.md
-    phrase: cite where it appears in the API surface
-    ground: 'outside the rule: the word names a place, the location within the API surface'
+    rule-version: '2'
+    file: packages/guidance/content/subagents/entry-drafter.md
+    phrase: never "Fixes an issue where `foo` crashed on an empty input"
+    ground: 'a marked exhibit: the text quotes the form that it forbids'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-planner.md
-    phrase: '**Output paths**: File paths where you write your plan artifacts'
-    ground: 'outside the rule: the word names a place, a filesystem path'
+    rule-version: '2'
+    file: packages/guidance/content/subagents/entry-drafter.md
+    phrase: where its code or values were copied from
+    ground: 'names a place: the origin location of copied code'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/content/subagents/orchestrated-reviewer.md
-    phrase: '**Artifact directory**: Path where you write your output'
-    ground: 'outside the rule: the word names a place, a filesystem path'
+    rule-version: '2'
+    file: packages/guidance/content/subagents/handoff-reviewer.md
+    phrase: capped at 20, where a task is a `### Task` heading of a feature plan or an investigation step of a spike plan.
+    ground: defines a term in the expression before it
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/content/subagents/handoff-reviewer.md
+    phrase: Work in rounds, where a round is one turn of tool calls.
+    ground: defines a term in the expression before it
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/content/subagents/plan-reviewer.md
     phrase: '**Output path**: Where to write the review artifact'
-    ground: 'outside the rule: the word names a place, a filesystem path'
+    ground: 'names a place: the output location'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/subagents/plan-reviser.md
     phrase: '**Output path**: Where to write the refined plan'
-    ground: 'outside the rule: the word names a place, a filesystem path'
+    ground: 'names a place: the output location'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/content/subagents/prose-reviser.md
     phrase: The candidates tell you where to look first; they are not the assignment.
-    ground: 'outside the rule: where names a place, the locations in the files to look at'
+    ground: 'names a place: the sites to read first'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/subagents/usability-assessor.md
+    phrase: '**Where.** `{command line}, {style, NO_COLOR, TTY or pipe, and width when relevant}`.'
+    ground: a label that names the location of a finding
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/subagents/usability-assessor.md
+    phrase: '**Where.** `{route and control}, {viewport and theme when relevant}`.'
+    ground: a label that names the location of a finding
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/subagents/usability-assessor.md
+    phrase: an action offered on a page where it cannot complete
+    ground: 'names a place: the page'
   - rule: where
     rule-version: '1'
     file: packages/guidance/src/capture-lede-decision/__tests__/prepare-decision.unit.test.ts

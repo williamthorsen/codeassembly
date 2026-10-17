@@ -34,7 +34,7 @@ The library's behavior belongs in the library's docs. A helper's contract belong
 
 **4. The derivation test: Do the listed cases follow from one rule?** Then state the rule.
 
-A comment that enumerates the cases below it copies each case's own description, and the copy drifts: The enumeration keeps a name that the code has since renamed, or it places one case on both sides of a distinction. State the invariant that generates the cases, and let each case's own description carry its specifics. An exception is worth naming once, beside the rule.
+A comment that enumerates the cases below it copies each case's own description, and the copy drifts: The enumeration keeps a name that the code has since renamed, or it places one case on both sides of a distinction. State the invariant that generates the cases, and let each case's own description state its specifics. An exception is worth naming once, beside the rule.
 
 Tells: The same name appearing in two of the comment's lists, a run of backticked member names already documented at their own declarations below, and a list whose length tracks the number of members or branches below it.
 

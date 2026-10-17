@@ -52,7 +52,7 @@ const FORM_CONTRACT_PHRASES: ReadonlyArray<string> = [
 /**
  * Phrases fixing an entry's scope to the outcome rather than to the edit. When they are gone, "one entry" reads as one
  * edit, and the caller's audit may not merge the entries split by that reading. The drafter reads the whole diff, so
- * this rule is the only thing standing between it and an entry per hunk.
+ * this rule alone keeps it from writing an entry per hunk.
  */
 const GRANULARITY_PHRASES: ReadonlyArray<string> = [
   'either two outcomes',
@@ -289,7 +289,7 @@ describe('entry-drafter contract', () => {
     const message =
       'A drafter reading "one entry" as one edit splits a single outcome across entries, and the split survives the ' +
       'whole pipeline, since the audit may strike and correct but never merge. The drafter reads the whole diff, so ' +
-      'this rule is also what stops the entry list becoming an inventory of hunks. These ' +
+      'this rule also stops the entry list from becoming an inventory of hunks. These ' +
       `phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -334,7 +334,7 @@ describe('entry-drafter contract', () => {
 
     const message =
       'A redispatch hands the drafter a code and the passages that failed, so a code that the caller sends and this ' +
-      `file does not explain reaches a fresh context that cannot act on it. These codes are unexplained:\n  ${missing.join('\n  ')}`;
+      `file does not explain is sent to a fresh context that cannot act on it. These codes are unexplained:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -363,8 +363,8 @@ describe('entry-drafter contract', () => {
 
   it('states the rule for leaving true facts out', async () => {
     const message =
-      'The drafter’s body does not contain the shared concision rule, so this section is the whole of what tells it to ' +
-      'drop a fact. Deleting it leaves a drafter without any leave-out rule, and every suite stays green.';
+      'The drafter’s body does not contain the shared concision rule, so this section alone tells it to drop a ' +
+      'fact. Deleting it leaves a drafter without any leave-out rule, and every suite stays green.';
     expect(await EXPANDED, message).toContain(LEAVE_OUT_RULE_PHRASE);
   });
 
@@ -396,8 +396,8 @@ describe('entry-drafter contract', () => {
 
     const message =
       'An entry’s `migration` is the upgrade instruction that release notes render under its bullet, and this file ' +
-      'is the only one that tells the drafter when to write it. Without the trigger, a breaking entry reaches the ' +
-      `changelog without an instruction; without the omission, every entry grows one. These phrases are gone:\n  ${missing.join('\n  ')}`;
+      'is the only one that tells the drafter when to write it. Without the trigger, a breaking entry appears in the ' +
+      `changelog without an instruction; without the omission, the drafter writes one for every entry. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
 
@@ -471,9 +471,9 @@ describe('entry-drafter contract', () => {
 
     const message =
       'The lede is the whole of what a reader of `git log` gets, and nothing downstream shortens it or changes its ' +
-      'shape. The same reader reads the entries next, so a lede that restates them costs a second pass over the ' +
-      'same facts. Without the summary rule it gives each entry a sentence, without the one-sentence allowance it ' +
-      'fills a length as a budget, and without the prose rule it arrives as the entry list a second time. These ' +
+      'shape. The same reader reads the entries next, so a lede that restates them makes that reader read the ' +
+      'same facts twice. Without the summary rule it gives each entry a sentence, without the one-sentence allowance it ' +
+      'fills a length as a budget, and without the prose rule it repeats the entry list as a list. These ' +
       `phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
   });
@@ -491,7 +491,7 @@ describe('entry-drafter contract', () => {
 
   it('does not prescribe any connective phrase', async () => {
     const message =
-      `A form named in guidance is a form that the model emits, so "${PRESCRIBED_CONNECTIVE}" reaches the draft ` +
+      `A form named in guidance is a form that the model emits, so the model writes "${PRESCRIBED_CONNECTIVE}" into the draft ` +
       'wherever the drafter names it. A second outcome is a second bullet.';
     expect(await EXPANDED, message).not.toContain(PRESCRIBED_CONNECTIVE);
   });

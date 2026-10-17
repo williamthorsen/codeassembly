@@ -104,7 +104,7 @@ The lede summarizes the change, and the entries enumerate it. The same reader re
 
 - Prose, never a list, and never the entries retold one by one. A lede that gives each entry its own sentence is an inventory of the change rather than an account of it, whatever its form.
 - The first sentence states what the change does. Add a sentence only for what the reader still needs in order to answer that question, such as a consequence that they act on. A one-sentence lede is often complete, and none runs past three.
-- The lede reports the change as a whole. Where the entries serve one outcome, the lede names that outcome. Where the change has several outcomes, the lede leads with the one that the change is about and covers the rest in a clause at most.
+- The lede reports the change as a whole. When the entries serve one outcome, the lede names that outcome. When the change has several outcomes, the lede leads with the one that the change is about and covers the rest in a clause at most.
 - Each sentence is bound by the rules in "The form that your answer takes" that govern an entry's `text`: the opening verb, the unwritten subject, the plain verb, the backticked artifact, and the claim no stronger than what the change delivers.
 
 ## The form that your answer takes
@@ -126,7 +126,7 @@ These fix what an entry contains and how its `text` is written. None of them ran
 - `breaking` is `true` when the commit log marks the change breaking: a `!` on a commit subject's type, or a `BREAKING CHANGE:` footer in a commit body. It is `false` otherwise, and the diff is not evidence for it.
 - An entry that breaks a consumer, or that drops or deprecates published surface, declares a `migration`: one sentence addressed to the consumer, to which the subject test does not apply. Every other entry omits the key.
 - A `migration` names in the imperative the edit that the consumer makes. A sentence describing the resulting state is not an edit.
-- A migration also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws where the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
+- A migration also names any trap present in the replacement and not in the old path, such as a filter that the predecessor did not need or an exception that the replacement throws in a case in which the predecessor returned. Such a trap appears nowhere in the diff, so nothing else reveals it.
 - A migration states the edit and the trap and stops there, rather than working through an example for each call shape. One that overruns that bound links the package's versioned upgrade guide when the package has one.
 
 Do not go looking for the lede doctrine, and do not work from a remembered rule list. The doctrine is written for the author and the auditor who read your draft. Reading rules before you write turns the question into a checklist, and a checklist is answered by including everything it does not forbid.

@@ -11,11 +11,11 @@ version: '6'
 
 When work deserves more than one pull request, give each pull request its own ticket. When splitting a ticket into two, keep the first piece in the originating ticket. When splitting into more, make the originating ticket an umbrella.
 
-A piece earns a ticket when it ships and can be verified on its own, not when it looks large enough to deserve one. When the count is a judgment, cut finer: Merging two tickets that turned out to be one costs an edit and a close, while splitting one that turned out to be four costs a rewrite of the original, new children, a re-cut plan, and whatever was committed against the superseded contract.
+A piece gets its own ticket when it can be merged and verified on its own, not when it looks large enough to deserve one. When the count is a judgment, cut finer: Merging two tickets that turned out to be one costs an edit and a close, while splitting one that turned out to be four costs a rewrite of the original, new children, a re-cut plan, and whatever was committed against the superseded contract.
 
 This governs work already judged to need more than one pull request. Whether work discovered mid-change becomes a ticket at all is decided first by the fold-in default in [scope-and-deferral.md](../../skills/_data/scope-and-deferral.md).
 
-Record the relationships natively when the tracker supports them -- blockers, and parent to child -- rather than as prose in a body. Record a blocker when there is some probability that one ticket affects another and should land first, not only when that is certain: A ticket whose design takes another ticket's outcome as an input is blocked by it.
+Record the relationships natively when the tracker supports them -- blockers, and parent to child -- rather than as prose in a body. Record a blocker when there is some probability that one ticket affects another and should be merged first, not only when that is certain: A ticket whose design takes another ticket's outcome as an input is blocked by it.
 
 ## Counts in a ticket body
 

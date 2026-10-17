@@ -465,7 +465,7 @@ End
 
 It "warns to stderr when a bare number is resolved outside a git repository"
 # Run from a sibling directory that is not a repo, so that the prefix lookup falls back to the working
-# directory and announces the misanchor on stderr.
+# directory and reports the misanchor on stderr.
 run_outside_repo() {
   mkdir -p "$tmpdir/outside"
   cd "$tmpdir/outside"

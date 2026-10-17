@@ -35,7 +35,7 @@ Assess every dimension, by the procedure in [Assessment procedure](#assessment-p
 
 **Read a prior marker as context.** When `priorMarker` is not `null`, an earlier sweep assessed the ticket. State in `reason` what has changed since its `assessedAt`. Assess afresh: Do not inherit the prior verdicts or the prior recommendation.
 
-**Report an in-progress signal.** When `inProgress` is not `null`, assess as usual and recommend what the assessment supports; the dispatching skill holds the ticket for a human decision.
+**Report an in-progress signal.** When `inProgress` is not `null`, assess as usual and recommend what the assessment supports; the dispatching skill leaves the ticket for a human decision.
 
 **Use `sha` in the output.** It is the `{short SHA}` of the assessment's provenance line.
 
@@ -54,8 +54,8 @@ Choose one `recommendation`:
 - **`close-superseded`**: The motivation no longer applies: Other work met it, or the target no longer exists.
 - **`update`**: The ticket is worth doing, and its facts need syncing with the codebase.
 - **`revise`**: The ticket is worth doing, and its scope or approach needs rework.
-- **`split`**: The ticket bundles work that would ship separately.
-- **`escalate`**: The disposition turns on a judgment that the evidence cannot settle.
+- **`split`**: The ticket bundles work that would be merged separately.
+- **`escalate`**: The disposition depends on a judgment that the evidence cannot settle.
 
 **The half-met rule.** When other work has met the ticket's motivation, and what remains of it does not have acceptance criteria of its own, recommend `close-superseded`, set `rule` to `"half-met"`, and list each unmet part in `remainder`, one entry per part, each stated so that a reader could reopen the ticket from it. Otherwise `rule` is `null` and `remainder` is `[]`.
 
@@ -67,7 +67,7 @@ Choose one `recommendation`:
 
 Write the draft as the ticket's own text: State the problem, the outcome, and the acceptance criteria, and leave out the assessment's evidence and your reasoning, which the comment records.
 
-**Confidence.** `high` when the evidence settles the recommendation, `medium` when it supports the recommendation and leaves room for another, and `low` when it barely tips the balance. Only a `high` recommendation can be applied without a human decision.
+**Confidence.** `high` when the evidence settles the recommendation, `medium` when it supports the recommendation and leaves room for another, and `low` when it barely favors the recommendation over another. Only a `high` recommendation can be applied without a human decision.
 
 ## What you return
 

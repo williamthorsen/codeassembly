@@ -6,9 +6,9 @@ import { describe, expect, it } from 'vitest';
 import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { readContentFile } from '../test-utils/read-content-file.ts';
 
-// The `pull-request` and `merge` artifacts carry the record marker, which puts the prohibition in the file that an
+// The `pull-request` and `merge` artifacts contain the record marker, which puts the prohibition in the file that an
 // agent has open rather than only in the standing guidance that it may not have loaded. The other artifacts do not
-// carry one: `capture-lede-decision` reads those two bodies, and a rewrite of either corrupts the lede corpus
+// contain one: `capture-lede-decision` reads those two bodies, and a rewrite of either corrupts the lede corpus
 // silently.
 
 /** The marker's source of truth; every other statement of it must match this one byte for byte. */
@@ -40,7 +40,7 @@ const EXCLUDED_PREFIX = '__tests__/fixtures/';
 
 describe('record-marker reach', () => {
   describe.each(CARRIERS)('%s', (relativePath) => {
-    it('carries the marker, and every copy of it matches the partial', async () => {
+    it('states the marker, and every copy of it matches the partial', async () => {
       const marker = await readMarker();
       const expanded = await readContentFile(relativePath);
       const lines = expanded.split('\n').filter((line) => line.includes(MARKER_KEY));
@@ -85,7 +85,7 @@ async function listScannedFiles(): Promise<ReadonlyArray<string>> {
     .toSorted();
 }
 
-/** Reads the marker line that the partial states, which is the single source to which every carrier answers. */
+/** Reads the marker line that the partial states, which is the single source that every carrier must match. */
 async function readMarker(): Promise<string> {
   const partial = await readFile(path.join(CONTENT_ROOT, PARTIAL), 'utf8');
   return partial.trim();

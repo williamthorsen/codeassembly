@@ -87,7 +87,7 @@ When the recommendation rules do not indicate a preference, omit markers from bo
 #### Recommendation rules
 
 1. **Recommend "Update the acceptance criteria"**: The implementation's direction is deliberate and sound, so the criteria as written would lead a later reader to judge correct code wrong.
-2. **Recommend "Leave as-is"**: The review raised a finding on the conflicting behavior. The code is what is in question, and revising the contract to match it would hide the finding.
+2. **Recommend "Leave as-is"**: The review raised a finding on the conflicting behavior. The code is in question, and revising the contract to match it would hide the finding.
 3. **No recommendation** (omit markers from both options): The reviewer cannot tell whether the criteria or the implementation is the wrong one. The user decides.
 
 #### Marker strengths
@@ -277,11 +277,11 @@ Proposed edits to the source:
 Per the session-boundary rule, two options name a skill in the render:
 
 - **Ask the author to address the findings**: The author's disposition happens in another session. The separate line below the list names `respond-to-review` for the case in which that author is an agent.
-- **Wait for the author to address the findings, then re-review**: Names `review-branch` in the render, because the re-review runs after a wait that only the user can end. It has no "Clear context" prefix: The saved review records the findings, so the re-review works the same in this session or a fresh one.
+- **Wait for the author to address the findings, then re-review**: Names `review-branch` in the render, because the re-review runs after a wait that only the user can end. It does not have a "Clear context" prefix: The saved review records the findings, so the re-review works the same in this session or a fresh one.
 
 #### Recommendation rules
 
-Both variants share one cascade. Check the rules in order and stop at the first match. Every rule states a firing condition, and an option is never a default that fires for want of one: A conditionless option outranks a conditioned one in practice, however the conditions are worded.
+Both variants share one cascade. Check the rules in order and stop at the first match. Every rule states a firing condition, and an option is never a default that fires for lack of one: A conditionless option outranks a conditioned one in practice, however the conditions are worded.
 
 1. **Create a follow-up ticket**: Every open finding clears one of [`scope-and-deferral.md`](../_data/scope-and-deferral.md)'s affirmative reasons for spinning off, namely a genuinely separable concern, a materially different risk surface, size that would overwhelm the current change, or independent prioritization. "The ticket didn't mention it" is never such a reason. Absent an affirmative reason the fold-in default applies and the cascade continues.
 2. **Implement directly and commit**: Every open finding names a single change rather than a choice among alternatives, which are the two shapes that the [Proposed-change gate](../review-criteria/SKILL.md#proposed-change-gate) admits. Implementing forfeits the second look, and the single-change shape makes that acceptable: The fix's diff is the finding restated, so a reviewer would be re-reading text that the review already contains. One finding leaving its choice to the author is enough to fail this rule, however small the alternatives look, since implementing would settle it on the author's behalf.

@@ -96,7 +96,7 @@ Write the note body. Embed cross-references inline when the reference contribute
 
 ### 6. Present the proposal (default mode)
 
-In default mode, present the proposed KB, folder, Diátaxis label, title, tags, and body to the user. Name the domain that the folder matched, that domain's description, and the taxonomy file from which they came, so that the user can see what the placement was measured against. When the folder is a new domain, name it as new and propose the description that you will pass as `--domain-description`. When the survey reported an undeclared folder bearing on the choice, say so. Wait for confirmation or a redirect. In auto mode, skip this step.
+In default mode, present the proposed KB, folder, Diátaxis label, title, tags, and body to the user. Name the domain that the folder matched, that domain's description, and the taxonomy file from which they came, so that the user can see what the placement was measured against. When the folder is a new domain, name it as new and propose the description that you will pass as `--domain-description`. When the survey reported an undeclared folder relevant to the choice, say so. Wait for confirmation or a redirect. In auto mode, skip this step.
 
 <!-- include: ../_partials/action-items.md / -->
 

@@ -4,7 +4,9 @@ import { z } from 'zod';
 /** The outcomes of the challenge on one item. */
 export const CHALLENGE_OUTCOMES = ['abandoned', 'defended', 'modified'] as const;
 
-/** The confidence grades, which state how advisable an item is; only `high` and `medium` earn a ticket. */
+/**
+ * The confidence grades, which state how advisable an item is; only an item graded `high` or `medium` gets a ticket.
+ */
 export const CONFIDENCE_GRADES = ['high', 'low', 'medium'] as const;
 
 /** The dispositions that an item can take. */

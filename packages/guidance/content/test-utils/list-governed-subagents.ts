@@ -9,9 +9,10 @@ const EXEMPT_SUBAGENTS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Returns every subagent slug that the guidance library can govern, read from the directory so that one added later
- * is covered the day it appears. The reach tests derive their populations from this rather than from the declarations
- * under test: A list read from the directives would move with the bug, whereas the directory is independent of them.
+ * Returns every subagent slug that the guidance library can govern, read from the directory so that the tests cover
+ * one added later as soon as its file exists. The reach tests derive their populations from this rather than from
+ * the declarations under test: A list read from the directives would change along with the bug, whereas the
+ * directory is independent of them.
  */
 export function listGovernedSubagents(): ReadonlyArray<string> {
   return readdirSync(SUBAGENTS_DIR)

@@ -11,7 +11,7 @@ By default, fold into the current change the work that the ticket didn't name (a
 
 "The ticket didn't mention it" is never such a reason. When the discovered work addresses the same underlying problem, closing only the ticket-named part leaves the problem partially solved, so the discovered work is required, not optional.
 
-**Authority.** The agent recommends the disposition of discovered work and builds on the recommendation; the developer vetoes. A fold-in is provisional and surfaces at the ticket checkpoint with its reason. A spin-off creates remote state, so it is asked before the ticket is created. Never declare work "out of scope" as settled fact, and never drop discovered work without reporting it.
+**Authority.** The agent recommends the disposition of discovered work and builds on the recommendation; the developer vetoes. A fold-in is provisional, and the agent reports it at the ticket checkpoint with its reason. Because a spin-off creates remote state, the agent asks before creating the ticket. Never declare work "out of scope" as settled fact, and never drop discovered work without reporting it.
 
 **Feature responsibility.** When the current change introduces a feature, an avoidable user-visible defect caused by that feature is in-scope-by-default, a likely bug to fix here, not an automatic follow-up. Meeting the ticket's written acceptance criteria does not license merging a defect that the change itself introduced.
 

@@ -68,7 +68,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 2. **Evaluate the ticket on its merits**: Apply the criteria in [ticket evaluation](../_data/ticket-evaluation.md). When evaluation reveals a divergence from the ticket as written, recommend a disposition, build the design on it, and present the divergence at the ticket checkpoint; raise it earlier only when the design cannot proceed without the answer. Divergence includes scope that should grow: By default, fold work that the problem requires into this change rather than into a follow-up (see [scope-and-deferral](../_data/scope-and-deferral.md)).
 
-3. **Form the questions that the design turns on, and decide what the gate lets you decide.** The questions cover purpose and motivation, constraints and scope boundaries, and success criteria and edge cases. Answer each from the codebase, the ticket, and the [option format](#option-format) gate where you can, and record the answer as a decision taken, with its reason. Carry the asks that survive the gate forward to the ticket checkpoint in Phase 3; ask earlier only where the design cannot proceed without the answer, and prefer multiple choice when you do. Treat the declared stage as the premise of every security, availability, and infrastructure question, per [project stage](../_data/project-stage.md). Ask for each undeclared stage value: in this step when the design has such a question, since the answer decides it, and otherwise at the ticket checkpoint. The ticket's `## Context` states each premise that decided such a question, and the plan includes a task that declares each answered value.
+3. **Form the questions that the design turns on, and decide what the gate lets you decide.** The questions cover purpose and motivation, constraints and scope boundaries, and success criteria and edge cases. Answer each from the codebase, the ticket, and the [option format](#option-format) gate when you can, and record the answer as a decision taken, with its reason. Defer the asks that survive the gate to the ticket checkpoint in Phase 3; ask earlier only when the design cannot proceed without the answer, and prefer multiple choice when you do. Treat the declared stage as the premise of every security, availability, and infrastructure question, per [project stage](../_data/project-stage.md). Ask for each undeclared stage value: in this step when the design has such a question, since the answer decides it, and otherwise at the ticket checkpoint. The ticket's `## Context` states each premise that decided such a question, and the plan includes a task that declares each answered value.
    - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 
 **Important:** Do not use `{tool:AskUserQuestion}` or any interactive selector (pop-up, arrow-key, structured-choice) for multiple-choice questions. Ask the question as plain text in the message body, with options as a numbered list.
@@ -84,7 +84,7 @@ Invoke the `{skill:assess-ticket}` skill with the resolved ticket source and mod
 
 **Spike mode.** If this is a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md) in place of the skeleton below; everything else in this phase is unchanged.
 
-If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately and the design did not surface any changes, propose adopting it as-is at the checkpoint. Skip the rewrite. Only add or revise sections for which the design revealed gaps or shifts in understanding.
+If the source ticket already covers problem, context, proposed solution, and acceptance criteria adequately and the design did not reveal any changes, propose adopting it as-is at the checkpoint. Skip the rewrite. Only add or revise sections for which the design revealed gaps or shifts in understanding.
 
 When the ticket needs work, produce or update it to state the proposed approach:
 
@@ -142,7 +142,7 @@ Then save both artifacts:
 
    Run `{harness_home_dir}/scripts/resolve-frontmatter.sh --skill design-and-plan --interactive true` via Bash. Prepend the output verbatim to each artifact body. For a plan saved in a child's directory, append `--override ticket_id="{child_id}" --override ticket_ref="{child_ref}"` to the plan's invocation, so that its frontmatter names the child rather than the current branch's ticket.
 
-   Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, when the source was a remote ticket and the refined ticket does not differ from its body: the same condition under which the remote-issue offer below is not made. This records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). When the offer is made, omit it on both outcomes: On consent, the remote is written after the artifact is saved, so recency already prefers the remote, and a refusal leaves the snapshot genuinely newer.
+   Append `--extra copies_remote=true` to the ticket artifact's invocation, and to that one alone, when the source was a remote ticket and the refined ticket does not differ from its body: the same condition under which the remote-issue offer below is not made. This records that the saved body is a copy of the ticket of record; see [ticket frontmatter](../_data/artifact-conventions.md#ticket-frontmatter). When the offer is made, omit it on both outcomes: On consent, the remote is written after the artifact is saved, so the remote is already the more recent copy, and a refusal leaves the snapshot genuinely newer.
 
 3. Save both artifacts following `save-artifact` naming conventions:
    - Ticket: `{YYYYMMDD-HHMMSSZ}_{slug}_ticket.md`
@@ -190,7 +190,7 @@ Follow the options, output format, and recommendation rules in [next-steps optio
 - **YAGNI ruthlessly**: Cut unnecessary scope from designs
 - **Scale to complexity**: A simple task gets a short design and a short plan
 - **Plan for engineers, not transcribers**: Communicate decisions, not ceremony
-- **The ticket is the contract**: If facts on the ground differ from the plan, the ticket's acceptance criteria are the source of truth
+- **The ticket is the contract**: If the facts found during implementation differ from the plan, the ticket's acceptance criteria are the source of truth
 
 <!-- include: ../_partials/next-steps-after-plan.md / -->
 

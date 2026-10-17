@@ -17,7 +17,7 @@ const BACKSTORY_WHY_PHRASES: ReadonlyArray<string> = ['motivation and background
 
 /**
  * Phrases that a restored coverage mandate contains. The mandate required every fact in the lede to reappear in
- * `## Details` and forbade trimming either section, which together commissioned the prose re-rendering of the diff
+ * `## Details` and forbade trimming either section, which together required the prose re-rendering of the diff
  * that this pipeline was rebuilt to stop. Lowercased, so that a sentence's opening capital still matches.
  */
 const COVERAGE_MANDATE_PHRASES: ReadonlyArray<string> = [
@@ -27,9 +27,9 @@ const COVERAGE_MANDATE_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases holding the skill to recording the entries as data: writing them to a file, consolidating the change's
- * record from that file, and ending the body with the rendered block. Without all three the entries reach the pull
- * request as prose alone, which is the state that recording them replaced. Lowercased, so that a sentence's opening
+ * Phrases that require the skill to record the entries as data: writing them to a file, consolidating the change's
+ * record from that file, and ending the body with the rendered block. Without all three the pull request receives the
+ * entries as prose alone, which is the state that recording them replaced. Lowercased, so that a sentence's opening
  * capital still matches.
  */
 const ENTRY_RECORDING_PHRASES: ReadonlyArray<string> = [
@@ -51,8 +51,8 @@ const LEDE_SOURCE_PHRASES: ReadonlyArray<string> = [
 ];
 
 /**
- * Phrases that a restored type ask contains. The ask let a close call under the work-type test reach the developer,
- * who holds less of the evidence than the session that applied the test. Lowercased, so that a sentence's opening
+ * Phrases that a restored type ask contains. The ask passed a close call under the work-type test to the developer,
+ * who has less of the evidence than the session that applied the test. Lowercased, so that a sentence's opening
  * capital still matches.
  */
 const TYPE_ASK_PHRASES: ReadonlyArray<string> = ['ask the developer only when', 'genuinely close'];
@@ -89,7 +89,7 @@ describe('summarize-change contract', () => {
     const missing = ENTRY_RECORDING_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The block is where the entries reach the pull request as data, and the consolidated record that the ' +
+      'The block adds the entries to the pull request as data, and the consolidated record that the ' +
       'frontmatter records is derived from them. Dropping any of these steps leaves the entries as prose alone, ' +
       `which reads as a working change summary. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
@@ -106,8 +106,8 @@ describe('summarize-change contract', () => {
     const found = COVERAGE_MANDATE_PHRASES.filter((phrase) => text.includes(phrase));
 
     const message =
-      'The lede and the entries answer at different lengths for one change, so a mandate that each fact in the ' +
-      'first reappear in the second can only ask for more than the entries contain. That is what drew a prose ' +
+      'The lede and the entries describe one change at different lengths, so a mandate that each fact in the ' +
+      'first reappear in the second can only ask for more than the entries contain. That mandate produced a prose ' +
       `re-rendering of the diff. These phrases are back:\n  ${found.join('\n  ')}`;
     expect(found, message).toEqual([]);
   });
@@ -117,7 +117,7 @@ describe('summarize-change contract', () => {
     const missing = LEDE_SOURCE_PHRASES.filter((phrase) => !text.includes(phrase));
 
     const message =
-      'The lede reaches the pull request and the merge commit, and it was written in a fresh context for ' +
+      'The lede appears in the pull request and the merge commit, and it was written in a fresh context for ' +
       'the reader who meets the change without the entries. A skill left free to compose it writes a ' +
       `plausible one weighted by this session's judgment. These phrases are gone:\n  ${missing.join('\n  ')}`;
     expect(missing, message).toEqual([]);
@@ -165,8 +165,8 @@ describe('summarize-change contract', () => {
     ].toSorted();
 
     const message =
-      'Each dispatch runs a fresh context over the whole change, which is what the pipeline pays for. A second one ' +
-      'on the lede path doubles that cost to rework text that the first already wrote for the same reader. These ' +
+      "Each dispatch runs a fresh context over the whole change, which is the pipeline's main expense. A second one " +
+      'on the lede path doubles that expense to rework text that the first already wrote for the same reader. These ' +
       `subagents are dispatched:\n  ${dispatched.join('\n  ')}`;
     expect(dispatched, message).toEqual([...PERMITTED_SUBAGENTS].toSorted());
   });

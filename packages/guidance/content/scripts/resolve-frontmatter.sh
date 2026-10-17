@@ -462,7 +462,7 @@ emit_yaml_flow_list() {
 
 # Emits a top-level YAML flow list from items accumulated by `--extra-list-item`,
 # splitting on ASCII US rather than on `,` so that an item containing a comma
-# survives whole. Each item is quoted as `emit_yaml_flow_list` quotes its own.
+# stays whole. Each item is quoted as `emit_yaml_flow_list` quotes its own.
 emit_yaml_flow_list_items() {
   local key="$1" raw="$2"
   local out="" first=1 item

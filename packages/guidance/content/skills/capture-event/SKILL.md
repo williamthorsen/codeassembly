@@ -43,7 +43,7 @@ A value-bearing flag accepts both `--summary text` and `--summary=text`. The eve
 
 ### Store selection
 
-`--store` is required: Every capture names its destination. The helper resolves the store by registry name only. It never walks the working directory for a `.kb/` folder, so a capture goes to the named store and never to a project-local KB near which it happened to be invoked. The store must be registered in `kb.yaml`. Omitting `--store` is refused with an error that lists the registered stores rather than defaulting silently.
+`--store` is required: Every capture names its destination. The helper resolves the store by registry name only. It never walks the working directory for a `.kb/` folder, so a capture goes to the named store and never to a project-local KB near which it happened to be invoked. The store must be registered in `kb.yaml`. The helper refuses a capture that omits `--store`, with an error that lists the registered stores, rather than defaulting silently.
 
 Choose the destination deliberately. When the lesson is specific to a project, pass that project's KB with `--store <name>`. Only when the lesson is environment-level, meaning an observation or refinement that applies across every project in the current environment, send it to the registry's `default_kb` by passing `--store @default`. Selecting the default is an explicit act, not what happens when the flag is forgotten.
 
@@ -51,7 +51,7 @@ A caller whose destination is a configured role rather than a per-lesson judgmen
 
 ### Amending an event
 
-`--amend <id>` rewrites an existing capture in place (for example, an event that a `capture-feedback` pass got wrong). Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
+`--amend <id>` rewrites an existing capture in place (for example, an event that a `capture-feedback` pass got wrong). Prefer amending over capturing a near-duplicate. Amend always rewrites `summary` and the body from the invocation. It overwrites `--skill`, `--model`, `--tags`, or `--impact` only when you pass that flag; any that you omit keep their existing value, as do the provenance fields (`id`, `captured-at`, `session`, `cwd`, `repo`, `harness`) and any `addressed-by` marks. To clear a curatorial field rather than edit content, use its `kb-update-events` mutator.
 
 Amend is a plain in-place edit and does not consult push state. To correct an event that may already have been shared, prefer appending a supersession with `kb-update-events --add-addressed-by` over rewriting it, so that the correction becomes a new record rather than a change to history.
 

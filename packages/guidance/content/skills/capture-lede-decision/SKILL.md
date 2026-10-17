@@ -6,7 +6,7 @@ user-invocable: true
 
 # Capture a lede decision
 
-Record how good the lede in the merged pull request is. A bundled helper does the mechanical work: It reads the lede that the agent published and the lede that merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present what shipped and relay the author's rating.
+Record how good the lede in the merged pull request is. A bundled helper does the mechanical work: It reads the lede that the agent published and the lede that was merged from the ticket's own artifacts, fingerprints the doctrine that applied to the first, and writes one event record. You present what was merged and relay the author's rating.
 
 Every lede decision belongs to one corpus, the `codeassembly` event store, whichever repository the pull request merged in. The helper targets it without being told, so a caller never chooses a destination.
 
@@ -14,11 +14,11 @@ Every lede decision belongs to one corpus, the `codeassembly` event store, which
 
 ## What the rating grades
 
-The rating grades the lede in the merged pull request, whichever hand wrote it: the merged lede when the author rewrote it before merge, and the agent's lede when it was merged as written. It is one of five levels, lowest to highest:
+The rating grades the lede in the merged pull request, whoever wrote it: the merged lede when the author rewrote it before merge, and the agent's lede when it was merged as written. It is one of five levels, lowest to highest:
 
 `poor`, `adequate`, `good`, `strong`, `exemplary`
 
-The middle of the scale is what the corpus most needs and most easily loses: a lede good enough that editing it is not worth the time, and not good enough that the author wants their imprimatur on it. Record such a lede at the level that it deserves rather than rounding it up.
+The corpus most needs ratings from the middle of the scale, and those are the ratings most easily lost: a lede good enough that editing it is not worth the time, and not good enough that the author wants their imprimatur on it. Record such a lede at the level that it deserves rather than rounding it up.
 
 The verdict, `accepted` or `revised`, is not asked. The helper derives it from whether the two ledes differ and records it beside the rating.
 
@@ -82,7 +82,7 @@ On `ok: false`, report the `message` on one line and stop. The merge has already
 
 On `store.reachable: false`, report `store.message` on one line and stop here, before presenting anything. The skill cannot reach the corpus, so it cannot record a decision; asking for one would spend the author's attention on an answer that this skill would then discard.
 
-### 3. Present what shipped and ask
+### 3. Present what was merged and ask
 
 Read `episode.differ`. When it is `true`, show the agent's lede and the merged lede; when it is `false`, show the single lede. Then ask for a rating of the lede in the merged pull request, adding a comment if the author wants to say what was wrong:
 

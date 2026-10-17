@@ -10,8 +10,8 @@ import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 // the version that it declares. Nothing else ties that version to the calibrated rule, so a rule edit would otherwise
 // leave every repository recorded as swept against a rule that has since changed.
 //
-// The pins below are what force the look. An edit to either file fails this suite until the author decides which of
-// the two remedies applies, and the failure message states both.
+// The pins below force an author to check the version. An edit to either file fails this suite until the author
+// decides which of the two remedies applies, and the failure message states both.
 
 const CALIBRATION = '_partials/plain-speech-calibration.md';
 const RULE = '_partials/plain-speech.md';

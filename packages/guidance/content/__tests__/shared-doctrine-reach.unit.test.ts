@@ -11,12 +11,12 @@ import { readContentFile } from '../test-utils/read-content-file.ts';
 import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers.ts';
 
 // `guidance/shared/AGENTS.md` installs unconditionally, so every interactive session receives all of it. Because a
-// subagent runs on its own system prompt and does not load any guidance file, a section that its role's work needs
-// reaches it only by being inlined. Both hosts source the text from one partial, and these assertions are what keep a
-// copy from creeping back into either.
+// subagent runs on its own system prompt and does not load any guidance file, it receives a section that its role's
+// work needs only when the section is inlined. Both hosts source the text from one partial, and these assertions keep
+// either host from regaining a copy of its own.
 
-// One section per entry in SECTIONS runs the restatement check, and each pass reads every authored Markdown file in
-// the tree. Reading them once here holds the whole suite to a single pass.
+// The restatement check runs once per entry in SECTIONS, and each pass reads every authored Markdown file in the
+// tree. Reading them once here limits the whole suite to a single pass.
 const CONTENT_FILES = readContentFiles();
 
 /**
@@ -27,7 +27,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   'code-descriptions': {
     headline: '## Code descriptions',
     // Pins the rule's universality, so that a restored carve-out fails. `comment-discipline.md` opens with the same
-    // words, so the phrase stops at the verb that parts the two.
+    // words, so the phrase stops at the verb at which the two differ.
     phrases: ['Every function, method, class, and component gets', 'In languages with doc-tag conventions'],
   },
   'code-style': {
@@ -41,7 +41,8 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   concision: {
     headline: '## Concision',
     // `skills/_data/concision.md` states the full principle that this section summarizes, and the two share sentences.
-    // These are the summary's own, so the single-statement check below reads as a duplicate rather than the pairing.
+    // These are the summary's own, so the single-statement check below would report a duplicate rather than accept the
+    // pairing.
     phrases: [
       "then wastes the reader's attention and hides the signal",
       'Lead with the minimal skeleton and add a sentence only when it changes what the reader does',
@@ -87,7 +88,9 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   },
 };
 
-/** The shared file's sections in source order, each with a phrase proving its body arrived rather than its heading. */
+/**
+ * The shared file's sections in source order, each with a phrase proving that its body rendered, not only its heading.
+ */
 const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string }> = [
   { heading: '## Interactive work', phrase: 'Invoke the `collaborate` skill when working interactively' },
   { heading: '## Style', phrase: 'fill new comments to its `max_line_length`' },
@@ -124,7 +127,7 @@ describe('shared-doctrine reach', () => {
   describe.each(Object.entries(SECTIONS))('%s', (name, { headline, phrases }) => {
     const carriers = SHARED_DOCTRINE_CARRIERS[name] ?? [];
 
-    it.each(carriers)('reaches %s', async (slug) => {
+    it.each(carriers)('is inlined into %s', async (slug) => {
       const expanded = await expandSubagent(slug);
 
       for (const phrase of phrases) {
@@ -133,7 +136,7 @@ describe('shared-doctrine reach', () => {
       expect(countOccurrences(expanded, headline)).toBe(1);
     });
 
-    it('does not reach any subagent that the section does not govern', async () => {
+    it('is not inlined into any subagent that the section does not govern', async () => {
       const others = listGovernedSubagents().filter((slug) => !carriers.includes(slug));
       const violations: Array<string> = [];
 
@@ -143,7 +146,7 @@ describe('shared-doctrine reach', () => {
         }
       }
 
-      const message = `${name} does not govern any part of these subagents' work, and each line of it is weight that they pay at every invocation:\n  ${violations.join('\n  ')}`;
+      const message = `${name} does not govern any part of these subagents' work, and each line of it adds tokens to every invocation of them:\n  ${violations.join('\n  ')}`;
       expect(violations, message).toEqual([]);
     });
 
@@ -168,8 +171,8 @@ describe('shared-doctrine reach', () => {
     });
   });
 
-  // These sections serve the interactive session as well as the subagent. A section pulled into a partial and wired
-  // only to subagents would silently strip doctrine from every interactive session; nothing else catches it.
+  // These sections serve the interactive session as well as the subagent. A section moved into a partial and included
+  // only by subagents would silently strip doctrine from every interactive session; nothing else catches it.
   describe.each(HARNESS_GUIDANCE)('%s', (relativePath) => {
     it('renders every shared section once, in source order', async () => {
       const lines = (await readContentFile(relativePath)).split('\n');

@@ -1,6 +1,6 @@
 # Branch currency
 
-A branch whose base is behind the remote's default branch gets designed, planned, or implemented without the changes that the default branch has gained since. Check the branch before such work starts, so that the gap surfaces while it is still cheap to close.
+A branch whose base is behind the remote's default branch gets designed, planned, or implemented without the changes that the default branch has gained since. Check the branch before such work starts, so that the check reveals the gap while it is still cheap to close.
 
 ## When to check
 
@@ -16,7 +16,7 @@ Pass one `--path` for each file or directory that the work touches, relative to 
 
 ## Acting on the result
 
-**`fetched: false`.** Report in one line that the branch check did not run, with the `error`, and continue. Never report the branch as current. Where the `consult-sandbox-conventions` skill is deployed, consult it before reading the error as a missing credential or an unreachable network.
+**`fetched: false`.** Report in one line that the branch check did not run, with the `error`, and continue. Never report the branch as current. When the `consult-sandbox-conventions` skill is deployed, consult it before reading the error as a missing credential or an unreachable network.
 
 **`behind: 0`.** Say nothing.
 

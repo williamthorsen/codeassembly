@@ -8,12 +8,12 @@ import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 import { readContentFile } from '../test-utils/read-content-file.ts';
 
-// `gh` accepts `--body-file ""` without complaint and publishes its own default body, so a call site that reaches
+// `gh` accepts `--body-file ""` without complaint and publishes its own default body, so a call site that invokes
 // the CLI with an unset path fails silently. The contract binds only when it is already in context as the call is
 // composed. Each carrier inlines it rather than linking to it, for the reason given by the `_partials` README: A
-// runtime link is an optional read, and the model fills from its prior instead.
+// runtime link is an optional read, and the model falls back on its prior instead.
 
-/** The one file permitted to state the contract; every carrier reaches it through an include. */
+/** The one file permitted to state the contract; every carrier includes it. */
 const PARTIAL = 'skills/_partials/gh-body-file.md';
 
 /** The contract's opening, which the single-statement counts key on. */
@@ -31,14 +31,13 @@ const CONTRACT_PHRASES: ReadonlyArray<string> = [
 
 /**
  * A body-file argument and the variable that it passes; `acli` names the description flag on its create call, and
- * `describe-change.mjs` names the pull-request body `--pr-body-file`. Capturing the variable is what ties the guard to
- * the path that the call actually passes, rather than to any guard that the block happens to carry: A carrier is
- * created by copying an existing block, and a renamed path with an un-renamed guard is the drift that copying
- * produces.
+ * `describe-change.mjs` names the pull-request body `--pr-body-file`. Capturing the variable ties the guard to the
+ * path that the call actually passes, rather than to any guard that the block happens to contain: A carrier is created
+ * by copying an existing block, and a renamed path with an un-renamed guard is the drift that copying produces.
  */
 const BODY_FILE_ARGUMENT = /--(?:body|description|pr-body)-file "\$(\w+)"/g;
 
-/** The guard itself, which is what turns a missing or empty body file into a refusal. */
+/** The guard itself, which turns a missing or empty body file into a refusal. */
 const GUARD = '[ -s "$body_path" ]';
 
 // Listed explicitly rather than discovered: The failure guarded against is a carrier dropping off the list, and a
@@ -75,7 +74,7 @@ describe('gh-body-file reach', () => {
     });
   });
 
-  it('carries the guard in the partial', async () => {
+  it('includes the guard in the partial', async () => {
     const partial = await readFile(path.join(CONTENT_ROOT, PARTIAL), 'utf8');
     expect(partial).toContain(GUARD);
   });
@@ -91,7 +90,7 @@ describe('gh-body-file reach', () => {
         }
       }
     }
-    const message = `An unguarded body-file call publishes the platform's default body when the path is unset; these paths reach a CLI without a guard on the variable that the call passes:\n  ${violations.join('\n  ')}`;
+    const message = `An unguarded body-file call publishes the platform's default body when the path is unset; these paths are passed to a CLI without a guard on the variable that the call passes:\n  ${violations.join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 

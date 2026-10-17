@@ -15,7 +15,10 @@ import { readContentFile } from '../test-utils/read-content-file.ts';
 
 const DOCTRINE_HEADING = '## Comment discipline';
 
-/** Phrases that must survive an edit to the partial, so that a gutted doctrine cannot still pass the heading check. */
+/**
+ * Phrases that must survive an edit to the partial, so that a doctrine stripped of its rules cannot still pass the
+ * heading check.
+ */
 const DOCTRINE_RULES: ReadonlyArray<string> = [
   "A comment drafted for someone else's file is a source comment",
   '**1. The stranger test',

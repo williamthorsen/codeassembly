@@ -8,7 +8,7 @@ import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 // The run renders the whole library once per harness, which takes longer under parallel-worker load than the tier's
 // own budget allows. The ceiling here matches the budget of the tiers above `unit`.
 describe('library validation', { timeout: 30_000 }, () => {
-  it('reports no defects in the library', async () => {
+  it('does not report any defect in the library', async () => {
     const defects = await validateContentRoot(CONTENT_ROOT, HARNESS_IDS);
 
     const message = `codeassembly validate reports defects in the library:\n\n${defects.map(formatDefect).join('\n')}`;

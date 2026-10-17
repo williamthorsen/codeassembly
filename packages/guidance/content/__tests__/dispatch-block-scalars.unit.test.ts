@@ -9,12 +9,12 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 // A dispatch block hands a subagent the scalars that it was not able to derive, and nothing else. A prose value
 // there makes the caller the author of the facts and the subagent a rewriter of them, which is worth nothing when the
 // subagent's value is its fresh context. Such a value does not fail at runtime -- it produces a plausible lede
-// carrying the caller's weighting -- so the guard has to be here.
+// reflecting the caller's weighting -- so the guard has to be here.
 
 /** Info string marking a fence as a subagent dispatch block. */
 const FENCE_INFO = 'dispatch';
 
-/** A line that a dispatch block may carry: a lowercase kebab-case key, a colon and a space, and a non-empty value. */
+/** A line that a dispatch block may contain: a lowercase kebab-case key, a colon and a space, and a non-empty value. */
 const SCALAR_LINE = /^[a-z][a-z0-9-]*: \S/;
 
 /**
@@ -24,7 +24,7 @@ const SCALAR_LINE = /^[a-z][a-z0-9-]*: \S/;
 const BLOCK_SCALAR_VALUE = /^[a-z][a-z0-9-]*: [|>][+-]?$/;
 
 /**
- * Every key that a dispatch block may carry. The shape check alone admits a one-line `outcome:` sentence, which seeds
+ * Every key that a dispatch block may contain. The shape check alone admits a one-line `outcome:` sentence, which seeds
  * the drafter exactly as the block form does, so the closed set makes the check a guard rather than a formality.
  */
 const DECLARED_KEYS: ReadonlySet<string> = new Set([
@@ -63,25 +63,25 @@ describe('dispatch blocks', () => {
   it('exist somewhere in the content tree', async () => {
     const message =
       `Because the content tree does not contain a fence with the \`${FENCE_INFO}\` info string, the scalars-only assertion below passes ` +
-      'vacuously. Re-key this suite on the info string that the dispatch blocks carry now, or drop it.';
+      'vacuously. Re-key this suite on the info string that the dispatch blocks use now, or drop it.';
     expect((await BLOCKS).length, message).toBeGreaterThan(0);
   });
 
-  it('carry scalars alone', async () => {
+  it('contain scalars alone', async () => {
     const violations = await findViolations((text) => !SCALAR_LINE.test(text) || BLOCK_SCALAR_VALUE.test(text));
 
     const message =
-      'A dispatch block carries the scalars that a subagent cannot derive, and does not carry prose: A sentence written here ' +
+      'A dispatch block contains the scalars that a subagent cannot derive, and does not contain prose: A sentence written here ' +
       'makes the caller the author of the facts, which is the arrangement replaced by the fresh-context dispatch. ' +
       `These lines are not \`key: value\` scalars:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 
-  it('carry declared keys alone', async () => {
+  it('contain declared keys alone', async () => {
     const violations = await findViolations((text) => !DECLARED_KEYS.has(readKey(text)));
 
     const message =
-      `A dispatch block carries only these keys:${[...DECLARED_KEYS].toSorted().join(', ')}. An ` +
+      `A dispatch block contains only these keys:${[...DECLARED_KEYS].toSorted().join(', ')}. An ` +
       'undeclared key is how a seeding sentence enters as a well-formed scalar. Add the key to DECLARED_KEYS if ' +
       `the drafter reads it, and drop it from the block if it does not:\n  ${violations.map(describeViolation).join('\n  ')}`;
     expect(violations, message).toEqual([]);
@@ -156,7 +156,7 @@ async function findViolations(isViolation: (text: string) => boolean): Promise<R
   );
 }
 
-/** Reads the key from a `key: value` line, returning the empty string when the line carries none. */
+/** Reads the key from a `key: value` line, returning the empty string when the line does not contain one. */
 function readKey(text: string): string {
   return /^([a-z][a-z0-9-]*):/.exec(text)?.[1] ?? '';
 }

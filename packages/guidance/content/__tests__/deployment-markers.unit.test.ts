@@ -13,7 +13,7 @@ import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 const RECIPE_PATH = path.join(CONTENT_ROOT, 'skills', '_data', 'deployed-file-provenance.md');
 
 /**
- * A root shipping one of each marked artifact: a skill, a subagent, a rulebook delivered both as a skill and ambient,
+ * A root containing one of each marked artifact: a skill, a subagent, a rulebook delivered both as a skill and ambient,
  * and a guidance template with an ambient region, beside two further template files on either side of the frontmatter
  * branch.
  */
@@ -37,7 +37,7 @@ const SENTINEL_VERSION = 'sentinel-version';
 /** The placeholder written by the recipe in place of a rulebook's own version in the version line. */
 const VERSION_PLACEHOLDER = '{version}';
 
-/** Each file carrying an ownership marker stamped by `sync`, with the number of its lines that contain the slug. */
+/** Each file containing an ownership marker stamped by `sync`, with the number of its lines that contain the slug. */
 const OWNERSHIP_MARKER_CASES: ReadonlyArray<{ deployedPath: string; label: string; markerCount: number }> = [
   { deployedPath: 'skills/sentinel-artifact/SKILL.md', label: 'skill', markerCount: 1 },
   { deployedPath: 'agents/sentinel-artifact.md', label: 'subagent', markerCount: 1 },
@@ -98,7 +98,7 @@ describe('deployment markers', () => {
     expect(recipe).toContain(lines.join('').replaceAll(SENTINEL_VERSION, () => VERSION_PLACEHOLDER));
   });
 
-  // The marker root does not ship a support entry, so the render does not produce the directory under which `sync`
+  // The marker root does not contain a support entry, so the render does not produce the directory under which `sync`
   // places a declared source's support entries.
   it('names the source-support directory as deployment writes it', () => {
     expect(recipe).toContain('_sources/<name>/');

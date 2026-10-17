@@ -25,7 +25,7 @@ Rank options on correctness. Convenience is secondary: a tiebreaker among correc
 
 ## Why
 
-Correctness determines what it costs to live with the system over its remaining life. A clean design can be evolved; a wrong one accumulates patches around its wrongness. Convenience is paid once, at the moment of change.
+Correctness determines what it costs to live with the system over its remaining life. A clean design can be evolved; a wrong one accumulates patches around its wrongness. Convenience saves effort only once, at the moment of change.
 
 ## Before / after
 
@@ -69,7 +69,7 @@ Three patterns signal a design that hasn't reached it:
 - **Carve-outs**: Special cases or conditional branches that exist because the change couldn't be integrated cleanly, not because the cases are genuinely distinct.
 - **Bolt-ons**: New modules or extension points appended alongside existing structure when the existing structure should have evolved to absorb the change.
 
-A fresh codebase wouldn't have these shapes; their presence means the change was attached to the system rather than integrated into it. Reaching the target may require touching code outside the ticket's literal frame: renaming, restructuring, generalizing. That cost is real but bounded; the cost of keeping a poorly integrated change compounds.
+A fresh codebase wouldn't have these shapes; their presence means the change was attached to the system rather than integrated into it. Reaching the target may require touching code outside the ticket's literal scope: renaming, restructuring, generalizing. That cost is real but bounded; the cost of keeping a poorly integrated change compounds.
 
 ## Reconciliation
 

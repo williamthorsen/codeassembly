@@ -66,7 +66,7 @@ Parse the JSON and rank the `candidates` by genuine relevance to the query's int
 
 Once relevance is established, rank by recurrence, then recency: A candidate with a higher `occurrences` count reflects a pattern seen repeatedly in the same `repo` and outranks a one-off of equal relevance; break ties by `capturedAt`, most recent first. Recurrence is a coarse count of query-matched events sharing the group, not a precise cluster; treat it as a strong-but-soft signal.
 
-Do not rank by `impact`. It is the author's subjective rating, orthogonal to a query's relevance, so it is shown to the reader and available as the `--min-impact` filter but never folded into the ordering.
+Do not rank by `impact`. It is the author's subjective rating, orthogonal to a query's relevance, so it is shown to the reader and available as the `--min-impact` filter but never included in the ordering.
 
 ### 3. Present a ranked list
 

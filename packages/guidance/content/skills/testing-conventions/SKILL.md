@@ -1,6 +1,6 @@
 ---
 name: testing-conventions
-description: What a test is for, how to name and structure it, and how it reaches git and other external programs. Consult before writing or changing a test.
+description: What a test is for, how to name and structure it, and how it calls git and other external programs. Consult before writing or changing a test.
 user-invocable: false
 ---
 
@@ -14,11 +14,11 @@ Before writing a test, ask what would go uncaught if it did not exist. Three ans
 
 - **A change that someone would have to make on purpose.** Rewording a message, editing a config, adding a member to a list: Each is a decision, and review already guards decisions. A test is justified when it catches an accident, a change made without intending to touch this outcome, such as a route added without its guard or a refactor that drops a case. A scenario constructed so that the test has something to catch is not an accident.
 - **Nothing that this repository authored.** Machine state, the user's environment, and a dependency's behavior are not under test, and enabling a dependency's feature does not make that feature's behavior ours. If the right response to red would be a bug report upstream, the test is not ours.
-- **A difference that costs nothing until noticed.** A relaxed lint rule, a setting that drifts from its best value, a directory that departs from convention: A standing test costs more than the moment that it saves. A caught failure has to cost more than noticing it: a wrong answer returned, a task that a user cannot finish, data lost or exposed.
+- **A difference that costs nothing until noticed.** A relaxed lint rule, a setting that drifts from its best value, a directory that departs from convention: Maintaining a standing test takes more effort than noticing the difference would. A caught failure has to be worse than noticing it: a wrong answer returned, a task that a user cannot finish, data lost or exposed.
 
 Then ask where the expected result comes from. A specification, a format, or a rule that someone could state without opening the code makes it an expectation. If pasting in whatever the code now produces would make the test pass again, the test pins a value, whatever its name says. When a test compares two sets, derive the expected one from its source; a set typed into the test drifts.
 
-Three cases recur. Configuration is verified by the tool that reads it, which the build and lint gates run; if an accident is real and the tool is silent, prevent it at the tool rather than detect it in a test. Wording is asserted only when the text is the sole thing that distinguishes two code paths that exist, and then by a durable fragment. A process that this repository does not author is reached through an adapter and replaced by a fake, as [External programs](#external-programs) states.
+Three cases recur. Configuration is verified by the tool that reads it, which the build and lint gates run; if an accident is real and the tool is silent, prevent it at the tool rather than detect it in a test. Wording is asserted only when the text is the sole thing that distinguishes two code paths that exist, and then by a durable fragment. A process that this repository does not author is called through an adapter and replaced by a fake, as [External programs](#external-programs) states.
 
 If a rule above forbids a test and the case seems exceptional, stop before writing it, state the case in one sentence, and wait.
 
@@ -110,7 +110,7 @@ This is the same signal-buried-in-noise failure mode that [comment discipline](#
 
 ### Rules
 
-1. **Test bodies should be mostly variation and assertion, not setup.** Any prop, fixture, or boilerplate identical across N adjacent tests is noise. Factor it into a default-bearing helper, or collapse the tests into a single parameterized test in which the variation reads as a table.
+1. **Test bodies should be mostly variation and assertion, not setup.** Any prop, fixture, or boilerplate identical across N adjacent tests is noise. Factor it into a helper that supplies defaults, or collapse the tests into a single parameterized test in which the variation reads as a table.
 2. **Use `it.each` when N adjacent tests differ only in a small set of inputs and the body is structurally identical.** Use a named helper when the variation is bigger, when shared setup should move into a helper signature, or when assertion shapes differ per case.
 3. **Test the rule, not the data.** Prefer counts, predicates, and structural assertions (`expect(getVisibleChipCount()).toBe(N)`, `expect(queryPillElement()).toBeInTheDocument()`) over enumerating specific fixture labels in every row. Assert specific data flow _once_, in a focused test, not per row of a table.
 
@@ -134,15 +134,15 @@ The smell is shared _setup with one variable_, not shared _shape with different 
 
 A test file runs in one test worker, and a file that keeps its fixtures makes an append cheaper than a split, so a file grows until it is the slowest unit in the suite. Before adding tests to a file that the addition would leave past the ceiling, split the file by aspect, then add the tests to the file that their aspect names.
 
-- **Ceiling.** The `max-lines` setting that the project's lint configuration applies to test files. Where the lint does not set one, 500 lines, counting every line.
+- **Ceiling.** The `max-lines` setting that the project's lint configuration applies to test files. When the lint does not set one, 500 lines, counting every line.
 - **Aspect.** A group of the subject's behaviors that shares setup and reads without the rest of the file. Each split file contains one aspect.
 - **Naming.** Each split file keeps the subject's name and adds the aspect after it, followed by any segment that the project's naming requires: `sync.test.ts` becomes `sync.retirement.test.ts`, and `sync.tool.test.ts` becomes `sync.retirement.tool.test.ts`.
 - **Setup.** A split does not add expensive setup. When the file starts an engine or another expensive fixture of its own, share that setup across files first, as [Where a test goes](#where-a-test-goes) states, then split.
-- **Fixtures.** Move the fixture builders that the split files share out of the test files, into a module in a `test-utils/` directory beside the tests (beside `__tests__/` when the tests live in one, never inside it), so that a new aspect file costs one import.
+- **Fixtures.** Move the fixture builders that the split files share out of the test files, into a module in a `test-utils/` directory beside the tests (beside `__tests__/` when the tests live in one, never inside it), so that a new aspect file needs only one import.
 
 ## Keep passing tests quiet
 
-A passing test prints nothing beyond the runner's report. Output that the code under test writes to the console, stdout, or stderr during a passing run sits between the results, and it hides the warning or stack trace that matters when a run fails.
+A passing test prints nothing beyond the runner's report. Output that the code under test writes to the console, stdout, or stderr during a passing run appears between the results, and it hides the warning or stack trace that matters when a run fails.
 
 When the code under test writes output, intercept it in the test that triggers it, and restore it when that test ends:
 
@@ -175,7 +175,7 @@ jest.mock('@atlaskit/component', () => ({
 
 A test that runs an external program to produce its inputs verifies the program rather than this code, and it depends on the copy installed on the machine that runs it: its version, its config, and its background processes. A `git commit` in a test repository, for example, can start a background maintenance run that is still writing into `.git/` when the test removes the directory.
 
-- Code reaches an external program whose behavior is not the subject of the test, such as git, through a small adapter that the code receives as a dependency.
+- Code calls an external program whose behavior is not the subject of the test, such as git, through a small adapter that the code receives as a dependency.
 - Tests of that code pass a fake adapter that returns fixed answers.
 - Only the adapter's own test runs the real program, and it checks that the adapter parses the program's output as the code expects.
 - A test does not create a repository, or any other state of a real program, to produce an input that a fake could return.
@@ -189,7 +189,7 @@ The `typescript-testing-conventions` skill shows the TypeScript shape.
 A database is a program like any other in [External programs](#external-programs): A test starts one only when its subject is SQL.
 
 - Logic that only passes through SQL, such as assembling a view, gating a command, or ordering and reporting, is tested at the cheapest tier against a fake client that returns fixed rows and errors, such as a SQLSTATE. Mock at the boundary of the module containing the SQL when that is simpler than faking the client.
-- The database tests that earn a place cover what the schema does not already state: that the migrations apply, transactional bookkeeping, upserts and idempotence, and queries.
+- The database tests worth writing cover what the schema does not already state: that the migrations apply, transactional bookkeeping, upserts and idempotence, and queries.
 - Do not write a test per constraint, such as inserting a duplicate row to expect the error. The test that the migrations apply covers the schema.
 
 ## Additional patterns

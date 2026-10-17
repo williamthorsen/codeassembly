@@ -38,8 +38,8 @@ describe('library invocation edges', () => {
   });
 
   it('leaves capture-lede-decision out of merge-pr’s closure and in triage’s', async () => {
-    // The merge flow does not record a lede decision, so its body does not contain a token that pulls the skill in. It
-    // reaches consumers through the triage collection alone, and both halves are asserted: without the second,
+    // The merge flow does not record a lede decision, so its body does not contain a token that pulls the skill in.
+    // Consumers receive it through the triage collection alone, and both halves are asserted: without the second,
     // deleting the skill from the library would satisfy the first.
     const mergePr = await resolveClosure(CONTENT_ROOT, { skill: ['merge-pr'] });
     const triage = await resolveClosure(CONTENT_ROOT, { collection: ['triage'] });
@@ -60,7 +60,7 @@ describe('library invocation edges', () => {
     expect(closure.skill).toContain('create-pr');
   });
 
-  it('pulls add-change-record and summarize-change into merge-pr, which offers the one on an absent block', async () => {
+  it('pulls add-change-record and summarize-change into merge-pr, which offers the first when the block is absent', async () => {
     const closure = await resolveClosure(CONTENT_ROOT, { skill: ['merge-pr'] });
 
     expect(closure.skill).toEqual(expect.arrayContaining(['add-change-record', 'summarize-change']));

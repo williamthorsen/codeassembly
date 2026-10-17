@@ -10,8 +10,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { CONTENT_ROOT } from '../../test-utils/content-root.ts';
 import { renderLibrary } from '../../test-utils/rendered-library.ts';
 
-// The harness home is written from `renderContentRoot`, which places support entries where `sync` deploys them, so a
-// change to that layout reaches this suite. The script is placed as `install` places it, beside `skills/` in
+// The harness home is written from `renderContentRoot`, which places support entries where `sync` deploys them, so
+// this suite picks up any change to that layout. The script is placed as `install` places it, beside `skills/` in
 // `scripts/`.
 
 /** The script as authored, which `install` copies or links into the harness home verbatim. */
