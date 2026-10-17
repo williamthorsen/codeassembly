@@ -32,6 +32,11 @@ export interface DecisionSpec {
   tier?: string;
   /** Rating as the record's frontmatter spells it; absent leaves the record unrated, as one captured earlier is. */
   quality?: string;
+  /**
+   * Breaking marker as the record's frontmatter spells it: a boolean bare, a string quoted so that it parses as one.
+   * Absent leaves the record without the field, as one captured before the marker was recorded is.
+   */
+  breaking?: boolean | string;
   tags?: readonly string[];
 }
 
@@ -123,8 +128,21 @@ export function renderDecision(spec: DecisionSpec): string {
     ...(spec.scope === null ? [] : [`scope: ${spec.scope ?? 'agents'}`]),
     `pr: '${spec.pr ?? '1'}'`,
     ...(spec.quality === undefined ? [] : [`quality: ${spec.quality}`]),
+    ...renderBreaking(spec.breaking),
     '---',
     '',
     `${sections.join('\n\n')}\n`,
   ].join('\n');
 }
+
+// region | Helpers
+
+/** Renders the frontmatter line of a breaking marker; an absent marker renders none. */
+function renderBreaking(breaking: boolean | string | undefined): string[] {
+  if (breaking === undefined) {
+    return [];
+  }
+  return [typeof breaking === 'string' ? `breaking: '${breaking}'` : `breaking: ${breaking}`];
+}
+
+// endregion | Helpers

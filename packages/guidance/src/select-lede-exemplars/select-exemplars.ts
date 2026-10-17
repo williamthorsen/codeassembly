@@ -12,6 +12,9 @@ import { isMissingFile } from '../lib/type-guards.ts';
 import type { WorkType } from '../lib/work-types.ts';
 import type { ExemplarRequest, ExemplarSelection, LedeExemplar, Widening } from './types.ts';
 
+/** Whether a candidate's breaking marker matches the request's. */
+type MarkerFit = 'match' | 'other';
+
 /** An exemplar paired with the taxonomy entry to which its recorded work type resolves; `null` for an undeclared type. */
 interface Candidate {
   exemplar: LedeExemplar;
@@ -46,6 +49,11 @@ type RecordOutcome =
  * widens exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while
  * qualifying tier-mates went untaken.
  *
+ * The breaking marker filters and orders in the same way. An unmarked request drops every breaking record before the
+ * scan buckets it, so that a drafter never calibrates against a `Migration:` paragraph that its change must not have.
+ * A marked request keeps both kinds and takes, at each widening step, the breaking records before the non-breaking
+ * ones: Type and tier outrank the marker, and a corpus with few breaking records still fills the count.
+ *
  * `withPair` additionally reports each record's agent lede, merged lede, and comment. Selection is unaffected: A
  * record is admitted on its rating and its type alone.
  */
@@ -60,12 +68,16 @@ export async function selectExemplars(input: {
   const eventsDir = resolveEventsDir(input.storePath);
   const filenames = await readEventFilenames(eventsDir);
 
-  const buckets: Record<Widening, LedeExemplar[]> = { none: [], tier: [], any: [] };
+  const buckets: Record<Widening, Record<MarkerFit, LedeExemplar[]>> = {
+    none: { match: [], other: [] },
+    tier: { match: [], other: [] },
+    any: { match: [], other: [] },
+  };
   const warnings: string[] = [];
 
   for (const filename of filenames) {
-    // Only the exact-match bucket can satisfy the count on its own, so a full one ends the scan.
-    if (buckets.none.length >= input.count) {
+    // Only the exact match that also matches the marker can satisfy the count on its own, so a full one ends the scan.
+    if (buckets.none.match.length >= input.count) {
       break;
     }
     const outcome = await readDecision({
@@ -84,22 +96,26 @@ export async function selectExemplars(input: {
     if (!clearsFloor({ candidate: outcome.candidate, floor: input.minQuality })) {
       continue;
     }
-    const bucket = buckets[classifyWidening({ candidate: outcome.candidate, request: input.request })];
+    const { exemplar } = outcome.candidate;
+    if (exemplar.breaking && !input.request.breaking) {
+      continue;
+    }
+    const width = classifyWidening({ candidate: outcome.candidate, request: input.request });
+    const bucket = buckets[width][exemplar.breaking === input.request.breaking ? 'match' : 'other'];
     if (bucket.length < input.count) {
-      bucket.push(outcome.candidate.exemplar);
+      bucket.push(exemplar);
     }
   }
 
-  const exemplars = [...buckets.none];
+  const exemplars: LedeExemplar[] = [];
   let widening: Widening = 'none';
-  for (const width of ['tier', 'any'] as const) {
-    if (exemplars.length >= input.count) {
-      break;
-    }
-    const taken = buckets[width].slice(0, input.count - exemplars.length);
-    if (taken.length > 0) {
-      widening = width;
-      exemplars.push(...taken);
+  for (const width of ['none', 'tier', 'any'] as const) {
+    for (const fit of ['match', 'other'] as const) {
+      const taken = buckets[width][fit].slice(0, input.count - exemplars.length);
+      if (taken.length > 0) {
+        widening = width;
+        exemplars.push(...taken);
+      }
     }
   }
   exemplars.sort((left, right) => compareDescending(left.capturedAt, right.capturedAt));
@@ -198,15 +214,25 @@ async function readDecision(input: {
     };
   }
 
+  // A record captured before the marker was recorded does not contain the field, and reads as non-breaking.
+  const rawBreaking = extra.breaking;
+  const breaking = rawBreaking === true;
+  const breakingWarnings =
+    rawBreaking === undefined || typeof rawBreaking === 'boolean'
+      ? []
+      : [`${basename}: names breaking ${JSON.stringify(rawBreaking)}, which is not a boolean`];
+
   // Because an unrated record is the ordinary case for one captured before ratings existed, only a value
   // outside the scale is worth reporting. Either way the candidate stays selectable by a request that does not name a
   // floor.
   const rawQuality = extractString(extra, 'quality');
   const quality = isLedeQuality(rawQuality) ? rawQuality : null;
-  const warnings =
-    rawQuality !== null && quality === null
+  const warnings = [
+    ...breakingWarnings,
+    ...(rawQuality !== null && quality === null
       ? [`${basename}: names quality "${rawQuality}", which the scale does not declare`]
-      : [];
+      : []),
+  ];
 
   // A decision written by `capture-lede-decision` always includes an agent lede. A body without one was edited by hand.
   const pair = input.withPair ? extractDecisionPair(parsed.record.body) : null;
@@ -222,6 +248,7 @@ async function readDecision(input: {
         ...pair,
         type: resolved?.key ?? type,
         tier,
+        breaking,
         ...(scope !== null && { scope }),
         pr,
         capturedAt: parsed.record.capturedAt,

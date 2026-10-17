@@ -289,7 +289,7 @@ function resolveRequest(
         message: `work type "${args.type}" is not declared in work-types.json, so its tier cannot be resolved`,
       };
     }
-    return { ok: true, request: { kind: 'type', workType: resolved.workType } };
+    return { ok: true, request: { kind: 'type', workType: resolved.workType, breaking: resolved.breaking } };
   }
 
   const tiers = new Set(workTypes.values().map((workType) => workType.tier));
@@ -301,7 +301,7 @@ function resolveRequest(
       message: `tier "${args.tier}" is not declared in work-types.json; declared tiers are ${declared.join(', ')}`,
     };
   }
-  return { ok: true, request: { kind: 'tier', tier: args.tier } };
+  return { ok: true, request: { kind: 'tier', tier: args.tier, breaking: false } };
 }
 
 // endregion | Helpers
