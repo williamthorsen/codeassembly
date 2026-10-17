@@ -50,7 +50,7 @@ describe(assertDesignatedWriter, () => {
     await expect(assertDesignatedWriter({ command: 'install', homeDir, packageRoot })).resolves.toBeUndefined();
   });
 
-  it('passes when the package root lies under the designated worktree', async () => {
+  it('passes when the package root is under the designated worktree', async () => {
     await writeDeclaration(`home-writer: ${path.resolve(packageRoot, '../..')}\n`);
 
     await expect(assertDesignatedWriter({ command: 'install', homeDir, packageRoot })).resolves.toBeUndefined();

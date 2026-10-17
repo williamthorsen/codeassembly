@@ -38,7 +38,7 @@ describe('realGit', () => {
       expect(await realGit.checkIgnored(scratch, target)).toBe(false);
     });
 
-    it('answers for a path that does not exist yet, so that a caller can check before writing', async () => {
+    it('reports on a path that does not exist yet, so that a caller can check before writing', async () => {
       await initRepo(scratch, '*.local.*\n');
 
       expect(await realGit.checkIgnored(scratch, path.join(scratch, 'CLAUDE.local.md'))).toBe(true);
@@ -59,11 +59,11 @@ describe('realGit', () => {
       expect(await realGit.findTopLevel(nested)).toBe(scratch);
     });
 
-    it('answers with nothing for a directory in no repository', async () => {
+    it('returns undefined for a directory outside any repository', async () => {
       expect(await realGit.findTopLevel(scratch)).toBeUndefined();
     });
 
-    it('answers with nothing for a directory that does not exist', async () => {
+    it('returns undefined for a directory that does not exist', async () => {
       expect(await realGit.findTopLevel(path.join(scratch, 'missing'))).toBeUndefined();
     });
   });
@@ -113,7 +113,7 @@ describe('realGit', () => {
       expect(await realGit.readHeadCommit(scratch)).toBe(await git(scratch, ['rev-parse', 'HEAD']));
     });
 
-    it('answers with nothing outside a repository', async () => {
+    it('returns undefined outside a repository', async () => {
       expect(await realGit.readHeadCommit(scratch)).toBeUndefined();
     });
   });
@@ -184,7 +184,7 @@ describe('realGit', () => {
 
 // region | Helpers
 
-/** Commits every file in the repository, supplying the identity and signing settings that git config may withhold. */
+/** Commits every file in the repository, supplying the identity and signing settings that the git config may not set. */
 async function commitAll(cwd: string, message: string): Promise<void> {
   await writeFile(path.join(cwd, 'file.txt'), `${message}\n`, 'utf8');
   await git(cwd, ['add', '--all']);

@@ -119,7 +119,7 @@ describe('home provenance', () => {
       expect(stamp?.lastAttempt?.outcome).toBe('failed');
     });
 
-    it('records an attempt on a machine that has never been written, rather than nothing', async () => {
+    it('records an attempt on a machine whose home has never been written to, rather than nothing', async () => {
       await recordFailedHomeAttempt('install', { summary: 'rejected' }, homeDir);
 
       const stamp = await readHomeProvenance(homeDir);
@@ -135,7 +135,7 @@ describe('home provenance', () => {
   });
 
   describe(readHomeProvenance, () => {
-    it("lifts a version-1 stamp's flat fields into `lastWrite`", async () => {
+    it("moves a version-1 stamp's flat fields into `lastWrite`", async () => {
       await writeStamp(
         JSON.stringify({
           schemaVersion: 1,
@@ -191,7 +191,7 @@ describe('home provenance', () => {
 
   // region | Helpers
 
-  /** Writes `content` to the stamp path verbatim, so that a test can plant a shape `recordHomeProvenance` never produces. */
+  /** Writes `content` to the stamp path verbatim, so that a test can write a shape that `recordHomeProvenance` never produces. */
   async function writeStamp(content: string): Promise<void> {
     const provenancePath = getHomeProvenancePath(homeDir);
     await mkdir(path.dirname(provenancePath), { recursive: true });
