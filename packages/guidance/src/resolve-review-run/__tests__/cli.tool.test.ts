@@ -58,7 +58,7 @@ describe('resolve-review-run CLI', () => {
     });
   });
 
-  it('exits 1 with a message naming the directory when no run exists', async () => {
+  it('exits 1 with a message naming the directory when the ticket directory does not contain a run', async () => {
     const result = await runCli(['latest', '--ticket-dir', ticketDir]);
 
     expect(result.exitCode).toBe(1);

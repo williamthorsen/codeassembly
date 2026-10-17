@@ -149,7 +149,7 @@ describe('openRun', () => {
     await rm(ticketDir, { force: true, recursive: true });
   });
 
-  it('creates the interactive run directory named for the timestamp when no active run exists', async () => {
+  it('creates the interactive run directory named for the timestamp when the ticket directory does not contain an active run', async () => {
     await mkdir(path.join(ticketDir, '20261003-090000Z-orchestrated'));
 
     const runDir = await openRun(ticketDir, '20261004-101500Z');
