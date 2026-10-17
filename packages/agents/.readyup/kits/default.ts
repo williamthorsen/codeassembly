@@ -20,7 +20,7 @@ const REFRESH_FIX = `Run \`/update-project-guidance\` to refresh ${GUIDANCE_PATH
  * Guidance checks published by the `codeassembly` package to every repository that consumes it.
  *
  * They cover the convention that the package's own tooling authors: project guidance at the repository-root
- * `AGENTS.md`, which Rovo Dev loads unaided and Claude Code reaches through one import.
+ * `AGENTS.md`, which Rovo Dev loads unaided and Claude Code loads through one import.
  */
 export default defineRdyKit({
   description: 'Project-guidance wiring, freshness, and size',

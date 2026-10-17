@@ -25,7 +25,7 @@ export interface GuidanceImportOutcome {
 
 /**
  * Resolves every raw `@` import in a document against the directory containing it, and reports whether one of them
- * reaches the guidance file. Both `importingDirPath` and `guidancePath` must be absolute.
+ * resolves to the guidance file. Both `importingDirPath` and `guidancePath` must be absolute.
  */
 export function resolveGuidanceImports(
   documentText: string,
