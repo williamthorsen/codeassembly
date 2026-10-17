@@ -98,7 +98,7 @@ describe(parseRecord, () => {
     expect(() => parseRecord('units: [not, a, map]', NO_VERSIONS)).toThrow(/Invalid sweep record/);
   });
 
-  it('reads a record keyed on unit versions still holding a hash, which neither schema defines', () => {
+  it('reads a record keyed on unit versions still containing a hash, which neither schema defines', () => {
     const legacy =
       'units: {}\nrejections:\n  - rule: em-dash\n    unit: writing\n    unit-version: "2"\n    file: docs/guide.md\n' +
       '    phrase: the source\n    ground: an exhibit\n    hash: "0123456789abcdef"\n';
@@ -106,7 +106,7 @@ describe(parseRecord, () => {
     expect(parseRecord(legacy, NO_VERSIONS).rejections[0]).not.toHaveProperty('hash');
   });
 
-  it('refuses a record holding both units and rules, neither shape accounting for the other', () => {
+  it('refuses a record containing both units and rules, neither shape accounting for the other', () => {
     expect(() => parseRecord('units: {}\nrules: {}\n', NO_VERSIONS)).toThrow(/both units and rules/);
   });
 });
@@ -579,7 +579,7 @@ describe(stringifyRecord, () => {
     expect(parseRecord(stringifyRecord(record), NO_VERSIONS)).toStrictEqual(record);
   });
 
-  it('renders the same bytes whatever order the rules, rejections, and their fields arrive in', () => {
+  it('renders the same bytes whatever order the input gives the rules, rejections, and their fields in', () => {
     const first = rejection({ file: 'docs/a.md' });
     const second = rejection({ file: 'docs/b.md' });
     const reordered: RecordedRejection = {
@@ -635,7 +635,7 @@ function coverage(overrides: Partial<RuleCoverage> = {}): RuleCoverage {
   return { version: '1', 'swept-at': '2026-09-01', detected: true, roots: ['.'], ...overrides };
 }
 
-/** Builds a record holding the given coverage and an empty rejection list. */
+/** Builds a record containing the given coverage and an empty rejection list. */
 function coveredRecord(rules: ProseRecord['rules']): ProseRecord {
   return { rules, rejections: [] };
 }

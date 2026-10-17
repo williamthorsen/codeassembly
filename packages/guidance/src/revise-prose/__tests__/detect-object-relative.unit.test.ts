@@ -87,7 +87,7 @@ const REPAIRED_SITES: ReadonlyArray<{ shape: SubjectShape; before: string; after
   },
 ];
 
-/** The one replacement wording that still carries the construction, at a second site on the same line. */
+/** The one replacement wording that still contains the construction, at a second site on the same line. */
 const SURVIVING_SITE = 'A bound, offset, or key rejected by the library exits 2 carrying the message it raises.';
 
 /** Neighbouring constructions that the rulebook puts outside the rule, decidable from the head noun alone. */
@@ -152,7 +152,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('Reports whether the file the parser should.')).toStrictEqual([]);
     });
 
-    it('holds a plural specifier to a plural head, so a numeral beside a participle licenses nothing', () => {
+    it('requires a plural head after a plural specifier, so a numeral beside a participle licenses nothing', () => {
       const candidates = detect('The key exits 2 carrying the message it raises.');
 
       expect(candidates).toHaveLength(1);
@@ -229,7 +229,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ phrase: 'file it may not have read' });
     });
 
-    it("holds a main-verb auxiliary to the bare subject's plural agreement", () => {
+    it('requires a main-verb auxiliary to agree with a plural bare subject', () => {
       expect(detect('Reports the fields records have.')).toHaveLength(1);
       expect(detect('Reports the fields records has.')).toStrictEqual([]);
     });
@@ -342,7 +342,7 @@ describe(detectObjectRelatives, () => {
     it.each([
       { sentence: 'That is the consent these checks rest on.', verb: 'rest' },
       { sentence: 'The report names the baseline the values sit above.', verb: 'sit' },
-    ])("rescues a verb absent from the detector's lexicons: $verb", ({ sentence, verb }) => {
+    ])("still reports a verb absent from the detector's lexicons: $verb", ({ sentence, verb }) => {
       const candidates = detect(sentence);
 
       expect(candidates).toHaveLength(1);
@@ -358,7 +358,7 @@ describe(detectObjectRelatives, () => {
       expect(candidates[0]).toMatchObject({ head: 'body', verb: 'read', shape: 'pronoun' });
     });
 
-    it('keeps the pronoun shape when an adverb sits between the demonstrative and the verb', () => {
+    it('keeps the pronoun shape when an adverb is between the demonstrative and the verb', () => {
       const candidates = detect('The reviewer opened a body this also read in full and found no throw in.');
 
       expect(candidates).toHaveLength(1);
@@ -457,7 +457,7 @@ describe(detectObjectRelatives, () => {
       expect(detect(sentence)).toStrictEqual([]);
     });
 
-    it('holds a verb that an auxiliary carries to the same gate', () => {
+    it('applies the same gate to a verb that an auxiliary carries', () => {
       const stranded = detect('The sweep covers the sources this prose about the idioms has drawn on.');
 
       expect(stranded).toHaveLength(1);
@@ -465,7 +465,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('The sweep covers the sources this prose about the idioms has listed.')).toStrictEqual([]);
     });
 
-    it('holds a main-verb auxiliary to the same gate', () => {
+    it('applies the same gate to a main-verb auxiliary', () => {
       expect(detect('The sweep covers the sources this prose about the idioms has.')).toStrictEqual([]);
     });
 
@@ -571,7 +571,7 @@ describe(detectObjectRelatives, () => {
       expect(detect('A package holding one drops it silently.')).toStrictEqual([]);
     });
 
-    it('reads a specified gerund as a head noun, since a specifier is what makes one', () => {
+    it('reads a specified gerund as a head noun, since a specifier makes it one', () => {
       expect(detect('The wrapping two of them apply is identical.')).toHaveLength(1);
       expect(detect('Every wrapping two of them apply is identical.')).toHaveLength(1);
     });
@@ -691,7 +691,7 @@ describe(detectObjectRelatives, () => {
   });
 
   describe('location', () => {
-    it('reports the line on which the site sits within a wrapped block', () => {
+    it('reports the line on which the site appears within a wrapped block', () => {
       const candidates = detectObjectRelatives([
         { file: 'docs/guide.md', line: 40, text: 'A clean first line.\nThen the source it names.' },
       ]);

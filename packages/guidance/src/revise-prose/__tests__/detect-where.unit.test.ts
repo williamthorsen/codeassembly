@@ -4,7 +4,7 @@ import { detectWhereUses } from '../detect-where.ts';
 import type { ProseSpan, WhereCandidate } from '../types.ts';
 
 describe(detectWhereUses, () => {
-  it('reports a sentence holding the word, with the sentence as the phrase', () => {
+  it('reports a sentence containing the word, with the sentence as the phrase', () => {
     expect(detect('Skip the batch where the record covers it.')).toStrictEqual([
       {
         rule: 'where',
@@ -24,7 +24,7 @@ describe(detectWhereUses, () => {
     expect(detect('Run it wherever the tree is clean, and nowhere else.')).toStrictEqual([]);
   });
 
-  it('reports one candidate for a sentence holding the word twice', () => {
+  it('reports one candidate for a sentence containing the word twice', () => {
     expect(detect('The file where it lives is where it stays.')).toHaveLength(1);
   });
 

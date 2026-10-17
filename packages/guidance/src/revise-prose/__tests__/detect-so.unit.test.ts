@@ -55,7 +55,7 @@ describe(detectSoUses, () => {
   });
 
   describe('a repeat', () => {
-    it('reports one candidate for a sentence holding two sites', () => {
+    it('reports one candidate for a sentence containing two sites', () => {
       expect(detect('The cache is cold, so the loader warms it, so the request is fast.')).toStrictEqual([
         expect.objectContaining({ trigger: 'repeat' }),
       ]);
