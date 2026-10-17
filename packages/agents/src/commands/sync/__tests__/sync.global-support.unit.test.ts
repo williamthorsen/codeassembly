@@ -12,7 +12,7 @@ import { buildContentTree } from '../../test-utils/build-content-tree.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../../test-utils/declare-fixture-source.ts';
 import { syncGlobalCommand } from '../sync.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that behaves as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 // `sync --global` delivers a source's support directories (e.g. `_data`) through the `renderSkillDirectory` walk,
