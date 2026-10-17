@@ -20,7 +20,7 @@ describe(renderContentRoot, () => {
     await rm(path.dirname(root), { recursive: true, force: true });
   });
 
-  it('places each artifact at the path where a harness home receives it', async () => {
+  it('places each artifact at its path in a harness home', async () => {
     await writeFileAt(root, 'skills/alpha/SKILL.md', '---\nname: alpha\ndescription: Alpha.\n---\n\n# Alpha\n');
     await writeFileAt(root, 'skills/alpha/notes.txt', 'plain text\n');
     await writeFileAt(root, 'subagents/helper.md', '---\nname: helper\ndescription: Helper.\n---\n\n# Helper\n');
