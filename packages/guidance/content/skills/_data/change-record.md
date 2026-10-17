@@ -76,9 +76,9 @@ entries:
 
 The payload is YAML rather than a surface template because `overrides` and `entries` nest, and a template renders one flat line. Nesting also leaves room for the block to gain structured keys, such as a grammar version or a ticket reference. Its inverse is a YAML parse rather than a compiled pattern, so this pair needs none of the round-trip verification required by the title grammar.
 
-**The scalars precede `entries`**, so the bulky list does not separate the title from the overrides.
+**The scalars precede `entries`** so that the bulky list does not separate the title from the overrides.
 
-**The block records the change entries as data**, which is how a reader downstream of the merge gets them without parsing them back out of the rendered `## Details` prose. The change summary's `changes` frontmatter field is a different list: It holds the commit entries, which record what the branch's commits declared.
+**The block records the change entries as data**, which is how a reader downstream of the merge gets them without parsing them back out of the rendered `## Details` prose. The change summary's `changes` frontmatter field is a different list: It contains the commit entries, which record what the branch's commits declared.
 
 **The block is the body's last element.** A reader takes the last `change-record` fence in the body, and the merge body that `resolve-merge` composes from the pull request excludes every block.
 

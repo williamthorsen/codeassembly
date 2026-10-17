@@ -18,8 +18,8 @@ A project declares its stage in its own `.agents/preferences.yaml`, under `proje
 
 ## What each value implies
 
-- **Security.** `owner` with `low` sensitivity needs only what keeps the owner's own credentials out of the repository; access control beyond the host's own login is machinery without an asset to protect. `personal` data warrants access limited to the people it concerns. Authentication with several factors, rate limits, and origin checks answer `public` users or `confidential` data.
-- **Availability.** `hobby` tolerates a service that runs only while the owner works, such as a local process or a database on the owner's machine. `early` tolerates downtime and manual recovery. Hosted, always-available infrastructure and backups answer `production`.
+- **Security.** `owner` with `low` sensitivity needs only what keeps the owner's own credentials out of the repository; access control beyond the host's own login is machinery without an asset to protect. `personal` data warrants access limited to the people that it concerns. Authentication with several factors, rate limits, and origin checks are needed for `public` users or `confidential` data.
+- **Availability.** `hobby` tolerates a service that runs only while the owner works, such as a local process or a database on the owner's machine. `early` tolerates downtime and manual recovery. Hosted, always-available infrastructure and backups are needed for `production`.
 - **Infrastructure.** Choose the least infrastructure on which the project runs at its declared stage: a file before a database, a local process before a hosted service, one environment before several.
 
 ## Rules

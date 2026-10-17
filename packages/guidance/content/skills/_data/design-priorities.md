@@ -69,7 +69,7 @@ Three patterns signal a design that hasn't reached it:
 - **Carve-outs**: Special cases or conditional branches that exist because the change couldn't be integrated cleanly, not because the cases are genuinely distinct.
 - **Bolt-ons**: New modules or extension points appended alongside existing structure when the existing structure should have evolved to absorb the change.
 
-A fresh codebase wouldn't have these shapes; their presence means the change was attached to the system rather than integrated into it. Reaching the target may require touching code outside the ticket's literal frame: renaming, restructuring, generalizing. That cost is real but bounded; the cost of keeping a poorly integrated change compounds.
+A fresh codebase wouldn't have these shapes; their presence means the change was attached to the system rather than integrated into it. Reaching the target may require touching code outside the ticket's literal scope: renaming, restructuring, generalizing. That cost is real but bounded; the cost of keeping a poorly integrated change compounds.
 
 ## Reconciliation
 
