@@ -4,9 +4,9 @@
 
 **Goal:** Implement a pure-function structural differ that compares two `CatwalkSceneConfig` snapshots and produces typed change descriptors for animation transitions.
 
-**Architecture:** Four sub-differs (orchestrator, agents, gates, artifacts) composed into a top-level `diffCatwalkConfig` function. Each sub-differ is a pure function with no side effects. Diff types are co-located with existing scene config types in `types.ts`.
+**Architecture:** Four sub-differs (orchestrator, agents, gates, artifacts) composed into a top-level `diffCatwalkConfig` function. Each sub-differ is a pure function without side effects. Diff types are co-located with existing scene config types in `types.ts`.
 
-**Tech Stack:** TypeScript (strict mode), Vitest
+**Tech stack:** TypeScript (strict mode), Vitest
 
 ---
 
@@ -73,7 +73,7 @@ export interface CatwalkDiff {
 **Step 2: Typecheck**
 
 Run: `cd packages/factory && pnpm run ws typecheck`
-Expected: PASS (types are just definitions, no usage yet)
+Expected: PASS (types are just definitions, not yet used)
 
 **Step 3: Commit**
 
@@ -93,7 +93,7 @@ git commit -m "factory|feat: Add CatwalkDiff types for structural scene config d
 
 **Step 1: Write the failing tests for diffOrchestrator**
 
-Create the test file. Tests use inline `OrchestratorConfig` fixtures — no factory helpers needed since the types are small.
+Create the test file. Tests use inline `OrchestratorConfig` fixtures and don't need factory helpers, since the types are small.
 
 ```typescript
 import { describe, expect, it } from 'vitest';
@@ -168,7 +168,7 @@ describe('diffOrchestrator', () => {
 **Step 2: Run tests to verify they fail**
 
 Run: `cd packages/factory && pnpm run ws test -- --testPathPattern catwalk-differ`
-Expected: FAIL — module `../catwalk-differ.js` does not exist
+Expected: FAIL (module `../catwalk-differ.js` does not exist)
 
 **Step 3: Write minimal implementation**
 
@@ -311,7 +311,7 @@ describe('diffAgents', () => {
 **Step 2: Run tests to verify the new tests fail**
 
 Run: `cd packages/factory && pnpm run ws test -- --testPathPattern catwalk-differ`
-Expected: FAIL — `diffAgents` is not exported from `../catwalk-differ.js`
+Expected: FAIL (`diffAgents` is not exported from `../catwalk-differ.js`)
 
 **Step 3: Write implementation**
 
@@ -424,7 +424,7 @@ describe('diffGates', () => {
 **Step 2: Run tests to verify the new tests fail**
 
 Run: `cd packages/factory && pnpm run ws test -- --testPathPattern catwalk-differ`
-Expected: FAIL — `diffGates` is not exported
+Expected: FAIL (`diffGates` is not exported)
 
 **Step 3: Write implementation**
 
@@ -554,7 +554,7 @@ describe('diffArtifacts', () => {
 **Step 2: Run tests to verify the new tests fail**
 
 Run: `cd packages/factory && pnpm run ws test -- --testPathPattern catwalk-differ`
-Expected: FAIL — `diffArtifacts` is not exported
+Expected: FAIL (`diffArtifacts` is not exported)
 
 **Step 3: Write implementation**
 
@@ -725,7 +725,7 @@ describe('diffCatwalkConfig', () => {
 **Step 2: Run tests to verify the new tests fail**
 
 Run: `cd packages/factory && pnpm run ws test -- --testPathPattern catwalk-differ`
-Expected: FAIL — `diffCatwalkConfig` is not exported
+Expected: FAIL (`diffCatwalkConfig` is not exported)
 
 **Step 3: Write implementation**
 
