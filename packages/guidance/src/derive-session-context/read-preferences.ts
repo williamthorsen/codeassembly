@@ -42,8 +42,8 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
 
 /**
  * Reads the repository's own preferences file under `cwd`, without the global file and without projecting or
- * validating any field. A missing or non-object file reads as empty; the function throws on malformed YAML, naming the
- * file.
+ * validating any field. The function returns an empty object for a missing or non-object file and throws on malformed
+ * YAML, naming the file.
  */
 export async function readProjectPreferences(cwd: string): Promise<Record<string, unknown>> {
   const project = await readOptionalYaml(path.join(cwd, '.agents', 'preferences.yaml'));

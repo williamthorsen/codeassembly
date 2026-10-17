@@ -66,7 +66,7 @@ export interface BranchManifest {
   readonly ticket_url?: string | null;
   /**
    * The org-stable base URL to which a bare ticket id is appended, copied from the `ticket.base_url` preference. Lets
-   * skills expand a bare reference to a full URL on platforms where one can't be reconstructed (e.g. Jira).
+   * skills expand a bare reference to a full URL on platforms for which one can't be reconstructed (e.g. Jira).
    */
   readonly ticket_base_url?: string | null;
   /**
