@@ -49,10 +49,10 @@ describe(runCheckProse, () => {
     expect(JSON.parse(stdio.stdoutChunks.join(''))).toMatchObject({ file: 'body.md', candidates: [] });
   });
 
-  it('exits 1 and names the fix when the file cannot be read', async () => {
+  it('exits 2 and names the fix when the file cannot be read', async () => {
     using stdio = captureStdio();
 
-    expect(await runCheckProse(['--file', 'missing.md'], workDir, programName)).toBe(1);
+    expect(await runCheckProse(['--file', 'missing.md'], workDir, programName)).toBe(2);
     expect(stdio.stderrChunks.join('')).toMatch(/^check-prose: cannot read missing\.md: .*pass a readable file/);
   });
 

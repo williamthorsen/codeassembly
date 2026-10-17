@@ -20,8 +20,8 @@ const KNOWN_OPTIONS = ['--file', '--help', '--json', '--version'];
 
 /**
  * Checks the file named by `--file`, resolved against `cwd`, and prints the candidates as text or, under `--json`, as
- * one JSON document. Returns the exit code: 0 without candidates, 1 with candidates or an unreadable file, and 2 on a
- * usage error.
+ * one JSON document. Returns the exit code: 0 without candidates, 1 with candidates, and 2 on a usage error or an
+ * unreadable file.
  */
 export async function runCheckProse(
   argv: readonly string[],
@@ -52,7 +52,7 @@ export async function runCheckProse(
     process.stderr.write(
       `${programName}: cannot read ${options.file}: ${describeError(error)}; pass a readable file to --file\n`,
     );
-    return 1;
+    return 2;
   }
 
   const check = checkProse({ file: options.file, content });
@@ -85,7 +85,7 @@ function buildHelp(programName: string): string {
     '  -h, --help       Print this help',
     '  -V, --version    Print the version',
     '',
-    'Exits 0 without candidates, 1 with candidates or an unreadable file, and 2 on a usage error.',
+    'Exits 0 without candidates, 1 with candidates, and 2 on a usage error or an unreadable file.',
     '',
     'Example:',
     `  ${programName} --file /tmp/prose-check.md --json`,
