@@ -10,12 +10,12 @@ import { installCommand } from '../install.ts';
 import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 // A declared guidance hook is inert until a binding fills it, and `install` doesn't bind any hook, so every hook that it
-// meets is unbound. These pin that the directive doesn't appear in installed harness guidance, which renders through
-// the direct expansion route.
+// processes is unbound. These tests assert that the directive doesn't appear in installed harness guidance, which
+// `install` renders through the direct expansion route.
 describe('install guidance-hook strip', () => {
   let tempDir: string;
   let contentDir: string;
@@ -36,7 +36,7 @@ describe('install guidance-hook strip', () => {
     return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
   }
 
-  it('installs hook-bearing harness guidance without any directive', async () => {
+  it('installs harness guidance that declares a hook, without the directive', async () => {
     await buildContentTree(contentDir, {
       harnessGuidance: {
         claude: {

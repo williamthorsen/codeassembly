@@ -17,7 +17,7 @@ import { buildContentTree } from '../test-utils/build-content-tree.ts';
 import { declareFixtureSource, FIXTURE_SOURCE_NAME } from '../test-utils/declare-fixture-source.ts';
 import { RETIRED_CLAUDE_SETTINGS, RETIRED_ROVO_CONFIG } from '../test-utils/retired-hook-configs.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 const ROVO_HOME = HARNESSES.rovo.homeDir;
@@ -92,7 +92,7 @@ describe(installCommand, () => {
 
     expect(existsSync(path.join(claudeHome, 'scripts', 'demo.sh'))).toBe(true);
     expect(existsSync(path.join(claudeHome, 'CLAUDE.md'))).toBe(true);
-    // `install` doesn't plant any skill directory or support entry: Skills and support entries deploy via sync.
+    // `install` doesn't create any skill directory or support entry: `sync` deploys skills and support entries.
     expect(existsSync(path.join(claudeHome, 'skills', 'claude-only', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'skills', 'alpha', 'SKILL.md'))).toBe(false);
     expect(existsSync(path.join(claudeHome, 'skills', '_data'))).toBe(false);
@@ -180,7 +180,7 @@ describe(installCommand, () => {
     expect(infoLines.some((line) => line.includes('PASS Installed '))).toBe(true);
   });
 
-  it('warns when the content does not ship a scripts directory, rather than reporting a clean install', async () => {
+  it('warns when the content does not include a scripts directory, rather than reporting a clean install', async () => {
     await setupClaudeHome();
     await rm(path.join(contentDir, 'scripts'), { recursive: true, force: true });
 
@@ -261,11 +261,11 @@ describe(installCommand, () => {
     );
   });
 
-  it('prunes previously-planted harness skills and prompts.yml on re-install', async () => {
+  it('prunes previously-installed harness skills and prompts.yml on re-install', async () => {
     const claudeHome = await setupClaudeHome();
     const rovoHome = await setupRovoHome();
 
-    // Seed on-disk files representing what a previous install would have planted.
+    // Seed on-disk files representing what a previous install would have installed.
     const legacySkillDir = path.join(claudeHome, 'skills', 'claude-only');
     await mkdir(legacySkillDir, { recursive: true });
     await writeFile(path.join(legacySkillDir, 'SKILL.md'), '---\nname: claude-only\n---\n', 'utf8');

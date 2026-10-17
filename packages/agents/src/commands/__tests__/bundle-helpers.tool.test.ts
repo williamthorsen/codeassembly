@@ -94,7 +94,7 @@ function commitAll(packageDir: string): AgentsGit {
   });
 }
 
-/** Creates a throwaway producer package holding `files` and returns its path. */
+/** Creates a throwaway producer package containing `files` and returns its path. */
 function makeProducer(files: Record<string, string>): string {
   const packageDir = mkdtempSync(join(tmpdir(), 'bundle-helpers-'));
   onTestFinished(() => rmSync(packageDir, { force: true, recursive: true }));

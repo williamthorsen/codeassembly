@@ -12,7 +12,7 @@ import type { InstallOptions } from '../../lib/types.ts';
 import { installCommand } from '../install.ts';
 import { declareFixtureSource } from '../test-utils/declare-fixture-source.ts';
 
-/** A git adapter that answers as git does outside any repository. */
+/** A git adapter that responds as git does outside any repository. */
 const fakeGit = makeFakeGit();
 
 describe('install stale-file pruning', () => {
@@ -180,13 +180,13 @@ describe('install stale-file pruning', () => {
     return contentDir;
   }
 
-  /** Returns the claude home path of the flat Markdown support entry that `seedFlatSupportEntries` plants. */
+  /** Returns the claude home path of the flat Markdown support entry that `seedFlatSupportEntries` creates. */
   function glossaryPath(): string {
     return path.join(tempDir, '.claude', 'skills', 'glossary.md');
   }
 
   /**
-   * Plants what an install that deployed support entries to the flat skills slot left behind: a `skills/_data`
+   * Recreates what an install that deployed support entries to the flat skills slot left behind: a `skills/_data`
    * directory with a file in it and a flat `skills/glossary.md`, each recorded in the claude manifest in the form
    * that such an install wrote (a sentinel hash for the directory, a content hash for the file).
    */
