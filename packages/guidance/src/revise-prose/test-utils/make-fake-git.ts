@@ -9,7 +9,7 @@ export interface FakeGitAnswers {
 }
 
 /**
- * Builds a git adapter that returns fixed values. Its listing honors the path forms that the sweep passes: `.`,
+ * Builds a git adapter that returns fixed values. Its listing supports the path forms that the sweep passes: `.`,
  * a directory, and a file.
  */
 export function makeFakeGit(answers: FakeGitAnswers): ReviseProseGit {

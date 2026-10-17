@@ -12,7 +12,7 @@ import type { ProseSpan, SoCandidate } from './types.ts';
 
 /**
  * Scans every span for a bare `so` or a `so` within the rule's gap after another, returning one candidate per sentence
- * that holds one, grouped by file and in reading order within each.
+ * that contains one, grouped by file and in reading order within each.
  */
 export function detectSoUses(spans: readonly ProseSpan[]): SoCandidate[] {
   return Map.groupBy(spans, (span) => span.file)
@@ -60,7 +60,7 @@ const SO = new RegExp(
   'giu',
 );
 
-/** One sentence of a span, with the count of `so` sites that it holds and whether any of them is bare. */
+/** One sentence of a span, with the count of `so` sites that it contains and whether any of them is bare. */
 interface SiteSentence {
   file: string;
   hasBareSite: boolean;
@@ -71,7 +71,7 @@ interface SiteSentence {
 
 /**
  * Returns one file's candidates, counting sentences across its spans in line order. A sentence is reported when it
- * holds a bare site, two sites, or a site after another within the gap.
+ * contains a bare site, two sites, or a site after another within the gap.
  */
 function detectInFile(spans: readonly ProseSpan[]): SoCandidate[] {
   const sentences = spans.toSorted((a, b) => a.line - b.line).flatMap(listSiteSentences);

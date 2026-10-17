@@ -3,13 +3,13 @@
  *
  * The rule permits two senses: A `where` naming a place stands, as does one that follows an expression and states what a
  * symbol in it stands for, and every other use is the violation. Only a reading tells the senses apart, so the detector
- * reports every sentence holding the word and leaves the sense to the adjudicator.
+ * reports every sentence containing the word and leaves the sense to the adjudicator.
  */
 import { findMatchingSentences } from './span-text.ts';
 import type { ProseSpan, WhereCandidate } from './types.ts';
 
 /**
- * Scans every span for the word `where`, returning one candidate per sentence that holds it, in reading order.
+ * Scans every span for the word `where`, returning one candidate per sentence that contains it, in reading order.
  */
 export function detectWhereUses(spans: readonly ProseSpan[]): WhereCandidate[] {
   return spans.flatMap((span) =>

@@ -44,8 +44,8 @@ export const RULE_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 export const SWEEP_VERSION_PATTERN = /^[1-9]\d*$/;
 
 /**
- * A rule name. Any rule declared by a bound rulebook is recordable, detected or not, so the shape is all that is held
- * here: Pinning the detector registry's names would make a rule's coverage depend on holding a detector.
+ * A rule name. Any rule declared by a bound rulebook is recordable, detected or not, so only the shape is checked
+ * here: Pinning the detector registry's names would make a rule's coverage depend on having a detector.
  */
 const RuleNameSchema = z.string().regex(RULE_NAME_PATTERN, 'rule must be a lowercase kebab-case name');
 
@@ -216,8 +216,8 @@ export function composeRecord(
     return { ...rejection, 'rule-version': version };
   });
 
-  // A key re-recorded by the run supersedes whatever the record held for it, which would otherwise stand beside the
-  // new entry as a second one for the same site.
+  // A key re-recorded by the run supersedes whatever the record contained for it, which would otherwise remain beside
+  // the new entry as a second one for the same site.
   const rerecorded = new Set(recorded.map((rejection) => rejectionKey(rejection)));
   const carried = prior.rejections.filter((rejection) => {
     if (rerecorded.has(rejectionKey(rejection))) return false;
@@ -232,7 +232,7 @@ export function composeRecord(
 }
 
 /**
- * Reports whether a file still holds a recorded phrase: in its extracted prose, normalized as a detector's phrase is
+ * Reports whether a file still contains a recorded phrase: in its extracted prose, normalized as a detector's phrase is
  * compared, or in its content, with only whitespace and Unicode form normalized. The content reading finds a phrase
  * reported verbatim across the comment markers that extraction strips.
  */
@@ -242,7 +242,7 @@ export function containsPhrase(text: SiteText, phrase: string): boolean {
   return flattenWhitespace(text.content.normalize('NFC')).includes(flattenWhitespace(phrase.normalize('NFC')));
 }
 
-/** Reports whether a rejection was recorded at a version older than the one that a run holds for its rule. */
+/** Reports whether a rejection was recorded at a version older than the one that a run declares for its rule. */
 export function isStaleRejection(rejection: RecordedRejection, ruleVersions: ReadonlyMap<string, string>): boolean {
   const current = ruleVersions.get(rejection.rule);
   return current !== undefined && current !== rejection['rule-version'];
@@ -278,8 +278,8 @@ export function listUnsweptRules(
 /**
  * Parses a record's YAML, converting one written before rules were versioned against the run's versions. An absent
  * record is the empty one, since a repository never swept has recorded nothing; malformed YAML throws, because silently
- * treating it as empty would erase every rejection on the next write. A record holding both `units` and `rules` throws
- * too, since neither shape accounts for the other's entries.
+ * treating it as empty would erase every rejection on the next write. A record containing both `units` and `rules`
+ * throws too, since neither shape accounts for the other's entries.
  */
 export function parseRecord(content: string, versions: SweepVersions, sourceLabel: string = RECORD_PATH): ProseRecord {
   const parsed: unknown = content.trim() === '' ? {} : parseYaml(content);
@@ -325,7 +325,7 @@ export function parseRunFold(json: string): RunFold {
  * verdict attached and adjudicates it afresh, which is what makes a raised version a review rather than a deletion.
  *
  * A rejection whose rule the run does not version is withheld on the same ground: Because the run doesn't have a
- * version of that rule to hold it against, nothing could ever re-open it.
+ * version of that rule to compare it against, nothing could ever re-open it.
  *
  * The projection hands over the rule, the file, and the phrase alone, dropping the rule version and the `ground`. A
  * standing rejection tells the sweeper to leave the site alone, and that instruction doesn't need a reason. The
@@ -387,8 +387,8 @@ function composeKey(...parts: readonly string[]): string {
  * Reports whether a recorded phrase and a candidate's phrase name one site: either normalized form containing the
  * other.
  *
- * The two come from different producers. The record holds the span reported by an adjudicator, readable enough to
- * locate the site by eye; the candidate holds the span emitted by its detector, which is shorter and contains a
+ * The two come from different producers. The record contains the span reported by an adjudicator, readable enough to
+ * locate the site by eye; the candidate contains the span emitted by its detector, which is shorter and contains a
  * placeholder where an inline code span stood. Normalizing both through the detector's own pipeline puts them in one
  * form, and containment then resolves the length difference that remains. It runs both ways because an em-dash
  * candidate's phrase is its whole sentence, and a recorded phrase is inside that sentence rather than around it.

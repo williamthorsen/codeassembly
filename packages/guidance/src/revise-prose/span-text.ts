@@ -26,8 +26,8 @@ export function countNewlinesBefore(text: string, offset: number): number {
 
 /**
  * Returns the offsets covered by each inline code span, delimiters included. A run of backticks opens a span and the
- * next run of the same length closes it, which is Markdown's own rule and the reason a span may hold a backtick of its
- * own. An unclosed run delimits nothing and is passed over, leaving its backticks as ordinary text.
+ * next run of the same length closes it, which is Markdown's own rule and the reason a span may contain a backtick of
+ * its own. An unclosed run delimits nothing and is passed over, leaving its backticks as ordinary text.
  */
 export function findCodeSpans(text: string): ReadonlyArray<{ start: number; end: number }> {
   const spans: Array<{ start: number; end: number }> = [];
@@ -51,10 +51,10 @@ export function findCodeSpans(text: string): ReadonlyArray<{ start: number; end:
 }
 
 /**
- * Returns each sentence of a span that holds a match of `pattern` outside an inline code span, in reading order, with
- * the source line on which the sentence begins. A sentence holding two matches is returned once, since a rule whose
- * phrase is the sentence would otherwise report two candidates adjudicating the same text. `pattern` must have the
- * global flag.
+ * Returns each sentence of a span that contains a match of `pattern` outside an inline code span, in reading order,
+ * with the source line on which the sentence begins. A sentence containing two matches is returned once, since a rule
+ * whose phrase is the sentence would otherwise report two candidates adjudicating the same text. `pattern` must have
+ * the global flag.
  */
 export function findMatchingSentences(span: ProseSpan, pattern: RegExp): Array<{ line: number; sentence: string }> {
   const codeSpans = findCodeSpans(span.text);
@@ -155,7 +155,7 @@ function countWords(text: string): number {
   return text.split(/\s+/).filter((word) => /[a-z]{2}/i.test(word)).length;
 }
 
-/** Advances `runs` to the next backtick run of exactly `length`, or returns null if the text holds none. */
+/** Advances `runs` to the next backtick run of exactly `length`, or returns null if the text contains none. */
 function findClosingRun(text: string, runs: RegExp, length: number): RegExpExecArray | null {
   let candidate = runs.exec(text);
   while (candidate !== null && candidate[0].length !== length) {
