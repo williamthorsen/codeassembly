@@ -31,7 +31,7 @@ The skills belong here on different grounds. A rulebook of the personal collecti
 
 `command-output-conventions` qualifies on its own terms too. What it states follows from a mechanism that every agent session meets, the cost of output kept in the context window, rather than from a preference, and it does not name any tool, host, or store. Its body does not contain any invocation token, so its closure is empty.
 
-`readme-conventions` qualifies on its own terms as well. It does not name any repository, tool, or path belonging to one author, and what it asks of a README follows from who reads the file rather than from a preference about how a README should read. Its body does not contain any invocation token, so its closure is empty and admitting it extends this collection's reach by nothing.
+`readme-conventions` qualifies on its own terms as well. It does not name any repository, tool, or path belonging to one author, and what it asks of a README follows from who reads the file rather than from a preference about how a README should read. Its body does not contain any invocation token, so its closure is empty and admitting it does not add any other artifact to what this collection deploys.
 
 Adding a skill that declares a guidance hook has a drawback that the current members do not have. A project declaring this collection deploys its own copy of that skill, and that copy shadows the user's home-bound one. Because guidance-hook bindings do not cross the boundary between the user-global and project domains, guidance bound globally by the developer goes missing in that repository until the project binds it too. Weigh that against the general applicability claimed by membership before admitting such a skill.
 
