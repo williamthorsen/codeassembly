@@ -21,12 +21,12 @@ Artefact-sourced content is in scope, and it is the most common source of unconv
 Match your client to one of these shapes:
 
 - **`acli`**: `acli jira workitem create` / `acli jira workitem edit`, whose `--description` and `--description-file` are documented as plain text or ADF. A Markdown body is not merely left unrendered there: It is parsed as Jira wiki markup, so headings become nested ordered list items and punctuation comes back backslash-escaped. → Follow the [ADF path](#adf-path).
-- **`contentFormat`-based tool**, e.g. `createJiraIssue` / `editJiraIssue` (Atlassian Rovo): Takes the description together with `contentFormat: "markdown" | "adf"` -- top-level on `createJiraIssue`, under `fields` on `editJiraIssue`. No HTML surface. → Follow the [Markdown path](#markdown-path).
+- **`contentFormat`-based tool**, e.g. `createJiraIssue` / `editJiraIssue` (Atlassian Rovo): Takes the description together with `contentFormat: "markdown" | "adf"` -- top-level on `createJiraIssue`, under `fields` on `editJiraIssue`. Doesn't offer an HTML surface. → Follow the [Markdown path](#markdown-path).
 - **`description_html`-based tool**: `create_jira_issue` / `update_jira_issue` with `description_html` / `comment_html`. → Follow the [HTML path](#html-path).
 
 If more than one is available, prefer the `contentFormat` tool: It takes Markdown directly, whereas `acli` needs ADF. Because the `contentFormat` tool needs a connected Jira server, `acli` is the fallback for a machine without one.
 
-When the machine adds a client of its own, a section after this one describes it, with the sites that it reaches and where it ranks among these.
+When the machine adds a client of its own, a section after this one describes it, with the sites to which it connects and where it ranks among these.
 
 <!-- guidance-hook: jira-clients -->
 

@@ -120,7 +120,7 @@ Use jsdom only for a test that depends on a behavior that happy-dom lacks, and n
 
 ## External programs
 
-The `testing-conventions` skill states the rule: Code reaches an external program through an adapter, and its tests pass a fake. In TypeScript, the adapter is a type, the code takes it as a parameter whose default is the real adapter, and the test passes an object literal. Prefer the parameter to module mocking (`vi.mock`), which leaves the dependency out of the signature and lets the code keep calling the program directly.
+The `testing-conventions` skill states the rule: Code calls an external program through an adapter, and its tests pass a fake. In TypeScript, the adapter is a type, the code takes it as a parameter whose default is the real adapter, and the test passes an object literal. Prefer the parameter to module mocking (`vi.mock`), which leaves the dependency out of the signature and lets the code keep calling the program directly.
 
 ```typescript
 // ✅ Good: The code receives git, and the test supplies its answers
@@ -169,7 +169,7 @@ it('if a deprecated option is passed, warns once', () => {
 });
 ```
 
-Where the project does not depend on these packages, spy on the method with the runner, and restore the spy in `afterEach` or through the runner's `restoreMocks` option:
+When the project does not depend on these packages, spy on the method with the runner, and restore the spy in `afterEach` or through the runner's `restoreMocks` option:
 
 ```typescript
 const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

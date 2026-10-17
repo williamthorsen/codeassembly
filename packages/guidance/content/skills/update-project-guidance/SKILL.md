@@ -90,7 +90,7 @@ For each finding, assign one of these classes:
 - What belongs in a README, and where the rest goes, is stated by {rulebook:readme-conventions}. Consult it before assigning a finding to the reference tier: A README's shape follows from what it describes, so the same finding is placed differently in a library's README and in a monorepo root's.
 - A finding belongs in the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch goes stale silently, because nothing fails when it drifts.
 - Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
-- When unsure about scope, place the finding on the recommended side provisionally and collect every ambiguous finding into one review at the gate below, as multiple-choice questions where possible.
+- When unsure about scope, place the finding on the recommended side provisionally and collect every ambiguous finding into one review at the gate below, as multiple-choice questions when possible.
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 - Content that is obvious from reading the code (e.g., "this project uses TypeScript") does not add any value. Include only what would save an agent from a wrong assumption or a slow discovery.
 
