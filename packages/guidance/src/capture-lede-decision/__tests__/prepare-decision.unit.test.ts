@@ -11,7 +11,7 @@ const AGENT_LEDE = 'Rulebooks can now address a file by linking to it.';
 const MERGED_LEDE = 'Rulebooks can now address a file by linking to it: a Markdown link reaches each harness.';
 
 describe(prepareDecision, () => {
-  it('writes recordType: event, so a decision joins the existing event substrate', () => {
+  it('writes recordType: event, so that a decision is stored as one more event record', () => {
     const content = expectContent(prepareDecision(decisionFor({})));
 
     expect(content).toMatch(/^recordType: event$/m);
@@ -23,7 +23,7 @@ describe(prepareDecision, () => {
     expect(content).toMatch(/^tags: \[lede-decision, type:feat, revised, quality:strong]$/m);
   });
 
-  it('marks a breaking change with the field and the tag, which the doctrine holds to a longer contract', () => {
+  it('marks a breaking change with the field and the tag, for which the doctrine sets a longer contract', () => {
     const content = expectContent(
       prepareDecision({
         ...decisionFor({}),

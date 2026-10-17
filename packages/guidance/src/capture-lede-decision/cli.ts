@@ -61,9 +61,9 @@ export interface ParsedArgs {
   artifactDir: string;
   pr: string;
   mergeCommit: string;
-  /** Directory holding `work-types.json`; `null` reads the taxonomy embedded in the bundle. */
+  /** Directory containing `work-types.json`; `null` reads the taxonomy embedded in the bundle. */
   dataDir: string | null;
-  /** Directory holding the deployed subagent bodies; `null` falls back to the one beside the installed helper. */
+  /** Directory containing the deployed subagent bodies; `null` falls back to the one beside the installed helper. */
   subagentsDir: string | null;
   /** The store to record into; falls back to the one that this helper serves when `--store` names none. */
   store: string;
@@ -102,10 +102,10 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs the helper end to end. In inspect mode it resolves the decision episode and the store into which a decision
- * would record, reporting both and writing nothing, so that a caller can present the ledes -- or stop short of
- * asking -- before the author is put to a decision. In commit mode it resolves the same episode, reads the comment
- * from stdin, and writes one event record.
+ * Runs the helper end to end. In inspect mode it resolves the decision episode and the store into which it would
+ * record a decision, reporting both and writing nothing, so that a caller can present the ledes -- or stop short of
+ * asking -- before the author is asked to decide. In commit mode it resolves the same episode, reads the comment from
+ * stdin, and writes one event record.
  *
  * Every episode-resolution failure, and every store failure on the recording path, becomes a structured
  * `{ ok: false, ... }` result, so that a caller invoking this after an irreversible merge can report one line and
@@ -226,7 +226,7 @@ export async function runDecision(input: {
  * `--scope`, and `--breaking`) and the ticket fall back to the change-summary artifact, the two lede overrides fall
  * back to their artifacts, and `--store` names a corpus registered under some other name. The `@default` and
  * `@feedback` sentinels are refused: Each names a store that a machine's registry assigns a role rather than a corpus,
- * which is the route by which decisions have been filed outside the one that keeps them.
+ * which is how decisions have been filed outside the one that keeps them.
  *
  * @internal - Exported to allow testing.
  */
@@ -327,8 +327,8 @@ function isEntryPoint(): boolean {
 
 /**
  * Locates the deployed subagents directory beside the installed helper. The harness names it, `agents` on Claude and
- * `subagents` on Rovo, so the name is probed rather than derived from the skills dir. When neither exists, the Claude
- * name stands in. The resolver's failure then names a path rather than an empty string.
+ * `subagents` on Rovo, so the name is probed rather than derived from the skills dir. When neither exists, the function
+ * returns the Claude name. The resolver's failure then names a path rather than an empty string.
  */
 function resolveDefaultSubagentsDir(): string {
   const harnessHome = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..');

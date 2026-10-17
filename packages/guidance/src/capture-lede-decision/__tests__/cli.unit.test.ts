@@ -103,7 +103,7 @@ describe(parseArgs, () => {
     expect(parseArgs(['--inspect', '--type', 'feat', '--breaking', ...requiredFlags()]).breaking).toBe(true);
   });
 
-  it('refuses --verdict, which the record derives rather than accepts', () => {
+  it('refuses --verdict, which the helper derives rather than accepts', () => {
     expect(() => parseArgs(['--verdict', 'revised', ...requiredFlags()])).toThrow('unknown flag: --verdict');
   });
 
