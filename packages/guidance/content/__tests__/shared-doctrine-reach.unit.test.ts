@@ -41,7 +41,8 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
   concision: {
     headline: '## Concision',
     // `skills/_data/concision.md` states the full principle that this section summarizes, and the two share sentences.
-    // These are the summary's own, so the single-statement check below would report a duplicate rather than accept the pairing.
+    // These are the summary's own, so the single-statement check below would report a duplicate rather than accept the
+    // pairing.
     phrases: [
       "then wastes the reader's attention and hides the signal",
       'Lead with the minimal skeleton and add a sentence only when it changes what the reader does',

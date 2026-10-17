@@ -16,7 +16,9 @@ import { listRuleSections } from '../test-utils/rule-markers.ts';
 /** A phrase of `_partials/prose-line-breaks.md` that `commit-conventions` contains only by including the partial. */
 const INCLUDED_PARTIAL_MARKER = '**No hard line breaks.**';
 
-/** A phrase of `_partials/reduced-object-relative.md` that the rule's section contains only by including the partial. */
+/**
+ * A phrase of `_partials/reduced-object-relative.md` that the rule's section contains only by including the partial.
+ */
 const INCLUDED_RULE_PHRASE = '**Repairs, in preference order.**';
 
 /** A rule's section text and the sweep version declared by its marker. */

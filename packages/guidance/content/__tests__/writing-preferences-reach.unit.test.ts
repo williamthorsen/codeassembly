@@ -10,8 +10,8 @@ import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
 
 // Two routes deliver these rules, and each is asserted where it can be: The ambient route is a `delivery` value on the
 // rulebook, checked here, and the hook route is a row in `guidance-hook-reach.unit.test.ts`. Both depend on each rule
-// being stated in one file alone, which the last assertion checks. A second statement elsewhere in the corpus is drift that
-// separates a rule from its rulebook.
+// being stated in one file alone, which the last assertion checks. A second statement elsewhere in the corpus is drift
+// that separates a rule from its rulebook.
 const RULEBOOK = 'guidance/rulebooks/williamthorsen-writing-preferences.md';
 const SLUG = 'williamthorsen-writing-preferences';
 
