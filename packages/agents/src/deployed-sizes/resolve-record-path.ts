@@ -4,7 +4,7 @@ import { splitRepo } from '../shared/repo-segments.ts';
 
 const RECORD_ROOT = ['.codeassembly', 'deployed-sizes'];
 
-/** Filename of the home domain's record, which belongs to no repo. */
+/** Filename of the home domain's record, which does not belong to any repo. */
 const HOME_RECORD_FILENAME = '_home.jsonl';
 
 /**

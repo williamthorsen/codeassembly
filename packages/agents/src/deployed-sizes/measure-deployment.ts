@@ -63,8 +63,8 @@ export async function measureDeployment(set: DeployedPathSet): Promise<Deploymen
     ambientRegions += byteLength(extractAmbientRegionContent(await readFileOrEmpty(hostPath)) ?? '');
   }
 
-  // Measured over the documents that are still on disk, so that a document removed between the deployment and the
-  // measurement counts toward no unit's reach.
+  // Measure over the documents that are still on disk, so that a document removed between the deployment and the
+  // measurement does not count toward any unit's reach.
   const { expansions, documentExpansions } = await measureExpansions(documents);
 
   return {

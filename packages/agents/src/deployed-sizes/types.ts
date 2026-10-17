@@ -1,4 +1,4 @@
-/** Whether a deployed file loads into an agent's context or only sits in the tree beside the ones that do. */
+/** Whether a deployed file loads into an agent's context or is only in the tree beside the ones that do. */
 export type DeployedFileKind = 'asset' | 'document';
 
 /** The three totals that a snapshot states, each derived from the measured files. */
@@ -31,8 +31,8 @@ export interface DeployedFile {
 /**
  * One measured unit that deploys inside documents rather than as a file of its own: its own bytes, and the deployed
  * documents that inline it. `reach` states the deployment as measured; what a change to the unit explains is derived
- * from the documents whose bytes it actually moved, which is fewer whenever a document it reaches was added, removed,
- * or left unchanged.
+ * from the documents whose bytes it actually moved, which is fewer whenever a document that it reaches was added,
+ * removed, or left unchanged.
  */
 export interface ExpansionUnit {
   readonly bytes: number;

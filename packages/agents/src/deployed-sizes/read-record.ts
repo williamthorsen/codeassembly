@@ -7,8 +7,9 @@ import type { SizeSnapshot } from './types.ts';
 /**
  * Reads the non-empty lines of the record at `recordPath`, or none when the file is absent.
  *
- * The lines are returned unparsed so that one caller reads the file once and each question it asks parses only what
- * it keeps: A record at the prune threshold would otherwise leave every snapshot it holds parsed in memory.
+ * The lines are returned unparsed so that one caller reads the file once and each question that it asks parses
+ * only what it keeps: A record at the prune threshold would otherwise leave every snapshot that it contains parsed
+ * in memory.
  */
 export async function readRecordLines(recordPath: string): Promise<ReadonlyArray<string>> {
   let raw: string;
@@ -24,7 +25,7 @@ export async function readRecordLines(recordPath: string): Promise<ReadonlyArray
 }
 
 /**
- * Selects the latest snapshot the lines hold, or `undefined` when they hold none.
+ * Selects the latest snapshot that the lines contain, or `undefined` when they contain none.
  *
  * The scan runs backward and returns the last line that parses, which skips a line of another kind and a final line
  * left truncated by an interrupted append alike.
