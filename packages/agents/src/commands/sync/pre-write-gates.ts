@@ -331,7 +331,7 @@ export function findSkillNameCollisionDefects(resolved: ReadonlyArray<ResolvedRu
 /**
  * Reports each guidance-hook binding naming a rulebook that does not resolve from any declared source, naming both
  * the slug and the hook that bound it. Seeding the closure would catch the same slug, but only as an
- * anonymous missing reference: The hook name is the half that says where to go and fix it.
+ * anonymous missing reference: The hook name tells the reader where to go and fix it.
  */
 export async function findUnresolvableBindingDefects(
   bindings: ReadonlyMap<string, ReadonlyArray<string>>,
@@ -360,7 +360,7 @@ export async function findUnresolvableBindingDefects(
 /**
  * Reports each artifact that a declaration's own `use:` list names and that does not resolve from any declared
  * source, naming the chain files that declare it alongside the slug. The closure catches the same
- * slug, but only as an anonymous missing reference: The declaring file is the half that says where to go and fix it,
+ * slug, but only as an anonymous missing reference: The declaring file tells the reader where to go and fix it,
  * and a path derived from the domain cannot supply it, since either tier of the chain could have named the slug.
  */
 export async function findUnresolvableDeclaredArtifactDefects(
@@ -428,7 +428,7 @@ export type UnresolvableSlugs = Record<ArtifactType, ReadonlySet<string>>;
 // region | Helpers
 
 /**
- * Builds one artifact's render defect, holding the harness so that the fold can tell a body-local failure from a
+ * Builds one artifact's render defect, including the harness so that the fold can tell a body-local failure from a
  * scoped one.
  */
 function describeRenderDefect(type: ArtifactType, slug: string, harnessId: HarnessId, error: unknown): HarnessDefect {

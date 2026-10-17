@@ -15,7 +15,7 @@ import type { HarnessId } from '../../lib/types.ts';
  * Builds the resolver of anchor inputs for one harness and one owning source. `rulebookSkillDirs` maps each harness to
  * the skill directories that the rulebook-delivery pass writes there, keyed by slug; `resolvedSkills` is filtered per
  * harness, because a declared skill may target only some. `supportEntriesBySource` maps each declared source's name to
- * the support entries that it ships.
+ * the support entries that it provides.
  */
 export function createAnchorContextResolver(
   resolvedSkills: ReadonlyArray<ResolvedSkill>,
@@ -103,8 +103,8 @@ export type ResolveAnchorContext = (harnessId: HarnessId, supportNamespace: stri
 
 /**
  * Reads the frontmatter overlay that one harness applies to subagents resolved from `contentRoot`. Source-scoped
- * rather than per-harness: A subagent merges against the overlay of the root from which it came, so a source shipping
- * none merges against nothing.
+ * rather than per-harness: A subagent merges against the overlay of the root from which it came, so a subagent from a
+ * source without an overlay merges against nothing.
  */
 export type ResolveOverlay = (harnessId: HarnessId, contentRoot: string) => Promise<string>;
 

@@ -11,7 +11,7 @@ import type { SyncDomain } from './sync-domain.ts';
 /**
  * Retires a former ambient host: removes the sync-owned rulebook blocks that it contains and writes back the stripped
  * remainder, so hand-authored content survives. Ambient delivery targets the harness regions now, and a lingering
- * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left holding nothing: right for
+ * copy would present stale guidance as current. `deleteWhenEmpty` deletes a host left empty: right for
  * one that sync created itself, wrong for a hand-authored file like the project's own `AGENTS.md`, which is never
  * deleted. A missing host, and one with nothing to retire, are both no-ops.
  */
@@ -45,7 +45,7 @@ export async function retireAmbientHost(
   return { kind: 'ambient-host', hostPath, emptied: deletable };
 }
 
-/** A retired legacy output, and whether the host that it names held nothing but retired blocks. */
+/** A retired legacy output, and whether the host that it names contained only retired blocks. */
 export type Retirement =
   | { readonly kind: 'ambient-host'; readonly hostPath: string; readonly emptied: boolean }
   | { readonly kind: 'neutral-rulebooks'; readonly dir: string };
@@ -53,11 +53,10 @@ export type Retirement =
 /**
  * Retires the outputs that this domain no longer produces: the neutral rulebook tree in both domains, and, in the
  * project domain, the rulebook blocks formerly hosted by the hand-authored project guidance. Runs on every sync that
- * has a declaration to act on, so a project picks the retirement up on its next run rather than needing a migration
- * step.
+ * has a declaration to act on, so a project's next sync performs the retirement without needing a migration step.
  *
  * Both guidance locations are swept. A project that renames `.agents/PROJECT.md` to the repository-root `AGENTS.md`
- * before its next sync would otherwise carry the stale blocks into the new location for good.
+ * before its next sync would otherwise leave the stale blocks in the new location permanently.
  */
 export async function retireRetiredOutputs(
   options: InstallOptions,

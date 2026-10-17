@@ -18,7 +18,7 @@ export type AmbientHostPlan =
   | { readonly kind: 'skip'; readonly reason: AmbientSkipReason }
   | { readonly kind: 'write'; readonly action: 'append' | 'create' | 'inject'; readonly content: string };
 
-/** A probed ambient host: its content when present, plus how its region stands. */
+/** A probed ambient host: its content when present, plus the state of its region. */
 export type AmbientHostState =
   { readonly status: 'missing' } | { readonly status: 'malformed' | 'no-region' | 'ready'; readonly content: string };
 
@@ -61,7 +61,7 @@ export async function deliverAmbient(plans: ReadonlyArray<PlannedAmbientHost>): 
  * The hosts that a sync writes and that git does not ignore, so that machine-local guidance does not quietly become a
  * commit candidate. Purely advisory: An ignored host is omitted, and so is one that the check cannot answer for; the
  * project may not be a repository at all, which is not a reason to fail a sync. A host skipped by the run is never
- * asked about.
+ * checked.
  */
 export async function findUnignoredHosts(
   projectRoot: string,
@@ -112,7 +112,7 @@ export interface PlannedReference extends ResolvedReference {
 /**
  * Reads the state of every guidance file whose ambient region a sync of `domain` targets: one per targeted harness,
  * each paired with the harness id for which its content is rendered. Read once here rather than per consumer, so that
- * the damaged-region gate and the delivery plan cannot disagree about what a host holds.
+ * the damaged-region gate and the delivery plan cannot disagree about what a host contains.
  */
 export async function probeAmbientHosts(
   harnessIds: ReadonlyArray<HarnessId>,
@@ -135,7 +135,7 @@ export interface ProbedAmbientHost {
 
 // region | Helpers
 
-/** Writes `target` with `~` in place of the home directory when it lies under it. */
+/** Writes `target` with `~` in place of the home directory when the target is under that directory. */
 function anchorAtHome(target: string, homeDir: string): string {
   const relative = path.relative(homeDir, target);
   if (relative === '' || relative === '..' || relative.startsWith(`..${path.sep}`) || path.isAbsolute(relative)) {
@@ -147,8 +147,8 @@ function anchorAtHome(target: string, homeDir: string): string {
 /**
  * Decides what a sync does to one ambient host. The harness-home host is `install`'s to create, so anything but a
  * rendered region is skipped with the remedy named. The project-local host is sync's own, and is materialized only
- * when there is ambient content to carry: An absent host with nothing to deliver stays absent, matching how the
- * `prompts.yml` region and the legacy ambient host withdraw rather than persist empty.
+ * when there is ambient content to deliver: An absent host with nothing to deliver stays absent, matching how sync
+ * removes the `prompts.yml` region and the legacy ambient host rather than keeping them empty.
  */
 function planAmbientHost(hostKind: AmbientHostKind, host: AmbientHostState, body: string): AmbientHostPlan {
   if (host.status === 'ready') {
