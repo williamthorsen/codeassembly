@@ -6,17 +6,17 @@ import { CONTENT_ROOT } from '../test-utils/content-root.ts';
 import { type ResolvedRulebook, resolveEveryRulebook } from '../test-utils/resolve-every-rulebook.ts';
 import { listRuleSections } from '../test-utils/rule-markers.ts';
 
-// A rulebook's version names the guidance that an agent holds, so a body that changes without a bump reports one
-// version for two different bodies. The include expansion is what makes the gap invisible: Editing a partial changes
-// the deployed body of every rulebook that includes it without touching any rulebook file.
+// A rulebook's version names the guidance that an agent has loaded, so a body that changes without a bump reports one
+// version for two different bodies. The include expansion makes the gap invisible: Editing a partial changes the
+// deployed body of every rulebook that includes it without touching any rulebook file.
 //
-// The pins below are what force the look. A body edit fails this suite until the author decides which of the two
-// remedies applies, and the failure message states both.
+// The pins below force an author to check the version. A body edit fails this suite until the author decides which
+// of the two remedies applies, and the failure message states both.
 
-/** A phrase of `_partials/prose-line-breaks.md` that `commit-conventions` reaches only by including the partial. */
+/** A phrase of `_partials/prose-line-breaks.md` that `commit-conventions` contains only by including the partial. */
 const INCLUDED_PARTIAL_MARKER = '**No hard line breaks.**';
 
-/** A phrase of `_partials/reduced-object-relative.md` that the rule's section reaches only by including the partial. */
+/** A phrase of `_partials/reduced-object-relative.md` that the rule's section contains only by including the partial. */
 const INCLUDED_RULE_PHRASE = '**Repairs, in preference order.**';
 
 /** A rule's section text and the sweep version declared by its marker. */
@@ -152,7 +152,7 @@ const DRIFT_MESSAGE =
   "A rulebook's deployed body no longer matches the pin recorded for it. Choose one remedy: bump the rulebook's " +
   '`version` and re-pin both fields if the operative content moved; or re-pin the hash alone if the edit left the ' +
   'operative content as it was. If the edit lies outside every rule section and some text that complied with a rule ' +
-  "could now fail it, also raise that rule's sweep version, which is what re-opens the rule's coverage in every " +
+  "could now fail it, also raise that rule's sweep version, which re-opens the rule's coverage in every " +
   "repository's record. An edit to an included partial counts as an edit to the body, which is why a rulebook can " +
   'drift with its own file untouched.';
 
@@ -205,11 +205,11 @@ describe('rulebook version pins', () => {
     expect(drifted, `${DRIFT_MESSAGE}\n  ${drifted.join('\n  ')}`).toEqual([]);
   });
 
-  // The pin table cannot show that partial content is inside what it hashes, and that reach covers the one case an
+  // The pin table cannot show that partial content is inside what it hashes, and this test covers the one case an
   // author cannot see for themselves: a rulebook whose body moved while its own file stayed as it was.
   it('hashes the content of an included partial', async () => {
     const message =
-      `commit-conventions reaches ${INCLUDED_PARTIAL_MARKER} only through an include, so its absence means the ` +
+      `commit-conventions contains ${INCLUDED_PARTIAL_MARKER} only through an include, so its absence means the ` +
       'pinned body no longer covers the partials that a rulebook inlines';
     expect((await RESOLVED).get('commit-conventions')?.body, message).toContain(INCLUDED_PARTIAL_MARKER);
   });
@@ -263,7 +263,7 @@ describe('rule version pins', () => {
 
   it('hashes the content of an included partial', async () => {
     const message =
-      `reduced-object-relative reaches ${INCLUDED_RULE_PHRASE} only through an include, so its absence means the ` +
+      `reduced-object-relative contains ${INCLUDED_RULE_PHRASE} only through an include, so its absence means the ` +
       'pinned section no longer covers the partial that states the rule';
     expect((await readRuleSections()).get('reduced-object-relative')?.text, message).toContain(INCLUDED_RULE_PHRASE);
   });

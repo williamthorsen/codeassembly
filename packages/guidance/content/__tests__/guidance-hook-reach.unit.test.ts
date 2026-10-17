@@ -7,8 +7,8 @@ import { readContentFile } from '../test-utils/read-content-file.ts';
 import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
 import { renderLibrary } from '../test-utils/rendered-library.ts';
 
-// A guidance hook reaches an agent two ways, and both are checked here: A body declares the directive itself, or a
-// subagent preloads a skill that declares it. Each route is one line that an edit can drop without any other test
+// An agent receives a guidance hook in two ways, and both are checked here: A body declares the directive itself, or
+// a subagent preloads a skill that declares it. Each route is one line that an edit can drop without any other test
 // failing.
 //
 // Every hook is a row of one table rather than a file of its own, so a hook added without a row is visible as an
@@ -132,8 +132,8 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     hook: 'writing-preferences',
     role: 'composes prose',
     // Every subagent composes prose, so this population is read from the directory rather than written out: a
-    // subagent added later fails here until it declares the hook or joins the exemption. `revise-prose` joins them
-    // as the one skill that reads its own fill; see AMBIENT_FILL_READERS.
+    // subagent added later fails here until it declares the hook or is added to the exemption. The list also includes
+    // `revise-prose`, the one skill that reads its own fill; see AMBIENT_FILL_READERS.
     declaringBodies: [
       ...listGovernedSubagents()
         .filter((slug) => !HOUSE_STYLE_EXEMPT_SUBAGENTS.has(slug))
@@ -161,7 +161,7 @@ const BINDINGS: Readonly<Record<string, ReadonlyArray<string>>> = Object.fromEnt
 /**
  * Skills permitted to declare a hook whose bound rulebooks deliver `ambient`, each with the reason it is permitted.
  * A session running such a skill reads the rulebook twice, once from the harness guidance file and once from the
- * fill, so the pairing is only worth its cost when the skill reads the fill rather than only carrying it.
+ * fill, so the pairing is justified only when the skill reads the fill rather than only containing it.
  *
  * Nothing else reports this. `sync` used to warn on every pairing and could not tell these apart from an accident.
  * This list records which ones are deliberate.
@@ -174,7 +174,7 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
   it.each(declaringBodies)('$label declares the hook', async ({ label, relativePath }) => {
     const declared = listDeclaredHooks(await readContentFile(relativePath));
 
-    const message = `${label} ${role} but does not declare the ${hook} hook, so a binding cannot reach it`;
+    const message = `${label} ${role} but does not declare the ${hook} hook, so a binding cannot fill it`;
     expect(declared, message).toContain(hook);
   });
 
@@ -198,7 +198,7 @@ describe.each(HOOK_GUARDS)('$hook reach', ({ boundRulebooks, declaringBodies, ho
   });
 
   // The bound render throws on an anchor that a fill leaves unresolvable, so a body that is present here resolved. A
-  // hook that only a machine binds has no library fill to render.
+  // hook that only a machine binds does not have a fill in the library to render.
   it.runIf(boundRulebooks.length > 0).each(declaringBodies)(
     '$label resolves its anchors once filled',
     async ({ relativePath }) => {

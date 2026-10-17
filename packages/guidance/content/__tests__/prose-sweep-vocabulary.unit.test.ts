@@ -82,7 +82,7 @@ describe('prose-sweep rule vocabulary', () => {
     const body = await readContentFile(SUBAGENT);
     const missing = listUnnamedRules(body, RULE_IDS);
 
-    const message = `${SUBAGENT} never names \`${missing.join('`, `')}\`, so the sweeper meets a candidate under a rule not described by its own body`;
+    const message = `${SUBAGENT} never names \`${missing.join('`, `')}\`, so the sweeper receives a candidate under a rule not described by its own body`;
     expect(missing, message).toEqual([]);
   });
 
@@ -118,7 +118,7 @@ describe('prose-sweep rule vocabulary', () => {
     ).toContain(`\`${UNSWEPT_FIELD}\``);
   });
 
-  it('carries a marker for every detector rule', async () => {
+  it('declares a marker for every detector rule', async () => {
     const declared = new Set(await readDeclaredIds());
     const missing = RULE_IDS.filter((rule) => !declared.has(rule));
 

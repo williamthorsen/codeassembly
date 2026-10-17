@@ -74,7 +74,7 @@ describe('library render', { timeout: 30_000 }, () => {
       expect(deployed).toContain('~/.claude');
     });
 
-    it('reaches capture-event through the recommended collection and leaves the standalone canary out', async () => {
+    it('pulls in capture-event through the recommended collection and leaves the standalone canary out', async () => {
       const closure = await resolveClosure(CONTENT_ROOT, { collection: ['recommended'] });
 
       expect(closure.skill).toContain('capture-event');

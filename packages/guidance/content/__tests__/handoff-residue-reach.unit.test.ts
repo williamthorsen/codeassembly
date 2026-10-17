@@ -8,10 +8,10 @@ import { countOccurrences } from '../test-utils/count-occurrences.ts';
 import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // The residue rule is stated once, in the collaboration rulebook's "Handoffs" section, and every surface that writes,
-// executes, reviews, or closes a step carries a pointer to it or the one clause that shapes its output. That
+// executes, reviews, or closes a step contains a pointer to it or the one clause that shapes its output. That
 // redundancy is deliberate: The rulebook is ambient, so a subagent never sees it, and an agent follows a clause
 // beside the step that it governs more reliably than a rule that it must fetch. A streamline pass reads the carriers
-// as restatements, which is how the pointers get stripped; this suite is what makes the strip visible.
+// as restatements and strips the pointers; this suite makes the removal visible.
 
 /** The rulebook that states the rule, and the heading under which it states it. */
 const RULEBOOK = 'guidance/rulebooks/williamthorsen-collaboration-preferences.md';
@@ -39,7 +39,7 @@ const CARRIERS: ReadonlyMap<string, ReadonlyArray<string>> = new Map([
 
 describe('handoff-residue reach', () => {
   describe.each([...CARRIERS])('%s', (relativePath, phrases) => {
-    it('carries the rule', async () => {
+    it('contains the rule', async () => {
       const content = await readCarrier(relativePath);
       for (const phrase of phrases) {
         expect(content, `${relativePath} no longer contains "${phrase}"`).toContain(phrase);

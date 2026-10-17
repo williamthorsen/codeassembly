@@ -10,9 +10,9 @@ import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // Bitbucket Cloud reads a 2-space nested item as a sibling and reports nothing, so the rule binds only when it is
 // already in context as a body is composed. Each carrier inlines it rather than linking to it, for the reason given
-// by the `_partials` README: A runtime link is an optional read, and the model fills from its prior instead.
+// by the `_partials` README: A runtime link is an optional read, and the model falls back on its prior instead.
 
-/** The one file permitted to state the rule; every carrier reaches it through an include. */
+/** The one file permitted to state the rule; every carrier includes it. */
 const PARTIAL = 'skills/_partials/nested-list-indent.md';
 
 /** The rule's opening, which the single-statement counts key on. */
@@ -33,7 +33,7 @@ const RULE_EXAMPLE = '- parent\n    - child\n        - grandchild\n';
 //
 // This list contains each step that composes a body rendered by Bitbucket, plus the data entry read by both
 // Bitbucket write delegates. Branch commit bodies are absent by decision: Bitbucket renders a commit message too,
-// but a squash merge discards the branch's own commits, so the commit body that reaches the default branch is the
+// but a squash merge discards the branch's own commits, so the commit body that arrives in the default branch is the
 // merge body composed by `merge-pr`. The delegates are absent because they submit a body rather than compose one.
 const CARRIERS: ReadonlyArray<string> = [
   'skills/_data/bitbucket-pr-access.md',

@@ -9,10 +9,10 @@ import { listMarkdownFiles } from '../test-utils/list-markdown-files.ts';
 import { readContentFile } from '../test-utils/read-content-file.ts';
 
 // Jira's Markdown and HTML conversions escape task-list brackets, so a checklist submitted through either persists as
-// bullets reading `\[ \]`. The submitting skills reach `update-jira-ticket` only through an optional token, which
+// bullets reading `\[ \]`. The submitting skills refer to `update-jira-ticket` only through an optional token, which
 // does not deploy it, so each point of Jira submission inlines the rule itself.
 
-/** The one file permitted to state the rule; every carrier reaches it through an include. */
+/** The one file permitted to state the rule; every carrier includes it. */
 const PARTIAL = 'skills/_partials/jira-task-list-flattening.md';
 
 /** The rule's opening, which the single-statement count keys on. */
