@@ -18,7 +18,7 @@ export interface RewriteResult {
  * another store, which this vault's index cannot resolve.
  *
  * The rewrite preserves any `|alias`, `#anchor`, and the embed (`!`) prefix, and keeps the path-qualified style.
- * Links inside fenced or inline code are skipped, because detection and remediation read the same
+ * Links inside fenced or inline code are skipped, because detection and remediation use the same
  * {@link scanWikilinks} walk.
  */
 export function rewriteWikilinks(input: { body: string; vaultIndex: VaultIndex }): RewriteResult {
