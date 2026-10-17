@@ -8,8 +8,8 @@ import { renderLibrary } from './rendered-library.ts';
 
 /**
  * Reads a library file by its path under the content root, as the pipeline delivers it: An artifact's source with its
- * includes expanded, and any other file (a support entry, a skill's secondary file, a harness guidance file) as the
- * harness home receives it. A file that is not harness-specific is read from the Claude render.
+ * includes expanded, and any other file (a support entry, a skill's secondary file, a harness guidance file) as it is
+ * deployed to the harness home. A file that is not harness-specific is read from the Claude render.
  */
 export async function readContentFile(relativePath: string): Promise<string> {
   const artifact = identifyArtifact(relativePath);

@@ -4,7 +4,7 @@ import { CONTENT_ROOT } from './content-root.ts';
 
 /**
  * Reads a list-valued frontmatter field of a library artifact, such as a subagent's `skills:` or a rulebook's
- * `delivery:`. A scalar reads as a one-item list and an absent field as an empty one; any other shape throws.
+ * `delivery:`. A scalar is returned as a one-item list and an absent field as an empty one; any other shape throws.
  */
 export async function readFrontmatterList(
   type: ArtifactType,
