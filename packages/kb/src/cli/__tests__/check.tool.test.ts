@@ -360,8 +360,8 @@ describe('kb check targeting', () => {
   });
 
   it('checks only the changed metacharacter-named note, not its glob-expanded siblings', async () => {
-    // `Draft2.md` is unchanged and erroring; as a glob, `Draft[v2].md` would also match it, so a
-    // `--vs` run that touched only the clean `Draft[v2].md` must not be failed by the sibling.
+    // `Draft2.md` is unchanged and erroring; as a glob, `Draft[v2].md` would also match it, so the
+    // sibling must not fail a `--vs` run whose only changed note is the clean `Draft[v2].md`.
     const store = await makeStore({ 'content/Draft2.md': UNRESOLVED_LINK, 'content/Draft[v2].md': VALID });
     const git = await makeChangedFilesGit(store, ['content/Draft[v2].md']);
 
