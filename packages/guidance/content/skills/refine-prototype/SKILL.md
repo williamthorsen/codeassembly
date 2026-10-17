@@ -1,6 +1,6 @@
 ---
 name: refine-prototype
-description: Refine one prototype page at sketch speed, between the verdict on a round and the end vision, or sketch a variant of a built product the same way. Applies the kept and adapted ideas of the round to the base, applies the developer's commands in batches while the page reloads in their browser, snapshots each accepted version into the ticket's prototype set with its id on the page, and records every accepted change in a refinement log that the end vision reads. Use when the developer wants to refine, combine, or vary prototypes before a ticket is written.
+description: Refine one prototype page at sketch speed, between the verdict on a round and the end vision, or sketch a variant of a built product the same way. Transfers the kept and adapted ideas of the round to the base, applies the developer's commands in batches while the page reloads in their browser, snapshots each accepted version into the ticket's prototype set with its id on the page, and records every accepted change in a refinement log that the end vision reads. Use when the developer wants to refine, combine, or vary prototypes before a ticket is written.
 user-invocable: true
 supported-harnesses: [claude]
 ---

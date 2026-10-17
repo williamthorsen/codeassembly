@@ -207,8 +207,8 @@ describe('rulebook version pins', () => {
     expect(drifted, `${DRIFT_MESSAGE}\n  ${drifted.join('\n  ')}`).toEqual([]);
   });
 
-  // The pin table cannot show that partial content is inside what it hashes, and this test covers the one case an
-  // author cannot see for themselves: a rulebook whose body moved while its own file stayed as it was.
+  // The pin table cannot show that partial content is inside what it hashes, and this test covers the one case that
+  // an author cannot see for themselves: a rulebook whose body moved while its own file stayed as it was.
   it('hashes the content of an included partial', async () => {
     const message =
       `commit-conventions contains ${INCLUDED_PARTIAL_MARKER} only through an include, so its absence means the ` +
