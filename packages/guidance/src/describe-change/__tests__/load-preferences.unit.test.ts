@@ -98,7 +98,7 @@ describe(loadPreferences, () => {
 
 // region | Helpers
 
-/** Creates a temp directory holding `.agents/preferences.yaml` with `content`, and returns the directory. */
+/** Creates a temp directory containing `.agents/preferences.yaml` with `content`, and returns the directory. */
 async function makePreferences(label: string, content: string): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), `describe-change-${label}-`));
   await mkdir(join(root, '.agents'), { recursive: true });

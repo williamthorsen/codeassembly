@@ -1,9 +1,9 @@
 /**
  * The rule registry: which detector reports each rule's sites.
  *
- * A rule lives here because it has a detector. A unit, whose coverage the record tracks, need not have one, and this
- * file doesn't contain any unit. The helper doesn't read any rule document, so what a rule *says* is the skill's
- * to hold; what a rule *finds* is here.
+ * A rule is listed here because it has a detector. A unit, whose coverage the record tracks, need not have one, and
+ * this file doesn't contain any unit. The helper doesn't read any rule document, so what a rule *says* is stated in
+ * the skill; what a rule *finds* is here.
  */
 import { detectDroppedApostrophes } from './detect-apostrophes.ts';
 import { detectEmDashes } from './detect-em-dash.ts';
@@ -25,7 +25,9 @@ export const RULE_DETECTORS: Readonly<Record<RuleId, (spans: readonly ProseSpan[
   where: detectWhereUses,
 };
 
-/** Every rule detected by the helper, for the messages that name the known set. A test holds it to the registry. */
+/**
+ * Every rule detected by the helper, for the messages that name the known set. A test checks it against the registry.
+ */
 export const RULE_IDS: ReadonlyArray<RuleId> = [
   'apostrophes',
   'em-dash',
@@ -51,7 +53,7 @@ export function detectRules(spans: readonly ProseSpan[], rules: readonly RuleId[
   return candidates.toSorted((a, b) => (fileOrder.get(a.file) ?? 0) - (fileOrder.get(b.file) ?? 0) || a.line - b.line);
 }
 
-/** Reports whether a name is a rule for which the helper holds a detector. */
+/** Reports whether a name is a rule for which the helper has a detector. */
 export function isRuleId(name: string): name is RuleId {
   return Object.hasOwn(RULE_DETECTORS, name);
 }

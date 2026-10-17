@@ -121,7 +121,7 @@ describe(readChangeRecordBlock, () => {
     { name: 'a list', value: ' [feat]' },
     { name: 'a numeric scope', value: '\n  scope: 42' },
     { name: 'a marker spelled as a string', value: "\n  breaking: 'yes'" },
-  ])('ignores a legacy consolidated record holding $name', ({ value }) => {
+  ])('ignores a legacy consolidated record containing $name', ({ value }) => {
     const body = `\`\`\`change-record\ntitle: Add foo\nconsolidated_record:${value}\n\`\`\``;
 
     expect(readChangeRecordBlock(body)).toStrictEqual({ block: { title: 'Add foo' }, kind: 'read' });

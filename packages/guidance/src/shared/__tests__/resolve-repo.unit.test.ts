@@ -27,7 +27,7 @@ describe(resolveRepo, () => {
     await expect(resolveRepo('/repo', git)).resolves.toBe('owner/upstream');
   });
 
-  it('returns undefined when there are no remotes', async () => {
+  it('returns undefined when the repository does not have any remotes', async () => {
     await expect(resolveRepo('/repo', makeFakeGit())).resolves.toBeUndefined();
   });
 

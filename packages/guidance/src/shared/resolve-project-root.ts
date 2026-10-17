@@ -22,8 +22,8 @@ interface ResolveProjectRootOptions {
  *   3. The ambient working directory, as a last resort, accompanied by a one-line stderr diagnostic quoting git.
  *
  * The diagnostic names git as the failing party and includes git's own message, because the failure has causes beyond
- * an absent repository: A repository that git cannot read produces the same empty answer, and asserting the wrong one
- * sends the reader after a repository that is already there.
+ * an absent repository: A repository that git cannot read produces the same empty answer, and asserting the
+ * wrong cause leads the reader to look for a repository that is already there.
  *
  * The diagnostic is written to stderr only: Callers such as `derive-session-context` emit machine-readable output on
  * stdout, so a stray stdout write would corrupt it.

@@ -75,8 +75,8 @@ const CONTRACTIONS: ReadonlyArray<string> = [
 
 /**
  * Words after which `own` is not a dropped possessive: a possessive determiner (`their own`), a word that makes `own` a
- * verb (`to own`, `they own`), or a preposition (`for own`). A word that ends in an apostrophe or in `'s` never reaches
- * this list, because the pattern requires a letter or a digit directly before the space.
+ * verb (`to own`, `they own`), or a preposition (`for own`). A word that ends in an apostrophe or in `'s` is never
+ * checked against this list, because the pattern requires a letter or a digit directly before the space.
  */
 const NON_POSSESSOR_WORDS: ReadonlyArray<string> = [
   'also',

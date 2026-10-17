@@ -362,8 +362,9 @@ async function loadIncludeGraph(contentRoot: string, context: MeasurementContext
  *
  * The transforms that a deployment applies per harness are excluded: the provenance header, the ownership marker,
  * path rewriting, and guidance-hook injection. A hook's bound rulebooks are declared in the machine's agent
- * configuration rather than in the content root, so their bytes are not computable from the repository, and their
- * text lands in a generated region that a run may not cut. The rest add a constant of a few hundred bytes.
+ * configuration rather than in the content root, so their bytes are not computable from the repository, and the
+ * deployment injects their text into a generated region that a run may not cut. The rest add a constant of a few
+ * hundred bytes.
  */
 async function measureFiles(files: readonly string[], context: MeasurementContext): Promise<Map<string, number>> {
   const measured = new Map<string, number>();
@@ -392,7 +393,7 @@ async function measureFiles(files: readonly string[], context: MeasurementContex
  *
  * Expansion rejects directive shapes that the include graph accepts: an unclosed open directive, an orphan close, a
  * slot without a `<!-- children -->` placeholder to fill, and a cycle, which the graph's walk terminates rather than
- * refuses. A file carrying one deploys nothing that this helper can size, which an absent figure already reports.
+ * refuses. A file containing one deploys nothing that this helper can size, which an absent figure already reports.
  */
 async function measureExpandedBytes(file: string, contentRoot: string): Promise<number | undefined> {
   try {

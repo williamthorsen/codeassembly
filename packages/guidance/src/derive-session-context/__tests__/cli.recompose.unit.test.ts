@@ -70,7 +70,7 @@ describe('recompose on every invocation', () => {
     expect(after.project_slug).toBe('second');
   });
 
-  it('re-seeds a ticket_url that no flag wrote when ticket.base_url changes', async () => {
+  it('re-seeds a ticket_url not written by a flag when ticket.base_url changes', async () => {
     await writePrefs(workDir, `ticket:\n  base_url: ${BASE_A}\n`);
     const before = await deriveSessionContext({
       git: NO_REMOTE_GIT,

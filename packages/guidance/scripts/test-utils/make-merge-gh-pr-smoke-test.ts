@@ -9,7 +9,7 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 /**
  * Puts a `gh` stand-in first on `PATH`, then returns an invocation that rebases PR 42 and deletes its branch through
  * it. The stand-in reports the PR as merged and every call as successful, so the run exercises the merge, the state
- * check, and the deletion without reaching GitHub.
+ * check, and the deletion without contacting GitHub.
  */
 export function makeMergeGhPrSmokeTest(): SmokeTestInvocation {
   const binDir = mkdtempSync(path.join(tmpdir(), 'merge-gh-pr-bin-'));

@@ -14,7 +14,7 @@ interface Call {
  * - `renameFailures`: Zero-based indexes of `rename` calls that should reject with the given error.
  * - `writeFileFailures`: Same shape for `writeFile`.
  *
- * `unlink` calls always succeed (production code best-effort-unlinks failed temps anyway).
+ * `unlink` calls always succeed (production code unlinks failed temps on a best-effort basis anyway).
  */
 function makeIo(
   failures: {

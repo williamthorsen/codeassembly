@@ -27,7 +27,23 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
+      - packages/guidance/LICENSE
+      - packages/guidance/README.md
+      - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -82,38 +98,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -182,38 +184,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -282,38 +270,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -382,38 +356,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -466,7 +426,23 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
+      - packages/guidance/LICENSE
+      - packages/guidance/README.md
+      - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -521,38 +497,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -605,7 +567,23 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
+      - packages/guidance/LICENSE
+      - packages/guidance/README.md
+      - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -660,38 +638,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -760,38 +724,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -860,38 +810,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -960,38 +896,24 @@ rules:
       - packages/foreman/vite.config.ts
       - packages/foreman/vitest.config.ts
       - packages/foreman/vitest.setup.ts
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
       - packages/guidance/.prettierignore
       - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
       - packages/guidance/LICENSE
+      - packages/guidance/README.md
       - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
       - packages/guidance/docs
       - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
       - packages/guidance/schemas
       - packages/guidance/scripts
       - packages/guidance/spec
-      - packages/guidance/src/capture-event
-      - packages/guidance/src/capture-lede-decision
-      - packages/guidance/src/change-grammar
-      - packages/guidance/src/derive-session-context
-      - packages/guidance/src/describe-change
-      - packages/guidance/src/feedback-memories
-      - packages/guidance/src/kb-add
-      - packages/guidance/src/kb-curate
-      - packages/guidance/src/kb-edit
-      - packages/guidance/src/kb-retrieve
-      - packages/guidance/src/kb-retrieve-events
-      - packages/guidance/src/kb-search
-      - packages/guidance/src/kb-shared
-      - packages/guidance/src/kb-update-events
-      - packages/guidance/src/lede-corpus
-      - packages/guidance/src/lib
-      - packages/guidance/src/revise-prose
-      - packages/guidance/src/select-lede-exemplars
-      - packages/guidance/src/shared
-      - packages/guidance/src/streamline-guidance
-      - packages/guidance/src/test-utils
-      - packages/guidance/src/update-jira-ticket
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/lifecycle/.meta
       - packages/lifecycle/LICENSE
@@ -1044,7 +966,23 @@ rules:
       - lefthook.yml
       - package.json
       - packages/agents
+      - packages/guidance/.gitignore
+      - packages/guidance/.meta
+      - packages/guidance/.prettierignore
+      - packages/guidance/.shellspec
+      - packages/guidance/CHANGELOG.md
+      - packages/guidance/LICENSE
+      - packages/guidance/README.md
+      - packages/guidance/__tests__
+      - packages/guidance/bin
       - packages/guidance/content
+      - packages/guidance/docs
+      - packages/guidance/eslint.config.ts
+      - packages/guidance/package.json
+      - packages/guidance/scripts
+      - packages/guidance/spec
+      - packages/guidance/src
+      - packages/guidance/tsconfig.json
       - packages/kb
       - packages/run-core
       - pnpm-lock.yaml
@@ -1071,6 +1009,81 @@ rejections:
     file: packages/guidance/content/skills/review-pr/SKILL.md
     phrase: Delegates own only the platform-specific work
     ground: '`own` is a verb whose object is a bare noun phrase ("the platform-specific work"), not a possessive missing its apostrophe'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/check-branch-currency/__tests__/branch-currency.tool.test.ts
+    phrase: counts own commits that the upstream does not contain as unpushed
+    ground: '`own` is an adjective without a possessor, not a possessive missing its apostrophe'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/check-branch-currency/__tests__/branch-currency.tool.test.ts
+    phrase: does not report an upstream without own commits as pushed
+    ground: '`own` is an adjective without a possessor, not a possessive missing its apostrophe'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/check-branch-currency/__tests__/branch-currency.tool.test.ts
+    phrase: reports own commits contained in the upstream as pushed
+    ground: '`own` is an adjective without a possessor, not a possessive missing its apostrophe'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/kb-add/declare-domain.ts
+    phrase: pre-existing drift that the lints own.
+    ground: "`own` is a verb whose object is the relative clause's gap, not a missing possessive"
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: 'a marked exhibit: the before half of case 2 own before/after pair'
+    ground: 'not prose: a fixture string whose dropped possessive the test asserts the detector reports'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: 'a marked exhibit: the rule own example of the all-purpose verb it forbids'
+    ground: 'not prose: a fixture string whose dropped possessive the test asserts the detector reports'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: 'a marked exhibit: the rule own example of the verbs it forbids'
+    ground: 'not prose: a fixture string whose dropped possessive the test asserts the detector reports'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: 'a marked exhibit: the watchlist own example of the use it forbids'
+    ground: 'not prose: a fixture string whose dropped possessive the test asserts the detector reports'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: It is the rule own example.
+    ground: 'not prose: test input and the expected candidate that the test asserts'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: It is the rule\u{0027}s own example.
+    ground: 'not prose: a pass-over fixture whose apostrophe is written as a Unicode escape'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: It is the rule\u{2019}s own example.
+    ground: 'not prose: a pass-over fixture whose apostrophe is written as a Unicode escape'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: 'not the construction: "hands" is the sentences own verb'
+    ground: 'not prose: a fixture string whose dropped possessive the test asserts the detector reports'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: 'not the construction: "widen" is the sentences own imperative verb'
+    ground: 'not prose: a fixture string whose dropped possessive the test asserts the detector reports'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: 'not the construction: the verb is the sentences own, with "it" as its subject'
+    ground: 'not prose: a fixture string whose dropped possessive the test asserts the detector reports'
+  - rule: apostrophes
+    rule-version: '1'
+    file: packages/guidance/src/revise-prose/__tests__/detect-apostrophes.unit.test.ts
+    phrase: The rule own example says dont.
+    ground: 'not prose: test input that contains both dropped forms on purpose'
   - rule: capitalization-after-colon
     rule-version: '1'
     file: packages/guidance/content/skills/_partials/next-steps-after-review.md
@@ -1743,6 +1756,26 @@ rejections:
     ground: "a marked exhibit: the rule's own example"
   - rule: negative-quantifier
     rule-version: '2'
+    file: packages/guidance/docs/preferences.md
+    phrase: 'Bare title (no prefix):'
+    ground: verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/docs/preferences.md
+    phrase: No `{pr_number}`
+    ground: verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/docs/preferences.md
+    phrase: No `{scope}`
+    ground: verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/docs/preferences.md
+    phrase: No `{ticket_ref}`
+    ground: verbless table cell
+  - rule: negative-quantifier
+    rule-version: '2'
     file: packages/guidance/docs/revise-prose-helper.md
     phrase: Each head noun followed directly by a new noun phrase with no relativizer between them
     ground: a verbless table cell, which does not contain a verb to negate
@@ -1768,9 +1801,9 @@ rejections:
     ground: a terse error-message fragment without a finite verb to negate
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/src/derive-session-context/__tests__/cli.tool.test.ts
-    phrase: 'No spurious recompose:'
-    ground: a verbless label before a colon
+    file: packages/guidance/src/capture-event/__tests__/cli.unit.test.ts
+    phrase: fails with no-default-store
+    ground: an error-code identifier, not prose
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/src/describe-change/__tests__/change-entries.unit.test.ts
@@ -1783,14 +1816,14 @@ rejections:
     ground: 'not prose: a YAML fixture literal'
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/src/describe-change/__tests__/cli.tool.test.ts
+    file: packages/guidance/src/describe-change/__tests__/cli.unit.test.ts
     phrase: 'Leaves no release flow until #19 adds the workflows.'
     ground: 'not prose: fixture entry text'
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/src/describe-change/__tests__/cli.tool.test.ts
-    phrase: 'Leaves no release flow until #19 lands.'
-    ground: 'not prose: YAML fixture data'
+    file: packages/guidance/src/describe-change/__tests__/cli.unit.test.ts
+    phrase: 'text: Leaves no release flow until #19 lands.'
+    ground: 'not prose: entries-file fixture data'
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/src/feedback-memories/__tests__/enumerate.unit.test.ts
@@ -1816,6 +1849,21 @@ rejections:
     file: packages/guidance/src/feedback-memories/report.ts
     phrase: No feedback memories found.
     ground: a status label without a finite verb, left as a verbless label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/src/index-prototypes/__tests__/render-index.unit.test.ts
+    phrase: No screenshot for v1
+    ground: a verbless placeholder label that the renderer outputs
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/src/index-prototypes/index-page-script.ts
+    phrase: "'no winner yet'"
+    ground: a verbless label in the summary line
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/src/index-prototypes/render-index.ts
+    phrase: No screenshot for v${entry.version}
+    ground: a verbless placeholder label
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/src/kb-add/__tests__/write-note.unit.test.ts
@@ -1866,11 +1914,6 @@ rejections:
     file: packages/guidance/src/kb-shared/resolve-writable-kb.ts
     phrase: '"no config file at all"'
     ground: a quotation of a condition label
-  - rule: negative-quantifier
-    rule-version: '2'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: A file with no candidate at all.
-    ground: 'not prose: fixture file content written by the test'
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-negative-quantifier.unit.test.ts
@@ -2113,6 +2156,11 @@ rejections:
     ground: 'not prose: fixture data for a planted record'
   - rule: negative-quantifier
     rule-version: '2'
+    file: packages/guidance/src/test-utils/make-fake-git.ts
+    phrase: "error: No such remote '${name}'"
+    ground: "quoted text: the fake reproduces git's own error message"
+  - rule: negative-quantifier
+    rule-version: '2'
     file: packages/kb/README.md
     phrase: No error-severity findings in the checked notes (warnings are allowed).
     ground: a verbless table cell
@@ -2292,45 +2340,15 @@ rejections:
     phrase: For each host that the product reaches
     ground: "'reach' is used in its literal network sense (whether this machine can reach the host)"
   - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/src/change-grammar/__tests__/parse.unit.test.ts
-    phrase: return carried;
-    ground: 'not prose: a local variable identifier in the `dropScopelessFields` helper'
+    rule-version: '9'
+    file: packages/guidance/scripts/test-utils/make-revise-prose-smoke-test.ts
+    phrase: Finds the ticket a branch name encodes.
+    ground: a fixture whose assertion depends on the construction
   - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/src/change-grammar/verify.ts
-    phrase: The structural rules run first and hold whatever the values are.
-    ground: the invariant sense of `hold`, which the rule keeps
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/src/describe-change/__tests__/consolidate-branch.unit.test.ts
-    phrase: lets one feat speak for a branch
-    ground: 'settled corpus vocabulary: `change-grammar/consolidate.ts` defines the consolidated record as the type that speaks for the branch'
-  - rule: plain-speech
-    rule-version: '7'
-    file: packages/guidance/src/kb-retrieve/__tests__/fixtures/normalize/custom-record.md
-    phrase: A custom insight surfaced during review
-    ground: 'not prose: a fixture frontmatter data value'
-  - rule: plain-speech
-    rule-version: '7'
-    file: packages/guidance/src/kb-search/__tests__/fixtures/events/event-impact-bad.md
-    phrase: An event carrying an out-of-range impact value
-    ground: 'not prose: a frontmatter data value on which a test asserts verbatim'
-  - rule: plain-speech
-    rule-version: '7'
-    file: packages/guidance/src/kb-search/__tests__/fixtures/events/event-typed-a.md
-    phrase: A typed event carrying a Diataxis label
-    ground: 'not prose: a fixture frontmatter data value'
-  - rule: plain-speech
-    rule-version: '7'
-    file: packages/guidance/src/kb-search/__tests__/fixtures/notes-vault/content/events/01HZCEVENTAAAAAAAAAAAAAAAA.md
-    phrase: The phantomwidget glitch only surfaced after the content/events relocation.
-    ground: 'not prose: fixture content that simulates a captured event body'
-  - rule: plain-speech
-    rule-version: '6'
-    file: packages/guidance/src/lib/work-types.ts
-    phrase: instead of standing up an install layout
-    ground: a common technical idiom rather than a figure built for the sentence
+    rule-version: '9'
+    file: packages/guidance/src/pull-from-backlog/__tests__/cli.unit.test.ts
+    phrase: reports the picture, the ranked candidates with reasons, and the warnings, without writing
+    ground: names the report section that the pull-from-backlog skill presents as the picture, the skill's own term
   - rule: plain-speech
     rule-version: '9'
     file: packages/kb/src/frontmatter/__tests__/fixtures/with-extra-fields.md
@@ -2921,6 +2939,11 @@ rejections:
     file: packages/guidance/__tests__/scratch-directory-conventions.unit.test.ts
     phrase: a root whose scratch-directory usage this suite governs
     ground: 'not the construction: the relative is overtly marked by pied-piped `whose`'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/__tests__/sync-global.tool.test.ts
+    phrase: share the ticket-authoring partials
+    ground: 'not the construction: share is the main verb with a direct object'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/banned-codepoints.unit.test.ts
@@ -4568,6 +4591,36 @@ rejections:
     ground: 'not the construction: no relative clause'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/docs/index-prototypes-helper.md
+    phrase: case the command exits
+    ground: 'not the construction: "in which case" is a fixed connective'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/docs/index-prototypes-helper.md
+    phrase: summary renders as a definition list
+    ground: 'not the construction: "renders" is the main verb of its clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/docs/preferences.md
+    phrase: design skills treat
+    ground: 'not the construction: the relativizer is present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/docs/preferences.md
+    phrase: keep a process-tier entry's
+    ground: 'not the construction: keep is the main verb with a direct object'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/docs/preferences.md
+    phrase: make a ticket ineligible
+    ground: 'not the construction: the relativizer is present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/docs/preferences.md
+    phrase: supported tokens listed
+    ground: 'not the construction: listed is a participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/docs/revise-prose-helper.md
     phrase: batch its `unswept` rules
     ground: 'not the construction: a ditransitive `applies X to Y` with the object shifted after the prepositional phrase'
@@ -4598,44 +4651,19 @@ rejections:
     ground: 'not the construction: `whenever` heads a temporal adjunct, not a relative clause on a noun'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/docs/triage-spike-findings-helper.md
+    phrase: case the command exits
+    ground: 'not the construction: "in which case" is a fixed connective'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/scripts/test-utils/make-feedback-memories-smoke-test.ts
     phrase: expected exactly one enumerated memory
     ground: 'not the construction: `enumerated` is a participial modifier of `memory`, not an embedded verb'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/scripts/test-utils/make-kb-edit-smoke-test.ts
-    phrase: OS reclaims short-lived
-    ground: "not the construction: `reclaims` is the coordinated clause's own verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/scripts/test-utils/make-kb-update-events-smoke-test.ts
-    phrase: expected no assertion fields injected
-    ground: 'not the construction: a reduced passive, `no assertion fields [were] injected`'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/scripts/test-utils/make-kb-update-events-smoke-test.ts
-    phrase: no assertion fields injected
-    ground: 'not the construction: a reduced passive, `no assertion fields [were] injected`'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/scripts/test-utils/make-select-lede-exemplars-smoke-test.ts
-    phrase: the work-type taxonomy the way an installed helper does
-    ground: 'outside the rule: `the way ...` is an adjunct relative whose gap fills no argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/capture-event/__tests__/cli.tool.test.ts
-    phrase: keep their existing values
-    ground: "not the construction: the span is the sentence's own verb phrase, and its relative clause has a relativizer"
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/src/capture-event/cli.ts
     phrase: failure the function emits
     ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/capture-event/types.ts
-    phrase: order the agent supplied
-    ground: 'outside the rule: an adjunct relative ("the order in which ..."); the gap fills no argument position'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/capture-lede-decision/__tests__/prepare-decision.unit.test.ts
@@ -4669,11 +4697,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/capture-lede-decision/cli.ts
-    phrase: When neither exists, the Claude name stands in
-    ground: 'not the construction: an adverbial clause followed by the main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/capture-lede-decision/cli.ts
     phrase: whichever repository the pull request merged in
     ground: 'fused head: `whichever` plus noun is its own relative and admits no relativizer'
   - rule: reduced-object-relative
@@ -4683,24 +4706,29 @@ rejections:
     ground: 'not the construction: `emitted` is a passive participle, so the phrase is already a reduced passive relative'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/change-grammar/apply-overrides.ts
-    phrase: add the marker supplies
-    ground: "not the construction: `supplies` is the sentence's own main verb"
+    file: packages/guidance/src/check-branch-currency/__tests__/branch-currency.tool.test.ts
+    phrase: touch the work paths
+    ground: "not the construction: `touch` is the relative clause's verb and the paths are its object"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/change-grammar/parse.ts
-    phrase: ticket-reference forms stripped
-    ground: 'not the construction: `stripped` is a passive participle modifying `forms`'
+    file: packages/guidance/src/check-branch-currency/__tests__/cli.tool.test.ts
+    phrase: not it fails
+    ground: 'not the construction: `whether or not it fails` is a conditional adjunct'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/change-grammar/verify.ts
-    phrase: which occurrence a value belongs to
-    ground: 'not the construction: an embedded question complementing `decide`'
+    file: packages/guidance/src/check-branch-currency/branch-currency.ts
+    phrase: directory the helper runs
+    ground: 'outside the rule: `whatever directory the helper runs in` is a free relative, which does not admit a relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/derive-session-context/__tests__/cli.tool.test.ts
-    phrase: path this would still
-    ground: 'not the construction: `this` is the main-clause subject after a fronted prepositional phrase'
+    file: packages/guidance/src/check-branch-currency/branch-currency.ts
+    phrase: touch the given paths
+    ground: "not the construction: `touch` is the relative clause's verb and the paths are its object"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/check-branch-currency/cli.ts
+    phrase: failure the function emits
+    ground: 'not the construction: an adverbial followed by the main clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/derive-session-context/__tests__/compose-manifest.unit.test.ts
@@ -4711,11 +4739,6 @@ rejections:
     file: packages/guidance/src/derive-session-context/cli.ts
     phrase: clear one stored
     ground: 'not the construction: `stored` is a participle modifying "URL field", and `clear` is a verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/derive-session-context/cli.ts
-    phrase: earlier steps produced
-    ground: 'outside the rule: the head is the fused relative "whatever", which admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/derive-session-context/cli.ts
@@ -4738,9 +4761,24 @@ rejections:
     ground: "not the construction: `rendered for $name` is a passive participle, the rule's own first-choice repair form"
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/src/describe-change/__tests__/cli.unit.test.ts
+    phrase: in the order that its ranking cases read
+    ground: 'not the construction: the relativizer is already present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/describe-change/__tests__/cli.unit.test.ts
+    phrase: represent a branch containing three fixes
+    ground: 'not the construction: the head is a participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/src/describe-change/__tests__/consolidate-branch.unit.test.ts
     phrase: alongside another commit
     ground: 'not the construction: `alongside` is a preposition and `trailers` its object noun'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/describe-change/__tests__/consolidate-branch.unit.test.ts
+    phrase: represent a branch containing three fixes
+    ground: 'not the construction: the head is a participle'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/describe-change/__tests__/consolidate-branch.unit.test.ts
@@ -4779,11 +4817,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/describe-change/types.ts
-    phrase: in the order the rendered output names them
-    ground: 'outside the rule: an adjunct relative whose gap fills no argument position'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/describe-change/types.ts
     phrase: The surface names widened to strings
     ground: 'not the construction: `widened` is a participle modifying the noun phrase'
   - rule: reduced-object-relative
@@ -4813,9 +4846,44 @@ rejections:
     ground: "not the construction: `found` is a passive participle, in the program's output string"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/feedback-memories/resolve-repo-path.ts
-    phrase: is reassembled only where the filesystem requires it
-    ground: 'outside the rule: `where` names a place, the position in the segment sequence'
+    file: packages/guidance/src/groom-backlog/__tests__/digest.unit.test.ts
+    phrase: moved.\n\n- It lives
+    ground: 'not prose: a fixture string literal, and a sentence boundary rather than a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/groom-backlog/__tests__/in-progress.unit.test.ts
+    phrase: ticket 14 is counted
+    ground: "not the construction: 'is counted' is the main verb and '14' is the ticket number"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/groom-backlog/cli.ts
+    phrase: as the calibration's records are
+    ground: "not the construction: a comparative 'as' clause"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/groom-backlog/cli.ts
+    phrase: drafted sections replaced
+    ground: 'not the construction: an absolute phrase whose head is a participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/groom-backlog/propose.ts
+    phrase: A digest entry's proposed action
+    ground: 'not the construction: a possessive noun phrase with an adjectival participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/groom-backlog/schemas.ts
+    phrase: for a split the child tickets
+    ground: 'not the construction: the last item of a list after a prepositional phrase'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/index-prototypes/__tests__/copy-probe.unit.test.ts
+    phrase: preset grants read
+    ground: "not the construction: 'grants' is the sentence's own verb, in fixture HTML that the test asserts on"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/index-prototypes/index-page-script.ts
+    phrase: share the first card's
+    ground: "not the construction: 'share' is the relative clause's verb"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/kb-add/cli.ts
@@ -4836,11 +4904,6 @@ rejections:
     file: packages/guidance/src/kb-add/survey.ts
     phrase: not the file exists
     ground: 'not the construction: "whether or not the file exists" is a subordinate clause with no head noun'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/kb-add/types.ts
-    phrase: order the agent supplied
-    ground: 'outside the rule: an adjunct relative ("the order in which ..."); the gap fills no argument position'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/kb-add/write-note.ts
@@ -4933,149 +4996,49 @@ rejections:
     ground: 'not the construction: a ditransitive verb with two objects'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: a figure the document displays on purpose
-    ground: 'not prose: a fixture phrase written into the record and asserted byte-for-byte'
+    file: packages/guidance/src/merge-gh-pr/cli.ts
+    phrase: failure the function emits
+    ground: 'not the construction: an adverbial followed by the main clause'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: Reads back the phrases of the rejections in the written record.
-    ground: 'not the construction: a verb particle plus its object, with no relative clause'
+    file: packages/guidance/src/merge-gh-pr/cli.ts
+    phrase: strategy needs is not given
+    ground: 'not the construction: the relativizer is present'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: The helper reports the source it names.
-    ground: 'a marked exhibit: the fixture sentence whose object relative every detection assertion in the file turns on'
+    file: packages/guidance/src/pull-from-backlog/__tests__/rank.unit.test.ts
+    phrase: open tickets that each candidate blocks
+    ground: "not the construction: the original 'open tickets blocked' was a participle; the title was repaired under plain-speech"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: the source it names
-    ground: 'not prose: a fixture phrase that must match the wrapped comment written into the scratch file'
+    file: packages/guidance/src/pull-from-backlog/cli.ts
+    phrase: project's preferences with each default filled
+    ground: 'not the construction: a participle in a with-absolute'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: which the record round-trip assertions read
-    ground: 'not the construction: the relativizer `which` is already present'
+    file: packages/guidance/src/pull-from-backlog/days.ts
+    phrase: whole days elapsed
+    ground: "not the construction: a participle modifying 'days'"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: A comment naming @generated in prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+    file: packages/guidance/src/pull-from-backlog/warnings.ts
+    phrase: open tickets created
+    ground: "not the construction: a passive participle modifying 'tickets'"
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: A line comment naming @generated in prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+    file: packages/guidance/src/resolve-review-run/__tests__/review-run.unit.test.ts
+    phrase: the ticket directory contains only orchestrated runs
+    ground: 'not the construction: "contains" is the clause''s own verb'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: a schema the sweep may not edit
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
+    file: packages/guidance/src/resolve-review-run/cli.ts
+    phrase: failure the function emits
+    ground: 'not the construction: an adverbial followed by the main clause'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Authored doc prose the sweep reads.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Authored prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Blocked prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Bounded prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Configured prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Copied prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Deployed prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Described prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Documented prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: from a schema the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Generated prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: is one marker the sweep knows.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Listed prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Mentioned prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Quoting doc prose the sweep reads.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Recorded prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Rendered prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Sealed prose the sweep reads.
-    ground: 'not prose: an assertion literal that must match the fixture byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Vendored doc prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Vendored prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/collect-prose.tool.test.ts
-    phrase: Vendored shell prose the sweep may not edit.
-    ground: 'not prose: fixture file content asserted byte-for-byte'
+    file: packages/guidance/src/resolve-ticket-target/cli.ts
+    phrase: failure the function emits
+    ground: 'not the construction: an adverbial followed by the main clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/revise-prose/__tests__/collect-prose.unit.test.ts
@@ -5559,11 +5522,6 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/revise-prose/__tests__/record.unit.test.ts
-    phrase: whatever a stale one recorded beside it holds
-    ground: 'not the construction: `recorded beside it` is a passive participle, and `whatever ... holds` is a fused head'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/record.unit.test.ts
     phrase: whatever rule it names
     ground: 'not prose: a fixture phrase, and `whatever rule` is a fused head that admits no relativizer'
   - rule: reduced-object-relative
@@ -5604,23 +5562,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/revise-prose/detect-object-relative.ts
-    phrase: auxiliary its lexical verb may sit
-    ground: 'not the construction: an embedded interrogative'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/detect-object-relative.ts
     phrase: bypass the head tests
     ground: "not the construction: the candidate's verb is the sentence's own main verb"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/detect-object-relative.ts
-    phrase: rulebook's two out-of-scope heads
-    ground: 'not the construction: a possessive noun phrase followed by an appositive'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/detect-object-relative.ts
-    phrase: verb it replaces
-    ground: "not the construction: the conditional's main clause"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/revise-prose/extract-yaml.ts
@@ -5669,13 +5612,8 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/revise-prose/types.ts
-    phrase: the path roots covered at that version
-    ground: 'not the construction: `covered` is a past participle modifying the noun'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/types.ts
-    phrase: whether or not the helper holds a detector for it
-    ground: 'not the construction: `whether or not` heads a concessive clause'
+    phrase: not the helper has
+    ground: "not the construction: 'has' is the main verb of a 'whether or not' clause"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/select-lede-exemplars/__tests__/select-exemplars.unit.test.ts
@@ -5684,27 +5622,17 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/select-lede-exemplars/cli.ts
-    phrase: no lede decisions rated ${minQuality} or better were found in ${corpus}
-    ground: 'not the construction: `rated` is a participle modifying the subject of a passive main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/select-lede-exemplars/cli.ts
-    phrase: no lede decisions were found in ${corpus}
-    ground: 'not the construction: a plain passive main clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/src/select-lede-exemplars/cli.ts
     phrase: On a `realpathSync` failure the function emits a warning
     ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/select-lede-exemplars/cli.ts
-    phrase: whichever repository the pull request merged in
-    ground: 'outside the rule: a fused head, which is its own relative word and admits no relativizer'
+    phrase: store a machine's registry assigns
+    ground: "outside the rule: 'whichever store' is a free relative, which does not admit a relativizer"
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/select-lede-exemplars/cli.ts
-    phrase: whichever store a machine defaults to
+    phrase: whichever repository the pull request merged in
     ground: 'outside the rule: a fused head, which is its own relative word and admits no relativizer'
   - rule: reduced-object-relative
     rule-version: '1'
@@ -5723,14 +5651,19 @@ rejections:
     ground: 'not the construction: an interrogative complement clause'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/src/shared/resolve-project-root.ts
-    phrase: asserting the wrong one sends the reader
-    ground: "not the construction: `asserting the wrong one` is the clause's gerund subject and `sends` its own verb"
+    file: packages/guidance/src/select-pr-ticket/cli.ts
+    phrase: failure the function emits
+    ground: 'not the construction: an adverbial followed by the main clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/shared/resolve-session.ts
     phrase: current session's id
     ground: 'not the construction: a possessive noun phrase, not a relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/streamline-guidance/cli.ts
+    phrase: reviewed file's deployed
+    ground: 'not the construction: a possessive followed by a participle adjective'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/src/streamline-guidance/record.ts
@@ -5748,9 +5681,39 @@ rejections:
     ground: 'not the construction: "reached from the targets" is a passive participle'
   - rule: reduced-object-relative
     rule-version: '1'
+    file: packages/guidance/src/triage-spike-findings/__tests__/render.unit.test.ts
+    phrase: new tickets is
+    ground: "not the construction: 'is' is the main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/triage-spike-findings/__tests__/render.unit.test.ts
+    phrase: step 7 has not assigned
+    ground: 'not the construction: the relativizer is present'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/triage-spike-findings/__tests__/schemas.unit.test.ts
+    phrase: blocker 7 is listed
+    ground: "not the construction: '7' is the blocker's id"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/triage-spike-findings/render.ts
+    phrase: new tickets is
+    ground: "not the construction: 'is' is the main verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/triage-spike-findings/render.ts
+    phrase: step 7 has not yet assigned
+    ground: 'not the construction: the relativizer is present'
+  - rule: reduced-object-relative
+    rule-version: '1'
     file: packages/guidance/src/update-jira-ticket/cli.ts
     phrase: failure the function emits
     ground: "not the construction: a fronted prepositional phrase followed by the sentence's own subject and verb"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/src/validate-preferences/cli.ts
+    phrase: failure the function emits
+    ground: 'not the construction: an adverbial followed by the main clause'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/kb/README.md
@@ -6173,6 +6136,11 @@ rejections:
     ground: a quoted message that the agent says to its user; the skill does not compose it as documentation
   - rule: second-person
     rule-version: '1'
+    file: packages/guidance/src/index-prototypes/index-page-script.ts
+    phrase: You can see the verdicts but not change them.
+    ground: on-page text addressed to the page's viewer, not documentation
+  - rule: second-person
+    rule-version: '1'
     file: packages/guidance/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
     phrase: All you need is the branch name.
     ground: detector fixture or the expectation literal paired with one
@@ -6196,6 +6164,26 @@ rejections:
     file: packages/guidance/src/revise-prose/__tests__/detect-second-person.unit.test.ts
     phrase: You set your own budget.
     ground: detector fixture or the expectation literal paired with one
+  - rule: second-person
+    rule-version: '1'
+    file: packages/guidance/src/validate-preferences/__tests__/cli.tool.test.ts
+    phrase: did you mean 'maturity'?
+    ground: an expectation of command-line output addressed to the person running the command
+  - rule: second-person
+    rule-version: '1'
+    file: packages/guidance/src/validate-preferences/__tests__/cli.tool.test.ts
+    phrase: did you mean 'project'?
+    ground: an expectation of command-line output addressed to the person running the command
+  - rule: second-person
+    rule-version: '1'
+    file: packages/guidance/src/validate-preferences/__tests__/validate-preferences.unit.test.ts
+    phrase: did you mean 'project'?
+    ground: an expectation of command-line output addressed to the person running the command
+  - rule: second-person
+    rule-version: '1'
+    file: packages/guidance/src/validate-preferences/validate-preferences.ts
+    phrase: ; did you mean '${nearest}'?
+    ground: command-line output addressed to the person running the command, not documentation
   - rule: second-person
     rule-version: '1'
     file: packages/kb/src/frontmatter/__tests__/fixtures/howto-typical.md
@@ -6553,11 +6541,6 @@ rejections:
     ground: 'outside the rule: a lone `so` stating a direct result; the merged entry points keep the same sentence'
   - rule: so
     rule-version: '1'
-    file: packages/guidance/src/capture-lede-decision/__tests__/cli.tool.test.ts
-    phrase: which carries no `.agents/kb.yaml`, so a store resolves to `not-registered` deterministically
-    ground: a lone `so` stating a direct result of the missing file; the only earlier `so` is the bare candidate on the line above, repaired to `so that`
-  - rule: so
-    rule-version: '1'
     file: packages/guidance/src/capture-lede-decision/cli.ts
     phrase: must appear, so the mode and the rating are decided together rather than validated separately
     ground: states a direct result; the `so` said to repeat is in a different function's doc comment
@@ -6566,16 +6549,6 @@ rejections:
     file: packages/guidance/src/capture-lede-decision/cli.ts
     phrase: so the destination is a property of this helper rather than of the change under review
     ground: states a direct result; the `so` said to repeat is in a separate doc comment on another declaration
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/src/capture-lede-decision/resolve-episode.ts
-    phrase: the digests are hashed together, so a change to either moves the result
-    ground: a lone `so` stating a direct result; the only earlier `so` within three sentences was repaired to `so that`
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/src/change-grammar/__tests__/render.unit.test.ts
-    phrase: drops the wildcard scope, so its group drops with it
-    ground: states a direct result; the `so` that it repeats is in a separate test title
   - rule: so
     rule-version: '1'
     file: packages/guidance/src/describe-change/cli.ts
@@ -6588,16 +6561,6 @@ rejections:
     ground: "outside the rule: a lone `so` stating a direct result; the earlier `so` is in the function's doc comment"
   - rule: so
     rule-version: '1'
-    file: packages/guidance/src/describe-change/cli.ts
-    phrase: commit.title_format is empty, so no commit and no title prefix can be read through it
-    ground: "outside the rule: a lone `so` stating a direct result; the `so` said to repeat is in another function's doc comment"
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/src/describe-change/read-commits.ts
-    phrase: so reporting it as unmatched would train a reader to skim the list that exists to be read
-    ground: 'no longer a repeat: the neighbouring uses were repaired, leaving three sentences of clearance'
-  - rule: so
-    rule-version: '1'
     file: packages/guidance/src/feedback-memories/enumerate.ts
     phrase: so skipping it never hides one
     ground: 'outside the rule: a lone `so` stating a direct result, once the earlier purpose clause reads "so that"'
@@ -6606,6 +6569,11 @@ rejections:
     file: packages/guidance/src/feedback-memories/resolve-repo-path.ts
     phrase: so a multi-segment directory name
     ground: 'outside the rule: a lone `so` stating a direct result, once the earlier purpose clause reads "so that"'
+  - rule: so
+    rule-version: '1'
+    file: packages/guidance/src/index-prototypes/index-page-script.ts
+    phrase: This view cannot change verdicts, so they are shown read-only.
+    ground: a lone so stating a direct result
   - rule: so
     rule-version: '1'
     file: packages/guidance/src/kb-add/write-note.ts
@@ -6618,24 +6586,9 @@ rejections:
     ground: 'no longer a repeat: an earlier repair left five sentences of clearance'
   - rule: so
     rule-version: '1'
-    file: packages/guidance/src/lib/__tests__/preferences-schema.unit.test.ts
-    phrase: so the second `validate()` call is paid for only on the failure path
-    ground: a lone `so` that states a direct result
-  - rule: so
-    rule-version: '1'
     file: packages/guidance/src/lib/work-types.ts
     phrase: so `feat!` names the `feat` entry
     ground: a lone `so` that states a direct result
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: reports a live rejection to the run, so the sweeper leaves the site alone
-    ground: a lone `so` stating a direct result; the earlier use is in a separate test label
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/__tests__/cli.tool.test.ts
-    phrase: The cache is cold
-    ground: 'a marked exhibit: the em-dash fixture sentence, asserted on by the detection tests'
   - rule: so
     rule-version: '1'
     file: packages/guidance/src/revise-prose/__tests__/detect-em-dash.unit.test.ts
@@ -6741,11 +6694,6 @@ rejections:
     file: packages/guidance/src/revise-prose/__tests__/record.unit.test.ts
     phrase: writes roots shared between rules in full, so a rewrite of the parsed record renders the same bytes
     ground: a lone `so` stating a direct result; the earlier use is a separate test label
-  - rule: so
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/collect-prose.ts
-    phrase: would hand a subagent a lockfile to read for nothing
-    ground: a correct result use; the `so` it repeats is in a separate inline comment forty lines earlier
   - rule: so
     rule-version: '1'
     file: packages/guidance/src/revise-prose/detect-object-relative.ts
@@ -7729,160 +7677,190 @@ rejections:
     phrase: an action offered on a page where it cannot complete
     ground: 'names a place: the page'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/docs/preferences.md
+    phrase: placed where the `!` cannot be told from its neighbour
+    ground: 'where names a place: a position in the template'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/docs/triage-spike-findings-helper.md
+    phrase: the columns item, disposition, confidence, value, where, blocked by, and reason
+    ground: 'outside the rule: "where" names a table column'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/docs/triage-spike-findings-helper.md
+    phrase: The where column is `#N`
+    ground: 'outside the rule: "where" names a table column'
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/src/capture-lede-decision/__tests__/prepare-decision.unit.test.ts
-    phrase: carries the rating in frontmatter, where the exemplar selector reads a record
-    ground: 'the word names a place: frontmatter is the location in the record at which the selector reads'
+    phrase: writes the rating in frontmatter, where the exemplar selector reads a record
+    ground: '`where` names a place: the part of the file that the selector reads'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/capture-lede-decision/__tests__/resolve-episode.unit.test.ts
-    phrase: where `null` leaves a flag out that `inputFor` would otherwise supply
-    ground: 'outside the rule: it states what the value `null` stands for among the identity flags just named, the definitional sense that the rule permits'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/change-grammar/__tests__/verify.unit.test.ts
-    phrase: places {breaking} where
-    ground: the word names a position in the template; the string also quotes a message composed by `verify.ts`, so changing it would break the assertion
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/change-grammar/__tests__/verify.unit.test.ts
-    phrase: refuses {breaking} beside free text, where the marker is not distinguishable
-    ground: 'the word names a place: the position beside free text'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/change-grammar/apply-overrides.ts
-    phrase: Reads a scope override, where `*` names no scope.
-    ground: 'outside the rule: the clause states what the value `*` stands for'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/change-grammar/verify.ts
-    phrase: hiding where the group begins
-    ground: 'outside the rule: `where` names the point in the string at which the group starts'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/change-grammar/verify.ts
-    phrase: placed where the marker cannot be told from its neighbours
-    ground: 'outside the rule: `where` names the position in the template at which the token sits'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/derive-session-context/types.ts
-    phrase: on platforms where one can't be reconstructed
-    ground: 'outside the rule: `where` names a place, the platform on which the URL cannot be reconstructed'
-  - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/describe-change/__tests__/cli.tool.test.ts
+    rule-version: '2'
+    file: packages/guidance/src/describe-change/__tests__/cli.unit.test.ts
     phrase: where <subcommand> is one of ${SUBCOMMAND_NAMES.join(', ')}
-    ground: "outside the rule: it defines the placeholder `<subcommand>` in the usage expression before it, and the string is asserted verbatim against the helper's own error message"
+    ground: 'outside the rule: defines the placeholder <subcommand> in the expression before it'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/describe-change/cli.ts
-    phrase: 'usage: ${PROGRAM} <subcommand> [flags], where <subcommand> is one of'
-    ground: 'outside the rule: the `where` follows an expression and defines the placeholder `<subcommand>` in it'
+    phrase: '[flags], where <subcommand> is one of'
+    ground: '`where` defines the `<subcommand>` placeholder in the expression before it'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/feedback-memories/resolve-repo-path.ts
-    phrase: is reassembled only where the filesystem requires it
-    ground: 'outside the rule: `where` names a place, the position in the segment sequence'
+    rule-version: '2'
+    file: packages/guidance/src/groom-backlog/types.ts
+    phrase: Where a sign of ongoing work on a ticket was found.
+    ground: "outside the rule: 'where' names a place"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/src/index-prototypes/index-page-script.ts
+    phrase: Keep keyboard focus where the viewer was
+    ground: 'names a place: the position of keyboard focus on the page'
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/src/kb-add/declare-domain.ts
     phrase: Returns where the note is and what the declaration added
-    ground: "outside the rule: `where` names a place, the note's position in the taxonomy"
+    ground: "names a place: the note's location in the taxonomy"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/kb-add/declare-domain.ts
-    phrase: Where a written note is in the store's taxonomy
-    ground: "outside the rule: `where` names a place, the note's position in the taxonomy"
+    phrase: Where a written note is in the store's taxonomy, and what recording it there added.
+    ground: "names a place: the note's location in the taxonomy"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/kb-add/types.ts
-    phrase: Where the note was placed in the store's taxonomy
-    ground: "outside the rule: `where` names a place, the note's position in the taxonomy"
+    phrase: Where the note was placed in the store's taxonomy; absent for a store that has not adopted one.
+    ground: "names a place: the note's location in the taxonomy"
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/kb-curate/__tests__/cli.unit.test.ts
     phrase: are placed where the loaders read them
-    ground: 'outside the rule: `where` names a place, the store-root location from which the loaders read'
+    ground: '`where` names a place: the location from which the loaders read the files'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/kb-edit/cli.ts
-    phrase: depends on where the note is rather than on where the helper was invoked
-    ground: 'outside the rule: `where` names a place, a directory, in both uses'
+    rule-version: '2'
+    file: packages/guidance/src/lib/work-types.ts
+    phrase: Names where a taxonomy is read from, as a diagnostic's locative phrase
+    ground: 'names a place: the location from which the taxonomy is read'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/src/manage-jira-ticket/cli.ts
+    phrase: resolves where a Jira work item goes
+    ground: 'names a place: the destination project of the work item'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/src/manage-jira-ticket/resolve-target.ts
+    phrase: Where a work item is created, or the reason that the preferences do not name a project.
+    ground: 'names a place: the project and issue type in which the item is created'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/src/pull-from-backlog/now.ts
+    phrase: Where the Now set came from.
+    ground: "outside the rule: 'where' names a place of origin"
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/src/resolve-ticket-target/cli.ts
+    phrase: prints where it was written as JSON
+    ground: 'outside the rule: "where" names a place'
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
-    phrase: 'passes over a modifier standing where a head noun would: %s'
-    ground: detector fixture or the expectation literal paired with one
+    phrase: or undefined where the source it names is fit to run.
+    ground: 'not prose: a recorded before-and-after fixture that the test asserts'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
-    phrase: Reports what disqualifies a bin target, or undefined where the source it names is fit to run.
-    ground: detector fixture or the expectation literal paired with one
+    phrase: or undefined where the source that it names is fit to run.
+    ground: 'not prose: a recorded before-and-after fixture that the test asserts'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-object-relative.unit.test.ts
-    phrase: Reports what disqualifies a bin target, or undefined where the source that it names is fit to run.
-    ground: detector fixture or the expectation literal paired with one
+    phrase: passes over a modifier standing where a head noun would
+    ground: 'outside the rule: names the position that a head noun would occupy'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-where.unit.test.ts
-    phrase: First sentence.\nSecond, where.
-    ground: detector fixture or the expectation literal paired with one
+    phrase: Second, where.
+    ground: 'a marked exhibit: a fixture that the where-detector test asserts on'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-where.unit.test.ts
     phrase: Skip the batch where the record covers it.
-    ground: detector fixture or the expectation literal paired with one
+    ground: 'a marked exhibit: a fixture that the where-detector test asserts on'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-where.unit.test.ts
     phrase: The file where it lives is where it stays.
-    ground: detector fixture or the expectation literal paired with one
+    ground: 'a marked exhibit: a fixture that the where-detector test asserts on'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/__tests__/detect-where.unit.test.ts
     phrase: Where a unit names no rule, nothing is detected.
-    ground: detector fixture or the expectation literal paired with one
+    ground: 'a marked exhibit: a fixture that the where-detector test asserts on'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/detect-object-relative.ts
     phrase: and where the chain ends
-    ground: 'outside the rule: the word names the position at which the chain ends'
+    ground: 'names a place: a position in the token run or text'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/detect-object-relative.ts
     phrase: reads off where the verb closed
-    ground: 'outside the rule: the word names the position at which the verb closed'
+    ground: 'names a place: a position in the token run or text'
   - rule: where
-    rule-version: '1'
-    file: packages/guidance/src/revise-prose/detect-object-relative.ts
-    phrase: Reports whether a head sits where a verb belongs rather than where a noun does.
-    ground: 'outside the rule: both uses name a position'
-  - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/detect-object-relative.ts
     phrase: since it stands where a word of the subject stood
-    ground: 'outside the rule: the word names the slot that a word of the subject held'
+    ground: 'names a place: a position in the token run or text'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/detect-object-relative.ts
     phrase: since nothing marks where a longer one would begin
-    ground: 'outside the rule: the word names the point at which a longer subject would begin'
+    ground: 'names a place: a position in the token run or text'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/detect-object-relative.ts
-    phrase: where the head fills its complement slot
-    ground: 'outside the rule: the word names the clause-final position'
+    phrase: where a verb belongs rather than where a noun does
+    ground: 'names a place: a position in the token run or text'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/src/revise-prose/mask-code-spans.ts
+    phrase: which is what a reported phrase contains where a span stood
+    ground: 'names a place: a position in the token run or text'
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/src/revise-prose/record.ts
     phrase: contains a placeholder where an inline code span stood
-    ground: 'outside the rule: the word names the position at which the code span stood'
+    ground: 'names a place: a position in the token run or text'
   - rule: where
-    rule-version: '1'
+    rule-version: '2'
+    file: packages/guidance/src/revise-prose/types.ts
+    phrase: 'Where a determiner `no` stands:'
+    ground: 'outside the rule: names a position in the sentence'
+  - rule: where
+    rule-version: '2'
     file: packages/guidance/src/shared/resolve-project-root.ts
     phrase: regardless of where the agent happened to invoke it
-    ground: 'outside the rule: `where` names a place, the directory of invocation'
+    ground: '`where` names a place: the directory from which the agent invoked the helper'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/src/triage-spike-findings/__tests__/render.unit.test.ts
+    phrase: '| Where | Blocked by | Reason |'
+    ground: 'not prose: a table header in an expected-output literal'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/src/triage-spike-findings/__tests__/render.unit.test.ts
+    phrase: renders one row per item with the where column by disposition
+    ground: "not prose: names the table's Where column"
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/src/triage-spike-findings/render.ts
+    phrase: '| Item | Disposition | Confidence | Value | Where | Blocked by | Reason |'
+    ground: 'outside the rule: a column label'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/src/triage-spike-findings/render.ts
+    phrase: 'Renders the where column:'
+    ground: 'outside the rule: names the Where column'
   - rule: where
     rule-version: '2'
     file: packages/kb/README.md

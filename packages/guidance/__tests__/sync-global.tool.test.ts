@@ -51,7 +51,7 @@ describe('sync --global (library, seeded collections)', { timeout: 60_000 }, () 
     const designAndPlan = await readFile(path.join(skillsDir, 'design-and-plan', 'SKILL.md'), 'utf8');
     expect(designAndPlan).not.toContain('{tool:');
 
-    // Each subagent resolves from the library source, so each is merged against the library's own overlay.
+    // Because each subagent resolves from the library source, each is merged against the library's own overlay.
     const agentsDir = path.join(homeDir, '.claude', 'agents');
     const deployedSubagents = await readdir(agentsDir);
     expect(deployedSubagents.length).toBeGreaterThan(0);

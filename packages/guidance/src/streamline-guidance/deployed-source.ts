@@ -12,9 +12,9 @@ export type SourceLookup = { found: string } | { reason: 'ambiguous-source' | 's
 
 /**
  * Finds the absolute path of a deployed copy's source inside the repository. An `install` copy names its source on a
- * `Source:` line, as a path within a source directory; a source directory outside the repository, such as another
- * checkout of the same content, resolves that path under each content root instead. A `sync` copy names only its slug
- * in an ownership marker, and `findDeployedSource` resolves that slug under each content root.
+ * `Source:` line, as a path within a source directory; for a source directory outside the repository, such as another
+ * checkout of the same content, `findDeployedSource` resolves that path under each content root instead. A `sync` copy
+ * names only its slug in an ownership marker, and `findDeployedSource` resolves that slug under each content root.
  */
 export function findDeployedSource(
   content: string,

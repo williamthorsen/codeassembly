@@ -35,8 +35,8 @@ describe('scope vocabulary', () => {
 /**
  * Reads the scopes from the release-kit config's `scope:` label keys whose entries are not archived, sorted.
  *
- * The keys are read textually rather than imported: the config sits outside this package, imports
- * `@williamthorsen/release-kit/config`, and is outside the package's `tsconfig` include set, so importing it would
+ * The keys are read textually rather than imported: the config is outside this package, imports
+ * `@williamthorsen/release-kit/config`, and is not in the package's `tsconfig` include set, so importing it would
  * couple the test to a resolution path that nothing else here needs.
  */
 async function readLabelScopes(): Promise<string[]> {

@@ -332,7 +332,7 @@ describe(resolveEpisode, () => {
     await writeFile(join(fixture.subagentsDir, 'lede-cutter.md'), 'A retired doctrine body.\n', 'utf8');
 
     // A harness installed before the cutter was removed still has its body beside the drafter's, and a digest that
-    // took whatever the directory held would open a generation per machine rather than per doctrine change.
+    // took whatever the directory contained would open a generation per machine rather than per doctrine change.
     expect((await resolveFor(fixture)).doctrineHash).toBe(before);
   });
 
@@ -424,7 +424,7 @@ function inputFor(fixture: LedeFixture, overrides: IdentityFlags = {}): Paramete
   };
 }
 
-/** The identity flags passed by a test, where `null` leaves a flag out that `inputFor` would otherwise supply. */
+/** The identity flags passed by a test. A `null` value leaves out a flag that `inputFor` would otherwise supply. */
 interface IdentityFlags {
   breaking?: boolean;
   scope?: string | null;

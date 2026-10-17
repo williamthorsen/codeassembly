@@ -4,7 +4,7 @@ import { detectSecondPersonPronouns } from '../detect-second-person.ts';
 import type { ProseSpan, SecondPersonCandidate } from '../types.ts';
 
 describe(detectSecondPersonPronouns, () => {
-  it('reports a sentence holding a pronoun, with the sentence as the phrase', () => {
+  it('reports a sentence containing a pronoun, with the sentence as the phrase', () => {
     expect(detect('Pass your config to the flag.')).toStrictEqual([
       {
         rule: 'second-person',
@@ -27,7 +27,7 @@ describe(detectSecondPersonPronouns, () => {
     expect(detect('The youth league keeps a youthful schedule.')).toStrictEqual([]);
   });
 
-  it('reports one candidate for a sentence holding two pronouns', () => {
+  it('reports one candidate for a sentence containing two pronouns', () => {
     expect(detect('You set your own budget.')).toHaveLength(1);
   });
 

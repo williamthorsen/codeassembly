@@ -91,8 +91,8 @@ function pad2(value: number): string {
 /**
  * Truncates text to `max` grapheme clusters, replacing the tail with an ellipsis that counts toward `max`; yields
  * empty text when max is not positive. Cutting on cluster boundaries keeps an emoji, a ZWJ sequence, or a combining
- * mark whole rather than splitting it. The count is clusters, not display columns, so a line holding a wide character
- * can still render past `max`.
+ * mark whole rather than splitting it. The count is clusters, not display columns, so a line containing a wide
+ * character can still render past `max`.
  */
 function truncate(text: string, max: number): string {
   if (max <= 0) {

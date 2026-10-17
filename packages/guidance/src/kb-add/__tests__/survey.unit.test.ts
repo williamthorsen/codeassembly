@@ -45,7 +45,7 @@ describe(surveyKb, () => {
     ]);
   });
 
-  it('counts a domain as holding every note beneath it, so a grouping domain is reported as populated', async () => {
+  it('counts a domain as containing every note beneath it, so a grouping domain is reported as populated', async () => {
     const kbPath = await makeStore({
       '.kb/taxonomy.yaml': 'domains:\n  engineering: Practice\n  engineering/tooling: Build and test tooling\n',
       'content/assertions/engineering/tooling/Vite.md': NOTE,

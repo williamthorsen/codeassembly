@@ -24,7 +24,8 @@ const MERGED_VIEW = JSON.stringify({
   headRepositoryOwner: { login: 'acme' },
 });
 
-// A `gh` stand-in: It appends its argv to the log as one JSON line and answers from the STUB_* variables.
+// A `gh` stand-in: It appends its argv to the log as one JSON line and takes its output and exit code from the
+// STUB_* variables.
 const GH_STUB = String.raw`#!${process.execPath}
 const fs = require('node:fs');
 const args = process.argv.slice(2);

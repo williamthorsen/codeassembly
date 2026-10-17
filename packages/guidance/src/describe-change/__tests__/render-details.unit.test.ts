@@ -16,7 +16,7 @@ describe(renderDetails, () => {
     expect(details).toBe(`### ${emoji} ${label}\n\n- Does the thing`);
   });
 
-  it('orders subsections by tier, then by listing order, whatever order the entries arrive in', () => {
+  it('orders subsections by tier, then by listing order, whatever the order of the entries', () => {
     const entries = [
       buildEntry({ text: 'Bumps a dependency', type: 'deps' }),
       buildEntry({ text: 'Restructures a module', type: 'refactor' }),

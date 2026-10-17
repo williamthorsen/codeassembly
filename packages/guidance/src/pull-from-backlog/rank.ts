@@ -24,7 +24,7 @@ export interface RankedCandidate {
   url: string;
 }
 
-/** Returns whether `issue` carries one of `excludeLabels`, compared trimmed and without regard to case. */
+/** Returns whether `issue` has one of `excludeLabels`, compared trimmed and without regard to case. */
 export function hasExcludedLabel(issue: Issue, excludeLabels: readonly string[]): boolean {
   const excluded = new Set(excludeLabels.map(normalizeLabel));
   return issue.labels.some((label) => excluded.has(normalizeLabel(label)));

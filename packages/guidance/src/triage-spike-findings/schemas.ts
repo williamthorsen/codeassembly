@@ -59,8 +59,9 @@ export interface GateViolation {
 
 /**
  * Checks a parsed record against the gate: a `low` item never takes a ticket; a `merge` targets a `ticket` item by id; a
- * `comment` targets an issue number; a `ticket` or `drop` item has no target; only a `ticket` item carries a ticket
- * number or blockers; a blocker id names another `ticket` item, once; the blockers form no cycle; and ids are unique.
+ * `comment` targets an issue number; a `ticket` or `drop` item does not have a target; only a `ticket` item has a
+ * ticket number or blockers; a blocker id names another `ticket` item, once; the blockers do not form a cycle; and ids
+ * are unique.
  * Returns every violation, so that one run reports them all.
  */
 export function checkGate(record: DispositionsRecord): GateViolation[] {
@@ -75,7 +76,7 @@ export function checkGate(record: DispositionsRecord): GateViolation[] {
       violations.push({ id: item.id, clause: 'a low item does not take a ticket' });
     }
     if (item.disposition !== 'ticket' && item.ticket !== null) {
-      violations.push({ id: item.id, clause: `a ${item.disposition} item does not carry a ticket number` });
+      violations.push({ id: item.id, clause: `a ${item.disposition} item does not have a ticket number` });
     }
     switch (item.disposition) {
       case 'comment':

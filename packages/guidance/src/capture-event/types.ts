@@ -14,7 +14,7 @@ export interface ParsedArgs {
   model: string | null;
   /** Optional harness (agent runtime) identifier, injected from the installed invocation template. */
   harness: string | null;
-  /** Optional tag list, in the order the agent supplied them. */
+  /** Optional tag list, in the order in which the agent supplied them. */
   tags: string[];
   impact: EventImpact | null;
   /** The id of an existing event to amend instead of capturing a new one; `null` for a fresh capture. */

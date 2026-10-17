@@ -152,7 +152,7 @@ export async function runRetrieveEvents(input: {
   return result;
 }
 
-/** Phrases the empty-result diagnostic, naming the stage at which the query lost its matches. */
+/** Phrases the empty-result diagnostic, naming the stage that emptied the candidate list. */
 function emptyResultDiagnostic(input: { recalledCount: number; filteredHits: number }): string {
   if (input.recalledCount === 0) {
     return 'the query did not match any notes';

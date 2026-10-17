@@ -17,7 +17,7 @@ const MILESTONES: Milestone[] = [
 ];
 
 describe(buildSurvey, () => {
-  it('skips a milestone that holds only excluded tickets when it resolves Now', () => {
+  it('skips a milestone that contains only excluded tickets when it resolves Now', () => {
     const survey = surveyBacklog([
       buildIssue({ number: 1, milestone: SOONER, labels: ['status:blocked'] }),
       buildIssue({ number: 2, milestone: SOONER, labels: ['status:on-hold'] }),

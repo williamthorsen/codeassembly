@@ -13,7 +13,7 @@ const TARGET = 'skills/demo/SKILL.md';
 /**
  * Builds a throwaway git repository containing one content root, whose skill includes one partial, and
  * returns an invocation that resolves the skill. Exercises the git listing, the include listing, and the
- * transitive-file pipeline. The invocation runs the shipped bundle end to end, which cannot take a fake git adapter,
+ * transitive-file pipeline. The invocation runs the built bundle end to end, which cannot take a fake git adapter,
  * so the bundle's real adapter needs a real repository to read.
  */
 export function makeStreamlineGuidanceSmokeTest(): SmokeTestInvocation {
@@ -34,7 +34,7 @@ export function makeStreamlineGuidanceSmokeTest(): SmokeTestInvocation {
 // region | Helpers
 
 /**
- * Asserts that the run resolved the skill and reached its partial. A working pipeline always reports the partial, so
+ * Asserts that the run resolved the skill and found its partial. A working pipeline always reports the partial, so
  * its absence means that the listing or the include resolution found nothing.
  */
 function assertStreamlineGuidanceSmokeResult(result: unknown): void {

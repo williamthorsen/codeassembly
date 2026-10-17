@@ -136,8 +136,8 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 /**
  * Applies the parsed operation to an event, returning the mutated record.
  *
- * Every operation here is a curatorial annotation and does not stamp a timestamp. A substantive content edit goes
- * through `capture-event --amend` instead.
+ * Every operation here is a curatorial annotation and does not stamp a timestamp. `capture-event --amend` makes a
+ * substantive content edit instead.
  */
 function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): KbEvent {
   switch (args.operation) {
@@ -224,7 +224,10 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Loads tag aliases for a store, degrading a malformed or unreadable `tag-aliases.yaml` to an empty map with a warning. */
+/**
+ * Loads tag aliases for a store, returning an empty map with a warning when `tag-aliases.yaml` is malformed or
+ * unreadable.
+ */
 async function loadAliasesForStore(storePath: string): Promise<AliasMap> {
   const kbRoot: KbRoot = { path: storePath, kbDir: resolveKbDir(storePath) };
   try {

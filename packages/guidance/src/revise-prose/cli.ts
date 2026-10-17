@@ -4,7 +4,7 @@
  * CLI entry for the prose sweep.
  *
  * Two commands. `detect` (the default) sweeps, batches, and reports; `record` folds one run's outcome into the
- * repository's record and is the only path that writes it. Positional arguments narrow the sweep to the files that
+ * repository's record and is the only command that writes it. Positional arguments narrow the sweep to the files that
  * they name or contain; with none, the sweep covers the whole repository.
  *
  * When the invocation does not declare any unit, `detect` runs the reduced-object-relative detector alone and does not
@@ -97,7 +97,7 @@ if (isEntryPoint()) {
 }
 
 /**
- * Parses the helper's argv: positional paths narrowing the sweep, plus the rules and units that the caller holds.
+ * Parses the helper's argv: positional paths narrowing the sweep, plus the rules and units that the caller names.
  *
  * `--rule <name>@<version>=<unit>` names a rule, its sweep version, and the unit owning it, whether or not the helper
  * has a detector for it; `--rule <name>=<unit>` names a rule that does not declare a sweep version, which is swept but
@@ -178,7 +178,7 @@ export async function runDetect(
   const versions = buildArgVersions(args);
   const ruleVersions = selectRuleVersions(versions);
 
-  // Read only when a unit is declared: With none, the invocation does not hold any version against which to compare
+  // Read only when a unit is declared: With none, the invocation does not have any version against which to compare
   // coverage or a rejection, and a malformed record would otherwise fail an invocation that never consults it.
   let record: ProseRecord = EMPTY_RECORD;
   if (args.units.size > 0) {
@@ -240,8 +240,8 @@ export async function runDetect(
 
 /**
  * Folds one run's outcome into the repository's record and writes it. A rule's coverage records whether the helper has
- * its detector, which is what lets a detector added later run over files already covered. A prior rejection's site is
- * looked for in its file as the file stands when the command runs.
+ * its detector, which is what lets a detector added later run over files already covered. The command looks
+ * for a prior rejection's site in its file as the file is when the command runs.
  *
  * @internal - Exported to allow testing.
  */
@@ -268,7 +268,7 @@ export function runRecord(input: { foldJson: string; root: string }): RecordResu
 
 // region | Helpers
 
-/** Builds the versions that an invocation holds, keeping only the named rules that declare a sweep version. */
+/** Builds the versions that an invocation declares, keeping only the named rules that declare a sweep version. */
 function buildArgVersions(args: ParsedArgs): SweepVersions {
   const rules = new Map<string, VersionedRule>();
   for (const { rule, unit, version } of args.rules) {
@@ -297,7 +297,7 @@ function buildBatchScope(
   };
 }
 
-/** Builds the versions that a fold holds. */
+/** Builds the versions that a fold contains. */
 function buildFoldVersions(fold: RunFold): SweepVersions {
   return { units: new Map(Object.entries(fold.units)), rules: new Map(Object.entries(fold.rules)) };
 }
@@ -373,7 +373,8 @@ function readSiteText(root: string, file: string): SiteText | undefined {
 /** Reads standard input to EOF, which is how the `record` command receives the run's fold. */
 async function readStdin(): Promise<string> {
   const chunks: Uint8Array[] = [];
-  // The stream yields `any`, so each chunk is narrowed rather than asserted: A string arrives when an encoding is set.
+  // The stream yields `any`, so each chunk is narrowed rather than asserted: A chunk is a string when an
+  // encoding is set.
   for await (const chunk of process.stdin) {
     chunks.push(chunk instanceof Uint8Array ? chunk : Buffer.from(String(chunk), 'utf8'));
   }
@@ -391,8 +392,8 @@ function selectRuleVersions(versions: SweepVersions): ReadonlyMap<string, string
 }
 
 /**
- * Splits a `name=value` flag argument. Both halves must be non-empty, an empty unit name or version naming nothing the
- * record could key on.
+ * Splits a `name=value` flag argument. Both halves must be non-empty, because an empty unit name or version does not
+ * name anything on which the record could key.
  */
 function splitPair(flag: string, value: string): [string, string] {
   const cut = value.indexOf('=');
@@ -418,7 +419,7 @@ function stripCommand(argv: readonly string[]): readonly string[] {
 /**
  * Counts a candidate set by file, by rule, and by shape, alongside how many files the sweep read, how many it
  * excluded, and how many batches the record let it skip. A whole-repository sweep can return more candidates than one
- * adjudication pass affords, and these counts are what a caller reads to narrow the next run before paying for it.
+ * adjudication pass affords, and these counts are what a caller reads to narrow the next run before running it.
  * The skip counts keep an exclusion visible: A file never opened by the sweep would otherwise leave the report looking
  * clean.
  */

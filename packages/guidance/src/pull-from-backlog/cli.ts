@@ -87,7 +87,7 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs one command. Invalid arguments, an invalid `ticket.pull` section, and a failed `gh` or `git` call become
+ * Runs one command, and reports invalid arguments, an invalid `ticket.pull` section, and a failed `gh` or `git` call as
  * structured `{ ok: false }` results.
  */
 export async function runCli(argv: readonly string[], context: CommandContext): Promise<CommandResult> {

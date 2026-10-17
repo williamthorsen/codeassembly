@@ -101,9 +101,9 @@ async function readMemory(input: {
   const content = await readFile(input.path, 'utf8');
   const note = readNoteContent(content);
   if (note.error !== undefined) {
-    // Report a malformed memory (a fence wrapping unparseable YAML) so that an operator can route it by hand. A file
-    // without a fence is not a memory at all, and a feedback memory always has frontmatter, so skipping it never hides
-    // one.
+    // Report a malformed memory (a fence wrapping unparseable YAML) so that an operator can assign it to a destination
+    // by hand. A file without a fence is not a memory at all, and a feedback memory always has frontmatter, so skipping
+    // it never hides one.
     return hasFrontmatterFence(content) ? { kind: 'unreadable', reason: note.error } : { kind: 'other' };
   }
   if (effectiveType(note.fields) !== 'feedback') {

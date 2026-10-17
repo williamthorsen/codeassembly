@@ -57,7 +57,7 @@ describe(resolveNow, () => {
     });
   });
 
-  it('falls back to the whole backlog when no open milestone has an open issue', () => {
+  it('falls back to the whole backlog when the open milestones do not have any open issues', () => {
     expect(resolveNow({ configured: undefined, issues: [buildIssue()], milestones: MILESTONES })).toStrictEqual({
       milestone: null,
       notFound: null,

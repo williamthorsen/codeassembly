@@ -165,11 +165,11 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
 
 /**
  * Selects the backlog narrowed by the selectors and writes one input file per ticket under `--out`.
- * A ticket already assessed in this run is skipped unless it changed after that assessment, the latest comment carrying
- * this run's marker, and the latest decision that this run applied to it, so that the sweep's own writes do not make a
- * ticket look changed: GitHub stamps `updatedAt` a moment after the comment that caused it. A skipped ticket
- * whose latest assessment has an auto-close class and no decision after it is reported in `pendingAutomatic`, so that
- * the skill still applies it.
+ * A ticket already assessed in this run is skipped unless it changed after that assessment, the latest comment
+ * containing this run's marker, and the latest decision that this run applied to it, so that the sweep's own writes do
+ * not make a ticket look changed: GitHub stamps `updatedAt` a moment after the comment that caused it. A skipped ticket
+ * whose latest assessment has an auto-close class and is not followed by any decision is reported in
+ * `pendingAutomatic`, so that the skill still applies it.
  */
 async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
   const run = readRequired(flags, 'run');
@@ -265,7 +265,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
 
 /**
  * Renders one ticket's comment body to `--out`, and reports whether to post it; a comment that is not posted is not
- * rendered. A bulk decision needs no reply; every other decision does.
+ * rendered. A bulk decision does not need a reply; every other decision does.
  */
 async function runComment(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
   const run = readRequired(flags, 'run');
@@ -345,7 +345,7 @@ async function runDigest(flags: ParsedFlags, context: CommandContext): Promise<C
  * Composes one ticket's drafted edit into files under `--out`: the new body, from the ticket's current body with the
  * drafted sections replaced, and one file per child of a split. The result names the drafted title, if any. The draft is
  * stale, and nothing is written, when the ticket changed after the version that the assessor read and after the latest
- * comment carrying this run's marker. A ticket in progress keeps its problem, context, and proposed solution, so a
+ * comment containing this run's marker. A ticket in progress keeps its problem, context, and proposed solution, so a
  * draft that replaces one is refused.
  */
 async function runDraft(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {

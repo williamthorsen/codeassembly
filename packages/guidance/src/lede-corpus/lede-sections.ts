@@ -1,8 +1,8 @@
 import { extractSection } from '../lib/markdown-sections.ts';
 
 // The body-section contract of a lede decision record. The writer that composes a decision and the reader that parses
-// one share these headings and the tag that marks a decision out from the other events in the store, so neither side
-// can rename a section without the other.
+// one share these headings and the tag that distinguishes a decision from the other events in the store, so neither
+// side can rename a section without the other.
 
 /** Heading of the section containing the lede that the agent published to the pull request. */
 export const AGENT_LEDE_HEADING = 'Agent lede';
@@ -29,7 +29,7 @@ export interface LedeDecisionPair {
  * agent's lede otherwise. Yields `null` when neither heading appears.
  *
  * Presence decides, never the verdict. Some records in the corpus state a verdict that disagrees with the sections
- * beside it, so a reader keying off the verdict would take the wrong text.
+ * beside it, so a reader that relied on the verdict would take the wrong text.
  *
  * A comment is critique of a lede rather than a lede, and this module does not read it.
  */

@@ -15,7 +15,7 @@ const VALUE_RANK: readonly ValueGrade[] = ['must-have', 'should-have', 'nice-to-
  * Returns the items in display order, which is also the creation order: the `ticket` items with every blocker before the
  * items that it blocks, choosing among the items whose blockers are placed by value, then confidence, then record order,
  * each followed by the `merge` items that target it; then the `comment` and `drop` items in record order. Assumes a
- * record that passed the gate, whose blockers form no cycle.
+ * record that passed the gate, whose blockers do not form a cycle.
  */
 export function orderItems(record: DispositionsRecord): Item[] {
   const byId = new Map(record.items.map((item) => [item.id, item]));
@@ -56,7 +56,7 @@ function sortByBlockers(tickets: readonly Item[], byId: ReadonlyMap<string, Item
     const readyIndex = remaining.findIndex((item) =>
       listInternalBlockers(item, byId).every((blocker) => placed.has(blocker)),
     );
-    // A cycle leaves no item ready; place the rest by priority rather than loop.
+    // When a cycle leaves every remaining item blocked, place the rest by priority rather than loop.
     const [next] = remaining.splice(Math.max(readyIndex, 0), 1);
     if (next === undefined) break;
     placed.add(next.id);

@@ -17,7 +17,7 @@ export const FIXTURE_DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter
  * and a provenance-stamp path.
  */
 export interface LedeFixture {
-  /** Temporary root holding everything the fixture created. */
+  /** Temporary root containing everything the fixture created. */
   root: string;
   artifactDir: string;
   dataDir: string;
@@ -28,8 +28,8 @@ export interface LedeFixture {
 
 /**
  * Builds a temporary ticket directory containing a pull-request, merge, and change-summary artifact, plus a `_data`
- * directory holding a minimal work-type taxonomy and a subagents directory holding the bodies covered by the doctrine
- * digest.
+ * directory containing a minimal work-type taxonomy and a subagents directory containing the bodies covered by the
+ * doctrine digest.
  *
  * The change summary declares a work type and scope that differ from what a caller would normally pass as flags, so a
  * test can tell a supplied flag from its artifact fallback.

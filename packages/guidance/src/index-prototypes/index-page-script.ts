@@ -1,4 +1,4 @@
-/** The `db` collection that holds one verdict document per slug. */
+/** The `db` collection that contains one verdict document per slug. */
 export const VERDICTS_COLLECTION = 'verdicts';
 
 /** The keys that the page binds, as the shortcut hint lists them. */
@@ -153,7 +153,7 @@ export const INDEX_PAGE_SCRIPT = `(() => {
       state.refused = true;
       setStatus('This view cannot change verdicts, so they are shown read-only.');
     } else if (code === 'quota_exceeded') {
-      setStatus('The verdict store is full, so this verdict was not saved.');
+      setStatus('This verdict was not saved because the verdict store is full.');
     } else {
       setStatus('The verdict was not saved. Try again in a moment.');
     }
@@ -233,7 +233,8 @@ export const INDEX_PAGE_SCRIPT = `(() => {
     const card = target ? target.closest('.card') : null;
     const key = event.key;
     if (key.startsWith('Arrow')) {
-      // Arrows move between cards only from a focused card, so the page scrolls as usual elsewhere.
+      // Move focus between cards with the arrow keys only from a focused card, so that the page scrolls as usual
+      // elsewhere.
       if (!event.shiftKey && target && target.classList.contains('card')) {
         event.preventDefault();
         moveFocus(target, key);

@@ -38,7 +38,7 @@ export function renderIssueComments(record: DispositionsRecord): Map<number, str
   const comments = new Map<number, string>();
   for (const [issue, items] of grouped) {
     const lines = [
-      `A triage of the findings of ${record.source} (#${record.triageTicket}) routes the following to this issue:`,
+      `A triage of the findings of ${record.source} (#${record.triageTicket}) assigns the following to this issue:`,
       '',
       ...items.map(
         (item) => `- **${item.title}** (confidence ${item.confidence}, value ${item.value}): ${item.reason}`,

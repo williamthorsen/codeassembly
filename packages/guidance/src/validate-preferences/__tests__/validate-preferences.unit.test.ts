@@ -35,7 +35,7 @@ describe(validatePreferences, () => {
     ]);
   });
 
-  it('reports an unrecognized key without a suggestion when no known key is near', () => {
+  it('reports an unrecognized key without a suggestion when every known key is too far from it', () => {
     expect(validatePreferences({ deployment: 'x' }, preferencesSchema).map(formatFinding)).toEqual([
       'warning deployment: unrecognized key',
     ]);
@@ -111,7 +111,10 @@ function collectKeywords(schema: unknown): Set<string> {
   return keywords;
 }
 
-/** Returns the subschemas held by one keyword's value: every property schema, or the one `items` or `additionalProperties` schema. */
+/**
+ * Returns the subschemas contained in one keyword's value: every property schema, or the one `items` or
+ * `additionalProperties` schema.
+ */
 function listSubschemas(keyword: string, value: unknown): unknown[] {
   if (keyword === 'properties') {
     return isRecord(value) ? Object.values(value) : [];

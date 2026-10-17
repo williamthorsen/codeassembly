@@ -8,9 +8,9 @@ The reference for the keys of `.agents/preferences.yaml`. The [README](../README
 
 | Key                         | Type                                  | Default                                      | Description                                                                                                                                                                                                                                                                           |
 | --------------------------- | ------------------------------------- | -------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `project.audience`          | `owner` \| `team` \| `public`         | — (undeclared)                               | Who uses the project. `owner`: only the repo's owner. `team`: a known, bounded group. `public`: anyone who can reach it.                                                                                                                                                              |
-| `project.maturity`          | `hobby` \| `early` \| `production`    | — (undeclared)                               | How far the project has come. `hobby`: built for the owner's own use or learning; breakage costs only the owner's time. `early`: in use by others, but the shape is still changing; downtime is tolerated. `production`: others depend on it; downtime and data loss have real costs. |
-| `project.sensitivity`       | `low` \| `personal` \| `confidential` | — (undeclared)                               | The most sensitive data that the project holds. `low`: nothing that would harm anyone if published. `personal`: personal data about the owner or identifiable individuals. `confidential`: secrets, credentials, or data that a third party is obliged to protect.                    |
+| `project.audience`          | `owner` \| `team` \| `public`         | none (undeclared)                            | Who uses the project. `owner`: only the repo's owner. `team`: a known, bounded group. `public`: anyone who can reach it.                                                                                                                                                              |
+| `project.maturity`          | `hobby` \| `early` \| `production`    | none (undeclared)                            | How far the project has come. `hobby`: built for the owner's own use or learning; breakage costs only the owner's time. `early`: in use by others, but the shape is still changing; downtime is tolerated. `production`: others depend on it; downtime and data loss have real costs. |
+| `project.sensitivity`       | `low` \| `personal` \| `confidential` | none (undeclared)                            | The most sensitive data that the project handles. `low`: nothing that would harm anyone if published. `personal`: personal data about the owner or identifiable individuals. `confidential`: secrets, credentials, or data that a third party is obliged to protect.                  |
 | `project.slug`              | string                                | Bare directory name of the working directory | Project identifier used for namespacing artifacts under `{base_dir}/projects/{slug}/`.                                                                                                                                                                                                |
 | `project.ticket_ref_prefix` | string                                | `''`                                         | Prefix that appears at the start of `ticket_ref`. Use `#` for GitHub issues (added at render time, omitted from file paths) or a Jira project key like `MAC-` (part of the canonical ticket ID, included in file paths and templates).                                                |
 
@@ -31,11 +31,11 @@ The reference for the keys of `.agents/preferences.yaml`. The [README](../README
 | ------------------------------------------ | ------ | -------- | ----------------------------------------------------------------------------------------------- |
 | `repository.default_remote.name`           | string | `origin` | Name of the default git remote.                                                                 |
 | `repository.default_remote.default_branch` | string | `main`   | Default branch of the remote. Combined with the remote name to produce refs like `origin/main`. |
-| `repository.slug`                          | string | —        | **Deprecated.** Use `project.slug` instead. Kept as a fallback.                                 |
+| `repository.slug`                          | string | none     | **Deprecated.** Use `project.slug` instead. Kept as a fallback.                                 |
 
 ### `commit`, `ticket`, `pr`, `merge`: title format conventions
 
-These four sections share the same structure. Each holds a declarative template that `describe-change.mjs` renders into the title for the corresponding surface (commit, GitHub issue, pull request, and squash-merge commit).
+These four sections share the same structure. Each contains a declarative template that `describe-change.mjs` renders into the title for the corresponding surface (commit, GitHub issue, pull request, and squash-merge commit).
 
 | Key                   | Type   | Default | Description                                 |
 | --------------------- | ------ | ------- | ------------------------------------------- |
@@ -57,17 +57,17 @@ A template is a string containing literal text and any combination of the suppor
 | `{ticket_ref}` | Rendered ticket reference (`#466`, `MAC-147`, …); empty when the change isn't associated with a ticket.                     |
 | `{pr_number}`  | PR number; empty when not yet known. Only meaningful in `merge.title_format`.                                               |
 
-A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so that typos surface in the output.
+A template that omits `{title}` will not have it inserted implicitly; unknown tokens (e.g., `{titel}`) are left as-is so that typos are visible in the output.
 
 Quote `title_format` values in YAML (single or double quotes are both fine). Quoting protects template characters such as `{`, `#`, `:`, and `|` from YAML's own parsing rules: Unquoted, `{title}` opens a flow mapping rather than naming a token, and a space followed by `#` opens a comment. A value that resolves to anything but a string is reported and skipped, so a misquoted template falls through to the next source rather than rendering as written.
 
 #### Optional groups
 
-A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group (literals included) drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would include the marker. Groups nest, and a nested group is kept or dropped on its own: Under `[[{scope}|]{type}: ]{title}`, a change without a scope still renders `feat: Add foo`. A flat group holding both tokens takes the type down with an absent scope instead, and a `*` scope is absent by the time the group decides; `describe-change.mjs` warns of such a template when preferences load. A template that should keep its type nests the scope in a group of its own. Write `\[` and `\]` for a literal bracket.
+A `[...]` group renders verbatim if every token directly inside it resolves non-empty. If one is empty, the entire group (literals included) drops. `{breaking}` never decides a group, so a non-breaking change keeps the prefix that would include the marker. Groups nest, and a nested group is kept or dropped on its own: Under `[[{scope}|]{type}: ]{title}`, a change without a scope still renders `feat: Add foo`. A flat group containing both tokens drops the type along with an absent scope instead, and a `*` scope is absent by the time the group decides; `describe-change.mjs` warns of such a template when preferences load. A template that should keep its type nests the scope in a group of its own. Write `\[` and `\]` for a literal bracket.
 
 `describe-change.mjs` doesn't run a whitespace pass after substitution, so each group contains its own separators: `[{ticket_ref} ]{title}`, not `[{ticket_ref}] {title}`. That lets `describe-change.mjs` read a rendered title back into the record that produced it, and read a whole commit range back through `commit.title_format`. See [title-templates.md](../content/skills/_data/title-templates.md) for how to invoke `describe-change.mjs` and what each of its subcommands reports, and [change-record.md](../content/skills/_data/change-record.md) for how a consolidated record is written down and read back.
 
-A template that cannot round-trip is refused when preferences load, naming the surface, the template, and the defect: two adjacent tokens without a literal between them, a token named twice, an optional group whose opening literal repeats the text before it, or a `{breaking}` placed where the `!` cannot be told from its neighbour. A template that round-trips but loses a token for some record shape that carries a type, such as a flat scope group that drops the type, draws a warning on stderr naming the surface, the template, and the record shape, and the run continues.
+A template that cannot round-trip is refused when preferences load, naming the surface, the template, and the defect: two adjacent tokens without a literal between them, a token named twice, an optional group whose opening literal repeats the text before it, or a `{breaking}` placed where the `!` cannot be told from its neighbour. A template that round-trips but loses a token for some record shape that has a type, such as a flat scope group that drops the type, makes `describe-change.mjs` print a warning on stderr naming the surface, the template, and the record shape, and the run continues.
 
 Example template: `[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]`
 
@@ -114,7 +114,7 @@ commit:
   title_format: '[[{scope}|]{type}: ]{title}'
 ```
 
-Produces: `agents|feat: Add script installer` with both present, `feat: Add script installer` without a scope, and `Add script installer` without a type. Nesting the scope in a group of its own keeps the type when the scope drops; a flat `[{scope}|{type}: ]` takes the type down with it, and `describe-change.mjs` warns of it.
+Produces: `agents|feat: Add script installer` with both present, `feat: Add script installer` without a scope, and `Add script installer` without a type. Nesting the scope in a group of its own keeps the type when the scope drops; a flat `[{scope}|{type}: ]` drops the type with it, and `describe-change.mjs` warns of it.
 
 Conventional commits with scope in parentheses:
 
@@ -194,7 +194,7 @@ editors:
 | ---------------------- | ------ | ---------------------------------------------------------------------- |
 | `editors[].name`       | string | Display name of the editor.                                            |
 | `editors[].command`    | string | Shell command to open files. The file path is appended as an argument. |
-| `editors[].extensions` | string | Glob pattern for file types this editor handles.                       |
+| `editors[].extensions` | string | Glob pattern for file types that this editor handles.                  |
 
 ## Validation
 
@@ -204,7 +204,7 @@ editors:
 codeassembly-validate-preferences [--json] [--strict] [file...]
 ```
 
-- A file named on the command line must exist, and a missing or unparsable file is an error. With no file named, the command validates `.agents/preferences.yaml` under the working directory and accepts its absence, because that file is optional.
+- A file named on the command line must exist, and a missing or unparsable file is an error. When the command line doesn't name a file, the command validates `.agents/preferences.yaml` under the working directory and accepts its absence, because that file is optional.
 - An invalid value, a value of the wrong type, and a missing required key are errors. An unrecognized key is a warning that names the nearest known key, because other tools may add keys to a preferences file. `--strict` treats a warning as an error.
 - By default, the command prints one line per finding, as `<file>: <key path>: <level>: <message>`, then a summary line. `--json` prints one `{ file, present, valid, findings }` object per file instead.
 - The command exits 1 when any file is invalid, and 0 otherwise.

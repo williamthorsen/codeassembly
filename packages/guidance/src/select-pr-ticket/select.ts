@@ -13,8 +13,8 @@ export interface PrTicketSelection {
 }
 
 // A closing keyword followed by `#n`, or a bare `#n` that is not part of a word, a path, a cross-repo reference, or an
-// HTML entity. The keyword alternative comes first, so a keyword reference matches as one even though it contains a
-// bare `#n`.
+// HTML entity. The keyword alternative comes first, so that a keyword reference matches as one even though it contains
+// a bare `#n`.
 const ISSUE_REFERENCE = /\b(?:closes|fixes|resolves):?\s+#(\d+)\b|(?<![\w/#&])#(\d+)\b/iu;
 
 /**

@@ -15,7 +15,7 @@ import type { SmokeTestInvocation } from './smoke-test-invocation.ts';
 export function makeKbCurateSmokeTest(): SmokeTestInvocation {
   const fixtureDir = mkdtempSync(path.join(tmpdir(), 'kb-curate-smoke-'));
   mkdirSync(resolveKbDir(fixtureDir), { recursive: true });
-  // The seed note lives under `content/` so that the store's default `targets: ['content/**/*.md']` enumerates it; a
+  // The seed note is under `content/` so that the store's default `targets: ['content/**/*.md']` enumerates it; a
   // note at the store root would not match and the smoke test would silently report zero notes. The note links to a
   // missing target so that a successful enumeration always yields a `wikilinks.unresolved` finding: the proof, below,
   // that the bundle enumerated the note rather than reporting an empty vault.

@@ -1,4 +1,4 @@
-/** Reports how the checked-out branch stands against a freshly fetched remote default branch. */
+/** Reports the checked-out branch's position relative to a freshly fetched remote default branch. */
 import { execFileSync } from 'node:child_process';
 import process from 'node:process';
 
@@ -36,8 +36,8 @@ export interface CheckOptions {
 
 /**
  * Fetches the base and reports how far the branch is behind and ahead of it, whether its tree is clean, whether its
- * upstream holds any of its own commits, and which commits the base gained. Throws when a git command after the fetch
- * fails, so that a failure never reads as a result.
+ * upstream contains any of its own commits, and which commits the base gained. Throws when a git command after the
+ * fetch fails, so that a failure is never mistaken for a result.
  */
 export function checkBranchCurrency(options: CheckOptions): BranchCurrency {
   const { base, cwd, paths } = options;

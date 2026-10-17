@@ -93,8 +93,8 @@ if (isEntryPoint()) {
 }
 
 /**
- * Runs one command of the helper. A recoverable failure returns `{ ok: false, error, message }` having written
- * nothing; a system failure (out of disk, permission denied) propagates.
+ * Runs one command of the helper. On a recoverable failure, returns `{ ok: false, error, message }` without writing
+ * anything; a system failure (out of disk, permission denied) propagates.
  *
  * @internal - Exported to allow testing.
  */
@@ -197,7 +197,7 @@ async function describeSet(setDir: string, filePath: string): Promise<IndexProto
 
   const read = await readManifest(setDir);
   if (read.kind === 'missing') {
-    return fail('manifest-not-found', `no manifest in ${setDir}; register a prototype first`);
+    return fail('manifest-not-found', `${setDir} does not contain a manifest; register a prototype first`);
   }
   if (read.kind === 'invalid') {
     return fail('invalid-manifest', read.message);
@@ -310,7 +310,7 @@ async function recordIndex(setDir: string, url: string): Promise<IndexPrototypes
   }
   const read = await readManifest(setDir);
   if (read.kind === 'missing') {
-    return fail('manifest-not-found', `no manifest in ${setDir}; register a prototype first`);
+    return fail('manifest-not-found', `${setDir} does not contain a manifest; register a prototype first`);
   }
   if (read.kind === 'invalid') {
     return fail('invalid-manifest', read.message);
@@ -398,7 +398,7 @@ async function register(
 async function render(setDir: string, outPath: string): Promise<IndexPrototypesResult> {
   const read = await readManifest(setDir);
   if (read.kind === 'missing') {
-    return fail('manifest-not-found', `no manifest in ${setDir}; register a prototype first`);
+    return fail('manifest-not-found', `${setDir} does not contain a manifest; register a prototype first`);
   }
   if (read.kind === 'invalid') {
     return fail('invalid-manifest', read.message);
@@ -471,7 +471,8 @@ async function resolveIdsForSlugs(setDir: string, slugs: string): Promise<IndexP
 /**
  * Returns the number that a registration of `slug` takes: the one that the set assigns when `requested` is absent,
  * or the requested one once it is checked. A registered slug keeps its number, a new slug cannot take a number that
- * another slug holds, and the value must be a positive integer; a request that fails one of those returns the failure.
+ * another slug already has, and the value must be a positive integer; for a request that fails one of those, returns
+ * the failure.
  */
 function resolveRegistrationNumber(
   manifest: Manifest | null,

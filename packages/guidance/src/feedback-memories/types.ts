@@ -5,7 +5,8 @@
 // and exits non-zero.
 
 /**
- * A single feedback memory discovered during enumeration, with the provenance that a caller needs to route it.
+ * A single feedback memory discovered during enumeration, with the provenance that a caller needs to decide where to
+ * send it.
  */
 export interface FeedbackMemory {
   /** Absolute path to the memory file. */
@@ -14,7 +15,7 @@ export interface FeedbackMemory {
   memoryStore: string;
   /**
    * Absolute path to the origin project's working directory when the memory-store slug resolves to a live repo on this
-   * machine, else `null`. Lets a caller ground routing decisions in that project's guidance.
+   * machine, else `null`. Lets a caller base its decision on where to send the memory on that project's guidance.
    */
   repoPath: string | null;
   /** Machine hostname captured at enumeration time. */

@@ -3,15 +3,15 @@
  *
  * The construction doesn't have a reliable surface form, so the anchor is adjacency rather than a verb pattern: a head
  * noun followed directly by the start of a new noun phrase, without any relativizer, preposition, conjunction,
- * auxiliary, or punctuation licensing the join. Three of the four shapes announce that new phrase with a closed-class
- * word; the bare-noun shape announces nothing, and is anchored on a plural subject instead.
+ * auxiliary, or punctuation licensing the join. Three of the four shapes open that new phrase with a closed-class
+ * word; the bare-noun shape does not, and is anchored on a plural subject instead.
  *
  * Detection is over-inclusive: Precision is the agent's, which adjudicates each candidate with the sentence in view.
- * A candidate is rejected here only where a reading cannot change the answer, and each test carries the reason for
+ * A candidate is rejected here only when a reading cannot change the answer, and each test documents the reason for
  * its own rejection.
  *
  * An inline code span reads as one placeholder token, which doesn't head a phrase, open a subject, or close a
- * clause. Because it holds its slot all the same, a site that a code span interrupts stays reachable.
+ * clause. Because it still occupies its slot, a site that a code span interrupts stays reachable.
  */
 import { CODE_SPAN_PLACEHOLDER, CODE_SPAN_PLACEHOLDER_WORD } from './mask-code-spans.ts';
 import { countNewlinesBefore, findSentence, flattenWhitespace } from './span-text.ts';
@@ -45,7 +45,7 @@ const ADJUNCT_HEADS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * Verbs whose bare form doesn't carry any verbal morphology, so nothing but a lexicon recognizes one. Every entry is
+ * Verbs whose bare form doesn't have any verbal morphology, so nothing but a lexicon recognizes one. Every entry is
  * a word that cannot be read as a noun: A homograph such as `name` or `report` would read a head noun as a verb.
  */
 const BARE_VERBS: ReadonlySet<string> = new Set([
@@ -220,7 +220,7 @@ const IRREGULAR_PAST_VERBS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * How far past an auxiliary its lexical verb may sit, counted in tokens. Three is what `may not have read` needs,
+ * How far past an auxiliary its lexical verb may appear, counted in tokens. Three is what `may not have read` needs,
  * since a skipped negator and a skipped auxiliary each consume one. The measure runs from the auxiliary rather than
  * from the subject, since a subject window bounds the subject alone and the one-token pronoun window doesn't leave an
  * auxiliary chain any room under it.
@@ -270,7 +270,7 @@ const DETERMINERS: ReadonlySet<string> = new Set([
 
 /**
  * Adverbial pairs opened by a quantifier. Each is a phrase rather than a noun phrase, so it doesn't open a subject.
- * The set holds whole pairs because the second word alone decides nothing: `longer` and `later` are adjectives in `two
+ * The set lists whole pairs because the second word alone decides nothing: `longer` and `later` are adjectives in `two
  * longer digests` and `many later drafts`, and every `-ly` adverb has an adjectival twin in `early`, `likely`, and
  * `timely`. Admission follows the rule that {@link BARE_VERBS} states, applied to the pair: An entry is a pair that
  * cannot be read as a noun phrase, which keeps `most likely` out, its `likely` heading one freely.
@@ -309,7 +309,7 @@ const DITRANSITIVE_PARTICIPLES: ReadonlySet<string> = new Set([
   'told',
 ]);
 
-/** Adverbs that may sit between a head noun and the subject without licensing the join. */
+/** Adverbs that may appear between a head noun and the subject without licensing the join. */
 const FOCUS_ADVERBS: ReadonlySet<string> = new Set([
   'almost',
   'also',
@@ -360,7 +360,7 @@ const FUSED_HEADS: ReadonlySet<string> = new Set([
 /**
  * Words ending in `ly` that cannot be read as an adverb, which the morphological test in {@link isMannerAdverb}
  * would otherwise skip. An entry is needed only for a word of five characters or more that neither verb lexicon
- * holds, since that function applies a length floor and consults both lexicons: `rely` is short enough for the floor
+ * lists, since that function applies a length floor and consults both lexicons: `rely` is short enough for the floor
  * to reject, and `apply` and `imply` are covered by {@link BARE_VERBS}, so none of the three needs an entry here.
  */
 const LY_FINAL_NON_ADVERBS: ReadonlySet<string> = new Set([
@@ -397,7 +397,7 @@ const NUMERALS: ReadonlySet<string> = new Set([
   'two',
 ]);
 
-/** Negators, which sit between an auxiliary and its verb. */
+/** Negators, which appear between an auxiliary and its verb. */
 const NEGATORS: ReadonlySet<string> = new Set(['never', 'not']);
 
 /**
@@ -540,7 +540,7 @@ const SUBJECT_PRONOUNS: ReadonlySet<string> = new Set(['he', 'i', 'it', 'one', '
 
 /**
  * The window in which each anchor's finite verb must fall, counted in tokens from the subject's first word. A
- * determiner, a numeral, and a quantifier each specify a noun, so the verb may not sit directly on one; a pronoun
+ * determiner, a numeral, and a quantifier each specify a noun, so the verb may not directly follow one; a pronoun
  * subject is one word, and so is a bare one, since nothing marks where a longer one would begin. Because a
  * demonstrative reads either way, its window spans both: one token when it stands alone, up to four when it
  * specifies a noun.
@@ -557,8 +557,8 @@ const SUBJECT_WINDOWS: Readonly<Record<SubjectKind, { min: number; max: number }
 
 /**
  * The ceiling to which a crossed preposition raises the subject window, counted in tokens from the subject's first
- * word. A prepositional phrase inside a subject costs several tokens, and {@link strandsClauseFinalPreposition}
- * rather than the window is what carries precision once one is crossed.
+ * word. A prepositional phrase inside a subject takes up several tokens, and once one is crossed,
+ * {@link strandsClauseFinalPreposition} rather than the window provides the precision.
  */
 const EXTENDED_SUBJECT_WINDOW = 12;
 
@@ -675,7 +675,7 @@ function buildCandidate(input: {
  *
  * The nearer head is the sounder one only when every competing anchor opens a real subject, which is what
  * {@link opensDegreeAdverbial} secures: An anchor whose subject is adverbial takes the site's own subject as its
- * head, and would win on nearness alone.
+ * head, and would be kept only for being nearest.
  */
 function detectInSpan(span: ProseSpan): ObjectRelativeCandidate[] {
   const tokens = tokenize(span.text);
@@ -741,7 +741,7 @@ function closesComparativePhrase(tokens: readonly Token[], index: number): boole
 
 /**
  * Reports whether the quantifier at `index` opens an adverbial rather than a noun phrase. `the entries the sweep no
- * longer holds` carries such a pair, and reading it as a subject gives the site a second anchor whose head is the
+ * longer holds` contains such a pair, and reading it as a subject gives the site a second anchor whose head is the
  * site's own subject.
  */
 function opensDegreeAdverbial(tokens: readonly Token[], index: number): boolean {
@@ -809,9 +809,9 @@ function isFusedProForm(tokens: readonly Token[], headIndex: number): boolean {
 }
 
 /**
- * Reports whether a word carrying verbal morphology is nonetheless heading a noun phrase, which a specifier before it
+ * Reports whether a word with verbal morphology is nonetheless heading a noun phrase, which a specifier before it
  * settles. Without one, an `-s` form is the clause's own verb and an `-ing` form is a participle, so reading
- * either as a head noun produces a whole clause dressed as a relative.
+ * either as a head noun misreads a whole clause as a relative.
  */
 function isDeterminedHead(tokens: readonly Token[], headIndex: number): boolean {
   const head = tokens[headIndex];
@@ -823,7 +823,7 @@ function isDeterminedHead(tokens: readonly Token[], headIndex: number): boolean 
 
 /**
  * Reports whether a specifier opens the phrase a head at `headIndex` closes, allowing one modifier between the two.
- * A bare-noun subject doesn't carry a marker of its own, so this is what keeps a plain `Noun Nouns Verb` main clause
+ * A bare-noun subject doesn't have a marker of its own, so this is what keeps a plain `Noun Nouns Verb` main clause
  * from reading as a relative clause.
  */
 function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolean {
@@ -849,11 +849,11 @@ function isDeterminedPhrase(tokens: readonly Token[], headIndex: number): boolea
  * would let the morphological test reach the same participle a second time and report what the chain just rejected.
  *
  * A preposition other than `of` opens a phrase inside the subject rather than ending it, and raises the ceiling to
- * {@link EXTENDED_SUBJECT_WINDOW} so that a subject holding one is still reachable. Precision then passes from the
+ * {@link EXTENDED_SUBJECT_WINDOW} so that a subject containing one is still reachable. Precision then passes from the
  * window to {@link strandsClauseFinalPreposition}: Past a crossed preposition only a verb stranding a clause-final
  * preposition closes the clause, which is what tells the `lives` of `the sources this prose about the idioms lives
- * in` from the `idioms` before it. A direct-object gap behind such a subject is out of reach, the price of a window
- * this wide.
+ * in` from the `idioms` before it. A direct-object gap behind such a subject is out of reach; that is the tradeoff
+ * of a window this wide.
  *
  * An adverb or a negator between the subject and the verb raises the ceiling by one rather than spending a token of
  * it, mirroring what {@link resolveAuxiliaryChain} reads through, so `the source it also names` reports as `the
@@ -882,7 +882,7 @@ function findVerbIndex(tokens: readonly Token[], subjectIndex: number, kind: Sub
       last = Math.min(last + 1, tokens.length - 1);
       continue;
     }
-    // The scan reads through the placeholder, which is what leaves the verb of a subject holding a code span in
+    // The scan reads through the placeholder, which is what leaves the verb of a subject containing a code span in
     // reach. It keeps its window slot, since it stands where a word of the subject stood.
     if (token.word === CODE_SPAN_PLACEHOLDER_WORD) continue;
 
@@ -1041,8 +1041,8 @@ function closeOnCarriedVerb(tokens: readonly Token[], chain: AuxiliaryChain): nu
 
 /**
  * Reports whether a token carried by an auxiliary can close a relative clause. The carried path admits whatever is
- * not a function word, since a past participle doesn't carry a marker held by any lexicon here; an intransitive verb
- * is the one exception, and closes a clause only when it strands a preposition.
+ * not a function word, since the lexicons here do not list a past-participle marker; an intransitive verb is the one
+ * exception, and closes a clause only when it strands a preposition.
  */
 function closesCarriedClause(tokens: readonly Token[], index: number): boolean {
   return !INTRANSITIVE_VERBS.has(tokens[index]?.word ?? '') || hasStrandedPreposition(tokens, index);
@@ -1059,7 +1059,7 @@ function closesScannedClause(tokens: readonly Token[], index: number, kind: Subj
 }
 
 /**
- * Reports whether the token at `index` is a participle carrying an agentive `by`, which modifies the noun before it
+ * Reports whether the token at `index` is a participle followed by an agentive `by`, which modifies the noun before it
  * rather than closing a clause. That noun is what the scan took for a bare subject, so the reading is the rulebook's
  * own passive-participle repair misread: Admitting it reports a repaired site back as a defect. The test is held to
  * the bare shape, since a longer subject means the `by` is doing other work, as in `the clauses the author struck by
@@ -1086,7 +1086,7 @@ function closesOnCopula(tokens: readonly Token[], index: number): boolean {
 }
 
 /**
- * Reports whether the token at `index` strands a preposition that ends its clause. This is what a subject holding a
+ * Reports whether the token at `index` strands a preposition that ends its clause. This is what a subject containing a
  * prepositional phrase is held to: A window wide enough to reach past one is wide enough to reach the noun that ends
  * the sentence, and {@link isFiniteVerb} reads that noun as a verb. The stranded preposition is the one signature for
  * which the raised window is raised, so a clause-final token without one closes nothing.
@@ -1104,7 +1104,7 @@ function isClauseFinal(tokens: readonly Token[], index: number): boolean {
 /**
  * Reports whether the token at `index` is a verb that a stranded preposition rescues. {@link isFiniteVerb} recognizes
  * a verb by morphology or by lexicon, and neither reaches a bare form such as `rest`; the stranded preposition is the
- * gap itself, so what precedes it needs only to be a word that can carry one. {@link hasStrandedPreposition} is what
+ * gap itself, so what precedes it needs only to be a word that can have one. {@link hasStrandedPreposition} is what
  * keeps this from reaching a noun: A preposition with an object of its own strands nothing.
  */
 function isStrandedVerb(tokens: readonly Token[], index: number): boolean {
@@ -1130,7 +1130,7 @@ function hostsGap(tokens: readonly Token[], index: number): boolean {
 }
 
 /**
- * Reports whether the token at `index` strands a preposition: One sits directly after it, and nothing in the clause
+ * Reports whether the token at `index` strands a preposition: One directly follows it, and nothing in the clause
  * fills that preposition's own object slot. What follows the preposition is what settles it, which is how `the store
  * the events belong to` is told from `the events belong to the store`.
  */
@@ -1194,7 +1194,7 @@ function isNumeral(word: string): boolean {
   return NUMERALS.has(word) || /^\d+$/.test(word);
 }
 
-/** Reports whether a word reads as a plural noun, which is the only marker carried by a bare-noun subject. */
+/** Reports whether a word reads as a plural noun, which is the only marker that a bare-noun subject has. */
 function isPluralNoun(word: string): boolean {
   return (
     word.length > 3 &&
@@ -1206,7 +1206,7 @@ function isPluralNoun(word: string): boolean {
 }
 
 /**
- * Reports whether a head sits where a verb belongs rather than where a noun does. Three positions say so: after `to`,
+ * Reports whether a head is where a verb belongs rather than where a noun does. Three positions say so: after `to`,
  * which opens an infinitive; after an auxiliary or modal, optionally negated; and at the start of a clause, unless
  * the word is plural, since a bare singular noun does not open one.
  */

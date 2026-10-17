@@ -44,7 +44,7 @@ The error codes are `gate-violation`, `gh-failed`, `invalid-args`, `invalid-reco
 }
 ```
 
-`disposition` is `ticket`, `comment`, `merge`, or `drop`. `target` is the issue number for a `comment`, the id of a `ticket` item for a `merge`, and null otherwise. `ticket` is the created child's number, null until the skill creates it; `umbrella` likewise. `blockedBy`, optional and on a `ticket` item alone, lists its blockers: the ids of other `ticket` items, and the numbers of issues outside the triage. `challenge.outcome` is `defended`, `modified`, or `abandoned`. `notes` holds the lines of the comment's "Labels and follow-ups" section, which is omitted when the list is empty.
+`disposition` is `ticket`, `comment`, `merge`, or `drop`. `target` is the issue number for a `comment`, the id of a `ticket` item for a `merge`, and null otherwise. `ticket` is the created child's number, null until the skill creates it; `umbrella` likewise. `blockedBy`, optional and on a `ticket` item alone, lists its blockers: the ids of other `ticket` items, and the numbers of issues outside the triage. `challenge.outcome` is `defended`, `modified`, or `abandoned`. `notes` contains the lines of the comment's "Labels and follow-ups" section, which is omitted when the list is empty.
 
 ## The gate
 
@@ -53,14 +53,14 @@ A record passes when every clause holds, and `validate` and `render` report ever
 - A `low` item does not take a ticket.
 - A `merge` names the id of a `ticket` item.
 - A `comment` names an issue number.
-- A `ticket` or `drop` item has no target.
-- Only a `ticket` item carries a ticket number or blockers.
-- A blocker id names another `ticket` item, and no blocker is listed twice.
-- The blockers form no cycle; a cycle is reported once, with its ids in order.
+- A `ticket` or `drop` item does not have a target.
+- Only a `ticket` item has a ticket number or blockers.
+- A blocker id names another `ticket` item, and an item does not list any blocker twice.
+- The blockers do not form a cycle; a cycle is reported once, with its ids in order.
 - Every id is declared once.
 
 ## The rendered comment
 
-`dispositions-comment.md` opens with a heading naming the source, a paragraph stating the grading convention and, when an item takes a ticket, the umbrella, and a table with the columns item, disposition, confidence, value, where, blocked by, and reason, whose rows follow the display order that `validate` reports. The where column is `#N` for a `ticket` or `comment` item, `merged into {id}` for a `merge`, and empty for a `drop`. The blocked-by column lists a `ticket` item's blockers as `#N`, with `(pending)` for a blocker not yet created. A `## Challenge` section carries `challengeSummary`, and a `## Labels and follow-ups` section carries `notes`.
+`dispositions-comment.md` opens with a heading naming the source, a paragraph stating the grading convention and, when an item takes a ticket, the umbrella, and a table with the columns item, disposition, confidence, value, where, blocked by, and reason, whose rows follow the display order that `validate` reports. The where column is `#N` for a `ticket` or `comment` item, `merged into {id}` for a `merge`, and empty for a `drop`. The blocked-by column lists a `ticket` item's blockers as `#N`, with `(pending)` for a blocker not yet created. A `## Challenge` section contains `challengeSummary`, and a `## Labels and follow-ups` section contains `notes`.
 
 `comment-{issue}.md` opens with one line naming the source and the triage ticket, then one bullet per item: its title, its grades, and its reason.

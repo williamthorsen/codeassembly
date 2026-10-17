@@ -116,7 +116,7 @@ export function parseIssueList(json: unknown): Issue[] {
 
 /**
  * Resolves the repository's GitHub name and default branch. The default branch is read from `origin/HEAD` first,
- * which costs no API call, and from GitHub when the remote does not record one.
+ * which does not need an API call, and from GitHub when the remote does not record one.
  */
 export async function resolveRepository(run: CommandRunner, git: BacklogGit, root: string): Promise<RepositoryInfo> {
   const view = RepoViewSchema.parse(

@@ -2,7 +2,7 @@
  * Zod schemas for the assessor's reply, the ledger's records, and the ticket-comment marker.
  *
  * The record and marker schemas are loose: The calibration sweep wrote its decision records in three key sets and its
- * policy record free-form, and a parser that dropped or refused a field it did not know would lose that history.
+ * policy record free-form, and a parser that dropped or refused a field that it did not know would lose that history.
  */
 import { z } from 'zod';
 
@@ -50,7 +50,7 @@ const OverlapSchema = z.object({
   reason: z.string(),
 });
 
-/** The recommendations that carry a drafted edit. */
+/** The recommendations that include a drafted edit. */
 export const DRAFTED_RECOMMENDATIONS = ['update', 'revise', 'split'] as const;
 
 const DraftSectionSchema = z.object({

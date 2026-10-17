@@ -308,7 +308,7 @@ async function openPage(options: {
   const element = (selector: string) => {
     const found = window.document.querySelector(selector);
     if (found === null) {
-      throw new Error(`no element matches ${selector}`);
+      throw new Error(`the page does not contain any element matching ${selector}`);
     }
     return assertIsHTMLElement(found);
   };

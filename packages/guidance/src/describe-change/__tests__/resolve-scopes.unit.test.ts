@@ -179,7 +179,10 @@ function fixtureDirs(root: string): string[] {
   return [join(root, 'packages/agents'), join(root, 'packages/kb')];
 }
 
-/** Writes a fixture root declaring the given workspace patterns, with `packages/agents` and `packages/kb` holding a manifest. */
+/**
+ * Writes a fixture root declaring the given workspace patterns, with a manifest in `packages/agents` and
+ * `packages/kb`.
+ */
 async function writeWorkspaceRoot(patterns: readonly string[] = ["  - 'packages/*'"]): Promise<string> {
   const root = await mkdtemp(join(tmpdir(), 'resolve-scopes-'));
   for (const dir of ['packages/agents', 'packages/kb']) {

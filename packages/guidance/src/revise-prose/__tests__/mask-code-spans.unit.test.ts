@@ -20,7 +20,7 @@ describe(maskCodeSpans, () => {
     expect(maskCodeSpans('The form ``a `b` pair`` reads oddly.')).toBe(`The form ${MASK} reads oddly.`);
   });
 
-  it('replaces each span on a line separately, so neither one swallows the text between them', () => {
+  it('replaces each span on a line separately, so neither one includes the text between them', () => {
     expect(maskCodeSpans('Pass `--store` before `--tags`.')).toBe(`Pass ${MASK} before ${MASK}.`);
   });
 
@@ -28,7 +28,7 @@ describe(maskCodeSpans, () => {
     expect(maskCodeSpans('A stray ` and the words after it.')).toBe('A stray ` and the words after it.');
   });
 
-  it('keeps every later pair in view past an unpaired run of a different length', () => {
+  it('still masks every later pair after an unpaired run of a different length', () => {
     expect(maskCodeSpans('A stray `` then `a span` after it.')).toBe(`A stray \`\` then ${MASK} after it.`);
   });
 

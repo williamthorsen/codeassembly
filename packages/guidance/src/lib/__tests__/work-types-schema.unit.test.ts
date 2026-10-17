@@ -174,7 +174,7 @@ describe('work-types.v1.json', () => {
 /**
  * Builds a minimal-but-valid `work-types.json` document, then shallow-merges in the supplied overrides.
  * Each rejection test is one constraint violation introduced via overrides; the baseline keeps every
- * other field valid so that the failure isolates to the mutation.
+ * other field valid so that only the mutation can cause the failure.
  */
 function buildMinimalDoc(overrides: Record<string, JsonValue> = {}): JsonValue {
   return {

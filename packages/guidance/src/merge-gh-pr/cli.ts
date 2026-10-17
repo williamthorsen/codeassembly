@@ -2,7 +2,8 @@
 /* eslint unicorn/no-process-exit: off -- same as above. */
 // CLI entry point for the merge-gh-pr helper: merges a pull request and deletes its head branch as one invocation.
 //
-// The title and body arrive as files, so the agent's command contains neither and nothing in them reaches a shell.
+// The helper reads the title and body from files, so the agent's command contains neither and a shell never
+// interprets their contents.
 
 import { execFile } from 'node:child_process';
 import { readFileSync, realpathSync, statSync } from 'node:fs';

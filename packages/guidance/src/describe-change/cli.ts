@@ -1075,8 +1075,8 @@ async function runResolveLabels(
   const labelInput = { entries: body.entries, labelMap, record: normalizeChangeRecord(args.record) };
   const unmapped = findUnmappedKeys(labelInput);
   warnings.push(
-    ...unmapped.types.map((key) => `label map ${labelMapPath} does not define type "${key}"; no label applied`),
-    ...unmapped.scopes.map((key) => `label map ${labelMapPath} does not define scope "${key}"; no label applied`),
+    ...unmapped.types.map((key) => `label map ${labelMapPath} does not define type "${key}"; leaving it unlabeled`),
+    ...unmapped.scopes.map((key) => `label map ${labelMapPath} does not define scope "${key}"; leaving it unlabeled`),
   );
   const output: ResolveLabelsOutcome = { labels: resolveLabels(labelInput) };
   return { output, warnings };

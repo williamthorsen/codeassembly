@@ -85,7 +85,7 @@ function buildScalarSpan(input: {
   return { file: input.file, line: startLine, text: stripContinuationIndent(stripQuotes(source)) };
 }
 
-/** Extracts the `#` comments outside every scalar, consecutive lines joining so that a wrapped sentence survives. */
+/** Extracts the `#` comments outside every scalar, joining consecutive lines so that a wrapped sentence stays whole. */
 function extractComments(input: { file: string; content: string }, continued: ReadonlySet<number>): ProseSpan[] {
   const spans: ProseSpan[] = [];
   let block: { line: number; texts: string[] } | undefined;
@@ -115,7 +115,7 @@ function extractComments(input: { file: string; content: string }, continued: Re
   return spans;
 }
 
-/** Removes the indentation shared by a block scalar's body, which is the syntax holding it under its key. */
+/** Removes the indentation shared by a block scalar's body, which is the syntax that nests it under its key. */
 function stripCommonIndent(body: string): string {
   const lines = body.split('\n');
   const indents = lines.filter((line) => line.trim() !== '').map((line) => /^[ \t]*/.exec(line)?.[0].length ?? 0);
@@ -123,7 +123,7 @@ function stripCommonIndent(body: string): string {
   return lines.map((line) => line.slice(common)).join('\n');
 }
 
-/** Removes the indentation holding a scalar's continuation lines, the first line's own offset being its key's. */
+/** Removes the indentation of a scalar's continuation lines, the first line's own offset being its key's. */
 function stripContinuationIndent(text: string): string {
   return text
     .split('\n')

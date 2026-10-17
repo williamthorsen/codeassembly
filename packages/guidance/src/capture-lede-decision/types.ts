@@ -1,9 +1,10 @@
 // Shapes for the capture-lede-decision helper: the rating recorded by an author, the resolved decision episode, and
 // the JSON payloads emitted to stdout.
 //
-// The stdout payload is a discriminated union on `ok`, mirroring `capture-event`. Recoverable failures (an unresolvable
-// artifact, an unreachable store on the recording path, schema validation, invalid args) return
-// `{ ok: false, error, message }`; system errors (out-of-disk, permission denied) print to stderr and exit non-zero.
+// The stdout payload is a discriminated union on `ok`, mirroring `capture-event`. On a recoverable failure (an
+// unresolvable artifact, an unreachable store on the recording path, schema validation, invalid args), the helper
+// returns `{ ok: false, error, message }`; on a system error (out-of-disk, permission denied), it prints to stderr and
+// exits non-zero.
 
 import type { LedeQuality } from '../lede-corpus/lede-quality.ts';
 
@@ -33,7 +34,7 @@ export interface LedeEpisode {
   agentLede: string;
   /** The lede in the merge commit. */
   mergedLede: string;
-  /** Whether the ledes differ once whitespace is normalized, so a reflow alone does not read as a revision. */
+  /** Whether the ledes differ once whitespace is normalized, so that a reflow alone does not count as a revision. */
   differ: boolean;
   identity: EpisodeIdentity;
   /** `sha256:`-prefixed digest of the doctrine file that governed the agent's lede. */
@@ -49,7 +50,7 @@ export type ResolveEpisodeOutcome =
 /**
  * Categorical reasons an episode cannot be resolved, each naming a distinct missing input. `unresolved-identity` covers
  * every field of {@link EpisodeIdentity} under one code, with the message naming the field that failed: The caller's
- * recourse is the same in each case (supply the flag), so splitting it per field would buy the caller nothing.
+ * recourse is the same in each case (supply the flag), so splitting it per field would not help the caller.
  *
  * An unreadable taxonomy is `no-taxonomy` rather than `unresolved-identity`, because a `--type` value cannot resolve
  * against a taxonomy that did not load: The caller's recourse is to repair the install, as it is for `no-doctrine`.

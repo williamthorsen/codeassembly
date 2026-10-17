@@ -18,7 +18,7 @@ const STRIPPED_GROUNDS: ReadonlyArray<string> = [
 ];
 
 describe(detectDroppedApostrophes, () => {
-  it('reports a sentence holding a dropped possessive, with the sentence as the phrase', () => {
+  it('reports a sentence containing a dropped possessive, with the sentence as the phrase', () => {
     expect(detect('It is the rule own example.')).toStrictEqual([
       {
         rule: 'apostrophes',
@@ -96,7 +96,7 @@ describe(detectDroppedApostrophes, () => {
     expect(detect('The fixture reads `the rule own example` and `dont`.')).toStrictEqual([]);
   });
 
-  it('reports one candidate for a sentence holding both shapes', () => {
+  it('reports one candidate for a sentence containing both shapes', () => {
     expect(detect('The rule own example says dont.')).toHaveLength(1);
   });
 });

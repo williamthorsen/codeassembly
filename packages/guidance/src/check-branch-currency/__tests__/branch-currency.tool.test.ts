@@ -44,7 +44,7 @@ describe(checkBranchCurrency, () => {
     ]);
   });
 
-  it('counts own commits that the upstream does not hold as unpushed', () => {
+  it('counts own commits that the upstream does not contain as unpushed', () => {
     commitUpstream(fixture, 'Upstream change');
     git(fixture.work, 'commit', '--quiet', '--allow-empty', '--message', 'Own change');
 
@@ -53,7 +53,7 @@ describe(checkBranchCurrency, () => {
     expect(result).toMatchObject({ behind: 1, ahead: 1, pushed: false });
   });
 
-  it('reports own commits held by the upstream as pushed', () => {
+  it('reports own commits contained in the upstream as pushed', () => {
     commitUpstream(fixture, 'Upstream change');
     git(fixture.work, 'commit', '--quiet', '--allow-empty', '--message', 'Own change');
     git(fixture.work, 'push', '--quiet', '--set-upstream', 'origin', 'feature');

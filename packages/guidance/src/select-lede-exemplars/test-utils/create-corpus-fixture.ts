@@ -11,7 +11,7 @@ export const FIXTURE_WORK_TYPES = [
   { key: 'docs', tier: 'process', aliases: [] },
 ];
 
-/** One decision record to plant in a fixture corpus. */
+/** One decision record to write to a fixture corpus. */
 export interface DecisionSpec {
   /** Filename stem, which the scan reads as a ULID and orders by. */
   id: string;
@@ -46,14 +46,14 @@ export interface CorpusFixture {
   home: string;
 }
 
-/** The agent lede that a planted record contains, distinct per record so that a test can tell which was selected. */
+/** The agent lede that a fixture record contains, distinct per record so that a test can tell which was selected. */
 export function agentLedeFor(id: string): string {
   return `Agent lede of ${id}.`;
 }
 
 /**
  * Builds a temporary event store with one record per decision spec, plus a `_data` directory containing the fixture
- * taxonomy and an isolated home registering the store. `files` plants raw content under `content/events/`, for a record
+ * taxonomy and an isolated home registering the store. `files` writes raw content under `content/events/`, for a record
  * whose own shape is the subject of the test; `storeName` registers the store under something other than the name that
  * the helper serves, which is how a test tells a resolved default from an unregistered one.
  */

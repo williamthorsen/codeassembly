@@ -1,6 +1,6 @@
 // Merges a GitHub pull request through `gh`, confirms the merge, and deletes the head branch on request.
 //
-// Every `gh` call goes through the injected runner as an argument array, so a title or path never reaches a shell.
+// Every `gh` call goes through the injected runner as an argument array, so a shell never interprets a title or path.
 
 import { isRecord } from '../lib/type-guards.ts';
 
@@ -149,7 +149,7 @@ async function deleteHeadBranch(
   if (deletionStrategy === 'both') {
     return 'by-gh';
   }
-  // A deleted fork leaves no repository to hold the ref.
+  // A deleted fork's ref no longer exists in any repository.
   if (merged.headOwner === undefined || merged.headRepo === undefined) {
     return 'already-deleted';
   }

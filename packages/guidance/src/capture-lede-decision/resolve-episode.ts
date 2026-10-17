@@ -13,7 +13,10 @@ import { describeTaxonomyLocation, loadWorkTypes, resolveWorkType } from '../lib
 import { readInstalledVersion } from './read-installed-version.ts';
 import type { EpisodeIdentity, ResolveEpisodeOutcome } from './types.ts';
 
-/** Artifact filename suffix holding the lede published by the agent, and the heading under which that lede appears. */
+/**
+ * Filename suffix of the artifact that contains the lede published by the agent, and the heading under which that
+ * lede appears.
+ */
 const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
 
 /**
@@ -23,8 +26,8 @@ const AGENT_LEDE_SOURCE = { suffix: '_pull-request', heading: 'What' } as const;
 const DOCTRINE_FILENAMES: ReadonlyArray<string> = ['entry-drafter.md'];
 
 /**
- * Artifact filename suffix holding the body that merged, and the heading under which it appears. The section records
- * the published whole, so the lede is what remains without the entry records below it.
+ * Filename suffix of the artifact that contains the body that merged, and the heading under which it appears. The
+ * section records the published whole, so the lede is what remains without the entry records below it.
  */
 const MERGED_LEDE_SOURCE = { suffix: '_merge', heading: 'Body' } as const;
 
@@ -35,9 +38,9 @@ type DoctrineHashOutcome = { ok: true; hash: string } | { ok: false; unreadableP
  * Assembles a lede decision episode from a ticket's artifact directory: the lede published by the agent, the lede that
  * merged, the change's identity, and a fingerprint of the doctrine that governed the agent's text.
  *
- * Each lede accepts an override file, so a pull request merged outside the merge flow (which does not write a
- * `_merge.md`) can still be recorded from text fetched by the caller. Absent an override, each is read from the newest
- * artifact of its kind, searched recursively because a review run nests its artifacts in a run subdirectory.
+ * The resolver accepts an override file for each lede, so a pull request merged outside the merge flow (which does not
+ * write a `_merge.md`) can still be recorded from text fetched by the caller. Absent an override, each is read from
+ * the newest artifact of its kind, searched recursively because a review run nests its artifacts in a run subdirectory.
  * Artifact filenames open with a `YYYYMMDDD-HHMMSSZ` stamp. The lexicographically greatest basename is the newest.
  *
  * The doctrine is fingerprinted by content rather than recorded as a version, which lets records group by doctrine
@@ -46,9 +49,11 @@ type DoctrineHashOutcome = { ok: true; hash: string } | { ok: false; unreadableP
  */
 export async function resolveEpisode(input: {
   artifactDir: string;
-  /** Directory holding `work-types.json`; when absent, the taxonomy embedded in the bundle is read. */
+  /** Directory containing `work-types.json`; when absent, the taxonomy embedded in the bundle is read. */
   dataDir?: string;
-  /** Directory holding the deployed subagent bodies that govern a draft; the harness's `agents` or `subagents` dir. */
+  /**
+   * Directory containing the deployed subagent bodies that govern a draft; the harness's `agents` or `subagents` dir.
+   */
   subagentsDir: string;
   pr: string;
   mergeCommit: string;
@@ -153,7 +158,7 @@ async function findNewestArtifact(input: { artifactDir: string; suffix: string }
 
 /**
  * Digests the subagent bodies that govern a draft. Each body is hashed on its own and the digests are hashed
- * together, so a change to any of them moves the result and content cannot straddle the boundary between two.
+ * together, so a change to any of them changes the result, and so does moving content from one body into the next.
  */
 async function hashDoctrine(subagentsDir: string): Promise<DoctrineHashOutcome> {
   const digests: string[] = [];
@@ -193,9 +198,9 @@ function normalizeLede(value: string): string {
  * record's `scope`, `type`, and `breaking`, with `override_scope`, `override_type`, and `override_breaking` applied
  * through `applyOverrides`. The resolver reads the marker from a type spelled with `!`.
  *
- * The read is field-blind rather than routed through the knowledge base's record parser: A change summary is an
- * artifact, not a knowledge-base record, and imposing that schema on it would reject the whole block over fields that
- * an artifact never declares.
+ * The function reads the frontmatter without a schema rather than passing it to the knowledge base's record parser: A
+ * change summary is an artifact, not a knowledge-base record, and imposing that schema on it would reject the whole
+ * block over fields that an artifact never declares.
  */
 async function readChangeSummaryFields(artifactDir: string): Promise<{ record: ChangeRecord; ticket: string | null }> {
   const absent = { record: {}, ticket: null };
@@ -229,7 +234,7 @@ async function readChangeSummaryFields(artifactDir: string): Promise<{ record: C
 
 /**
  * Reads an identifier field that YAML may have typed as a number: A wholly numeric ticket id is written unquoted, so a
- * string-only read would silently drop it, while a prefixed key such as `MAC-42` arrives as a string.
+ * string-only read would silently drop it, while YAML parses a prefixed key such as `MAC-42` as a string.
  */
 function readIdentifier(fields: Record<string, unknown>, key: string): string | null {
   const value = fields[key];
@@ -356,7 +361,7 @@ async function resolveIdentity(input: {
 }
 
 /**
- * Removes the trailing `Change:` trailer block from a merge commit's body, leaving the lede that stands above it.
+ * Removes the trailing `Change:` trailer block from a merge commit's body, leaving the lede above it.
  *
  * Only a run at the end qualifies, and only when every line of it is a trailer: a body whose last paragraph is prose
  * keeps every line, and one that is trailers alone leaves nothing. A body without a trailer block is returned

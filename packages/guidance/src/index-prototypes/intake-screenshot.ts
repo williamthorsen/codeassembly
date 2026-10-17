@@ -21,7 +21,7 @@ export async function intakeScreenshot(input: {
     bytes = await readFile(input.sourcePath);
   } catch (error) {
     if (isEnoent(error)) {
-      return { ok: false, error: 'screenshot-not-found', message: `no screenshot at ${input.sourcePath}` };
+      return { ok: false, error: 'screenshot-not-found', message: `the screenshot ${input.sourcePath} does not exist` };
     }
     throw error;
   }

@@ -1,4 +1,4 @@
-/** The graded label families that a child ticket carries, and the check that a repository has them. */
+/** The graded label families that a child ticket has, and the check that a repository has them. */
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
@@ -15,7 +15,10 @@ export const LABEL_FAMILIES: Readonly<Record<'confidence' | 'value', readonly st
 
 const execFileAsync = promisify(execFile);
 
-/** The most labels that one `gh label list` reads; a repository past it is beyond what the families need. */
+/**
+ * The most labels that one `gh label list` reads; a repository with more labels than that is beyond what the families
+ * need.
+ */
 const LABEL_LIST_LIMIT = 500;
 
 const LabelListSchema = z.array(z.object({ name: z.string() }));

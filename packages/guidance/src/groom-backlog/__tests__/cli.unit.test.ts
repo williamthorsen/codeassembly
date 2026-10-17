@@ -416,7 +416,7 @@ describe(runCli, () => {
       expect(result).toMatchObject({ ok: false, error: 'missing-reply' });
     });
 
-    it('reports a baseline keep as not posted and writes no body', async () => {
+    it('reports a baseline keep as not posted and does not write a body', async () => {
       writeStoredReply(root, buildReply());
 
       const result = await runCli(
@@ -611,7 +611,7 @@ function makeFakeRepository(root: string): BacklogGit {
   });
 }
 
-/** Reads the fixture's ledger as parsed lines; a ledger not yet written reads as empty. */
+/** Reads the fixture's ledger as parsed lines, returning an empty list for a ledger not yet written. */
 function readLedgerLines(root: string): unknown[] {
   const file = path.join(root, 'local', 'ticket-triage', 'ledger.jsonl');
   if (!existsSync(file)) return [];

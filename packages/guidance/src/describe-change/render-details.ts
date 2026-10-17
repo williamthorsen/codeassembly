@@ -5,7 +5,7 @@ import type { ChangeEntry } from './change-entries.ts';
 
 /**
  * Renders the `## Details` body of a change summary from its entries: one `###` subsection per type, ordered by tier
- * and then by the taxonomy's listing order, holding one bullet per entry in the order given.
+ * and then by the taxonomy's listing order, containing one bullet per entry in the order given.
  *
  * A breaking entry's bullet opens with the breaking prefix, and a `migration` nests under its bullet as a list item
  * indented 4 spaces, which Bitbucket requires to read it as a child. Each bullet ends with its scopes as `#scope` tags

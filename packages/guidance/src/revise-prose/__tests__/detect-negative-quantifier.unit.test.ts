@@ -194,7 +194,7 @@ describe(detectNegativeQuantifiers, () => {
 
 // region | Helpers
 
-/** Detects over one sentence held in a single span. */
+/** Detects over one sentence in a single span. */
 function detect(sentence: string): NegativeQuantifierCandidate[] {
   return detectNegativeQuantifiers([{ file: 'fixture.md', line: 1, text: sentence }]);
 }

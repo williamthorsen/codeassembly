@@ -94,7 +94,7 @@ describe(createWorkItem, () => {
 
 // region | Helpers
 
-/** Builds an `acli` stand-in that records each call and answers `view` and `create` from the given results. */
+/** Builds an `acli` stand-in that records each call and returns the given results for `view` and `create`. */
 function fakeAcli(results: { create: AcliResult; view?: AcliResult }) {
   const calls: string[][] = [];
   function run(args: readonly string[]): Promise<AcliResult> {

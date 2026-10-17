@@ -13,7 +13,7 @@ export const LEDGER_DIR = path.join('local', 'ticket-triage');
 
 /** The ledger's paths for one repository. */
 export interface LedgerPaths {
-  /** The directory that holds one subdirectory of reply files per run. */
+  /** The directory that contains one subdirectory of reply files per run. */
   assessmentsDir: string;
   ledgerFile: string;
 }

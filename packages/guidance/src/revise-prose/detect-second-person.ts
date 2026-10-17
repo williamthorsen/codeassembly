@@ -3,7 +3,7 @@
  *
  * The rule forbids a pronoun that addresses a reader of documentation and keeps one that addresses the agent that a
  * document instructs. The rulebook names that second case by document type, a skill body or a subagent body, and a path
- * identifies both without a reading, so their files are passed over here. Every other pronoun is reported, and whom it
+ * identifies both without a reading, so the detector skips their files. Every other pronoun is reported, and whom it
  * names is the adjudicator's to decide.
  */
 import { findMatchingSentences } from './span-text.ts';
@@ -11,7 +11,7 @@ import type { ProseSpan, SecondPersonCandidate } from './types.ts';
 
 /**
  * Scans every span outside a skill or subagent body for a second-person pronoun, returning one candidate per sentence
- * that holds one, in reading order.
+ * that contains one, in reading order.
  */
 export function detectSecondPersonPronouns(spans: readonly ProseSpan[]): SecondPersonCandidate[] {
   return spans
@@ -42,7 +42,7 @@ const SECOND_PERSON = /\byou(?:rs?|rself|rselves)?\b/giu;
  * Reports whether a repository-relative path names a skill body or a subagent body: a `SKILL.md`, a Markdown file
  * directly inside a `subagents/` or `.claude/agents/` directory, or a partial directly inside `skills/_partials/` or
  * `subagents/_partials/`, which the expander inlines into those bodies. The match reads the nearest directories alone,
- * since a package directory named `agents` holds documentation for readers too. A `_partials/` directory under any
+ * since a package directory named `agents` contains documentation for readers too. A `_partials/` directory under any
  * other parent stays in scope, because a rulebook may include its partials.
  */
 function isAgentInstructionBody(file: string): boolean {

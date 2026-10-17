@@ -37,7 +37,7 @@ Steps 2 and 3 skip a milestone that does not have any open eligible issue.
 
 ## Excluded tickets
 
-An open ticket that carries one of the `excludeLabels` labels, compared trimmed and without regard to case, is excluded: It is never a candidate, and it does not count toward resolving Now or toward `counts.inNow`. It still appears in `umbrellas`, `inProgress`, `blocked`, and `warnings`, and it still blocks the tickets whose `blockedBy` names it.
+An open ticket that has one of the `excludeLabels` labels, compared trimmed and without regard to case, is excluded: It is never a candidate, and it does not count toward resolving Now or toward `counts.inNow`. It still appears in `umbrellas`, `inProgress`, `blocked`, and `warnings`, and it still blocks the tickets whose `blockedBy` names it.
 
 ## Candidates
 

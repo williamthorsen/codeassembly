@@ -30,11 +30,11 @@ export async function findActiveRun(ticketDir: string): Promise<string | undefin
 export async function findLatestReview(ticketDir: string): Promise<LatestReview> {
   const runDir = await findActiveRun(ticketDir);
   if (runDir === undefined) {
-    throw new Error(`no ${INTERACTIVE_MODE} run directory found in ${ticketDir}`);
+    throw new Error(`${ticketDir} does not contain an ${INTERACTIVE_MODE} run directory`);
   }
   const reviewName = selectNewest(await listEntryNames(runDir, 'file'), REVIEW_FILE_PATTERN);
   if (reviewName === undefined) {
-    throw new Error(`no reviewer or overseer review found in ${runDir}`);
+    throw new Error(`${runDir} does not contain a reviewer or overseer review`);
   }
   return { reviewPath: path.join(runDir, reviewName), runDir };
 }

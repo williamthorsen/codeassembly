@@ -18,7 +18,7 @@ export const CODE_SPAN_PLACEHOLDER_WORD = CODE_SPAN_PLACEHOLDER.replace(/^[^\p{L
 
 /**
  * Replaces every inline code span in `text` with {@link CODE_SPAN_PLACEHOLDER}. The newlines covered by a span are
- * re-emitted after the placeholder, so an offset past the span still maps back to the source line holding it.
+ * re-emitted after the placeholder, so an offset past the span still maps back to the source line containing it.
  */
 export function maskCodeSpans(text: string): string {
   const spans = findCodeSpans(text);

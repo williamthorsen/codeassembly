@@ -28,7 +28,7 @@ export type PrepareDecisionOutcome = { ok: true; prepared: PreparedDecision } | 
 /**
  * Composes a lede decision as a knowledge-base `event`, renders it through the record module's `renderEvent`, and
  * validates the serialized note by re-parsing it. A decision is a third consumer of the event substrate rather than a
- * record type of its own, so it has the same typed spine that every captured event does and stores its change
+ * record type of its own, so it has the same typed core fields that every captured event does and stores its change
  * identity, doctrine fingerprint, and provenance in `extra`.
  *
  * Tags name the group (`lede-decision`), the work type under a `type:` namespace, `breaking` for a change whose type
@@ -38,7 +38,7 @@ export type PrepareDecisionOutcome = { ok: true; prepared: PreparedDecision } | 
  * and `create-ticket` derive from the same marker.
  *
  * The verdict is derived from whether the two ledes differ, which also decides whether the body includes a merged
- * section. One derivation drives both, so the verdict and the sections can never describe different episodes.
+ * section. One derivation determines both, so the verdict and the sections can never describe different episodes.
  */
 export function prepareDecision(input: {
   episode: LedeEpisode;

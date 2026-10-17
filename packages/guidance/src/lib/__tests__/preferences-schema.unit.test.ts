@@ -3,7 +3,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { FLAG, type JsonSchemaDraft202012Object, registerSchema, validate } from '@hyperjump/json-schema/draft-2020-12';
-// `BASIC` is exported only from `/experimental`. It serves the diagnostic failure path below, never an assertion.
+// `BASIC` is exported only from `/experimental`. It is used only on the diagnostic failure path below, never in an
+// assertion.
 import { BASIC } from '@hyperjump/json-schema/experimental';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
@@ -58,7 +59,7 @@ describe('preferences.v1.json schema', () => {
     // FLAG output is the stable assertion target; it returns only `{ valid }`. On failure,
     // re-validate with `BASIC` (from `/experimental`) so that the failure message includes per-keyword
     // error locations instead of an opaque `{ valid: false }`. The diagnostic is computed only
-    // when the assertion fails, so the second `validate()` call is paid for only on the failure path.
+    // when the assertion fails, so the second `validate()` call runs only on the failure path.
     let diagnosticMessage = '';
     if (!output.valid) {
       const diagnostic = await validate(schemaId, jsonValue, BASIC);
@@ -164,7 +165,7 @@ describe('preferences.v1.json schema', () => {
   });
 
   it('rejects an `integrations.<key>` object missing the required `enabled` field', async () => {
-    // Guards the `integrations.additionalProperties.required: ["enabled"]` sub-constraint, which governs
+    // Guards the `integrations.additionalProperties.required: ["enabled"]` sub-constraint, which applies to
     // every integration except `jira`; the named property shadows `additionalProperties` for that key.
     const output = await validate(schemaId, { integrations: { linear: {} } }, FLAG);
     expect(output).toMatchObject({ valid: false });

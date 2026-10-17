@@ -138,7 +138,7 @@ describe(stringifyRecord, () => {
     expect(parseRecord(forward).reviewed).toStrictEqual(reviews.toReversed());
   });
 
-  it('writes both sections when they are empty, and parses a record holding only declined cuts', () => {
+  it('writes both sections when they are empty, and parses a record containing only declined cuts', () => {
     expect(stringifyRecord({ declined: [], reviewed: [] })).toBe('declined: []\nreviewed: []\n');
     expect(parseRecord('declined: []\n')).toStrictEqual({ declined: [], reviewed: [] });
   });

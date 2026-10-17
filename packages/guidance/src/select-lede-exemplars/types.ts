@@ -34,7 +34,7 @@ export interface LedeExemplar {
   /** Canonical work-type key, so that a record filed under an alias and one filed under the key read alike. */
   type: string;
   tier: string;
-  /** Scope the change belongs to; absent for a change that names none. */
+  /** Scope to which the change belongs; absent for a change that names none. */
   scope?: string;
   /** Number of the pull request in which the lede was merged. */
   pr: string;

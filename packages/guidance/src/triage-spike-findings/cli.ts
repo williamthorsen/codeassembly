@@ -103,7 +103,7 @@ async function runCheckLabels(flags: ParsedFlags, context: CommandContext): Prom
 
 /**
  * Writes the dispositions comment and one comment per issue named by a `comment` disposition under `--out`. Without
- * `--preview`, refuses while a `ticket` item or the umbrella has no number, and writes nothing.
+ * `--preview`, refuses while a `ticket` item or the umbrella does not have a number, and writes nothing.
  */
 function runRender(flags: ParsedFlags, context: CommandContext): CommandResult {
   const record = readRecord(flags, context);
@@ -113,7 +113,7 @@ function runRender(flags: ParsedFlags, context: CommandContext): CommandResult {
     const parts = [...(missing.umbrella ? ['the umbrella'] : []), ...missing.items];
     throw new CommandError(
       'tickets-missing',
-      `${parts.join(', ')} ${parts.length === 1 ? 'has' : 'have'} no ticket number; pass --preview to render placeholders`,
+      `${parts.join(', ')} ${parts.length === 1 ? 'does not have' : 'do not have'} a ticket number; pass --preview to render placeholders`,
     );
   }
   mkdirSync(out, { recursive: true });
