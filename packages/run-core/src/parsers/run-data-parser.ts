@@ -75,7 +75,7 @@ export async function parseRunData(runPath: string): Promise<CanonicalRunStatus>
     return parseStatusFile(v1Path);
   }
 
-  // Parse the JSON (corrupt JSON propagates without a fallback)
+  // Parse the JSON (throw on corrupt JSON rather than fall back)
   let raw: unknown;
   try {
     raw = JSON.parse(indexContent);
