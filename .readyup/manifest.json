@@ -2,6 +2,16 @@
   "version": 1,
   "kits": [
     {
+      "checklistChecks": [
+        {
+          "checklist": "default",
+          "checks": [
+            ".meta/label-map.json exists",
+            ".meta/label-map.json scopes match the workspace",
+            ".meta/label-map.json $schema matches the installed change-grammar"
+          ]
+        }
+      ],
       "checklists": [
         "default"
       ],
@@ -20,10 +30,10 @@
       ],
       "name": "default",
       "path": "kits/default.js",
-      "readyupVersion": "0.40.0",
+      "readyupVersion": "0.41.0",
       "source": "kits/default.ts",
       "sourceHash": "e9b62bff",
-      "targetHash": "0d50c719"
+      "targetHash": "9698b10e"
     }
   ]
 }

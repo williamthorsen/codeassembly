@@ -2,6 +2,19 @@
   "version": 1,
   "kits": [
     {
+      "checklistChecks": [
+        {
+          "checklist": "guidance",
+          "checks": [
+            "AGENTS.md is non-empty",
+            ".claude/CLAUDE.md imports AGENTS.md",
+            "AGENTS.md is current",
+            "AGENTS.md is harness-neutral",
+            "AGENTS.md doesn't host any rulebook region",
+            "AGENTS.md is within the ambient budget"
+          ]
+        }
+      ],
       "checklists": [
         "guidance"
       ],
@@ -36,10 +49,10 @@
       ],
       "name": "default",
       "path": "kits/default.js",
-      "readyupVersion": "0.40.0",
+      "readyupVersion": "0.41.0",
       "source": "kits/default.ts",
       "sourceHash": "3867f601",
-      "targetHash": "8c444dc2"
+      "targetHash": "63cadc95"
     }
   ]
 }
