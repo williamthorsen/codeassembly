@@ -8,7 +8,7 @@
  * nor is a comparative that `than` follows.
  *
  * Detection is over-inclusive: Precision is the agent's, which adjudicates each candidate with the sentence in view.
- * A candidate is rejected here only where a reading cannot change the answer: a fixed phrase opened by `no`, the
+ * A candidate is rejected here only when a reading cannot change the answer: a fixed phrase opened by `no`, the
  * pronoun `no one`, a hyphenated compound such as `no-op`, which the tokenizer reads as one word, and a `no` inside an
  * inline code span, which the extractor has masked. Each `no` is tagged with its position to point the agent at the
  * likeliest repair; the tag is a heuristic, and detection does not depend on it.
@@ -122,7 +122,7 @@ function classifyPosition(tokens: readonly Token[], quantifierIndex: number): Ne
 
 /**
  * Scans one span for every determiner `no`, grouping the ones that share a sentence into one candidate, since a rule
- * whose phrase is the sentence would otherwise report two candidates adjudicating the same text.
+ * whose phrase is the sentence would otherwise report the same text as two candidates.
  */
 function detectInSpan(span: ProseSpan): NegativeQuantifierCandidate[] {
   const tokens = tokenize(span.text);

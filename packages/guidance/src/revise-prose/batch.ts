@@ -18,13 +18,13 @@ export const DEFAULT_BATCH_BUDGET = 96 * 1_024;
  *
  * Puts the recurring batches first. Groups files linked by a shared sentence into a component that a batch boundary
  * never crosses, so that one subagent adjudicates every copy of a sentence and two subagents never edit the same file.
- * Packs components under the budget like any other batch, and makes a single component that outgrows it into one
- * oversized batch, splitting it being what the grouping exists to prevent.
+ * Packs components under the budget like any other batch, and makes a single component that exceeds it into one
+ * oversized batch, because the grouping exists to prevent splitting a component.
  *
  * Packs the remaining files by whole directory. A batch boundary falls on a directory boundary except when one
  * directory alone exceeds the budget.
  *
- * Throws when `budget` is not a positive integer, a zero-byte batch being unsatisfiable rather than empty.
+ * Throws when `budget` is not a positive integer, because a zero-byte batch is unsatisfiable rather than empty.
  */
 export function planBatches(input: {
   files: readonly ScannedFile[];
@@ -45,8 +45,8 @@ export function planBatches(input: {
     batches.push(composeBatch(batches.length, run, true));
   }
 
-  // A directory need not stay whole, so one that outgrows the budget is split before packing; only a component must
-  // stay whole, which is why the two go through different preparation.
+  // A directory need not stay whole, so one that exceeds the budget is split before packing; only a component must
+  // stay whole, which is why the two are prepared differently.
   const ordinary = input.files.filter((file) => !recurring.has(file.file));
   const directories = packGroups(splitOversized(groupByDirectory(ordinary), budget), budget);
   for (const run of directories) {
@@ -77,9 +77,10 @@ function directoryOf(file: string): string {
 /**
  * Groups the files linked by a shared recurring sentence into components, in the order the sweep resolved them.
  *
- * A sentence is the link because it is what an adjudicator rewrites, and one sentence acquires two repairs when two
+ * A sentence is the link because it is what an adjudicator rewrites, and one sentence receives two repairs when two
  * subagents adjudicate its copies independently. The link is transitive: When one file shares a sentence with a second
- * and another with a third, all three form one component, since separating them would hand one file to two writers.
+ * and another with a third, all three form one component, since separating them would assign one file to two
+ * subagents.
  */
 function findRecurringComponents(
   candidates: readonly Candidate[],
@@ -181,7 +182,7 @@ function packGroups(groups: readonly ScannedFile[][], budget: number): ScannedFi
 
 /**
  * Chunks any group exceeding `budget` into consecutive runs that fit, leaving the rest as they are. A single file over
- * the budget still stands alone, nothing smaller than a file being a unit.
+ * the budget still forms a batch of its own, because nothing smaller than a file is a unit.
  */
 function splitOversized(groups: readonly ScannedFile[][], budget: number): ScannedFile[][] {
   const prepared: ScannedFile[][] = [];

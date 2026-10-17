@@ -2,9 +2,9 @@
  * Target-set resolution and prose extraction for the revise-prose sweep.
  *
  * The sweep reads what git tracks plus what git would track, which respects `.gitignore` and so keeps `node_modules/`
- * and `dist/` out for free. Extraction is per file type, each extractor stating what it reads. Everything mechanical
- * about scope is decided here, so that the detector sees prose alone and the agent never adjudicates a candidate from
- * a file that it may not edit.
+ * and `dist/` out without a separate exclusion list. Extraction is per file type, each extractor stating what it
+ * reads. Everything mechanical about scope is decided here, so that the detector sees prose alone and the agent never
+ * adjudicates a candidate from a file that it may not edit.
  */
 import { readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -26,8 +26,8 @@ export interface ProseCollection {
   /** The resolved target set, in git's own order. Nothing outside it may be edited. */
   files: readonly string[];
   /**
-   * The files from which the sweep read prose, in the target set's own order, each with the bytes that a batch budget
-   * reads.
+   * The files from which the sweep read prose, in the target set's own order, each with the byte count that the batch
+   * budget measures.
    */
   scannedFiles: readonly ScannedFile[];
   /** Files excluded, by the reason each was excluded, so that an exclusion is never silent. */
@@ -239,7 +239,7 @@ const MACHINE_LINE_WIDTH = 1_000;
 /** Characters that the script scanner passes over between tokens. */
 const SCRIPT_SPACING: ReadonlySet<string> = new Set([' ', '\t', '\r']);
 
-/** Quote characters opening a string literal, whose multi-word contents reach a reader. */
+/** Quote characters opening a string literal, whose multi-word contents are shown to a reader. */
 const STRING_DELIMITERS: ReadonlySet<string> = new Set(['"', "'", '`']);
 
 /** Characters that may precede a `/` that opens a regular expression, which distinguishes one from a division. */
@@ -248,7 +248,7 @@ const REGEX_PRECEDERS = new Set(['(', ',', '=', ':', '[', '!', '&', '|', '?', '{
 /**
  * Builds one span from a block comment's body, stripping each line's leading `*` and the blank lines contributed by
  * a `/**` opener and a closing line. The span's own line advances past each blank line dropped, so it still names the
- * source line on which its first word sits. Returns undefined for a comment that does not contain any prose at all.
+ * source line on which its first word appears. Returns undefined for a comment that does not contain any prose at all.
  */
 function buildBlockCommentSpan(file: string, line: number, body: string): ProseSpan | undefined {
   const texts = body.split('\n').map(stripCommentMarkers);
@@ -318,8 +318,8 @@ function extractByKind(input: { file: string; content: string; kind: ProseKind }
 
 /**
  * Extracts a Markdown file's frontmatter through the YAML extractor, each span naming the source line on which it
- * sits. A block that the parser cannot read yields nothing rather than failing the file, whose body is prose whatever
- * its frontmatter holds.
+ * begins. A block that the parser cannot read yields nothing rather than failing the file, whose body is prose
+ * whatever its frontmatter contains.
  */
 function extractFrontmatterProse(file: string, lines: readonly string[], bodyStart: number): ProseSpan[] {
   if (bodyStart === 0) return [];
@@ -401,8 +401,8 @@ function extractMarkdownProse(file: string, content: string): ProseSpan[] {
 }
 
 /**
- * Extracts comments and multi-word string literals from TypeScript or JavaScript. The literals are what reach a
- * reader as help text, error messages, and test titles; a data literal comes along with them, which is over-inclusion
+ * Extracts comments and multi-word string literals from TypeScript or JavaScript. The literals are what a reader
+ * sees as help text, error messages, and test titles; a data literal comes along with them, which is over-inclusion
  * that the agent filters. Consecutive `//` lines join into one block so that a wrapped sentence survives the scan.
  */
 function extractScriptProse(file: string, content: string): ProseSpan[] {
@@ -507,7 +507,7 @@ function extractShellProse(file: string, content: string): ProseSpan[] {
   return spans;
 }
 
-/** Returns the index of the newline ending the line on which `index` sits, or the content length if none does. */
+/** Returns the index of the newline ending the line on which `index` falls, or the content length if none does. */
 function findLineEnd(content: string, index: number): number {
   const end = content.indexOf('\n', index);
   return end === -1 ? content.length : end;

@@ -3,9 +3,9 @@
  * version, into the per-rule record.
  *
  * Repositories keep records in that shape at every version reached by their sweeps, so the helper converts one
- * whenever it reads one. Only what the run's versions confirm as current carries over: A unit's coverage at the unit's
- * current version stands for each of its versioned rules at the rule's current version, because a rule that changed
- * since that sweep would have raised the unit's version too.
+ * whenever it reads one. The conversion keeps only what the run's versions confirm as current: A unit's coverage at
+ * the unit's current version stands for each of its versioned rules at the rule's current version, because a rule that
+ * changed since that sweep would have raised the unit's version too.
  */
 import type { LegacyRecord, ProseRecord, RecordedRejection, RuleCoverage, SweepVersions } from './types.ts';
 
