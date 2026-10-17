@@ -102,7 +102,7 @@ export async function readHomeProvenanceAt(provenancePath: string): Promise<Home
 
 /**
  * Records a failed home-domain attempt, keeping whatever write the stamp already reports. Swallows its own failure:
- * An error is already on its way to the caller, and losing the record must not replace it with a different one.
+ * An error is already propagating to the caller, and losing the record must not replace it with a different one.
  */
 export async function recordFailedHomeAttempt(
   command: HomeWriteCommand,

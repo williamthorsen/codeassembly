@@ -31,7 +31,7 @@ interface DesignatedWriter {
  * output.
  *
  * Passes when every home tier leaves `home-writer` unset, so a machine that never configures one behaves as it always
- * has, and when the running package root lies at or under the designated path, which lets the setting name either the
+ * has, and when the running package root is at or under the designated path, which lets the setting name either the
  * worktree root or the package directory within it. A malformed setting fails the run rather than being silently
  * ignored.
  */
@@ -78,7 +78,7 @@ function expandHome(rawPath: string, homeDir: string): string {
 }
 
 /**
- * Whether `packageRoot` is the designated installation or lies within it. Both sides are resolved through symlinks
+ * Whether `packageRoot` is the designated installation or is within it. Both sides are resolved through symlinks
  * first, so a worktree reached by one path and designated by another still matches.
  */
 async function matchesDesignatedWriter(packageRoot: string, designatedPath: string): Promise<boolean> {
@@ -118,7 +118,7 @@ async function readDesignatedWriter(homeDir: string): Promise<DesignatedWriter |
 
 /**
  * Resolves `targetPath` through symlinks, falling back to a plain absolute resolution for a path that does not exist.
- * A designated worktree that has been deleted still names a location against which a comparison can answer.
+ * A designated worktree that has been deleted still names a location that the comparison can use.
  */
 async function resolveRealPath(targetPath: string): Promise<string> {
   try {

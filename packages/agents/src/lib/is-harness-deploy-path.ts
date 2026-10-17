@@ -3,7 +3,7 @@ import path from 'node:path';
 import { HARNESSES } from './harness.ts';
 
 /**
- * Reports whether a path lies in a harness's deployed `skills/` or `scripts/` tree, whose files are copied from a source
+ * Reports whether a path is in a harness's deployed `skills/` or `scripts/` tree, whose files are copied from a source
  * elsewhere. Accepts a repository-relative or an absolute path, since only the segments are read.
  */
 export function isHarnessDeployPath(file: string): boolean {

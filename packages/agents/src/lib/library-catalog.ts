@@ -14,12 +14,12 @@ const NON_SUPPORT_ENTRIES: ReadonlySet<string> = new Set(['_harnesses', '_partia
 
 /**
  * Enumerates a content root's deployable artifacts as a per-type slug map (`{ rulebook, skill, subagent }`), computed
- * from the filesystem so that a newly added artifact joins without an edit. The root is whichever directory the caller
- * passes, such as the declared source from which an `@library` collection resolved. Collections are never
- * enumerated -- they are traversal-only nodes and "every collection" would be self-referential. The slugs are
- * filesystem basenames (skill = subdirectory name, rulebook/subagent = filename without `.md`), the form that
- * `artifactFrontmatterPath` maps back to a file, not the frontmatter `name`. The result is the
- * `ArtifactDependencies` edge shape, so the resolver consumes it directly as a collection's expanded members.
+ * from the filesystem so that the result includes a newly added artifact without an edit. The root is whichever
+ * directory the caller passes, such as the declared source from which an `@library` collection resolved. Collections
+ * are never enumerated -- they are traversal-only nodes and "every collection" would be self-referential. The slugs
+ * are filesystem basenames (skill = subdirectory name, rulebook/subagent = filename without `.md`), the form that
+ * `artifactFrontmatterPath` maps back to a file, not the frontmatter `name`. The result is the `ArtifactDependencies`
+ * edge shape, so the resolver consumes it directly as a collection's expanded members.
  */
 export async function enumerateCatalogSlugs(contentDir: string): Promise<ArtifactDependencies> {
   const [rulebook, skill, subagent] = await Promise.all([
@@ -31,7 +31,7 @@ export async function enumerateCatalogSlugs(contentDir: string): Promise<Artifac
 }
 
 /**
- * Reports whether `entryDir` is a skill directory -- one holding a `SKILL.md` file.
+ * Reports whether `entryDir` is a skill directory -- one containing a `SKILL.md` file.
  *
  * `SKILL.md` must be a file. A directory of that name is not a skill, and treating it as one would send the installer
  * to read a body that does not exist. The probe follows symlinks, so a `SKILL.md` symlinked to a real file counts.
@@ -52,8 +52,8 @@ export async function isSkillDirectory(entryDir: string): Promise<boolean> {
 
 /**
  * Lists the visible subdirectories of `skillsDir` that are skill directories. Visibility separates this from
- * `isSkillDirectory` alone: A `_`-prefixed directory is support content even when it holds a `SKILL.md`, so it never
- * enters the catalog.
+ * `isSkillDirectory` alone: A `_`-prefixed directory is support content even when it contains a `SKILL.md`, so the
+ * catalog never includes it.
  */
 export async function listSkillDirectories(skillsDir: string): Promise<Array<string>> {
   const names: Array<string> = [];
@@ -67,13 +67,13 @@ export async function listSkillDirectories(skillsDir: string): Promise<Array<str
 }
 
 /**
- * Lists the entries directly under `skillsDir` that deliver unconditionally with a source's skills, sorted. Support
+ * Lists the entries directly under `skillsDir` that deploy unconditionally with a source's skills, sorted. Support
  * content is everything left once the reserved entries, test directories, dotfiles, and skill directories are removed
  * -- `skills/_data/` being the case that motivates it, since it does not contain a `SKILL.md` and does not appear in
  * any catalog walk.
  *
  * A `_`-prefixed name is support content rather than hidden, which is why the visibility rule that the catalog walk
- * applies is absent here; `__tests__` shares that prefix without sharing that standing, and is excluded by name.
+ * applies is absent here; `__tests__` shares that prefix but is not support content, and is excluded by name.
  */
 export async function listSupportEntries(skillsDir: string): Promise<Array<string>> {
   const candidates = (await readDirEntries(skillsDir))

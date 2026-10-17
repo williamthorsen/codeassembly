@@ -28,7 +28,7 @@ const ProjectManifestSchema = z
   })
   .loose();
 
-/** A declared package resolved to the content directory that it ships, named by the package from which it came. */
+/** A declared package resolved to the content directory that it publishes, named by the package from which it came. */
 export interface PackageSource {
   readonly name: string;
   readonly dir: string;
@@ -37,8 +37,8 @@ export interface PackageSource {
 /**
  * Reads the content directory declared by a package manifest under `codeassembly.content`, or `undefined` when the
  * key is absent. A malformed `codeassembly` key still throws, naming the package: Absence is a package that does not
- * ship any content, which some callers answer for themselves, but a key that is present and wrong is a defect either
- * way.
+ * publish any content, which some callers handle for themselves, but a key that is present and wrong is a defect
+ * either way.
  */
 export function findContentPath(name: string, manifest: unknown): string | undefined {
   const result = PackageManifestSchema.safeParse(manifest);
@@ -52,13 +52,13 @@ export function findContentPath(name: string, manifest: unknown): string | undef
 }
 
 /**
- * Reports the direct dependencies of the project at `baseDir` that ship CodeAssembly content and are absent from
+ * Reports the direct dependencies of the project at `baseDir` that publish CodeAssembly content and are absent from
  * `addressed`, sorted by name, so that a caller can name the declaration that would adopt each. `addressed` lists
- * every name that the project has spoken about, adopted and declined alike, so a package that a project turned down
- * is not reported. Purely advisory: It does not contribute any source and cannot fail a run. An unreadable or absent
- * `package.json` yields nothing, which also lets the home domain share this path without a carve-out. Because a
- * package must declare its content directory to ship any, detection reads that declaration and cannot report a false
- * positive.
+ * every name that the project's declaration mentions, adopted and declined alike, so a package that a project turned
+ * down is not reported. Purely advisory: It does not contribute any source and cannot fail a run. An unreadable or
+ * absent `package.json` yields nothing, which also lets the home domain share this path without a carve-out. Because
+ * a package must declare its content directory to publish any, detection reads that declaration and cannot report a
+ * false positive.
  */
 export async function findUndeclaredGuidancePackages(
   addressed: ReadonlyArray<string>,
@@ -72,7 +72,8 @@ export async function findUndeclaredGuidancePackages(
     );
     return shipping.filter((name): name is string => name !== undefined).toSorted((a, b) => a.localeCompare(b));
   } catch {
-    // A suggestion is never worth failing a run for, so any surprise here yields an empty list rather than an error.
+    // A suggestion is never worth failing a run for, so any unexpected failure here yields an empty list rather than an
+    // error.
     return [];
   }
 }
@@ -105,7 +106,7 @@ export async function locateInstalledPackage(
 }
 
 /**
- * Resolves one installed package to the content directory that it ships. Resolution walks the `node_modules` chain
+ * Resolves one installed package to the content directory that it publishes. Resolution walks the `node_modules` chain
  * that Node itself would search from `baseDir`, so it holds under pnpm's symlinked layout and under `workspace:*`
  * links. Throws, opening each message with `label` so that the reader can tell which declaration to edit, when
  * `packageName` is a filesystem path rather than a package name, when the package is not installed, or when it does
@@ -121,8 +122,8 @@ export async function resolvePackageSource(packageName: string, baseDir: string,
 }
 
 /**
- * Resolves each declared package name to the content directory that it ships, in declaration order, for use as a
- * content source. A producing repo consumes its own guidance through a `workspace:*` link, by the same declaration
+ * Resolves each declared package name to the content directory that it publishes, in declaration order, for use as
+ * a content source. A producing repo consumes its own guidance through a `workspace:*` link, by the same declaration
  * that a third party writes. Throws as `resolvePackageSource` does, labelling each failure with the declared package.
  */
 export async function resolvePackageSources(
@@ -182,7 +183,7 @@ function readContentPath(name: string, manifest: unknown): string {
   const content = findContentPath(name, manifest);
   if (content === undefined) {
     throw new Error(
-      `Package "${name}" does not declare any CodeAssembly content. A package that ships content sets "codeassembly": { "content": "<dir>" } in its package.json, and includes that directory in its published "files".`,
+      `Package "${name}" does not declare any CodeAssembly content. A package that publishes content sets "codeassembly": { "content": "<dir>" } in its package.json, and includes that directory in its published "files".`,
     );
   }
   return content;
@@ -190,8 +191,8 @@ function readContentPath(name: string, manifest: unknown): string {
 
 /**
  * Reads the direct dependency names declared by the project at `baseDir`, or nothing when it does not have a readable
- * manifest. Direct dependencies only: Guidance is something a project opts into by depending on the package that ships
- * it, and pnpm's strict layout would not expose a transitive package at the probed paths anyway.
+ * manifest. Direct dependencies only: Guidance is something a project opts into by depending on the package that
+ * publishes it, and pnpm's strict layout would not expose a transitive package at the probed paths anyway.
  */
 async function readDirectDependencies(baseDir: string): Promise<ReadonlyArray<string>> {
   const raw = await readFileIfPresent(path.join(baseDir, 'package.json'));
@@ -208,8 +209,8 @@ async function readDirectDependencies(baseDir: string): Promise<ReadonlyArray<st
 
 /**
  * Reads `filePath`, resolving to `undefined` when it is absent. Rethrows any other failure (e.g. `EACCES` on an
- * unreadable `node_modules` directory), so a permission problem surfaces instead of reading as a bare absence and
- * sending resolution on to the next candidate.
+ * unreadable `node_modules` directory), so a permission problem is thrown to the caller instead of reading as a bare
+ * absence and sending resolution on to the next candidate.
  */
 async function readFileIfPresent(filePath: string): Promise<string | undefined> {
   try {

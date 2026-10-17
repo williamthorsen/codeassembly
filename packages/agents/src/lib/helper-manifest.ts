@@ -10,7 +10,7 @@ import { isMissingFile } from './type-guards.ts';
 
 /**
  * The `helpers:` key alone. It is parsed apart from the deploy-path schema in `content-root-manifest.ts`, so a
- * malformed list fails only the command that builds helpers and never refuses a root at `sync`.
+ * malformed list fails only the command that builds helpers and never makes `sync` refuse a root.
  */
 const HelperManifestSchema = z
   .object({

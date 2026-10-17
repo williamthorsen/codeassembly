@@ -16,8 +16,8 @@ import type { HarnessId } from './types.ts';
 
 /**
  * Lists the file names that a root's `guidance/_harnesses/<harnessId>/` template directory installs into the harness
- * home: its visible regular files. A directory that is absent, or that holds only dotfiles and subdirectories, lists
- * nothing.
+ * home: its visible regular files. A directory that is absent, or that contains only dotfiles and subdirectories,
+ * lists nothing.
  */
 export async function listGuidanceTemplateFiles(rootDir: string, harnessId: HarnessId): Promise<ReadonlyArray<string>> {
   const templateDir = resolveGuidanceTemplateDir(rootDir, harnessId);
@@ -47,8 +47,9 @@ export async function listGuidanceTemplateFiles(rootDir: string, harnessId: Harn
  * Renders one Markdown file of a harness guidance template as `install` writes it to the harness home: includes
  * expanded against the owning root, guidance-hook declarations stripped, link targets and template variables
  * rewritten for the harness home, and the provenance marker stamped. A link target into `skills/` resolves into the
- * owning root's support namespace, as one in a body that `sync --global` deploys from that root does. The ambient region is left as the template
- * declares it. Throws on a broken include, a malformed hook, or an anchor that names nothing.
+ * owning root's support namespace, as one in a body that `sync --global` deploys from that root does. The ambient
+ * region is left as the template declares it. Throws on a broken include, a malformed hook, or an anchor that names
+ * nothing.
  */
 export async function renderGuidanceTemplateFile(
   root: ContentRootRef,
