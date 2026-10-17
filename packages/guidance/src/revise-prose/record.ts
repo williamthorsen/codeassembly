@@ -250,9 +250,9 @@ export function isStaleRejection(rejection: RecordedRejection, ruleVersions: Rea
 
 /**
  * Lists the rules that the run versions and for which the record does not cover `file`, in the run's order. A rule
- * covers the file at the rule's current version, under one of its roots, and, if the helper holds the rule's detector,
- * with that detector having run. A rule recorded at another version covers nothing, its sweep having been taken against
- * a rule that has since changed; a sweep that ran without a rule's detector never saw that rule's candidates.
+ * covers the file at the rule's current version, under one of its roots, and, if the helper has a detector for the
+ * rule, with that detector having run. A rule recorded at another version covers nothing, its sweep having been taken
+ * against a rule that has since changed; a sweep that ran without a rule's detector never saw that rule's candidates.
  */
 export function listUnsweptRules(
   record: ProseRecord,

@@ -304,7 +304,7 @@ const RELOCATED_SPEC_LINKS: ReadonlyArray<string> = [
   '_data/next-steps-after-review.md',
 ];
 
-/** The sole permitted statement of the diff-audit checklist; every host reaches it through an include. */
+/** The sole permitted statement of the diff-audit checklist; every host includes it. */
 const DIFF_AUDIT_PARTIAL = '_partials/diff-audit-checklist.md';
 
 /** Phrases distinctive enough that a file containing one has restated the checklist rather than included it. */
