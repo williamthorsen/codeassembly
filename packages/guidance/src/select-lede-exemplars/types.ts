@@ -10,10 +10,12 @@ import type { WorkType } from '../lib/work-types.ts';
 /**
  * What a selection matches on. A caller that resolved the change's work type selects on it; one that could not
  * selects on the tier alone, which is what the dispatched tier already names, so a drafter never has to invent a type
- * to make a request.
+ * to make a request. `breaking` states whether the change is breaking: An unmarked request never selects a breaking
+ * record, and a marked one prefers breaking records within each widening step.
  */
-export type ExemplarRequest =
-  { readonly kind: 'type'; readonly workType: WorkType } | { readonly kind: 'tier'; readonly tier: string };
+export type ExemplarRequest = (
+  { readonly kind: 'type'; readonly workType: WorkType } | { readonly kind: 'tier'; readonly tier: string }
+) & { readonly breaking: boolean };
 
 /** One author-approved lede, with the change identity against which a drafter calibrates a new lede. */
 export interface LedeExemplar {
@@ -34,6 +36,8 @@ export interface LedeExemplar {
   /** Canonical work-type key, so that a record filed under an alias and one filed under the key read alike. */
   type: string;
   tier: string;
+  /** Whether the change was breaking, so that its lede was written under the breaking contract. */
+  breaking: boolean;
   /** Scope to which the change belongs; absent for a change that names none. */
   scope?: string;
   /** Number of the pull request in which the lede was merged. */
@@ -71,6 +75,8 @@ export interface SelectSuccess {
   /** Canonical key of the requested work type, whichever spelling the request used; absent for a tier request. */
   type?: string;
   tier: string;
+  /** Whether the request was marked breaking, by `--breaking` or by a `!` on its work type. */
+  breaking: boolean;
   widening: Widening;
   /** The rating floor that the request applied; `none` when it named none and read every record. */
   minQuality: AppliedFloor;

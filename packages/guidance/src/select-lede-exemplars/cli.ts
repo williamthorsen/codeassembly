@@ -16,6 +16,7 @@ import type { ExemplarRequest, SelectErrorCode, SelectResult } from './types.ts'
 
 /** The flags that this helper accepts; it reads nothing from stdin. */
 const FLAGS: readonly FlagSpec[] = [
+  { name: 'breaking', takesValue: false },
   { name: 'count', takesValue: true },
   { name: 'data-dir', takesValue: true },
   { name: 'min-quality', takesValue: true },
@@ -43,6 +44,8 @@ export type RequestArgs = { kind: 'type'; type: string } | { kind: 'tier'; tier:
 /** Parsed command-line invocation of the select-lede-exemplars helper. */
 export interface ParsedArgs {
   request: RequestArgs;
+  /** Whether `--breaking` was passed; a `!` on `--type` marks the request as well, once the taxonomy resolves it. */
+  breaking: boolean;
   count: number;
   /** Lowest rating that a record may have and still be selected; `null` reads every record, rated or not. */
   minQuality: LedeQuality | null;
@@ -73,7 +76,9 @@ if (isEntryPoint()) {
 /**
  * Parses the helper's argv. Exactly one of `--type` and `--tier` is required: The exemplars that a drafter needs are
  * the ones written under its own work type, and `--tier` serves a caller whose dispatch did not resolve a type, so
- * that the fallback is a narrower request rather than an invented type. `--with-pair` serves a caller calibrating an
+ * that the fallback is a narrower request rather than an invented type. `--breaking` marks either request as one for a
+ * breaking change, as a `!` on `--type` also does: An unmarked request never selects a breaking record, and a marked one
+ * prefers breaking records within each widening step. `--with-pair` serves a caller calibrating an
  * edit rather than a draft and does not change the selection. `--count`, `--min-quality`, `--store`, and `--data-dir`
  * each fall back to a default; an absent `--min-quality` reads every record, so a corpus whose ratings are still
  * sparse is not filtered down to nothing. The `@default` and `@feedback` sentinels are refused: Each names whichever
@@ -102,6 +107,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
 
   return {
     request: parseRequest({ type: raw.type, tier: raw.tier }),
+    breaking: flags.some((flag) => flag.name === 'breaking'),
     count: parseCount(raw.count),
     minQuality: parseMinQuality(raw['min-quality']),
     store: raw.store ?? LEDE_DECISION_STORE,
@@ -141,7 +147,7 @@ export async function runSelect(input: { argv: readonly string[]; home?: string 
     };
   }
 
-  const resolved = resolveRequest(args.request, workTypes);
+  const resolved = resolveRequest({ args: args.request, breaking: args.breaking, workTypes });
   if (!resolved.ok) {
     return { ok: false, error: resolved.error, message: resolved.message };
   }
@@ -165,6 +171,7 @@ export async function runSelect(input: { argv: readonly string[]; home?: string 
     ok: true,
     ...(request.kind === 'type' && { type: request.workType.key }),
     tier: request.kind === 'type' ? request.workType.tier : request.tier,
+    breaking: request.breaking,
     widening: selection.widening,
     minQuality: args.minQuality ?? 'none',
     exemplars: selection.exemplars,
@@ -274,12 +281,15 @@ async function resolveCorpus(input: {
 
 /**
  * Resolves a parsed request against the taxonomy. A tier is checked against the tiers declared by the taxonomy, so a
- * misspelt one is refused rather than returning an empty list that reads as an exhausted corpus.
+ * misspelt one is refused rather than returning an empty list that reads as an exhausted corpus. A request is
+ * breaking when `--breaking` was passed or, for a type request, when the type is spelled with a `!`.
  */
-function resolveRequest(
-  args: RequestArgs,
-  workTypes: ReadonlyMap<string, WorkType>,
-): { ok: true; request: ExemplarRequest } | { ok: false; error: SelectErrorCode; message: string } {
+function resolveRequest(input: {
+  args: RequestArgs;
+  breaking: boolean;
+  workTypes: ReadonlyMap<string, WorkType>;
+}): { ok: true; request: ExemplarRequest } | { ok: false; error: SelectErrorCode; message: string } {
+  const { args, workTypes } = input;
   if (args.kind === 'type') {
     const resolved = resolveWorkType(args.type, workTypes);
     if (resolved === null) {
@@ -289,7 +299,10 @@ function resolveRequest(
         message: `work type "${args.type}" is not declared in work-types.json, so its tier cannot be resolved`,
       };
     }
-    return { ok: true, request: { kind: 'type', workType: resolved.workType } };
+    return {
+      ok: true,
+      request: { kind: 'type', workType: resolved.workType, breaking: input.breaking || resolved.breaking },
+    };
   }
 
   const tiers = new Set(workTypes.values().map((workType) => workType.tier));
@@ -301,7 +314,7 @@ function resolveRequest(
       message: `tier "${args.tier}" is not declared in work-types.json; declared tiers are ${declared.join(', ')}`,
     };
   }
-  return { ok: true, request: { kind: 'tier', tier: args.tier } };
+  return { ok: true, request: { kind: 'tier', tier: args.tier, breaking: input.breaking } };
 }
 
 // endregion | Helpers

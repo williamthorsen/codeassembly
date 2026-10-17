@@ -66,13 +66,13 @@ Read the change and settle the entries: what each outcome is, which type it take
 
    A supporting edit in another workspace does not contribute any scope. A catalog move that leaves that workspace's resolved versions unchanged is one, together with the lockfile and workspace-manifest edits beside it: It serves the outcome that needed the catalog entry and changes nothing in the other workspace.
 
-7. **Exemplars.** Run `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type} --min-quality strong` once per distinct type among your entries. It returns text rated `strong` or `exemplary` by the author, newest first. Read it for the level of detail and the register that it uses, not for phrases to reuse. An empty list is a normal result; draft without it.
+7. **Exemplars.** Run `node {harness_home_dir}/scripts/select-lede-exemplars.mjs --type {type} --min-quality strong` once per distinct pair of `type` and `breaking` among your entries, adding `--breaking` for a pair whose `breaking` is `true`. `breaking` is the value that "The form that your answer takes" sets from the commit log. It returns text rated `strong` or `exemplary` by the author, newest first. Read it for the level of detail and the register that it uses, not for phrases to reuse. An empty list is a normal result; draft without it.
 
-   Calibrate each entry against the exemplars drawn for its own type. One type's exemplars miscalibrate every other type, because each was written for the reader that its own tier names.
+   Calibrate each entry against the exemplars drawn for its own pair. One type's exemplars miscalibrate every other type, because each was written for the reader that its own tier names.
 
    Each record's text is a whole approved lede, so the sets you drew also calibrate the lede that you write. Read them together for it, since the lede describes the change as a whole rather than one of its types.
 
-   When you cannot resolve an outcome's type against the taxonomy, put `--tier {tier}` in place of `--type {type}` for that outcome, keep `--min-quality strong`, and name the omission in your report. `{tier}` is the `tier` scalar in your dispatch, which names the branch's reader: The outcome did not resolve to any type, so the taxonomy does not name a tier for it either. Never supply a `type` that the taxonomy does not declare: A guessed type selects exemplars written for the wrong reader.
+   When you cannot resolve an outcome's type against the taxonomy, put `--tier {tier}` in place of `--type {type}` for that outcome, keep `--min-quality strong` and any `--breaking`, and name the omission in your report. `{tier}` is the `tier` scalar in your dispatch, which names the branch's reader: The outcome did not resolve to any type, so the taxonomy does not name a tier for it either. Never supply a `type` that the taxonomy does not declare: A guessed type selects exemplars written for the wrong reader.
 
 Writing follows.
 

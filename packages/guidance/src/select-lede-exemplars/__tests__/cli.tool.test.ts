@@ -36,12 +36,21 @@ describe(parseArgs, () => {
 
     expect(parsed).toStrictEqual({
       request: { kind: 'type', type: 'feat' },
+      breaking: false,
       count: 3,
       minQuality: 'strong',
       store: OTHER_STORE_NAME,
       dataDir: '/_data',
       withPair: false,
     });
+  });
+
+  it('reports --breaking as the boolean flag that it is', () => {
+    expect(parseArgs(['--type', 'feat', '--breaking']).breaking).toBe(true);
+  });
+
+  it('accepts --breaking on a --tier request', () => {
+    expect(parseArgs(['--tier', 'public', '--breaking']).breaking).toBe(true);
   });
 
   it('reports --with-pair as the boolean flag that it is', () => {
@@ -192,6 +201,19 @@ describe(runSelect, () => {
     const success = expectSuccess(result);
     expect(success.type).toBe('feat');
     expect(success.tier).toBe('public');
+    expect(success.breaking).toBe(true);
+  });
+
+  it.each([
+    [['--type', 'feat', '--breaking'], true],
+    [['--tier', 'public', '--breaking'], true],
+    [['--type', 'feat'], false],
+  ])('reports the marker of %j as %s', async (argv, breaking) => {
+    const fixture = await createCorpusFixture({ decisions: CORPUS });
+
+    const result = await run({ argv, fixture });
+
+    expect(expectSuccess(result).breaking).toBe(breaking);
   });
 
   it('reports a work type that the taxonomy does not declare', async () => {

@@ -153,7 +153,7 @@ describe(selectExemplars, () => {
     const selection = await selectExemplars({
       storePath: '/no/such/store',
       workTypes,
-      request: { kind: 'type', workType: requireType(workTypes, 'feat') },
+      request: { kind: 'type', workType: requireType(workTypes, 'feat'), breaking: false },
       count: 5,
     });
 
@@ -188,6 +188,7 @@ describe(selectExemplars, () => {
       lede: agentLedeFor('A'),
       type: 'feat',
       tier: 'public',
+      breaking: false,
       scope: 'kb',
       pr: '1124',
       capturedAt: '2026-01-01T00:00:00Z',
@@ -204,6 +205,7 @@ describe(selectExemplars, () => {
       lede: agentLedeFor('A'),
       type: 'feat',
       tier: 'public',
+      breaking: false,
       pr: '1124',
       capturedAt: '2026-01-01T00:00:00Z',
     });
@@ -333,6 +335,100 @@ describe(selectExemplars, () => {
   });
 });
 
+describe('selectExemplars, on the breaking marker', () => {
+  it('never selects a breaking record for an unmarked request', async () => {
+    const decisions: DecisionSpec[] = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' },
+      { id: 'Z', type: 'feat', capturedAt: '2026-09-01T00:00:00Z', breaking: true },
+    ];
+
+    const selection = await select({ decisions, type: 'feat', count: 2 });
+
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
+  });
+
+  it('widens past a type whose only records are breaking, for an unmarked request', async () => {
+    const decisions: DecisionSpec[] = [
+      { id: 'A', type: 'fix', capturedAt: '2026-01-01T00:00:00Z' },
+      { id: 'Z', type: 'feat', capturedAt: '2026-09-01T00:00:00Z', breaking: true },
+    ];
+
+    const selection = await select({ decisions, type: 'feat', count: 1 });
+
+    expect(selection.widening).toBe('tier');
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
+  });
+
+  it('takes an older breaking exact match ahead of a newer non-breaking one for a marked request', async () => {
+    const decisions: DecisionSpec[] = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', breaking: true },
+      { id: 'Z', type: 'feat', capturedAt: '2026-09-01T00:00:00Z' },
+    ];
+
+    const selection = await select({ decisions, type: 'feat', breaking: true, count: 1 });
+
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
+  });
+
+  it('takes a non-breaking exact match ahead of a breaking tier-mate for a marked request', async () => {
+    const decisions: DecisionSpec[] = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' },
+      { id: 'Z', type: 'fix', capturedAt: '2026-09-01T00:00:00Z', breaking: true },
+    ];
+
+    const selection = await select({ decisions, type: 'feat', breaking: true, count: 1 });
+
+    expect(selection.widening).toBe('none');
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
+  });
+
+  it('fills the count from non-breaking records when a marked request finds too few breaking ones', async () => {
+    const selection = await select({ decisions: CORPUS, type: 'feat', breaking: true, count: 5 });
+
+    expect(selection.exemplars).toHaveLength(5);
+  });
+
+  it('reports the marker of each exemplar', async () => {
+    const decisions: DecisionSpec[] = [
+      { id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z' },
+      { id: 'Z', type: 'feat', capturedAt: '2026-09-01T00:00:00Z', breaking: true },
+    ];
+
+    const selection = await select({ decisions, type: 'feat', breaking: true, count: 2 });
+
+    expect(selection.exemplars.map((exemplar) => exemplar.breaking)).toStrictEqual([true, false]);
+  });
+
+  it('reads a record that names breaking false as non-breaking without reporting it', async () => {
+    const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', breaking: false }];
+
+    const selection = await select({ decisions, type: 'feat', count: 1 });
+
+    expect(selection.warnings).toStrictEqual([]);
+    expect(selection.exemplars.map((exemplar) => exemplar.breaking)).toStrictEqual([false]);
+  });
+
+  it('reports a breaking value that is not a boolean and keeps the record selectable as non-breaking', async () => {
+    const decisions = [{ id: 'A', type: 'feat', capturedAt: '2026-01-01T00:00:00Z', breaking: 'yes' }];
+
+    const selection = await select({ decisions, type: 'feat', count: 1 });
+
+    expect(selection.warnings).toStrictEqual(['A.md: names breaking "yes", which is not a boolean']);
+    expect(selection.exemplars.map((exemplar) => exemplar.breaking)).toStrictEqual([false]);
+  });
+
+  it('prefers breaking records within the requested tier for a marked tier request', async () => {
+    const decisions: DecisionSpec[] = [
+      { id: 'A', type: 'fix', capturedAt: '2026-01-01T00:00:00Z', breaking: true },
+      { id: 'Z', type: 'feat', capturedAt: '2026-09-01T00:00:00Z' },
+    ];
+
+    const selection = await selectByTier({ decisions, tier: 'public', breaking: true, count: 1 });
+
+    expect(selection.exemplars.map((exemplar) => exemplar.lede)).toStrictEqual([agentLedeFor('A')]);
+  });
+});
+
 describe('selectExemplars, on a tier request', () => {
   it('treats every type of the requested tier as an exact match', async () => {
     const selection = await selectByTier({ decisions: CORPUS, tier: 'public', count: 3 });
@@ -388,6 +484,7 @@ async function select(input: {
   decisions: readonly DecisionSpec[];
   files?: Readonly<Record<string, string>>;
   type: string;
+  breaking?: boolean;
   count: number;
   minQuality?: LedeQuality;
   withPair?: boolean;
@@ -401,7 +498,7 @@ async function select(input: {
   return selectExemplars({
     storePath: fixture.storePath,
     workTypes,
-    request: { kind: 'type', workType: requireType(workTypes, input.type) },
+    request: { kind: 'type', workType: requireType(workTypes, input.type), breaking: input.breaking ?? false },
     count: input.count,
     ...(input.minQuality !== undefined && { minQuality: input.minQuality }),
     ...(input.withPair !== undefined && { withPair: input.withPair }),
@@ -412,6 +509,7 @@ async function select(input: {
 async function selectByTier(input: {
   decisions: readonly DecisionSpec[];
   tier: string;
+  breaking?: boolean;
   count: number;
 }): Promise<ExemplarSelection> {
   const fixture = await createCorpusFixture({ decisions: input.decisions });
@@ -420,7 +518,7 @@ async function selectByTier(input: {
   return selectExemplars({
     storePath: fixture.storePath,
     workTypes,
-    request: { kind: 'tier', tier: input.tier },
+    request: { kind: 'tier', tier: input.tier, breaking: input.breaking ?? false },
     count: input.count,
   });
 }
