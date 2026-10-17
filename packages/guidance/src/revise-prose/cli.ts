@@ -28,6 +28,7 @@ import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { DEFAULT_BATCH_BUDGET, planBatches } from './batch.ts';
 import { collectProse, extractFileProse, NotARepositoryError } from './collect-prose.ts';
 import { realGit, type ReviseProseGit } from './git.ts';
+import { hashFileProse } from './hash-prose.ts';
 import {
   applyRejections,
   composeRecord,
@@ -37,6 +38,7 @@ import {
   parseRunFold,
   RECORD_PATH,
   RULE_NAME_PATTERN,
+  seedFiles,
   selectPriorRejections,
   stringifyRecord,
   SWEEP_VERSION_PATTERN,
@@ -82,7 +84,7 @@ async function main(): Promise<void> {
     const argv = process.argv.slice(2);
     const result =
       argv[0] === 'record'
-        ? runRecord({ foldJson: await readStdin(), root: process.cwd() })
+        ? await runRecord({ foldJson: await readStdin(), root: process.cwd() })
         : await runDetect({ argv: stripCommand(argv), root: process.cwd() });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     // The helper's contract is exit 0 with a structured `{ ok: false, ... }` for recoverable failures.
@@ -197,6 +199,10 @@ export async function runDetect(
       ...(input.home !== undefined && { home: input.home }),
     });
 
+    // Seed only a record that was read: Coverage is asked about the scanned files alone, so their hashes suffice.
+    const hashes = hashFileProse(spans, scannedFiles);
+    if (args.units.size > 0) record = seedFiles(record, hashes);
+
     const rules = args.rules.length === 0 ? LEGACY_RULES : selectDetectorRules(args.rules);
     const detected = detectRules(spans, rules);
     const applied = args.units.size === 0 ? detected : applyRejections(detected, record, ruleVersions);
@@ -204,7 +210,7 @@ export async function runDetect(
     // Plan from every candidate: A recurring sentence links its files before coverage decides which rules they need.
     const planned = planBatches({ files: scannedFiles, candidates: applied, budget: args.budget });
     const batches: ReportedBatch[] = planned
-      .map((batch) => ({ ...batch, unswept: listBatchUnsweptRules(record, ruleVersions, batch.files) }))
+      .map((batch) => ({ ...batch, unswept: listBatchUnsweptRules(record, ruleVersions, batch.files, hashes) }))
       .filter((batch) => ruleVersions.size === 0 || batch.unswept.length > 0);
 
     const isInScope = buildBatchScope(batches, ruleVersions);
@@ -240,22 +246,32 @@ export async function runDetect(
 
 /**
  * Folds one run's outcome into the repository's record and writes it. A rule's coverage records whether the helper has
- * its detector, which is what lets a detector added later run over files already covered. The command looks
- * for a prior rejection's site in its file as the file is when the command runs.
+ * its detector, which is what lets a detector added later run over files already covered. The command hashes the prose
+ * of each file under the run's roots, and looks for a prior rejection's site, in the file as it is when the command
+ * runs. A record written before files were hashed is first seeded from the whole repository, since the rules that the
+ * run did not sweep can cover files outside its roots.
  *
  * @internal - Exported to allow testing.
  */
-export function runRecord(input: { foldJson: string; root: string }): RecordResult {
+export async function runRecord(
+  input: { foldJson: string; root: string; home?: string },
+  git: ReviseProseGit = realGit,
+): Promise<RecordResult> {
   let record: ProseRecord;
   try {
     const fold = parseRunFold(input.foldJson);
-    record = composeRecord(
-      readRecordFile(input.root, buildFoldVersions(fold)),
-      fold,
-      buildSitePredicate(input.root),
-      isRuleId,
-    );
+    const prior = readRecordFile(input.root, buildFoldVersions(fold));
+    const runPaths = fold.roots.includes('.') ? [] : fold.roots;
+    const hashes = await hashProseUnder({ ...input, paths: runPaths }, git);
+    const seeded =
+      prior.files === undefined
+        ? seedFiles(prior, runPaths.length === 0 ? hashes : await hashProseUnder({ ...input, paths: [] }, git))
+        : prior;
+    record = composeRecord(seeded, fold, buildSitePredicate(input.root), isRuleId, hashes);
   } catch (error) {
+    if (error instanceof NotARepositoryError) {
+      return { ok: false, error: 'not-a-repository', message: error.message };
+    }
     return { ok: false, error: 'invalid-record', message: describeError(error) };
   }
 
@@ -316,6 +332,20 @@ function buildSitePredicate(root: string): (rejection: RecordedRejection) => boo
   };
 }
 
+/** Hashes the prose of each file that a sweep of `paths` would read, an empty list covering the repository. */
+async function hashProseUnder(
+  input: { root: string; paths: readonly string[]; home?: string },
+  git: ReviseProseGit,
+): Promise<ReadonlyMap<string, string>> {
+  const { scannedFiles, spans } = await collectProse({
+    root: input.root,
+    paths: input.paths,
+    git,
+    ...(input.home !== undefined && { home: input.home }),
+  });
+  return hashFileProse(spans, scannedFiles);
+}
+
 /**
  * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
  * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
@@ -334,13 +364,16 @@ function isEntryPoint(): boolean {
   }
 }
 
-/** Lists, sorted, the versioned rules for which the record does not cover at least one of `files`. */
+/** Lists, sorted, the versioned rules for which the record does not cover at least one of `files` at its hash. */
 function listBatchUnsweptRules(
   record: ProseRecord,
   ruleVersions: ReadonlyMap<string, string>,
   files: readonly string[],
+  hashes: ReadonlyMap<string, string>,
 ): string[] {
-  const unswept = new Set(files.flatMap((file) => listUnsweptRules(record, ruleVersions, isRuleId, file)));
+  const unswept = new Set(
+    files.flatMap((file) => listUnsweptRules(record, ruleVersions, isRuleId, file, hashes.get(file))),
+  );
   return [...unswept].toSorted();
 }
 
