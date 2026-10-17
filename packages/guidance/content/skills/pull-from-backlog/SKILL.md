@@ -8,7 +8,7 @@ user-invocable: true
 
 Recommend the next ticket to work on. A bundled helper reads GitHub, the repository's branches, and groom-backlog's ledger, and reports the picture, the warnings, and the ranked candidates. You present them, offer the grooms that the backlog needs, record the pick, and assign the user on consent.
 
-The skill is re-entrant: Everything it reads is in GitHub and the ledger, so a fresh session and a warm one reach the same menu. When the user says "merged #N" or "done with #N" after a pick, start again at step 1.
+The skill is re-entrant: Everything it reads is in GitHub and the ledger, so a fresh session and one already in progress produce the same menu. When the user says "merged #N" or "done with #N" after a pick, start again at step 1.
 
 **Announce at start:** "Using pull-from-backlog to recommend the next ticket of {repository}."
 
@@ -48,7 +48,7 @@ The ledger is `local/ticket-triage/ledger.jsonl` in the primary worktree, shared
 
 Present, in this order, and omit a section that is empty rather than reporting a zero:
 
-1. **Now**: the milestone and its due date, with how it was resolved (`now.source`). For `backlog`, say in one line that the repository does not have an open milestone with open eligible issues, so the whole backlog is the Now set. When the milestone is not null and `counts.inNow` is 0, say that it has no eligible open tickets left, and suggest closing it or planning a new one; do not offer to change any ticket's milestone. When `counts.excluded` is not 0, add one line stating how many open tickets carry a `ticket.pull.excludeLabels` label and are not offered.
+1. **Now**: the milestone and its due date, with how it was resolved (`now.source`). For `backlog`, say in one line that the repository does not have an open milestone with open eligible issues, so the whole backlog is the Now set. When the milestone is not null and `counts.inNow` is 0, say that it has no eligible open tickets left, and suggest closing it or planning a new one; do not offer to change any ticket's milestone. When `counts.excluded` is not 0, add one line stating how many open tickets have a `ticket.pull.excludeLabels` label and are not offered.
 2. **Umbrellas**: each as `#N title: completed/total done`.
 3. **In progress**: each ticket with its branch (`ref`) and the days since its last commit, or its assignees when it does not have a branch. List the user's own (`yours`) first, under their own heading.
 4. **Blocked**: each blocked Now ticket with its open blockers.
@@ -74,7 +74,7 @@ Close the turn with an action-items block that asks for the pick. When `groomSta
    gh issue edit {N} --add-assignee @me
    ```
 
-   If the command fails, report `gh`'s message and do not retry. The `pull` record stands: The pick happened, and only the assignee did not.
+   If the command fails, report `gh`'s message and do not retry. The `pull` record stands: The pick happened, and only the assignment failed.
 
 3. Close with one line: "Start #{N} in its own session."
 

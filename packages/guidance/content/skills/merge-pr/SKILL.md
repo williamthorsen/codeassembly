@@ -109,7 +109,7 @@ The helper prints one JSON object. Read it from the command's output, with pytho
 
 The overrides passed to this run are the merge's **override set**. Each later run of this step, for a choice at the gate or for step 8's re-read, passes the whole set with that run's addition, and the same `--head`.
 
-**When the first run's `notices` contains `absent-block`, offer to add the block, if this checkout can draft it.** The pull request does not contain a change record, so the merge would not publish any change entries. `{skill:add-change-record}` drafts the entries from `{default_branch}...HEAD`, and refuses when HEAD is not the pull request's head commit, so read the local head before offering:
+**When the first run's `notices` contains `absent-block`, offer to add the block, if this checkout can draft it.** The pull request does not contain a change record, so the merge would not publish any change entries. `{skill:add-change-record}` drafts the entries from `{default_branch}...HEAD`, and refuses when HEAD is not the pull request's head commit. Read the local head before offering:
 
 ```bash
 git rev-parse HEAD
@@ -180,11 +180,11 @@ Do not audit the draft here: The user reads the published body at the approval g
 
 ### 6. Approval gate
 
-Settle every item in `defects` before showing the proposal. Settle the entry defects first, in entry order: Amending an entry can change the effective record, and with it the record's own defects. Decide each type and each marker by the test below and the type's `breakingPolicy`, never by asking which to choose: This session holds the diff, the sources, and the test, and the gate's title shows the result before the merge.
+Settle every item in `defects` before showing the proposal. Settle the entry defects first, in entry order: Amending an entry can change the effective record, and with it the record's own defects. Decide each type and each marker by the test below and the type's `breakingPolicy`, never by asking which to choose: This session has the diff, the sources, and the test, and the gate's title shows the result before the merge.
 
 **An entry defect** (one that names an `entry`) is settled by amending that entry in the PR body, because an override changes only the effective record, and the merge block would still publish the entry as it stands. Decide each amendment: For an `undeclared-type`, the type that the test below assigns to the entry's own text; for a `policy-violation`, the same test's type, with the marker kept when that type's `breakingPolicy` permits it and dropped otherwise. The amendments rewrite the PR body, which is remote shared state, so ask once to authorize all of them: Quote each entry's `text` from `sources.block.entries`, name its defect, and state the decided type or marker with its reason in one line. A no is a redirect, not a request for a menu: Take the type or marker that the developer names in place of the decided one.
 
-On approval, re-read the PR body into a fresh scratch file as step 3 writes one, named `gh-body-pr{number}-amend-{timestamp}.md`: from the platform on GitHub, and on Bitbucket from a fresh read of the description through step 2's platform dispatch. The approval is human-paced, so the copy that step 3 read can be older than the PR, and writing it back would discard an edit made while the ask was pending. Then amend each entry in that file, opening each call with the assignment and the guard. Pass `--type` when the amendment changes the type, and `--breaking` or `--no-breaking` when it changes the marker:
+On approval, re-read the PR body into a fresh scratch file as step 3 writes one, named `gh-body-pr{number}-amend-{timestamp}.md`: from the platform on GitHub, and on Bitbucket from a fresh read of the description through step 2's platform dispatch. Because the approval is human-paced, the copy that step 3 read can be older than the PR, and writing it back would discard an edit made while the ask was pending. Then amend each entry in that file, opening each call with the assignment and the guard. Pass `--type` when the amendment changes the type, and `--breaking` or `--no-breaking` when it changes the marker:
 
 ```bash
 body_path="{absolute path from the re-read}"
@@ -200,7 +200,7 @@ The helper rewrites the file in place and refuses an amendment that would leave 
 - **`"github"`**: `gh pr edit {number} --body-file "$body_path"`, in a call that opens with the same assignment and guard.
 - **`"bitbucket"`**: [Bitbucket pull-request access](../_data/bitbucket-pr-access.md) does not document a description-write action. Stop, showing the amended `change-record` block from the body file and saying that the author pastes it over the description's block in the Bitbucket UI, then runs the merge again.
 
-Then re-run step 3 with the same override set and the same `--head`. Its fresh read of the body confirms that the amendment reached the PR.
+Then re-run step 3 with the same override set and the same `--head`. Its fresh read of the body confirms that the PR contains the amendment.
 
 **A defect of the effective record** is settled by an override, which changes nothing outside this run, so decide it without an ask and state the decision in one line with its reason:
 
@@ -211,7 +211,7 @@ Decide each type by applying this test to the change, whether the diff or an ent
 
 <!-- include: ../../_partials/work-type-choice.md / -->
 
-Apply the test to the diff whether or not `defects` holds an item. Commits, labels, and a PR title that agree can agree on one wrong type, which does not raise a defect, and the merge title would then publish that type. When the test's type differs from the effective record's, add `--override-type` with the test's type to the override set and state the decision in one line with its reason; when they agree, report nothing, here or at the gate.
+Apply the test to the diff whether or not `defects` contains an item. Commits, labels, and a PR title that agree can agree on one wrong type, which does not raise a defect, and the merge title would then publish that type. When the test's type differs from the effective record's, add `--override-type` with the test's type to the override set and state the decision in one line with its reason; when they agree, report nothing, here or at the gate.
 
 A type that the developer named, through `--type` or in an answer at the gate, stands: Never replace it with the test's type, here or in a record defect above: The gate shows the type so that the developer can correct it, and replacing the correction leaves the developer unable to merge under it. When the test disagrees with it, state the disagreement in one line at the gate and change nothing.
 
@@ -246,12 +246,12 @@ Proposed merge for PR #{pr_number}:
 Render each notice there as one line. When a line says where a field came from, name the source that `effective_sources` gives for that field:
 
 - **`absent-block`**: The PR does not contain a `change-record` block, so the merge does not publish any change entries, and the effective record comes from the sources that `effective_sources` names field by field.
-- **`malformed-block`**: The PR's `change-record` block cannot be read (its `defect`), so the labels and the commits resolved the effective record.
-- **`commits-unavailable`**: The commits were not read (its `reason`), so when the block does not record any entries, the effective record comes from the labels alone.
+- **`malformed-block`**: Because the PR's `change-record` block cannot be read (its `defect`), the labels and the commits resolved the effective record.
+- **`commits-unavailable`**: The commits were not read (its `reason`). When the block does not record any entries, the effective record comes from the labels alone.
 - **`pr-title-divergence`**: The PR title's prefix differs from the proposal on the fields that the notice's `fields` lists. Name the prefix's values for those fields, read from `sources.pr_title`.
-- **`pr-title-unparsed`**: The PR title did not parse, so the title comes from the source that `effective_sources.title` names.
-- **`malformed-entries`**: The block's entry list cannot be read (its `defect`), so the block does not record any entries, and the labels and the commits resolved the base record. Its title and overrides still stand.
-- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names, so commits pushed since then may not be described by the entries, whose record still stands.
+- **`pr-title-unparsed`**: The PR title did not parse. The title comes from the source that `effective_sources.title` names.
+- **`malformed-entries`**: Because the block's entry list cannot be read (its `defect`), the block does not record any entries, and the labels and the commits resolved the base record. Its title and overrides still stand.
+- **`stale-entries`**: The block's entries were derived at the commit that the notice's `entries_commit` names, `null` when the block records none, and not at the head that its `head_commit` names. Commits pushed since then may not be described by the entries, whose record still stands.
 
 **A `stale-entries` notice is reported and nothing is re-derived.**
 
@@ -293,7 +293,7 @@ If the new report contains a defect, return to step 6 and settle it before compa
 
 The lede comparison keys on the report's `body` rather than on the composed lede because step 5's thin-lede fallback composes fresh prose, which does not reproduce word for word from one run to the next. Comparing composed output would report a change on every pass, and the loop below would never reach a fixed point. The helper's extraction is deterministic, so it has one. Keying on the `## What` section rather than on the whole description also means an edit confined to another section raises nothing, which is correct: Nothing outside `## What` appears in the merge commit.
 
-The merge block takes a comparison of its own because `body` excludes the `change-record` block: An edit confined to that block leaves `body` identical while changing what the merge publishes, and `merge_title` catches only the subset of such edits that move the record ranked from the entries. `merge_block` is rendered by the helper rather than drafted, so comparing it has the fixed point that the lede comparison needs `body` to supply.
+The merge block takes a comparison of its own because `body` excludes the `change-record` block: An edit confined to that block leaves `body` identical while changing what the merge publishes, and `merge_title` catches only the subset of such edits that move the record ranked from the entries. Because `merge_block` is rendered by the helper rather than drafted, comparing it has the fixed point that the lede comparison needs `body` to supply.
 
 The window that this step closes is an edit to the PR's title or description. New commits pushed to the branch are not in scope: The re-run reads the commits up to the head commit read in step 2, and a generated body is not recomposed on account of later commits. The delegate's own branch-sync check reports local and remote divergence.
 

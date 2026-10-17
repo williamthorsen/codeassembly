@@ -7,7 +7,7 @@ supported-harnesses: [claude]
 
 # Prepare prototype brief
 
-Write the brief that a round of prototype builders receives, from the idea, the settled intent, and the lenses that the developer supplies. Every builder reads the brief and follows its words literally: A criterion written into a section's instruction becomes a refrain in every entry, a request to convince becomes a sales pitch, "show the view" becomes a paragraph about the view, and "a large clock" becomes a digital readout. Apply the rules below yourself, so that the developer states the ask and never has to police their own wording.
+Write the brief that a round of prototype builders receives, from the idea, the settled intent, and the lenses that the developer supplies. Every builder reads the brief and follows its words literally: A criterion written into a section's instruction becomes a refrain in every entry, a request to convince becomes a sales pitch, "show the view" becomes a paragraph about the view, and "a large clock" becomes a digital readout. Apply the rules below yourself, so that the developer states the ask and never has to check their own wording.
 
 The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_dir}/{slug}-v{n}.html` with its id, `{number}.{version}`, on the page, one index page with screenshots and verdicts, and a comparison afterwards. Once the developer has judged the round, an `idea-decisions` artifact records the decision on each of the round's ideas.
 
@@ -21,7 +21,7 @@ The round's artifacts follow {skill:index-prototypes}: each prototype at `{set_d
 
 ## Rules of composition
 
-Each rule names the failure that it prevents, because the failure is what a reviewer sees first.
+Each rule names the failure that it prevents, because a reviewer sees the failure first.
 
 ### Ask for a demonstration, not a pitch
 
@@ -45,7 +45,7 @@ Allow tables and require the demo: A catalogue may be a table, and every row mus
 
 A builder draws every noun in the brief. Say what the viewer must be able to learn and at what precision, and let the builder choose the instrument: "the hour, legible across the table, to the precision that a character would have" rather than "a large clock." For an audience-facing or in-world view, state what the audience may know and what it may never see, and state that any readout more precise than the fiction allows is a defect.
 
-The same holds for the verbs `state`, `say`, `tell`, and `explain`. A requirement that the page states something before the first field is met most cheaply by a sentence under the heading. Write what the viewer must be able to learn and at what moment, such as "which scopes a preset grants, visible before a token is created", and let the builder choose whether a label, a column, or a control carries it.
+The same holds for the verbs `state`, `say`, `tell`, and `explain`. A requirement that the page states something before the first field is met most cheaply by a sentence under the heading. Write what the viewer must be able to learn and at what moment, such as "which scopes a preset grants, visible before a token is created", and let the builder choose whether a label, a column, or a control shows it.
 
 ### Describe only what the audience sees
 
@@ -79,7 +79,7 @@ Write the brief in this order, with these headings:
 
 1. **Context.** The ticket, quoted. The developer's motivating picture, restated in plain speech.
 2. **Settled intent.** Bullets. Each is a decision, with its reason when the reason constrains the design.
-3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view. The demo chrome (the demo control, scene captions, the lens note, the data-model note, the API list) sits in a band visibly distinct from the product surface, and every part of it is inside an element that carries `data-demo`. The band's first line is the id and the title from the dispatch block, `{id} {title}`.
+3. **Deliverable.** The file and its path per {skill:index-prototypes}; the constraints (self-contained, opens from `file://`, inline CSS and JavaScript, no framework, readable with JavaScript off, phone width); the mechanism that must run; the demo control that plays the written scene; a full-screen mode when the product has an audience view. The demo chrome (the demo control, scene captions, the lens note, the data-model note, the API list) is in a band visibly distinct from the product surface, and every part of it is inside an element that has the `data-demo` attribute. The band's first line is the id and the title from the dispatch block, `{id} {title}`.
 4. **Sections.** Numbered, each a noun phrase plus what it contains and a length bound. None asks for persuasion; one is the scene, exhibited; one is the data-model note when the product stores data; one is the API list when the product has an API.
 5. **Quality bar.** Works, legible, accessible, and within the copy rules, with {rulebook:accessibility-conventions} and {rulebook:ui-copy-conventions} named, the design skill to invoke before markup, and the salience order required.
 6. **How this round is judged.** The criteria, in the reviewer's voice, with the divergence between lenses named as the point of the round. One criterion is the copy: "Read every string on the product surface as its user opening the page for the tenth time. A string that explains the page, reassures, or repeats the brief, and any copy over the budget in {rulebook:ui-copy-conventions}, is a defect."
