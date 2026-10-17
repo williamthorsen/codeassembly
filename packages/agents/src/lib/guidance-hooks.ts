@@ -197,7 +197,7 @@ export function listGuidanceHooks(body: string, sourceLabel: string): ReadonlyAr
     if (name === undefined) {
       if (HOOK_LIKE_REGEX.test(line)) {
         throw new GuidanceHookError(
-          `Line resembles the guidance-hook directive but does not match its shape:${sourceLabel}:${index + 1} ` +
+          `Line resembles the guidance-hook directive but does not match its shape: ${sourceLabel}:${index + 1} ` +
             `line="${line.trim()}" reason=unrecognized-directive. The directive is \`<!-- guidance-hook: name -->\`.`,
           'unrecognized-directive',
         );

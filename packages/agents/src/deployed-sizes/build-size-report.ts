@@ -89,8 +89,9 @@ export interface SizeReport {
  * document explained in full does not contribute an entry, which keeps the report from printing one line per includer
  * for a one-byte partial edit. A unit that does not explain any document's delta does not contribute an entry either:
  * Extracting a partial from text that was already in its includers leaves every deployed document byte-identical,
- * and a line claiming the extracted bytes as growth would head a block that states how many bytes a deployment added.
- * A previous snapshot without `expansions` suppresses the whole pass, leaving every document to report its own change.
+ * and a line claiming the extracted bytes as growth would head a block that states how a deployment changed the
+ * deployed bytes. A previous snapshot without `expansions` suppresses the whole pass, leaving every document to report
+ * its own change.
  *
  * A warning fires on a crossing rather than on a standing comparison, so that the report warns about a document at
  * most once per record. A first recorded deployment does not have any crossing to observe, and the report does not

@@ -67,7 +67,7 @@ describe(buildSizeReport, () => {
     expect(report.documentCount).toBe(0);
   });
 
-  it('orders changes by the bytes for which each accounts, putting a large removal where a large addition would be', () => {
+  it('orders changes by the bytes that each change accounts for, putting a large removal where a large addition would be', () => {
     const report = build({
       measured: { 'small-growth.md': 1_100, 'large-growth.md': 9_000 },
       previous: { 'small-growth.md': 1_000, 'large-removal.md': 5_000 },
