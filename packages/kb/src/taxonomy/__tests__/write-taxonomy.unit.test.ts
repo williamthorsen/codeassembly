@@ -183,7 +183,7 @@ describe(writeTaxonomy, () => {
     expect(await readTaxonomy(kbRoot)).toBe(seeded);
   });
 
-  it('refuses a block holding a scalar, leaving the file untouched', async () => {
+  it('refuses a block containing a scalar, leaving the file untouched', async () => {
     const seeded = 'domains: not-a-mapping\nprovisional:\n  t: T\n';
     const kbRoot = await makeKbRoot({ taxonomy: seeded });
 
@@ -193,7 +193,7 @@ describe(writeTaxonomy, () => {
     expect(await readTaxonomy(kbRoot)).toBe(seeded);
   });
 
-  it('refuses a block holding a sequence, leaving the file untouched', async () => {
+  it('refuses a block containing a sequence, leaving the file untouched', async () => {
     const seeded = 'domains:\n  - engineering\n  - tools\n';
     const kbRoot = await makeKbRoot({ taxonomy: seeded });
 

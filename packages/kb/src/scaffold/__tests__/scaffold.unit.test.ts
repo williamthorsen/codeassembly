@@ -107,7 +107,7 @@ describe(scaffold, () => {
 
 // region | Helpers
 
-/** Creates a temp store holding a `.kb/` directory and the given `.kb/config.yaml` content; returns its path. */
+/** Creates a temp store containing a `.kb/` directory and the given `.kb/config.yaml` content; returns its path. */
 async function makeStoreWithConfig(config: string): Promise<string> {
   const storePath = await makeTempDir('kb-scaffold-');
   await mkdir(resolveKbDir(storePath), { recursive: true });

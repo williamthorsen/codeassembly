@@ -36,7 +36,7 @@ export interface TaxonomyDeclaration {
  * helper, so an interrupted call cannot truncate the taxonomy.
  *
  * Throws a {@link KbLoaderError} on a malformed key, or on an existing file that cannot be safely appended to: one
- * that fails to parse, one whose top level is not a mapping, and one whose `domains` or `provisional` block holds
+ * that fails to parse, one whose top level is not a mapping, and one whose `domains` or `provisional` block contains
  * something other than a mapping. Other I/O errors propagate.
  */
 export async function writeTaxonomy(input: {
