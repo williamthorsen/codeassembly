@@ -42,20 +42,20 @@ type RecordOutcome =
  * Only a request too scarce to fill it reads every file. The assembled result is then ordered by each record's own
  * `captured-at`, so that a stem that is not a ULID cannot silently reorder what is emitted.
  *
- * Each of the three buckets is capped at `count`, and the fill takes the exact matches first. Widening only ever makes
- * up a shortfall and never displaces an exact match with a newer tier-mate.
+ * Each bucket is capped at `count`, and the fill takes the exact matches first. Widening only ever makes up a shortfall
+ * and never displaces an exact match with a newer tier-mate.
  *
  * Because a `minQuality` floor filters candidates before the scan buckets them, a request left short by the floor
  * widens exactly as a scarce one does. Filtering the filled buckets instead would return fewer than `count` while
  * qualifying tier-mates went untaken.
  *
- * The breaking marker filters and orders in the same way. An unmarked request drops every breaking record before the
- * scan buckets it, so that a drafter never calibrates against a `Migration:` paragraph that its change must not have.
- * A marked request keeps both kinds and takes, at each widening step, the breaking records before the non-breaking
- * ones: Type and tier outrank the marker, and a corpus with few breaking records still fills the count.
+ * An unmarked request drops every breaking record before the scan buckets it, so that a drafter never calibrates
+ * against a `Migration:` paragraph that its change must not have. A marked request keeps both kinds and, at each
+ * widening step, takes the breaking records before the non-breaking ones: Type and tier outrank the marker, and the
+ * non-breaking records fill the count while the corpus contains few breaking ones.
  *
  * `withPair` additionally reports each record's agent lede, merged lede, and comment. Selection is unaffected: A
- * record is admitted on its rating and its type alone.
+ * record is admitted on its rating, its type, and its breaking marker alone.
  */
 export async function selectExemplars(input: {
   storePath: string;

@@ -281,8 +281,8 @@ async function resolveCorpus(input: {
 
 /**
  * Resolves a parsed request against the taxonomy. A tier is checked against the tiers declared by the taxonomy, so a
- * misspelt one is refused rather than returning an empty list that reads as an exhausted corpus. A type request is
- * breaking when `--breaking` was passed or the type is spelled with a `!`.
+ * misspelt one is refused rather than returning an empty list that reads as an exhausted corpus. A request is
+ * breaking when `--breaking` was passed or, for a type request, when the type is spelled with a `!`.
  */
 function resolveRequest(input: {
   args: RequestArgs;
