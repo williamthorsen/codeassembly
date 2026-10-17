@@ -147,6 +147,7 @@ const REJECTION_CODES: ReadonlyArray<string> = [
   'unmatched-return',
   'unsupported-claim',
   'voice',
+  'writing-rule',
 ];
 
 /**

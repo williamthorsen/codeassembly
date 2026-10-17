@@ -55,3 +55,5 @@ helpers:
     out: skills/triage-spike-findings/triage-spike-findings.mjs
   - entry: ../src/check-branch-currency/cli.ts
     out: scripts/check-branch-currency.mjs
+  - entry: ../src/check-prose/cli.ts
+    out: scripts/check-prose.mjs
