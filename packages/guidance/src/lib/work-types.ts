@@ -22,8 +22,8 @@ export interface ResolvedWorkType {
 }
 
 /**
- * The display text that a rendered change summary heads its parts with: each type's `{emoji} {label}`, keyed by
- * canonical key, and the breaking marker's inline prefix.
+ * The display text that a rendered change summary uses as the headings of its parts: each type's `{emoji} {label}`,
+ * keyed by canonical key, and the breaking marker's inline prefix.
  */
 export interface WorkTypeHeadings {
   breakingPrefix: string;

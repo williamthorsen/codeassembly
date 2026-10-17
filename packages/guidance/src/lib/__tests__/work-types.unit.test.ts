@@ -123,7 +123,7 @@ describe(loadTaxonomy, () => {
 });
 
 describe(loadWorkTypeHeadings, () => {
-  it('heads every type in the embedded taxonomy with its emoji and label', async () => {
+  it('builds the heading of every type in the embedded taxonomy from its emoji and label', async () => {
     const loaded = await loadWorkTypeHeadings();
 
     expect(loaded?.headings).toEqual(

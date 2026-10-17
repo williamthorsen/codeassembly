@@ -32,7 +32,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return isObject(value) && !Array.isArray(value);
 }
 
-/** Type guard for a non-null object; the looser building block that the exported guards are defined in terms of. */
+/** Type guard for a non-null object; the looser guard that the exported guards are defined in terms of. */
 function isObject(value: unknown): value is Record<PropertyKey, unknown> {
   return typeof value === 'object' && value !== null;
 }
