@@ -56,7 +56,7 @@ interface CatwalkDiff {
 ### Design rationale
 
 - **Stations excluded**: Derived from phase decisions at run start; static within a run.
-- **Gates are monotonic**: only transition closed→open within a run. `GateDiffs` only has `opened`.
+- **Gates are monotonic**: Only transition closed→open within a run. `GateDiffs` only has `opened`.
 - **Artifacts are append-only**: `ArtifactDiffs` only has `added`.
 - **`carriedArtifacts`/`codeBadge` omitted**: Milestone 3/4 fields, currently always empty. Trivial to add later as new fields on `OrchestratorDiff`.
 - **`hasChanges`**: Convenience boolean for short-circuiting when nothing changed.

@@ -12,7 +12,10 @@ export const KB_DIR = '.kb';
 /** The directory containing the store's notes. */
 export const CONTENT_DIR = 'content';
 
-/** The `content/` subdirectory containing assertion records. Named on its own because a caller may need to recognize the segment, not just the path. */
+/**
+ * The `content/` subdirectory containing assertion records. Named on its own because a caller may need to recognize
+ * the segment, not just the path.
+ */
 export const ASSERTIONS_SEGMENT = 'assertions';
 
 export const ALIASES_FILE = `${KB_DIR}/tag-aliases.yaml`;
