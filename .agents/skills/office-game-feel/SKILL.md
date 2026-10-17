@@ -65,7 +65,7 @@ When an agent changes state, signal it briefly:
 - **working → blocked**: Activity indicator changes to amber, thought bubble updates
 - **Any → concerned**: Red pulse on the agent's status indicator, thought bubble border turns red
 
-Keep transition cues under 500ms. They signal change, not celebrate it.
+Keep transition cues under 500ms. They signal a change rather than celebrate it.
 
 ### Orchestrator states
 
@@ -122,7 +122,7 @@ Agents don't free-roam. All paths are pre-computed by the transition planner as 
 [fromPosition, ...corridorWaypoints, toPosition]
 ```
 
-Corridor waypoints route through doorways. The layout provides `corridorPath(fromZone, toZone)` which returns intermediate positions. Animate along these waypoints sequentially.
+Corridor waypoints pass through doorways. The layout provides `corridorPath(fromZone, toZone)` which returns intermediate positions. Animate along these waypoints sequentially.
 
 ### Facing direction
 
