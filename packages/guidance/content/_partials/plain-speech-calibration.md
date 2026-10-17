@@ -52,6 +52,10 @@ The helper reports every determiner "no" under this rule, as shape 9, in any pos
 
 ### Words to look for
 
+<!-- rule: overused-word 1 -->
+
+The helper reports every sentence that contains one of these words or an inflection of one under this rule. Report a site of a listed word under `overused-word`, and every other site that breaks the plain-speech rule under `plain-speech`.
+
 Ten words recur in this corpus in uses for which a word naming the relation exists. Each is a search term rather than a rule, as a shape is: A match is a candidate for the rule's tests. When an entry names a sense that stays, a use in that sense is not a candidate.
 
 - **carry**: "the change carries a flag". Instead: has, includes, declares, sets, states.
