@@ -3,16 +3,15 @@
 // CLI entry point for the check-prose helper: runs every revise-prose detector over one Markdown file at any path,
 // printing the candidates and exiting 1 when there are any.
 
-import { realpathSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import packageJson from '../../package.json' with { type: 'json' };
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { findNearestKey } from '../validate-preferences/find-nearest-key.ts';
 import { checkProse, renderCheckJson, renderCheckText } from './check-prose.ts';
 
@@ -60,7 +59,7 @@ export async function runCheckProse(
   return check.candidates.length === 0 ? 0 : 1;
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'check-prose')) {
   const programName = deriveProgramName(process.argv[1]);
   try {
     process.exit(await runCheckProse(process.argv.slice(2), process.cwd(), programName));
@@ -99,24 +98,6 @@ function deriveProgramName(entryPath: string | undefined): string {
     return 'check-prose';
   }
   return path.basename(entryPath, path.extname(entryPath));
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`check-prose: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Parses the options, throwing on an unknown option, a positional argument, or a missing `--file`. */

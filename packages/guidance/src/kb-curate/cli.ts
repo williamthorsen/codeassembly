@@ -1,8 +1,6 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import type { Finding } from '@williamthorsen/kb';
 import { check, type EnumeratedNote } from '@williamthorsen/kb/check';
@@ -11,6 +9,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-failure.ts';
 import { type ResolvedKb, resolveWritableKb } from '../kb-shared/resolve-writable-kb.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { applyFixes } from './apply.ts';
 import { detectCurateFindings, sortFindings } from './detect.ts';
 import type { CurateResult, CurateSummary, ParsedArgs } from './types.ts';
@@ -34,7 +33,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'kb-curate')) {
   await main();
 }
 
@@ -242,25 +241,6 @@ function parseStaleAfter(value: string): number {
     throw new Error(`--stale-after requires a positive integer; got "${value}"`);
   }
   return days;
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    const message = describeError(error);
-    process.stderr.write(`kb-curate: warning: could not determine entry point: ${message}\n`);
-    return false;
-  }
 }
 
 // endregion | Helpers

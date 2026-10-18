@@ -17,13 +17,13 @@
  * adjudicated. The helper does not revise any prose. The agent applies repairs with its own editing tool, which keeps
  * one write path and leaves the harness its file tracking.
  */
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { DEFAULT_BATCH_BUDGET, planBatches } from './batch.ts';
 import { collectProse, extractFileProse, NotARepositoryError } from './collect-prose.ts';
@@ -94,7 +94,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'revise-prose')) {
   await main();
 }
 
@@ -344,24 +344,6 @@ async function hashProseUnder(
     ...(input.home !== undefined && { home: input.home }),
   });
   return hashFileProse(spans, scannedFiles);
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`revise-prose: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Lists, sorted, the versioned rules for which the record does not cover at least one of `files` at its hash. */

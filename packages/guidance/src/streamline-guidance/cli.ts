@@ -6,14 +6,14 @@
  * Each command writes its JSON result on stdout, and the helper does not edit any guidance: The agent applies every
  * cut through its own editing tool.
  */
-import { existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { scanFlags } from '../lib/parse-flags.ts';
 import { checkCuts, parseCheckInput } from './check.ts';
 import { realGit, type StreamlineGit } from './git.ts';
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'streamline-guidance')) {
   await main();
 }
 
@@ -194,23 +194,6 @@ export async function runResolve(
 }
 
 // region | Helpers
-
-/**
- * Returns true when this module is the process entry point, resolving both sides so that a symlinked path still
- * matches.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`streamline-guidance: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
-}
 
 /** Returns a file's content, or undefined when it cannot be read. */
 function readFileIfPresent(absolutePath: string): string | undefined {

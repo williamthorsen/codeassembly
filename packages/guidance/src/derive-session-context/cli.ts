@@ -1,4 +1,4 @@
-/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isMain()` guard, never on import as a library. */
+/* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
 /**
  * CLI entry for the session-context deriver.
@@ -14,15 +14,14 @@
  *   or a `pr_url`. Because the default branch is not derived from any ticket and does not belong to any pull
  *   request, a stored URL there is wrong rather than stale. See `enforceDefaultBranchInvariant`.
  */
-import { realpathSync } from 'node:fs';
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { resolveCurrentBranch, sanitizeBranch } from '../shared/branch-helpers.ts';
 import { realGit, type SharedGit } from '../shared/git.ts';
@@ -383,23 +382,6 @@ function consumeValue(argv: readonly string[], index: number, flag: string): str
   return value;
 }
 
-if (isMain()) {
+if (isEntryPoint(import.meta.url, 'derive-session-context')) {
   await main();
-}
-
-/** True when this module is the entry point. Resolves both sides through `realpathSync` to tolerate symlinked installs. */
-function isMain(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    // A resolution failure most plausibly means this module is the entry point, invoked through a stale link, and
-    // returning `false` would silently no-op the CLI.
-    const message = describeError(error);
-    process.stderr.write(`derive-session-context: warning: could not determine entry point: ${message}\n`);
-    return true;
-  }
 }

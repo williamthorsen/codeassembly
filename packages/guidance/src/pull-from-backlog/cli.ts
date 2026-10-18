@@ -7,9 +7,7 @@
  * and groom-backlog's ledger, and reports the picture, the warnings, and the ranked candidates; `record` appends one
  * `pull` record to the ledger. `record` is the only writer, and the helper does not write anything remote.
  */
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
@@ -26,6 +24,7 @@ import { detectInProgress } from '../groom-backlog/in-progress.ts';
 import { appendRecords, readLedger, resolveLedgerPaths } from '../groom-backlog/ledger.ts';
 import type { LedgerRecord } from '../groom-backlog/schemas.ts';
 import type { CommandRunner } from '../groom-backlog/types.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { isRecord } from '../lib/type-guards.ts';
 import { type PullConfig, PullConfigSchema } from './schemas.ts';
@@ -82,7 +81,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'pull-from-backlog')) {
   await main();
 }
 
@@ -173,18 +172,6 @@ async function runSurvey(flags: ParsedFlags, context: CommandContext): Promise<C
 
 /** Parsed flags: each flag's values in order. */
 type ParsedFlags = ReadonlyMap<FlagName, string[]>;
-
-/** Returns whether this module is the process's entry point. */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) return false;
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`pull-from-backlog: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
-}
 
 /** Scans the command's flags, refusing a positional argument and a repeated flag other than `--ticket`. */
 function parseFlags(argv: readonly string[]): ParsedFlags {

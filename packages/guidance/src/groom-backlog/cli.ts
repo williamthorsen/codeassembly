@@ -12,14 +12,14 @@
  * The helper does not write anything remote. The skill posts the comments, edits and creates the tickets, and closes
  * them, which keeps this module testable without a `gh` write.
  */
-import { mkdirSync, readFileSync, realpathSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import { z } from 'zod';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { replaceSections } from '../lib/markdown-sections.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { classify, isUmbrella } from './classify.ts';
@@ -124,7 +124,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'groom-backlog')) {
   await main();
 }
 
@@ -501,18 +501,6 @@ interface Selection {
 function extractReplyJson(reply: string): string {
   const blocks = reply.matchAll(/```(?:json)?\n([\s\S]*?)\n```/g).toArray();
   return blocks.at(-1)?.[1] ?? reply.trim();
-}
-
-/** Returns whether this module is the process's entry point. */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) return false;
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`groom-backlog: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Returns whether `value` is one of `options`. */

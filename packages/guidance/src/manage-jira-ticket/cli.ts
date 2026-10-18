@@ -4,17 +4,16 @@
 // with a ticket's site, converts a Markdown body to ADF, and creates the work item through `acli` exactly once.
 
 import { execFile } from 'node:child_process';
-import { realpathSync } from 'node:fs';
 import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { readPreferences, readProjectPreferences } from '../derive-session-context/read-preferences.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { loadWorkTypes } from '../lib/work-types.ts';
@@ -58,7 +57,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'manage-jira-ticket')) {
   await main();
 }
 
@@ -70,20 +69,6 @@ function describeSiteMismatch(check: SiteCheck): string {
   return check.activeSite === null
     ? `could not read acli's active site; the ticket is on ${check.targetSite}. Sign in, then run \`${switchCommand}\`.`
     : `acli's active site is ${check.activeSite}, but the ticket is on ${check.targetSite}. Run \`${switchCommand}\`.`;
-}
-
-/** Returns true when this module is the process entry point, resolving both sides through `realpathSync`. */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`manage-jira-ticket: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
 }
 
 /** Parses `argv` against `specs` into a value map, rejecting positional arguments and absent required flags. */

@@ -1,12 +1,11 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-import { realpathSync } from 'node:fs';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
-import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { resolveTerminalWidth } from '../lib/resolve-terminal-width.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { deleteMemories } from './delete-memory.ts';
@@ -35,7 +34,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'feedback-memories')) {
   await main();
 }
 
@@ -253,25 +252,6 @@ function usage(): string {
     '  --verbose              (list) List each memory with its description.',
     '  -h, --help             Show this help.',
   ].join('\n');
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning and returns
- * `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    const message = describeError(error);
-    process.stderr.write(`feedback-memories: warning: could not determine entry point: ${message}\n`);
-    return false;
-  }
 }
 
 // endregion | Helpers

@@ -4,14 +4,13 @@
 // where it was written as JSON.
 
 import { execFile } from 'node:child_process';
-import { realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import process from 'node:process';
-import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { type GhResult, resolveTicketTarget } from './resolve-ticket-target.ts';
@@ -43,29 +42,11 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, PROGRAM)) {
   await main();
 }
 
 // region | Helpers
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    process.stderr.write(`${PROGRAM}: warning: could not determine entry point: ${describeError(error)}\n`);
-    return false;
-  }
-}
 
 /** Runs `gh` without a shell and reports its exit code and output; throws when `gh` cannot be started. */
 async function runGh(args: readonly string[]): Promise<GhResult> {

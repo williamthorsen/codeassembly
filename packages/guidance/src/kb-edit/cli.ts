@@ -1,10 +1,8 @@
 /* eslint n/no-process-exit: off -- CLI entry point: The process must exit with the helper's resolved exit code, and `main` runs only behind the `isEntryPoint()` guard, never on import as a library. */
 /* eslint unicorn/no-process-exit: off -- same as above. */
-import { realpathSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import process from 'node:process';
 import type { Readable } from 'node:stream';
-import { fileURLToPath } from 'node:url';
 
 import type { AliasMap, KbRoot } from '@williamthorsen/kb';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
@@ -16,6 +14,7 @@ import { formatKbResolutionFailure } from '../kb-shared/format-kb-resolution-fai
 import { splitCommaList } from '../kb-shared/note-helpers.ts';
 import { discoverWritableKb, type ResolvedKb } from '../kb-shared/resolve-writable-kb.ts';
 import { parseTagList } from '../kb-shared/tag-helpers.ts';
+import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { readAll } from '../lib/stream-helpers.ts';
 import { commitSupersede } from './commit-supersede.ts';
@@ -65,7 +64,7 @@ async function main(): Promise<void> {
   }
 }
 
-if (isEntryPoint()) {
+if (isEntryPoint(import.meta.url, 'kb-edit')) {
   await main();
 }
 
@@ -577,25 +576,6 @@ function singlePositional(positionals: string[]): string {
     throw new Error('missing required <path> positional argument');
   }
   return first;
-}
-
-/**
- * Returns true when this module is the process entry point. Both sides are resolved through `realpathSync`, so a
- * symlinked invocation path still matches. On a `realpathSync` failure the function emits a warning to stderr and
- * returns `false`.
- */
-function isEntryPoint(): boolean {
-  const entry = process.argv[1];
-  if (entry === undefined) {
-    return false;
-  }
-  try {
-    return realpathSync(fileURLToPath(import.meta.url)) === realpathSync(entry);
-  } catch (error) {
-    const message = describeError(error);
-    process.stderr.write(`kb-edit: warning: could not determine entry point: ${message}\n`);
-    return false;
-  }
 }
 
 // endregion | Helpers
