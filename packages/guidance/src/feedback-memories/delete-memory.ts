@@ -84,14 +84,7 @@ async function reconcileIndexes(paths: readonly string[]): Promise<Map<string, b
 
 /** Groups paths by their sibling `MEMORY.md` index path, preserving each group's input order. */
 function groupByIndex(paths: readonly string[]): Map<string, string[]> {
-  const groups = new Map<string, string[]>();
-  for (const path of paths) {
-    const indexPath = join(dirname(path), 'MEMORY.md');
-    const group = groups.get(indexPath) ?? [];
-    group.push(path);
-    groups.set(indexPath, group);
-  }
-  return groups;
+  return Map.groupBy(paths, (path) => join(dirname(path), 'MEMORY.md'));
 }
 
 /** Builds the per-path note describing any non-fatal condition, or `undefined` when the delete was clean. */

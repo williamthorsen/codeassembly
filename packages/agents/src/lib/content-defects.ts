@@ -61,12 +61,7 @@ export function foldHarnessDefects(
 
 /** Groups defects by file and renders each as an indented, kind-tagged block, ordered so that two runs read alike. */
 export function formatContentDefects(defects: ReadonlyArray<ContentDefect>): string {
-  const byFile = new Map<string, Array<ContentDefect>>();
-  for (const defect of defects) {
-    const group = byFile.get(defect.file) ?? [];
-    group.push(defect);
-    byFile.set(defect.file, group);
-  }
+  const byFile = Map.groupBy(defects, (defect) => defect.file);
 
   return Array.from(byFile.keys())
     .toSorted()

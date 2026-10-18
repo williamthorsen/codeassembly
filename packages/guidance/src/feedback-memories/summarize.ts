@@ -49,13 +49,7 @@ export async function summarizeFeedbackMemories(input: {
 
 /** Groups enumerated memories by memory-store slug, preserving enumeration's per-store ordering. */
 function groupByMemoryStore(memories: readonly FeedbackMemory[]): Map<string, FeedbackMemory[]> {
-  const groups = new Map<string, FeedbackMemory[]>();
-  for (const memory of memories) {
-    const group = groups.get(memory.memoryStore) ?? [];
-    group.push(memory);
-    groups.set(memory.memoryStore, group);
-  }
-  return groups;
+  return Map.groupBy(memories, (memory) => memory.memoryStore);
 }
 
 /** Returns the newest memory file's modification time in the group as an ISO-8601 string, statting each file. */
