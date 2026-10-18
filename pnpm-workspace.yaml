@@ -10,7 +10,7 @@ catalog:
   '@types/react-dom': '19.3.0'
   '@vitejs/plugin-react': '6.1.2'
   '@williamthorsen/change-grammar': '0.2.1'
-  '@williamthorsen/nmr': '0.47.0'
+  '@williamthorsen/nmr': '0.48.0'
   '@williamthorsen/toolbelt.errors': '0.8.3'
   '@williamthorsen/toolbelt.terminal': '0.2.1'
   '@williamthorsen/toolbelt.testing': '0.6.3'
@@ -19,10 +19,10 @@ catalog:
   eslint: '10.12.0'
   eslint-plugin-react: '7.37.5'
   happy-dom: '21.0.1'
-  prettier: '3.9.9'
+  prettier: '3.9.10'
   react: '19.3.0'
   react-dom: '19.3.0'
-  readyup: '0.41.0'
+  readyup: '0.41.1'
   vite: '8.3.4'
   vitest: '4.1.11'
   yaml: '2.9.1'
@@ -39,6 +39,3 @@ allowBuilds:
 savePrefix: ''
 
 minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
-
-minimumReleaseAgeExclude:
-  - '@williamthorsen/nmr@0.47.0'
