@@ -1,7 +1,7 @@
 import type { Finding } from '@williamthorsen/kb';
 import type { EnumeratedNote } from '@williamthorsen/kb/check';
 
-import { computeAgeDays } from '../kb-shared/note-helpers.ts';
+import { computeAgeDays, extractString } from '../kb-shared/note-helpers.ts';
 
 /**
  * Reports verification-staleness findings for one note, both at `warning` severity:
@@ -62,13 +62,3 @@ export function vaultUsesVerification(notes: readonly EnumeratedNote[], now: Dat
     return lastVerified !== null && computeAgeDays(lastVerified, now) !== null;
   });
 }
-
-// region | Helpers
-
-/** Reads a trimmed string-valued field from a note's frontmatter; `null` when absent, non-string, or blank. */
-function extractString(fields: Record<string, unknown>, key: string): string | null {
-  const value = fields[key];
-  return typeof value === 'string' && value.trim() !== '' ? value.trim() : null;
-}
-
-// endregion | Helpers

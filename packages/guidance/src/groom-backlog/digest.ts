@@ -144,9 +144,9 @@ function describeProposal(proposed: ProposedAction, isInProgress: boolean): stri
   }
 }
 
-/** Indents every non-empty line of `text` by `width` spaces, so that it continues a list item. */
-function indent(text: string, width: number): string {
-  const padding = ' '.repeat(width);
+/** Indents every non-empty line of `text` by five spaces, so that it continues a list item. */
+function indent(text: string): string {
+  const padding = ' '.repeat(5);
   return text
     .trim()
     .split('\n')
@@ -158,10 +158,10 @@ function indent(text: string, width: number): string {
 function renderDraft(escalation: Escalation): string[] {
   const draft = escalation.reply?.draft;
   if (draft === null || draft === undefined) return [];
-  const title = draft.title === null ? [] : [indent(`#### Title\n\n${draft.title}`, 5)];
-  const blocks = draft.sections.map((section) => indent(`#### ${section.heading}\n\n${section.body}`, 5));
+  const title = draft.title === null ? [] : [indent(`#### Title\n\n${draft.title}`)];
+  const blocks = draft.sections.map((section) => indent(`#### ${section.heading}\n\n${section.body}`));
   const children = draft.children.map((child, offset) =>
-    indent(`#### Child ${offset + 1}: ${child.title}\n\n${child.body}`, 5),
+    indent(`#### Child ${offset + 1}: ${child.title}\n\n${child.body}`),
   );
   return ['   - Draft:', ...[...title, ...blocks, ...children].flatMap((block) => ['', block])];
 }

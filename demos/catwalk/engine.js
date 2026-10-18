@@ -61,10 +61,9 @@ export function createEngine(state, playback) {
     });
   }
 
-  // Animates `target[prop]` to `end` over `duration` ms scaled by the playback speed. `easeFn` defaults to easeInOutCubic.
-  function animateProp(target, prop, end, duration, easeFn) {
+  // Animates `target[prop]` to `end` over `duration` ms scaled by the playback speed, with easeInOutCubic easing.
+  function animateProp(target, prop, end, duration) {
     duration /= playback.speedMultiplier;
-    if (easeFn === undefined) easeFn = easeInOutCubic;
     const start = target[prop];
     const startTime = performance.now();
     return new Promise(function (resolve) {
@@ -76,7 +75,7 @@ export function createEngine(state, playback) {
           resolve();
           return;
         }
-        const t = easeFn(elapsed / duration);
+        const t = easeInOutCubic(elapsed / duration);
         target[prop] = lerp(start, end, t);
         requestAnimationFrame(tick);
       }
