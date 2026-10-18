@@ -37,7 +37,7 @@ export function renderDetails(
       return [];
     }
     const bullets = grouped.map((entry) => renderBullet(entry, breakingPrefix, tagged));
-    return [`### ${headings.get(workType.key) ?? workType.key}\n\n${bullets.join('\n')}`];
+    return `### ${headings.get(workType.key) ?? workType.key}\n\n${bullets.join('\n')}`;
   });
   return sections.join('\n\n');
 }

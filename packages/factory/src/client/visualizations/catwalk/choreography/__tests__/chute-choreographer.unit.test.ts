@@ -518,15 +518,15 @@ describe('choreograph', () => {
               callLog.push('ascend-end');
             };
           }
-          if (typeof flyingActor.descend === 'function') {
-            // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Accessing mock FlyingArtifactActor methods
-            const originalDescend = flyingActor.descend as () => Promise<void>;
-            flyingActor.descend = async () => {
-              callLog.push('descend-start');
-              await originalDescend.call(flyingActor);
-              callLog.push('descend-end');
-            };
-          }
+          if (typeof flyingActor.descend !== 'function') return;
+
+          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Accessing mock FlyingArtifactActor methods
+          const originalDescend = flyingActor.descend as () => Promise<void>;
+          flyingActor.descend = async () => {
+            callLog.push('descend-start');
+            await originalDescend.call(flyingActor);
+            callLog.push('descend-end');
+          };
         },
       });
 

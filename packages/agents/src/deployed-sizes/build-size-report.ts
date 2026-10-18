@@ -186,10 +186,12 @@ function collapseDocuments(input: {
     let explained = 0;
     for (const unitKey of unitKeys) {
       const unit = changedUnits.get(unitKey);
-      if (unit !== undefined) {
-        explained += unit.delta;
-        explainedDocumentCounts.set(unitKey, (explainedDocumentCounts.get(unitKey) ?? 0) + 1);
+      if (unit === undefined) {
+        continue;
       }
+
+      explained += unit.delta;
+      explainedDocumentCounts.set(unitKey, (explainedDocumentCounts.get(unitKey) ?? 0) + 1);
     }
     const delta = bytes - previousBytes;
     if (delta !== explained) {

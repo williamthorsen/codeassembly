@@ -27,7 +27,7 @@ export interface ExpansionMeasurement {
  */
 export async function measureExpansions(files: ReadonlyArray<DeployedPath>): Promise<ExpansionMeasurement> {
   const authored = files.flatMap((file) =>
-    file.authored === undefined ? [] : [{ key: file.key, authored: file.authored }],
+    file.authored === undefined ? [] : { key: file.key, authored: file.authored },
   );
 
   const contentRoots = new Set(authored.map((document) => path.resolve(document.authored.contentRoot)));

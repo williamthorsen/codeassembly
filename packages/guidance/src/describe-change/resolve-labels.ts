@@ -75,9 +75,7 @@ function collectKeys(input: LabelInput): { scopes: Array<string | undefined>; ty
 function findMissingKeys(section: LabelSection, keys: ReadonlyArray<string | undefined>): string[] {
   const missing = keys.flatMap((key) => {
     const trimmed = key?.trim();
-    return trimmed === undefined || trimmed === '' || trimmed === '*' || Object.hasOwn(section, trimmed)
-      ? []
-      : [trimmed];
+    return trimmed === undefined || trimmed === '' || trimmed === '*' || Object.hasOwn(section, trimmed) ? [] : trimmed;
   });
   return [...new Set(missing)];
 }
@@ -93,7 +91,7 @@ function lookUpLabels(section: LabelSection, keys: ReadonlyArray<string | undefi
     const trimmed = key?.trim();
     const label =
       trimmed === undefined || trimmed === '*' || !Object.hasOwn(section, trimmed) ? undefined : section[trimmed];
-    return label === undefined ? [] : [label];
+    return label === undefined ? [] : label;
   });
 }
 

@@ -69,10 +69,12 @@ export function useRunStatus(projectSlug: string | null, runId: string | null): 
 
     return () => {
       mounted = false;
-      if (intervalRef.current !== null) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      if (intervalRef.current === null) {
+        return;
       }
+
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     };
   }, [projectSlug, runId]);
 

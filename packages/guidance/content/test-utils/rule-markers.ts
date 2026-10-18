@@ -40,7 +40,7 @@ export function listRuleSections(body: string): RuleSection[] {
   const maskedLines = maskFencedLines(body);
   const headings = maskedLines.flatMap((line, index) => {
     const heading = RULE_HEADING_REGEX.exec(line)?.[1];
-    return heading === undefined ? [] : [{ heading, index }];
+    return heading === undefined ? [] : { heading, index };
   });
 
   return headings.map(({ heading, index }, position) => {

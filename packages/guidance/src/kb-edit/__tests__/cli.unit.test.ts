@@ -201,12 +201,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'bump-updated') {
-      expect(result.record.updated).toBe(TODAY);
-      const written = await readFile(notePath, 'utf8');
-      expect(written).toContain(`updated: ${TODAY}`);
-      expect(written).toContain('Original body.');
-    }
+    if (!result.ok || result.operation !== 'bump-updated') return;
+
+    expect(result.record.updated).toBe(TODAY);
+    const written = await readFile(notePath, 'utf8');
+    expect(written).toContain(`updated: ${TODAY}`);
+    expect(written).toContain('Original body.');
   });
 
   it('sets last-verified without bumping updated', async () => {
@@ -221,13 +221,13 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'verify') {
-      expect(result.record.lastVerified).toBe(TODAY);
-      expect(result.record.updated).toBe('2026-05-01T08:17:23Z');
-      const written = await readFile(notePath, 'utf8');
-      expect(written).toContain(`last-verified: ${TODAY}`);
-      expect(written).toContain('updated: 2026-05-01T08:17:23Z');
-    }
+    if (!result.ok || result.operation !== 'verify') return;
+
+    expect(result.record.lastVerified).toBe(TODAY);
+    expect(result.record.updated).toBe('2026-05-01T08:17:23Z');
+    const written = await readFile(notePath, 'utf8');
+    expect(written).toContain(`last-verified: ${TODAY}`);
+    expect(written).toContain('updated: 2026-05-01T08:17:23Z');
   });
 
   it('replaces tags via --retag without bumping updated and reports canonicalization audit', async () => {
@@ -242,14 +242,14 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'retag') {
-      expect(result.originalTags).toEqual(['one', 'two', 'three']);
-      expect(result.canonicalTags).toEqual(['one', 'two', 'three']);
-      expect(result.record.tags).toEqual(['one', 'two', 'three']);
-      expect(result.record.updated).toBe('2026-05-01T08:17:23Z');
-      const written = await readFile(notePath, 'utf8');
-      expect(written).toContain('updated: 2026-05-01T08:17:23Z');
-    }
+    if (!result.ok || result.operation !== 'retag') return;
+
+    expect(result.originalTags).toEqual(['one', 'two', 'three']);
+    expect(result.canonicalTags).toEqual(['one', 'two', 'three']);
+    expect(result.record.tags).toEqual(['one', 'two', 'three']);
+    expect(result.record.updated).toBe('2026-05-01T08:17:23Z');
+    const written = await readFile(notePath, 'utf8');
+    expect(written).toContain('updated: 2026-05-01T08:17:23Z');
   });
 
   it('appends stdin to the body with a separating blank line and bumps updated', async () => {
@@ -264,11 +264,11 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'append') {
-      const written = await readFile(notePath, 'utf8');
-      expect(written).toContain('Original body.\n\nAppended paragraph.');
-      expect(result.record.updated).toBe(TODAY);
-    }
+    if (!result.ok || result.operation !== 'append') return;
+
+    const written = await readFile(notePath, 'utf8');
+    expect(written).toContain('Original body.\n\nAppended paragraph.');
+    expect(result.record.updated).toBe(TODAY);
   });
 
   it('returns invalid-args when --append receives empty stdin', async () => {
@@ -304,10 +304,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('note-not-found');
-      expect(result.details?.missingPath).toBe(missing);
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('note-not-found');
+    expect(result.details?.missingPath).toBe(missing);
   });
 
   it('returns note-parse when the note has malformed YAML', async () => {
@@ -324,10 +326,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('note-parse');
-      expect(result.details?.parseError).toMatch(/./);
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('note-parse');
+    expect(result.details?.parseError).toMatch(/./);
   });
 
   it('returns missing-destination when the note path is not inside any .kb/', async () => {
@@ -396,10 +400,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('note-parse');
-      expect(result.details?.parseError).toContain('recordType');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('note-parse');
+    expect(result.details?.parseError).toContain('recordType');
   });
 
   it('commits both writes on --supersede-with and reports KB-relative pointers', async () => {
@@ -536,10 +542,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'supersede-with') {
-      expect(result.oldRecord.tags).toContain('archived');
-      expect(result.oldRecord.tags).not.toContain('deprecated');
+    if (!(result.ok && result.operation === 'supersede-with')) {
+      return;
     }
+
+    expect(result.oldRecord.tags).toContain('archived');
+    expect(result.oldRecord.tags).not.toContain('deprecated');
   });
 
   it('is idempotent on the deprecated tag when it is already present', async () => {
@@ -564,10 +572,10 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'supersede-with') {
-      const occurrences = result.oldRecord.tags.filter((t) => t === 'deprecated');
-      expect(occurrences).toHaveLength(1);
-    }
+    if (!result.ok || result.operation !== 'supersede-with') return;
+
+    const occurrences = result.oldRecord.tags.filter((t) => t === 'deprecated');
+    expect(occurrences).toHaveLength(1);
   });
 
   it("appends a reference to a single record's addressed-by list", async () => {
@@ -582,18 +590,18 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'add-addressed-by') {
-      expect(result.results).toHaveLength(1);
-      const [entry] = result.results;
-      expect(entry?.ok).toBe(true);
-      if (entry?.ok) {
-        expect(entry.record.addressedBy).toEqual(['[[fix]]']);
-        expect(entry.record.updated).toBe(TODAY);
-      }
-      const written = await readFile(notePath, 'utf8');
-      expect(written).toContain('addressed-by');
-      expect(written).toContain('[[fix]]');
+    if (!result.ok || result.operation !== 'add-addressed-by') return;
+
+    expect(result.results).toHaveLength(1);
+    const [entry] = result.results;
+    expect(entry?.ok).toBe(true);
+    if (entry?.ok) {
+      expect(entry.record.addressedBy).toEqual(['[[fix]]']);
+      expect(entry.record.updated).toBe(TODAY);
     }
+    const written = await readFile(notePath, 'utf8');
+    expect(written).toContain('addressed-by');
+    expect(written).toContain('[[fix]]');
   });
 
   it('appends the same reference to multiple records in one invocation', async () => {
@@ -610,12 +618,14 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'add-addressed-by') {
-      expect(result.results).toHaveLength(2);
-      expect(result.results.every((record) => record.ok)).toBe(true);
-      expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
-      expect(await readFile(second, 'utf8')).toContain('[[fix]]');
+    if (!(result.ok && result.operation === 'add-addressed-by')) {
+      return;
     }
+
+    expect(result.results).toHaveLength(2);
+    expect(result.results.every((record) => record.ok)).toBe(true);
+    expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
+    expect(await readFile(second, 'utf8')).toContain('[[fix]]');
   });
 
   it('reports a per-record failure for a missing target while writing the valid ones', async () => {
@@ -631,16 +641,16 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'add-addressed-by') {
-      const byPath = new Map(result.results.map((record) => [record.path, record]));
-      expect(byPath.get(notePath)?.ok).toBe(true);
-      const missingRecord = byPath.get(missing);
-      expect(missingRecord?.ok).toBe(false);
-      if (missingRecord && !missingRecord.ok) {
-        expect(missingRecord.error).toBe('note-not-found');
-      }
-      expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
+    if (!result.ok || result.operation !== 'add-addressed-by') return;
+
+    const byPath = new Map(result.results.map((record) => [record.path, record]));
+    expect(byPath.get(notePath)?.ok).toBe(true);
+    const missingRecord = byPath.get(missing);
+    expect(missingRecord?.ok).toBe(false);
+    if (missingRecord && !missingRecord.ok) {
+      expect(missingRecord.error).toBe('note-not-found');
     }
+    expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
   });
 
   it('is idempotent: Re-appending an existing reference does not duplicate it', async () => {
@@ -652,11 +662,11 @@ describe(runEdit, () => {
     const result = await runEdit({ argv, ...baseInput, stdin: bodyStream('') });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'add-addressed-by') {
-      const [entry] = result.results;
-      if (entry?.ok) {
-        expect(entry.record.addressedBy).toEqual(['[[fix]]']);
-      }
+    if (!result.ok || result.operation !== 'add-addressed-by') return;
+
+    const [entry] = result.results;
+    if (entry?.ok) {
+      expect(entry.record.addressedBy).toEqual(['[[fix]]']);
     }
   });
 
@@ -679,17 +689,17 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'add-addressed-by') {
-      const byPath = new Map(result.results.map((record) => [record.path, record]));
-      expect(byPath.get(notePath)?.ok).toBe(true);
-      const badRecord = byPath.get(badType);
-      expect(badRecord?.ok).toBe(false);
-      if (badRecord && !badRecord.ok) {
-        expect(badRecord.error).toBe('note-parse');
-      }
-      expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
-      expect(await readFile(badType, 'utf8')).not.toContain('addressed-by');
+    if (!result.ok || result.operation !== 'add-addressed-by') return;
+
+    const byPath = new Map(result.results.map((record) => [record.path, record]));
+    expect(byPath.get(notePath)?.ok).toBe(true);
+    const badRecord = byPath.get(badType);
+    expect(badRecord?.ok).toBe(false);
+    if (badRecord && !badRecord.ok) {
+      expect(badRecord.error).toBe('note-parse');
     }
+    expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
+    expect(await readFile(badType, 'utf8')).not.toContain('addressed-by');
   });
 
   it('reports a per-record missing-destination failure for a target outside any KB', async () => {
@@ -707,14 +717,14 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'add-addressed-by') {
-      const byPath = new Map(result.results.map((record) => [record.path, record]));
-      expect(byPath.get(notePath)?.ok).toBe(true);
-      const orphanRecord = byPath.get(orphan);
-      expect(orphanRecord?.ok).toBe(false);
-      if (orphanRecord && !orphanRecord.ok) {
-        expect(orphanRecord.error).toBe('missing-destination');
-      }
+    if (!result.ok || result.operation !== 'add-addressed-by') return;
+
+    const byPath = new Map(result.results.map((record) => [record.path, record]));
+    expect(byPath.get(notePath)?.ok).toBe(true);
+    const orphanRecord = byPath.get(orphan);
+    expect(orphanRecord?.ok).toBe(false);
+    if (orphanRecord && !orphanRecord.ok) {
+      expect(orphanRecord.error).toBe('missing-destination');
     }
   });
 });

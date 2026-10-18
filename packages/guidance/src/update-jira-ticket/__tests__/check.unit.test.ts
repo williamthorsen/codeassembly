@@ -20,10 +20,10 @@ function expectFinding(html: string, ruleId: RuleId): Finding {
 /** Asserts that `check(html)` returns `ok: true`. */
 function expectClean(html: string): void {
   const result = check(html);
-  if (!result.ok) {
-    const seen = result.findings.map((entry) => `${entry.rule}: ${entry.snippet}`).join('; ');
-    throw new Error(`Expected ok: true; got findings: [${seen}]`);
-  }
+  if (result.ok) return;
+
+  const seen = result.findings.map((entry) => `${entry.rule}: ${entry.snippet}`).join('; ');
+  throw new Error(`Expected ok: true; got findings: [${seen}]`);
 }
 
 describe(check, () => {
@@ -53,7 +53,7 @@ describe(check, () => {
     });
 
     it('accepts literal Unicode characters in text', () => {
-      expectClean('<p>An em-dash — here, an ellipsis … there, a nbsp gap.</p>');
+      expectClean('<p>An em-dash — here, an ellipsis … there, a nbsp\u{A0}gap.</p>');
     });
   });
 

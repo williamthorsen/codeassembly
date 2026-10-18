@@ -123,17 +123,17 @@ export function findBoundRulebookHookDefects(
         continue;
       }
       const declared = listGuidanceHooks(bound.body, `guidance/rulebooks/${slug}.md`);
-      if (declared.length > 0) {
-        const names = declared.map((declaration) => declaration.name).join(', ');
-        defects.push({
-          file: artifactFrontmatterPath('rulebook', slug),
-          kind: 'frontmatter',
-          detail:
-            `Rulebook "${slug}", bound to guidance hook "${hook}", declares a guidance hook of its own (${names}). ` +
-            'Bound guidance is spliced as rendered, so nothing can fill a hook inside it: Remove the directive, or ' +
-            'bind a rulebook that declares none.',
-        });
-      }
+      if (declared.length === 0) continue;
+
+      const names = declared.map((declaration) => declaration.name).join(', ');
+      defects.push({
+        file: artifactFrontmatterPath('rulebook', slug),
+        kind: 'frontmatter',
+        detail:
+          `Rulebook "${slug}", bound to guidance hook "${hook}", declares a guidance hook of its own (${names}). ` +
+          'Bound guidance is spliced as rendered, so nothing can fill a hook inside it: Remove the directive, or ' +
+          'bind a rulebook that declares none.',
+      });
     }
   }
   return defects;

@@ -656,7 +656,7 @@ function readRenderTitlesArgs({ flags, positionals }: ScanResult): ParsedArgs {
 
 /** Collects every value of a repeatable flag, in the order that the invocation passes them. */
 function readRepeatedValues(flags: readonly MatchedFlag[], name: string): string[] {
-  return flags.flatMap((flag) => (flag.name === name && flag.value !== null ? [flag.value] : []));
+  return flags.flatMap((flag) => (flag.name === name && flag.value !== null ? flag.value : []));
 }
 
 /** Reads a value flag that the subcommand requires, refusing one that is absent or blank. */

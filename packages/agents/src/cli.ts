@@ -109,10 +109,12 @@ function configureStreamStyles(): void {
   const stdout = resolveStreamStyle(process.stdout.isTTY);
   const stderr = resolveStreamStyle(process.stderr.isTTY);
   configureOutputStyle({ stderr: stderr.style, stdout: stdout.style });
-  if (stdout.invalid !== undefined) {
-    console.error(`Error: ${describeInvalidOutputStyle(stdout.invalid)}`);
-    process.exit(1);
+  if (stdout.invalid === undefined) {
+    return;
   }
+
+  console.error(`Error: ${describeInvalidOutputStyle(stdout.invalid)}`);
+  process.exit(1);
 }
 
 function isValidHarness(value: string): value is HarnessId | 'all' {

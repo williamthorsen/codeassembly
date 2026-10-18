@@ -42,11 +42,11 @@ async function searchSegments(input: {
   }
   for (let end = index + 1; end <= segments.length; end++) {
     const candidate = join(prefix, segments.slice(index, end).join('-'));
-    if (await isDirectory(candidate)) {
-      const resolved = await searchSegments({ isDirectory, segments, prefix: candidate, index: end });
-      if (resolved !== null) {
-        return resolved;
-      }
+    if (!(await isDirectory(candidate))) continue;
+
+    const resolved = await searchSegments({ isDirectory, segments, prefix: candidate, index: end });
+    if (resolved !== null) {
+      return resolved;
     }
   }
   return null;

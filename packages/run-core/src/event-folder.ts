@@ -377,13 +377,15 @@ function applyReviewPhaseCompleted(
   review.status = status;
   review.completedAt = timestamp;
   if (usage) review.usage = usage;
-  if (data) {
-    if (isCriticality(data.aggregatedCriticality)) {
-      review.aggregatedCriticality = data.aggregatedCriticality;
-    }
-    if (typeof data.reviewRoundsUsed === 'number') {
-      review.reviewRoundsUsed = data.reviewRoundsUsed;
-    }
+  if (!data) {
+    return;
+  }
+
+  if (isCriticality(data.aggregatedCriticality)) {
+    review.aggregatedCriticality = data.aggregatedCriticality;
+  }
+  if (typeof data.reviewRoundsUsed === 'number') {
+    review.reviewRoundsUsed = data.reviewRoundsUsed;
   }
 }
 

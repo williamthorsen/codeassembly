@@ -87,14 +87,14 @@ export function buildSurvey(input: {
     staleGroomNewTickets: config.staleGroomNewTickets,
   });
 
-  const parentsOfNow = new Set(nowIssues.flatMap((issue) => (issue.parent === null ? [] : [issue.parent])));
+  const parentsOfNow = new Set(nowIssues.flatMap((issue) => (issue.parent === null ? [] : issue.parent)));
   const umbrellas = open
     .filter((issue) => issue.subIssues.total > 0 && (inNow(issue) || parentsOfNow.has(issue.number)))
     .map((issue) => ({ ...issue.subIssues, number: issue.number, title: issue.title }));
 
   const blocked = nowIssues.flatMap((issue) => {
     const blockedBy = issue.blockedBy.filter((blocker) => openNumbers.has(blocker));
-    return blockedBy.length === 0 ? [] : [{ blockedBy, number: issue.number, title: issue.title }];
+    return blockedBy.length === 0 ? [] : { blockedBy, number: issue.number, title: issue.title };
   });
 
   return {

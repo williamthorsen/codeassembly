@@ -228,10 +228,10 @@ describe('v1StatusSchema', () => {
     it('produces meaningful error paths', () => {
       const result = v1StatusSchema.safeParse({ ...minimalValid(), status: 'unknown' });
       expect(result.success).toBe(false);
-      if (!result.success) {
-        const paths = result.error.issues.map((i) => i.path.join('.'));
-        expect(paths).toContain('status');
-      }
+      if (result.success) return;
+
+      const paths = result.error.issues.map((i) => i.path.join('.'));
+      expect(paths).toContain('status');
     });
   });
 });

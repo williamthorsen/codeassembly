@@ -112,10 +112,12 @@ export async function selectExemplars(input: {
   for (const width of ['none', 'tier', 'any'] as const) {
     for (const fit of ['match', 'other'] as const) {
       const taken = buckets[width][fit].slice(0, input.count - exemplars.length);
-      if (taken.length > 0) {
-        widening = width;
-        exemplars.push(...taken);
+      if (taken.length === 0) {
+        continue;
       }
+
+      widening = width;
+      exemplars.push(...taken);
     }
   }
   exemplars.sort((left, right) => compareDescending(left.capturedAt, right.capturedAt));

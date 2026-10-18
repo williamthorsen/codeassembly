@@ -75,10 +75,7 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
   const aliases: AliasMap =
     args.operation === 'retag' ? await loadAliasesForStore(store.path) : new Map<string, string>();
 
-  const results: EventResult[] = [];
-  for (const id of args.ids) {
-    results.push(await editOne({ storePath: store.path, id, args, aliases }));
-  }
+  const results = await Array.fromAsync(args.ids, (id) => editOne({ storePath: store.path, id, args, aliases }));
 
   return { ok: true, operation: args.operation, store: store.name, results };
 }

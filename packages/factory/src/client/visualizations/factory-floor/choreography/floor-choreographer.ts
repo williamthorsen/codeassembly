@@ -167,9 +167,11 @@ function applyAgentChanges(diff: FactoryFloorDiff, refs: FloorSceneRefs): void {
 
   for (const agent of diff.agents.removed) {
     const actor = refs.agents.get(agent.id);
-    if (actor !== undefined) {
-      actor.animateToState('deactivated');
-      refs.agents.delete(agent.id);
+    if (actor === undefined) {
+      continue;
     }
+
+    actor.animateToState('deactivated');
+    refs.agents.delete(agent.id);
   }
 }

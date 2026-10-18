@@ -143,11 +143,13 @@ describe('phaseEntrySchema', () => {
       stepCount: 7,
     });
     expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toHaveProperty('impactLevel', 'high');
-      expect(result.data).toHaveProperty('artifact', 'architecture.md');
-      expect(result.data).toHaveProperty('stepCount', 7);
+    if (!result.success) {
+      return;
     }
+
+    expect(result.data).toHaveProperty('impactLevel', 'high');
+    expect(result.data).toHaveProperty('artifact', 'architecture.md');
+    expect(result.data).toHaveProperty('stepCount', 7);
   });
 });
 
@@ -310,10 +312,10 @@ describe('v2ContextSchema', () => {
     const ctx = { ...minimalContext(), status: 'unknown' };
     const result = v2ContextSchema.safeParse(ctx);
     expect(result.success).toBe(false);
-    if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join('.'));
-      expect(paths).toContain('status');
-    }
+    if (result.success) return;
+
+    const paths = result.error.issues.map((i) => i.path.join('.'));
+    expect(paths).toContain('status');
   });
 });
 
@@ -342,11 +344,13 @@ describe('v2ConfigSchema', () => {
     };
     const result = v2ConfigSchema.safeParse(config);
     expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.effort).toBe('medium');
-      expect(result.data.approvalThreshold).toBe('medium');
-      expect(result.data.budgetThreshold).toBe('medium');
+    if (!result.success) {
+      return;
     }
+
+    expect(result.data.effort).toBe('medium');
+    expect(result.data.approvalThreshold).toBe('medium');
+    expect(result.data.budgetThreshold).toBe('medium');
   });
 
   it('rejects non-string effort', () => {
@@ -377,10 +381,12 @@ describe('v2ConfigSchema', () => {
     };
     const result = v2ConfigSchema.safeParse(config);
     expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data).toHaveProperty('pipeline');
-      expect(result.data).toHaveProperty('models');
+    if (!result.success) {
+      return;
     }
+
+    expect(result.data).toHaveProperty('pipeline');
+    expect(result.data).toHaveProperty('models');
   });
 });
 
@@ -433,10 +439,10 @@ describe('v2RunIndexSchema', () => {
     };
     const result = v2RunIndexSchema.safeParse(v2);
     expect(result.success).toBe(false);
-    if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join('.'));
-      expect(paths.some((p) => p.startsWith('artifacts.1'))).toBe(true);
-    }
+    if (result.success) return;
+
+    const paths = result.error.issues.map((i) => i.path.join('.'));
+    expect(paths.some((p) => p.startsWith('artifacts.1'))).toBe(true);
   });
 
   it('produces meaningful error paths for nested failures', () => {
@@ -446,9 +452,9 @@ describe('v2RunIndexSchema', () => {
     };
     const result = v2RunIndexSchema.safeParse(v2);
     expect(result.success).toBe(false);
-    if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join('.'));
-      expect(paths).toContain('context.status');
-    }
+    if (result.success) return;
+
+    const paths = result.error.issues.map((i) => i.path.join('.'));
+    expect(paths).toContain('context.status');
   });
 });

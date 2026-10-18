@@ -73,7 +73,7 @@ function findPublishablePackages(): ReadonlyArray<PublishablePackage> {
     if (isPrivate || name === undefined) {
       return [];
     }
-    return [{ bins: readBinPaths(manifest), contentDir: readContentDir(manifest), dir, name }];
+    return { bins: readBinPaths(manifest), contentDir: readContentDir(manifest), dir, name };
   });
   return packages.toSorted((a, b) => a.name.localeCompare(b.name));
 }

@@ -183,18 +183,22 @@ export class OfficeScene extends Scene {
 
     for (const [id, pos] of positions.agents) {
       const actor = this.agentActors.get(id);
-      if (actor !== undefined) {
-        actor.pos.x = pos.x;
-        actor.pos.y = pos.y;
+      if (actor === undefined) {
+        continue;
       }
+
+      actor.pos.x = pos.x;
+      actor.pos.y = pos.y;
     }
 
     for (const [id, pos] of positions.artifacts) {
       const actor = this.artifactActors.get(id);
-      if (actor !== undefined) {
-        actor.pos.x = pos.x;
-        actor.pos.y = pos.y;
+      if (actor === undefined) {
+        continue;
       }
+
+      actor.pos.x = pos.x;
+      actor.pos.y = pos.y;
     }
   }
 

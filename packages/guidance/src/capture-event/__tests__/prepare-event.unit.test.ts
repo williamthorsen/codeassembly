@@ -64,10 +64,12 @@ describe(prepareEvent, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.id).toBe(ID);
-      expect(result.prepared.capturedAt).toBe(CAPTURED_AT);
+    if (!result.ok) {
+      return;
     }
+
+    expect(result.prepared.id).toBe(ID);
+    expect(result.prepared.capturedAt).toBe(CAPTURED_AT);
   });
 
   it('omits updated and last-verified from the rendered record', () => {
@@ -80,10 +82,12 @@ describe(prepareEvent, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.content).not.toMatch(/^updated:/m);
-      expect(result.prepared.content).not.toMatch(/^last-verified:/m);
+    if (!result.ok) {
+      return;
     }
+
+    expect(result.prepared.content).not.toMatch(/^updated:/m);
+    expect(result.prepared.content).not.toMatch(/^last-verified:/m);
   });
 
   it('writes an event with repo absent when the context does not include a resolvable remote', () => {
@@ -126,12 +130,14 @@ describe(prepareEvent, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.prepared.content).toContain('skill: kb-retrieve');
-      expect(result.prepared.content).toContain('model: claude-opus-4-8');
-      expect(result.prepared.content).toContain('harness: claude');
-      expect(result.prepared.content).toContain('tags: [recall, kb]');
+    if (!result.ok) {
+      return;
     }
+
+    expect(result.prepared.content).toContain('skill: kb-retrieve');
+    expect(result.prepared.content).toContain('model: claude-opus-4-8');
+    expect(result.prepared.content).toContain('harness: claude');
+    expect(result.prepared.content).toContain('tags: [recall, kb]');
   });
 
   it('renders the supplied impact into the record', () => {
@@ -180,13 +186,13 @@ describe(prepareEvent, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const lines = result.prepared.content.split('\n');
-      const lineOf = (field: string): number => lines.findIndex((line) => line.startsWith(`${field}:`));
-      // Pinning the order keeps a fresh capture identical in field order to its later amendment.
-      const lastTyped = Math.max(lineOf('summary'), lineOf('tags'), lineOf('impact'));
-      const firstExtra = Math.min(lineOf('repo'), lineOf('skill'), lineOf('model'), lineOf('harness'));
-      expect(lastTyped).toBeLessThan(firstExtra);
-    }
+    if (!result.ok) return;
+
+    const lines = result.prepared.content.split('\n');
+    const lineOf = (field: string): number => lines.findIndex((line) => line.startsWith(`${field}:`));
+    // Pinning the order keeps a fresh capture identical in field order to its later amendment.
+    const lastTyped = Math.max(lineOf('summary'), lineOf('tags'), lineOf('impact'));
+    const firstExtra = Math.min(lineOf('repo'), lineOf('skill'), lineOf('model'), lineOf('harness'));
+    expect(lastTyped).toBeLessThan(firstExtra);
   });
 });

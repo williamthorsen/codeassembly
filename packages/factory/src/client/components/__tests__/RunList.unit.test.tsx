@@ -304,12 +304,12 @@ describe('RunList', () => {
 
     const runItem = within(container).getByText('alpha / T-1').closest('[role="button"]');
     expect(runItem).toBeInstanceOf(HTMLElement);
-    if (runItem instanceof HTMLElement) {
-      const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
-      const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
-      runItem.dispatchEvent(event);
-      expect(preventDefaultSpy).toHaveBeenCalled();
-    }
+    if (!(runItem instanceof HTMLElement)) return;
+
+    const event = new KeyboardEvent('keydown', { key: ' ', bubbles: true, cancelable: true });
+    const preventDefaultSpy = vi.spyOn(event, 'preventDefault');
+    runItem.dispatchEvent(event);
+    expect(preventDefaultSpy).toHaveBeenCalled();
   });
 
   it('shows start-only tooltip for active runs', () => {

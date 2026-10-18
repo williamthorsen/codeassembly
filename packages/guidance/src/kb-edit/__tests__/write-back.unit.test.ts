@@ -46,10 +46,10 @@ describe(writeBackNote, () => {
     const result = await writeBackNote({ path, record: buildAssertion() });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const written = await readFile(path, 'utf8');
-      expect(result.content).toBe(written);
-    }
+    if (!result.ok) return;
+
+    const written = await readFile(path, 'utf8');
+    expect(result.content).toBe(written);
   });
 
   it('refuses to write and leaves an existing file untouched when the rendered record fails re-parse', async () => {

@@ -92,11 +92,11 @@ describe(writeNote, () => {
     });
 
     expect(outcome.ok).toBe(true);
-    if (outcome.ok) {
-      expect(outcome.path).toBe(join(kbPath, 'content', 'assertions', 'languages', 'typescript', 'Generics.md'));
-      const stats = await stat(outcome.path);
-      expect(stats.isFile()).toBe(true);
-    }
+    if (!outcome.ok) return;
+
+    expect(outcome.path).toBe(join(kbPath, 'content', 'assertions', 'languages', 'typescript', 'Generics.md'));
+    const stats = await stat(outcome.path);
+    expect(stats.isFile()).toBe(true);
   });
 
   it('refuses to overwrite an existing file and reports the existing path', async () => {

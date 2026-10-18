@@ -632,10 +632,10 @@ function renderEdges(type: ArtifactType, edges: DirectArtifacts | '@library' | u
   const lines: Array<string> = [];
   for (const edgeType of ARTIFACT_TYPE_VALUES) {
     const slugs = edges?.[edgeType] ?? [];
-    if (slugs.length > 0) {
-      const items = slugs.map((slug) => `    - ${slug}`).join('\n');
-      lines.push(`  ${ARTIFACT_TYPES[edgeType].key}:\n${items}`);
-    }
+    if (slugs.length === 0) continue;
+
+    const items = slugs.map((slug) => `    - ${slug}`).join('\n');
+    lines.push(`  ${ARTIFACT_TYPES[edgeType].key}:\n${items}`);
   }
   return lines.length === 0 ? '' : `${key}:\n${lines.join('\n')}\n`;
 }

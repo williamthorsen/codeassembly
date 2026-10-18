@@ -200,7 +200,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
     const assessed = assessedAt.get(issue.number);
     if (assessed === undefined) return true;
     const sweepWrites = [assessed, findLatestRunMarkerDate(issue.comments, run), decidedAt.get(issue.number)];
-    const lastSweepWrite = Math.max(...sweepWrites.flatMap((date) => (date === undefined ? [] : [Date.parse(date)])));
+    const lastSweepWrite = Math.max(...sweepWrites.flatMap((date) => (date === undefined ? [] : Date.parse(date))));
     const changed = Date.parse(issue.updatedAt) > lastSweepWrite;
     if (!changed) resumed.push(issue.number);
     return changed;
@@ -208,7 +208,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   const pendingAutomatic = resumed.flatMap((number) => {
     const policyClass = undecidedClass.get(number);
     return policyClass === 'auto-close-complete' || policyClass === 'auto-close-half-met'
-      ? [{ number, class: policyClass }]
+      ? { number, class: policyClass }
       : [];
   });
   const issues = selection.limit === undefined ? pending : pending.slice(0, selection.limit);

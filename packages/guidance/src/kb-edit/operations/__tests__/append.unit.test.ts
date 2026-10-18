@@ -25,10 +25,12 @@ describe(append, () => {
     const result = append(buildAssertion({ body: 'First paragraph.' }), 'Second paragraph.', NOW);
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.record.body).toBe('First paragraph.\n\nSecond paragraph.\n');
-      expect(result.record.updated).toBe('2026-05-24T14:35:00Z');
+    if (!result.ok) {
+      return;
     }
+
+    expect(result.record.body).toBe('First paragraph.\n\nSecond paragraph.\n');
+    expect(result.record.updated).toBe('2026-05-24T14:35:00Z');
   });
 
   it('trims trailing whitespace from the existing body before appending', () => {

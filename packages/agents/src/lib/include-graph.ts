@@ -129,10 +129,12 @@ function walkIncludes(file: string, directIncludes: ReadonlyMap<string, Readonly
     const targets = directIncludes.get(current) ?? [];
     for (const include of targets) {
       includes.push({ file: include, includer: current });
-      if (!visited.has(include)) {
-        visited.add(include);
-        pending.push(include);
+      if (visited.has(include)) {
+        continue;
       }
+
+      visited.add(include);
+      pending.push(include);
     }
   }
   return { files: [...visited], includes };

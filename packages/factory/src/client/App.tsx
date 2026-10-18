@@ -218,11 +218,13 @@ export function App(): React.JSX.Element {
 
     const validated = validateSelection(index, initialSelection.current);
 
-    if (validated) {
-      setSelectedProject(validated.project);
-      setSelectedTicket(validated.ticket);
-      setSelectedRun(validated.run);
+    if (!validated) {
+      return;
     }
+
+    setSelectedProject(validated.project);
+    setSelectedTicket(validated.ticket);
+    setSelectedRun(validated.run);
   }, [index]);
 
   useEffect(() => {

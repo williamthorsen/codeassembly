@@ -105,11 +105,13 @@ describe(runCurate, () => {
     const result = await runCurate({ argv: [], startDir, now: NOW, home });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('missing-destination');
-      expect(result.message).toContain('primary');
-      expect(result.message).toContain('--kb @default');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('missing-destination');
+    expect(result.message).toContain('primary');
+    expect(result.message).toContain('--kb @default');
   });
 
   it('reports the registry error when --kb @default names an unresolvable default', async () => {
@@ -127,10 +129,12 @@ describe(runCurate, () => {
     const result = await runCurate({ argv: ['--kb', '@default'], startDir, now: NOW, home });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('no-default');
-      expect(result.message).toContain('could not resolve the default');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('no-default');
+    expect(result.message).toContain('could not resolve the default');
   });
 
   it('returns no-default when --kb @default is given but kb.yaml does not configure default_kb', async () => {
