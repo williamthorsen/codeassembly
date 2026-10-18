@@ -95,7 +95,7 @@ function createRouteHandler(layer: HasHandle): RouteHandler {
  */
 export function getHandler(router: Router, method: string, path: string): RouteHandler {
   const stack = prop(router, 'stack');
-  if (!Array.isArray(stack)) throw new Error('Router has no stack');
+  if (!Array.isArray(stack)) throw new TypeError('Router has no stack');
 
   for (const layer of stack) {
     const route = prop(layer, 'route');

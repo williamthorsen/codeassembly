@@ -398,10 +398,12 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.store).toBe('named');
-      expect(result.path.startsWith(namedStore)).toBe(true);
+    if (!result.ok) {
+      return;
     }
+
+    expect(result.store).toBe('named');
+    expect(result.path.startsWith(namedStore)).toBe(true);
   });
 
   it('fails with missing-store, listing the non-default store and marking the registry default', async () => {
@@ -426,12 +428,14 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('missing-store');
-      expect(result.message).toContain('secondary');
-      expect(result.message).toContain('default is "primary"');
-      expect(result.message).toContain('--store @default');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('missing-store');
+    expect(result.message).toContain('secondary');
+    expect(result.message).toContain('default is "primary"');
+    expect(result.message).toContain('--store @default');
   });
 
   it('fails with no-default-store when --store @default is given but default_kb is not configured', async () => {
@@ -477,10 +481,12 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.store).toBe('guidance');
-      expect(result.path.startsWith(feedbackStore)).toBe(true);
+    if (!result.ok) {
+      return;
     }
+
+    expect(result.store).toBe('guidance');
+    expect(result.path.startsWith(feedbackStore)).toBe(true);
   });
 
   it('fails with no-feedback-store naming the key when --store @feedback is given but feedback_kb is not configured', async () => {
@@ -497,10 +503,12 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('no-feedback-store');
-      expect(result.message).toBe('--store @feedback was given but kb.yaml does not configure feedback_kb');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('no-feedback-store');
+    expect(result.message).toBe('--store @feedback was given but kb.yaml does not configure feedback_kb');
   });
 
   it('fails with missing-store, naming both role sentinels when both roles are configured', async () => {
@@ -525,10 +533,12 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.message).toContain('the registry default is "personal", available as --store @default');
-      expect(result.message).toContain('the feedback store is "guidance", available as --store @feedback');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.message).toContain('the registry default is "personal", available as --store @default');
+    expect(result.message).toContain('the feedback store is "guidance", available as --store @feedback');
   });
 
   it('names the registry-load cause when --store names a registered store but default_kb is unresolvable', async () => {
@@ -552,10 +562,12 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('store-not-registered');
-      expect(result.message).toMatch(/default_kb "ghost" does not match any registered KB/);
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('store-not-registered');
+    expect(result.message).toMatch(/default_kb "ghost" does not match any registered KB/);
   });
 
   it('returns invalid-args when a required flag is missing', async () => {

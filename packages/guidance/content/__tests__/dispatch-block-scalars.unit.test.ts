@@ -133,14 +133,16 @@ function findDispatchBlocks(content: string, relativePath: string): ReadonlyArra
       }
       continue;
     }
-    if (trimmed.startsWith('```')) {
-      blocks.push({
-        firstLine: openedAt + 2,
-        lines: lines.slice(openedAt + 1, index).map((l) => l.trim()),
-        relativePath,
-      });
-      openedAt = undefined;
+    if (!trimmed.startsWith('```')) {
+      continue;
     }
+
+    blocks.push({
+      firstLine: openedAt + 2,
+      lines: lines.slice(openedAt + 1, index).map((l) => l.trim()),
+      relativePath,
+    });
+    openedAt = undefined;
   }
 
   return blocks;

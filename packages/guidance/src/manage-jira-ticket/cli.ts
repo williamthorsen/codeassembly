@@ -149,10 +149,12 @@ async function runCheckSite(argv: readonly string[]): Promise<void> {
   const values = parseValues(argv, [{ name: 'target', takesValue: true }], ['target']);
   const check = await readSiteCheck(values.target ?? '', runAcli);
   writeJson(check);
-  if (!check.match) {
-    process.stderr.write(`manage-jira-ticket: ${describeSiteMismatch(check)}\n`);
-    process.exitCode = 1;
+  if (check.match) {
+    return;
   }
+
+  process.stderr.write(`manage-jira-ticket: ${describeSiteMismatch(check)}\n`);
+  process.exitCode = 1;
 }
 
 /** Converts the body to ADF and writes it to `--out`. */

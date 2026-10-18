@@ -99,32 +99,36 @@ export function planTransitions(
       }
     }
 
-    if (agentDiff.statusChanged !== null) {
-      transitions.push({
-        type: 'state_change',
-        entityId: agentDiff.agentId,
-        entityKind: 'agent',
-        delayMs: staggerIndex * TRANSITION_STAGGER_MS,
-        from: agentDiff.statusChanged.from,
-        to: agentDiff.statusChanged.to,
-      });
-      staggerIndex++;
+    if (agentDiff.statusChanged === null) {
+      continue;
     }
+
+    transitions.push({
+      type: 'state_change',
+      entityId: agentDiff.agentId,
+      entityKind: 'agent',
+      delayMs: staggerIndex * TRANSITION_STAGGER_MS,
+      from: agentDiff.statusChanged.from,
+      to: agentDiff.statusChanged.to,
+    });
+    staggerIndex++;
   }
 
   // Artifact transitions
   for (const added of diff.artifacts.added) {
     const pos = nextPositions.artifacts.get(added.id);
-    if (pos !== undefined) {
-      transitions.push({
-        type: 'artifact_appear',
-        entityId: added.id,
-        entityKind: 'artifact',
-        delayMs: staggerIndex * TRANSITION_STAGGER_MS,
-        waypoints: [pos],
-      });
-      staggerIndex++;
+    if (pos === undefined) {
+      continue;
     }
+
+    transitions.push({
+      type: 'artifact_appear',
+      entityId: added.id,
+      entityKind: 'artifact',
+      delayMs: staggerIndex * TRANSITION_STAGGER_MS,
+      waypoints: [pos],
+    });
+    staggerIndex++;
   }
 
   for (const statusChange of diff.artifacts.statusChanged) {
@@ -152,16 +156,18 @@ export function planTransitions(
 
   for (const removed of diff.artifacts.removed) {
     const pos = prevPositions.artifacts.get(removed.id);
-    if (pos !== undefined) {
-      transitions.push({
-        type: 'fade_out',
-        entityId: removed.id,
-        entityKind: 'artifact',
-        delayMs: staggerIndex * TRANSITION_STAGGER_MS,
-        waypoints: [pos],
-      });
-      staggerIndex++;
+    if (pos === undefined) {
+      continue;
     }
+
+    transitions.push({
+      type: 'fade_out',
+      entityId: removed.id,
+      entityKind: 'artifact',
+      delayMs: staggerIndex * TRANSITION_STAGGER_MS,
+      waypoints: [pos],
+    });
+    staggerIndex++;
   }
 
   return { transitions };

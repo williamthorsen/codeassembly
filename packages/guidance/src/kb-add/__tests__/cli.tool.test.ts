@@ -194,10 +194,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('missing-destination');
-      expect(result.message).toContain('--kb');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('missing-destination');
+    expect(result.message).toContain('--kb');
   });
 
   it('names the registered KBs and points to --kb @default in the missing-destination message', async () => {
@@ -220,11 +222,13 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('missing-destination');
-      expect(result.message).toContain('primary');
-      expect(result.message).toContain('--kb @default');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('missing-destination');
+    expect(result.message).toContain('primary');
+    expect(result.message).toContain('--kb @default');
   });
 
   it('returns no-default when --kb @default is given but the registry does not configure a default_kb', async () => {
@@ -242,10 +246,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('no-default');
-      expect(result.message).toContain('@default');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('no-default');
+    expect(result.message).toContain('@default');
   });
 
   it('returns no-kb-resolvable with requestedKb when --kb names an unknown entry', async () => {
@@ -260,10 +266,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('no-kb-resolvable');
-      expect(result.details?.requestedKb).toBe('nonexistent');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('no-kb-resolvable');
+    expect(result.details?.requestedKb).toBe('nonexistent');
   });
 
   it('writes recordType: assertion and the Diátaxis --diataxis label into extra', async () => {
@@ -299,10 +307,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.mode === 'write') {
-      expect(result.record.recordType).toBe('assertion');
-      expect(result.record.extra).not.toHaveProperty('diataxis');
+    if (!(result.ok && result.mode === 'write')) {
+      return;
     }
+
+    expect(result.record.recordType).toBe('assertion');
+    expect(result.record.extra).not.toHaveProperty('diataxis');
   });
 
   it('returns collision and does not overwrite an existing note', async () => {
@@ -407,10 +417,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('invalid-args');
-      expect(result.message).toContain('assertions/');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('invalid-args');
+    expect(result.message).toContain('assertions/');
   });
 
   it('warns on stderr and falls back to an empty alias map when tag-aliases.yaml is malformed', async () => {
@@ -521,14 +533,16 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.mode === 'survey') {
-      expect(result.kb.path).toBe(kbPath);
-      expect(result.taxonomyPath).toBe(join(kbPath, '.kb', 'taxonomy.yaml'));
-      expect(result.domains).toEqual([
-        { path: 'engineering', description: 'Software engineering practice', provisional: false, noteCount: 0 },
-      ]);
-      expect(result.undeclaredFolders).toEqual([{ path: 'languages', noteCount: 1 }]);
+    if (!(result.ok && result.mode === 'survey')) {
+      return;
     }
+
+    expect(result.kb.path).toBe(kbPath);
+    expect(result.taxonomyPath).toBe(join(kbPath, '.kb', 'taxonomy.yaml'));
+    expect(result.domains).toEqual([
+      { path: 'engineering', description: 'Software engineering practice', provisional: false, noteCount: 0 },
+    ]);
+    expect(result.undeclaredFolders).toEqual([{ path: 'languages', noteCount: 1 }]);
   });
 
   it('surveys a store that does not declare a taxonomy', async () => {
@@ -545,10 +559,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.mode === 'survey') {
-      expect(result.domains).toEqual([]);
-      expect(result.undeclaredFolders).toEqual([{ path: 'languages', noteCount: 1 }]);
+    if (!(result.ok && result.mode === 'survey')) {
+      return;
     }
+
+    expect(result.domains).toEqual([]);
+    expect(result.undeclaredFolders).toEqual([{ path: 'languages', noteCount: 1 }]);
   });
 
   it('surveys a KB that the registry marks readonly, which refuses only writes', async () => {
@@ -570,10 +586,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.mode === 'survey') {
-      expect(result.kb.name).toBe('locked');
-      expect(result.kb.path).toBe(kbPath);
+    if (!(result.ok && result.mode === 'survey')) {
+      return;
     }
+
+    expect(result.kb.name).toBe('locked');
+    expect(result.kb.path).toBe(kbPath);
   });
 
   it('returns a survey without consuming stdin', async () => {
@@ -606,10 +624,12 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('invalid-config');
-      expect(result.message).toContain('taxonomy.yaml');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('invalid-config');
+    expect(result.message).toContain('taxonomy.yaml');
   });
 
   it('subprocess smoke: piping a body into the built bundle produces a written note and well-shaped JSON', async () => {

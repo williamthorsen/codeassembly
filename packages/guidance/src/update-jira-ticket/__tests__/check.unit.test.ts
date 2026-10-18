@@ -53,7 +53,7 @@ describe(check, () => {
     });
 
     it('accepts literal Unicode characters in text', () => {
-      expectClean('<p>An em-dash — here, an ellipsis … there, a nbsp gap.</p>');
+      expectClean('<p>An em-dash — here, an ellipsis … there, a nbsp\u{A0}gap.</p>');
     });
   });
 

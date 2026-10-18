@@ -32,12 +32,14 @@ describe(loadNote, () => {
     const result = await loadNote({ path });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.record.title).toBe('Example');
-      expect(result.record.tags).toEqual(['example']);
-      expect(result.record.body.trim()).toBe('Body text.');
-      expect(result.content).toBe(VALID_NOTE);
+    if (!result.ok) {
+      return;
     }
+
+    expect(result.record.title).toBe('Example');
+    expect(result.record.tags).toEqual(['example']);
+    expect(result.record.body.trim()).toBe('Body text.');
+    expect(result.content).toBe(VALID_NOTE);
   });
 
   it('returns note-not-found when the path does not exist', async () => {
@@ -58,12 +60,14 @@ describe(loadNote, () => {
     const result = await loadNote({ path });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.reason).toBe('note-parse');
-      expect(result.path).toBe(path);
-      if (result.reason === 'note-parse') {
-        expect(result.parseError).toMatch(/./);
-      }
+    if (result.ok) {
+      return;
+    }
+
+    expect(result.reason).toBe('note-parse');
+    expect(result.path).toBe(path);
+    if (result.reason === 'note-parse') {
+      expect(result.parseError).toMatch(/./);
     }
   });
 

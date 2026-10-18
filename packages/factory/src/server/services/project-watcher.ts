@@ -41,10 +41,12 @@ export class ProjectWatcher {
       this.debounceTimer = undefined;
     }
 
-    if (this.watcher !== undefined) {
-      this.watcher.close();
-      this.watcher = undefined;
+    if (this.watcher === undefined) {
+      return;
     }
+
+    this.watcher.close();
+    this.watcher = undefined;
   }
 
   private async rescan(): Promise<void> {

@@ -304,10 +304,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('note-not-found');
-      expect(result.details?.missingPath).toBe(missing);
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('note-not-found');
+    expect(result.details?.missingPath).toBe(missing);
   });
 
   it('returns note-parse when the note has malformed YAML', async () => {
@@ -324,10 +326,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('note-parse');
-      expect(result.details?.parseError).toMatch(/./);
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('note-parse');
+    expect(result.details?.parseError).toMatch(/./);
   });
 
   it('returns missing-destination when the note path is not inside any .kb/', async () => {
@@ -396,10 +400,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(false);
-    if (!result.ok) {
-      expect(result.error).toBe('note-parse');
-      expect(result.details?.parseError).toContain('recordType');
+    if (result.ok) {
+      return;
     }
+
+    expect(result.error).toBe('note-parse');
+    expect(result.details?.parseError).toContain('recordType');
   });
 
   it('commits both writes on --supersede-with and reports KB-relative pointers', async () => {
@@ -536,10 +542,12 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'supersede-with') {
-      expect(result.oldRecord.tags).toContain('archived');
-      expect(result.oldRecord.tags).not.toContain('deprecated');
+    if (!(result.ok && result.operation === 'supersede-with')) {
+      return;
     }
+
+    expect(result.oldRecord.tags).toContain('archived');
+    expect(result.oldRecord.tags).not.toContain('deprecated');
   });
 
   it('is idempotent on the deprecated tag when it is already present', async () => {
@@ -610,12 +618,14 @@ describe(runEdit, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.operation === 'add-addressed-by') {
-      expect(result.results).toHaveLength(2);
-      expect(result.results.every((record) => record.ok)).toBe(true);
-      expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
-      expect(await readFile(second, 'utf8')).toContain('[[fix]]');
+    if (!(result.ok && result.operation === 'add-addressed-by')) {
+      return;
     }
+
+    expect(result.results).toHaveLength(2);
+    expect(result.results.every((record) => record.ok)).toBe(true);
+    expect(await readFile(notePath, 'utf8')).toContain('[[fix]]');
+    expect(await readFile(second, 'utf8')).toContain('[[fix]]');
   });
 
   it('reports a per-record failure for a missing target while writing the valid ones', async () => {

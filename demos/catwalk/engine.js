@@ -184,10 +184,12 @@ export function createEngine(state, playback) {
     const item = state.orch.transient.find(function (a) {
       return a.label === label;
     });
-    if (item) {
-      await animateProp(item, 'alpha', 0, 200);
-      orchRemoveTransient(label);
+    if (!item) {
+      return;
     }
+
+    await animateProp(item, 'alpha', 0, 200);
+    orchRemoveTransient(label);
   }
 
   // § CHOREOGRAPHY

@@ -431,11 +431,13 @@ describe('v3RunIndexSchema', () => {
     };
     const result = v3RunIndexSchema.safeParse(fixture);
     expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.config.effort).toBe('high');
-      expect(result.data.config.approvalThreshold).toBe('low');
-      expect(result.data.config.budgetThreshold).toBe('low');
+    if (!result.success) {
+      return;
     }
+
+    expect(result.data.config.effort).toBe('high');
+    expect(result.data.config.approvalThreshold).toBe('low');
+    expect(result.data.config.budgetThreshold).toBe('low');
   });
 
   it('accepts optional config fields (mode, model, externalPlan)', () => {
@@ -452,10 +454,12 @@ describe('v3RunIndexSchema', () => {
     };
     const result = v3RunIndexSchema.safeParse(fixture);
     expect(result.success).toBe(true);
-    if (result.success) {
-      expect(result.data.config.mode).toBe('orchestrated');
-      expect(result.data.config.model).toBe('claude-opus-4-6');
-      expect(result.data.config.externalPlan).toBe(true);
+    if (!result.success) {
+      return;
     }
+
+    expect(result.data.config.mode).toBe('orchestrated');
+    expect(result.data.config.model).toBe('claude-opus-4-6');
+    expect(result.data.config.externalPlan).toBe(true);
   });
 });
