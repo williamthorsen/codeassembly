@@ -18,7 +18,7 @@ export function findDefects(record: ChangeRecord, taxonomy: Taxonomy): RecordDef
 export function findEntryDefects(entries: readonly ChangeEntry[], taxonomy: Taxonomy): RecordDefect[] {
   return entries.flatMap((entry, index) => {
     const defect = findTypeDefect(entry, taxonomy);
-    return defect === undefined ? [] : [{ ...defect, entry: index }];
+    return defect === undefined ? [] : { ...defect, entry: index };
   });
 }
 

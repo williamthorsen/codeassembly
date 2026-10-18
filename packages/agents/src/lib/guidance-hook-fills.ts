@@ -29,7 +29,7 @@ export function buildGuidanceHookFills(
         }
         try {
           const context = resolveRulebookContext(harnessId, rulebook.source);
-          return [{ slug, body: renderRulebookBody(rulebook.body, slug, context), version: rulebook.version }];
+          return { slug, body: renderRulebookBody(rulebook.body, slug, context), version: rulebook.version };
         } catch {
           return [];
         }

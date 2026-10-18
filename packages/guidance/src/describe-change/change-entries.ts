@@ -15,7 +15,7 @@ import { isRecord } from '../lib/type-guards.ts';
 export function consolidateChangeEntries(entries: readonly ChangeEntry[], taxonomy: Taxonomy): ChangeRecord {
   const expanded = entries.flatMap((entry) => {
     const record: ChangeRecord = { ...(entry.breaking && { breaking: true }), type: entry.type };
-    return entry.scopes.length === 0 ? [record] : entry.scopes.map((scope) => ({ ...record, scope }));
+    return entry.scopes.length === 0 ? record : entry.scopes.map((scope) => ({ ...record, scope }));
   });
   return consolidate(expanded, taxonomy);
 }
