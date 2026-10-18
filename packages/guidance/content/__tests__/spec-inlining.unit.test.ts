@@ -81,6 +81,12 @@ const OPTION_FORMAT: Spec = {
     // renders a menu that the gate would have decided.
     '**Check the leader before rendering.**',
     'When every alternative has a disqualifying `➖`, mark the leader ■■■',
+    // Without it the check reads as deciding only whether a menu renders, so in a gated decision, whose menu renders
+    // anyway, the agent skips it and the developer re-derives the analysis to approve a leader marked too weak.
+    'It applies to a gated decision as fully as to any other',
+    // Without it the check reads only the bullets already drafted, and an alternative's deciding cost, often one that
+    // follows from the work's acceptance criteria, never reaches the menu.
+    'including one that follows from the constraints and acceptance criteria of the work at hand',
     // The gate's one observed blind spot. Without it the agent measures each option by its own elapsed time and
     // round trips, which are scarce to it, and treats having measured one as license to rank.
     '**Never rank the options by your own elapsed time, round trips, or effort.**',
