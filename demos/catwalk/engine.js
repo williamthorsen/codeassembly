@@ -304,38 +304,38 @@ export function createEngine(state, playback) {
       await wait(PAUSE_DURATION);
 
       // Shuttle the fixes (if this round requires it)
-      if (round.fix) {
-        state.orch.working = true;
-        await wait(800);
-        state.orch.working = false;
-        orchAddTransient('fixes', ARTIFACT_COLORS.fixes);
+      if (!round.fix) continue;
 
-        displayRound++;
-        state.reviewRound.current = displayRound;
+      state.orch.working = true;
+      await wait(800);
+      state.orch.working = false;
+      orchAddTransient('fixes', ARTIFACT_COLORS.fixes);
 
-        // Shuttle to coder
-        await orchWalkTo(stationX(2));
-        await orchFadeTransient('fixes');
-        state.stationInputs[2].push({ label: 'fixes', color: ARTIFACT_COLORS.fixes });
-        await chuteDescend(stationX(2), 'fixes', ARTIFACT_COLORS.fixes);
+      displayRound++;
+      state.reviewRound.current = displayRound;
 
-        // Have the coder produce the next version
-        codeVersionRef.version++;
-        const newLabel = 'code v' + codeVersionRef.version;
-        state.agents.coder = 'working';
-        await materialize(2, 'code', ARTIFACT_COLORS.code, codeVersionRef.version);
-        state.agents.coder = 'resting';
-        await wait(PAUSE_DURATION);
-        await chuteAscend(stationX(2), newLabel, ARTIFACT_COLORS.code);
-        state.orch.code = { label: newLabel, color: ARTIFACT_COLORS.code };
+      // Shuttle to coder
+      await orchWalkTo(stationX(2));
+      await orchFadeTransient('fixes');
+      state.stationInputs[2].push({ label: 'fixes', color: ARTIFACT_COLORS.fixes });
+      await chuteDescend(stationX(2), 'fixes', ARTIFACT_COLORS.fixes);
 
-        state.stationInputs[station].push({ label: newLabel, color: ARTIFACT_COLORS.code });
+      // Have the coder produce the next version
+      codeVersionRef.version++;
+      const newLabel = 'code v' + codeVersionRef.version;
+      state.agents.coder = 'working';
+      await materialize(2, 'code', ARTIFACT_COLORS.code, codeVersionRef.version);
+      state.agents.coder = 'resting';
+      await wait(PAUSE_DURATION);
+      await chuteAscend(stationX(2), newLabel, ARTIFACT_COLORS.code);
+      state.orch.code = { label: newLabel, color: ARTIFACT_COLORS.code };
 
-        if (ri < rounds.length - 1) {
-          await orchWalkTo(stationX(station));
-          await wait(PAUSE_DURATION);
-        }
-      }
+      state.stationInputs[station].push({ label: newLabel, color: ARTIFACT_COLORS.code });
+
+      if (ri >= rounds.length - 1) continue;
+
+      await orchWalkTo(stationX(station));
+      await wait(PAUSE_DURATION);
     }
 
     // Mark convergence

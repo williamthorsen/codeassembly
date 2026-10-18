@@ -156,13 +156,13 @@ function findReachDefects(
       });
       continue;
     }
-    if (permitted !== undefined && !permitted.has(id)) {
-      const clause =
-        held.length === 0
-          ? 'which does not have a disposition; claim it or drop the edge'
-          : `whose disposition${held.length === 1 ? ' is' : 's are'} ${held.join(', ')}; promote it or drop the edge`;
-      defects.push({ file, kind: 'disposition', detail: `${collection.slug}'s closure reaches ${id}, ${clause}.` });
-    }
+    if (permitted === undefined || permitted.has(id)) continue;
+
+    const clause =
+      held.length === 0
+        ? 'which does not have a disposition; claim it or drop the edge'
+        : `whose disposition${held.length === 1 ? ' is' : 's are'} ${held.join(', ')}; promote it or drop the edge`;
+    defects.push({ file, kind: 'disposition', detail: `${collection.slug}'s closure reaches ${id}, ${clause}.` });
   }
   return defects;
 }

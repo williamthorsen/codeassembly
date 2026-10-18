@@ -175,14 +175,14 @@ async function findUnresolvedTokens(
       continue;
     }
     seen.add(written);
-    if ((await resolver.resolve(token.kind, token.slug)) === undefined) {
-      const line = body.slice(0, token.index).split('\n').length;
-      defects.push({
-        file: relativePath,
-        kind: 'dependency',
-        detail: `Line ${line} invokes ${written}, which the content root does not contain.`,
-      });
-    }
+    if ((await resolver.resolve(token.kind, token.slug)) !== undefined) continue;
+
+    const line = body.slice(0, token.index).split('\n').length;
+    defects.push({
+      file: relativePath,
+      kind: 'dependency',
+      detail: `Line ${line} invokes ${written}, which the content root does not contain.`,
+    });
   }
   return defects;
 }

@@ -120,13 +120,13 @@ function findFences(content: string, relativePath: string): ReadonlyArray<Fence>
       }
       continue;
     }
-    if (trimmed.startsWith('```')) {
-      const body = lines.slice(openedAt + 1, index).map((bodyLine) => bodyLine.trim());
-      if (body.some((text) => text !== '')) {
-        fences.push({ firstLine: openedAt + 2, info, lines: body, relativePath });
-      }
-      openedAt = undefined;
+    if (!trimmed.startsWith('```')) continue;
+
+    const body = lines.slice(openedAt + 1, index).map((bodyLine) => bodyLine.trim());
+    if (body.some((text) => text !== '')) {
+      fences.push({ firstLine: openedAt + 2, info, lines: body, relativePath });
     }
+    openedAt = undefined;
   }
 
   return fences;
