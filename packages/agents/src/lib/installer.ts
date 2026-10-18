@@ -11,35 +11,35 @@ export function checkSymlinkSafety(dirPath: string): void {
   }
 
   const stats = lstatSync(dirPath);
-  if (stats.isSymbolicLink()) {
-    const lines = [
-      `Target directory is a symlink: ${dirPath}`,
-      'The install command cannot write into a symlinked directory.',
-    ];
+  if (!stats.isSymbolicLink()) return;
 
-    try {
-      const entries = readdirSync(dirPath);
-      if (entries.length > 0) {
-        const MAX_LISTED = 5;
-        lines.push('The target directory contains files that may need to be preserved:');
-        for (const entry of entries.slice(0, MAX_LISTED)) {
-          lines.push(`  ${entry}`);
-        }
-        if (entries.length > MAX_LISTED) {
-          lines.push(`  ... and ${entries.length - MAX_LISTED} more`);
-        }
+  const lines = [
+    `Target directory is a symlink: ${dirPath}`,
+    'The install command cannot write into a symlinked directory.',
+  ];
+
+  try {
+    const entries = readdirSync(dirPath);
+    if (entries.length > 0) {
+      const MAX_LISTED = 5;
+      lines.push('The target directory contains files that may need to be preserved:');
+      for (const entry of entries.slice(0, MAX_LISTED)) {
+        lines.push(`  ${entry}`);
       }
-    } catch {
-      // Fall back to warning without file list if the directory can't be read.
+      if (entries.length > MAX_LISTED) {
+        lines.push(`  ... and ${entries.length - MAX_LISTED} more`);
+      }
     }
-
-    lines.push(
-      'Remove the symlink, recreate it as a regular directory, restore',
-      'any preserved files, and re-run the install command.',
-    );
-
-    throw new Error(lines.join('\n'));
+  } catch {
+    // Fall back to warning without file list if the directory can't be read.
   }
+
+  lines.push(
+    'Remove the symlink, recreate it as a regular directory, restore',
+    'any preserved files, and re-run the install command.',
+  );
+
+  throw new Error(lines.join('\n'));
 }
 
 /** Returns true for OS metadata files like .DS_Store that should never be installed. */

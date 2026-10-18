@@ -136,17 +136,17 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.mode === 'write') {
-      expect(result.path).toBe(join(kbPath, 'content', 'assertions', 'Working with streams.md'));
-      expect(result.kb.source).toBe('discovered');
-      expect(result.record.title).toBe('Working with streams');
-      expect(result.record.created).toBe(TODAY);
-      expect(result.record.updated).toBe(TODAY);
-      expect(result.record.lastVerified).toBe(TODAY);
-      const content = await readFile(result.path, 'utf8');
-      expect(content).toContain('title: Working with streams');
-      expect(content).toContain('How to work with Node streams.');
-    }
+    if (!result.ok || result.mode !== 'write') return;
+
+    expect(result.path).toBe(join(kbPath, 'content', 'assertions', 'Working with streams.md'));
+    expect(result.kb.source).toBe('discovered');
+    expect(result.record.title).toBe('Working with streams');
+    expect(result.record.created).toBe(TODAY);
+    expect(result.record.updated).toBe(TODAY);
+    expect(result.record.lastVerified).toBe(TODAY);
+    const content = await readFile(result.path, 'utf8');
+    expect(content).toContain('title: Working with streams');
+    expect(content).toContain('How to work with Node streams.');
   });
 
   it('places the note under content/assertions plus the given topic folder, creating it on demand', async () => {
@@ -178,10 +178,10 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.mode === 'write') {
-      const content = await readFile(result.path, 'utf8');
-      expect(content).toMatch(/^---\nrecordType: assertion\ntitle: Stub\n/);
-    }
+    if (!result.ok || result.mode !== 'write') return;
+
+    const content = await readFile(result.path, 'utf8');
+    expect(content).toMatch(/^---\nrecordType: assertion\ntitle: Stub\n/);
   });
 
   it('returns missing-destination when discovery does not find a .kb/ and --kb is not given', async () => {
@@ -286,13 +286,13 @@ describe(runAdd, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok && result.mode === 'write') {
-      expect(result.record.recordType).toBe('assertion');
-      expect(result.record.extra.diataxis).toBe('howto');
-      const written = await readFile(result.path, 'utf8');
-      expect(written).toMatch(/^recordType: assertion$/m);
-      expect(written).toContain('diataxis: howto');
-    }
+    if (!result.ok || result.mode !== 'write') return;
+
+    expect(result.record.recordType).toBe('assertion');
+    expect(result.record.extra.diataxis).toBe('howto');
+    const written = await readFile(result.path, 'utf8');
+    expect(written).toMatch(/^recordType: assertion$/m);
+    expect(written).toContain('diataxis: howto');
   });
 
   it('writes a note even when --diataxis is omitted', async () => {

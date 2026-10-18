@@ -197,15 +197,15 @@ async function deployHomeDomain(options: InstallOptions, baseDir: string | undef
     });
   }
 
-  if (!options.dryRun) {
-    const updatedManifest: AgentsManifest = {
-      ...withoutSharedTier(manifest),
-      harnesses: updatedHarnesses,
-    };
-    await writeManifest(manifestPath, updatedManifest);
-    console.info('\nManifest updated.');
-    await recordHomeProvenance('install', baseDir, git);
-  }
+  if (options.dryRun) return;
+
+  const updatedManifest: AgentsManifest = {
+    ...withoutSharedTier(manifest),
+    harnesses: updatedHarnesses,
+  };
+  await writeManifest(manifestPath, updatedManifest);
+  console.info('\nManifest updated.');
+  await recordHomeProvenance('install', baseDir, git);
 }
 
 /**

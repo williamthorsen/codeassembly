@@ -164,18 +164,18 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.id).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
-      expect(result.capturedAt).toBe('2026-06-04T06:57:22Z');
-      expect(result.store).toBe('codeassembly');
-      const written = await readFile(result.path, 'utf8');
-      expect(written).toMatch(/^recordType: event$/m);
-      expect(written).not.toMatch(/^type:/m);
-      expect(written).toContain('summary: Noticed a thing');
-      expect(written).toContain('session: session-xyz');
-      expect(written).toContain('repo: williamthorsen/codeassembly');
-      expect(written).not.toMatch(/^harness:/m);
-    }
+    if (!result.ok) return;
+
+    expect(result.id).toMatch(/^[0-9A-HJKMNP-TV-Z]{26}$/);
+    expect(result.capturedAt).toBe('2026-06-04T06:57:22Z');
+    expect(result.store).toBe('codeassembly');
+    const written = await readFile(result.path, 'utf8');
+    expect(written).toMatch(/^recordType: event$/m);
+    expect(written).not.toMatch(/^type:/m);
+    expect(written).toContain('summary: Noticed a thing');
+    expect(written).toContain('session: session-xyz');
+    expect(written).toContain('repo: williamthorsen/codeassembly');
+    expect(written).not.toMatch(/^harness:/m);
   });
 
   it('captures an event without a session field when the harness does not expose a session id', async () => {
@@ -193,11 +193,11 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const written = await readFile(result.path, 'utf8');
-      expect(written).not.toMatch(/^session:/m);
-      expect(written).toContain('summary: Noticed a thing');
-    }
+    if (!result.ok) return;
+
+    const written = await readFile(result.path, 'utf8');
+    expect(written).not.toMatch(/^session:/m);
+    expect(written).toContain('summary: Noticed a thing');
   });
 
   it('treats a blank session id as a missing one', async () => {
@@ -215,10 +215,10 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const written = await readFile(result.path, 'utf8');
-      expect(written).not.toMatch(/^session:/m);
-    }
+    if (!result.ok) return;
+
+    const written = await readFile(result.path, 'utf8');
+    expect(written).not.toMatch(/^session:/m);
   });
 
   it('amends an event stored with an empty session, dropping the empty field', async () => {
@@ -241,13 +241,13 @@ describe(runCapture, () => {
     });
 
     expect(amended.ok).toBe(true);
-    if (amended.ok) {
-      const written = await readFile(amended.path, 'utf8');
-      expect(written).not.toMatch(/^session:/m);
-      expect(written).toContain('summary: Corrected summary');
-      expect(written).toContain('harness: rovo');
-      expect(written).toContain('cwd: /tmp/work');
-    }
+    if (!amended.ok) return;
+
+    const written = await readFile(amended.path, 'utf8');
+    expect(written).not.toMatch(/^session:/m);
+    expect(written).toContain('summary: Corrected summary');
+    expect(written).toContain('harness: rovo');
+    expect(written).toContain('cwd: /tmp/work');
   });
 
   it('writes the impact field when --impact is supplied', async () => {
@@ -265,10 +265,10 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const written = await readFile(result.path, 'utf8');
-      expect(written).toMatch(/^impact: high$/m);
-    }
+    if (!result.ok) return;
+
+    const written = await readFile(result.path, 'utf8');
+    expect(written).toMatch(/^impact: high$/m);
   });
 
   it('writes the harness field when --harness is supplied', async () => {
@@ -286,10 +286,10 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const written = await readFile(result.path, 'utf8');
-      expect(written).toMatch(/^harness: claude$/m);
-    }
+    if (!result.ok) return;
+
+    const written = await readFile(result.path, 'utf8');
+    expect(written).toMatch(/^harness: claude$/m);
   });
 
   it('resolves repo via the first-remote fallback when origin is absent', async () => {
@@ -307,10 +307,10 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const written = await readFile(result.path, 'utf8');
-      expect(written).toContain('repo: williamthorsen/codeassembly');
-    }
+    if (!result.ok) return;
+
+    const written = await readFile(result.path, 'utf8');
+    expect(written).toContain('repo: williamthorsen/codeassembly');
   });
 
   it('writes an event with repo absent when cwd does not have a git remote', async () => {
@@ -328,10 +328,10 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      const written = await readFile(result.path, 'utf8');
-      expect(written).not.toMatch(/^repo:/m);
-    }
+    if (!result.ok) return;
+
+    const written = await readFile(result.path, 'utf8');
+    expect(written).not.toMatch(/^repo:/m);
   });
 
   it('writes to the registered store, not a .kb in cwd, when capturing from a directory containing one', async () => {
@@ -350,11 +350,11 @@ describe(runCapture, () => {
     });
 
     expect(result.ok).toBe(true);
-    if (result.ok) {
-      expect(result.path.startsWith(storePath)).toBe(true);
-      const cwdEntries = await readdir(cwdWithKb);
-      expect(cwdEntries).not.toContain('content');
-    }
+    if (!result.ok) return;
+
+    expect(result.path.startsWith(storePath)).toBe(true);
+    const cwdEntries = await readdir(cwdWithKb);
+    expect(cwdEntries).not.toContain('content');
   });
 
   it('fails when the named store is not registered', async () => {
@@ -616,25 +616,25 @@ describe(runCapture, () => {
     });
 
     expect(amended.ok).toBe(true);
-    if (amended.ok) {
-      expect(amended.id).toBe(created.id);
-      expect(amended.capturedAt).toBe(created.capturedAt);
+    if (!amended.ok) return;
 
-      const written = await readFile(amended.path, 'utf8');
-      expect(written).toContain('summary: Corrected summary');
-      expect(written).toContain('Corrected body.');
-      expect(written).not.toContain('Original body.');
+    expect(amended.id).toBe(created.id);
+    expect(amended.capturedAt).toBe(created.capturedAt);
 
-      // Provenance comes from the original capture, not the amending invocation.
-      expect(written).toContain(`captured-at: ${created.capturedAt}`);
-      expect(written).toContain('session: session-original');
-      expect(written).toContain(`cwd: ${repo}`);
-      expect(written).toContain('repo: williamthorsen/codeassembly');
+    const written = await readFile(amended.path, 'utf8');
+    expect(written).toContain('summary: Corrected summary');
+    expect(written).toContain('Corrected body.');
+    expect(written).not.toContain('Original body.');
 
-      // Curatorial fields that the amend did not restate keep their existing values.
-      expect(written).toMatch(/^tags: \[one\]$/m);
-      expect(written).toMatch(/^impact: high$/m);
-    }
+    // Provenance comes from the original capture, not the amending invocation.
+    expect(written).toContain(`captured-at: ${created.capturedAt}`);
+    expect(written).toContain('session: session-original');
+    expect(written).toContain(`cwd: ${repo}`);
+    expect(written).toContain('repo: williamthorsen/codeassembly');
+
+    // Curatorial fields that the amend did not restate keep their existing values.
+    expect(written).toMatch(/^tags: \[one\]$/m);
+    expect(written).toMatch(/^impact: high$/m);
   });
 
   it('overrides curatorial fields on amend only when their flag is supplied', async () => {
@@ -664,11 +664,11 @@ describe(runCapture, () => {
     });
 
     expect(amended.ok).toBe(true);
-    if (amended.ok) {
-      const written = await readFile(amended.path, 'utf8');
-      expect(written).toMatch(/^tags: \[two\]$/m);
-      expect(written).toMatch(/^impact: low$/m);
-    }
+    if (!amended.ok) return;
+
+    const written = await readFile(amended.path, 'utf8');
+    expect(written).toMatch(/^tags: \[two\]$/m);
+    expect(written).toMatch(/^impact: low$/m);
   });
 
   it('returns amend-not-found when the target event does not exist', async () => {

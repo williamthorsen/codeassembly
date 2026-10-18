@@ -309,17 +309,17 @@ function parseLogLines(logContent: string, logPath: string): RunEvent[] {
 /** Asserts that `raw` is a v2 run index, throwing an `invalid_schema` error that contains the Zod issues. */
 function assertValidRunIndex(raw: unknown, filePath: string): asserts raw is V2RunIndex {
   const result = v2RunIndexSchema.safeParse(raw);
-  if (!result.success) {
-    const message = `Invalid run-index.json at ${filePath}`;
-    throw new RunDataParseError(message, 'invalid_schema', filePath, result.error.issues);
-  }
+  if (result.success) return;
+
+  const message = `Invalid run-index.json at ${filePath}`;
+  throw new RunDataParseError(message, 'invalid_schema', filePath, result.error.issues);
 }
 
 /** Asserts that `raw` is a v1 status object, throwing an `invalid_schema` error that contains the Zod issues. */
 function assertValidStatusObject(raw: unknown, filePath: string): asserts raw is V1StatusObject {
   const result = v1StatusSchema.safeParse(raw);
-  if (!result.success) {
-    const message = `Invalid status.json at ${filePath}`;
-    throw new RunDataParseError(message, 'invalid_schema', filePath, result.error.issues);
-  }
+  if (result.success) return;
+
+  const message = `Invalid status.json at ${filePath}`;
+  throw new RunDataParseError(message, 'invalid_schema', filePath, result.error.issues);
 }

@@ -312,10 +312,10 @@ describe('v2ContextSchema', () => {
     const ctx = { ...minimalContext(), status: 'unknown' };
     const result = v2ContextSchema.safeParse(ctx);
     expect(result.success).toBe(false);
-    if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join('.'));
-      expect(paths).toContain('status');
-    }
+    if (result.success) return;
+
+    const paths = result.error.issues.map((i) => i.path.join('.'));
+    expect(paths).toContain('status');
   });
 });
 
@@ -439,10 +439,10 @@ describe('v2RunIndexSchema', () => {
     };
     const result = v2RunIndexSchema.safeParse(v2);
     expect(result.success).toBe(false);
-    if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join('.'));
-      expect(paths.some((p) => p.startsWith('artifacts.1'))).toBe(true);
-    }
+    if (result.success) return;
+
+    const paths = result.error.issues.map((i) => i.path.join('.'));
+    expect(paths.some((p) => p.startsWith('artifacts.1'))).toBe(true);
   });
 
   it('produces meaningful error paths for nested failures', () => {
@@ -452,9 +452,9 @@ describe('v2RunIndexSchema', () => {
     };
     const result = v2RunIndexSchema.safeParse(v2);
     expect(result.success).toBe(false);
-    if (!result.success) {
-      const paths = result.error.issues.map((i) => i.path.join('.'));
-      expect(paths).toContain('context.status');
-    }
+    if (result.success) return;
+
+    const paths = result.error.issues.map((i) => i.path.join('.'));
+    expect(paths).toContain('context.status');
   });
 });

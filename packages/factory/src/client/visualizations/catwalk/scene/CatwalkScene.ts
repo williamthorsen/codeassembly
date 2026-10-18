@@ -160,11 +160,11 @@ export class CatwalkScene extends Scene {
     }
 
     // Apply any buffered diff so the scene does not get stuck
-    if (this.pendingDiff !== undefined) {
-      const pending = this.pendingDiff;
-      this.pendingDiff = undefined;
-      this.applyDiff(pending.diff, pending.config, pending.layout);
-    }
+    if (this.pendingDiff === undefined) return;
+
+    const pending = this.pendingDiff;
+    this.pendingDiff = undefined;
+    this.applyDiff(pending.diff, pending.config, pending.layout);
   }
 
   /** Build the SceneRefs object that the choreographer needs. */
