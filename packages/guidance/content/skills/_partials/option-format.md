@@ -63,7 +63,7 @@ Keep on a `□□□` option the `➖` that explains why you ruled it out. Under
 
 **Check the leader before rendering.** Once you have drafted the bullets, and before you read the markers against the gate, run this check. It applies to a gated decision as fully as to any other: The menu renders whatever the markers say, and the marker tells the developer how much deliberation the ask needs.
 
-1. For each alternative, look for the cost that disqualifies it, including one that follows from the constraints and acceptance criteria of the work at hand, and state that cost as the alternative's `➖`.
+1. For each alternative, look for a cost that disqualifies it, including one that follows from the constraints and acceptance criteria of the work at hand. When you find one, state it as the alternative's `➖`.
 2. For each `➖` on the strongest-marked option, name the reader who would choose differently because of it. Cut the bullet if there is none.
 3. Re-mark the options. When every alternative has a disqualifying `➖`, mark the leader ■■■. The observed bias is a marker set too weak, not one set too strong.
 4. Re-apply the gate. Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and do not render a menu. Inside the class, render the menu with the leader's marker as the check set it.
