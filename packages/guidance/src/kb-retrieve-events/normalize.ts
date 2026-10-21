@@ -22,7 +22,7 @@ function toEventCandidate(searchHit: SearchHit): EventCandidate {
 
   const repo = extractString(extra, 'repo');
   const addressedBy = readStringList(extra, 'addressed-by');
-  const rawImpact = extra?.impact;
+  const rawImpact = extra?.['impact'];
   const impact = isEventImpact(rawImpact) ? rawImpact : undefined;
 
   const candidate: EventCandidate = {

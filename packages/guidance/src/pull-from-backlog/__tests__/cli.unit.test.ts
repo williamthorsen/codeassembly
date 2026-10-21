@@ -56,17 +56,17 @@ describe(runCli, () => {
         blocked: [{ number: 14, blockedBy: [20] }],
         groomStale: { stale: false, daysSince: 7 },
       });
-      expect(result.ok && result.candidates).toMatchObject([
+      expect(result.ok && result['candidates']).toMatchObject([
         { number: 11, inNow: true, reasons: ['priority:high', expect.stringMatching(/^opened/)] },
         { number: 10, inNow: true },
         { number: 20, inNow: false },
       ]);
-      expect(result.ok && result.inProgress).toMatchObject([
+      expect(result.ok && result['inProgress']).toMatchObject([
         { number: 12, assignees: ['me'], ref: null },
         { number: 13, ref: '13-branch', daysSinceLastCommit: 30 },
       ]);
-      expect(result.ok && result.yours).toMatchObject([{ number: 12 }]);
-      expect(result.ok && result.warnings).toStrictEqual([
+      expect(result.ok && result['yours']).toMatchObject([{ number: 12 }]);
+      expect(result.ok && result['warnings']).toStrictEqual([
         { days: 11, kind: 'milestone-past-due', title: 'Sprint 1' },
         { days: 30, kind: 'stale-branch', number: 13, ref: '13-branch' },
         { blockers: [20], kind: 'blocked-outside-now', number: 14 },
@@ -81,12 +81,12 @@ describe(runCli, () => {
       const flagged = await runCli(['survey', '--now', 'Sprint 2'], context);
 
       expect(configured).toMatchObject({ ok: true, assignOnPick: true, now: { source: 'config' } });
-      expect(configured.ok && configured.candidates).toHaveLength(1);
-      expect(configured.ok && configured.warnings).not.toContainEqual(
+      expect(configured.ok && configured['candidates']).toHaveLength(1);
+      expect(configured.ok && configured['warnings']).not.toContainEqual(
         expect.objectContaining({ kind: 'stale-branch' }),
       );
       expect(flagged).toMatchObject({ ok: true, now: { source: 'flag', milestone: { title: 'Sprint 2' } } });
-      expect(flagged.ok && flagged.candidates).toMatchObject([
+      expect(flagged.ok && flagged['candidates']).toMatchObject([
         { number: 20, inNow: true, reasons: ['unblocks #14', expect.any(String)] },
         { number: 11, inNow: false },
         { number: 10, inNow: false },
@@ -111,7 +111,7 @@ describe(runCli, () => {
         ok: true,
         groomStale: { stale: true, reasons: ['never'] },
       });
-      expect(result.ok && result.warnings).toContainEqual({ kind: 'groom-stale', reasons: ['never'] });
+      expect(result.ok && result['warnings']).toContainEqual({ kind: 'groom-stale', reasons: ['never'] });
       expect(existsSync(ledgerFile(root))).toBe(false);
     });
 

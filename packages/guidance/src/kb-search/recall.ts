@@ -93,7 +93,7 @@ function expandTerms(baseTerms: string[], aliases: AliasMap): string[] {
 
 /** Returns true when the error is a child-process failure with the given exit code. */
 function isExitCode(error: unknown, code: number): boolean {
-  return isRecord(error) && error.code === code;
+  return isRecord(error) && error['code'] === code;
 }
 
 /** Returns true when the error indicates the `rg` binary could not be spawned. */
@@ -111,18 +111,18 @@ function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
   if (!isRecord(value) || !('type' in value)) {
     return false;
   }
-  if (value.type !== 'match' && value.type !== 'context') {
+  if (value['type'] !== 'match' && value['type'] !== 'context') {
     return false;
   }
-  if (!isRecord(value.data)) {
+  if (!isRecord(value['data'])) {
     return false;
   }
   const { data } = value;
   return (
-    isRecord(data.path) &&
-    typeof data.path.text === 'string' &&
-    isRecord(data.lines) &&
-    typeof data.lines.text === 'string'
+    isRecord(data['path']) &&
+    typeof data['path']['text'] === 'string' &&
+    isRecord(data['lines']) &&
+    typeof data['lines']['text'] === 'string'
   );
 }
 

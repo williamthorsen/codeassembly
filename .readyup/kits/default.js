@@ -1,6 +1,6 @@
 /** @noformat -- @generated. Do not edit. Compiled by rdy. */
 /* eslint-disable */
-export const __readyupVersion = "0.41.0";
+export const __readyupVersion = "0.41.1";
 
 
 // .readyup/kits/default.ts
@@ -74,7 +74,7 @@ var default_default = defineRdyKit({
             if (map === void 0) {
               return true;
             }
-            const actual = isRecord(map.scopes) ? Object.keys(map.scopes) : [];
+            const actual = isRecord(map["scopes"]) ? Object.keys(map["scopes"]) : [];
             const expected = deriveExpectedScopeKeys(listPackageDirNames());
             const drift = diffScopeKeys(expected, actual);
             if (drift.missing.length === 0 && drift.extra.length === 0) {
@@ -123,7 +123,7 @@ function listPackageDirNames() {
   try {
     entries = readdirSync("packages");
   } catch (error) {
-    if (isRecord(error) && error.code === "ENOENT") {
+    if (isRecord(error) && error["code"] === "ENOENT") {
       return [];
     }
     throw error;
@@ -139,8 +139,8 @@ function readInstalledChangeGrammarVersion() {
   }
   for (; ; ) {
     const packageJson = readJsonFile(join(dir, "node_modules", CHANGE_GRAMMAR_PACKAGE_NAME, "package.json"));
-    if (packageJson?.name === CHANGE_GRAMMAR_PACKAGE_NAME && typeof packageJson.version === "string") {
-      return packageJson.version;
+    if (packageJson?.["name"] === CHANGE_GRAMMAR_PACKAGE_NAME && typeof packageJson["version"] === "string") {
+      return packageJson["version"];
     }
     const parent = dirname(dir);
     if (parent === dir) {

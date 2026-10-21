@@ -31,7 +31,7 @@ export function makeMergeGhPrSmokeTest(): SmokeTestInvocation {
 
   return {
     args: ['--pr', '42', '--strategy', 'rebase', '--delete', 'remote'],
-    env: { ...process.env, PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ''}` },
+    env: { ...process.env, PATH: `${binDir}${path.delimiter}${process.env['PATH'] ?? ''}` },
     assertResult: assertBranchDeleted,
   };
 }
@@ -43,11 +43,11 @@ function assertBranchDeleted(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result');
   }
-  if (result.branchDeletion !== 'deleted') {
-    throw new Error(`expected branchDeletion: deleted, got ${JSON.stringify(result.branchDeletion)}`);
+  if (result['branchDeletion'] !== 'deleted') {
+    throw new Error(`expected branchDeletion: deleted, got ${JSON.stringify(result['branchDeletion'])}`);
   }
-  if (!isRecord(result.mergeCommit) || result.mergeCommit.oid !== 'abc123') {
-    throw new Error(`expected mergeCommit.oid abc123, got ${JSON.stringify(result.mergeCommit)}`);
+  if (!isRecord(result['mergeCommit']) || result['mergeCommit']['oid'] !== 'abc123') {
+    throw new Error(`expected mergeCommit.oid abc123, got ${JSON.stringify(result['mergeCommit'])}`);
   }
 }
 

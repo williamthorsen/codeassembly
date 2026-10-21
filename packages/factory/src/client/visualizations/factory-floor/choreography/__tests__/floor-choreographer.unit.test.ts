@@ -588,11 +588,11 @@ describe(choreographFloor, () => {
         addActor: (actor: unknown) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
           const flyer = actor as Record<string, unknown>;
-          if (typeof flyer.ascend === 'function') {
-            flyer.ascend = () => Promise.reject(new Error('Actor has been killed'));
+          if (typeof flyer['ascend'] === 'function') {
+            flyer['ascend'] = () => Promise.reject(new Error('Actor has been killed'));
           }
-          if (typeof flyer.descend === 'function') {
-            flyer.descend = () => Promise.reject(new Error('Actor has been killed'));
+          if (typeof flyer['descend'] === 'function') {
+            flyer['descend'] = () => Promise.reject(new Error('Actor has been killed'));
           }
         },
       });
@@ -614,11 +614,11 @@ describe(choreographFloor, () => {
         addActor: (actor: unknown) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
           const flyer = actor as Record<string, unknown>;
-          if (typeof flyer.ascend === 'function') {
-            flyer.ascend = () => Promise.reject(new Error('Unexpected error'));
+          if (typeof flyer['ascend'] === 'function') {
+            flyer['ascend'] = () => Promise.reject(new Error('Unexpected error'));
           }
-          if (typeof flyer.descend === 'function') {
-            flyer.descend = () => Promise.reject(new Error('Unexpected error'));
+          if (typeof flyer['descend'] === 'function') {
+            flyer['descend'] = () => Promise.reject(new Error('Unexpected error'));
           }
         },
       });

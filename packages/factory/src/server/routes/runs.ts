@@ -108,7 +108,7 @@ export function createRunsRouter(scanner: ProjectIndexProvider): Router {
     const artifactPath = join(runPath, filename);
     try {
       let content = await readFile(artifactPath, 'utf8');
-      if (req.query.format === 'html' && filename.endsWith('.md')) {
+      if (req.query['format'] === 'html' && filename.endsWith('.md')) {
         content = await marked.parse(content);
       }
       res.json({ content });

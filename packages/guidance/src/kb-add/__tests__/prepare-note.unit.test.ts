@@ -36,7 +36,7 @@ describe(prepareNote, () => {
   it('writes the Diátaxis --diataxis label into extra, not a top-level field', () => {
     const { record } = prepareNote({ args: baseArgs, aliases: emptyAliases, now: NOW, body: '' });
 
-    expect(record.extra.diataxis).toBe('howto');
+    expect(record.extra['diataxis']).toBe('howto');
     expect(record).not.toHaveProperty('diataxis');
   });
 

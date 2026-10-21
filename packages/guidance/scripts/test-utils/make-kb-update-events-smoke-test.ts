@@ -62,17 +62,17 @@ function assertKbUpdateEventsSmokeResult(result: unknown, eventPath: string): vo
   if (!isRecord(result)) {
     throw new TypeError('expected object result from kb-update-events');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (result.operation !== 'add-addressed-by') {
-    throw new Error(`expected operation 'add-addressed-by', got ${JSON.stringify(result.operation)}`);
+  if (result['operation'] !== 'add-addressed-by') {
+    throw new Error(`expected operation 'add-addressed-by', got ${JSON.stringify(result['operation'])}`);
   }
-  if (!Array.isArray(result.results) || result.results.length !== 1) {
-    throw new Error(`expected one per-event result, got ${JSON.stringify(result.results)}`);
+  if (!Array.isArray(result['results']) || result['results'].length !== 1) {
+    throw new Error(`expected one per-event result, got ${JSON.stringify(result['results'])}`);
   }
-  const entry: unknown = result.results[0];
-  if (!isRecord(entry) || entry.ok !== true) {
+  const entry: unknown = result['results'][0];
+  if (!isRecord(entry) || entry['ok'] !== true) {
     throw new Error(`expected the event to update, got ${JSON.stringify(entry)}`);
   }
   const written = readFileSync(eventPath, 'utf8');

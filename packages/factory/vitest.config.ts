@@ -7,6 +7,6 @@ import { defineVitestConfig } from '@williamthorsen/nmr/vitest';
 // renders into a DOM opts into happy-dom with a `// @vitest-environment happy-dom` pragma, because a
 // DOM's start-up costs more than most suites here take to run.
 export default defineVitestConfig({
-  root: { plugins: [createReactPlugin()], resolve: { tsconfigPaths: true } },
+  root: { plugins: [createReactPlugin()] },
   project: { environment: 'node', setupFiles: ['./vitest.setup.ts'] },
 });

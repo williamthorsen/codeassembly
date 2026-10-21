@@ -31,7 +31,7 @@ function assertResolveReviewRunSmokeResult(result: unknown, runDir: string): voi
   if (!isRecord(result)) {
     throw new TypeError('expected object result from resolve-review-run');
   }
-  if (result.runDir !== runDir || result.reviewPath !== path.join(runDir, REVIEW_FILE_NAME)) {
+  if (result['runDir'] !== runDir || result['reviewPath'] !== path.join(runDir, REVIEW_FILE_NAME)) {
     throw new Error(`expected the fixture run and review, got ${JSON.stringify(result)}`);
   }
 }

@@ -24,12 +24,12 @@ export function makeManageJiraTicketSmokeTest(): SmokeTestInvocation {
 
 /** Asserts that the result names the ADF file and that the file contains a `taskList` node. */
 function assertTaskListWritten(result: unknown): void {
-  if (!isRecord(result) || typeof result.adfPath !== 'string') {
+  if (!isRecord(result) || typeof result['adfPath'] !== 'string') {
     throw new TypeError(`expected { adfPath }, got ${JSON.stringify(result)}`);
   }
-  const adf: unknown = JSON.parse(readFileSync(result.adfPath, 'utf8'));
-  const content = isRecord(adf) && Array.isArray(adf.content) ? adf.content : [];
-  if (content.every((node) => !(isRecord(node) && node.type === 'taskList'))) {
+  const adf: unknown = JSON.parse(readFileSync(result['adfPath'], 'utf8'));
+  const content = isRecord(adf) && Array.isArray(adf['content']) ? adf['content'] : [];
+  if (content.every((node) => !(isRecord(node) && node['type'] === 'taskList'))) {
     throw new Error('expected the ADF to contain a taskList node');
   }
 }

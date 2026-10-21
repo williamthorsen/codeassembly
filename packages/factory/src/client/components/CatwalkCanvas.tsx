@@ -63,7 +63,7 @@ export function CatwalkCanvas({ status }: CatwalkCanvasProps): React.JSX.Element
       }
       return;
     }
-    const scene = engineRef.current.scenes.catwalk;
+    const scene = engineRef.current.scenes['catwalk'];
     if (scene instanceof CatwalkScene) {
       scene.updateStatus(status);
     }

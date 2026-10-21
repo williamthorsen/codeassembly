@@ -65,7 +65,7 @@ export function parseOverlayOverrides(overlayYaml: string, agentName: string): R
 
   const overrides: Record<string, string> = {};
 
-  const defaults = parsed._defaults;
+  const defaults = parsed['_defaults'];
   if (isRecord(defaults)) {
     applyOverrides(overrides, defaults);
   }

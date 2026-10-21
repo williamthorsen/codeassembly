@@ -46,7 +46,7 @@ function assertIndexPrototypesSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from index-prototypes');
   }
-  if (result.ok !== true || result.command !== 'render' || result.cards !== 1) {
+  if (result['ok'] !== true || result['command'] !== 'render' || result['cards'] !== 1) {
     throw new Error(`expected an ok render of one card, got ${JSON.stringify(result)}`);
   }
 }

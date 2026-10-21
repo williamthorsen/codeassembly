@@ -105,12 +105,14 @@ const runNode: RetagRunner = (args) =>
       }
       try {
         const parsed: unknown = JSON.parse(stdout);
-        if (isRecord(parsed) && parsed.ok === true) {
+        if (isRecord(parsed) && parsed['ok'] === true) {
           settle({ ok: true });
           return;
         }
         const message =
-          isRecord(parsed) && typeof parsed.message === 'string' ? parsed.message : 'kb-edit reported a non-ok result';
+          isRecord(parsed) && typeof parsed['message'] === 'string'
+            ? parsed['message']
+            : 'kb-edit reported a non-ok result';
         settle({ ok: false, message });
       } catch {
         settle({ ok: false, message: `could not parse kb-edit output: ${stdout.trim()}` });

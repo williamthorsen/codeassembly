@@ -39,7 +39,7 @@ if (isEntryPoint(import.meta.url, 'resolve-review-run')) {
 
 /** Throws when `--timestamp` is passed to a subcommand that does not take it. */
 function rejectTimestamp(values: Record<string, string>, command: string): void {
-  if (values.timestamp !== undefined) {
+  if (values['timestamp'] !== undefined) {
     throw new Error(`${command} does not take --timestamp\n${USAGE}`);
   }
 }

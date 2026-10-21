@@ -34,9 +34,9 @@ describe(readProjectStage, () => {
 
   it('accepts exactly the values that the preferences schema declares', () => {
     const projectProperties = readSchemaProjectProperties();
-    expect(MATURITY_VALUES).toEqual(projectProperties.maturity);
-    expect(SENSITIVITY_VALUES).toEqual(projectProperties.sensitivity);
-    expect(AUDIENCE_VALUES).toEqual(projectProperties.audience);
+    expect(MATURITY_VALUES).toEqual(projectProperties['maturity']);
+    expect(SENSITIVITY_VALUES).toEqual(projectProperties['sensitivity']);
+    expect(AUDIENCE_VALUES).toEqual(projectProperties['audience']);
   });
 });
 

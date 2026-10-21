@@ -25,13 +25,13 @@ const BARE_NUMERIC_PATTERN = /^(?<ticketId>[0-9]+)(?:\.(?<revisit>[0-9]+))?/;
  */
 export function parseTicketRef(branch: string): TicketRef | undefined {
   const jira = JIRA_STYLE_PATTERN.exec(branch)?.groups;
-  if (jira?.ticketId !== undefined) {
-    return composeTicketRef(jira.ticketId.toUpperCase(), jira.revisit);
+  if (jira?.['ticketId'] !== undefined) {
+    return composeTicketRef(jira['ticketId'].toUpperCase(), jira['revisit']);
   }
 
   const bare = BARE_NUMERIC_PATTERN.exec(branch)?.groups;
-  if (bare?.ticketId !== undefined) {
-    return composeTicketRef(bare.ticketId, bare.revisit);
+  if (bare?.['ticketId'] !== undefined) {
+    return composeTicketRef(bare['ticketId'], bare['revisit']);
   }
   return undefined;
 }

@@ -132,5 +132,5 @@ function frontmatterDescription(skill: string): unknown {
   if (!isRecord(parsed)) {
     throw new Error('rendered skill frontmatter is not a mapping');
   }
-  return parsed.description;
+  return parsed['description'];
 }

@@ -19,7 +19,7 @@ function assertKeywordSelection(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result');
   }
-  if (result.number !== 42 || result.source !== 'body-keyword') {
+  if (result['number'] !== 42 || result['source'] !== 'body-keyword') {
     throw new Error(`expected { number: 42, source: 'body-keyword' }, got ${JSON.stringify(result)}`);
   }
 }

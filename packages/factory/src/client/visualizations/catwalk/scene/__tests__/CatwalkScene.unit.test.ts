@@ -169,7 +169,7 @@ function hasConfig(value: unknown): value is { config: Record<string, unknown> }
 
 /** Type guard for objects with a config containing an id string. */
 function hasIdConfig(value: unknown): value is { config: { id: string } } {
-  return hasConfig(value) && 'id' in value.config && typeof value.config.id === 'string';
+  return hasConfig(value) && 'id' in value.config && typeof value.config['id'] === 'string';
 }
 
 /** Type guard for dimmed config shape used by ChuteActor. */

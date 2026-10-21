@@ -53,20 +53,20 @@ function assertSelectLedeExemplarsSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from select-lede-exemplars');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (result.type !== 'feat' || result.tier !== 'public') {
+  if (result['type'] !== 'feat' || result['tier'] !== 'public') {
     throw new Error(`expected the request to resolve to feat/public, got ${JSON.stringify(result)}`);
   }
-  if (result.widening !== 'none') {
-    throw new Error(`expected the exact type to fill the count, got widening ${JSON.stringify(result.widening)}`);
+  if (result['widening'] !== 'none') {
+    throw new Error(`expected the exact type to fill the count, got widening ${JSON.stringify(result['widening'])}`);
   }
-  if (!Array.isArray(result.exemplars) || result.exemplars.length !== 2) {
-    throw new Error(`expected two exemplars, got ${JSON.stringify(result.exemplars)}`);
+  if (!Array.isArray(result['exemplars']) || result['exemplars'].length !== 2) {
+    throw new Error(`expected two exemplars, got ${JSON.stringify(result['exemplars'])}`);
   }
-  const newest: unknown = result.exemplars[0];
-  if (!isRecord(newest) || newest.lede !== 'Agent lede of C.' || newest.capturedAt !== '2026-03-01T00:00:00Z') {
+  const newest: unknown = result['exemplars'][0];
+  if (!isRecord(newest) || newest['lede'] !== 'Agent lede of C.' || newest['capturedAt'] !== '2026-03-01T00:00:00Z') {
     throw new Error(`expected the newest exemplar first, got ${JSON.stringify(newest)}`);
   }
 }

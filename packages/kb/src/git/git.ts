@@ -49,8 +49,8 @@ const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
 
 /** Extracts git's stderr from a thrown `execFileSync` error, falling back to the error's own message. */
 function extractGitErrorMessage(error: unknown): string {
-  if (isRecord(error) && typeof error.stderr === 'string' && error.stderr.trim() !== '') {
-    return error.stderr.trim();
+  if (isRecord(error) && typeof error['stderr'] === 'string' && error['stderr'].trim() !== '') {
+    return error['stderr'].trim();
   }
   return describeError(error);
 }

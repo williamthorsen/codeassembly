@@ -26,7 +26,7 @@ export async function declareFixtureSource(baseDir: string, contentDir: string, 
 export async function writeFixtureDeclaration(declarationPath: string, contentDir: string, yaml = ''): Promise<void> {
   const parsed: unknown = parseYaml(yaml);
   const declaration = isRecord(parsed) ? parsed : {};
-  const declared: ReadonlyArray<unknown> = Array.isArray(declaration.sources) ? declaration.sources : [];
+  const declared: ReadonlyArray<unknown> = Array.isArray(declaration['sources']) ? declaration['sources'] : [];
   const sources = [{ name: FIXTURE_SOURCE_NAME, path: contentDir }, ...declared];
   await mkdir(path.dirname(declarationPath), { recursive: true });
   await writeFile(declarationPath, stringifyYaml({ ...declaration, sources }), 'utf8');

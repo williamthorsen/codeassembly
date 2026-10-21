@@ -7,7 +7,7 @@ import { buildSchemaDocuments } from '../src/schemas/build-schema-documents.ts';
 // Write the published schemas into `schemas/`, stamped with this package's version.
 const packageRoot = path.resolve(import.meta.dirname, '..');
 const packageJson: unknown = JSON.parse(readFileSync(path.join(packageRoot, 'package.json'), 'utf8'));
-const version = isRecord(packageJson) ? packageJson.version : undefined;
+const version = isRecord(packageJson) ? packageJson['version'] : undefined;
 if (typeof version !== 'string') {
   throw new TypeError(`package.json in ${packageRoot} does not declare a string version`);
 }

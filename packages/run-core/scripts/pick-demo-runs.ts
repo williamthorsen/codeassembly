@@ -4,14 +4,13 @@ import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { resolveProjectsDir } from '~/src/config.ts';
-import { foldEvents } from '~/src/event-folder.ts';
-import { parseRunRawData } from '~/src/parsers/run-data-parser.ts';
-import { RunDataParseError } from '~/src/run-data-parse-error.ts';
-import { discoverRunDirectories, type RunDirectoryEntry } from '~/src/scanners/run-directory-scanner.ts';
-import type { CanonicalRunStatus } from '~/src/types/canonical.ts';
-import type { RunEvent } from '~/src/types/run-log.ts';
-
+import { resolveProjectsDir } from '../src/config.ts';
+import { foldEvents } from '../src/event-folder.ts';
+import { parseRunRawData } from '../src/parsers/run-data-parser.ts';
+import { RunDataParseError } from '../src/run-data-parse-error.ts';
+import { discoverRunDirectories, type RunDirectoryEntry } from '../src/scanners/run-directory-scanner.ts';
+import type { CanonicalRunStatus } from '../src/types/canonical.ts';
+import type { RunEvent } from '../src/types/run-log.ts';
 import { type ScoreResult, scoreRun } from './demo-scorer.ts';
 
 const DEFAULT_TOP = 5;

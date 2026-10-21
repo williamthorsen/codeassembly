@@ -21,7 +21,7 @@ export function prepareNote(input: { args: WriteArgs; aliases: AliasMap; now: Da
 
   const extra: Record<string, unknown> = {};
   if (args.diataxis !== null) {
-    extra.diataxis = args.diataxis;
+    extra['diataxis'] = args.diataxis;
   }
 
   const record: KbAssertion = {

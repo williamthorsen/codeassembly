@@ -39,7 +39,7 @@ function assertCheckBranchCurrencySmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from check-branch-currency');
   }
-  if (result.fetched !== true || result.behind !== 1 || result.ahead !== 0) {
+  if (result['fetched'] !== true || result['behind'] !== 1 || result['ahead'] !== 0) {
     throw new Error(`expected fetched: true, behind: 1, ahead: 0, got ${JSON.stringify(result)}`);
   }
 }

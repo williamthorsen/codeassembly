@@ -16,7 +16,7 @@ function isAgentsManifest(value: unknown): value is AgentsManifest {
   if (!isRecord(value)) {
     return false;
   }
-  return typeof value.schemaVersion === 'number' && isRecord(value.harnesses);
+  return typeof value['schemaVersion'] === 'number' && isRecord(value['harnesses']);
 }
 
 /** Default manifest directory relative to home. */

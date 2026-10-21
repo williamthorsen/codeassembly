@@ -97,19 +97,19 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`--${name} requires a value`);
     }
   }
-  if (raw.store === DEFAULT_KB_SENTINEL || raw.store === FEEDBACK_KB_SENTINEL) {
+  if (raw['store'] === DEFAULT_KB_SENTINEL || raw['store'] === FEEDBACK_KB_SENTINEL) {
     throw new Error(
-      `--store ${raw.store} is not accepted: Lede exemplars come from the ${LEDE_DECISION_STORE} corpus, ` +
+      `--store ${raw['store']} is not accepted: Lede exemplars come from the ${LEDE_DECISION_STORE} corpus, ` +
         'not from whichever store kb.yaml assigns a role. Omit --store, or name the corpus.',
     );
   }
 
   return {
-    request: parseRequest({ type: raw.type, tier: raw.tier }),
+    request: parseRequest({ type: raw['type'], tier: raw['tier'] }),
     breaking: flags.some((flag) => flag.name === 'breaking'),
-    count: parseCount(raw.count),
+    count: parseCount(raw['count']),
     minQuality: parseMinQuality(raw['min-quality']),
-    store: raw.store ?? LEDE_DECISION_STORE,
+    store: raw['store'] ?? LEDE_DECISION_STORE,
     dataDir: raw['data-dir'] ?? null,
     withPair: flags.some((flag) => flag.name === 'with-pair'),
   };

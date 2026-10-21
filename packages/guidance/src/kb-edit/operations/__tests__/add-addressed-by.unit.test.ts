@@ -51,7 +51,7 @@ describe(addAddressedBy, () => {
   it('preserves other fields', () => {
     const result = addAddressedBy(buildAssertion({ extra: { diataxis: 'howto' } }), ['[[fix]]'], NOW);
 
-    expect(result.extra.diataxis).toBe('howto');
+    expect(result.extra['diataxis']).toBe('howto');
   });
 
   it('does not mutate the input record', () => {

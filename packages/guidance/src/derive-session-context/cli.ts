@@ -145,7 +145,7 @@ function buildManifest(
   explicitUrls: ExplicitUrls,
   prior: Record<string, unknown> | undefined,
 ): BranchManifest {
-  const createdAt = typeof prior?.created_at === 'string' ? prior.created_at : composed.created_at;
+  const createdAt = typeof prior?.['created_at'] === 'string' ? prior['created_at'] : composed.created_at;
   return {
     ...composed,
     created_at: createdAt,
@@ -236,7 +236,7 @@ function isStringOrNull(value: unknown): value is string | null {
 function readExplicitUrls(prior: Record<string, unknown>, composed: BranchManifest): ExplicitUrls {
   let result: ExplicitUrls = {};
   if (Object.hasOwn(prior, 'explicit_urls')) {
-    const stored = prior.explicit_urls;
+    const stored = prior['explicit_urls'];
     if (!isRecord(stored)) {
       return result;
     }

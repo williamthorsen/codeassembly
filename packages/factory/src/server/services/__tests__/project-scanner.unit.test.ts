@@ -18,7 +18,7 @@ vi.mock('codeassembly-run-core/scanners', () => ({
 vi.mock('../../../config.ts', () => ({
   factoryConfig: {
     get logInvalidRuns() {
-      return process.env.FACTORY_LOG_INVALID_RUNS === 'true';
+      return process.env['FACTORY_LOG_INVALID_RUNS'] === 'true';
     },
   },
 }));
@@ -63,7 +63,7 @@ function createMockStatus(overrides: Partial<CanonicalRunStatus> = {}): Canonica
 describe('ProjectScanner', () => {
   beforeEach(() => {
     vi.resetAllMocks();
-    delete process.env.FACTORY_LOG_INVALID_RUNS;
+    delete process.env['FACTORY_LOG_INVALID_RUNS'];
   });
 
   it('builds index from discovered valid run directories', async () => {
@@ -133,7 +133,7 @@ describe('ProjectScanner', () => {
 
   it('logs invalid-run warnings when FACTORY_LOG_INVALID_RUNS is enabled', async () => {
     using silent = silenceConsole(['error', 'warn']);
-    process.env.FACTORY_LOG_INVALID_RUNS = 'true';
+    process.env['FACTORY_LOG_INVALID_RUNS'] = 'true';
     const scanner = new ProjectScanner('/test/projects');
 
     mockedDiscover.mockResolvedValue([{ projectSlug: 'proj', ticketId: 'T-1', runId: 'bad', runPath: '/p/bad' }]);

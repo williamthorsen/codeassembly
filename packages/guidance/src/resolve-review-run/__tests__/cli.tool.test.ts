@@ -96,11 +96,11 @@ async function runCli(argv: readonly string[]): Promise<CliResult> {
   } catch (error) {
     if (
       isRecord(error) &&
-      typeof error.code === 'number' &&
-      typeof error.stderr === 'string' &&
-      typeof error.stdout === 'string'
+      typeof error['code'] === 'number' &&
+      typeof error['stderr'] === 'string' &&
+      typeof error['stdout'] === 'string'
     ) {
-      return { exitCode: error.code, stderr: error.stderr, stdout: error.stdout };
+      return { exitCode: error['code'], stderr: error['stderr'], stdout: error['stdout'] };
     }
     throw error;
   }

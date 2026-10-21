@@ -11,7 +11,7 @@ export function isEnoent(error: unknown): boolean {
  * @internal
  */
 export function isErrorCode(error: unknown, code: string): boolean {
-  return isObject(error) && error.code === code;
+  return isObject(error) && error['code'] === code;
 }
 
 /**

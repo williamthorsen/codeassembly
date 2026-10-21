@@ -34,11 +34,11 @@ export async function readDeclaredScopes(projectRoot: string): Promise<DeclaredS
   } catch (error) {
     throw chainError(`${file}: malformed YAML`, error);
   }
-  if (!isRecord(parsed) || !isRecord(parsed.project) || !('scopes' in parsed.project)) {
+  if (!isRecord(parsed) || !isRecord(parsed['project']) || !('scopes' in parsed['project'])) {
     return empty;
   }
 
-  const entries = parsed.project.scopes;
+  const entries = parsed['project']['scopes'];
   if (!Array.isArray(entries)) {
     return { scopeDirs: [], warnings: [`${file}: project.scopes is not a list; ignoring it`] };
   }

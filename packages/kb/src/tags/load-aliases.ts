@@ -52,7 +52,7 @@ export function parseAliases(text: string, contextLabel = 'tag-aliases'): AliasM
   if (!('aliases' in parsed)) {
     throw new Error(`${contextLabel}: missing required "aliases" key`);
   }
-  const aliasesBlock = parsed.aliases;
+  const aliasesBlock = parsed['aliases'];
   if (!isRecord(aliasesBlock)) {
     throw new Error(`${contextLabel}: "aliases" must be a mapping of canonical to alias list`);
   }

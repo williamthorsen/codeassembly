@@ -35,10 +35,10 @@ export function parsePrTicketInput(value: unknown): PrTicketInput {
   }
 
   const closingIssueNumbers = (closingIssuesReferences ?? []).map((reference: unknown) => {
-    if (!isRecord(reference) || typeof reference.number !== 'number' || !Number.isSafeInteger(reference.number)) {
+    if (!isRecord(reference) || typeof reference['number'] !== 'number' || !Number.isSafeInteger(reference['number'])) {
       throw new Error('each closingIssuesReferences entry must have an integer number');
     }
-    return reference.number;
+    return reference['number'];
   });
 
   return { body: body ?? '', closingIssueNumbers };

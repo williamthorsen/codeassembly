@@ -4,8 +4,6 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "lib": ["DOM", "DOM.Iterable", "ESNext"],
-    "strict": true,
-    "useDefineForClassFields": true,
   },
   // prettier-ignore
   "include": [

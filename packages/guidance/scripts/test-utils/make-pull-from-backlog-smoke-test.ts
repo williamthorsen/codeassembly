@@ -50,7 +50,7 @@ function assertPullFromBacklogSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from pull-from-backlog');
   }
-  if (result.ok !== true || !isRecord(result.record) || result.record.kind !== 'pull') {
+  if (result['ok'] !== true || !isRecord(result['record']) || result['record']['kind'] !== 'pull') {
     throw new Error(`expected ok: true and a pull record, got ${JSON.stringify(result)}`);
   }
 }

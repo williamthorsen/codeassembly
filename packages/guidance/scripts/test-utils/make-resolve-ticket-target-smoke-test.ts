@@ -26,7 +26,7 @@ export function makeResolveTicketTargetSmokeTest(): SmokeTestInvocation {
 
   return {
     args: ['--repo', 'acme/widgets'],
-    env: { ...process.env, PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ''}` },
+    env: { ...process.env, PATH: `${binDir}${path.delimiter}${process.env['PATH'] ?? ''}` },
     assertResult: assertPreferencesMissing,
   };
 }
@@ -38,11 +38,11 @@ function assertPreferencesMissing(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result');
   }
-  if (result.repo !== 'acme/widgets' || result.projectSlug !== 'widgets') {
+  if (result['repo'] !== 'acme/widgets' || result['projectSlug'] !== 'widgets') {
     throw new Error(`expected repo acme/widgets with slug widgets, got ${JSON.stringify(result)}`);
   }
-  if (JSON.stringify(result.missing) !== JSON.stringify(['.agents/preferences.yaml'])) {
-    throw new Error(`expected missing [.agents/preferences.yaml], got ${JSON.stringify(result.missing)}`);
+  if (JSON.stringify(result['missing']) !== JSON.stringify(['.agents/preferences.yaml'])) {
+    throw new Error(`expected missing [.agents/preferences.yaml], got ${JSON.stringify(result['missing'])}`);
   }
 }
 

@@ -343,13 +343,13 @@ describe(renderChangeRecordBlock, () => {
   it('when an override type spells the marker, records the type and a breaking override', () => {
     const rendered = renderChangeRecordBlock({ overrides: { type: 'sec!' }, title: 'Add foo' });
 
-    expect(readBlock(rendered).overrides).toStrictEqual({ type: 'sec', breaking: true });
+    expect(readBlock(rendered)['overrides']).toStrictEqual({ type: 'sec', breaking: true });
   });
 
   it('when the author overrides the scope to the wildcard, records the wildcard override', () => {
     const rendered = renderChangeRecordBlock({ overrides: { scope: '*' }, title: 'Add foo' });
 
-    expect(readBlock(rendered).overrides).toStrictEqual({ scope: '*' });
+    expect(readBlock(rendered)['overrides']).toStrictEqual({ scope: '*' });
   });
 
   it('omits empty overrides and an empty entry list', () => {
@@ -455,7 +455,7 @@ describe(renderMergeChangeRecordBlock, () => {
   it('renders the pull-request number as a YAML integer', () => {
     const rendered = renderMergeChangeRecordBlock({ entries: MERGE_ENTRIES, prNumber: 470 });
 
-    expect(readBlock(rendered).pr_number).toBe(470);
+    expect(readBlock(rendered)['pr_number']).toBe(470);
   });
 
   it('omits a blank ticket reference', () => {

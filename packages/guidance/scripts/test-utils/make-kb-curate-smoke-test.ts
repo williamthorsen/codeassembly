@@ -45,16 +45,16 @@ function assertKbCurateSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from kb-curate');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (result.mode !== 'report') {
-    throw new Error(`expected mode 'report', got ${JSON.stringify(result.mode)}`);
+  if (result['mode'] !== 'report') {
+    throw new Error(`expected mode 'report', got ${JSON.stringify(result['mode'])}`);
   }
-  if (!Array.isArray(result.findings)) {
-    throw new TypeError(`expected findings to be an array, got ${JSON.stringify(result.findings)}`);
+  if (!Array.isArray(result['findings'])) {
+    throw new TypeError(`expected findings to be an array, got ${JSON.stringify(result['findings'])}`);
   }
-  const rules = result.findings.map((entry: unknown) => (isRecord(entry) ? entry.rule : undefined));
+  const rules = result['findings'].map((entry: unknown) => (isRecord(entry) ? entry['rule'] : undefined));
   if (!rules.includes('wikilinks.unresolved')) {
     throw new Error(`expected the smoke run to enumerate the seed note; got rules: ${JSON.stringify(rules)}`);
   }

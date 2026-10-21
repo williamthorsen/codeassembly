@@ -47,9 +47,9 @@ interface CliResult {
 function isExecError(error: unknown): error is { code: number; stderr: string; stdout: string } {
   return (
     isRecord(error) &&
-    typeof error.code === 'number' &&
-    typeof error.stderr === 'string' &&
-    typeof error.stdout === 'string'
+    typeof error['code'] === 'number' &&
+    typeof error['stderr'] === 'string' &&
+    typeof error['stdout'] === 'string'
   );
 }
 

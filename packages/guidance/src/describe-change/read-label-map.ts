@@ -30,7 +30,7 @@ export async function readLabelMap(path: string): Promise<LabelMap> {
   if (!isRecord(parsed)) {
     return { scopes: {}, types: {} };
   }
-  return { scopes: readSection(parsed.scopes), types: readSection(parsed.types) };
+  return { scopes: readSection(parsed['scopes']), types: readSection(parsed['types']) };
 }
 
 /**

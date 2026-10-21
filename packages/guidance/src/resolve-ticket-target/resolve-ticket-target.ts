@@ -105,7 +105,7 @@ function isNotFound(result: GhResult): boolean {
   }
   try {
     const body: unknown = JSON.parse(result.stdout);
-    return isRecord(body) && body.status === '404';
+    return isRecord(body) && body['status'] === '404';
   } catch {
     return false;
   }

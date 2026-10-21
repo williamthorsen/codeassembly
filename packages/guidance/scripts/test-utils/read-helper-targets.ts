@@ -16,14 +16,14 @@ export interface HelperTarget {
 /** Reads the `helpers:` list of the `codeassembly-content.yaml` at the top of `contentRoot`. */
 export async function readHelperTargets(contentRoot: string): Promise<ReadonlyArray<HelperTarget>> {
   const parsed: unknown = parseYaml(await readFile(path.join(contentRoot, 'codeassembly-content.yaml'), 'utf8'));
-  const helpers = isRecord(parsed) ? parsed.helpers : undefined;
+  const helpers = isRecord(parsed) ? parsed['helpers'] : undefined;
   if (!Array.isArray(helpers)) {
     throw new TypeError(`${contentRoot}/codeassembly-content.yaml does not declare a helpers list`);
   }
   return helpers.map((helper: unknown) => {
-    if (!isRecord(helper) || typeof helper.entry !== 'string' || typeof helper.out !== 'string') {
+    if (!isRecord(helper) || typeof helper['entry'] !== 'string' || typeof helper['out'] !== 'string') {
       throw new Error(`Malformed helper entry: ${JSON.stringify(helper)}`);
     }
-    return { entry: helper.entry, out: helper.out };
+    return { entry: helper['entry'], out: helper['out'] };
   });
 }

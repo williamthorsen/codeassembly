@@ -33,7 +33,7 @@ function assertGroomBacklogSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from groom-backlog');
   }
-  if (result.ok !== true || result.appended !== 1) {
+  if (result['ok'] !== true || result['appended'] !== 1) {
     throw new Error(`expected ok: true and one appended record, got ${JSON.stringify(result)}`);
   }
 }

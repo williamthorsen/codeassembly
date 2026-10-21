@@ -220,12 +220,12 @@ async function readChangeSummaryFields(artifactDir: string): Promise<{ record: C
   const overrideScope = extractString(fields, 'override_scope');
   const overrideType = extractString(fields, 'override_type');
   const consolidatedRecord = normalizeChangeRecord({
-    ...(fields.breaking === true && { breaking: true }),
+    ...(fields['breaking'] === true && { breaking: true }),
     ...(scope !== null && { scope }),
     ...(type !== null && { type }),
   });
   const record = applyOverrides(consolidatedRecord, {
-    ...(fields.override_breaking === true && { breaking: true }),
+    ...(fields['override_breaking'] === true && { breaking: true }),
     ...(overrideScope !== null && { scope: overrideScope }),
     ...(overrideType !== null && { type: overrideType }),
   });

@@ -137,8 +137,8 @@ const REQUIRE_SHIM =
 async function describePeerRange(): Promise<string | undefined> {
   try {
     const parsed: unknown = JSON.parse(await readFile(path.join(resolveRunningPackageRoot(), 'package.json'), 'utf8'));
-    const peers = isRecord(parsed) ? parsed.peerDependencies : undefined;
-    const range = isRecord(peers) ? peers.esbuild : undefined;
+    const peers = isRecord(parsed) ? parsed['peerDependencies'] : undefined;
+    const range = isRecord(peers) ? peers['esbuild'] : undefined;
     return typeof range === 'string' ? range : undefined;
   } catch {
     return;

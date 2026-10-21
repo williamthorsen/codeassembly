@@ -1,72 +1,24 @@
-// TSConfig for monorepo root
-// Adapted from https://blog.logrocket.com/setting-up-monorepo-with-lerna-typescript/
+// Monorepo root TSConfig: the shared base plus the settings that this repo adds. Packages extend this file.
 {
   "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@williamthorsen/tsconfig/tsconfig.base.json",
   "compilerOptions": {
-    "allowJs": false,
-    "allowImportingTsExtensions": true,
-    // Report an error for unreachable code instead of just a warning.
-    "allowUnreachableCode": false,
-    // Report an error for unused labels instead of just a warning.
-    "allowUnusedLabels": false,
-    // "alwaysStrict": true, // implied by "strict"
     // Match the `source` export condition, so workspace dependencies resolve to their TypeScript source rather than
     // their built declarations. This mirrors the `source` condition nmr's Vitest factory resolves, and lets in-repo
     // typechecking run without a prior build. External consumers don't set this condition and fall through to `types`.
     "customConditions": ["source"],
     "declaration": true,
     "emitDecoratorMetadata": true,
-    // Support importation of CJS modules in ESM.
-    "esModuleInterop": true,
-    // Report an error when the value `undefined` is given to an optional property that doesn't specify `undefined` as a valid value.
-    "exactOptionalPropertyTypes": true,
     "experimentalDecorators": true,
-    // Report an error when importing a file using a casing different from the casing on disk.
-    "forceConsistentCasingInFileNames": true,
-    // Enable stricter transpilation for better output.
-    "isolatedModules": true,
-    "lib": ["ES2025", "ESNext.Array"],
-    "module": "NodeNext",
-    "moduleDetection": "force",
-    "noEmit": true,
-    // Report errors for fallthrough cases in switch statements.
-    "noFallthroughCasesInSwitch": true,
-    // "noImplicitAny": true,                // implied by "strict"
-    // Force functions designed to override their parent class to be specified as `override`.
-    "noImplicitOverride": true,
-    // Force functions to specify that they can return `undefined` if a possible code path does not return a value.
-    "noImplicitReturns": true,
-    // "noImplicitThis": true,               // implied by "strict"
-    // Consider enabling this; see https://www.typescriptlang.org/tsconfig#noPropertyAccessFromIndexSignature
-    // "noPropertyAccessFromIndexSignature": true,
-    "noLib": false,
-    // Force the usage of the indexed syntax to access fields declared using an index signature.
-    "noUncheckedIndexedAccess": true,
-    // Report an error when a variable is declared but never used.
-    "noUnusedLocals": true,
-    "paths": {
-      "~/*": ["./*"],
-    },
-    "removeComments": true,
 
     // Enable JSON imports.
     "resolveJsonModule": true,
-    // Don't typecheck libraries and declaration (.d.ts) files
-    "skipLibCheck": true,
     "sourceMap": true,
-    "strict": true,
-    // "strictBindCallApply": true,          // implied by "strict"
-    // "strictFunctionTypes": true,          // implied by "strict"
-    // "strictNullChecks": true,             // implied by "strict"
-    // "strictPropertyInitialization": true, // implied by "strict"
 
-    "target": "ES2025",
     // TypeScript no longer includes ambient `@types` packages automatically, so a package that imports a
     // `node:` builtin sees no declaration for it unless "node" is named here.
     "types": ["node"],
-    // "useDefineForClassFields": true, // implied by target >= ES2022 (including ESNext)
   },
-  "exclude": ["node_modules"],
   "include": [
     // This file covers only the monorepo root. Packages have their own tsconfig.json files that extend this one.
     ".config/**/*.ts",

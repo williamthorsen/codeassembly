@@ -68,7 +68,7 @@ async function hasCommit(cwd: string, ref: string): Promise<boolean> {
     ]);
     return true;
   } catch (error) {
-    if (isRecord(error) && error.code === 1) {
+    if (isRecord(error) && error['code'] === 1) {
       return false;
     }
     throw error;

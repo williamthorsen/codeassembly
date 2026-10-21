@@ -25,29 +25,29 @@ describe('SettingsStore', () => {
     });
 
     it('uses FACTORY_SETTINGS_PATH env var when no constructor argument is given', () => {
-      const original = process.env.FACTORY_SETTINGS_PATH;
+      const original = process.env['FACTORY_SETTINGS_PATH'];
       try {
-        process.env.FACTORY_SETTINGS_PATH = '/from/env';
+        process.env['FACTORY_SETTINGS_PATH'] = '/from/env';
         const store = new SettingsStore();
         expect(store.getFilePath()).toBe('/from/env/settings.json');
       } finally {
         if (original === undefined) {
-          delete process.env.FACTORY_SETTINGS_PATH;
+          delete process.env['FACTORY_SETTINGS_PATH'];
         } else {
-          process.env.FACTORY_SETTINGS_PATH = original;
+          process.env['FACTORY_SETTINGS_PATH'] = original;
         }
       }
     });
 
     it('falls back to default path when no constructor argument or env var is set', () => {
-      const original = process.env.FACTORY_SETTINGS_PATH;
+      const original = process.env['FACTORY_SETTINGS_PATH'];
       try {
-        delete process.env.FACTORY_SETTINGS_PATH;
+        delete process.env['FACTORY_SETTINGS_PATH'];
         const store = new SettingsStore();
         expect(store.getFilePath()).toMatch(/\.config\/codeassembly\/factory\/settings\.json$/);
       } finally {
         if (original !== undefined) {
-          process.env.FACTORY_SETTINGS_PATH = original;
+          process.env['FACTORY_SETTINGS_PATH'] = original;
         }
       }
     });

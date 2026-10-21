@@ -262,7 +262,7 @@ describe('parseStatusFile', () => {
       const result = await parseStatusFile('/path/to/status.json');
 
       expect(result.phaseDecisions).toBeDefined();
-      expect(result.phaseDecisions?.architecture).toEqual({
+      expect(result.phaseDecisions?.['architecture']).toEqual({
         run: true,
         reason: 'Significant UI redesign',
       });
@@ -515,7 +515,7 @@ describe('parseStatusFile', () => {
 
       const result = await parseStatusFile('/path/to/status.json');
 
-      expect(result.phaseDecisions?.architecture).toEqual({ run: true });
+      expect(result.phaseDecisions?.['architecture']).toEqual({ run: true });
     });
 
     it('rejects phaseDecision entry with wrong types', async () => {
@@ -778,8 +778,8 @@ describe('parseRunData', () => {
 
       const result = await parseRunData('/runs/test-run');
 
-      expect(result.phaseDecisions?.architecture?.reason).toBe('Validate assumptions');
-      expect(result.phaseDecisions?.implementation?.reason).toBeUndefined();
+      expect(result.phaseDecisions?.['architecture']?.reason).toBe('Validate assumptions');
+      expect(result.phaseDecisions?.['implementation']?.reason).toBeUndefined();
       expect(result.phaseDecisions?.['review-cycle']?.reason).toBeUndefined();
     });
 

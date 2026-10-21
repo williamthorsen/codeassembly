@@ -88,7 +88,7 @@ describe('index page script', () => {
     page.click('b', 'winner');
     await settle();
 
-    expect(page.store.writes.map(({ slug, data }) => [slug, data.winner])).toEqual([
+    expect(page.store.writes.map(({ slug, data }) => [slug, data['winner']])).toEqual([
       ['b', true],
       ['a', false],
     ]);
@@ -185,7 +185,7 @@ describe('index page script', () => {
     page.press('w');
     await settle();
 
-    expect(page.store.writes.map(({ slug, data }) => [slug, data.rejected, data.rank, data.winner])).toEqual([
+    expect(page.store.writes.map(({ slug, data }) => [slug, data['rejected'], data['rank'], data['winner']])).toEqual([
       ['a', true, null, false],
       ['b', false, 3, false],
       ['b', false, 3, true],
@@ -317,7 +317,7 @@ async function openPage(options: {
     store,
     element,
     text: (selector: string) => element(selector).textContent,
-    order: () => cards().map((card) => card.dataset.slug),
+    order: () => cards().map((card) => card.dataset['slug']),
     badges: (slug: string) =>
       [...element(`[data-slug="${slug}"] [data-role="badges"]`).children].map((badge) => badge.textContent),
     controlsHidden: () => cards().map((card) => findHTMLElement(card.querySelector('[data-role="controls"]'))?.hidden),
@@ -328,7 +328,7 @@ async function openPage(options: {
       select.dispatchEvent(new window.Event('change', { bubbles: true }));
     },
     focus: (slug: string) => element(`[data-slug="${slug}"]`).focus(),
-    focusedSlug: () => findHTMLElement(window.document.activeElement.closest('.card'))?.dataset.slug,
+    focusedSlug: () => findHTMLElement(window.document.activeElement.closest('.card'))?.dataset['slug'],
     activeElement: () => window.document.activeElement,
     // happy-dom does not lay out, so each card reports the top edge of the row that it is assigned to.
     layOutRows: (rows: string[][]) => {

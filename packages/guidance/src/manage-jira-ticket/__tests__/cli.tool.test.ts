@@ -263,10 +263,10 @@ describe('manage-jira-ticket CLI', () => {
   async function readSubcommands(): Promise<string[]> {
     const calls = await readCalls();
     return calls.map((call) => {
-      if (!isRecord(call) || !Array.isArray(call.args)) {
+      if (!isRecord(call) || !Array.isArray(call['args'])) {
         throw new Error('unexpected stand-in log entry');
       }
-      return call.args.slice(1, 3).join(' ');
+      return call['args'].slice(1, 3).join(' ');
     });
   }
 
@@ -276,7 +276,7 @@ describe('manage-jira-ticket CLI', () => {
       ...process.env,
       ...stubEnv,
       HOME: homeDir,
-      PATH: `${workDir}${path.delimiter}${process.env.PATH ?? ''}`,
+      PATH: `${workDir}${path.delimiter}${process.env['PATH'] ?? ''}`,
       STUB_GIT_TOPLEVEL: projectDir,
       STUB_LOG: path.join(workDir, 'calls.log'),
     };
@@ -331,9 +331,9 @@ interface CliResult {
 function isExecError(error: unknown): error is CliResult & { code: number } {
   return (
     isRecord(error) &&
-    typeof error.code === 'number' &&
-    typeof error.stderr === 'string' &&
-    typeof error.stdout === 'string'
+    typeof error['code'] === 'number' &&
+    typeof error['stderr'] === 'string' &&
+    typeof error['stdout'] === 'string'
   );
 }
 

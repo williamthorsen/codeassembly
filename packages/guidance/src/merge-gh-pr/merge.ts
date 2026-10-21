@@ -175,14 +175,14 @@ function parseMergedView(stdout: string): ParsedView {
   } catch {
     return { kind: 'unreadable' };
   }
-  if (!isRecord(parsed) || typeof parsed.state !== 'string') {
+  if (!isRecord(parsed) || typeof parsed['state'] !== 'string') {
     return { kind: 'unreadable' };
   }
-  if (parsed.state !== 'MERGED') {
-    return { kind: 'not-merged', state: parsed.state };
+  if (parsed['state'] !== 'MERGED') {
+    return { kind: 'not-merged', state: parsed['state'] };
   }
   const { headRefName, mergeCommit, mergedAt, url } = parsed;
-  const oid = isRecord(mergeCommit) ? mergeCommit.oid : undefined;
+  const oid = isRecord(mergeCommit) ? mergeCommit['oid'] : undefined;
   if (
     typeof headRefName !== 'string' ||
     typeof mergedAt !== 'string' ||
@@ -193,9 +193,9 @@ function parseMergedView(stdout: string): ParsedView {
   }
   return {
     kind: 'merged',
-    headOwner: readNamedField(parsed.headRepositoryOwner, 'login'),
+    headOwner: readNamedField(parsed['headRepositoryOwner'], 'login'),
     headRefName,
-    headRepo: readNamedField(parsed.headRepository, 'name'),
+    headRepo: readNamedField(parsed['headRepository'], 'name'),
     mergedAt,
     oid,
     url,

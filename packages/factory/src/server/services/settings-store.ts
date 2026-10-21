@@ -15,7 +15,8 @@ export class SettingsStore {
   private readonly filePath: string;
 
   constructor(dirPath?: string) {
-    const dir = dirPath ?? process.env.FACTORY_SETTINGS_PATH ?? join(homedir(), '.config', 'codeassembly', 'factory');
+    const dir =
+      dirPath ?? process.env['FACTORY_SETTINGS_PATH'] ?? join(homedir(), '.config', 'codeassembly', 'factory');
     this.filePath = join(dir, 'settings.json');
   }
 

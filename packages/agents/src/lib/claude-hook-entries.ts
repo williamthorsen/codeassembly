@@ -44,9 +44,9 @@ export function removeHookEntries(settings: unknown, sentinel: string): HookEntr
 
   const next: Record<string, unknown> = { ...root };
   if (Object.keys(nextHooks).length === 0) {
-    delete next.hooks;
+    delete next['hooks'];
   } else {
-    next.hooks = nextHooks;
+    next['hooks'] = nextHooks;
   }
   return { settings: next, result: { changed: true, removedCount } };
 }
@@ -55,11 +55,11 @@ export function removeHookEntries(settings: unknown, sentinel: string): HookEntr
 
 /** True when a matcher group contains the sentinel in any of its commands: the ownership check. */
 function isOwnedGroup(group: unknown, sentinel: string): boolean {
-  if (!isRecord(group) || !Array.isArray(group.hooks)) {
+  if (!isRecord(group) || !Array.isArray(group['hooks'])) {
     return false;
   }
-  return group.hooks.some(
-    (hook: unknown) => isRecord(hook) && typeof hook.command === 'string' && hook.command.includes(sentinel),
+  return group['hooks'].some(
+    (hook: unknown) => isRecord(hook) && typeof hook['command'] === 'string' && hook['command'].includes(sentinel),
   );
 }
 
@@ -77,7 +77,7 @@ function readEventGroups(hooks: Record<string, unknown>, event: string): Readonl
 
 /** Reads the `hooks` map, treating an absent key as empty and refusing a non-object value. */
 function readHooks(settings: unknown): Record<string, unknown> {
-  const hooks = readSettingsRoot(settings).hooks;
+  const hooks = readSettingsRoot(settings)['hooks'];
   if (hooks === undefined) {
     return {};
   }

@@ -511,18 +511,18 @@ describe('choreograph', () => {
           // Patch the flying actor's ascend/descend to use our deferred promises.
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Accessing mock FlyingArtifactActor methods
           const flyingActor = actor as Record<string, unknown>;
-          if (typeof flyingActor.ascend === 'function') {
-            flyingActor.ascend = async () => {
+          if (typeof flyingActor['ascend'] === 'function') {
+            flyingActor['ascend'] = async () => {
               callLog.push('ascend-start');
               await ascendPromise;
               callLog.push('ascend-end');
             };
           }
-          if (typeof flyingActor.descend !== 'function') return;
+          if (typeof flyingActor['descend'] !== 'function') return;
 
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Accessing mock FlyingArtifactActor methods
-          const originalDescend = flyingActor.descend as () => Promise<void>;
-          flyingActor.descend = async () => {
+          const originalDescend = flyingActor['descend'] as () => Promise<void>;
+          flyingActor['descend'] = async () => {
             callLog.push('descend-start');
             await originalDescend.call(flyingActor);
             callLog.push('descend-end');
@@ -587,11 +587,11 @@ describe('choreograph', () => {
         addActor: (actor: unknown) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
           const flyer = actor as Record<string, unknown>;
-          if (typeof flyer.ascend === 'function') {
-            flyer.ascend = () => Promise.reject(new Error('Actor has been killed'));
+          if (typeof flyer['ascend'] === 'function') {
+            flyer['ascend'] = () => Promise.reject(new Error('Actor has been killed'));
           }
-          if (typeof flyer.descend === 'function') {
-            flyer.descend = () => Promise.reject(new Error('Actor has been killed'));
+          if (typeof flyer['descend'] === 'function') {
+            flyer['descend'] = () => Promise.reject(new Error('Actor has been killed'));
           }
         },
       });
@@ -613,11 +613,11 @@ describe('choreograph', () => {
         addActor: (actor: unknown) => {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions -- Patching mock FlyingArtifactActor
           const flyer = actor as Record<string, unknown>;
-          if (typeof flyer.ascend === 'function') {
-            flyer.ascend = () => Promise.reject(new Error('Unexpected error'));
+          if (typeof flyer['ascend'] === 'function') {
+            flyer['ascend'] = () => Promise.reject(new Error('Unexpected error'));
           }
-          if (typeof flyer.descend === 'function') {
-            flyer.descend = () => Promise.reject(new Error('Unexpected error'));
+          if (typeof flyer['descend'] === 'function') {
+            flyer['descend'] = () => Promise.reject(new Error('Unexpected error'));
           }
         },
       });

@@ -37,13 +37,13 @@ function assertReviseProseSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from revise-prose');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (!Array.isArray(result.candidates)) {
-    throw new TypeError(`expected candidates to be an array, got ${JSON.stringify(result.candidates)}`);
+  if (!Array.isArray(result['candidates'])) {
+    throw new TypeError(`expected candidates to be an array, got ${JSON.stringify(result['candidates'])}`);
   }
-  const phrases = result.candidates.map((entry: unknown) => (isRecord(entry) ? entry.phrase : undefined));
+  const phrases = result['candidates'].map((entry: unknown) => (isRecord(entry) ? entry['phrase'] : undefined));
   if (!phrases.includes('ticket a branch name encodes')) {
     throw new Error(`expected the smoke run to report the seed site; got phrases: ${JSON.stringify(phrases)}`);
   }
