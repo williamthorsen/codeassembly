@@ -3,7 +3,6 @@
   "$schema": "https://json.schemastore.org/tsconfig",
   "extends": "@williamthorsen/tsconfig/tsconfig.base.json",
   "compilerOptions": {
-    "allowJs": false,
     // Match the `source` export condition, so workspace dependencies resolve to their TypeScript source rather than
     // their built declarations. This mirrors the `source` condition nmr's Vitest factory resolves, and lets in-repo
     // typechecking run without a prior build. External consumers don't set this condition and fall through to `types`.
@@ -11,9 +10,6 @@
     "declaration": true,
     "emitDecoratorMetadata": true,
     "experimentalDecorators": true,
-    // Report an error when importing a file using a casing different from the casing on disk.
-    "forceConsistentCasingInFileNames": true,
-    "noLib": false,
 
     // Enable JSON imports.
     "resolveJsonModule": true,
