@@ -11,7 +11,6 @@ import { RunDataParseError } from '../src/run-data-parse-error.ts';
 import { discoverRunDirectories, type RunDirectoryEntry } from '../src/scanners/run-directory-scanner.ts';
 import type { CanonicalRunStatus } from '../src/types/canonical.ts';
 import type { RunEvent } from '../src/types/run-log.ts';
-
 import { type ScoreResult, scoreRun } from './demo-scorer.ts';
 
 const DEFAULT_TOP = 5;

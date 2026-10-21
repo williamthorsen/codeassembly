@@ -108,8 +108,9 @@ function walkObject(
   findings: Finding[],
 ): void {
   const properties = isRecord(schema['properties']) ? schema['properties'] : undefined;
-  if (Array.isArray(schema['required'])) {
-    for (const key of schema['required']) {
+  const required = schema['required'];
+  if (Array.isArray(required)) {
+    for (const key of required) {
       if (typeof key === 'string' && !Object.hasOwn(value, key)) {
         report(findings, 'error', segments, `missing required key '${key}'`);
       }
