@@ -12,7 +12,8 @@ import {
   renderChangeRecordBlock,
   renderMergeChangeRecordBlock,
 } from '../change-record-block.ts';
-import { parseArgs, runDescribe } from '../cli.ts';
+import { runDescribe } from '../cli.ts';
+import { parseArgs } from '../parse-args.ts';
 import { type FakeGit, makeFakeGit, makeRawCommit } from '../test-utils/make-fake-git.ts';
 import { SUBCOMMAND_NAMES } from '../test-utils/subcommand-names.ts';
 import type { ConsolidateBranchOutcome, EntryOutcome } from '../types.ts';
