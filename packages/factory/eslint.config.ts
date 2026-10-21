@@ -28,6 +28,12 @@ const config = defineConfig([
       },
     },
   },
+  {
+    // Dormant: Restructured on revival rather than split now.
+    rules: {
+      'max-lines': 'off',
+    },
+  },
 ]);
 
 export default config;
