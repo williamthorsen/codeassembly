@@ -241,8 +241,8 @@ export async function resolveDomain(
   const ambientHosts = await probeAmbientHosts(harnessIds, domain);
   defects.add(findDamagedAmbientHostDefects(ambientHosts, domain, resolved, references));
 
-  // Every gate above has reported. Raised here, ahead of `retireRetiredOutputs`, which is the first call in this
-  // phase that writes, so a failing run leaves the previously deployed guidance exactly as it found it.
+  // Every gate above has reported. Raised here, ahead of `retireRetiredOutputs` in `reconcileDomain`, the first call
+  // that writes, so a failing run leaves the previously deployed guidance exactly as it found it.
   if (defects.found.length > 0) {
     throw new SyncValidationError(defects.found);
   }
