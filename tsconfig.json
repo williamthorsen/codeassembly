@@ -23,7 +23,6 @@
     // `node:` builtin sees no declaration for it unless "node" is named here.
     "types": ["node"],
   },
-  "exclude": ["node_modules"],
   "include": [
     // This file covers only the monorepo root. Packages have their own tsconfig.json files that extend this one.
     ".config/**/*.ts",
