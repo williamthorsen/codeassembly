@@ -225,8 +225,8 @@ catalogs:
       specifier: 19.3.1
       version: 19.3.1
     readyup:
-      specifier: 0.41.1
-      version: 0.41.1
+      specifier: 0.42.0
+      version: 0.42.0
     vite:
       specifier: 8.3.4
       version: 8.3.4
@@ -264,7 +264,7 @@ importers:
         version: 1.6.27(@typescript-eslint/eslint-plugin@8.71.1(@typescript-eslint/parser@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)(vitest@4.1.12)
       '@williamthorsen/eslint-config-typescript':
         specifier: 20.1.2
-        version: 20.1.2(@typescript-eslint/utils@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@vitest/eslint-plugin@1.6.27(@typescript-eslint/eslint-plugin@8.71.1(@typescript-eslint/parser@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)(vitest@4.1.12))(eslint-plugin-jest-dom@5.10.1(@testing-library/dom@10.4.2)(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-react-hooks@7.1.1(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-testing-library@7.16.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(readyup@0.41.1(esbuild@0.28.2))(supports-color@7.2.0)(typescript@6.0.3)
+        version: 20.1.2(@typescript-eslint/utils@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@vitest/eslint-plugin@1.6.27(@typescript-eslint/eslint-plugin@8.71.1(@typescript-eslint/parser@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)(vitest@4.1.12))(eslint-plugin-jest-dom@5.10.1(@testing-library/dom@10.4.2)(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-react-hooks@7.1.1(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-testing-library@7.16.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(readyup@0.42.0(esbuild@0.28.2))(supports-color@7.2.0)(typescript@6.0.3)
       '@williamthorsen/kb':
         specifier: workspace:*
         version: link:packages/kb
@@ -288,7 +288,7 @@ importers:
         version: 0.10.3(vitest@4.1.12)
       '@williamthorsen/tsconfig':
         specifier: 0.12.0
-        version: 0.12.0(readyup@0.41.1(esbuild@0.28.2))
+        version: 0.12.0(readyup@0.42.0(esbuild@0.28.2))
       codeassembly:
         specifier: workspace:*
         version: link:packages/agents
@@ -321,7 +321,7 @@ importers:
         version: 3.9.10
       readyup:
         specifier: 'catalog:'
-        version: 0.41.1(esbuild@0.28.2)
+        version: 0.42.0(esbuild@0.28.2)
       tsx:
         specifier: 4.23.15
         version: 4.23.15
@@ -385,7 +385,7 @@ importers:
         version: 10.12.0(jiti@2.7.0)(supports-color@7.2.0)
       readyup:
         specifier: 'catalog:'
-        version: 0.41.1(esbuild@0.28.2)
+        version: 0.42.0(esbuild@0.28.2)
       vitest:
         specifier: 'catalog:'
         version: 4.1.12(@types/node@24.19.2)(@vitest/coverage-v8@4.1.12)(happy-dom@21.0.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -3383,8 +3383,8 @@ packages:
     resolution: {integrity: sha512-7KA6+N9IGat52d83dvxnApAWN+MtVb1MiVuMR/cf1O4kYsJG+g/Aav0AHcHKsb6StinayfPLne0+fMX2sOzAKg==}
     engines: {node: '>=6'}
 
-  readyup@0.41.1:
-    resolution: {integrity: sha512-9f/QJC/+D+BTlY1docfK6EVERn6Qq1dmMz+riNVw4/cjjQNuIKuuwEuihnerCb4144xxvhmDTDsGX5I4Zx5tkQ==}
+  readyup@0.42.0:
+    resolution: {integrity: sha512-xdZwdJtlvEIPSkRVhP9ASXUVwOO+Ip8VfiZ1653zWKtsRqt/ySZ2htbcWWT0V+wGF4GYlkVNZDy6MZCDY10bBA==}
     engines: {node: '>=24'}
     hasBin: true
     peerDependencies:
@@ -4939,7 +4939,7 @@ snapshots:
 
   '@williamthorsen/change-grammar@0.2.1': {}
 
-  ? '@williamthorsen/eslint-config-typescript@20.1.2(@typescript-eslint/utils@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@vitest/eslint-plugin@1.6.27(@typescript-eslint/eslint-plugin@8.71.1(@typescript-eslint/parser@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)(vitest@4.1.12))(eslint-plugin-jest-dom@5.10.1(@testing-library/dom@10.4.2)(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-react-hooks@7.1.1(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-testing-library@7.16.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(readyup@0.41.1(esbuild@0.28.2))(supports-color@7.2.0)(typescript@6.0.3)'
+  ? '@williamthorsen/eslint-config-typescript@20.1.2(@typescript-eslint/utils@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(@vitest/eslint-plugin@1.6.27(@typescript-eslint/eslint-plugin@8.71.1(@typescript-eslint/parser@8.71.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)(vitest@4.1.12))(eslint-plugin-jest-dom@5.10.1(@testing-library/dom@10.4.2)(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0)))(eslint-plugin-react-hooks@7.1.1(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0))(eslint-plugin-testing-library@7.16.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3))(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(readyup@0.42.0(esbuild@0.28.2))(supports-color@7.2.0)(typescript@6.0.3)'
   : dependencies:
       '@eslint-community/eslint-plugin-eslint-comments': 4.8.1(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))
       '@eslint/js': 10.0.1(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))
@@ -4963,7 +4963,7 @@ snapshots:
       eslint-plugin-jest-dom: 5.10.1(@testing-library/dom@10.4.2)(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))
       eslint-plugin-react-hooks: 7.1.1(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)
       eslint-plugin-testing-library: 7.16.2(eslint@10.12.0(jiti@2.7.0)(supports-color@7.2.0))(supports-color@7.2.0)(typescript@6.0.3)
-      readyup: 0.41.1(esbuild@0.28.2)
+      readyup: 0.42.0(esbuild@0.28.2)
     transitivePeerDependencies:
       - '@eslint/json'
       - eslint-import-resolver-node
@@ -5050,9 +5050,9 @@ snapshots:
     dependencies:
       vitest: 4.1.12(@types/node@24.19.2)(@vitest/coverage-v8@4.1.12)(happy-dom@21.0.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
 
-  '@williamthorsen/tsconfig@0.12.0(readyup@0.41.1(esbuild@0.28.2))':
+  '@williamthorsen/tsconfig@0.12.0(readyup@0.42.0(esbuild@0.28.2))':
     optionalDependencies:
-      readyup: 0.41.1(esbuild@0.28.2)
+      readyup: 0.42.0(esbuild@0.28.2)
 
   '@xyflow/react@12.12.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
     dependencies:
@@ -6920,7 +6920,7 @@ snapshots:
 
   readline-transform@1.0.0: {}
 
-  readyup@0.41.1(esbuild@0.28.2):
+  readyup@0.42.0(esbuild@0.28.2):
     dependencies:
       '@williamthorsen/toolbelt.errors': 0.8.3
       '@williamthorsen/toolbelt.packaging': 0.6.3
