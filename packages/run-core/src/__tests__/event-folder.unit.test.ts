@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { foldEvents } from '../event-folder.ts';
+import { foldEvents } from '../event-folder/event-folder.ts';
 import type { RunEvent, RunHeader } from '../types/run-log.ts';
 
 /** Builds a minimal run header; tests override fields as needed. */

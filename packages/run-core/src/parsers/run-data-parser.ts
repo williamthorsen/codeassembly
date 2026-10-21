@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { foldEvents } from '../event-folder.ts';
+import { foldEvents } from '../event-folder/event-folder.ts';
 import { RunDataParseError } from '../run-data-parse-error.ts';
 import { v2RunIndexSchema } from '../schemas/run-index-schema.ts';
 import { parseRunLogLine, v3RunIndexSchema } from '../schemas/run-log-schema.ts';
