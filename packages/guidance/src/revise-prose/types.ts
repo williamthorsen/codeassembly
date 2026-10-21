@@ -289,6 +289,10 @@ export interface ProseSpan {
  */
 export type NegativeQuantifierPosition = 'existential' | 'relative' | 'other';
 
+/** What opens an embedded subject, which decides its window. Several kinds report under one shape. */
+export type SubjectKind =
+  'bare' | 'demonstrative' | 'determiner' | 'numeral' | 'pronoun' | 'quantifier' | 'quantifier-pronoun';
+
 /** The embedded subject's form, in the order the rulebook ranks it: worst first. */
 export type SubjectShape = 'quantified' | 'definite' | 'bare' | 'pronoun';
 
