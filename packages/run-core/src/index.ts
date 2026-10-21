@@ -76,7 +76,7 @@ export type { RunDataParseErrorCategory } from './run-data-parse-error.ts';
 export { RunDataParseError } from './run-data-parse-error.ts';
 
 // Event folder: Reconstruct CanonicalRunStatus from header + events
-export { foldEvents } from './event-folder.ts';
+export { foldEvents } from './event-folder/event-folder.ts';
 
 // Type guards
 export { isEnoent } from './type-guards.ts';
