@@ -42,6 +42,7 @@
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
+    "@williamthorsen/tsconfig": "0.12.0",
     "codeassembly": "workspace:*",
     "dotenv": "18.0.7",
     "eslint": "catalog:",

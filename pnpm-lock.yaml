@@ -286,6 +286,9 @@ importers:
       '@williamthorsen/toolbelt.vitest':
         specifier: 'catalog:'
         version: 0.10.3(vitest@4.1.11)
+      '@williamthorsen/tsconfig':
+        specifier: 0.12.0
+        version: 0.12.0(readyup@0.41.1(esbuild@0.28.2))
       codeassembly:
         specifier: workspace:*
         version: link:packages/agents
@@ -1687,6 +1690,15 @@ packages:
     engines: {node: '>=24.0.0'}
     peerDependencies:
       vitest: ^4.0.0
+
+  '@williamthorsen/tsconfig@0.12.0':
+    resolution: {integrity: sha512-hp7NOu49B6K4g5mttweGf8mIuGHxYdkw6sv/ljbatX4pHZDcRlwVCW12GKactTnbNX9rBR+YKjMYVmPAAyykhw==}
+    engines: {node: '>=24'}
+    peerDependencies:
+      readyup: '>=0.33.0'
+    peerDependenciesMeta:
+      readyup:
+        optional: true
 
   '@xyflow/react@12.12.0':
     resolution: {integrity: sha512-74oXI0Rgm1Eu33cHQAd74J6oVgCH9mbFyTVQbsGgp2kmWwh0HdtBr2VP04z8mbPD+M/xO69nqG5dDEt7/EN2rQ==}
@@ -4951,6 +4963,10 @@ snapshots:
   '@williamthorsen/toolbelt.vitest@0.10.3(vitest@4.1.11)':
     dependencies:
       vitest: 4.1.11(@types/node@24.19.2)(@vitest/coverage-v8@4.1.11)(happy-dom@21.0.1)(vite@8.3.4(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+
+  '@williamthorsen/tsconfig@0.12.0(readyup@0.41.1(esbuild@0.28.2))':
+    optionalDependencies:
+      readyup: 0.41.1(esbuild@0.28.2)
 
   '@xyflow/react@12.12.0(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:

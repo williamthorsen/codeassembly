@@ -11,6 +11,7 @@ export default defineRdyConfig({
     'npm:@williamthorsen/release-kit',
     'npm:@williamthorsen/toolbelt.errors',
     'npm:@williamthorsen/toolbelt.vitest',
+    'npm:@williamthorsen/tsconfig',
     'npm:codeassembly',
     'npm:readyup',
     'npm:v11y-check',
