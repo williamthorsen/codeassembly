@@ -20,13 +20,13 @@ catalog:
   eslint-plugin-react: '7.37.5'
   happy-dom: '21.0.1'
   prettier: '3.9.10'
-  react: '19.3.0'
-  react-dom: '19.3.0'
+  react: '19.3.1'
+  react-dom: '19.3.1'
   readyup: '0.41.1'
   vite: '8.3.4'
   vitest: '4.1.12'
   yaml: '2.9.1'
-  zod: '4.6.5'
+  zod: '4.6.7'
 
 allowBuilds:
   '@tailwindcss/oxide': true
