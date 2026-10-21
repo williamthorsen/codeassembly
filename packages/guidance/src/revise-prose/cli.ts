@@ -25,7 +25,8 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { planBatches } from './batch.ts';
-import { collectProse, extractFileProse, NotARepositoryError } from './collect-prose.ts';
+import { collectProse, NotARepositoryError } from './collect-prose.ts';
+import { extractFileProse } from './extract-prose.ts';
 import { realGit, type ReviseProseGit } from './git.ts';
 import { hashFileProse } from './hash-prose.ts';
 import { parseArgs, stripCommand } from './parse-args.ts';

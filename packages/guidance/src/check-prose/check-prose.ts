@@ -2,7 +2,7 @@
  * Runs every revise-prose detector over one composed body, such as a change summary's passages, without the sweep
  * record: The body has neither a tracked path nor a record entry, so coverage and rejections do not apply to it.
  */
-import { extractProse } from '../revise-prose/collect-prose.ts';
+import { extractProse } from '../revise-prose/extract-prose.ts';
 import { detectRules, RULE_IDS } from '../revise-prose/rules.ts';
 import type { Candidate, RuleId } from '../revise-prose/types.ts';
 
