@@ -127,8 +127,8 @@ export async function resolveDomain(
     ),
   );
 
-  // Because every delivery pass below targets this one set of harnesses, and each renders its content for the harness
-  // to which it writes, the set is resolved once and threaded rather than re-derived per pass.
+  // Because every delivery pass in `reconcileDomain` targets this one set of harnesses, and each renders its content
+  // for the harness to which it writes, the set is resolved once and threaded rather than re-derived per pass.
   const targets = await resolveTargetHarnesses({ harness: options.harness, cwd: domain.baseDir, homeDir });
   const harnessIds = targets.harnessIds;
 
@@ -187,9 +187,9 @@ export async function resolveDomain(
   // rather than one per subagent.
   const resolveOverlay = createOverlayLoader();
 
-  // Scanned against the pre-write filesystem, so that each delivery pass below can retract before it writes and free
-  // a name for reuse within the same run. The two skill namespaces share these dirs and are scanned separately, each
-  // reading only its own marker, so neither ever claims the other's.
+  // Scanned against the pre-write filesystem, so that each delivery pass in `reconcileDomain` can retract before it
+  // writes and free a name for reuse within the same run. The two skill namespaces share these dirs and are scanned
+  // separately, each reading only its own marker, so neither ever claims the other's.
   const skillOrphansByDir = await findRulebookSkillOrphans(harnessSkillTargets, desiredSkillDirs);
   const declaredSkillOrphansByDir = await findDeclaredSkillOrphans(harnessSkillTargets, resolvedSkills);
   const subagentOrphansByDir = await findSubagentOrphans(harnessSubagentTargets, declaredSubagentSet);
@@ -209,8 +209,9 @@ export async function resolveDomain(
   // here; `deploySkill` re-renders it at write time.
   defects.add(await findDeclaredSkillRenderDefects(harnessSkillTargets, resolvedSkills, resolveAnchorContext));
 
-  // Same gate for each source's support entries, whose defects would otherwise appear only at the write below. The
-  // rendered result is passed to the preview and the delivery pass rather than rendered again by each.
+  // Same gate for each source's support entries, whose defects would otherwise appear only at the write in
+  // `reconcileDomain`. The rendered result is passed to the preview and the delivery pass rather than rendered again by
+  // each.
   const sourceSupport = await renderSourceSupportPlans(harnessSkillTargets, sources, resolveAnchorContext);
   const sourceSupportPlans = sourceSupport.plans;
   defects.add(sourceSupport.defects);

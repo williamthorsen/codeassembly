@@ -100,7 +100,7 @@ export async function resolveDomainArtifacts(
 
   // Resolve and validate every declared rulebook, skill, and subagent before writing anything, so that a missing
   // source file, invalid frontmatter, or a still-`install` artifact is reported rather than leaving a partial sync.
-  // Each pass resolves what it can: An artifact reported here is simply absent from the passes below.
+  // Each pass resolves what it can: An artifact reported here is simply absent from every later pass.
   const rulebookResolution = await resolveEachArtifact('rulebook', declaredRulebooks, (slug) =>
     resolveRulebook(slug, resolver),
   );
