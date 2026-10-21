@@ -48,10 +48,7 @@ import {
   findBoundRulebookHookDefects,
   findCrossNamespaceCollisionDefects,
   findDamagedAmbientHostDefects,
-  findDeclaredSkillRenderDefects,
-  findDeclaredSubagentRenderDefects,
   findForeignOwnedTargetDefects,
-  findRulebookRenderDefects,
   findSkillNameCollisionDefects,
   findUnresolvableBindingDefects,
   findUnresolvableDeclaredArtifactDefects,
@@ -67,6 +64,11 @@ import {
   resolveSkillTarget,
   resolveSubagentTarget,
 } from './render-contexts.ts';
+import {
+  findDeclaredSkillRenderDefects,
+  findDeclaredSubagentRenderDefects,
+  findRulebookRenderDefects,
+} from './render-gates.ts';
 import { planSourceSupportRetractions, reconcileSourceSupport, renderSourceSupportPlans } from './source-support.ts';
 import type { SyncDomain } from './sync-domain.ts';
 import type { ResolutionEntry, SyncOutcome, SyncPlan } from './sync-plan.ts';

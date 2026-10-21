@@ -5,29 +5,20 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { ARTIFACT_TYPE_VALUES, artifactFrontmatterPath, type ArtifactType } from '../../lib/artifact-types.ts';
 import type { ResolvedDeclaration } from '../../lib/codeassembly-manifest.ts';
-import { type ContentDefect, foldHarnessDefects, type HarnessDefect } from '../../lib/content-defects.ts';
+import type { ContentDefect } from '../../lib/content-defects.ts';
 import { describeSearchedLocations, type SourceResolver } from '../../lib/content-sources.ts';
 import type { DirectArtifacts } from '../../lib/dependency-resolver.ts';
 import { findCrossNamespaceCollisions, findSkillNameCollisions } from '../../lib/deploy-collisions.ts';
 import { listGuidanceHooks } from '../../lib/guidance-hooks.ts';
 import { artifactTargetsHarness } from '../../lib/harness.ts';
-import { createContentRootLinkAnchor, createSkillLinkAnchor } from '../../lib/link-anchor.ts';
 import { indexRulebooksBySlug, type ResolvedRulebook } from '../../lib/rulebook-deploy.ts';
 import { extractRulebookSkillSlug } from '../../lib/rulebook-skill.ts';
-import { renderRulebookBody, type ResolveRulebookContext } from '../../lib/rulebook-transform.ts';
 import type { ResolvedSkill } from '../../lib/skill-deploy.ts';
-import { renderSkillDirectory } from '../../lib/skill-transform.ts';
-import { renderSubagent, type ResolvedSubagent } from '../../lib/subagent-deploy.ts';
+import type { ResolvedSubagent } from '../../lib/subagent-deploy.ts';
 import { isMissingFile } from '../../lib/type-guards.ts';
-import type { HarnessId } from '../../lib/types.ts';
 import type { PlannedReference, ProbedAmbientHost } from './ambient-hosts.ts';
 import { skillMarker, subagentMarker } from './owned-artifacts.ts';
-import type {
-  HarnessSkillTarget,
-  HarnessSubagentTarget,
-  ResolveAnchorContext,
-  ResolveOverlay,
-} from './render-contexts.ts';
+import type { HarnessSkillTarget, HarnessSubagentTarget } from './render-contexts.ts';
 import type { SyncDomain } from './sync-domain.ts';
 
 /**
@@ -193,69 +184,6 @@ export function findDamagedAmbientHostDefects(
 }
 
 /**
- * Renders every declared skill against every targeted harness, discarding the output, so that a broken include or an
- * unmapped tool placeholder is reported before any file is written. The deploy pass re-renders at write time; this
- * pass exists only to fail the run closed, including under `--dry-run`.
- */
-export async function findDeclaredSkillRenderDefects(
-  targets: ReadonlyArray<HarnessSkillTarget>,
-  resolvedSkills: ReadonlyArray<ResolvedSkill>,
-  resolveAnchorContext: ResolveAnchorContext,
-): Promise<ReadonlyArray<ContentDefect>> {
-  const raised: Array<HarnessDefect> = [];
-  for (const target of targets) {
-    for (const skill of resolvedSkills) {
-      if (!artifactTargetsHarness(skill, target.harnessId)) {
-        continue;
-      }
-      try {
-        await renderSkillDirectory(skill.srcDir, skill.slug, skill.contentRoot, {
-          ...target.deployContext,
-          anchor: createSkillLinkAnchor(resolveAnchorContext(target.harnessId, skill.source)),
-        });
-      } catch (error: unknown) {
-        raised.push(describeRenderDefect('skill', skill.slug, target.harnessId, error));
-      }
-    }
-  }
-  return foldHarnessDefects(
-    raised,
-    targets.map((target) => target.harnessId),
-  );
-}
-
-/**
- * Renders every declared subagent against every targeted harness, discarding the output, so that an unmapped tool
- * placeholder or a rulebook token is reported before any file is written. `reconcileDeclaredSubagents` re-renders at write
- * time; this pass exists only to fail the run closed, including under `--dry-run`.
- */
-export async function findDeclaredSubagentRenderDefects(
-  targets: ReadonlyArray<HarnessSubagentTarget>,
-  resolvedSubagents: ReadonlyArray<ResolvedSubagent>,
-  resolveAnchorContext: ResolveAnchorContext,
-  resolveOverlay: ResolveOverlay,
-): Promise<ReadonlyArray<ContentDefect>> {
-  const raised: Array<HarnessDefect> = [];
-  for (const target of targets) {
-    for (const subagent of resolvedSubagents) {
-      try {
-        await renderSubagent(subagent, {
-          ...target.deployContext,
-          anchor: createContentRootLinkAnchor(resolveAnchorContext(target.harnessId, subagent.source)),
-          overlayYaml: await resolveOverlay(target.harnessId, subagent.contentRoot),
-        });
-      } catch (error: unknown) {
-        raised.push(describeRenderDefect('subagent', subagent.slug, target.harnessId, error));
-      }
-    }
-  }
-  return foldHarnessDefects(
-    raised,
-    targets.map((target) => target.harnessId),
-  );
-}
-
-/**
  * Reports every planned target that already exists without this sync's ownership marker: an install-managed or
  * hand-authored file. Failing here, before any write or delete, keeps a same-named foreign file from being
  * overwritten; the marker-gated retraction scans separately keep it from being deleted. Absent targets are safe.
@@ -285,32 +213,6 @@ export async function findForeignOwnedTargetDefects(
     }
   }
   return defects;
-}
-
-/**
- * Renders every resolved rulebook against each targeted harness that the rulebook targets, discarding the output, so
- * that a link target that the delivery pipeline cannot honor is reported before any file is written. Both delivery
- * passes re-render at write time; this pass exists only to fail the run closed, including under `--dry-run`.
- */
-export function findRulebookRenderDefects(
-  harnessIds: ReadonlyArray<HarnessId>,
-  resolved: ReadonlyArray<ResolvedRulebook>,
-  resolveRulebookContext: ResolveRulebookContext,
-): ReadonlyArray<ContentDefect> {
-  const raised: Array<HarnessDefect> = [];
-  for (const harnessId of harnessIds) {
-    for (const rulebook of resolved) {
-      if (!artifactTargetsHarness(rulebook, harnessId)) {
-        continue;
-      }
-      try {
-        renderRulebookBody(rulebook.body, rulebook.slug, resolveRulebookContext(harnessId, rulebook.source));
-      } catch (error: unknown) {
-        raised.push(describeRenderDefect('rulebook', rulebook.slug, harnessId, error));
-      }
-    }
-  }
-  return foldHarnessDefects(raised, harnessIds);
 }
 
 /**
@@ -424,18 +326,3 @@ export async function resolveEachArtifact<T>(
 
 /** Declared slugs per type that resolve from nowhere, so that the closure walk can skip a seed already reported. */
 export type UnresolvableSlugs = Record<ArtifactType, ReadonlySet<string>>;
-
-// region | Helpers
-
-/**
- * Builds one artifact's render defect, including the harness so that the fold can tell a body-local failure from a
- * scoped one.
- */
-function describeRenderDefect(type: ArtifactType, slug: string, harnessId: HarnessId, error: unknown): HarnessDefect {
-  return {
-    harnessId,
-    defect: { file: artifactFrontmatterPath(type, slug), kind: 'render', detail: describeError(error) },
-  };
-}
-
-// endregion | Helpers
