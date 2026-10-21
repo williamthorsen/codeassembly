@@ -15,7 +15,7 @@ import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/a
 import { classifyByExtension, classifyByShebang, extractProse } from './extract-prose.ts';
 import { UnparsableYamlError } from './extract-yaml.ts';
 import { realGit, type ReviseProseGit } from './git.ts';
-import { RECORD_PATH } from './record.ts';
+import { RECORD_PATH } from './parse-record.ts';
 import type { ProseKind, ProseSpan, ScannedFile, SkipReason } from './types.ts';
 
 /** A resolved sweep: what it read, what it excluded, and every block of prose that it yielded. */

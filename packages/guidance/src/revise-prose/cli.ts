@@ -30,14 +30,12 @@ import { extractFileProse } from './extract-prose.ts';
 import { realGit, type ReviseProseGit } from './git.ts';
 import { hashFileProse } from './hash-prose.ts';
 import { parseArgs, stripCommand } from './parse-args.ts';
+import { parseRecord, parseRunFold, RECORD_PATH } from './parse-record.ts';
 import {
   applyRejections,
   composeRecord,
   containsPhrase,
   listUnsweptRules,
-  parseRecord,
-  parseRunFold,
-  RECORD_PATH,
   seedFiles,
   selectPriorRejections,
   stringifyRecord,

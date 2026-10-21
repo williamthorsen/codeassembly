@@ -8,7 +8,8 @@ import { z } from 'zod';
 
 import { runDetect, runRecord } from '../cli.ts';
 import { LEGACY_STALE_VERSION } from '../convert-record.ts';
-import { parseRecord, RECORD_PATH, stringifyRecord } from '../record.ts';
+import { parseRecord, RECORD_PATH } from '../parse-record.ts';
+import { stringifyRecord } from '../record.ts';
 import { makeFakeGit } from '../test-utils/make-fake-git.ts';
 import type {
   DetectResult,

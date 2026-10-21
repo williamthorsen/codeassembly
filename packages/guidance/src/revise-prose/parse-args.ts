@@ -1,6 +1,6 @@
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { DEFAULT_BATCH_BUDGET } from './batch.ts';
-import { RULE_NAME_PATTERN, SWEEP_VERSION_PATTERN } from './record.ts';
+import { RULE_NAME_PATTERN, SWEEP_VERSION_PATTERN } from './parse-record.ts';
 import type { NamedRule, ParsedArgs } from './types.ts';
 
 /** The flags recognized by the sweep. Each of `rule` and `unit` may repeat; the scanner reports them in argv order. */

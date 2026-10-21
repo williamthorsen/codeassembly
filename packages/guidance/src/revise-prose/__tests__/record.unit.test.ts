@@ -1,14 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { parseRecord, parseRunFold, RECORD_PATH } from '../parse-record.ts';
 import {
   applyRejections,
   composeRecord,
   containsPhrase,
   isStaleRejection,
   listUnsweptRules,
-  parseRecord,
-  parseRunFold,
-  RECORD_PATH,
   seedFiles,
   selectPriorRejections,
   stringifyRecord,
