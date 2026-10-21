@@ -1,45 +1,22 @@
 import path from 'node:path';
 
-import {
-  countAccountedBytes,
-  type DocumentChange,
-  type ExpansionChange,
-  GROWTH_CEILING_BYTES,
-  type GrowthWarning,
-  type SizeChange,
-  type SizeReport,
-} from '../../deployed-sizes/build-size-report.ts';
-import { formatBytes, formatDelta } from '../../deployed-sizes/format-bytes.ts';
-import { renderAggregates } from '../../deployed-sizes/render-aggregates.ts';
-import type { ArtifactType } from '../../lib/artifact-types.ts';
 import { describeMissingSource } from '../../lib/declared-sources.ts';
 import { artifactTargetsHarness } from '../../lib/harness.ts';
 import type { ReportLine } from '../../lib/report-line.ts';
 import { describeHarnessTargeting } from '../../lib/target-harnesses.ts';
-import type { AmbientHostPlan, AmbientSkipReason } from './ambient-hosts.ts';
-import type { DroppedHarnessRetraction, HostRetraction } from './harness-retraction.ts';
 import type { GuidanceHookAdvisory } from './hook-bindings.ts';
-import type { Retirement } from './legacy-retirement.ts';
-import type { SizeReportOutcome } from './record-deployed-sizes.ts';
+import { describeAmbientHostPlan, describeAmbientSkip, describeUnignoredHost } from './report-ambient.ts';
+import { renderResolutionReport, renderShadowWarning } from './report-resolution.ts';
+import {
+  describeDamagedDroppedHosts,
+  describeDroppedHarnesses,
+  describePlannedDroppedHarnesses,
+  describePlannedRetractions,
+  describeRetirement,
+} from './report-retractions.ts';
+import { describeSizes } from './report-sizes.ts';
 import type { SourceSupportPlan } from './source-support.ts';
-import type { MissingDeclaration, ResolutionEntry, SyncOutcome, SyncPlan } from './sync-plan.ts';
-
-/** Rank used to group resolution entries by type before the within-type slug sort. */
-const ARTIFACT_TYPE_ORDER: Readonly<Record<ArtifactType, number>> = {
-  rulebook: 0,
-  skill: 1,
-  subagent: 2,
-  collection: 3,
-};
-
-/** The verbs that a retraction line takes, so that the same renderer serves a preview and the run that it previews. */
-interface RetractionVerbs {
-  readonly remove: string;
-  readonly strip: string;
-}
-
-const PERFORMED_VERBS: RetractionVerbs = { remove: 'removed', strip: 'stripped' };
-const PLANNED_VERBS: RetractionVerbs = { remove: 'remove', strip: 'strip' };
+import type { MissingDeclaration, SyncOutcome, SyncPlan } from './sync-plan.ts';
 
 /**
  * Renders what a dry run reports: where it would deploy, what it would retire, how each artifact resolved, and every
@@ -126,88 +103,9 @@ export function renderSyncReport(outcome: SyncOutcome): ReadonlyArray<ReportLine
 
 // region | Helpers
 
-/** Orders resolution entries by artifact type, then by slug, so the report is deterministic. */
-function compareResolutionEntries(a: ResolutionEntry, b: ResolutionEntry): number {
-  if (a.type !== b.type) {
-    return ARTIFACT_TYPE_ORDER[a.type] - ARTIFACT_TYPE_ORDER[b.type];
-  }
-  return a.slug.localeCompare(b.slug);
-}
-
 /** Totals the orphan paths found by one retraction pass across the directories that it swept. */
 function countOrphans(byDir: ReadonlyArray<{ readonly orphans: ReadonlyArray<string> }>): number {
   return byDir.reduce((total, entry) => total + entry.orphans.length, 0);
-}
-
-/** The dry-run line for one host's plan, naming the host and the action that a real run would take on it. */
-function describeAmbientHostPlan(hostPath: string, plan: AmbientHostPlan): ReportLine | undefined {
-  if (plan.kind === 'skip') {
-    const reason = describeAmbientSkip(plan.reason, hostPath);
-    return reason === undefined ? undefined : { level: 'info', text: `  skip ambient delivery: ${reason}` };
-  }
-  switch (plan.action) {
-    case 'append':
-      return { level: 'info', text: `  append the ambient region to ${hostPath}` };
-    case 'create':
-      return { level: 'info', text: `  create ${hostPath}, containing the ambient region` };
-    case 'inject':
-      return { level: 'info', text: `  inject the ambient region in ${hostPath}` };
-  }
-}
-
-/**
- * The reason one ambient host is skipped, or `undefined` when the skip is not worth reporting. A scope declaring
- * nothing ambient is an ordinary outcome rather than news, so neither path reports it; every other cause names a
- * problem that the user can act on, and both paths report it in these same words.
- */
-function describeAmbientSkip(reason: AmbientSkipReason, hostPath: string): string | undefined {
-  switch (reason.cause) {
-    case 'damaged-region':
-      return describeDamagedRegion(hostPath);
-    case 'not-needed':
-      return undefined;
-    case 'stale-install':
-      return describeStaleAmbientHost(reason.status, hostPath);
-  }
-}
-
-/** The parenthesized detail beside one change: its size after the deployment, or the word that a size cannot state. */
-function describeChangeDetail(change: DocumentChange): string {
-  switch (change.kind) {
-    case 'added':
-      return `added, ${formatBytes(change.bytes)}`;
-    case 'removed':
-      return 'removed';
-    case 'resized':
-      // A document whose growth its partials partly explain leads with the residual, which the word marks as such.
-      return change.explained === 0 ? formatBytes(change.bytes) : `residual, ${formatBytes(change.bytes)}`;
-  }
-}
-
-/**
- * The warning for each dropped harness whose ambient host the sweep skips. Emitted at the report's top level, beside
- * the ambient-delivery skips that it mirrors, rather than inside the harness's block: Nothing was retracted there, and
- * a run that reports only what it removed looks clean while guidance that the declaration withdrew still loads.
- */
-function describeDamagedDroppedHosts(plan: SyncPlan): ReadonlyArray<ReportLine> {
-  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> =>
-    retraction.ambientHost?.kind === 'damaged'
-      ? [
-          {
-            glyph: 'warning',
-            level: 'warn',
-            text:
-              `Skipping ambient retraction: ${describeDamagedRegion(retraction.ambientHost.path)} Repair the ` +
-              'codeassembly-ambient markers and re-run, or the withdrawn guidance keeps loading.',
-          },
-        ]
-      : [],
-  );
-}
-
-/** The sentence naming a host whose ambient region is too damaged for any transform to touch. */
-function describeDamagedRegion(hostPath: string): string {
-  return `${hostPath} has a damaged ambient region.`;
 }
 
 /** The closing summary: what the run resolved, what it delivered across the targeted harnesses, and what it retracted. */
@@ -232,74 +130,6 @@ function describeDeliveries(plan: SyncPlan): string {
     `${countOrphans(plan.declaredSkillOrphansByDir)} declared-skill dir(s), and ` +
     `${countOrphans(plan.subagentOrphansByDir)} declared-subagent file(s).`
   );
-}
-
-/** What this deployment did to one document: its change, its key, and its size after the deployment. */
-function describeDocumentChange(change: DocumentChange, deltaWidth: number): ReportLine {
-  return describeSizeChangeLine(change, deltaWidth, change.key, describeChangeDetail(change));
-}
-
-/**
- * The lines naming what one dropped harness still contains: one for each path removed and each region stripped.
- * `verbs` supplies the tense, so a preview reads as what a run would do and a run as what it did.
- */
-function describeDroppedHarness(retraction: DroppedHarnessRetraction, verbs: RetractionVerbs): ReadonlyArray<string> {
-  const lines = [
-    ...retraction.skillDirs.map((skillDir) => `${verbs.remove} skill ${skillDir}`),
-    ...retraction.subagentFiles.map((subagentFile) => `${verbs.remove} subagent ${subagentFile}`),
-    ...retraction.supportPaths.map((supportPath) => `${verbs.remove} source support ${supportPath}`),
-  ];
-  // A damaged host is reported as a warning of its own, so it doesn't contribute a line to the actions block.
-  if (retraction.ambientHost !== undefined && retraction.ambientHost.kind !== 'damaged') {
-    lines.push(describeHostRetraction(retraction.ambientHost, 'ambient', verbs));
-  }
-  if (retraction.promptsYml !== undefined) {
-    lines.push(describeHostRetraction(retraction.promptsYml, 'codeassembly', verbs));
-  }
-  return lines;
-}
-
-/**
- * The live-run lines for the dropped-harness sweep, one headed block per harness. Headed rather than counted into the
- * closing summary: That sentence reconciles the targeted set, and a harness leaving that set is a different event.
- */
-function describeDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
-  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => {
-    const removals = describeDroppedHarness(retraction, PERFORMED_VERBS);
-    return removals.length === 0
-      ? []
-      : [
-          { level: 'info', text: `\nRetracted harness dropped from the declaration: ${retraction.harnessId}` },
-          ...removals.map((text): ReportLine => ({ level: 'info', text: `  ${text}` })),
-        ];
-  });
-}
-
-/**
- * What one changed expansion unit deployed: the bytes that its change explains, the unit, its per-document delta, the
- * documents whose change it explains, and its own size. The unit is named without its key's kind prefix, which puts
- * it in the same column as the deployed paths beside it, and the document count is the one that makes the line's own
- * arithmetic check out.
- */
-function describeExpansionChange(change: ExpansionChange, deltaWidth: number): ReportLine {
-  const count = change.explainedDocumentCount;
-  const detail = `${formatDelta(change.delta)} × ${count} document${count === 1 ? '' : 's'}, ${formatBytes(change.bytes)}`;
-  return describeSizeChangeLine(change, deltaWidth, stripKeyKind(change.key), detail);
-}
-
-/**
- * The warning for one document that has just reached the growth ceiling. It names `streamline-guidance` only when
- * the reader maintains the source behind the document; otherwise the crossing is worth stating and the remedy is not
- * theirs to apply.
- */
-function describeGrowthWarning(warning: GrowthWarning): ReportLine {
-  const remedy = warning.mayStreamline ? ' Run the `streamline-guidance` skill on its source to reduce it.' : '';
-  const ceiling = formatBytes(GROWTH_CEILING_BYTES);
-  return {
-    glyph: 'warning',
-    level: 'warn',
-    text: `${warning.key} has passed the ${ceiling} growth ceiling (${formatBytes(warning.bytes)}).${remedy}`,
-  };
 }
 
 /**
@@ -339,58 +169,11 @@ function describeGuidanceHookAdvisory(advisory: GuidanceHookAdvisory): ReportLin
   }
 }
 
-/** Names what retraction does to one host containing a sync-owned region: delete the file, or strip the region. */
-function describeHostRetraction(retraction: HostRetraction, region: string, verbs: RetractionVerbs): string {
-  return retraction.kind === 'delete'
-    ? `${verbs.remove} ${retraction.path}`
-    : `${verbs.strip} the ${region} region from ${retraction.path}`;
-}
-
 /** The advice for a scope without a declaration to act on, naming the remedy that the global tier has. */
 function describeMissingDeclaration(outcome: MissingDeclaration): string {
   return outcome.scope === 'global'
     ? `No ${outcome.declarationPath} found. Run \`codeassembly init --global\` to create one, then re-run \`sync --global\`.`
     : 'No .agents/codeassembly.yaml found. Nothing to sync.';
-}
-
-/** The dry-run lines for the dropped-harness sweep, each harness's paths nested under a header naming it. */
-function describePlannedDroppedHarnesses(plan: SyncPlan): ReadonlyArray<ReportLine> {
-  return plan.droppedHarnesses.flatMap((retraction): ReadonlyArray<ReportLine> => {
-    const removals = describeDroppedHarness(retraction, PLANNED_VERBS);
-    return removals.length === 0
-      ? []
-      : [
-          { level: 'info', text: `  retract harness dropped from the declaration: ${retraction.harnessId}` },
-          ...removals.map((text): ReportLine => ({ level: 'info', text: `    ${text}` })),
-        ];
-  });
-}
-
-/** The dry-run lines for every retraction that a run would perform, across the three delivery namespaces. */
-function describePlannedRetractions(plan: SyncPlan): ReadonlyArray<ReportLine> {
-  const lines: Array<ReportLine> = [];
-  for (const { skillsDir, orphans } of plan.skillOrphansByDir) {
-    for (const dir of orphans) {
-      lines.push({
-        level: 'info',
-        text: `  retract skill ${path.join(skillsDir, dir)} (no longer the current skill dir)`,
-      });
-    }
-  }
-  for (const { skillsDir, orphans } of plan.declaredSkillOrphansByDir) {
-    for (const dir of orphans) {
-      lines.push({ level: 'info', text: `  retract declared skill ${path.join(skillsDir, dir)} (no longer declared)` });
-    }
-  }
-  for (const { subagentsDir, orphans } of plan.subagentOrphansByDir) {
-    for (const file of orphans) {
-      lines.push({
-        level: 'info',
-        text: `  retract declared subagent ${path.join(subagentsDir, file)} (no longer declared)`,
-      });
-    }
-  }
-  return lines;
 }
 
 /** The dry-run lines for every write that a run would perform, in the order the delivery passes run. */
@@ -435,61 +218,6 @@ function describePlannedWrites(plan: SyncPlan): ReadonlyArray<ReportLine> {
   return lines;
 }
 
-/** What one retirement did to a legacy output, or would do had the run not been a dry run. */
-function describeRetirement(retirement: Retirement, performed: boolean): ReportLine {
-  if (retirement.kind === 'neutral-rulebooks') {
-    return {
-      level: 'info',
-      text: performed
-        ? `Retired the neutral rulebook tree ${retirement.dir}`
-        : `[dry-run] sync would retire the neutral rulebook tree ${retirement.dir}`,
-    };
-  }
-  if (retirement.emptied) {
-    return {
-      level: 'info',
-      text: performed
-        ? `Deleted ${retirement.hostPath}, which contained only retired rulebook blocks`
-        : `[dry-run] sync would delete ${retirement.hostPath}, which contains only retired rulebook blocks`,
-    };
-  }
-  return {
-    level: 'info',
-    text: performed
-      ? `Retired the rulebook blocks in ${retirement.hostPath}`
-      : `[dry-run] sync would retire the rulebook blocks in ${retirement.hostPath}`,
-  };
-}
-
-/** One change's line: the bytes that it accounts for, the name that it is reported under, and its own detail. */
-function describeSizeChangeLine(change: SizeChange, deltaWidth: number, name: string, detail: string): ReportLine {
-  const accounted = formatDelta(countAccountedBytes(change)).padStart(deltaWidth);
-  return { level: 'info', text: `  ${accounted}  ${name}  (${detail})` };
-}
-
-/**
- * The size block that closes a live run's report: what changed, what has just grown past the ceiling, the three
- * aggregates, and the command that ranks every deployed document.
- *
- * The aggregates don't include an overlap disclaimer here. The block labels the three totals separately and doesn't
- * print a combined total, so nothing implies that they sum, and the closing line points at the command that gives the
- * explanation.
- */
-function describeSizes(sizes: SizeReportOutcome | undefined): ReadonlyArray<ReportLine> {
-  if (sizes === undefined) {
-    return [];
-  }
-  if (sizes.kind === 'failed') {
-    return [{ glyph: 'warning', level: 'warn', text: `The deployment's sizes were not recorded: ${sizes.message}` }];
-  }
-  return renderSizeReport(sizes.report);
-}
-
-/** Renders source names for a report line: `source "a"` or `sources "a", "b"`. */
-function describeSourceNames(names: ReadonlyArray<string>): string {
-  return `source${names.length === 1 ? '' : 's'} ${names.map((name) => `"${name}"`).join(', ')}`;
-}
-
 /**
  * Renders the dry-run lines for the source-support pass: what each namespace gains, which ones delivery empties
  * because their source provides nothing, and which ones retraction removes because they aren't claimed by any source.
@@ -506,29 +234,6 @@ function describeSourceSupport(
         : `  retract source support ${plan.destDir} (source provides none)`,
     );
   return [...lines, ...retractions.map((retraction) => `  retract source support ${retraction} (no longer declared)`)];
-}
-
-/** The reason a harness-home guidance file is too stale to receive ambient delivery, naming the remedy. */
-function describeStaleAmbientHost(status: 'malformed' | 'missing' | 'no-region', guidanceFile: string): string {
-  switch (status) {
-    case 'missing':
-      return `${guidanceFile} does not exist. Run \`codeassembly install\`, then re-run \`sync --global\`.`;
-    case 'no-region':
-      return `${guidanceFile} doesn't have an ambient region. Run \`codeassembly install\` to refresh it, then re-run \`sync --global\`.`;
-    case 'malformed':
-      return `${guidanceFile} has a damaged ambient region: an unmatched marker, or more than one region. Repair its codeassembly-ambient markers, then re-run \`sync --global\`.`;
-  }
-}
-
-/** The advisory naming a host that a run writes and that git does not ignore. */
-function describeUnignoredHost(hostPath: string): ReportLine {
-  return {
-    glyph: 'warning',
-    level: 'warn',
-    text:
-      `${hostPath} is not git-ignored. It contains machine-local guidance, so add it to .gitignore to keep it ` +
-      'out of version control.',
-  };
 }
 
 /**
@@ -549,68 +254,6 @@ function renderPackageAdvice(names: ReadonlyArray<string>): ReadonlyArray<Report
     },
     { level: 'info', text: `\npackages:\n  use:\n${entries}\n` },
   ];
-}
-
-/**
- * Renders the per-artifact resolution report, sorted by type then slug: each deployed artifact and the source from
- * which it resolved (`← source "<name>"`), with `(shadows source "<name>")` appended on a shadow. Type and slug
- * columns are padded for scannability. Pure and deterministic for a given entry set.
- */
-function renderResolutionReport(entries: ReadonlyArray<ResolutionEntry>): string {
-  const sorted = entries.toSorted(compareResolutionEntries);
-  const typeWidth = Math.max(...sorted.map((entry) => entry.type.length));
-  const slugWidth = Math.max(...sorted.map((entry) => entry.slug.length));
-  const lines = sorted.map((entry) => {
-    const shadow = entry.shadowedSources.length > 0 ? ` (shadows ${describeSourceNames(entry.shadowedSources)})` : '';
-    return `  ${entry.type.padEnd(typeWidth)}  ${entry.slug.padEnd(slugWidth)}  ← source "${entry.source}"${shadow}`;
-  });
-  return ['[dry-run] sync would resolve:', ...lines].join('\n');
-}
-
-/** Renders the real-run warning naming each deployed artifact that shadows a lower-precedence source's artifact. */
-function renderShadowWarning(shadows: ReadonlyArray<ResolutionEntry>): string {
-  const details = shadows
-    .toSorted(compareResolutionEntries)
-    .map(
-      (entry) =>
-        `${entry.type} "${entry.slug}" (source "${entry.source}" over ${describeSourceNames(entry.shadowedSources)})`,
-    )
-    .join(', ');
-  const plural = shadows.length === 1 ? '' : 's';
-  const verb = shadows.length === 1 ? 's' : '';
-  return `${shadows.length} artifact${plural} shadow${verb} a lower-precedence source: ${details}`;
-}
-
-/** Renders one measured deployment's size block, in the order stated by `describeSizes`. */
-function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
-  const lines: Array<ReportLine> = [
-    { level: 'info', text: '' },
-    { level: 'info', text: 'Deployed sizes:' },
-  ];
-  if (report.isFirstRecorded) {
-    lines.push({ level: 'info', text: '  This is the first recorded deployment here, so nothing is compared to it.' });
-  }
-  // Computed across both kinds of change, so that the column stays aligned when the two interleave.
-  const deltaWidth = Math.max(0, ...report.changes.map((change) => formatDelta(countAccountedBytes(change)).length));
-  lines.push(
-    ...report.changes.map((change) =>
-      change.kind === 'expansion'
-        ? describeExpansionChange(change, deltaWidth)
-        : describeDocumentChange(change, deltaWidth),
-    ),
-    ...report.warnings.map(describeGrowthWarning),
-    { level: 'info', text: '' },
-    ...renderAggregates(report.aggregates, report.documentCount),
-    { level: 'info', text: '' },
-    { level: 'info', text: 'Run `codeassembly sizes` to rank every deployed document by size.' },
-  );
-  return lines;
-}
-
-/** The name under which one expansion key is reported: its `{source}/{relPath}` tail, without the kind that leads it. */
-function stripKeyKind(key: string): string {
-  const separator = key.indexOf(':');
-  return separator === -1 ? key : key.slice(separator + 1);
 }
 
 // endregion | Helpers
