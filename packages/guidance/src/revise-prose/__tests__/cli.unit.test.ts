@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { DEFAULT_BATCH_BUDGET } from '../batch.ts';
-import { parseArgs, runDetect } from '../cli.ts';
+import { runDetect } from '../cli.ts';
+import { parseArgs } from '../parse-args.ts';
 
 describe(parseArgs, () => {
   it('reads every positional argument as a path narrowing the sweep', () => {
