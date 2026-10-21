@@ -24,7 +24,7 @@ export function makeTriageSpikeFindingsSmokeTest(): SmokeTestInvocation {
 
   return {
     args: ['check-labels'],
-    env: { ...process.env, PATH: `${binDir}${path.delimiter}${process.env.PATH ?? ''}` },
+    env: { ...process.env, PATH: `${binDir}${path.delimiter}${process.env['PATH'] ?? ''}` },
     assertResult: assertTriageSpikeFindingsSmokeResult,
   };
 }
@@ -36,15 +36,15 @@ function assertTriageSpikeFindingsSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from triage-spike-findings');
   }
-  const families = isRecord(result.families) ? result.families : {};
-  const confidence = isRecord(families.confidence) ? families.confidence : {};
-  const value = isRecord(families.value) ? families.value : {};
+  const families = isRecord(result['families']) ? result['families'] : {};
+  const confidence = isRecord(families['confidence']) ? families['confidence'] : {};
+  const value = isRecord(families['value']) ? families['value'] : {};
   const expectedMissing = JSON.stringify(['value:nice-to-have', 'value:questionable', 'value:should-have']);
   if (
-    result.ok !== true ||
-    result.complete !== false ||
-    JSON.stringify(confidence.missing) !== '[]' ||
-    JSON.stringify(value.missing) !== expectedMissing
+    result['ok'] !== true ||
+    result['complete'] !== false ||
+    JSON.stringify(confidence['missing']) !== '[]' ||
+    JSON.stringify(value['missing']) !== expectedMissing
   ) {
     throw new Error(`expected the stand-in's label families, got ${JSON.stringify(result)}`);
   }

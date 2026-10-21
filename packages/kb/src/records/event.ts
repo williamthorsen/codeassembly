@@ -57,14 +57,14 @@ const TYPED_FIELDS = new Set([
 export function parseEvent(fields: Record<string, unknown>, body: string): ParseEventResult {
   const errors: string[] = [];
 
-  if (fields.recordType !== 'event') {
+  if (fields['recordType'] !== 'event') {
     errors.push('recordType: expected "event"');
   }
 
-  const id = requireString(fields.id, 'id', errors);
-  const session = readOptionalNonEmptyString(fields.session, 'session', errors);
-  const cwd = requireString(fields.cwd, 'cwd', errors);
-  const summary = requireString(fields.summary, 'summary', errors);
+  const id = requireString(fields['id'], 'id', errors);
+  const session = readOptionalNonEmptyString(fields['session'], 'session', errors);
+  const cwd = requireString(fields['cwd'], 'cwd', errors);
+  const summary = requireString(fields['summary'], 'summary', errors);
 
   let capturedAt: string | undefined;
   const rawCapturedAt = fields['captured-at'];
@@ -76,9 +76,9 @@ export function parseEvent(fields: Record<string, unknown>, body: string): Parse
     capturedAt = rawCapturedAt;
   }
 
-  const tags = readListField(fields.tags, 'tags', errors);
+  const tags = readListField(fields['tags'], 'tags', errors);
   const addressedBy = readListField(fields['addressed-by'], 'addressed-by', errors);
-  const impact = readImpactField(fields.impact, errors);
+  const impact = readImpactField(fields['impact'], errors);
 
   if (
     errors.length > 0 ||
@@ -132,13 +132,13 @@ export function renderEvent(record: KbEvent): { fields: Record<string, unknown>;
     summary: record.summary,
   };
   if (record.tags.length > 0) {
-    fields.tags = record.tags;
+    fields['tags'] = record.tags;
   }
   if (record.addressedBy.length > 0) {
     fields['addressed-by'] = record.addressedBy;
   }
   if (record.impact !== undefined) {
-    fields.impact = record.impact;
+    fields['impact'] = record.impact;
   }
   Object.assign(fields, record.extra);
   return { fields, body: record.body };

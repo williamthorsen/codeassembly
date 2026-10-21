@@ -242,9 +242,9 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error(`--${name} requires a value`);
     }
   }
-  if (raw.store === DEFAULT_KB_SENTINEL || raw.store === FEEDBACK_KB_SENTINEL) {
+  if (raw['store'] === DEFAULT_KB_SENTINEL || raw['store'] === FEEDBACK_KB_SENTINEL) {
     throw new Error(
-      `--store ${raw.store} is not accepted: A lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
+      `--store ${raw['store']} is not accepted: A lede decision belongs to the ${LEDE_DECISION_STORE} corpus, ` +
         'not to whichever store kb.yaml assigns a role. Omit --store, or name the corpus.',
     );
   }
@@ -259,15 +259,15 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     mergeCommit: requireFlag(raw, 'merge-commit'),
     dataDir: raw['data-dir'] ?? null,
     subagentsDir: raw['subagents-dir'] ?? null,
-    store: raw.store ?? LEDE_DECISION_STORE,
-    type: raw.type ?? null,
-    scope: raw.scope ?? null,
+    store: raw['store'] ?? LEDE_DECISION_STORE,
+    type: raw['type'] ?? null,
+    scope: raw['scope'] ?? null,
     breaking: flags.some((flag) => flag.name === 'breaking'),
-    ticket: raw.ticket ?? null,
+    ticket: raw['ticket'] ?? null,
     agentLedeFile: raw['agent-lede-file'] ?? null,
     mergedLedeFile: raw['merged-lede-file'] ?? null,
-    provenance: raw.provenance ?? null,
-    harness: raw.harness ?? null,
+    provenance: raw['provenance'] ?? null,
+    harness: raw['harness'] ?? null,
   };
 }
 
@@ -326,7 +326,7 @@ function resolveMode(input: { inspect: boolean; raw: Record<string, string> }): 
   mode: 'inspect' | 'commit';
   quality: LedeQuality | null;
 } {
-  const rawQuality = input.raw.quality;
+  const rawQuality = input.raw['quality'];
   if (rawQuality !== undefined && input.inspect) {
     throw new Error('--inspect and --quality are mutually exclusive');
   }

@@ -171,7 +171,7 @@ function readBreaking(input: { extra: Record<string, unknown>; basename: string 
   breaking: boolean;
   warnings: string[];
 } {
-  const raw = input.extra.breaking;
+  const raw = input.extra['breaking'];
   if (raw === undefined || typeof raw === 'boolean') {
     return { breaking: raw === true, warnings: [] };
   }

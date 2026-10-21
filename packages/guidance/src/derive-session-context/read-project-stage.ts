@@ -17,7 +17,7 @@ export interface ProjectStage {
  * the allowed values, when a declared value is outside its set.
  */
 export function readProjectStage(projectPreferences: Record<string, unknown>): ProjectStage {
-  const section = projectPreferences.project;
+  const section = projectPreferences['project'];
   if (section === undefined) {
     return { maturity: null, sensitivity: null, audience: null };
   }
@@ -25,9 +25,9 @@ export function readProjectStage(projectPreferences: Record<string, unknown>): P
     throw new Error(`preferences: 'project' must be an object (got ${JSON.stringify(section)})`);
   }
   return {
-    maturity: expectOneOf(section.maturity, MATURITY_VALUES, 'project.maturity'),
-    sensitivity: expectOneOf(section.sensitivity, SENSITIVITY_VALUES, 'project.sensitivity'),
-    audience: expectOneOf(section.audience, AUDIENCE_VALUES, 'project.audience'),
+    maturity: expectOneOf(section['maturity'], MATURITY_VALUES, 'project.maturity'),
+    sensitivity: expectOneOf(section['sensitivity'], SENSITIVITY_VALUES, 'project.sensitivity'),
+    audience: expectOneOf(section['audience'], AUDIENCE_VALUES, 'project.audience'),
   };
 }
 

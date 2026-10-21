@@ -89,13 +89,13 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   const { positionals: ids, flags } = scanFlags(argv, FLAGS);
   const raw = valueFlagMap(flags);
 
-  const store = raw.store === undefined ? null : raw.store;
+  const store = raw['store'] === undefined ? null : raw['store'];
   if (store === '') {
     throw new Error('--store requires a value');
   }
 
   const hasAddressedBy = raw['add-addressed-by'] !== undefined;
-  const hasRetag = raw.retag !== undefined;
+  const hasRetag = raw['retag'] !== undefined;
   const hasSetImpact = raw['set-impact'] !== undefined;
   const operationCount = [hasAddressedBy, hasRetag, hasSetImpact].filter(Boolean).length;
   if (operationCount > 1) {
@@ -118,7 +118,7 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     return { operation: 'add-addressed-by', store, ids, references };
   }
   if (hasRetag) {
-    return { operation: 'retag', store, ids, tags: parseTagList(raw.retag ?? '') };
+    return { operation: 'retag', store, ids, tags: parseTagList(raw['retag'] ?? '') };
   }
   const impact = raw['set-impact'] ?? '';
   if (!isEventImpact(impact)) {

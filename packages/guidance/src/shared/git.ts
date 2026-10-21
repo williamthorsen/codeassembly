@@ -33,7 +33,7 @@ const execFileAsync = promisify(execFile);
 
 /** Extracts git's own message from a failed `execFileSync` call, falling back to the thrown error's own text. */
 function describeGitFailure(error: unknown): string {
-  const stderr = isRecord(error) ? error.stderr : undefined;
+  const stderr = isRecord(error) ? error['stderr'] : undefined;
   if (typeof stderr === 'string' && stderr.trim() !== '') {
     return stderr.trim();
   }

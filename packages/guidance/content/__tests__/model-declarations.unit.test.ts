@@ -66,20 +66,20 @@ async function collectDeclarations(): Promise<ReadonlyArray<ModelDeclaration>> {
     declarations.push({
       kind: 'skill',
       source: `skill ${slug}`,
-      model: frontmatter.model,
-      context: frontmatter.context,
+      model: frontmatter['model'],
+      context: frontmatter['context'],
     });
   }
   for (const slug of subagent) {
     const { frontmatter } = await readArtifact(CONTENT_ROOT, 'subagent', slug);
-    declarations.push({ kind: 'subagent', source: `subagent ${slug}`, model: frontmatter.model });
+    declarations.push({ kind: 'subagent', source: `subagent ${slug}`, model: frontmatter['model'] });
   }
 
   const overlay: unknown = parse(await readFile(CLAUDE_SUBAGENT_DATA, 'utf8'));
   if (isRecord(overlay)) {
     for (const [key, entry] of Object.entries(overlay)) {
       if (isRecord(entry)) {
-        declarations.push({ kind: 'subagent', source: `claude.yaml ${key}`, model: entry.model });
+        declarations.push({ kind: 'subagent', source: `claude.yaml ${key}`, model: entry['model'] });
       }
     }
   }

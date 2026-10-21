@@ -33,11 +33,11 @@ async function readBaseDirFromYaml(filePath: string): Promise<string | undefined
     if (!isRecord(parsed)) {
       return undefined;
     }
-    const artifacts: unknown = parsed.artifacts;
+    const artifacts: unknown = parsed['artifacts'];
     if (!isRecord(artifacts)) {
       return undefined;
     }
-    const baseDir: unknown = artifacts.base_dir;
+    const baseDir: unknown = artifacts['base_dir'];
     if (typeof baseDir !== 'string') {
       return undefined;
     }

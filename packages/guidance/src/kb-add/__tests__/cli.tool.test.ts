@@ -289,7 +289,7 @@ describe(runAdd, () => {
     if (!result.ok || result.mode !== 'write') return;
 
     expect(result.record.recordType).toBe('assertion');
-    expect(result.record.extra.diataxis).toBe('howto');
+    expect(result.record.extra['diataxis']).toBe('howto');
     const written = await readFile(result.path, 'utf8');
     expect(written).toMatch(/^recordType: assertion$/m);
     expect(written).toContain('diataxis: howto');

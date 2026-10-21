@@ -111,7 +111,7 @@ describe(runCli, () => {
         sha: 'abc1234',
         counts: { fetched: 3, selected: 2, resumed: 0, total: 2 },
       });
-      expect(result.ok && result.groups).toMatchObject([
+      expect(result.ok && result['groups']).toMatchObject([
         { scope: 'agents', waves: [[10]] },
         { scope: null, waves: [[12]] },
       ]);
@@ -132,7 +132,7 @@ describe(runCli, () => {
 
       // #10 is resumed, and #11, the oldest unscoped ticket, leads #12 whatever order `gh` returns.
       expect(result).toMatchObject({ ok: true, counts: { total: 1 } });
-      expect(result.ok && result.tickets).toMatchObject([{ number: 11 }]);
+      expect(result.ok && result['tickets']).toMatchObject([{ number: 11 }]);
     });
 
     it('skips a ticket assessed in the run unless it changed since, ignoring the run marker comment', async () => {
@@ -146,7 +146,7 @@ describe(runCli, () => {
 
       // #10 is unchanged since its assessment, #11 changed after it, and #12 was assessed only by a dry run.
       expect(result).toMatchObject({ ok: true, resumed: [10] });
-      expect(result.ok && result.tickets).toMatchObject([{ number: 11 }, { number: 12 }]);
+      expect(result.ok && result['tickets']).toMatchObject([{ number: 11 }, { number: 12 }]);
     });
 
     it('reports a resumed auto-close that does not have a decision as pending', async () => {
@@ -395,7 +395,7 @@ describe(runCli, () => {
       const result = await runCli(['digest', '--run', 'r'], context);
 
       expect(result).toMatchObject({ ok: true, total: 1, pageSize: 25 });
-      expect(result.ok && result.pages).toMatchObject([{ entries: [{ index: 1, number: 10 }] }]);
+      expect(result.ok && result['pages']).toMatchObject([{ entries: [{ index: 1, number: 10 }] }]);
     });
 
     it('refuses a page size outside 20 to 30', async () => {

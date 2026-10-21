@@ -106,7 +106,7 @@ async function measureDescription(file: DeployedPath): Promise<number> {
   } catch {
     return 0;
   }
-  return isRecord(parsed) && typeof parsed.description === 'string' ? byteLength(parsed.description) : 0;
+  return isRecord(parsed) && typeof parsed['description'] === 'string' ? byteLength(parsed['description']) : 0;
 }
 
 // endregion | Helpers

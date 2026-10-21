@@ -20,7 +20,7 @@ export function readJiraPreferences(merged: Readonly<Record<string, unknown>>): 
   const project = readSection(merged, 'project');
 
   const issueTypes: Record<string, string> = {};
-  const issueTypesValue = jira.issue_types;
+  const issueTypesValue = jira['issue_types'];
   if (issueTypesValue !== undefined && issueTypesValue !== null) {
     if (!isRecord(issueTypesValue)) {
       throw new Error("preferences: 'integrations.jira.issue_types' must be an object");
@@ -32,8 +32,8 @@ export function readJiraPreferences(merged: Readonly<Record<string, unknown>>): 
 
   return {
     issueTypes,
-    projectKey: readString(jira.project_key, 'integrations.jira.project_key'),
-    ticketRefPrefix: readString(project.ticket_ref_prefix, 'project.ticket_ref_prefix'),
+    projectKey: readString(jira['project_key'], 'integrations.jira.project_key'),
+    ticketRefPrefix: readString(project['ticket_ref_prefix'], 'project.ticket_ref_prefix'),
   };
 }
 
@@ -112,7 +112,7 @@ function resolveIssueType(
       return name;
     }
   }
-  return nonEmpty(issueTypes.default) ?? 'Task';
+  return nonEmpty(issueTypes['default']) ?? 'Task';
 }
 
 // endregion | Helpers

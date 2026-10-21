@@ -327,14 +327,14 @@ async function register(
     return fail('missing-set-title', 'the first registration in a set requires --set-title');
   }
 
-  const number = resolveRegistrationNumber(existing, slug, values.number);
+  const number = resolveRegistrationNumber(existing, slug, values['number']);
   if (typeof number !== 'number') {
     return number;
   }
 
   const version = nextVersion(existing, slug);
   let shot: string | null = null;
-  const screenshot = values.screenshot;
+  const screenshot = values['screenshot'];
   if (screenshot !== undefined) {
     const intake = await intakeScreenshot({
       sourcePath: path.resolve(screenshot),
@@ -355,10 +355,10 @@ async function register(
     registeredAt: now.toISOString(),
     title: requireFlag(values, 'title'),
     url,
-    source: values.source ?? null,
-    lens: values.lens ?? null,
-    inputs: parseInputs(values.inputs),
-    description: values.description ?? null,
+    source: values['source'] ?? null,
+    lens: values['lens'] ?? null,
+    inputs: parseInputs(values['inputs']),
+    description: values['description'] ?? null,
     notes,
     shot,
   };

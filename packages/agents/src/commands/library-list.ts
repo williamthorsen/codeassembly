@@ -342,11 +342,11 @@ function readNameAndDescription(content: string): { name?: string; description?:
     return {};
   }
   const meta: { name?: string; description?: string } = {};
-  if (typeof parsed.name === 'string') {
-    meta.name = parsed.name;
+  if (typeof parsed['name'] === 'string') {
+    meta.name = parsed['name'];
   }
-  if (typeof parsed.description === 'string') {
-    meta.description = parsed.description;
+  if (typeof parsed['description'] === 'string') {
+    meta.description = parsed['description'];
   }
   return meta;
 }

@@ -346,7 +346,7 @@ function buildArtifacts(status: CanonicalRunStatus): StationArtifactConfig[] {
     // even when produced during the review phase (fix cycles).
     const stationIndex =
       entry.type === 'change-summary' && entry.role === 'coder'
-        ? PHASE_TO_STATION.implementation
+        ? PHASE_TO_STATION['implementation']
         : PHASE_TO_STATION[entry.phase];
     if (stationIndex === undefined) continue;
 

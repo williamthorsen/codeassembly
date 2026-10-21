@@ -23,9 +23,9 @@ interface ExecError {
 function isExecError(error: unknown): error is ExecError {
   return (
     isRecord(error) &&
-    typeof error.stdout === 'string' &&
-    typeof error.stderr === 'string' &&
-    typeof error.code === 'number'
+    typeof error['stdout'] === 'string' &&
+    typeof error['stderr'] === 'string' &&
+    typeof error['code'] === 'number'
   );
 }
 

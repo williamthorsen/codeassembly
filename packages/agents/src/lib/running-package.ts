@@ -8,10 +8,10 @@ import { isRecord } from './type-guards.ts';
 export function readRunningPackageVersion(): string {
   const manifestPath = path.join(resolveRunningPackageRoot(), 'package.json');
   const parsed: unknown = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  if (!isRecord(parsed) || typeof parsed.version !== 'string') {
+  if (!isRecord(parsed) || typeof parsed['version'] !== 'string') {
     throw new Error(`Could not read a version from ${manifestPath}`);
   }
-  return parsed.version;
+  return parsed['version'];
 }
 
 /**

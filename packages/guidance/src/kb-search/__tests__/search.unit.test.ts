@@ -38,7 +38,7 @@ describe(searchNotes, () => {
       }),
     });
 
-    expect(result.hits.every((hit) => hit.note.frontmatter?.extra.diataxis === 'howto')).toBe(true);
+    expect(result.hits.every((hit) => hit.note.frontmatter?.extra['diataxis'] === 'howto')).toBe(true);
     expect(result.hits).toHaveLength(2);
     expect(result.recalledCount).toBe(3);
   });

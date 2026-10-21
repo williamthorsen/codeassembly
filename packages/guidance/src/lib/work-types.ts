@@ -55,14 +55,14 @@ export async function loadTaxonomy(dataDir?: string): Promise<Taxonomy | null> {
 
   const types: WorkTypeEntry[] = [];
   for (const entry of parsed.types) {
-    if (!isRecord(entry) || typeof entry.key !== 'string' || typeof entry.tier !== 'string') {
+    if (!isRecord(entry) || typeof entry['key'] !== 'string' || typeof entry['tier'] !== 'string') {
       continue;
     }
     types.push({
-      aliases: readAliases(entry.aliases),
-      key: entry.key,
-      tier: entry.tier,
-      ...(isBreakingPolicy(entry.breakingPolicy) && { breakingPolicy: entry.breakingPolicy }),
+      aliases: readAliases(entry['aliases']),
+      key: entry['key'],
+      tier: entry['tier'],
+      ...(isBreakingPolicy(entry['breakingPolicy']) && { breakingPolicy: entry['breakingPolicy'] }),
     });
   }
 
@@ -81,21 +81,21 @@ export async function loadWorkTypeHeadings(dataDir?: string): Promise<WorkTypeHe
     return null;
   }
 
-  const breaking = isRecord(parsed.markers) ? readDisplay(parsed.markers.breaking) : null;
+  const breaking = isRecord(parsed.markers) ? readDisplay(parsed.markers['breaking']) : null;
   if (breaking === null) {
     return null;
   }
 
   const headings = new Map<string, string>();
   for (const entry of parsed.types) {
-    if (!isRecord(entry) || typeof entry.key !== 'string' || typeof entry.tier !== 'string') {
+    if (!isRecord(entry) || typeof entry['key'] !== 'string' || typeof entry['tier'] !== 'string') {
       continue;
     }
     const display = readDisplay(entry);
     if (display === null) {
       return null;
     }
-    headings.set(entry.key, `${display.emoji} ${display.label}`);
+    headings.set(entry['key'], `${display.emoji} ${display.label}`);
   }
   return { breakingPrefix: `${breaking.emoji} **${breaking.label}:** `, headings };
 }
@@ -113,10 +113,10 @@ export async function loadWorkTypes(dataDir?: string): Promise<ReadonlyMap<strin
 
   const declared: Array<{ workType: WorkType; aliases: string[] }> = [];
   for (const entry of parsed.types) {
-    if (!isRecord(entry) || typeof entry.key !== 'string' || typeof entry.tier !== 'string') {
+    if (!isRecord(entry) || typeof entry['key'] !== 'string' || typeof entry['tier'] !== 'string') {
       continue;
     }
-    declared.push({ workType: { key: entry.key, tier: entry.tier }, aliases: readAliases(entry.aliases) });
+    declared.push({ workType: { key: entry['key'], tier: entry['tier'] }, aliases: readAliases(entry['aliases']) });
   }
 
   // Index the aliases first, so that a canonical key outranks an alias that happens to spell it.
@@ -165,10 +165,10 @@ function isBreakingPolicy(value: unknown): value is BreakingPolicy {
  * entries themselves are checked by each loader.
  */
 function parseTaxonomy(value: unknown): ParsedTaxonomy | null {
-  if (!isRecord(value) || !Array.isArray(value.types)) {
+  if (!isRecord(value) || !Array.isArray(value['types'])) {
     return null;
   }
-  return { markers: value.markers, tiers: value.tiers, types: value.types };
+  return { markers: value['markers'], tiers: value['tiers'], types: value['types'] };
 }
 
 /** Reads a declared `aliases` list, dropping any entry that is not a string. */

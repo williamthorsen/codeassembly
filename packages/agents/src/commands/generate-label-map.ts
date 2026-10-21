@@ -23,7 +23,7 @@ interface GenerateLabelMapOptions {
 export async function readChangeGrammarVersion(startDir: string): Promise<string> {
   const releaseKit = await findRequiredPackage(RELEASE_KIT_PACKAGE_NAME, startDir);
   const changeGrammar = await findRequiredPackage(CHANGE_GRAMMAR_PACKAGE_NAME, await realpath(releaseKit.directory));
-  const version = isRecord(changeGrammar.manifest) ? changeGrammar.manifest.version : undefined;
+  const version = isRecord(changeGrammar.manifest) ? changeGrammar.manifest['version'] : undefined;
   if (typeof version !== 'string') {
     throw new TypeError(`package.json for ${CHANGE_GRAMMAR_PACKAGE_NAME} does not declare a string version`);
   }

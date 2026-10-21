@@ -38,25 +38,25 @@ const TYPED_FIELDS = new Set([
 export function parseAssertion(fields: Record<string, unknown>, body: string): ParseAssertionResult {
   const errors: string[] = [];
 
-  if (fields.recordType !== 'assertion') {
+  if (fields['recordType'] !== 'assertion') {
     errors.push('recordType: expected "assertion"');
   }
 
   let title: string | undefined;
-  if (typeof fields.title === 'string' && fields.title.length > 0) {
-    title = fields.title;
+  if (typeof fields['title'] === 'string' && fields['title'].length > 0) {
+    title = fields['title'];
   } else {
     errors.push('missing required field: title');
   }
 
-  const created = requireDate(fields.created, 'created', errors);
-  const updated = requireDate(fields.updated, 'updated', errors);
+  const created = requireDate(fields['created'], 'created', errors);
+  const updated = requireDate(fields['updated'], 'updated', errors);
 
   let tags: string[] | undefined;
-  if (fields.tags === undefined) {
+  if (fields['tags'] === undefined) {
     errors.push('missing required field: tags');
   } else {
-    const list = asStringList(fields.tags);
+    const list = asStringList(fields['tags']);
     if (list === null) {
       errors.push('tags: must be a list');
     } else {
@@ -66,7 +66,7 @@ export function parseAssertion(fields: Record<string, unknown>, body: string): P
 
   const addressedBy = readListField(fields['addressed-by'], 'addressed-by', errors);
   const lastVerified = readOptionalDate(fields['last-verified'], 'last-verified', errors);
-  const supersedes = readOptionalString(fields.supersedes, 'supersedes', errors);
+  const supersedes = readOptionalString(fields['supersedes'], 'supersedes', errors);
   const supersededBy = readOptionalString(fields['superseded-by'], 'superseded-by', errors);
 
   if (
@@ -121,7 +121,7 @@ export function renderAssertion(record: KbAssertion): { fields: Record<string, u
     fields['last-verified'] = record.lastVerified;
   }
   if (record.supersedes !== undefined) {
-    fields.supersedes = record.supersedes;
+    fields['supersedes'] = record.supersedes;
   }
   if (record.supersededBy !== undefined) {
     fields['superseded-by'] = record.supersededBy;

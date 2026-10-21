@@ -57,13 +57,13 @@ describe('FURNITURE_MANIFEST', () => {
 
 describe('CHARACTER_ROLE_MAP', () => {
   it('maps all standard workflow phases', () => {
-    expect(CHARACTER_ROLE_MAP.architecture).toBe('Alex');
-    expect(CHARACTER_ROLE_MAP.planning).toBe('Amelia');
-    expect(CHARACTER_ROLE_MAP.implementation).toBe('Dan');
-    expect(CHARACTER_ROLE_MAP.review).toBe('Bob');
-    expect(CHARACTER_ROLE_MAP.simplifier).toBe('Ash');
-    expect(CHARACTER_ROLE_MAP.holistic).toBe('Rob');
-    expect(CHARACTER_ROLE_MAP.orchestrator).toBe('Adam');
+    expect(CHARACTER_ROLE_MAP['architecture']).toBe('Alex');
+    expect(CHARACTER_ROLE_MAP['planning']).toBe('Amelia');
+    expect(CHARACTER_ROLE_MAP['implementation']).toBe('Dan');
+    expect(CHARACTER_ROLE_MAP['review']).toBe('Bob');
+    expect(CHARACTER_ROLE_MAP['simplifier']).toBe('Ash');
+    expect(CHARACTER_ROLE_MAP['holistic']).toBe('Rob');
+    expect(CHARACTER_ROLE_MAP['orchestrator']).toBe('Adam');
   });
 });
 

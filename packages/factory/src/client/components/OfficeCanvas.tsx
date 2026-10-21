@@ -65,7 +65,7 @@ export function OfficeCanvas({ status }: OfficeCanvasProps): React.JSX.Element {
       }
       return;
     }
-    const scene = engineRef.current.scenes.office;
+    const scene = engineRef.current.scenes['office'];
     if (scene instanceof OfficeScene) {
       scene.updateStatus(status);
     }

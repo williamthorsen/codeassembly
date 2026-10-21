@@ -212,7 +212,7 @@ function readOptional(flags: ParsedFlags, name: FlagName): string | undefined {
 /** Reads `ticket.pull` from the project's preferences with each default filled in, throwing `invalid-config`. */
 async function readPullConfig(root: string): Promise<PullConfig> {
   const preferences = await readProjectPreferences(root);
-  const section = isRecord(preferences.ticket) ? preferences.ticket.pull : undefined;
+  const section = isRecord(preferences['ticket']) ? preferences['ticket']['pull'] : undefined;
   const parsed = PullConfigSchema.safeParse(section ?? {});
   if (!parsed.success) {
     const issues = parsed.error.issues.map((issue) => `ticket.pull.${issue.path.join('.')}: ${issue.message}`);

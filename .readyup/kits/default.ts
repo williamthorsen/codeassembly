@@ -48,7 +48,7 @@ export default defineRdyKit({
             if (map === undefined) {
               return true;
             }
-            const actual = isRecord(map.scopes) ? Object.keys(map.scopes) : [];
+            const actual = isRecord(map['scopes']) ? Object.keys(map['scopes']) : [];
             const expected = deriveExpectedScopeKeys(listPackageDirNames());
             const drift = diffScopeKeys(expected, actual);
             if (drift.missing.length === 0 && drift.extra.length === 0) {
@@ -102,7 +102,7 @@ function listPackageDirNames(): string[] {
   try {
     entries = readdirSync('packages');
   } catch (error) {
-    if (isRecord(error) && error.code === 'ENOENT') {
+    if (isRecord(error) && error['code'] === 'ENOENT') {
       return [];
     }
     throw error;
@@ -124,8 +124,8 @@ function readInstalledChangeGrammarVersion(): string | undefined {
   }
   for (;;) {
     const packageJson = readJsonFile(join(dir, 'node_modules', CHANGE_GRAMMAR_PACKAGE_NAME, 'package.json'));
-    if (packageJson?.name === CHANGE_GRAMMAR_PACKAGE_NAME && typeof packageJson.version === 'string') {
-      return packageJson.version;
+    if (packageJson?.['name'] === CHANGE_GRAMMAR_PACKAGE_NAME && typeof packageJson['version'] === 'string') {
+      return packageJson['version'];
     }
     const parent = dirname(dir);
     if (parent === dir) {

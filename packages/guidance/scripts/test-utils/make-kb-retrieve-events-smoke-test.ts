@@ -42,14 +42,14 @@ function assertKbRetrieveEventsSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from kb-retrieve-events');
   }
-  if (!Array.isArray(result.candidates) || result.candidates.length > 0) {
+  if (!Array.isArray(result['candidates']) || result['candidates'].length > 0) {
     throw new Error(`expected an empty candidate table, got ${JSON.stringify(result)}`);
   }
-  if (!Array.isArray(result.scopedKbs) || result.scopedKbs.length > 0) {
-    throw new Error(`expected an empty scope, got ${JSON.stringify(result.scopedKbs)}`);
+  if (!Array.isArray(result['scopedKbs']) || result['scopedKbs'].length > 0) {
+    throw new Error(`expected an empty scope, got ${JSON.stringify(result['scopedKbs'])}`);
   }
-  if (typeof result.diagnostic !== 'string' || !result.diagnostic.includes('is not registered in kb.yaml')) {
-    throw new Error(`expected an unregistered-store diagnostic, got ${JSON.stringify(result.diagnostic)}`);
+  if (typeof result['diagnostic'] !== 'string' || !result['diagnostic'].includes('is not registered in kb.yaml')) {
+    throw new Error(`expected an unregistered-store diagnostic, got ${JSON.stringify(result['diagnostic'])}`);
   }
 }
 

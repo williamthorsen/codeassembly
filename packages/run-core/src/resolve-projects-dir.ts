@@ -21,7 +21,7 @@ function expandTilde(value: string, home: string): string {
 export async function resolveProjectsDir(projectRoot: string, options?: ResolveBaseDirOptions): Promise<string> {
   const home = options?.home ?? homedir();
 
-  const envPath = process.env.AI_PROJECTS_PATH;
+  const envPath = process.env['AI_PROJECTS_PATH'];
   if (envPath) {
     return expandTilde(envPath, home);
   }

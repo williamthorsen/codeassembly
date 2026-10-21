@@ -281,7 +281,7 @@ describe('parseRunLogLine', () => {
     const result = parseRunLogLine(line);
     expect(result.event).toBe('run_started');
     const resultObj: Record<string, unknown> = { ...result };
-    expect(resultObj.futureField).toBeUndefined();
+    expect(resultObj['futureField']).toBeUndefined();
   });
 });
 

@@ -56,18 +56,18 @@ function assertFeedbackMemoriesSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from feedback-memories');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (!Array.isArray(result.memories) || result.memories.length !== 1) {
-    throw new Error(`expected exactly one enumerated memory, got ${JSON.stringify(result.memories)}`);
+  if (!Array.isArray(result['memories']) || result['memories'].length !== 1) {
+    throw new Error(`expected exactly one enumerated memory, got ${JSON.stringify(result['memories'])}`);
   }
-  const memory: unknown = result.memories[0];
-  if (!isRecord(memory) || memory.slug !== 'feedback-smoke-example') {
+  const memory: unknown = result['memories'][0];
+  if (!isRecord(memory) || memory['slug'] !== 'feedback-smoke-example') {
     throw new Error(`expected the seeded feedback memory, got ${JSON.stringify(memory)}`);
   }
-  if (memory.originSessionId !== 'smoke-session') {
-    throw new Error(`expected originSessionId from nested metadata, got ${JSON.stringify(memory.originSessionId)}`);
+  if (memory['originSessionId'] !== 'smoke-session') {
+    throw new Error(`expected originSessionId from nested metadata, got ${JSON.stringify(memory['originSessionId'])}`);
   }
 }
 

@@ -136,11 +136,11 @@ function hasFrontmatterFence(content: string): boolean {
 
 /** Returns the memory's effective type: the nested `metadata.type` when present, else a top-level `type`. */
 function effectiveType(fields: Record<string, unknown>): string | null {
-  const metadata = fields.metadata;
-  if (isRecord(metadata) && typeof metadata.type === 'string') {
-    return metadata.type;
+  const metadata = fields['metadata'];
+  if (isRecord(metadata) && typeof metadata['type'] === 'string') {
+    return metadata['type'];
   }
-  return typeof fields.type === 'string' ? fields.type : null;
+  return typeof fields['type'] === 'string' ? fields['type'] : null;
 }
 
 /** Returns a top-level string frontmatter field, or `null` when absent or non-string. */
@@ -151,9 +151,9 @@ function stringField(fields: Record<string, unknown>, key: string): string | nul
 
 /** Returns the origin session id from `metadata.originSessionId` or a top-level `originSessionId`, else `null`. */
 function originSessionId(fields: Record<string, unknown>): string | null {
-  const metadata = fields.metadata;
-  if (isRecord(metadata) && typeof metadata.originSessionId === 'string') {
-    return metadata.originSessionId;
+  const metadata = fields['metadata'];
+  if (isRecord(metadata) && typeof metadata['originSessionId'] === 'string') {
+    return metadata['originSessionId'];
   }
   return stringField(fields, 'originSessionId');
 }

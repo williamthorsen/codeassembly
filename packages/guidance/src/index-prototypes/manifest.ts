@@ -142,7 +142,7 @@ type StoredManifest = Omit<Manifest, 'entries' | 'summary'> & { entries: StoredE
 
 /** Returns true when `value` has the layout of one note. */
 function isNote(value: unknown): value is Note {
-  return isRecord(value) && typeof value.label === 'string' && typeof value.value === 'string';
+  return isRecord(value) && typeof value['label'] === 'string' && typeof value['value'] === 'string';
 }
 
 /** Returns true when `value` is a string or null. */
@@ -156,10 +156,10 @@ function isSetSummary(value: unknown): value is SetSummary {
     return false;
   }
   return (
-    typeof value.shared === 'string' &&
-    isNullableString(value.changes) &&
-    Array.isArray(value.try) &&
-    value.try.every((item) => typeof item === 'string')
+    typeof value['shared'] === 'string' &&
+    isNullableString(value['changes']) &&
+    Array.isArray(value['try']) &&
+    value['try'].every((item) => typeof item === 'string')
   );
 }
 
@@ -169,21 +169,21 @@ function isStoredEntry(value: unknown): value is StoredEntry {
     return false;
   }
   return (
-    typeof value.slug === 'string' &&
-    (value.number === undefined ||
-      (typeof value.number === 'number' && Number.isSafeInteger(value.number) && value.number > 0)) &&
-    typeof value.version === 'number' &&
-    Number.isSafeInteger(value.version) &&
-    typeof value.registeredAt === 'string' &&
-    typeof value.title === 'string' &&
-    typeof value.url === 'string' &&
-    isNullableString(value.source) &&
-    isNullableString(value.lens) &&
-    Array.isArray(value.inputs) &&
-    value.inputs.every((input) => typeof input === 'string') &&
-    isNullableString(value.description) &&
-    (value.notes === undefined || (Array.isArray(value.notes) && value.notes.every((note) => isNote(note)))) &&
-    isNullableString(value.shot)
+    typeof value['slug'] === 'string' &&
+    (value['number'] === undefined ||
+      (typeof value['number'] === 'number' && Number.isSafeInteger(value['number']) && value['number'] > 0)) &&
+    typeof value['version'] === 'number' &&
+    Number.isSafeInteger(value['version']) &&
+    typeof value['registeredAt'] === 'string' &&
+    typeof value['title'] === 'string' &&
+    typeof value['url'] === 'string' &&
+    isNullableString(value['source']) &&
+    isNullableString(value['lens']) &&
+    Array.isArray(value['inputs']) &&
+    value['inputs'].every((input) => typeof input === 'string') &&
+    isNullableString(value['description']) &&
+    (value['notes'] === undefined || (Array.isArray(value['notes']) && value['notes'].every((note) => isNote(note)))) &&
+    isNullableString(value['shot'])
   );
 }
 
@@ -193,11 +193,11 @@ function isStoredManifest(value: unknown): value is StoredManifest {
     return false;
   }
   return (
-    typeof value.title === 'string' &&
-    (value.indexUrl === null || typeof value.indexUrl === 'string') &&
-    (value.summary === undefined || value.summary === null || isSetSummary(value.summary)) &&
-    Array.isArray(value.entries) &&
-    value.entries.every((entry) => isStoredEntry(entry))
+    typeof value['title'] === 'string' &&
+    (value['indexUrl'] === null || typeof value['indexUrl'] === 'string') &&
+    (value['summary'] === undefined || value['summary'] === null || isSetSummary(value['summary'])) &&
+    Array.isArray(value['entries']) &&
+    value['entries'].every((entry) => isStoredEntry(entry))
   );
 }
 

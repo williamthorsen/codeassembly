@@ -46,16 +46,16 @@ export function prepareEvent(input: {
 
   const extra: Record<string, unknown> = {};
   if (context.repo !== undefined) {
-    extra.repo = context.repo;
+    extra['repo'] = context.repo;
   }
   if (args.skill !== null) {
-    extra.skill = args.skill;
+    extra['skill'] = args.skill;
   }
   if (args.model !== null) {
-    extra.model = args.model;
+    extra['model'] = args.model;
   }
   if (args.harness !== null) {
-    extra.harness = args.harness;
+    extra['harness'] = args.harness;
   }
 
   const record: KbEvent = {

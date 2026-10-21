@@ -74,9 +74,9 @@ async function runCli(
       throw error;
     }
     return {
-      exitCode: typeof error.code === 'number' ? error.code : -1,
-      stderr: typeof error.stderr === 'string' ? error.stderr : '',
-      stdout: typeof error.stdout === 'string' ? error.stdout : '',
+      exitCode: typeof error['code'] === 'number' ? error['code'] : -1,
+      stderr: typeof error['stderr'] === 'string' ? error['stderr'] : '',
+      stdout: typeof error['stdout'] === 'string' ? error['stdout'] : '',
     };
   }
 }

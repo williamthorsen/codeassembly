@@ -134,11 +134,11 @@ async function runAcli(args: readonly string[]): Promise<AcliResult> {
     }
     if (
       isRecord(error) &&
-      typeof error.code === 'number' &&
-      typeof error.stderr === 'string' &&
-      typeof error.stdout === 'string'
+      typeof error['code'] === 'number' &&
+      typeof error['stderr'] === 'string' &&
+      typeof error['stdout'] === 'string'
     ) {
-      return { exitCode: error.code, stderr: error.stderr, stdout: error.stdout };
+      return { exitCode: error['code'], stderr: error['stderr'], stdout: error['stdout'] };
     }
     throw error;
   }
@@ -147,7 +147,7 @@ async function runAcli(args: readonly string[]): Promise<AcliResult> {
 /** Prints the site check for `--target`, exiting non-zero and naming the switch command unless the sites match. */
 async function runCheckSite(argv: readonly string[]): Promise<void> {
   const values = parseValues(argv, [{ name: 'target', takesValue: true }], ['target']);
-  const check = await readSiteCheck(values.target ?? '', runAcli);
+  const check = await readSiteCheck(values['target'] ?? '', runAcli);
   writeJson(check);
   if (check.match) {
     return;
@@ -167,7 +167,7 @@ async function runConvertBody(argv: readonly string[]): Promise<void> {
     ],
     ['body-file', 'out'],
   );
-  const adfPath = path.resolve(values.out ?? '');
+  const adfPath = path.resolve(values['out'] ?? '');
   const adf = convertMarkdownToAdf(await readBody(values['body-file'] ?? ''));
   await writeFile(adfPath, `${JSON.stringify(adf)}\n`);
   writeJson({ adfPath });
@@ -220,8 +220,8 @@ async function runCreate(argv: readonly string[]): Promise<void> {
   try {
     const adfPath = path.join(scratchDir, 'description.json');
     await writeFile(adfPath, JSON.stringify(convertMarkdownToAdf(markdown)));
-    const parent = values.parent === '' ? undefined : values.parent;
-    const outcome = await createWorkItem({ ...target, adfPath, parent, summary: values.summary ?? '' }, runAcli);
+    const parent = values['parent'] === '' ? undefined : values['parent'];
+    const outcome = await createWorkItem({ ...target, adfPath, parent, summary: values['summary'] ?? '' }, runAcli);
     for (const diagnostic of outcome.diagnostics) {
       process.stderr.write(`manage-jira-ticket: ${diagnostic}\n`);
     }

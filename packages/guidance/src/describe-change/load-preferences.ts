@@ -89,7 +89,7 @@ async function readTitleFormats(file: string, warnings: string[]): Promise<Parti
     if (!isRecord(section) || !('title_format' in section)) {
       continue;
     }
-    const value = section.title_format;
+    const value = section['title_format'];
     if (value === null || value === undefined) {
       formats[surface] = '';
     } else if (typeof value === 'string') {

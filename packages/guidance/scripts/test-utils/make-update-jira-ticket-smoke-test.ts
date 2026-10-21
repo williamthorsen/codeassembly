@@ -19,14 +19,14 @@ function assertCompositionViolationFinding(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result');
   }
-  if (result.ok !== false) {
-    throw new Error(`expected ok: false, got ${JSON.stringify(result.ok)}`);
+  if (result['ok'] !== false) {
+    throw new Error(`expected ok: false, got ${JSON.stringify(result['ok'])}`);
   }
-  const findings = result.findings;
+  const findings = result['findings'];
   if (!Array.isArray(findings) || findings.length === 0) {
     throw new Error('expected non-empty findings array');
   }
-  const rules = findings.map((entry: unknown) => (isRecord(entry) ? entry.rule : undefined));
+  const rules = findings.map((entry: unknown) => (isRecord(entry) ? entry['rule'] : undefined));
   if (!rules.includes('composition-code-inline-mark')) {
     throw new Error(`expected composition-code-inline-mark finding; got rules: ${JSON.stringify(rules)}`);
   }

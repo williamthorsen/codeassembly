@@ -14,7 +14,7 @@ export interface TagAliasNote {
  * absent or not a list does not yield any findings. Each finding points at the note, not a specific tag line.
  */
 export function tagAliasFindings(note: TagAliasNote, aliases: AliasMap): Finding[] {
-  const tags = asStringList(note.fields.tags);
+  const tags = asStringList(note.fields['tags']);
   if (tags === null) {
     return [];
   }

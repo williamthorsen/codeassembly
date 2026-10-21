@@ -102,41 +102,41 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
   const result: WritablePreferences = {};
 
   // Fall back to the legacy top-level `platform` key, so that an existing `bitbucket` configuration still resolves.
-  const scmValue = merged.scm ?? merged.platform;
+  const scmValue = merged['scm'] ?? merged['platform'];
   if (scmValue !== undefined) {
-    if (merged.scm === undefined) {
+    if (merged['scm'] === undefined) {
       process.stderr.write("preferences: the top-level 'platform' key is deprecated; rename it to 'scm'.\n");
     }
     result.scm = expectScm(scmValue);
   }
 
-  if (merged.project !== undefined) {
-    const section = expectRecord(merged.project, 'project');
+  if (merged['project'] !== undefined) {
+    const section = expectRecord(merged['project'], 'project');
     const project: WritablePreferences['project'] = {};
-    if (section.slug !== undefined) {
-      project.slug = expectString(section.slug, 'project.slug');
+    if (section['slug'] !== undefined) {
+      project.slug = expectString(section['slug'], 'project.slug');
     }
-    if (section.ticket_ref_prefix !== undefined) {
-      project.ticket_ref_prefix = expectString(section.ticket_ref_prefix, 'project.ticket_ref_prefix');
+    if (section['ticket_ref_prefix'] !== undefined) {
+      project.ticket_ref_prefix = expectString(section['ticket_ref_prefix'], 'project.ticket_ref_prefix');
     }
     result.project = project;
   }
 
-  if (merged.repository !== undefined) {
-    const section = expectRecord(merged.repository, 'repository');
+  if (merged['repository'] !== undefined) {
+    const section = expectRecord(merged['repository'], 'repository');
     const repository: WritablePreferences['repository'] = {};
-    if (section.slug !== undefined) {
-      repository.slug = expectString(section.slug, 'repository.slug');
+    if (section['slug'] !== undefined) {
+      repository.slug = expectString(section['slug'], 'repository.slug');
     }
-    if (section.default_remote !== undefined) {
-      const remoteSection = expectRecord(section.default_remote, 'repository.default_remote');
+    if (section['default_remote'] !== undefined) {
+      const remoteSection = expectRecord(section['default_remote'], 'repository.default_remote');
       const defaultRemote: NonNullable<WritablePreferences['repository']>['default_remote'] = {};
-      if (remoteSection.name !== undefined) {
-        defaultRemote.name = expectString(remoteSection.name, 'repository.default_remote.name');
+      if (remoteSection['name'] !== undefined) {
+        defaultRemote.name = expectString(remoteSection['name'], 'repository.default_remote.name');
       }
-      if (remoteSection.default_branch !== undefined) {
+      if (remoteSection['default_branch'] !== undefined) {
         defaultRemote.default_branch = expectString(
-          remoteSection.default_branch,
+          remoteSection['default_branch'],
           'repository.default_remote.default_branch',
         );
       }
@@ -145,14 +145,14 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
     result.repository = repository;
   }
 
-  if (merged.artifacts !== undefined) {
-    const section = expectRecord(merged.artifacts, 'artifacts');
+  if (merged['artifacts'] !== undefined) {
+    const section = expectRecord(merged['artifacts'], 'artifacts');
     const artifacts: WritablePreferences['artifacts'] = {};
-    if (section.base_dir !== undefined) {
-      artifacts.base_dir = expectString(section.base_dir, 'artifacts.base_dir');
+    if (section['base_dir'] !== undefined) {
+      artifacts.base_dir = expectString(section['base_dir'], 'artifacts.base_dir');
     }
-    if (section.paths !== undefined) {
-      const pathsSection = expectRecord(section.paths, 'artifacts.paths');
+    if (section['paths'] !== undefined) {
+      const pathsSection = expectRecord(section['paths'], 'artifacts.paths');
       const paths: Record<string, string> = {};
       for (const [key, value] of Object.entries(pathsSection)) {
         paths[key] = expectString(value, `artifacts.paths.${key}`);
@@ -162,11 +162,11 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
     result.artifacts = artifacts;
   }
 
-  if (merged.ticket !== undefined) {
-    const section = expectRecord(merged.ticket, 'ticket');
+  if (merged['ticket'] !== undefined) {
+    const section = expectRecord(merged['ticket'], 'ticket');
     const ticket: WritablePreferences['ticket'] = {};
-    if (section.base_url !== undefined) {
-      ticket.base_url = expectString(section.base_url, 'ticket.base_url');
+    if (section['base_url'] !== undefined) {
+      ticket.base_url = expectString(section['base_url'], 'ticket.base_url');
     }
     result.ticket = ticket;
   }

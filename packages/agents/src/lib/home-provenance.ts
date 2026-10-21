@@ -168,10 +168,10 @@ export async function recordHomeProvenance(
 function isHomeAttempt(value: unknown): value is HomeAttempt {
   return (
     isRecord(value) &&
-    typeof value.command === 'string' &&
-    HOME_WRITE_COMMANDS.has(value.command) &&
-    typeof value.attemptedAt === 'string' &&
-    (value.outcome === 'failed' || value.outcome === 'succeeded')
+    typeof value['command'] === 'string' &&
+    HOME_WRITE_COMMANDS.has(value['command']) &&
+    typeof value['attemptedAt'] === 'string' &&
+    (value['outcome'] === 'failed' || value['outcome'] === 'succeeded')
   );
 }
 
@@ -179,11 +179,11 @@ function isHomeAttempt(value: unknown): value is HomeAttempt {
 function isHomeWrite(value: unknown): value is HomeWrite {
   return (
     isRecord(value) &&
-    typeof value.version === 'string' &&
-    typeof value.sourcePath === 'string' &&
-    typeof value.command === 'string' &&
-    HOME_WRITE_COMMANDS.has(value.command) &&
-    typeof value.writtenAt === 'string'
+    typeof value['version'] === 'string' &&
+    typeof value['sourcePath'] === 'string' &&
+    typeof value['command'] === 'string' &&
+    HOME_WRITE_COMMANDS.has(value['command']) &&
+    typeof value['writtenAt'] === 'string'
   );
 }
 
@@ -200,16 +200,16 @@ function liftWrite(parsed: HomeWrite): HomeWrite {
 
 /** Normalizes a parsed stamp into the current shape, or `undefined` when it contains neither a write nor an attempt. */
 function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
-  if (!isRecord(parsed) || typeof parsed.schemaVersion !== 'number') {
+  if (!isRecord(parsed) || typeof parsed['schemaVersion'] !== 'number') {
     return undefined;
   }
   const lastWrite = resolveLastWrite(parsed);
-  const lastAttempt = isHomeAttempt(parsed.lastAttempt) ? parsed.lastAttempt : undefined;
+  const lastAttempt = isHomeAttempt(parsed['lastAttempt']) ? parsed['lastAttempt'] : undefined;
   if (lastWrite === undefined && lastAttempt === undefined) {
     return undefined;
   }
   return {
-    schemaVersion: parsed.schemaVersion,
+    schemaVersion: parsed['schemaVersion'],
     ...(lastWrite !== undefined && { lastWrite, ...lastWrite }),
     ...(lastAttempt !== undefined && { lastAttempt }),
   };
@@ -220,8 +220,8 @@ function normalizeProvenance(parsed: unknown): HomeProvenance | undefined {
  * it, so that an existing machine keeps its stamp.
  */
 function resolveLastWrite(parsed: Record<string, unknown>): HomeWrite | undefined {
-  if (isHomeWrite(parsed.lastWrite)) {
-    return parsed.lastWrite;
+  if (isHomeWrite(parsed['lastWrite'])) {
+    return parsed['lastWrite'];
   }
   return isHomeWrite(parsed) ? liftWrite(parsed) : undefined;
 }

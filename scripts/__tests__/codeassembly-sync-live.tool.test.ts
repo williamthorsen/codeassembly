@@ -213,7 +213,7 @@ function runSyncLive(fixture: Fixture, args: string[] = [], env: Record<string, 
     encoding: 'utf8',
     env: {
       ...process.env,
-      PATH: `${fixture.stubBinDir}${path.delimiter}${process.env.PATH ?? ''}`,
+      PATH: `${fixture.stubBinDir}${path.delimiter}${process.env['PATH'] ?? ''}`,
       SYNC_LIVE_LOG: fixture.logPath,
       ...env,
     },

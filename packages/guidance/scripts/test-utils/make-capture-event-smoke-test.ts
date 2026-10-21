@@ -48,19 +48,21 @@ function assertCaptureEventSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from capture-event');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (typeof result.id !== 'string' || !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(result.id)) {
-    throw new Error(`expected a ULID-shaped id, got ${JSON.stringify(result.id)}`);
+  if (typeof result['id'] !== 'string' || !/^[0-9A-HJKMNP-TV-Z]{26}$/.test(result['id'])) {
+    throw new Error(`expected a ULID-shaped id, got ${JSON.stringify(result['id'])}`);
   }
-  if (typeof result.capturedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T.*Z$/.test(result.capturedAt)) {
-    throw new Error(`expected an ISO-8601 capturedAt, got ${JSON.stringify(result.capturedAt)}`);
+  if (typeof result['capturedAt'] !== 'string' || !/^\d{4}-\d{2}-\d{2}T.*Z$/.test(result['capturedAt'])) {
+    throw new Error(`expected an ISO-8601 capturedAt, got ${JSON.stringify(result['capturedAt'])}`);
   }
-  if (typeof result.path !== 'string' || !result.path.endsWith(`${result.id}.md`)) {
-    throw new Error(`expected a written record path ending in ${result.id}.md, got ${JSON.stringify(result.path)}`);
+  if (typeof result['path'] !== 'string' || !result['path'].endsWith(`${result['id']}.md`)) {
+    throw new Error(
+      `expected a written record path ending in ${result['id']}.md, got ${JSON.stringify(result['path'])}`,
+    );
   }
-  const written = readFileSync(result.path, 'utf8');
+  const written = readFileSync(result['path'], 'utf8');
   if (!/^recordType: event$/m.test(written)) {
     throw new Error(`expected the written event to contain recordType: event, got:\n${written}`);
   }

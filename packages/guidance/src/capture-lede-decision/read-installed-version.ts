@@ -29,10 +29,10 @@ export async function readInstalledVersion(input: {
   } catch {
     return null;
   }
-  if (!isRecord(parsed) || typeof parsed.schemaVersion !== 'number') {
+  if (!isRecord(parsed) || typeof parsed['schemaVersion'] !== 'number') {
     return null;
   }
   // A stamp predating `lastWrite` keeps the write fields at its top level.
-  const write = isRecord(parsed.lastWrite) ? parsed.lastWrite : parsed;
-  return typeof write.version === 'string' ? write.version : null;
+  const write = isRecord(parsed['lastWrite']) ? parsed['lastWrite'] : parsed;
+  return typeof write['version'] === 'string' ? write['version'] : null;
 }

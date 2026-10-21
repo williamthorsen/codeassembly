@@ -242,14 +242,14 @@ function readEntryFields(
   if (entriesComment !== undefined) {
     return { defect: entriesComment };
   }
-  const commit = payload.entries_commit;
+  const commit = payload['entries_commit'];
   if (commit !== undefined && commit !== null && typeof commit !== 'string') {
     return { defect: '`entries_commit` is not a string' };
   }
   const entriesCommit = commit?.trim();
   const recordedCommit = entriesCommit === undefined || entriesCommit === '' ? {} : { entriesCommit };
 
-  const list = payload.entries;
+  const list = payload['entries'];
   if (list === undefined || list === null) {
     return recordedCommit;
   }
@@ -265,7 +265,7 @@ function readEntryFields(
  * first field whose value has the wrong type. An absent or null value reads as empty.
  */
 function readOverrideFields(payload: Record<string, unknown>): { defect: string } | { record: ChangeRecord } {
-  const mapping = payload.overrides;
+  const mapping = payload['overrides'];
   if (mapping === undefined || mapping === null) {
     return { record: {} };
   }

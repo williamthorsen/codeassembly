@@ -41,13 +41,13 @@ function assertStreamlineGuidanceSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from streamline-guidance');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (!Array.isArray(result.transitive)) {
-    throw new TypeError(`expected transitive to be an array, got ${JSON.stringify(result.transitive)}`);
+  if (!Array.isArray(result['transitive'])) {
+    throw new TypeError(`expected transitive to be an array, got ${JSON.stringify(result['transitive'])}`);
   }
-  const files = result.transitive.map((entry: unknown) => (isRecord(entry) ? entry.file : undefined));
+  const files = result['transitive'].map((entry: unknown) => (isRecord(entry) ? entry['file'] : undefined));
   if (!files.includes(PARTIAL)) {
     throw new Error(`expected the smoke run to report the partial as transitive; got files: ${JSON.stringify(files)}`);
   }

@@ -8,12 +8,12 @@
 export function parseRemoteToOwnerRepo(url: string): string | null {
   const withoutSuffix = url.replace(/\.git$/, '');
   const sshMatch = /^[^@]+@[^:]+:(?<path>.+)$/.exec(withoutSuffix);
-  if (sshMatch?.groups?.path !== undefined) {
-    return takeOwnerRepo(sshMatch.groups.path);
+  if (sshMatch?.groups?.['path'] !== undefined) {
+    return takeOwnerRepo(sshMatch.groups['path']);
   }
   const httpsMatch = /^https?:\/\/[^/]+\/(?<path>.+)$/.exec(withoutSuffix);
-  if (httpsMatch?.groups?.path !== undefined) {
-    return takeOwnerRepo(httpsMatch.groups.path);
+  if (httpsMatch?.groups?.['path'] !== undefined) {
+    return takeOwnerRepo(httpsMatch.groups['path']);
   }
   return null;
 }

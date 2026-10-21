@@ -100,7 +100,7 @@ function parseKey(stdout: string): string | null {
   } catch {
     return null;
   }
-  return isRecord(parsed) && typeof parsed.key === 'string' && parsed.key !== '' ? parsed.key : null;
+  return isRecord(parsed) && typeof parsed['key'] === 'string' && parsed['key'] !== '' ? parsed['key'] : null;
 }
 
 // endregion | Helpers

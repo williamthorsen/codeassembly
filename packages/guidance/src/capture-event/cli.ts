@@ -176,31 +176,31 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     }
   }
 
-  const summary = raw.summary;
+  const summary = raw['summary'];
   if (summary === undefined) {
     throw new Error('--summary is required');
   }
 
   let impact: EventImpact | null = null;
-  if (raw.impact !== undefined) {
-    if (!isEventImpact(raw.impact)) {
+  if (raw['impact'] !== undefined) {
+    if (!isEventImpact(raw['impact'])) {
       throw new Error(`--impact must be one of ${EVENT_IMPACT_LEVELS.join(', ')}`);
     }
-    impact = raw.impact;
+    impact = raw['impact'];
   }
 
-  const amend = raw.amend ?? null;
+  const amend = raw['amend'] ?? null;
   if (amend !== null && !isSafeEventId(amend)) {
     throw new Error(`--amend id "${amend}" must be a bare filename stem, without a path separator`);
   }
 
   return {
-    store: raw.store ?? null,
+    store: raw['store'] ?? null,
     summary,
-    skill: raw.skill ?? null,
-    model: raw.model ?? null,
-    harness: raw.harness ?? null,
-    tags: raw.tags === undefined ? [] : parseTagList(raw.tags),
+    skill: raw['skill'] ?? null,
+    model: raw['model'] ?? null,
+    harness: raw['harness'] ?? null,
+    tags: raw['tags'] === undefined ? [] : parseTagList(raw['tags']),
     impact,
     amend,
   };
@@ -271,10 +271,10 @@ async function amendEvent(input: {
 function amendRecord(existing: KbEvent, args: ParsedArgs, body: string): KbEvent {
   const extra = { ...existing.extra };
   if (args.skill !== null) {
-    extra.skill = args.skill;
+    extra['skill'] = args.skill;
   }
   if (args.model !== null) {
-    extra.model = args.model;
+    extra['model'] = args.model;
   }
   return {
     ...existing,

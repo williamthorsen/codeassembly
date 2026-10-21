@@ -33,9 +33,9 @@ function isStringArray(value: unknown): value is string[] {
 /** Narrows `value` to a `QualityGates` record, in which each gate is absent or a string. */
 function isQualityGatesRecord(value: Record<string, unknown>): value is QualityGates & Record<string, unknown> {
   return (
-    (value.typecheck === undefined || typeof value.typecheck === 'string') &&
-    (value.lint === undefined || typeof value.lint === 'string') &&
-    (value.tests === undefined || typeof value.tests === 'string')
+    (value['typecheck'] === undefined || typeof value['typecheck'] === 'string') &&
+    (value['lint'] === undefined || typeof value['lint'] === 'string') &&
+    (value['tests'] === undefined || typeof value['tests'] === 'string')
   );
 }
 
@@ -59,10 +59,10 @@ function extractQualityGates(
   data: Record<string, unknown> | undefined,
   existing: string | QualityGates | undefined,
 ): string | QualityGates | undefined {
-  if (data?.qualityGates === undefined) return existing;
-  if (typeof data.qualityGates === 'string') return data.qualityGates;
-  if (isRecord(data.qualityGates) && isQualityGatesRecord(data.qualityGates)) {
-    return data.qualityGates;
+  if (data?.['qualityGates'] === undefined) return existing;
+  if (typeof data['qualityGates'] === 'string') return data['qualityGates'];
+  if (isRecord(data['qualityGates']) && isQualityGatesRecord(data['qualityGates'])) {
+    return data['qualityGates'];
   }
   return existing;
 }
@@ -381,11 +381,11 @@ function applyReviewPhaseCompleted(
     return;
   }
 
-  if (isCriticality(data.aggregatedCriticality)) {
-    review.aggregatedCriticality = data.aggregatedCriticality;
+  if (isCriticality(data['aggregatedCriticality'])) {
+    review.aggregatedCriticality = data['aggregatedCriticality'];
   }
-  if (typeof data.reviewRoundsUsed === 'number') {
-    review.reviewRoundsUsed = data.reviewRoundsUsed;
+  if (typeof data['reviewRoundsUsed'] === 'number') {
+    review.reviewRoundsUsed = data['reviewRoundsUsed'];
   }
 }
 
@@ -463,8 +463,8 @@ function mergeArchitecture(
   return {
     ...existing,
     status,
-    impactLevel: typeof data?.impactLevel === 'string' ? data.impactLevel : existing.impactLevel,
-    artifact: typeof data?.artifact === 'string' ? data.artifact : existing.artifact,
+    impactLevel: typeof data?.['impactLevel'] === 'string' ? data['impactLevel'] : existing.impactLevel,
+    artifact: typeof data?.['artifact'] === 'string' ? data['artifact'] : existing.artifact,
   };
 }
 
@@ -477,8 +477,8 @@ function mergePlanning(
   return {
     ...existing,
     status,
-    stepCount: typeof data?.stepCount === 'number' ? data.stepCount : existing.stepCount,
-    artifacts: isStringArray(data?.artifacts) ? data.artifacts : existing.artifacts,
+    stepCount: typeof data?.['stepCount'] === 'number' ? data['stepCount'] : existing.stepCount,
+    artifacts: isStringArray(data?.['artifacts']) ? data['artifacts'] : existing.artifacts,
   };
 }
 
@@ -491,7 +491,7 @@ function mergeImplementation(
   return {
     ...existing,
     status,
-    artifact: typeof data?.artifact === 'string' ? data.artifact : existing.artifact,
+    artifact: typeof data?.['artifact'] === 'string' ? data['artifact'] : existing.artifact,
     qualityGates: extractQualityGates(data, existing.qualityGates),
   };
 }
@@ -505,11 +505,12 @@ function mergeCodeSimplifier(
   return {
     ...existing,
     status,
-    ran: typeof data?.ran === 'boolean' ? data.ran : existing.ran,
+    ran: typeof data?.['ran'] === 'boolean' ? data['ran'] : existing.ran,
     actionableFindings:
-      typeof data?.actionableFindings === 'boolean' ? data.actionableFindings : existing.actionableFindings,
-    coderFixCycleRan: typeof data?.coderFixCycleRan === 'boolean' ? data.coderFixCycleRan : existing.coderFixCycleRan,
-    artifact: typeof data?.artifact === 'string' ? data.artifact : existing.artifact,
+      typeof data?.['actionableFindings'] === 'boolean' ? data['actionableFindings'] : existing.actionableFindings,
+    coderFixCycleRan:
+      typeof data?.['coderFixCycleRan'] === 'boolean' ? data['coderFixCycleRan'] : existing.coderFixCycleRan,
+    artifact: typeof data?.['artifact'] === 'string' ? data['artifact'] : existing.artifact,
   };
 }
 
@@ -522,13 +523,15 @@ function mergeHolisticReview(
   return {
     ...existing,
     status,
-    criticality: isCriticality(data?.criticality) ? data.criticality : existing.criticality,
-    reReviewCriticality: isCriticality(data?.reReviewCriticality)
-      ? data.reReviewCriticality
+    criticality: isCriticality(data?.['criticality']) ? data['criticality'] : existing.criticality,
+    reReviewCriticality: isCriticality(data?.['reReviewCriticality'])
+      ? data['reReviewCriticality']
       : existing.reReviewCriticality,
-    coderFixCycleRan: typeof data?.coderFixCycleRan === 'boolean' ? data.coderFixCycleRan : existing.coderFixCycleRan,
-    reviewRoundsUsed: typeof data?.reviewRoundsUsed === 'number' ? data.reviewRoundsUsed : existing.reviewRoundsUsed,
-    artifact: typeof data?.artifact === 'string' ? data.artifact : existing.artifact,
+    coderFixCycleRan:
+      typeof data?.['coderFixCycleRan'] === 'boolean' ? data['coderFixCycleRan'] : existing.coderFixCycleRan,
+    reviewRoundsUsed:
+      typeof data?.['reviewRoundsUsed'] === 'number' ? data['reviewRoundsUsed'] : existing.reviewRoundsUsed,
+    artifact: typeof data?.['artifact'] === 'string' ? data['artifact'] : existing.artifact,
   };
 }
 

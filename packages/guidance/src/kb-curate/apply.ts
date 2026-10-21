@@ -37,7 +37,7 @@ async function canonicalizeAffectedNotes(input: {
   const fixes: AppliedFix[] = [];
   for (const entry of input.notes) {
     if (!affectedPaths.has(entry.path)) continue;
-    const currentTags = asStringList(entry.fields.tags) ?? [];
+    const currentTags = asStringList(entry.fields['tags']) ?? [];
     fixes.push(await canonicalizeTags({ notePath: entry.path, currentTags }));
   }
   return fixes;

@@ -59,12 +59,12 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   const { positionals, flags } = scanFlags(argv, FLAGS);
   const values = valueFlagMap(flags);
 
-  const storeName = values.store ?? null;
+  const storeName = values['store'] ?? null;
   if (storeName === '') {
     throw new Error('--store requires a value');
   }
 
-  const tag = values.tag;
+  const tag = values['tag'];
   if (tag === '') {
     throw new Error('--tag requires a value');
   }

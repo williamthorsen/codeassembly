@@ -70,7 +70,7 @@ async function checkIgnored(cwd: string, filePath: string): Promise<boolean | un
     await execFileAsync('git', ['-C', cwd, 'check-ignore', '--quiet', filePath]);
     return true;
   } catch (error: unknown) {
-    return isRecord(error) && error.code === NOT_IGNORED_EXIT_CODE ? false : undefined;
+    return isRecord(error) && error['code'] === NOT_IGNORED_EXIT_CODE ? false : undefined;
   }
 }
 

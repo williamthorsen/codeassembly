@@ -74,7 +74,7 @@ describe('parseOverlayOverrides', () => {
     ].join('\n');
 
     const result = parseOverlayOverrides(overlay, 'any-agent');
-    expect(result.tools).toBe('[bash, create_file, expand_code_chunks, expand_folder, grep, open_files]');
+    expect(result['tools']).toBe('[bash, create_file, expand_code_chunks, expand_folder, grep, open_files]');
   });
 });
 

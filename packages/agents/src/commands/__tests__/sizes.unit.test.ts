@@ -163,7 +163,7 @@ function buildSnapshot(files: Record<string, DeployedFile>): SizeSnapshot {
 function rankedKeys(report: string): ReadonlyArray<string> {
   return report
     .split('\n')
-    .map((line) => /^ {2}\s*[\d.]+ (?:B|KiB) {2}(?<key>\S+)$/.exec(line)?.groups?.key)
+    .map((line) => /^ {2}\s*[\d.]+ (?:B|KiB) {2}(?<key>\S+)$/.exec(line)?.groups?.['key'])
     .filter((key) => key !== undefined);
 }
 

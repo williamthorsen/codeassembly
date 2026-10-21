@@ -20,11 +20,16 @@ export function makeValidatePreferencesSmokeTest(): SmokeTestInvocation {
 
 /** Asserts that the parsed smoke-test result is valid and reports the misspelt key alone. */
 function assertOneWarning(result: unknown): void {
-  if (!isRecord(result) || !Array.isArray(result.findings)) {
+  if (!isRecord(result) || !Array.isArray(result['findings'])) {
     throw new TypeError('expected an object result with a findings array');
   }
-  const finding: unknown = result.findings[0];
-  if (result.valid !== true || result.findings.length !== 1 || !isRecord(finding) || finding.path !== 'projct') {
+  const finding: unknown = result['findings'][0];
+  if (
+    result['valid'] !== true ||
+    result['findings'].length !== 1 ||
+    !isRecord(finding) ||
+    finding['path'] !== 'projct'
+  ) {
     throw new Error(`expected one warning at 'projct', got ${JSON.stringify(result)}`);
   }
 }

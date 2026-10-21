@@ -88,11 +88,11 @@ function walkArray(
   segments: readonly (string | number)[],
   findings: Finding[],
 ): void {
-  if (schema.items === undefined) {
+  if (schema['items'] === undefined) {
     return;
   }
   for (const [index, item] of value.entries()) {
-    walkValue(item, schema.items, [...segments, index], findings);
+    walkValue(item, schema['items'], [...segments, index], findings);
   }
 }
 
@@ -107,9 +107,9 @@ function walkObject(
   segments: readonly (string | number)[],
   findings: Finding[],
 ): void {
-  const properties = isRecord(schema.properties) ? schema.properties : undefined;
-  if (Array.isArray(schema.required)) {
-    for (const key of schema.required) {
+  const properties = isRecord(schema['properties']) ? schema['properties'] : undefined;
+  if (Array.isArray(schema['required'])) {
+    for (const key of schema['required']) {
       if (typeof key === 'string' && !Object.hasOwn(value, key)) {
         report(findings, 'error', segments, `missing required key '${key}'`);
       }
@@ -119,9 +119,9 @@ function walkObject(
     const keySegments = [...segments, key];
     if (properties !== undefined && Object.hasOwn(properties, key)) {
       walkValue(entry, properties[key], keySegments, findings);
-    } else if (isRecord(schema.additionalProperties)) {
-      walkValue(entry, schema.additionalProperties, keySegments, findings);
-    } else if (properties !== undefined && schema.additionalProperties !== true) {
+    } else if (isRecord(schema['additionalProperties'])) {
+      walkValue(entry, schema['additionalProperties'], keySegments, findings);
+    } else if (properties !== undefined && schema['additionalProperties'] !== true) {
       const nearest = findNearestKey(key, Object.keys(properties));
       const suggestion = nearest === undefined ? '' : `; did you mean '${nearest}'?`;
       report(findings, 'warning', keySegments, `unrecognized key${suggestion}`);
@@ -134,20 +134,20 @@ function walkValue(value: unknown, schema: unknown, segments: readonly (string |
   if (!isRecord(schema)) {
     return;
   }
-  if (schema.type !== undefined && !matchesType(value, schema.type)) {
-    const expected = typeof schema.type === 'string' ? schema.type : JSON.stringify(schema.type);
+  if (schema['type'] !== undefined && !matchesType(value, schema['type'])) {
+    const expected = typeof schema['type'] === 'string' ? schema['type'] : JSON.stringify(schema['type']);
     report(findings, 'error', segments, `expected ${expected} (got ${JSON.stringify(value)})`);
     return;
   }
-  if (Array.isArray(schema.enum) && !schema.enum.includes(value)) {
-    const allowed = schema.enum.map((candidate) => JSON.stringify(candidate)).join(', ');
+  if (Array.isArray(schema['enum']) && !schema['enum'].includes(value)) {
+    const allowed = schema['enum'].map((candidate) => JSON.stringify(candidate)).join(', ');
     report(findings, 'error', segments, `must be one of ${allowed} (got ${JSON.stringify(value)})`);
   }
-  if (typeof schema.minLength === 'number' && typeof value === 'string' && value.length < schema.minLength) {
-    report(findings, 'error', segments, `must be at least ${schema.minLength} characters long`);
+  if (typeof schema['minLength'] === 'number' && typeof value === 'string' && value.length < schema['minLength']) {
+    report(findings, 'error', segments, `must be at least ${schema['minLength']} characters long`);
   }
-  if (typeof schema.minimum === 'number' && typeof value === 'number' && value < schema.minimum) {
-    report(findings, 'error', segments, `must be at least ${schema.minimum} (got ${value})`);
+  if (typeof schema['minimum'] === 'number' && typeof value === 'number' && value < schema['minimum']) {
+    report(findings, 'error', segments, `must be at least ${schema['minimum']} (got ${value})`);
   }
   if (isRecord(value)) {
     walkObject(value, schema, segments, findings);

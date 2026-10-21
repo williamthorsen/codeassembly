@@ -44,7 +44,7 @@ for (const meta of Object.values(ARTIFACT_TYPES)) {
  */
 export function readCollectionDisposition(content: string, sourceLabel?: string): Disposition | undefined {
   const parsed = readFrontmatterRecord(content);
-  const disposition = parsed.disposition;
+  const disposition = parsed['disposition'];
   if (disposition === undefined || disposition === null) {
     return undefined;
   }
@@ -80,21 +80,21 @@ export function readDependencies(content: string, sourceLabel?: string): Artifac
 
   const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
   // `members:` belongs to collections; a rulebook, skill, or subagent declaring it has misplaced a key, not an edge.
-  if (parsed.members !== undefined) {
+  if (parsed['members'] !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: "members:" is only valid on collections; declare prerequisite edges via "dependencies:".`,
     );
   }
-  if (parsed.disposition !== undefined) {
+  if (parsed['disposition'] !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: "disposition:" is only valid on collections; an artifact outside every collection declares "standalone:".`,
     );
   }
-  if (parsed.dependencies === undefined || parsed.dependencies === null) {
+  if (parsed['dependencies'] === undefined || parsed['dependencies'] === null) {
     return {};
   }
 
-  const block = parsed.dependencies;
+  const block = parsed['dependencies'];
   if (!isRecord(block)) {
     throw new Error(`Invalid dependencies${where}: expected a mapping of artifact type to a list of slugs.`);
   }
@@ -137,18 +137,18 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
   const where = sourceLabel === undefined ? '' : ` in ${sourceLabel}`;
   // A collection's constituents are declared under `members:`; a `dependencies:` key there is a misplaced key, not
   // an edge.
-  if (parsed.dependencies !== undefined) {
+  if (parsed['dependencies'] !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: a collection declares its constituents via "members:", not "dependencies:".`,
     );
   }
-  if (parsed.standalone !== undefined) {
+  if (parsed['standalone'] !== undefined) {
     throw new Error(
       `Invalid frontmatter${where}: "standalone:" is only valid on an artifact that no collection contains, not on a collection.`,
     );
   }
 
-  const members = parsed.members;
+  const members = parsed['members'];
   if (members === undefined || members === null) {
     return { kind: 'explicit', edges: {} };
   }
@@ -176,7 +176,7 @@ export function readMembers(content: string, sourceLabel?: string): MembersResul
  * reason is what makes the absence from every collection a decision, so a value that is not a non-empty string throws.
  */
 export function readStandaloneReason(content: string, sourceLabel?: string): string | undefined {
-  const reason = readFrontmatterRecord(content).standalone;
+  const reason = readFrontmatterRecord(content)['standalone'];
   if (reason === undefined) {
     return undefined;
   }

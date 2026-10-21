@@ -146,9 +146,9 @@ interface CliResult {
 function isExecError(error: unknown): error is CliResult & { code: number } {
   return (
     isRecord(error) &&
-    typeof error.code === 'number' &&
-    typeof error.stderr === 'string' &&
-    typeof error.stdout === 'string'
+    typeof error['code'] === 'number' &&
+    typeof error['stderr'] === 'string' &&
+    typeof error['stdout'] === 'string'
   );
 }
 
@@ -177,7 +177,7 @@ async function runCli(
 ): Promise<CliResult> {
   const env = {
     ...process.env,
-    PATH: `${workDir}${path.delimiter}${process.env.PATH ?? ''}`,
+    PATH: `${workDir}${path.delimiter}${process.env['PATH'] ?? ''}`,
     STUB_LOG: path.join(workDir, 'calls.log'),
     STUB_VIEW: MERGED_VIEW,
     ...stubEnv,

@@ -37,18 +37,18 @@ function assertKbEditSmokeResult(result: unknown): void {
   if (!isRecord(result)) {
     throw new TypeError('expected object result from kb-edit');
   }
-  if (result.ok !== true) {
+  if (result['ok'] !== true) {
     throw new Error(`expected ok: true, got ${JSON.stringify(result)}`);
   }
-  if (result.operation !== 'bump-updated') {
-    throw new Error(`expected operation 'bump-updated', got ${JSON.stringify(result.operation)}`);
+  if (result['operation'] !== 'bump-updated') {
+    throw new Error(`expected operation 'bump-updated', got ${JSON.stringify(result['operation'])}`);
   }
-  const record = result.record;
+  const record = result['record'];
   if (!isRecord(record)) {
     throw new TypeError('expected record object on kb-edit result');
   }
-  if (typeof record.updated !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(record.updated)) {
-    throw new Error(`expected updated to be YYYY-MM-DDTHH:MM:SSZ, got ${JSON.stringify(record.updated)}`);
+  if (typeof record['updated'] !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(record['updated'])) {
+    throw new Error(`expected updated to be YYYY-MM-DDTHH:MM:SSZ, got ${JSON.stringify(record['updated'])}`);
   }
 }
 

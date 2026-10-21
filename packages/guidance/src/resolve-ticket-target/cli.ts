@@ -26,7 +26,7 @@ async function main(): Promise<void> {
     if (positionals.length > 0) {
       throw new Error(`unexpected argument: ${positionals.join(' ')}`);
     }
-    const repo = valueFlagMap(flags).repo?.trim();
+    const repo = valueFlagMap(flags)['repo']?.trim();
     if (repo === undefined || repo === '') {
       throw new Error('--repo is required');
     }
@@ -59,11 +59,11 @@ async function runGh(args: readonly string[]): Promise<GhResult> {
     }
     if (
       isRecord(error) &&
-      typeof error.code === 'number' &&
-      typeof error.stderr === 'string' &&
-      typeof error.stdout === 'string'
+      typeof error['code'] === 'number' &&
+      typeof error['stderr'] === 'string' &&
+      typeof error['stdout'] === 'string'
     ) {
-      return { exitCode: error.code, stderr: error.stderr, stdout: error.stdout };
+      return { exitCode: error['code'], stderr: error['stderr'], stdout: error['stdout'] };
     }
     throw error;
   }

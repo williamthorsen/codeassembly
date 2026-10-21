@@ -20,10 +20,10 @@ export function makeCheckProseSmokeTest(): SmokeTestInvocation {
 
 /** Asserts that the parsed smoke-test result lists the overused-word rule and does not contain any candidate. */
 function assertCleanCheck(result: unknown): void {
-  if (!isRecord(result) || !Array.isArray(result.rules) || !Array.isArray(result.candidates)) {
+  if (!isRecord(result) || !Array.isArray(result['rules']) || !Array.isArray(result['candidates'])) {
     throw new TypeError('expected an object result with rules and candidates arrays');
   }
-  if (!result.rules.includes('overused-word') || result.candidates.length > 0) {
+  if (!result['rules'].includes('overused-word') || result['candidates'].length > 0) {
     throw new Error(`expected the overused-word rule and an empty candidate list, got ${JSON.stringify(result)}`);
   }
 }

@@ -421,7 +421,7 @@ function readAmendEntryArgs({ flags, positionals }: ScanResult): ParsedArgs {
   if (breakingFlags.size > 1) {
     throw new Error('--breaking and --no-breaking set the marker in opposite directions; pass one');
   }
-  const type = values.type?.trim();
+  const type = values['type']?.trim();
   if (type === '') {
     throw new Error('--type requires a value');
   }
@@ -595,10 +595,10 @@ function readRecordFlags(flags: readonly MatchedFlag[]): ChangeRecord {
   return {
     ...(flags.some((flag) => flag.name === 'breaking') && { breaking: true }),
     ...(values['pr-number'] !== undefined && { prNumber: values['pr-number'] }),
-    ...(values.scope !== undefined && { scope: values.scope }),
+    ...(values['scope'] !== undefined && { scope: values['scope'] }),
     ...(values['ticket-ref'] !== undefined && { ticketRef: values['ticket-ref'] }),
-    ...(values.title !== undefined && { title: values.title }),
-    ...(values.type !== undefined && { type: values.type }),
+    ...(values['title'] !== undefined && { title: values['title'] }),
+    ...(values['type'] !== undefined && { type: values['type'] }),
   };
 }
 
