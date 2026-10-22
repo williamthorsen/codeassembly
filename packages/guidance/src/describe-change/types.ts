@@ -1,10 +1,12 @@
 import type { ChangeRecord } from '@williamthorsen/change-grammar';
 
+import type { FlagSpec, ScanResult } from '../lib/parse-flags.ts';
 import type { EntryAmendment } from './amend-entry.ts';
 import type { ChangeEntry } from './change-entries.ts';
 import type { ChangeRecordBlock, RecordOverrides } from './change-record-block.ts';
 import type { RecordDefect } from './find-defects.ts';
-import type { MergeOverrides } from './resolve-merge.ts';
+import type { DescribeChangeGit } from './git.ts';
+import type { MergeOverrides, ResolveMergeOutcome } from './resolve-merge.ts';
 
 /** Reports whether `value` names one of the configured surfaces. */
 export function isSurface(value: string): value is Surface {
@@ -43,6 +45,39 @@ export interface ConsolidatedRecordOutcome {
 /** What a change's entries consolidated to, in the shape that the JSON output names. */
 export interface ConsolidateEntriesOutcome {
   consolidated_record: ConsolidatedRecordOutcome;
+}
+
+/**
+ * What a run reads: its argv, the directory from which it was invoked, the taxonomy's directory, the home directory, and
+ * the git adapter.
+ */
+export interface DescribeInput {
+  argv: readonly string[];
+  cwd: string;
+  /** Directory containing `work-types.json`; when absent, the run reads the taxonomy embedded in the bundle. */
+  dataDir?: string;
+  /** The git adapter; when absent, the run uses the one that runs git. */
+  git?: DescribeChangeGit;
+  home: string;
+}
+
+/** What a completed run writes: the JSON payload for stdout, and the diagnostics for stderr. */
+export interface DescribeResult {
+  output:
+    | AmendEntryOutcome
+    | CheckMergeBodyOutcome
+    | ConsolidateBranchOutcome
+    | ConsolidateEntriesOutcome
+    | ParseTitleOutcome
+    | RenderBlockOutcome
+    | RenderDetailsOutcome
+    | RenderedTitles
+    | ResolveEffectiveRecordOutcome
+    | ResolveLabelsOutcome
+    | ResolveMergeOutcome
+    | ResolveScopesOutcome
+    | TicketTypeOutcome;
+  warnings: string[];
 }
 
 /** An effective record, in the shape that the JSON output names: every field of a record, each `null` when nothing sets it. */
@@ -140,8 +175,20 @@ export interface ResolveScopesOutcome {
   scopes: string[];
 }
 
+/** A run's input, with the git adapter that it uses resolved, and the project root that `--project-root` names. */
+export interface RunInput extends DescribeInput {
+  git: DescribeChangeGit;
+  projectRoot?: string;
+}
+
 /** One subcommand of the helper. */
 export type Subcommand = ParsedArgs['subcommand'];
+
+/** One subcommand's flags, and the reader that turns its scanned arguments into what the run asks for. */
+export interface SubcommandSpec {
+  flags: readonly FlagSpec[];
+  read: (scan: ScanResult) => ParsedArgs;
+}
 
 /** One surface for which a title template is configured. */
 export type Surface = (typeof SURFACES)[number];

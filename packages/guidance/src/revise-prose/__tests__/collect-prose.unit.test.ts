@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { extractFileProse, extractProse } from '../collect-prose.ts';
+import { extractFileProse, extractProse } from '../extract-prose.ts';
 import { UnparsableYamlError } from '../extract-yaml.ts';
 import { CODE_SPAN_PLACEHOLDER } from '../mask-code-spans.ts';
 import type { ProseKind } from '../types.ts';
