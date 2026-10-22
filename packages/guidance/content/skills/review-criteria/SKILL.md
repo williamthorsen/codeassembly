@@ -101,7 +101,7 @@ The same defects in tests that the change does not add, split, or modify are Leg
 
 Two defects against the test-data and timeout rules in the `testing-conventions` skill are Warnings:
 
-- **A raised timeout.** The change raises a hook's, a test's, or a tier's timeout, in a test or in config. The proposed change reduces the work, by the fixes that the skill names: smaller data, injection of what the code reads, and shared setup. A reason stated in the plan or the pull-request description does not exempt the raise: Check the reason against those fixes, and report the finding when one of them still applies.
+- **A raised timeout.** The change raises a hook's, a test's, or a tier's timeout, in a test or in config. The proposed change reduces the work by the fixes that the skill names. A reason stated in the plan or the pull-request description does not exempt the raise: Check the reason against those fixes, and report the finding when one of them still applies.
 - **A test that renders or builds production-scale data.** The proposed change passes the smallest data that proves the behavior, and makes the data injectable when the code under test reads it from a module-level singleton, even when the singleton is in code that the change does not touch. The diff does not show the data's size, so read what the code under test imports.
 
 The same defects in tests and config that the change does not add or modify are Legacy.
