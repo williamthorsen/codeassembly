@@ -89,14 +89,22 @@ The same defects in tests that the change neither adds nor supersedes are Legacy
 
 ## Database tests and setup cost
 
-Four defects against the database and setup rules in the `testing-conventions` skill are Warnings:
+Three defects against the database and setup rules in the `testing-conventions` skill are Warnings:
 
 - **A database for a test whose subject is not SQL.** The proposed change tests the logic against a fake client or a mock at the boundary of the module containing the SQL.
 - **A test per constraint.** The proposed change deletes it; the test that the migrations apply covers the schema.
-- **A raised hook timeout.** The proposed change reduces the work that the setup does.
 - **A split that adds per-file setup.** The change adds or splits a test file, and each file starts its own expensive setup. The proposed change shares that setup across the files.
 
 The same defects in tests that the change does not add, split, or modify are Legacy.
+
+## Test data and timeouts
+
+Two defects against the test-data and timeout rules in the `testing-conventions` skill are Warnings:
+
+- **A raised timeout.** The change raises a hook's, a test's, or a tier's timeout, in a test or in config. The proposed change reduces the work by the fixes that the skill names. A reason stated in the plan or the pull-request description does not exempt the raise: Check the reason against those fixes, and report the finding when one of them still applies.
+- **A test that renders or builds production-scale data.** The proposed change passes the smallest data that proves the behavior, and makes the data injectable when the code under test reads it from a module-level singleton, even when the singleton is in code that the change does not touch. The diff does not show the data's size, so read what the code under test imports.
+
+The same defects in tests and config that the change does not add or modify are Legacy.
 
 ## Noisy tests
 
