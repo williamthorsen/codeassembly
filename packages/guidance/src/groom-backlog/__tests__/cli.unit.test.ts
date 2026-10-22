@@ -7,7 +7,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { buildFakeRunner, type RunnerCall } from '../../test-utils/fake-runner.ts';
 import { makeFakeBacklogGit } from '../../test-utils/make-fake-backlog-git.ts';
-import { type CommandContext, runCli } from '../cli.ts';
+import { runCli } from '../cli.ts';
+import type { CommandContext } from '../command.ts';
 import type { BacklogGit } from '../git.ts';
 import { renderMarker } from '../marker.ts';
 import type { AssessorReply } from '../schemas.ts';
