@@ -7,71 +7,14 @@ import process from 'node:process';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { isEntryPoint } from '../lib/is-entry-point.ts';
-import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
 import { COPY_PROBE_SCRIPT } from './copy-probe.ts';
-import { intakeScreenshot } from './intake-screenshot.ts';
-import {
-  isValidSlug,
-  listLatestEntries,
-  nextVersion,
-  readManifest,
-  resolveIds,
-  resolveNumber,
-  writeManifest,
-} from './manifest.ts';
+import { fail } from './failure.ts';
+import { isValidSlug, listLatestEntries, readManifest, resolveIds, writeManifest } from './manifest.ts';
+import { parseArgs, type ParsedArgs, parseInputs, requireFlag, resolveSetDir } from './parse-args.ts';
+import { isWebUrl, register } from './register.ts';
 import { type IndexCard, PAGE_LIMIT_BYTES, PAGE_WARN_BYTES, renderIndexPage } from './render-index.ts';
-import type {
-  IndexPrototypesFailure,
-  IndexPrototypesResult,
-  Manifest,
-  ManifestEntry,
-  Note,
-  SetSummary,
-} from './types.ts';
-
-const COMMANDS = ['copy-probe', 'describe-set', 'record-index', 'register', 'render', 'resolve-ids'] as const;
-
-type Command = (typeof COMMANDS)[number];
-
-const COMMAND_NAMES: ReadonlySet<string> = new Set(COMMANDS);
-
-const FLAGS: readonly FlagSpec[] = [
-  { name: 'description', takesValue: true },
-  { name: 'file', takesValue: true },
-  { name: 'inputs', takesValue: true },
-  { name: 'lens', takesValue: true },
-  { name: 'note', takesValue: true },
-  { name: 'number', takesValue: true },
-  { name: 'out', takesValue: true },
-  { name: 'screenshot', takesValue: true },
-  { name: 'set-dir', takesValue: true },
-  { name: 'set-title', takesValue: true },
-  { name: 'slug', takesValue: true },
-  { name: 'slugs', takesValue: true },
-  { name: 'source', takesValue: true },
-  { name: 'title', takesValue: true },
-  { name: 'url', takesValue: true },
-];
-
-const COMMAND_FLAGS: Record<Command, { required: readonly string[]; optional: readonly string[] }> = {
-  'copy-probe': { required: [], optional: [] },
-  'describe-set': { required: ['file', 'set-dir'], optional: [] },
-  'record-index': { required: ['set-dir', 'url'], optional: [] },
-  register: {
-    required: ['set-dir', 'slug', 'title', 'url'],
-    optional: ['description', 'inputs', 'lens', 'note', 'number', 'screenshot', 'set-title', 'source'],
-  },
-  render: { required: ['out', 'set-dir'], optional: [] },
-  'resolve-ids': { required: ['set-dir', 'slugs'], optional: [] },
-};
-
-/** A parsed invocation: the command, its single-valued flags keyed by flag name, and its `--note` flags in order. */
-export interface ParsedArgs {
-  command: Command;
-  values: Record<string, string>;
-  notes: Note[];
-}
+import type { IndexPrototypesResult, SetSummary } from './types.ts';
 
 /** Executes the helper from `process.argv`, writing the JSON result to stdout and exiting non-zero on a failure. */
 async function main(): Promise<void> {
@@ -128,48 +71,6 @@ export async function runIndexPrototypes(input: {
   }
 }
 
-/**
- * Parses argv into a command and its flags, throwing on an unknown command, a flag that the command does not take, a
- * missing required flag, an empty value, or a note that is not `<label>: <value>`.
- *
- * @internal - Exported to allow testing.
- */
-export function parseArgs(argv: readonly string[]): ParsedArgs {
-  const { positionals, flags } = scanFlags(argv, FLAGS);
-  const [command, extra] = positionals;
-  if (command === undefined) {
-    throw new Error(`a command is required: ${COMMANDS.join(', ')}`);
-  }
-  if (!isCommand(command)) {
-    throw new Error(`unknown command "${command}"; expected one of ${COMMANDS.join(', ')}`);
-  }
-  if (extra !== undefined) {
-    throw new Error(`unexpected argument: ${extra}`);
-  }
-
-  const noteFlags = flags.filter((flag) => flag.name === 'note');
-  const values = valueFlagMap(flags.filter((flag) => flag.name !== 'note'));
-  const { required, optional } = COMMAND_FLAGS[command];
-  if (noteFlags.length > 0 && !optional.includes('note')) {
-    throw new Error(`${command} does not take --note`);
-  }
-  for (const [name, value] of Object.entries(values)) {
-    if (!required.includes(name) && !optional.includes(name)) {
-      throw new Error(`${command} does not take --${name}`);
-    }
-    if (value === '') {
-      throw new Error(`--${name} requires a value`);
-    }
-  }
-  for (const name of required) {
-    if (values[name] === undefined) {
-      throw new Error(`${command} requires --${name}`);
-    }
-  }
-  const notes = noteFlags.map((flag) => parseNote(flag.value ?? ''));
-  return { command, values, notes };
-}
-
 // region | Helpers
 
 /** Replaces the set's summary with the one in the JSON file at `filePath`. */
@@ -203,48 +104,6 @@ async function describeSet(setDir: string, filePath: string): Promise<IndexProto
   }
   const manifestPath = await writeManifest(setDir, { ...read.manifest, summary });
   return { ok: true, command: 'describe-set', manifestPath, summary };
-}
-
-/** Returns a failure result. */
-function fail(error: IndexPrototypesFailure['error'], message: string): IndexPrototypesFailure {
-  return { ok: false, error, message };
-}
-
-/** Returns true when `value` names a helper command. */
-function isCommand(value: string): value is Command {
-  return COMMAND_NAMES.has(value);
-}
-
-/** Returns true when `value` parses as an http or https URL. */
-function isWebUrl(value: string): boolean {
-  try {
-    const { protocol } = new URL(value);
-    return protocol === 'https:' || protocol === 'http:';
-  } catch {
-    return false;
-  }
-}
-
-/** Splits a comma-separated `--inputs` value into trimmed, non-empty items. */
-function parseInputs(value: string | undefined): string[] {
-  if (value === undefined) {
-    return [];
-  }
-  return value
-    .split(',')
-    .map((item) => item.trim())
-    .filter((item) => item !== '');
-}
-
-/** Splits a `--note` value at its first colon into a trimmed label and value, throwing when either is empty. */
-function parseNote(text: string): Note {
-  const colon = text.indexOf(':');
-  const label = colon === -1 ? '' : text.slice(0, colon).trim();
-  const value = colon === -1 ? '' : text.slice(colon + 1).trim();
-  if (label === '' || value === '') {
-    throw new Error(`--note "${text}" must have the form "<label>: <value>"`);
-  }
-  return { label, value };
 }
 
 /**
@@ -301,78 +160,6 @@ async function recordIndex(setDir: string, url: string): Promise<IndexPrototypes
   return { ok: true, command: 'record-index', manifestPath, indexUrl: url };
 }
 
-/** Adds a registration to the set's manifest, creating the manifest on the set's first registration. */
-async function register(
-  setDir: string,
-  values: Record<string, string>,
-  notes: Note[],
-  now: Date,
-): Promise<IndexPrototypesResult> {
-  const slug = requireFlag(values, 'slug');
-  if (!isValidSlug(slug)) {
-    return fail('invalid-slug', `slug "${slug}" must match [a-z0-9][a-z0-9-]{0,39}`);
-  }
-  const url = requireFlag(values, 'url');
-  if (!isWebUrl(url)) {
-    return fail('invalid-url', `--url "${url}" is not an http or https URL`);
-  }
-
-  const read = await readManifest(setDir);
-  if (read.kind === 'invalid') {
-    return fail('invalid-manifest', read.message);
-  }
-  const existing = read.kind === 'ok' ? read.manifest : null;
-  const setTitle = values['set-title'] ?? existing?.title;
-  if (setTitle === undefined) {
-    return fail('missing-set-title', 'the first registration in a set requires --set-title');
-  }
-
-  const number = resolveRegistrationNumber(existing, slug, values['number']);
-  if (typeof number !== 'number') {
-    return number;
-  }
-
-  const version = nextVersion(existing, slug);
-  let shot: string | null = null;
-  const screenshot = values['screenshot'];
-  if (screenshot !== undefined) {
-    const intake = await intakeScreenshot({
-      sourcePath: path.resolve(screenshot),
-      setDir,
-      slug,
-      version,
-    });
-    if (!intake.ok) {
-      return fail(intake.error, intake.message);
-    }
-    shot = intake.shot;
-  }
-
-  const entry: ManifestEntry = {
-    slug,
-    number,
-    version,
-    registeredAt: now.toISOString(),
-    title: requireFlag(values, 'title'),
-    url,
-    source: values['source'] ?? null,
-    lens: values['lens'] ?? null,
-    inputs: parseInputs(values['inputs']),
-    description: values['description'] ?? null,
-    notes,
-    shot,
-  };
-
-  const manifest: Manifest = {
-    title: setTitle,
-    indexUrl: existing?.indexUrl ?? null,
-    summary: existing?.summary ?? null,
-    entries: [...(existing?.entries ?? []), entry],
-  };
-  const manifestPath = await writeManifest(setDir, manifest);
-  return { ok: true, command: 'register', manifestPath, entry };
-}
-
 /**
  * Renders the set's index page from the latest version of each slug and writes it to `outPath`, refusing a page over
  * the artifact cap. A recorded screenshot that is missing from disk renders as the placeholder and is reported.
@@ -419,15 +206,6 @@ async function render(setDir: string, outPath: string): Promise<IndexPrototypesR
   };
 }
 
-/** Returns a required flag's value, which `parseArgs` has already guaranteed. */
-function requireFlag(values: Record<string, string>, name: string): string {
-  const value = values[name];
-  if (value === undefined) {
-    throw new Error(`--${name} is missing after parsing`);
-  }
-  return value;
-}
-
 /** Resolves the id that the next registration of each slug in the comma-separated `slugs` takes, without writing. */
 async function resolveIdsForSlugs(setDir: string, slugs: string): Promise<IndexPrototypesResult> {
   const list = parseInputs(slugs);
@@ -448,40 +226,6 @@ async function resolveIdsForSlugs(setDir: string, slugs: string): Promise<IndexP
   }
   const manifest = read.kind === 'ok' ? read.manifest : null;
   return { ok: true, command: 'resolve-ids', ids: resolveIds(manifest, list) };
-}
-
-/**
- * Returns the number that a registration of `slug` takes: the one that the set assigns when `requested` is absent,
- * or the requested one once it is checked. A registered slug keeps its number, a new slug cannot take a number that
- * another slug already has, and the value must be a positive integer; for a request that fails one of those, returns
- * the failure.
- */
-function resolveRegistrationNumber(
-  manifest: Manifest | null,
-  slug: string,
-  requested: string | undefined,
-): number | IndexPrototypesFailure {
-  const assigned = resolveNumber(manifest, slug);
-  if (requested === undefined) {
-    return assigned;
-  }
-  const number = Number(requested);
-  if (!Number.isSafeInteger(number) || number < 1) {
-    return fail('number-conflict', `--number "${requested}" must be a positive integer`);
-  }
-  const entries = manifest?.entries ?? [];
-  if (entries.some((entry) => entry.slug === slug)) {
-    return assigned === number
-      ? number
-      : fail('number-conflict', `slug "${slug}" is number ${assigned}, not ${number}`);
-  }
-  const holder = entries.find((entry) => entry.number === number);
-  return holder === undefined ? number : fail('number-conflict', `number ${number} belongs to slug "${holder.slug}"`);
-}
-
-/** Resolves the required `--set-dir` value to an absolute path. */
-function resolveSetDir(values: Record<string, string>): string {
-  return path.resolve(requireFlag(values, 'set-dir'));
 }
 
 // endregion | Helpers
