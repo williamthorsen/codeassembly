@@ -17,8 +17,9 @@ import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { scanFlags } from '../lib/parse-flags.ts';
 import { checkCuts, parseCheckInput } from './check.ts';
 import { realGit, type StreamlineGit } from './git.ts';
+import { measureDeployedBytes } from './measure.ts';
 import { composeRecord, parseFold, parseRecord, RECORD_PATH, stringifyRecord } from './record.ts';
-import { findRepositoryRoot, measureDeployedBytes, NotARepositoryError, resolveGuidance } from './resolve.ts';
+import { findRepositoryRoot, NotARepositoryError, resolveGuidance } from './resolve.ts';
 import type {
   CheckInput,
   CheckSuccess,

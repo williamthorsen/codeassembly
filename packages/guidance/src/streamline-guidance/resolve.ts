@@ -9,31 +9,24 @@
 import { existsSync, readFileSync, realpathSync, statSync } from 'node:fs';
 import path from 'node:path';
 
-import { buildIncludeGraph, DirectiveExpansionError, expandIncludes, type IncludeGraph } from 'codeassembly/api';
-
 import { isInsideArtifactBaseDir, resolveRootArtifactBaseDir } from '../shared/artifact-base-dir.ts';
+import { findContentRoot, isInside, listContentRoots } from './content-roots.ts';
 import { findDeployedSource, isDeployedCopy } from './deployed-source.ts';
 import type { StreamlineGit } from './git.ts';
+import { listLinkedPaths } from './links.ts';
 import { listWorkingTreeFiles } from './list-working-tree-files.ts';
+import { findGeneratedRegions, loadIncludeGraph, measureFiles, type MeasurementContext } from './measure.ts';
 import { isLive } from './record.ts';
 import type {
   DeclinedPhrase,
   GuidanceFile,
   GuidanceRecord,
   LastReview,
-  LineRange,
   RejectedPath,
   ResolveSuccess,
   TransitiveEdge,
   TransitiveFile,
 } from './types.ts';
-
-/** Returns the innermost content root containing a file, or undefined when none does. */
-export function findContentRoot(file: string, contentRoots: readonly string[]): string | undefined {
-  return contentRoots
-    .filter((contentRoot) => isInside(file, contentRoot))
-    .toSorted((left, right) => right.length - left.length)[0];
-}
 
 /** Returns the real path of the repository's top level. Throws {@link NotARepositoryError} outside a working tree. */
 export function findRepositoryRoot(cwd: string, git: StreamlineGit): string {
@@ -42,22 +35,6 @@ export function findRepositoryRoot(cwd: string, git: StreamlineGit): string {
     throw new NotARepositoryError(`${cwd} is not inside a git working tree`);
   }
   return realpathSync(topLevel);
-}
-
-/** Lists the absolute directories of every content root in the repository. */
-export function listContentRoots(root: string, git: StreamlineGit): string[] {
-  return listWorkingTreeFiles(root, git, [`*${CONTENT_ROOT_MANIFEST}`])
-    .filter((file) => path.basename(file) === CONTENT_ROOT_MANIFEST)
-    .map((file) => path.join(root, path.dirname(file)));
-}
-
-/** Measures what each repository-relative file deploys, on the terms that `resolve` reports as `deployedBytes`. */
-export async function measureDeployedBytes(
-  root: string,
-  files: readonly string[],
-  git: StreamlineGit,
-): Promise<Map<string, number>> {
-  return measureFiles(files, { contentRoots: listContentRoots(root, git), git, graphs: new Map(), root });
 }
 
 /** Raised when the helper runs somewhere git does not track. */
@@ -135,34 +112,6 @@ export async function resolveGuidance(input: {
 
 // region | Helpers
 
-/** Names the manifest file that marks a directory as a content root. */
-const CONTENT_ROOT_MANIFEST = 'codeassembly-content.yaml';
-
-/** Matches the start marker of a region that a deployment rewrites, whose captured group names the region. */
-const GENERATED_REGION_START_REGEX =
-  /^[ \t]*<!-- codeassembly-(ambient|guidance-hook:[a-z][a-z0-9-]*):start -->[ \t]*$/;
-
-/** Matches a Markdown link, whose captured groups are its text and its target. */
-const MARKDOWN_LINK_REGEX = /\[([^\]]*)\]\(([^)]+)\)/g;
-
-/** Matches a `{harness_home_dir}` reference into a deployed tree, whose captured group is the path beneath the home. */
-const HARNESS_HOME_REFERENCE_REGEX = /\{harness_home_dir\}\/((?:scripts|skills)\/[^\s`'"()<>[\]]+)/g;
-
-/** The values that measuring deployed bytes fixes for one run. */
-interface MeasurementContext {
-  contentRoots: readonly string[];
-  git: StreamlineGit;
-  /** The include graph of each content root that the run has reached, built once per root. */
-  graphs: Map<string, IncludeGraph>;
-  root: string;
-}
-
-/** The values that resolution fixes for one run. */
-interface ResolutionContext extends MeasurementContext {
-  artifactBaseDir: string;
-  home: string;
-}
-
 /** A file accepted as a target, identified by its repository-relative path. */
 interface AcceptedFile {
   file: string;
@@ -175,6 +124,12 @@ interface FileMeasures {
   deployedBytes: ReadonlyMap<string, number>;
   dirty: ReadonlySet<string>;
   reviews: ReadonlyMap<string, LastReview>;
+}
+
+/** The values that resolution fixes for one run. */
+interface ResolutionContext extends MeasurementContext {
+  artifactBaseDir: string;
+  home: string;
 }
 
 /**
@@ -282,158 +237,11 @@ function describeFile(file: string, context: ResolutionContext, measures: FileMe
   };
 }
 
-/**
- * Returns the line ranges of every region that a deployment rewrites, running to the end for a region without an end
- * marker.
- */
-function findGeneratedRegions(content: string): LineRange[] {
-  const lines = content.split('\n');
-  const regions: LineRange[] = [];
-  let index = 0;
-  while (index < lines.length) {
-    const name = GENERATED_REGION_START_REGEX.exec(lines[index] ?? '')?.[1];
-    if (name === undefined) {
-      index += 1;
-      continue;
-    }
-    const endMarker = `<!-- codeassembly-${name}:end -->`;
-    const endIndex = lines.findIndex((line, lineIndex) => lineIndex > index && line.trim() === endMarker);
-    const end = endIndex === -1 ? lines.length : endIndex + 1;
-    regions.push({ start: index + 1, end });
-    index = end;
-  }
-  return regions;
-}
-
-/** Reports whether a path is the directory itself or lies beneath it. */
-function isInside(child: string, parent: string): boolean {
-  const relative = path.relative(parent, child);
-  return !relative.startsWith('..') && !path.isAbsolute(relative);
-}
-
-/**
- * Lists the existing Markdown files to which content links: Markdown links resolved against the host's directory, and
- * `{harness_home_dir}` references mapped into the content root, whose tree is deployed beneath the harness home.
- */
-function listLinkedPaths(
-  content: string,
-  input: { contentRoot: string | undefined; home: string; hostDir: string },
-): string[] {
-  const found = new Set<string>();
-
-  for (const match of content.matchAll(MARKDOWN_LINK_REGEX)) {
-    const resolved = resolveLinkTarget(match[2] ?? '', input);
-    if (resolved !== undefined) found.add(resolved);
-  }
-  if (input.contentRoot !== undefined) {
-    for (const match of content.matchAll(HARNESS_HOME_REFERENCE_REGEX)) {
-      found.add(mapDeployedPathToContentRoot(input.contentRoot, trimTrailingPunctuation(match[1] ?? '')));
-    }
-  }
-
-  return [...found].filter(
-    (candidate) =>
-      path.extname(candidate).toLowerCase() === '.md' && existsSync(candidate) && statSync(candidate).isFile(),
-  );
-}
-
 /** Lists the Markdown files in the working tree beneath a repository-relative directory. */
 function listMarkdownFilesUnder(root: string, directory: string, git: StreamlineGit): string[] {
   return listWorkingTreeFiles(root, git, [directory === '' ? '.' : directory]).filter(
     (file) => path.extname(file).toLowerCase() === '.md',
   );
-}
-
-/** Returns the include graph of a content root, building it on the run's first file inside that root. */
-async function loadIncludeGraph(contentRoot: string, context: MeasurementContext): Promise<IncludeGraph> {
-  const cached = context.graphs.get(contentRoot);
-  if (cached !== undefined) {
-    return cached;
-  }
-  const graph = await buildIncludeGraph(contentRoot);
-  context.graphs.set(contentRoot, graph);
-  return graph;
-}
-
-/**
- * Measures what each file deploys: for a document, its size once its includes are expanded; for a file that deploys
- * only inside the documents that include it, its own size times the number of documents that it reaches. A file
- * outside every content root, and one whose includes cannot be expanded, is absent from the result.
- *
- * The transforms that a deployment applies per harness are excluded: the provenance header, the ownership marker,
- * path rewriting, and guidance-hook injection. A hook's bound rulebooks are declared in the machine's agent
- * configuration rather than in the content root, so their bytes are not computable from the repository, and the
- * deployment injects their text into a generated region that a run may not cut. The rest add a constant of a few
- * hundred bytes.
- */
-async function measureFiles(files: readonly string[], context: MeasurementContext): Promise<Map<string, number>> {
-  const measured = new Map<string, number>();
-  for (const file of files) {
-    const absolutePath = path.join(context.root, file);
-    const contentRoot = findContentRoot(absolutePath, context.contentRoots);
-    if (contentRoot === undefined) {
-      continue;
-    }
-    const graph = await loadIncludeGraph(contentRoot, context);
-    if (graph.hasUnresolvedIncludes(absolutePath)) {
-      continue;
-    }
-    const deployed = graph.documents.has(absolutePath)
-      ? await measureExpandedBytes(absolutePath, contentRoot)
-      : statSync(absolutePath).size * graph.countReach(absolutePath);
-    if (deployed !== undefined) {
-      measured.set(file, deployed);
-    }
-  }
-  return measured;
-}
-
-/**
- * Measures a document's body once its includes are expanded, and reports undefined when they cannot be expanded.
- *
- * Expansion rejects directive shapes that the include graph accepts: an unclosed open directive, an orphan close, a
- * slot without a `<!-- children -->` placeholder to fill, and a cycle, which the graph's walk terminates rather than
- * refuses. A file containing one deploys nothing that this helper can size, which an absent figure already reports.
- */
-async function measureExpandedBytes(file: string, contentRoot: string): Promise<number | undefined> {
-  try {
-    return new TextEncoder().encode(await expandIncludes(contentRoot, file)).length;
-  } catch (error) {
-    if (!(error instanceof DirectiveExpansionError)) throw error;
-    return undefined;
-  }
-}
-
-/**
- * Maps a path beneath the harness home to the content-root file deployed there. A source's support entries deploy
- * under `skills/_sources/<name>/`, a name that may be scoped, and are authored directly under `skills/`.
- */
-function mapDeployedPathToContentRoot(contentRoot: string, beneath: string): string {
-  return path.join(contentRoot, beneath.replace(/^skills\/_sources\/(?:@[^/]+\/)?[^/]+\//, 'skills/'));
-}
-
-/** Resolves a Markdown link target to an absolute path, or undefined when the target is not a local file. */
-function resolveLinkTarget(
-  rawTarget: string,
-  input: { contentRoot: string | undefined; home: string; hostDir: string },
-): string | undefined {
-  const target = (rawTarget.trim().split(/\s/, 1)[0] ?? '').split('#', 1)[0] ?? '';
-  if (target === '' || /^[a-z][a-z0-9+.-]*:/i.test(target)) {
-    return undefined;
-  }
-  if (target.startsWith('{harness_home_dir}/')) {
-    const beneath = target.slice('{harness_home_dir}/'.length);
-    return input.contentRoot !== undefined && /^(?:scripts|skills)\//.test(beneath)
-      ? mapDeployedPathToContentRoot(input.contentRoot, beneath)
-      : undefined;
-  }
-  if (target.startsWith('{')) {
-    return undefined;
-  }
-  if (target.startsWith('~/')) {
-    return path.join(input.home, target.slice(2));
-  }
-  return path.resolve(input.hostDir, target);
 }
 
 /** Maps each reviewed file to its most recent review, as `resolve` reports it. */
@@ -483,11 +291,6 @@ function selectLiveDeclined(record: GuidanceRecord, files: ReadonlySet<string>, 
   return record.declined
     .filter((entry) => files.has(entry.file) && isLive(entry, readFileSync(path.join(root, entry.file), 'utf8')))
     .map(({ file, phrase, class: cutClass }) => ({ file, phrase, class: cutClass }));
-}
-
-/** Drops the sentence punctuation that prose can leave after a bare path. */
-function trimTrailingPunctuation(reference: string): string {
-  return reference.replace(/[.,;:]+$/, '');
 }
 
 // endregion | Helpers
