@@ -1,10 +1,10 @@
 import { access, mkdir, mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Readable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
+import { makeBodyStream } from '../../test-utils/make-body-stream.ts';
 import { runFeedbackMemories } from '../cli.ts';
 import type { FeedbackMemoriesResult, RenderedResult } from '../types.ts';
 
@@ -20,11 +20,6 @@ metadata:
 
 Body.
 `;
-
-/** Builds a Readable stream that emits the given body and ends. */
-function bodyStream(body: string): Readable {
-  return Readable.from([Buffer.from(body, 'utf8')]);
-}
 
 /** Unwraps a JSON-rendered result, failing the test if the run produced text instead. */
 function jsonValue(result: RenderedResult): FeedbackMemoriesResult {
@@ -67,7 +62,7 @@ describe(runFeedbackMemories, () => {
     const { home } = await makeHomeWithMemory();
 
     const result = jsonValue(
-      await runFeedbackMemories({ argv: ['enumerate'], stdin: bodyStream(''), env: {}, home, machine: MACHINE }),
+      await runFeedbackMemories({ argv: ['enumerate'], stdin: makeBodyStream(''), env: {}, home, machine: MACHINE }),
     );
 
     expect(result.ok).toBe(true);
@@ -80,7 +75,7 @@ describe(runFeedbackMemories, () => {
     const { home, memoryPath } = await makeHomeWithMemory();
 
     const result = jsonValue(
-      await runFeedbackMemories({ argv: ['delete'], stdin: bodyStream(`${memoryPath}\n`), env: {}, home }),
+      await runFeedbackMemories({ argv: ['delete'], stdin: makeBodyStream(`${memoryPath}\n`), env: {}, home }),
     );
 
     expect(result.ok).toBe(true);
@@ -90,7 +85,7 @@ describe(runFeedbackMemories, () => {
   });
 
   it('treats empty stdin for delete as a clean no-op', async () => {
-    const result = jsonValue(await runFeedbackMemories({ argv: ['delete'], stdin: bodyStream('   \n'), env: {} }));
+    const result = jsonValue(await runFeedbackMemories({ argv: ['delete'], stdin: makeBodyStream('   \n'), env: {} }));
 
     expect(result.ok).toBe(true);
     if (!result.ok || !('results' in result)) return;
@@ -98,7 +93,7 @@ describe(runFeedbackMemories, () => {
   });
 
   it('returns invalid-args for an unknown subcommand', async () => {
-    const result = jsonValue(await runFeedbackMemories({ argv: ['frobnicate'], stdin: bodyStream(''), env: {} }));
+    const result = jsonValue(await runFeedbackMemories({ argv: ['frobnicate'], stdin: makeBodyStream(''), env: {} }));
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -107,7 +102,7 @@ describe(runFeedbackMemories, () => {
   });
 
   it("returns invalid-args when the arguments don't include a subcommand", async () => {
-    const result = jsonValue(await runFeedbackMemories({ argv: [], stdin: bodyStream(''), env: {} }));
+    const result = jsonValue(await runFeedbackMemories({ argv: [], stdin: makeBodyStream(''), env: {} }));
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -117,7 +112,7 @@ describe(runFeedbackMemories, () => {
 
   it('returns invalid-args when enumerate is given a stray argument', async () => {
     const result = jsonValue(
-      await runFeedbackMemories({ argv: ['enumerate', 'extra'], stdin: bodyStream(''), env: {} }),
+      await runFeedbackMemories({ argv: ['enumerate', 'extra'], stdin: makeBodyStream(''), env: {} }),
     );
 
     expect(result.ok).toBe(false);
@@ -133,7 +128,7 @@ describe(runFeedbackMemories, () => {
     const result = jsonValue(
       await runFeedbackMemories({
         argv: ['enumerate', '--memory-store', '-store-b'],
-        stdin: bodyStream(''),
+        stdin: makeBodyStream(''),
         env: {},
         home,
         machine: MACHINE,
@@ -153,7 +148,7 @@ describe(runFeedbackMemories, () => {
     const result = jsonValue(
       await runFeedbackMemories({
         argv: ['enumerate', '--memory-store=-store-a'],
-        stdin: bodyStream(''),
+        stdin: makeBodyStream(''),
         env: {},
         home,
         machine: MACHINE,
@@ -167,7 +162,7 @@ describe(runFeedbackMemories, () => {
 
   it("returns invalid-args when --memory-store doesn't have a value", async () => {
     const result = jsonValue(
-      await runFeedbackMemories({ argv: ['enumerate', '--memory-store'], stdin: bodyStream(''), env: {} }),
+      await runFeedbackMemories({ argv: ['enumerate', '--memory-store'], stdin: makeBodyStream(''), env: {} }),
     );
 
     expect(result.ok).toBe(false);
@@ -178,7 +173,7 @@ describe(runFeedbackMemories, () => {
 
   it('rejects the KB-store --store flag, naming the memory-store selector', async () => {
     const result = jsonValue(
-      await runFeedbackMemories({ argv: ['enumerate', '--store', '-store-a'], stdin: bodyStream(''), env: {} }),
+      await runFeedbackMemories({ argv: ['enumerate', '--store', '-store-a'], stdin: makeBodyStream(''), env: {} }),
     );
 
     expect(result.ok).toBe(false);
@@ -190,7 +185,7 @@ describe(runFeedbackMemories, () => {
 
   it('rejects the --store=<slug> form on list', async () => {
     const result = jsonValue(
-      await runFeedbackMemories({ argv: ['list', '--store=-store-a'], stdin: bodyStream(''), env: {} }),
+      await runFeedbackMemories({ argv: ['list', '--store=-store-a'], stdin: makeBodyStream(''), env: {} }),
     );
 
     expect(result.ok).toBe(false);
@@ -207,7 +202,7 @@ describe(runFeedbackMemories, () => {
     const output = textValue(
       await runFeedbackMemories({
         argv: ['list'],
-        stdin: bodyStream(''),
+        stdin: makeBodyStream(''),
         env: {},
         home,
         machine: MACHINE,
@@ -228,7 +223,7 @@ describe(runFeedbackMemories, () => {
     const output = textValue(
       await runFeedbackMemories({
         argv: ['list', '--verbose'],
-        stdin: bodyStream(''),
+        stdin: makeBodyStream(''),
         env: {},
         home,
         machine: MACHINE,
@@ -248,7 +243,7 @@ describe(runFeedbackMemories, () => {
     const output = textValue(
       await runFeedbackMemories({
         argv: ['list', '--memory-store', '-store-b'],
-        stdin: bodyStream(''),
+        stdin: makeBodyStream(''),
         env: {},
         home,
         machine: MACHINE,
@@ -262,7 +257,9 @@ describe(runFeedbackMemories, () => {
   });
 
   it('returns invalid-args when list is given a stray argument', async () => {
-    const result = jsonValue(await runFeedbackMemories({ argv: ['list', 'bogus'], stdin: bodyStream(''), env: {} }));
+    const result = jsonValue(
+      await runFeedbackMemories({ argv: ['list', 'bogus'], stdin: makeBodyStream(''), env: {} }),
+    );
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -270,7 +267,7 @@ describe(runFeedbackMemories, () => {
   });
 
   it('prints usage for --help', async () => {
-    const output = textValue(await runFeedbackMemories({ argv: ['--help'], stdin: bodyStream(''), env: {} }));
+    const output = textValue(await runFeedbackMemories({ argv: ['--help'], stdin: makeBodyStream(''), env: {} }));
 
     expect(output).toContain('Usage:');
     expect(output).toContain('feedback-memories list');

@@ -1,10 +1,10 @@
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Readable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
+import { makeBodyStream } from '../../test-utils/make-body-stream.ts';
 import { parseArgs, runEdit } from '../cli.ts';
 
 const NOW = new Date('2026-05-24T14:35:00Z');
@@ -21,11 +21,6 @@ type: howto
 
 Original body.
 `;
-
-/** Builds a Readable stream that emits the given body and ends. */
-function bodyStream(body: string): Readable {
-  return Readable.from([Buffer.from(body, 'utf8')]);
-}
 
 /** Creates a temporary KB containing one seed note, and returns both paths. */
 async function makeKbWithNote(): Promise<{ kbPath: string; notePath: string }> {
@@ -194,7 +189,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--bump-updated'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -214,7 +209,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--verify'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -235,7 +230,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--retag', 'one,two,three'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -257,7 +252,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--append'],
-      stdin: bodyStream('Appended paragraph.\n'),
+      stdin: makeBodyStream('Appended paragraph.\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -276,7 +271,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--append'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -297,7 +292,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [missing, '--bump-updated'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -319,7 +314,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [path, '--bump-updated'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -341,7 +336,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [path, '--bump-updated'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: wd,
       now: NOW,
       home: wd,
@@ -365,7 +360,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--bump-updated'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: homeDir,
@@ -393,7 +388,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [path, '--bump-updated'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -415,7 +410,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [oldPath, '--supersede-with', newPath],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -443,7 +438,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [oldPath, '--supersede-with', missingNew],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -463,7 +458,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--supersede-with', notePath],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -486,7 +481,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [oldPath, '--supersede-with', newPath],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbA,
       now: NOW,
       home: kbA,
@@ -512,7 +507,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [oldPath, '--supersede-with', newPath],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -535,7 +530,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [oldPath, '--supersede-with', newPath],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -565,7 +560,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [oldPath, '--supersede-with', newPath],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -583,7 +578,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, '--add-addressed-by', '[[fix]]'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -611,7 +606,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, second, '--add-addressed-by', '[[fix]]'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -634,7 +629,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, missing, '--add-addressed-by', '[[fix]]'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -656,10 +651,10 @@ describe(runEdit, () => {
   it('is idempotent: Re-appending an existing reference does not duplicate it', async () => {
     const { kbPath, notePath } = await makeKbWithNote();
     const argv = [notePath, '--add-addressed-by', '[[fix]]'];
-    const baseInput = { stdin: bodyStream(''), startDir: kbPath, now: NOW, home: kbPath };
+    const baseInput = { stdin: makeBodyStream(''), startDir: kbPath, now: NOW, home: kbPath };
 
-    await runEdit({ argv, ...baseInput, stdin: bodyStream('') });
-    const result = await runEdit({ argv, ...baseInput, stdin: bodyStream('') });
+    await runEdit({ argv, ...baseInput, stdin: makeBodyStream('') });
+    const result = await runEdit({ argv, ...baseInput, stdin: makeBodyStream('') });
 
     expect(result.ok).toBe(true);
     if (!result.ok || result.operation !== 'add-addressed-by') return;
@@ -682,7 +677,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, badType, '--add-addressed-by', '[[fix]]'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -710,7 +705,7 @@ describe(runEdit, () => {
 
     const result = await runEdit({
       argv: [notePath, orphan, '--add-addressed-by', '[[fix]]'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,

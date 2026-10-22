@@ -8,6 +8,7 @@ import { Readable } from 'node:stream';
 import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
 import { describe, expect, it } from 'vitest';
 
+import { makeBodyStream } from '../../test-utils/make-body-stream.ts';
 import { parseArgs, runAdd } from '../cli.ts';
 import type { WriteArgs } from '../types.ts';
 
@@ -129,7 +130,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Working with streams', '--tags', 'node,streams'],
-      stdin: bodyStream('How to work with Node streams.\n'),
+      stdin: makeBodyStream('How to work with Node streams.\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -154,7 +155,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'concept', '--title', 'IO', '--folder', 'languages/typescript'],
-      stdin: bodyStream('A short note.\n'),
+      stdin: makeBodyStream('A short note.\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -171,7 +172,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'reference', '--title', 'Stub'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -187,7 +188,7 @@ describe(runAdd, () => {
   it('returns missing-destination when discovery does not find a .kb/ and --kb is not given', async () => {
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Floating'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: '/',
       now: NOW,
       home: '/nonexistent-home',
@@ -214,7 +215,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Floating'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       // startDir avoids the KB so that discovery does not supply a destination.
       startDir: homeDir,
       now: NOW,
@@ -239,7 +240,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--kb', '@default', '--diataxis', 'howto', '--title', 'Floating'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: homeDir,
       now: NOW,
       home: homeDir,
@@ -259,7 +260,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--kb', 'nonexistent', '--diataxis', 'howto', '--title', 'X'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -279,7 +280,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Labeled'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -300,7 +301,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--title', 'Unlabeled'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -323,7 +324,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Existing'],
-      stdin: bodyStream('new body\n'),
+      stdin: makeBodyStream('new body\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -352,7 +353,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--kb', 'locked', '--diataxis', 'howto', '--title', 'Refused'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       // startDir avoids the KB so that discovery does not produce a writable fallback.
       startDir: homeDir,
       now: NOW,
@@ -374,7 +375,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -391,7 +392,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'foo/bar'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -410,7 +411,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Doubled', '--folder', 'assertions/tools'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -437,7 +438,7 @@ describe(runAdd, () => {
     using stdio = captureStdio();
     const result = await runAdd({
       argv: ['--diataxis', 'howto', '--title', 'Aliases fallback', '--tags', 'node.js,react'],
-      stdin: bodyStream('Body.\n'),
+      stdin: makeBodyStream('Body.\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -459,7 +460,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--title', 'Types', '--folder', 'languages/typescript', '--domain-description', 'The TypeScript language'],
-      stdin: bodyStream('Body.\n'),
+      stdin: makeBodyStream('Body.\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -485,7 +486,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--title', 'Types', '--folder', 'languages', '--domain-description', 'Languages', '--auto'],
-      stdin: bodyStream('Body.\n'),
+      stdin: makeBodyStream('Body.\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -501,7 +502,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--title', 'Types', '--folder', 'languages'],
-      stdin: bodyStream('Body.\n'),
+      stdin: makeBodyStream('Body.\n'),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -526,7 +527,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--survey'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -552,7 +553,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--survey'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -579,7 +580,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--survey', '--kb', 'locked'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: homeDir,
       now: NOW,
       home: homeDir,
@@ -617,7 +618,7 @@ describe(runAdd, () => {
 
     const result = await runAdd({
       argv: ['--survey'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       startDir: kbPath,
       now: NOW,
       home: kbPath,
@@ -662,11 +663,6 @@ describe(runAdd, () => {
 });
 
 // region | Helpers
-
-/** Builds a Readable stream that emits the given body and ends. */
-function bodyStream(body: string): Readable {
-  return Readable.from([Buffer.from(body, 'utf8')]);
-}
 
 /** Builds a temp KB rooted at a fresh directory with a `.kb/` marker. */
 async function makeKb(): Promise<string> {

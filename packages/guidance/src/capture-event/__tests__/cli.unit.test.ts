@@ -1,11 +1,11 @@
 import { mkdir, mkdtemp, readdir, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Readable } from 'node:stream';
 
 import { describe, expect, it } from 'vitest';
 
 import type { SharedGit } from '../../shared/git.ts';
+import { makeBodyStream } from '../../test-utils/make-body-stream.ts';
 import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { parseArgs, runCapture } from '../cli.ts';
 
@@ -25,11 +25,6 @@ exclude:
 /** Builds a working directory whose git adapter lists a single named remote, from which `resolveRepo` derives an `owner/name`. */
 function buildRepoWithRemote(url: string, name = 'origin'): { cwd: string; git: SharedGit } {
   return { cwd: '/tmp/capture-cli-repo', git: makeFakeGit({ remotes: [{ name, url }] }) };
-}
-
-/** Builds a Readable stream that emits the given body and ends. */
-function bodyStream(body: string): Readable {
-  return Readable.from([Buffer.from(body, 'utf8')]);
 }
 
 /** Creates a temp event store directory containing a default `.kb/config.yaml`, returning its path. */
@@ -155,7 +150,7 @@ describe(runCapture, () => {
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -184,7 +179,7 @@ describe(runCapture, () => {
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: repo,
       git,
       env: {},
@@ -206,7 +201,7 @@ describe(runCapture, () => {
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: '' },
@@ -233,7 +228,7 @@ describe(runCapture, () => {
     const amended = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--amend', ID, '--summary', 'Corrected summary'],
-      stdin: bodyStream('Corrected body.'),
+      stdin: makeBodyStream('Corrected body.'),
       cwd: '/tmp/different-cwd',
       env: {},
       now: NOW,
@@ -256,7 +251,7 @@ describe(runCapture, () => {
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing', '--impact', 'high'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -277,7 +272,7 @@ describe(runCapture, () => {
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing', '--harness', 'claude'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -298,7 +293,7 @@ describe(runCapture, () => {
 
     const result = await runCapture({
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
@@ -320,7 +315,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: bareDir,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
@@ -342,7 +337,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', 'codeassembly', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: cwdWithKb,
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
@@ -363,7 +358,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', 'missing', '--summary', 'x'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -390,7 +385,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', 'named', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: '/tmp/elsewhere',
       env: { CLAUDE_CODE_SESSION_ID: 'session-xyz' },
       now: NOW,
@@ -420,7 +415,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--summary', 'x'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -446,7 +441,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--summary', 'x'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -473,7 +468,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', '@feedback', '--summary', 'Noticed a thing'],
-      stdin: bodyStream('Body text.'),
+      stdin: makeBodyStream('Body text.'),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -495,7 +490,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', '@feedback', '--summary', 'x'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -525,7 +520,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--summary', 'x'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -554,7 +549,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', 'realstore', '--summary', 'x'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -576,7 +571,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', 'codeassembly'],
-      stdin: bodyStream(''),
+      stdin: makeBodyStream(''),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
@@ -595,7 +590,7 @@ describe(runCapture, () => {
 
     const created = await runCapture({
       argv: ['--store', '@default', '--summary', 'Original summary', '--tags', 'one', '--impact', 'high'],
-      stdin: bodyStream('Original body.'),
+      stdin: makeBodyStream('Original body.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
@@ -608,7 +603,7 @@ describe(runCapture, () => {
     const amended = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--amend', created.id, '--summary', 'Corrected summary'],
-      stdin: bodyStream('Corrected body.'),
+      stdin: makeBodyStream('Corrected body.'),
       cwd: '/tmp/different-cwd',
       env: { CLAUDE_CODE_SESSION_ID: 'session-later' },
       now: new Date('2027-01-01T00:00:00.000Z'),
@@ -643,7 +638,7 @@ describe(runCapture, () => {
 
     const created = await runCapture({
       argv: ['--store', '@default', '--summary', 'Original', '--tags', 'one', '--impact', 'high'],
-      stdin: bodyStream('Body.'),
+      stdin: makeBodyStream('Body.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
@@ -655,7 +650,7 @@ describe(runCapture, () => {
 
     const amended = await runCapture({
       argv: ['--store', '@default', '--amend', created.id, '--summary', 'Original', '--tags', 'two', '--impact', 'low'],
-      stdin: bodyStream('Body.'),
+      stdin: makeBodyStream('Body.'),
       cwd: repo,
       git,
       env: { CLAUDE_CODE_SESSION_ID: 'session-original' },
@@ -677,7 +672,7 @@ describe(runCapture, () => {
     const result = await runCapture({
       git: NO_REMOTE_GIT,
       argv: ['--store', '@default', '--amend', ID, '--summary', 'x'],
-      stdin: bodyStream('body'),
+      stdin: makeBodyStream('body'),
       cwd: '/tmp/elsewhere',
       env: {},
       now: NOW,
