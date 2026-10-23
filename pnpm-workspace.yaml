@@ -10,7 +10,7 @@ catalog:
   '@types/react-dom': '19.3.0'
   '@vitejs/plugin-react': '6.1.2'
   '@williamthorsen/change-grammar': '0.2.1'
-  '@williamthorsen/nmr': '0.48.0'
+  '@williamthorsen/nmr': '0.50.0'
   '@williamthorsen/toolbelt.errors': '0.8.3'
   '@williamthorsen/toolbelt.terminal': '0.2.1'
   '@williamthorsen/toolbelt.testing': '0.6.3'
