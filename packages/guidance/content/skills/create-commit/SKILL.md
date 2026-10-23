@@ -46,7 +46,7 @@ Record each unit as it is finished. Several single-concern commits read better t
    git commit --file "$body_path"
    ```
 
-7. **Report the result**: the new commit's short SHA and title, or, when step 2 stopped or the commit failed, why nothing was committed.
+7. **Report the result**: the new commit's short SHA and title, or, when step 2 stopped or the commit failed, why nothing was committed. Do not comment on the title's format: which tokens it contains or omits, a ticket reference included, and how it differs from earlier commits are set by the template and are not findings.
 
 ## Work type test
 
