@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.18.0 — 2026-10-23
+
+### 🎉 Features
+
+- Makes `delivery` a required rulebook frontmatter field, so that `codeassembly sync` rejects a rulebook that omits it with a message saying the field is required, where it previously treated the rulebook as `ambient`. (#2087)
+- Adds the `disposition:` collection key (`public`, `personal`, or `opt-in`, the claim that membership makes about the members) and the `standalone:` artifact key, and makes `codeassembly validate` report as a `disposition` defect an artifact that no disposition covers, a standalone artifact that a collection lists or reaches, and a collection whose closure reaches beyond what its disposition permits. (#2137)
+- Adds content format 3 and its computed `'@unclaimed'` members token, which resolves to every artifact of the collection's content root that does not declare `standalone:` and that is not listed by any collection with a `disposition:`; `codeassembly validate` reports the token in a root that declares a lower format. (#2137)
+
+### ♻️ Refactoring
+
+- Moves the git calls in `packages/agents` into the `AgentsGit` adapter, which `sync`, `sync --global`, `sizes`, `install`, and `bundle-helpers` receive as a parameter, so that their tests pass a fake adapter instead of creating git repositories. (#2071)
+- Restructures code across the packages and the catwalk demo to satisfy the new `unicorn` rules, mostly by turning trailing `if` blocks into early returns and `continue` guards, and adds `ESNext.Array` to the root `tsconfig.json` `lib` so that `Array.fromAsync` typechecks. (#2152)
+- Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)
+- Brings the oversized `agents` modules under the `max-lines` ceiling by moving argument parsing into `parse-args.ts`, script and harness-guidance installation into `install-scripts.ts` and `install-harness-guidance.ts`, the render gates into `render-gates.ts`, the report describers into four `report-*.ts` subject modules, the pre-write phase of `reconcileDomain` into `resolveDomain` and `resolveDomainArtifacts`, and the resolver's invocation-token tests into their own file. (#2161)
+
+### 📦 Dependencies
+
+- Upgrades `@williamthorsen/nmr-core` to 0.13.4, `@williamthorsen/release-kit` to 14.2.2, `prettier` to 3.9.10, `readyup` to 0.41.1, and `v11y-check` to 0.19.3. (#2149)
+- Upgrades `readyup` from 0.41.1 to 0.42.0 and recompiles the root and `agents` kits, which `rdy compile` now compiles without a `checks-vary-by-directory` warning. (#2163)
+- Upgrades `happy-dom` to 21.0.3, `@williamthorsen/release-kit` to 14.2.4, `@williamthorsen/nmr-core` to 0.13.5, `v11y-check` to 0.19.5, and pnpm to 12.14.0, and leaves `lefthook` at 2.2.1 because 2.2.2 was published without provenance. (#2169)
+
+### 📚 Documentation
+
+- Replaces vague verbs, figurative phrasing, the determiner "no", and `where` clauses that stated a condition across the comments, docs, README, test names, readyup checks, and printed messages of `packages/agents`, including the duplicate-content-root warnings and the near-miss guidance-hook directive message. (#2128)
+
 ## 0.17.0 — 2026-10-10
 
 ### 🎉 Features
@@ -131,6 +156,9 @@ All notable changes to this project will be documented in this file.
 - 🚨 **Breaking:** Removes the session-lifecycle hooks from `codeassembly install`, which now deletes the hook entries that earlier installs wrote into the Claude and Rovo configs instead of writing them, together with the `configure-hooks` command, the `--print` and `--skip-hooks` options, and the hook report in `codeassembly status`. (#1925)
 - 🚨 **Breaking:** Removes the `emit-event` skill and the lifecycle-event instructions from the skills that called it, such as `create-pr`, `merge-pr`, and `orchestrate`; the `emit_event` tool of the CodeAssembly MCP server is a separate system and remains. (#1925)
 - Removes the "Grown since last streamlined" block from the report that a live `sync` prints, and keeps the growth-ceiling warning. (#1929)
+- 🚨 **Breaking:** Remove the codeassembly-mcp server (#1945)
+
+  Removes the `codeassembly-mcp` server and its `codeassembly` registration in `.claude/settings.json`, because its five run-management tools served only the orchestration engine, which has been retired. Keeps the v3 run format in `codeassembly-run-core` as a read-only format, so that existing v3 runs stay readable after the removal of the only tool that wrote them.
 
 ### 🐛 Bug fixes
 

@@ -2,7 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.3 — 2026-10-23
+
+### ♻️ Refactoring
+
+- Restructures code across the packages and the catwalk demo to satisfy the new `unicorn` rules, mostly by turning trailing `if` blocks into early returns and `continue` guards, and adds `ESNext.Array` to the root `tsconfig.json` `lib` so that `Array.fromAsync` typechecks. (#2152)
+- Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)
+- Splits `event-folder.ts` into an `event-folder/` directory, with separate modules for the shared event-field helpers, phase events, and review events, and with `event-folder/event-folder.ts` as the entry point that exports `foldEvents`. (#2160)
+
+### 🧪 Tests
+
+- Splits the `event-folder` test into run-level, phases, and review files beside the new module, and the `run-data-parser` test into files for `parseStatusFile`, `parseRunData`, and v3 with `parseRunRawData`, and moves their shared helpers and fixture builders into `test-utils/` directories. (#2160)
+
+### ⚙️ Tooling
+
+- Removes the `~/*` path alias, which the base's `rewriteRelativeImportExtensions` rejects with `.ts` specifiers, and with it the `resolve.tsconfigPaths` setting from the Vite and Vitest configs, because the repo's tsconfigs no longer declare `paths`. (#2153)
+
+### 📚 Documentation
+
+- Rewrites comments, READMEs, design docs, test titles, and the `kb taxonomy` help text in `packages/kb`, `packages/run-core`, `docs/`, and `scripts/` to follow the current writing rules. (#2127)
+
 ## 0.4.2 — 2026-10-10
+
+### 🎉 Features
+
+- Move the CodeAssembly library into its own codeassembly-guidance package (#1933)
+
+  Moves the CodeAssembly library of rulebooks, skills, and subagents, together with its helpers and their tests, out of the `codeassembly` tool package into a package of its own, `codeassembly-guidance`, which reaches the tool only through its CLI and `codeassembly/api`. Changes the library's path in a clone to `packages/guidance/content`, and the source name in the `sources:` entry scaffolded by `init --global` to `codeassembly-guidance`.
 
 ### ♻️ Refactoring
 

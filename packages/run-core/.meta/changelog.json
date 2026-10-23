@@ -1,8 +1,79 @@
 [
   {
+    "version": "0.4.3",
+    "date": "2026-10-23",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Restructures code across the packages and the catwalk demo to satisfy the new `unicorn` rules, mostly by turning trailing `if` blocks into early returns and `continue` guards, and adds `ESNext.Array` to the root `tsconfig.json` `lib` so that `Array.fromAsync` typechecks. (#2152)",
+            "hash": "844d21ccdf4ed85436de9cfcd358af2f34651f09",
+            "entry": 2
+          },
+          {
+            "description": "Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)",
+            "hash": "e09ca0e224178ce34444160ac80477d2e884b677",
+            "entry": 3
+          },
+          {
+            "description": "Splits `event-folder.ts` into an `event-folder/` directory, with separate modules for the shared event-field helpers, phase events, and review events, and with `event-folder/event-folder.ts` as the entry point that exports `foldEvents`. (#2160)",
+            "hash": "7b4865094277680c184a58cca9fb312046729545",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Splits the `event-folder` test into run-level, phases, and review files beside the new module, and the `run-data-parser` test into files for `parseStatusFile`, `parseRunData`, and v3 with `parseRunRawData`, and moves their shared helpers and fixture builders into `test-utils/` directories. (#2160)",
+            "hash": "7b4865094277680c184a58cca9fb312046729545",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Removes the `~/*` path alias, which the base's `rewriteRelativeImportExtensions` rejects with `.ts` specifiers, and with it the `resolve.tsconfigPaths` setting from the Vite and Vitest configs, because the repo's tsconfigs no longer declare `paths`. (#2153)",
+            "hash": "e09ca0e224178ce34444160ac80477d2e884b677",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Rewrites comments, READMEs, design docs, test titles, and the `kb taxonomy` help text in `packages/kb`, `packages/run-core`, `docs/`, and `scripts/` to follow the current writing rules. (#2127)",
+            "hash": "0d1b6546d5daf93e044a71e702f7b49e93dcbe45",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.4.2",
     "date": "2026-10-10",
     "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Move the CodeAssembly library into its own codeassembly-guidance package (#1933)",
+            "body": "Moves the CodeAssembly library of rulebooks, skills, and subagents, together with its helpers and their tests, out of the `codeassembly` tool package into a package of its own, `codeassembly-guidance`, which reaches the tool only through its CLI and `codeassembly/api`. Changes the library's path in a clone to `packages/guidance/content`, and the source name in the `sources:` entry scaffolded by `init --global` to `codeassembly-guidance`.",
+            "hash": "04c9f0b68f9d30f51c37203449047c88e1615d38"
+          }
+        ]
+      },
       {
         "title": "♻️ Refactoring",
         "audience": "dev",

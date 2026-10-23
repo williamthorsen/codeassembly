@@ -1,5 +1,65 @@
 [
   {
+    "version": "0.10.0",
+    "date": "2026-10-23",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds an optional `git` parameter, which defaults to running git, to `check`, `enumerateNotes`, and `enumerateNotePaths`, and exports the `KbGit` adapter type and its `GitAnswer` result type from `@williamthorsen/kb/check`, so that a consumer's tests can supply fixed answers to the repository queries instead of creating a real repository. (#2077)",
+            "hash": "e1242949ad8654b3c3bba3b5bccd8acf7abed0a2",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Moves every git invocation in kb, with the parsing of its output, into the `realGit` adapter in `git/git.ts`, which replaces `run-git.ts` and `list-git-scope.ts`, and passes the adapter through `run`, `kb check`, `kb taxonomy`, and changed-path resolution. (#2077)",
+            "hash": "e1242949ad8654b3c3bba3b5bccd8acf7abed0a2",
+            "entry": 2
+          },
+          {
+            "description": "Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)",
+            "hash": "e09ca0e224178ce34444160ac80477d2e884b677",
+            "entry": 3
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces the real git repositories in kb's enumeration, `check`, `kb check --vs`, and changed-path tests with `makeFakeGit`, a fake adapter that returns fixed answers, and moves the tests that no longer run git from the `tool` tier to `unit`. (#2077)",
+            "hash": "e1242949ad8654b3c3bba3b5bccd8acf7abed0a2",
+            "entry": 3
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Rewrites comments, READMEs, design docs, test titles, and the `kb taxonomy` help text in `packages/kb`, `packages/run-core`, `docs/`, and `scripts/` to follow the current writing rules. (#2127)",
+            "hash": "0d1b6546d5daf93e044a71e702f7b49e93dcbe45",
+            "entry": 1
+          },
+          {
+            "description": "Revise the agents package's prose against the current writing rules (#2128)",
+            "body": "Revises the comments, docs, test names, and printed messages of `packages/agents` against the current writing rules, which completes the `revise-prose` sweep of the package. The CLI's warnings now say that a guidance template or a script \"is provided by more than one content root\" instead of \"is shipped by more than one content root\".",
+            "hash": "0a26701f3713fc430be0a104361bbcf7ab51881f"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.9.0",
     "date": "2026-10-10",
     "sections": [
@@ -7,6 +67,11 @@
         "title": "🎉 Features",
         "audience": "all",
         "items": [
+          {
+            "description": "Treat the negative-quantifier construction as a plain-speech defect (#1866)",
+            "body": "Treats the negative-quantifier construction as a plain-speech defect, and adds a `negative-quantifier` detector to `revise-prose` that reports it. Removes the construction from the library's own guidance, including the reduced-object-relative rule's exhibits, which modeled it.",
+            "hash": "a1b903080cdc9889631e3c56a96b94a0f9bafd99"
+          },
           {
             "description": "Adds an optional `feedback_kb` key to the `kb.yaml` registry, which names the KB that receives feedback about agent guidance and follows the `default_kb` rules for validation and project-over-user precedence. (#1868)",
             "hash": "32e2b5e839e4cca550d40272d6733c2054845d0d",

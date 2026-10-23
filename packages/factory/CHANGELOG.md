@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.14 — 2026-10-23
+
+### ♻️ Refactoring
+
+- Restructures code across the packages and the catwalk demo to satisfy the new `unicorn` rules, mostly by turning trailing `if` blocks into early returns and `continue` guards, and adds `ESNext.Array` to the root `tsconfig.json` `lib` so that `Array.fromAsync` typechecks. (#2152)
+- Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)
+
+### 🧪 Tests
+
+- Moves the `factory` DOM tests and the `index-prototypes` page-script tests in `guidance` from jsdom to happy-dom, and removes the `ResizeObserver` stub that the `factory` setup file installed for jsdom. (#2101)
+
+### ⚙️ Tooling
+
+- Turns off `max-lines` in `packages/factory/eslint.config.ts` and, for `demos/catwalk/**`, in the root `eslint.config.ts`, because both are dormant code that will be restructured when it is revived rather than split now. (#2159)
+
+### 📦 Dependencies
+
+- Replaces `jsdom` 30.1.1 with `happy-dom` 21.0.1 in the workspace catalog and the `factory` and `guidance` manifests, drops `@types/jsdom`, and prunes the jsdom package tree from `pnpm-lock.yaml`. (#2101)
+- Applies patch and minor upgrades to the root and `factory` dependencies, among them `react` and `react-dom` 19.3.1, `zod` 4.6.7, and pnpm 12.13.0, and rebuilds the `guidance` helper bundles that bundle `zod`. (#2163)
+
 ## 0.2.13 — 2026-10-10
 
 ### 🧪 Tests

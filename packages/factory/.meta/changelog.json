@@ -1,5 +1,65 @@
 [
   {
+    "version": "0.2.14",
+    "date": "2026-10-23",
+    "sections": [
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Restructures code across the packages and the catwalk demo to satisfy the new `unicorn` rules, mostly by turning trailing `if` blocks into early returns and `continue` guards, and adds `ESNext.Array` to the root `tsconfig.json` `lib` so that `Array.fromAsync` typechecks. (#2152)",
+            "hash": "844d21ccdf4ed85436de9cfcd358af2f34651f09",
+            "entry": 2
+          },
+          {
+            "description": "Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)",
+            "hash": "e09ca0e224178ce34444160ac80477d2e884b677",
+            "entry": 3
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Moves the `factory` DOM tests and the `index-prototypes` page-script tests in `guidance` from jsdom to happy-dom, and removes the `ResizeObserver` stub that the `factory` setup file installed for jsdom. (#2101)",
+            "hash": "f4c7fa57b639bc377fdbbbd6a06c2299478ef5c5",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Turns off `max-lines` in `packages/factory/eslint.config.ts` and, for `demos/catwalk/**`, in the root `eslint.config.ts`, because both are dormant code that will be restructured when it is revived rather than split now. (#2159)",
+            "hash": "3961f964cc27f47cfa7422db8addc8a9df34e5f8",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "📦 Dependencies",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces `jsdom` 30.1.1 with `happy-dom` 21.0.1 in the workspace catalog and the `factory` and `guidance` manifests, drops `@types/jsdom`, and prunes the jsdom package tree from `pnpm-lock.yaml`. (#2101)",
+            "hash": "f4c7fa57b639bc377fdbbbd6a06c2299478ef5c5",
+            "entry": 3
+          },
+          {
+            "description": "Applies patch and minor upgrades to the root and `factory` dependencies, among them `react` and `react-dom` 19.3.1, `zod` 4.6.7, and pnpm 12.13.0, and rebuilds the `guidance` helper bundles that bundle `zod`. (#2163)",
+            "hash": "394ecd3f317959edfba110efac5f6bd2f4c50541",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.13",
     "date": "2026-10-10",
     "sections": [

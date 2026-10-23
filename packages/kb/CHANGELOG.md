@@ -2,9 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.0 — 2026-10-23
+
+### 🎉 Features
+
+- Adds an optional `git` parameter, which defaults to running git, to `check`, `enumerateNotes`, and `enumerateNotePaths`, and exports the `KbGit` adapter type and its `GitAnswer` result type from `@williamthorsen/kb/check`, so that a consumer's tests can supply fixed answers to the repository queries instead of creating a real repository. (#2077)
+
+### ♻️ Refactoring
+
+- Moves every git invocation in kb, with the parsing of its output, into the `realGit` adapter in `git/git.ts`, which replaces `run-git.ts` and `list-git-scope.ts`, and passes the adapter through `run`, `kb check`, `kb taxonomy`, and changed-path resolution. (#2077)
+- Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)
+
+### 🧪 Tests
+
+- Replaces the real git repositories in kb's enumeration, `check`, `kb check --vs`, and changed-path tests with `makeFakeGit`, a fake adapter that returns fixed answers, and moves the tests that no longer run git from the `tool` tier to `unit`. (#2077)
+
+### 📚 Documentation
+
+- Rewrites comments, READMEs, design docs, test titles, and the `kb taxonomy` help text in `packages/kb`, `packages/run-core`, `docs/`, and `scripts/` to follow the current writing rules. (#2127)
+- Revise the agents package's prose against the current writing rules (#2128)
+
+  Revises the comments, docs, test names, and printed messages of `packages/agents` against the current writing rules, which completes the `revise-prose` sweep of the package. The CLI's warnings now say that a guidance template or a script "is provided by more than one content root" instead of "is shipped by more than one content root".
+
 ## 0.9.0 — 2026-10-10
 
 ### 🎉 Features
+
+- Treat the negative-quantifier construction as a plain-speech defect (#1866)
+
+  Treats the negative-quantifier construction as a plain-speech defect, and adds a `negative-quantifier` detector to `revise-prose` that reports it. Removes the construction from the library's own guidance, including the reduced-object-relative rule's exhibits, which modeled it.
 
 - Adds an optional `feedback_kb` key to the `kb.yaml` registry, which names the KB that receives feedback about agent guidance and follows the `default_kb` rules for validation and project-over-user precedence. (#1868)
 - Replaces the `✓` that leads the `kb check` clean-run line with ✅ on a terminal and `PASS` elsewhere, and adds an `--output-style <auto|plain|rich>` option to every `kb` command and a `KB_OUTPUT_STYLE` variable to force either style. (#1897)

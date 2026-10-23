@@ -1,5 +1,91 @@
 [
   {
+    "version": "0.18.0",
+    "date": "2026-10-23",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Makes `delivery` a required rulebook frontmatter field, so that `codeassembly sync` rejects a rulebook that omits it with a message saying the field is required, where it previously treated the rulebook as `ambient`. (#2087)",
+            "migration": "Add `delivery: ambient` to each rulebook that omits `delivery` and must still load into every session, or `delivery: skill` to one that a session consults on demand.",
+            "hash": "893150e0dea901c3e178565092511dae45ed41bf",
+            "entry": 1
+          },
+          {
+            "description": "Adds the `disposition:` collection key (`public`, `personal`, or `opt-in`, the claim that membership makes about the members) and the `standalone:` artifact key, and makes `codeassembly validate` report as a `disposition` defect an artifact that no disposition covers, a standalone artifact that a collection lists or reaches, and a collection whose closure reaches beyond what its disposition permits. (#2137)",
+            "hash": "a2690848e3e61e8a04b0b63177afd1161f6c60ad",
+            "entry": 1
+          },
+          {
+            "description": "Adds content format 3 and its computed `'@unclaimed'` members token, which resolves to every artifact of the collection's content root that does not declare `standalone:` and that is not listed by any collection with a `disposition:`; `codeassembly validate` reports the token in a root that declares a lower format. (#2137)",
+            "hash": "a2690848e3e61e8a04b0b63177afd1161f6c60ad",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "♻️ Refactoring",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Moves the git calls in `packages/agents` into the `AgentsGit` adapter, which `sync`, `sync --global`, `sizes`, `install`, and `bundle-helpers` receive as a parameter, so that their tests pass a fake adapter instead of creating git repositories. (#2071)",
+            "hash": "8ac4d2a9947a837e5b7cc14bcc77fdfc6d74652f",
+            "entry": 1
+          },
+          {
+            "description": "Restructures code across the packages and the catwalk demo to satisfy the new `unicorn` rules, mostly by turning trailing `if` blocks into early returns and `continue` guards, and adds `ESNext.Array` to the root `tsconfig.json` `lib` so that `Array.fromAsync` typechecks. (#2152)",
+            "hash": "844d21ccdf4ed85436de9cfcd358af2f34651f09",
+            "entry": 2
+          },
+          {
+            "description": "Converts property accesses on index signatures to bracket notation in every package, as `noPropertyAccessFromIndexSignature` requires. (#2153)",
+            "hash": "e09ca0e224178ce34444160ac80477d2e884b677",
+            "entry": 3
+          },
+          {
+            "description": "Brings the oversized `agents` modules under the `max-lines` ceiling by moving argument parsing into `parse-args.ts`, script and harness-guidance installation into `install-scripts.ts` and `install-harness-guidance.ts`, the render gates into `render-gates.ts`, the report describers into four `report-*.ts` subject modules, the pre-write phase of `reconcileDomain` into `resolveDomain` and `resolveDomainArtifacts`, and the resolver's invocation-token tests into their own file. (#2161)",
+            "hash": "f022a7931db53701929c2850c233c94527c01c8e",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "📦 Dependencies",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Upgrades `@williamthorsen/nmr-core` to 0.13.4, `@williamthorsen/release-kit` to 14.2.2, `prettier` to 3.9.10, `readyup` to 0.41.1, and `v11y-check` to 0.19.3. (#2149)",
+            "hash": "ad8549ed6e0144f9cb16757ede32a45de6a58c84",
+            "entry": 3
+          },
+          {
+            "description": "Upgrades `readyup` from 0.41.1 to 0.42.0 and recompiles the root and `agents` kits, which `rdy compile` now compiles without a `checks-vary-by-directory` warning. (#2163)",
+            "hash": "394ecd3f317959edfba110efac5f6bd2f4c50541",
+            "entry": 3
+          },
+          {
+            "description": "Upgrades `happy-dom` to 21.0.3, `@williamthorsen/release-kit` to 14.2.4, `@williamthorsen/nmr-core` to 0.13.5, `v11y-check` to 0.19.5, and pnpm to 12.14.0, and leaves `lefthook` at 2.2.1 because 2.2.2 was published without provenance. (#2169)",
+            "hash": "cb38d6f04276922ec4710372257c5407f55c2eca",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces vague verbs, figurative phrasing, the determiner \"no\", and `where` clauses that stated a condition across the comments, docs, README, test names, readyup checks, and printed messages of `packages/agents`, including the duplicate-content-root warnings and the near-miss guidance-hook directive message. (#2128)",
+            "hash": "0a26701f3713fc430be0a104361bbcf7ab51881f",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.17.0",
     "date": "2026-10-10",
     "sections": [
@@ -567,6 +653,12 @@
             "migration": "Read a file's growth since its last review from the `streamline-guidance` summary instead, and expect it to show `never` for a file until a run records a review in `.agents/streamline-guidance.yaml`, because reviews marked in the deployed-sizes record are not carried over.",
             "hash": "ca8fa96148adea6613e185fabaae9a46e977ad9f",
             "entry": 2
+          },
+          {
+            "description": "Remove the codeassembly-mcp server (#1945)",
+            "body": "Removes the `codeassembly-mcp` server and its `codeassembly` registration in `.claude/settings.json`, because its five run-management tools served only the orchestration engine, which has been retired. Keeps the v3 run format in `codeassembly-run-core` as a read-only format, so that existing v3 runs stay readable after the removal of the only tool that wrote them.",
+            "breaking": true,
+            "hash": "9021da623524864946b3f389ffd24b89dbb146ee"
           }
         ]
       },
