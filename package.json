@@ -37,7 +37,7 @@
     "@williamthorsen/eslint-config-typescript": "20.1.2",
     "@williamthorsen/kb": "workspace:*",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/release-kit": "14.2.3",
+    "@williamthorsen/release-kit": "14.2.4",
     "@williamthorsen/strict-lint": "14.2.1",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.testing": "catalog:",
@@ -57,11 +57,11 @@
     "tsx": "4.23.15",
     "typescript": "6.0.3",
     "typescript-eslint": "8.71.2",
-    "v11y-check": "0.19.4",
+    "v11y-check": "0.19.5",
     "vite": "catalog:",
     "vitest": "catalog:"
   },
-  "packageManager": "pnpm@12.13.0",
+  "packageManager": "pnpm@12.14.0",
   "engines": {
     "node": ">=24"
   }
