@@ -2,7 +2,7 @@
 slug: commit-conventions
 description: Commit title and body conventions, the work-type taxonomy, and branch naming. Consult before writing a commit message or naming a branch.
 delivery: skill
-version: '10'
+version: '11'
 ---
 
 # Git commit conventions
@@ -15,9 +15,10 @@ A commit on the default branch is extracted into the changelog and, for release-
 
 ## Commit title
 
-Voice, length, content discipline, and the ticket-reference rule are stated in [`title-voice.md`](../../skills/_data/title-voice.md), which governs the authored string across every surface into which it is rendered. Two rules are commit-specific:
+Voice, length, content discipline, and the ticket-reference rule are stated in [`title-voice.md`](../../skills/_data/title-voice.md), which governs the authored string across every surface into which it is rendered. Three rules are commit-specific:
 
 - Render via `describe-change.mjs`; see [`title-templates.md`](../../skills/_data/title-templates.md) for the full template syntax, supported tokens, and rendering pipeline.
+- Take the title's format from the configured `commit.title_format` alone. When that template is empty or unset, the title is the bare title text. Never infer a format from `git log` or from other commits: The default branch's subjects are squash-merge titles rendered by `merge.title_format`, and earlier branch commits may have been written by hand. A rendered title that differs from earlier commits is not a defect.
 - Mark breaking changes by appending `!` to the work type: `agents|feat!: Remove deprecated API`. See [Breaking changes](#breaking-changes) below for which types are eligible.
 
 ## Ticket ID

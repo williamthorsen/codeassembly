@@ -48,4 +48,4 @@ Agents write most of what appears under the developer's account, so a creator, r
 
 ## Commits
 
-Invoke the `create-commit` skill to make a commit. It states the procedure: what to stage, one commit per logical unit of work, and how the title is rendered. The `consult-commit-conventions` skill states what the message is composed to -- the title and body conventions, the work-type taxonomy, and the branch-naming format -- and is worth consulting on its own before writing a message by hand.
+Invoke the `create-commit` skill to make a commit. It states the procedure: what to stage, one commit per logical unit of work, and how the title is rendered. The `consult-commit-conventions` skill states what the message is composed to -- the title and body conventions, the work-type taxonomy, and the branch-naming format -- and is worth consulting on its own before writing a message by hand. A title rendered from the configured template is correct: Never propose changing it to match other commits, and do not comment on whether it contains a ticket reference.
