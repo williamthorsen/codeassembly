@@ -1086,7 +1086,7 @@ rejections:
     ground: 'not prose: test input that contains both dropped forms on purpose'
   - rule: capitalization-after-colon
     rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
+    file: packages/guidance/content/skills/review-branch/SKILL.md
     phrase: '**T1: test code.**'
     ground: the text after a finding ID is a lowercase surface value from the list that the section defines (source, test, comment, docs, config), and every finding label in the examples takes the same form
   - rule: capitalization-after-colon
@@ -1361,11 +1361,6 @@ rejections:
     ground: a verbless label in a failure message
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/__tests__/prose-line-breaks-reach.unit.test.ts
-    phrase: No hard line breaks
-    ground: a data literal (RULE_HEADLINE) that quotes the partial's heading, not prose
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: "'no version'"
     ground: a verbless label in a rendered listing
@@ -1521,11 +1516,6 @@ rejections:
     ground: a verbless fragment listing what the title omits
   - rule: negative-quantifier
     rule-version: '2'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: '**No recommendation**'
-    ground: a verbless bold label
-  - rule: negative-quantifier
-    rule-version: '2'
     file: packages/guidance/content/skills/add-change-record/SKILL.md
     phrase: '"No open pull request found for branch `{branch_name}`.'
     ground: a quoted message that the skill prints verbatim
@@ -1677,6 +1667,11 @@ rejections:
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: '**No recommendation**'
+    ground: a verbless bold label
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
     phrase: '**No source available**:'
     ground: a verbless label
   - rule: negative-quantifier
@@ -1754,6 +1749,11 @@ rejections:
     file: packages/guidance/content/subagents/prose-reviser.md
     phrase: '"there''s no Vercel CLI"'
     ground: "a marked exhibit: the rule's own example"
+  - rule: negative-quantifier
+    rule-version: '2'
+    file: packages/guidance/content/test-utils/doctrine-reach.ts
+    phrase: No hard line breaks
+    ground: a data literal (RULE_HEADLINE) that quotes the partial's heading, not prose
   - rule: negative-quantifier
     rule-version: '2'
     file: packages/guidance/docs/preferences.md
@@ -2966,14 +2966,9 @@ rejections:
     ground: 'not the construction: "grows" is the main clause''s own verb and "the bound" is the object of "without"'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/__tests__/gh-body-file-reach.unit.test.ts
+    file: packages/guidance/content/__tests__/gh-body-file-call-sites.unit.test.ts
     phrase: a Markdown file's fenced `bash` blocks
     ground: 'not the construction: no relative clause, only a possessive noun phrase'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/gh-body-file-reach.unit.test.ts
-    phrase: which the single-statement counts key on
-    ground: 'not the construction: the relativizer "which" is already present, and "key on" is a phrasal verb whose particle cannot be pied-piped'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/guidance-hook-reach.unit.test.ts
@@ -2986,16 +2981,6 @@ rejections:
     ground: 'outside the rule: a fused relative adverb heading an adjunct'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/__tests__/nested-list-indent-reach.unit.test.ts
-    phrase: which the single-statement counts key on
-    ground: 'not the construction: the relativizer "which" is already present'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/prose-line-breaks-reach.unit.test.ts
-    phrase: which the single-statement counts key on
-    ground: 'not the construction: the relativizer "which" is already present'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: '**Fold every rejection under a rule that `rules` names, whether or not the helper has its detector.**'
     ground: 'not prose: a literal pinned byte-for-byte against the `revise-prose` skill body, and the span already carries "that"'
@@ -3004,11 +2989,6 @@ rejections:
     file: packages/guidance/content/__tests__/prose-sweep-vocabulary.unit.test.ts
     phrase: so the fold's rules leave it out
     ground: 'not the construction: "leave" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/shared-doctrine-reach.unit.test.ts
-    phrase: a dropped one would strip the doctrine from that skill
-    ground: 'not the construction: "dropped" is a participial modifier, and "would strip" is the clause''s own verb'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/spec-inlining.unit.test.ts
@@ -3034,11 +3014,6 @@ rejections:
     file: packages/guidance/content/__tests__/subagent-content.unit.test.ts
     phrase: whichever guidance file the target harness loads
     ground: 'outside the rule: a fused relative headed by "whichever", which admits no relativizer'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/__tests__/work-type-choice-reach.unit.test.ts
-    phrase: single-statement counts key
-    ground: 'not the construction: the clause is "which the single-statement counts key on", which already has the overt relativizer "which"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/__tests__/work-types-data.unit.test.ts
@@ -3129,36 +3104,6 @@ rejections:
     file: packages/guidance/content/_partials/README.md
     phrase: use the partial's empty-slot defaults
     ground: "not the construction: 'use' is an imperative verb with its object"
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: idiom developers recognize
-    ground: a marked exhibit of the construction
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: mock it is
-    ground: a marked exhibit of the construction
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: parallel forms are
-    ground: 'not the construction: an ordinary subject and copula'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: source it names
-    ground: a marked exhibit of the construction
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: source it names
-    ground: a marked exhibit of the construction
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/_partials/reduced-object-relative.md
-    phrase: ticket the branch name encodes
-    ground: a marked exhibit of the construction
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/_partials/target-file-set-resolution.md
@@ -3339,6 +3284,36 @@ rejections:
     file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
     phrase: cap the config sets
     ground: 'a marked exhibit: the text names it as a reduced object relative'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: idiom developers recognize
+    ground: a marked exhibit of the construction
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: mock it is
+    ground: a marked exhibit of the construction
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: parallel forms are
+    ground: 'not the construction: an ordinary subject and copula'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: source it names
+    ground: a marked exhibit of the construction
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: source it names
+    ground: a marked exhibit of the construction
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
+    phrase: ticket the branch name encodes
+    ground: a marked exhibit of the construction
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/guidance/shared/AGENTS.md
@@ -3631,56 +3606,6 @@ rejections:
     ground: 'not the construction: an option title used as the subject'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: cascade's conditions leave
-    ground: 'not the construction: "leave" is the clause''s own verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: case the ticket option composes
-    ground: 'not the construction: "In this case" is an adverbial and "composes" is the main verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: keep each sub-block's own 1-based
-    ground: 'not the construction: no relative clause'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: one it has
-    ground: 'not the construction: an embedded question ("renders which one it has")'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: option-format tests bearing
-    ground: 'not the construction: "bearing" is a participle'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: recommendation rules do not indicate
-    ground: 'not the construction: a subject with its main verb'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: source the implementation matches
-    ground: 'not the construction: an embedded question ("which spec source the implementation matches")'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: still a single named
-    ground: 'not the construction: "named" is a participle modifying "change"'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: tier it omits
-    ground: 'outside the rule: "whichever tier ..." is a fused relative whose determiner admits no relativizer'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: touch a shared contract used
-    ground: 'not the construction: "used" is a participle, inside a quoted example'
-  - rule: reduced-object-relative
-    rule-version: '1'
     file: packages/guidance/content/skills/_partials/option-format.md
     phrase: answer the test yields
     ground: "not the construction: an embedded question ('which answer the test yields'), not a relative clause"
@@ -3726,12 +3651,17 @@ rejections:
     ground: 'not the construction: a passive main clause'
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/_partials/ticket-concision.md
+    file: packages/guidance/content/skills/_partials/ticket-composition.md
     phrase: back-and-forth we landed
     ground: not the construction, and inside the marked Before exhibit
   - rule: reduced-object-relative
     rule-version: '1'
-    file: packages/guidance/content/skills/_partials/ticket-concision.md
+    file: packages/guidance/content/skills/_partials/ticket-composition.md
+    phrase: column stays pinned
+    ground: 'not the construction: a subject and verb in a main clause inside the After exhibit'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/_partials/ticket-composition.md
     phrase: work gets executed
     ground: 'not the construction: a get-passive main clause'
   - rule: reduced-object-relative
@@ -3739,11 +3669,6 @@ rejections:
     file: packages/guidance/content/skills/_partials/ticket-criteria-conventions.md
     phrase: criteria the corresponding updates
     ground: 'not the construction: a prepositional phrase followed by the moved object'
-  - rule: reduced-object-relative
-    rule-version: '1'
-    file: packages/guidance/content/skills/_partials/ticket-placement.md
-    phrase: column stays pinned
-    ground: 'not the construction: a subject and verb in a main clause inside the After exhibit'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/add-change-record/SKILL.md
@@ -4297,6 +4222,16 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: cascade's conditions leave
+    ground: 'not the construction: "leave" is the clause''s own verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: case the ticket option composes
+    ground: 'not the construction: "In this case" is an adverbial and "composes" is the main verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
     phrase: claim falls through to the comparison
     ground: 'not the construction: "falls through" is the main verb'
   - rule: reduced-object-relative
@@ -4304,6 +4239,36 @@ rejections:
     file: packages/guidance/content/skills/review-branch/SKILL.md
     phrase: falls through to the comparison below
     ground: 'not the construction: "falls through" is the main verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: keep each sub-block's own 1-based
+    ground: 'not the construction: no relative clause'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: one it has
+    ground: 'not the construction: an embedded question ("renders which one it has")'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: option-format tests bearing
+    ground: 'not the construction: "bearing" is a participle'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: recommendation rules do not indicate
+    ground: 'not the construction: a subject with its main verb'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: source the implementation matches
+    ground: 'not the construction: an embedded question ("which spec source the implementation matches")'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: still a single named
+    ground: 'not the construction: "named" is a participle modifying "change"'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/review-branch/SKILL.md
@@ -4317,8 +4282,18 @@ rejections:
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: tier it omits
+    ground: 'outside the rule: "whichever tier ..." is a fused relative whose determiner admits no relativizer'
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
     phrase: timestamp it exits
     ground: "not the construction: 'it exits' is the main clause after a prepositional phrase"
+  - rule: reduced-object-relative
+    rule-version: '1'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: touch a shared contract used
+    ground: 'not the construction: "used" is a participle, inside a quoted example'
   - rule: reduced-object-relative
     rule-version: '1'
     file: packages/guidance/content/skills/review-branch/SKILL.md
@@ -5951,16 +5926,6 @@ rejections:
     ground: the pronoun names the agent that the partial instructs
   - rule: second-person
     rule-version: '1'
-    file: packages/guidance/content/_partials/live-repo-writes.md
-    phrase: Once the artifact exists, downstream effects may fire before you can undo it; some release configurations are immutable (published tags produce permanent artifacts).
-    ground: the pronoun names the agent that the partial instructs
-  - rule: second-person
-    rule-version: '1'
-    file: packages/guidance/content/_partials/live-repo-writes.md
-    phrase: Other sessions, file watchers, CI, release tooling, or IDE extensions on the user's machine can observe in-progress mutations, even if you intend to clean up after.
-    ground: the pronoun names the agent that the partial instructs
-  - rule: second-person
-    rule-version: '1'
     file: packages/guidance/content/_partials/plain-speech-calibration.md
     phrase: '"priced on your ledger" becomes "measured by you".'
     ground: 'a marked exhibit: a quoted before-and-after example'
@@ -6039,6 +6004,16 @@ rejections:
     file: packages/guidance/content/guidance/rulebooks/williamthorsen-writing-preferences.md
     phrase: '**The surviving object gap.** "the cap you set" and "the cap the config sets" are the same reduced object relative; therefore, the substitution leaves the second defect in place.'
     ground: 'a marked exhibit: a quoted example of the failed substitution'
+  - rule: second-person
+    rule-version: '1'
+    file: packages/guidance/content/guidance/shared/AGENTS.md
+    phrase: Once the artifact exists, downstream effects may fire before you can undo it; some release configurations are immutable (published tags produce permanent artifacts).
+    ground: the pronoun names the agent that the partial instructs
+  - rule: second-person
+    rule-version: '1'
+    file: packages/guidance/content/guidance/shared/AGENTS.md
+    phrase: Other sessions, file watchers, CI, release tooling, or IDE extensions on the user's machine can observe in-progress mutations, even if you intend to clean up after.
+    ground: the pronoun names the agent that the partial instructs
   - rule: second-person
     rule-version: '1'
     file: packages/guidance/content/skills/_data/action-items.md
@@ -6486,7 +6461,7 @@ rejections:
     ground: the earlier bare so is repaired with "so that"; judged alone, this so states a direct result
   - rule: so
     rule-version: '1'
-    file: packages/guidance/content/skills/_partials/ticket-concision.md
+    file: packages/guidance/content/skills/_partials/ticket-composition.md
     phrase: It must be covered by tests so we know it works.
     ground: 'a marked exhibit: the Before sample of a ticket that the After version replaces'
   - rule: so
@@ -7198,11 +7173,6 @@ rejections:
     ground: 'not prose: a string literal that the test asserts appears verbatim in subagents/entry-drafter.md; also names a place (a source location)'
   - rule: where
     rule-version: '2'
-    file: packages/guidance/content/__tests__/shared-doctrine-reach.unit.test.ts
-    phrase: inside `<HARD-GATE>` blocks where a heading would be wrong
-    ground: '`where` names a place: the position inside those blocks'
-  - rule: where
-    rule-version: '2'
     file: packages/guidance/content/__tests__/writing-preferences-reach.unit.test.ts
     phrase: each is asserted where it can be
     ground: '`where` names a place: the test file in which each route can be asserted, named next in the sentence'
@@ -7473,11 +7443,6 @@ rejections:
     ground: 'names a place: inside the repository'
   - rule: where
     rule-version: '2'
-    file: packages/guidance/content/skills/_partials/next-steps-after-review.md
-    phrase: A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it.
-    ground: 'names a place: the delta rendered in the output'
-  - rule: where
-    rule-version: '2'
     file: packages/guidance/content/skills/_partials/ticket-and-plan-completeness.md
     phrase: Where the gap came up in conversation does not decide where it goes.
     ground: 'both uses name a place: where in the conversation, and where in the artifacts'
@@ -7531,6 +7496,11 @@ rejections:
     file: packages/guidance/content/skills/respond-to-review/SKILL.md
     phrase: Save into the same run directory where the review was found
     ground: "outside the rule: 'where' names a place (a directory)"
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/skills/review-branch/SKILL.md
+    phrase: A criterion genuinely arguable as in conflict belongs in the delta, where the user can strike it.
+    ground: 'names a place: the delta rendered in the output'
   - rule: where
     rule-version: '2'
     file: packages/guidance/content/skills/review-criteria/SKILL.md
@@ -7661,6 +7631,11 @@ rejections:
     file: packages/guidance/content/subagents/usability-assessor.md
     phrase: an action offered on a page where it cannot complete
     ground: 'names a place: the page'
+  - rule: where
+    rule-version: '2'
+    file: packages/guidance/content/test-utils/doctrine-reach.ts
+    phrase: inside `<HARD-GATE>` blocks where a heading would be wrong
+    ground: '`where` names a place: the position inside those blocks'
   - rule: where
     rule-version: '2'
     file: packages/guidance/docs/preferences.md
