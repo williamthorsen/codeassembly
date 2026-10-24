@@ -1,8 +1,8 @@
 ---
 slug: cli-conventions
-description: 'How a command-line tool talks to its user: subcommands and options, standard option names, configuration, writing modes, help on every command, exit codes, error messages, JSON output, progress and outcome reports, color, the split of logic from presentation, and help topics. Consult before writing or changing any command-line tool, in any language.'
+description: 'How a command-line tool talks to its user: subcommands and options, standard option names, configuration, writing modes, help on every command, exit codes, error messages, JSON output, progress and outcome reports, check results, color, the split of logic from presentation, and help topics. Consult before writing or changing any command-line tool, in any language.'
 delivery: skill
-version: '4'
+version: '5'
 ---
 
 # CLI conventions
@@ -150,6 +150,20 @@ Example, for `<bin> deploy`:
 
 - ❌ `<bin> deploy: deployed 20261012-142530Z-a10a17e`
 - ✅ One line for each step (pull, build, stage, restart, readiness check), then `<bin> deploy: replaced 20261009-091200Z-4c2e8b1 with 20261012-142530Z-a10a17e (3 commits)`
+
+## Check results
+
+These rules apply to a command that checks state without changing it: a `check` or `verify` mode, a health probe, a pre-flight.
+
+- **Each item's line states what it checked and the state that it found**, on a pass as well as on a failure. A bare `PASS` does not say what was compared with what, so a reader cannot tell a check that verified something from one that compared nothing.
+- **A failure shows its evidence in the default output**: a diff for a file compared with its definition, the actual state otherwise. A reader who sees only the verdict must run the check again, or reproduce it by hand, to learn what is wrong.
+- **A check whose items read only configuration also probes the function that the configuration serves, end to end.** Configuration that matches its definition does not show that the service works: A resolver can match its config file and still fail to answer a query.
+- **`--verbose` adds only detail too long to print on every run.** The per-item lines and a failure's evidence belong in the default output. The exit code stays the contract for scripts, as "Exit codes" states.
+
+Example, for `<bin> check` on a host whose hosts file matches its definition and whose resolver config does not:
+
+- ❌ `PASS hosts`, then `FAIL resolver`
+- ✅ `PASS hosts: /etc/hosts matches hosts.conf`, then `FAIL resolver: /etc/resolv.conf differs from resolver.conf`, followed by the diff
 
 ## Color
 
