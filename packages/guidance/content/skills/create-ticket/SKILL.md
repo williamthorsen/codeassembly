@@ -61,17 +61,13 @@ Create the ticket body describing WHAT needs to be done: problem, context, and a
 
 **Spike mode.** If the ticket describes a spike, use the spike ticket template in [spike conventions](../_data/spike-conventions.md) in place of the skeleton above.
 
-<!-- include: ../_partials/ticket-skeleton-tiers.md / -->
-
-<!-- include: ../_partials/ticket-concision.md / -->
-
-<!-- include: ../../_partials/prose-line-breaks.md / -->
-
-<!-- include: ../_partials/ticket-placement.md / -->
+<!-- include: ../_partials/ticket-composition.md / -->
 
 `create-ticket` does not produce a plan, so _the implementation_ is derived when the work is later planned; state the subject and outcomes, and leave mechanism for that step.
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
+
+<!-- include: ../../_partials/prose-line-breaks.md / -->
 
 Also draft the ticket string, per [`title-voice.md`](../_data/title-voice.md), for use in step 6.
 

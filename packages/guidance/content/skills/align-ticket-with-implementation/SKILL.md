@@ -37,13 +37,9 @@ The artifact begins with YAML frontmatter conforming to the [universal artifact 
 <!-- include: ../_partials/ticket-skeleton.md / -->
 ```
 
-<!-- include: ../_partials/ticket-skeleton-tiers.md / -->
-
 ## Guidance
 
-<!-- include: ../_partials/ticket-concision.md / -->
-
-<!-- include: ../_partials/ticket-placement.md / -->
+<!-- include: ../_partials/ticket-composition.md / -->
 
 When aligning to an existing implementation, _the implementation_ is the code on the branch; describe what the code now does, and resist transcribing its mechanism back into the ticket.
 

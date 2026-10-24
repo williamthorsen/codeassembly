@@ -94,17 +94,13 @@ When the ticket needs work, produce or update it to state the proposed approach:
 <!-- include: ../_partials/ticket-skeleton.md / -->
 ```
 
-<!-- include: ../_partials/ticket-skeleton-tiers.md / -->
-
-<!-- include: ../_partials/ticket-concision.md / -->
-
-<!-- include: ../../_partials/prose-line-breaks.md / -->
-
-<!-- include: ../_partials/ticket-placement.md / -->
+<!-- include: ../_partials/ticket-composition.md / -->
 
 Here, _the implementation_ is the plan artifact (Phase 4): Mechanism that the ticket omits is recorded there, not dropped.
 
 <!-- include: ../_partials/ticket-criteria-conventions.md / -->
+
+<!-- include: ../../_partials/prose-line-breaks.md / -->
 
 **Present the ticket as the first checkpoint**, in one turn: the draft ticket, the decisions taken so far with their reasons, and the forks that survived the gate as option-style questions. Revise until approved. Approval of the ticket is approval of the design.
 

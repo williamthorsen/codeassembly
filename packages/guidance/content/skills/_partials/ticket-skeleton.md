@@ -10,4 +10,18 @@
 
 {The shape of the proposed approach: components or boundaries involved, how it fits into the existing system, and the chosen approach, including "X, not Y" when a rejected option is worth recording. Keep this section outcome-shaped per the placement doctrine below.}
 
-<!-- include: acceptance-criteria-scaffold.md / -->
+## Acceptance criteria
+
+Include only the tiers that have criteria. Omit any empty tier; do not emit a "Should have" or "Nice to have" header with nothing under it.
+
+### Must have
+
+- [ ] {Critical requirement}
+
+### Should have
+
+- [ ] {Important but not blocking}
+
+### Nice to have
+
+- [ ] {Optional enhancement}
