@@ -42,6 +42,12 @@ Acceptance criteria are the one revisable part, because they alone are the contr
 
 A write that this section rules out is not a skipped step, because nobody asked for it, and it does not produce any user-facing text: Do not mention the doctrine or the marker, do not report the write that was not made, and do not offer to reconcile the record with current state. When the user asks for such a write, decline it in one line and name the alternative: for a revision that you publish, a new record; for a divergence from the ticket, the pull-request description; for a lede that the records do not contain, `capture-lede-decision`'s `--agent-lede-file` and `--merged-lede-file`. A human's later edit to a published body does not need a record, because the `merge` record captures what merged.
 
+## Documentation placement
+
+A fact goes where it is defined: in the config that declares it, the code that implements it, the README section that owns it, or the rulebook that states it. When prose that you write into a file read for guidance, such as `AGENTS.md`, a README, `docs/`, or a rulebook, needs such a fact, write a pointer to its source and add only what the source does not state. A copy drifts from its source, and nothing reports the drift.
+
+Look for the source in two places before writing the fact: the repository's own files, and the guidance that the harness loads into every session in the repository, which includes the global guidance file, the rulebooks rendered into it, and the project's guidance files. A copy shows itself as a list whose entries mirror a config's entries, such as the hosts that a tool's user config declares, as a value taken from a config, or as a paragraph that restates a rulebook. A copy that a repository maintains on purpose, such as a mirror that a check keeps in sync, is outside this rule.
+
 ## Authorship
 
 Agents write most of what appears under the developer's account, so a creator, reporter, or author field shows which account made an item, not who wrote it. Never infer from such a field that the developer wrote an item, and never rest a conclusion on that premise unless the developer has said so. When provenance matters, say that the item was created under the developer's account and trace its content to a source; otherwise omit attribution.

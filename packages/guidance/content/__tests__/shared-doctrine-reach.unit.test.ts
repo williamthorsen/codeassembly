@@ -105,6 +105,10 @@ const SHARED_GUIDANCE_SECTIONS: ReadonlyArray<{ heading: string; phrase: string 
   },
   { heading: '## Technical recommendations', phrase: 'Default to current best practices' },
   { heading: '## Artifacts', phrase: 'invoke the `save-artifact` skill to resolve path and naming' },
+  {
+    heading: '## Documentation placement',
+    phrase: 'write a pointer to its source and add only what the source does not state',
+  },
   { heading: '## Authorship', phrase: 'shows which account made an item, not who wrote it' },
   { heading: '## Commits', phrase: 'Invoke the `create-commit` skill to make a commit' },
 ];

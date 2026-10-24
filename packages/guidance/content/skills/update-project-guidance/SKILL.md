@@ -76,20 +76,20 @@ State which path was selected, and why, before proceeding.
 
 For each finding, assign one of these classes:
 
-| Class               | Destination                             | Test                                                                                             |
-| ------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Ambient**         | `AGENTS.md`                             | Applies only to this repo, and the obvious action goes wrong without it                          |
-| **Reference**       | The owning package's README, or `docs/` | Applies only to this repo, but an agent needs it occasionally                                    |
-| **Already covered** | Omit                                    | Already stated in `{harness_home_dir}/{harness_guidance_file}`, or printed by the tool itself    |
-| **General**         | Recommend for the global guidance       | Applies across repos but not yet in general guidance                                             |
-| **Ambiguous**       | Ask the user                            | Could go either way; collect every such finding into one review at the draft or change-list gate |
+| Class               | Destination                                                           | Test                                                                                                                                                                 |
+| ------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Ambient**         | `AGENTS.md`                                                           | Applies only to this repo, and the obvious action goes wrong without it                                                                                              |
+| **Reference**       | The owning package's README, or `docs/`                               | Applies only to this repo, but an agent needs it occasionally                                                                                                        |
+| **Already covered** | Omit; for a fact defined in a repository file, a pointer to that file | Already stated in `{harness_home_dir}/{harness_guidance_file}` or by a rulebook loaded into the session, defined in a repository file, or printed by the tool itself |
+| **General**         | Recommend for the global guidance                                     | Applies across repos but not yet in general guidance                                                                                                                 |
+| **Ambiguous**       | Ask the user                                                          | Could go either way; collect every such finding into one review at the draft or change-list gate                                                                     |
 
 **Rules:**
 
 - Two axes decide the destination. **Scope** (general vs project-specific) separates `{harness_home_dir}/{harness_guidance_file}` from this repo; **tier** (ambient vs reference) then separates what `AGENTS.md` states from what a package README does. Neither axis is nature (prescriptive vs descriptive): Conventions, commands, and architectural decisions all classify the same way whether they are rules or facts.
 - What belongs in a README, and where the rest goes, is stated by {rulebook:readme-conventions}. Consult it before assigning a finding to the reference tier: A README's shape follows from what it describes, so the same finding is placed differently in a library's README and in a monorepo root's.
 - A finding belongs in the ambient tier only when it is absent from the tool's own output _and_ the obvious action goes wrong without it. A command table restates `--help`; a directory listing restates `ls`. Both are reference at best, and reference material injected at launch goes stale silently, because nothing fails when it drifts.
-- Do not duplicate general guidance. If a project-specific convention _extends_ a general one, include only the delta.
+- Do not duplicate general guidance or a rulebook loaded into the session; omit what they state. For a fact defined in a repository file, point to that file and add only what it does not state, per the "Documentation placement" section of the shared agent instructions. If a project-specific convention _extends_ a general one, include only the delta.
 - When unsure about scope, place the finding on the recommended side provisionally and collect every ambiguous finding into one review at the gate below, as multiple-choice questions when possible.
   - When asking option-style questions, follow [option format](#option-format). (Reinforces the rule in `AGENTS.md`: intentional redundancy.)
 - Content that is obvious from reading the code (e.g., "this project uses TypeScript") does not add any value. Include only what would save an agent from a wrong assumption or a slow discovery.
@@ -177,7 +177,7 @@ A `holds` row without an evidence token is not a permitted state. The audit is o
 
 Close the ledger by naming what was not audited, so that a bounded run reads as bounded.
 
-Re-run the Phase 2 classification only on the sections touched by the window, plus one pass against `{harness_home_dir}/{harness_guidance_file}` for content that the global file now states. What was ambient last month is still ambient unless something moved.
+Re-run the Phase 2 classification only on the sections touched by the window, plus one pass against `{harness_home_dir}/{harness_guidance_file}` and the rulebooks loaded into the session for content that they now state. What was ambient last month is still ambient unless something moved.
 
 ##### Scan for gaps
 
@@ -282,7 +282,7 @@ Before presenting the draft or the change list, verify:
 - [ ] The file does not contain a path into a harness-owned directory, home-anchored or repository-local
 - [ ] The file does not contain a `<!-- rulebook:` marker anywhere
 - [ ] The file is at most 200 lines, matching the ambient budget against which the published guidance checklist reports; anything that pushed it over was moved to the package level behind a pointer
-- [ ] The file does not duplicate any content from `{harness_home_dir}/{harness_guidance_file}`
+- [ ] The file does not duplicate any content from `{harness_home_dir}/{harness_guidance_file}`, from a rulebook loaded into the session, or from a repository file that defines it; it points to a defining repository file instead
 - [ ] The file does not contain a section that merely restates what's obvious from the code
 - [ ] Commands listed are ones that an agent would actually need (not exhaustive npm script listings)
 - [ ] Each command group states where to run it (repo root, package directory, etc.); don't assume the agent knows

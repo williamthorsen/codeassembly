@@ -56,6 +56,8 @@
 
 **Per-task README guidance:** When a task writes or revises a README, consult {rulebook:readme-conventions} while planning the task. Its key decisions name the rulebook, the table row that fits the README, and what that row says the README leads with, keeps, and omits, so that the constraints are available to an implementer that cannot load the rulebook.
 
+**Per-task documentation placement:** When a task writes or revises guidance or documentation, its key decisions name the source that defines each fact that the task documents, and the task writes a pointer to that source rather than a copy, per the "Documentation placement" section of the shared agent instructions.
+
 **Per-task interface guidance:** When a task defines colour tokens, styles or writes interface text, or builds a page, a prototype, or a UI component, consult {rulebook:accessibility-conventions} and {rulebook:ui-copy-conventions} while planning the task. Its key decisions state the contrast and size floors and the contrast check, the interaction states that each interactive element shows, and the copy rules and the copy budget, so that the constraints are available to an implementer that cannot load the rulebooks. When the plan changes a visible component, its `## Verification` includes the rulebook's browser check of each new or changed interactive element.
 
 **Data-change guidance:** When the work changes the shape of persisted data or writes to shared state, consult {rulebook:shared-data-conventions} while planning. Scope the plan to one step of the expand, migrate, contract sequence, and name that step in the key decisions of each task that touches the data. A task or verification check does not run a migration or another write against shared state before merge.
