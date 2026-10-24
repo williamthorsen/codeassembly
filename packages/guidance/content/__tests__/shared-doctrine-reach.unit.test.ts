@@ -19,18 +19,23 @@ import { SHARED_DOCTRINE_CARRIERS } from '../test-utils/shared-doctrine-carriers
 // tree. Reading them once here limits the whole suite to a single pass.
 const CONTENT_FILES = readContentFiles();
 
+/** The shared guidance file, which states the sections that it does not share with any subagent. */
+const SHARED_GUIDANCE = 'guidance/shared/AGENTS.md';
+
 /**
- * Each extracted section: the string counted for single-statement checks, and phrases that a gutted partial would
- * lose.
+ * Each shared section: the string counted for single-statement checks, phrases that a gutted section would lose, and
+ * the file that states it when that file is not `_partials/{name}.md`.
  */
-const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArray<string> }>> = {
+const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArray<string>; source?: string }>> = {
   'code-descriptions': {
+    source: SHARED_GUIDANCE,
     headline: '## Code descriptions',
     // Pins the rule's universality, so that a restored carve-out fails. `comment-discipline.md` opens with the same
     // words, so the phrase stops at the verb at which the two differ.
     phrases: ['Every function, method, class, and component gets', 'In languages with doc-tag conventions'],
   },
   'code-style': {
+    source: SHARED_GUIDANCE,
     headline: '## Style',
     phrases: [
       'fill new comments to its `max_line_length`',
@@ -53,6 +58,7 @@ const SECTIONS: Readonly<Record<string, { headline: string; phrases: ReadonlyArr
     phrases: ['When given an exact file path', 'STOP and report the missing path'],
   },
   'live-repo-writes': {
+    source: SHARED_GUIDANCE,
     headline: "## Don't test write operations against a live repo",
     phrases: ['Never exercise destructive or side-effecting operations', 'I can just clean up afterward'],
   },
@@ -128,7 +134,7 @@ const HARNESS_GUIDANCE: ReadonlyArray<string> = [
 ];
 
 describe('shared-doctrine reach', () => {
-  describe.each(Object.entries(SECTIONS))('%s', (name, { headline, phrases }) => {
+  describe.each(Object.entries(SECTIONS))('%s', (name, { headline, phrases, source }) => {
     const carriers = SHARED_DOCTRINE_CARRIERS[name] ?? [];
 
     it.each(carriers)('is inlined into %s', async (slug) => {
@@ -155,7 +161,7 @@ describe('shared-doctrine reach', () => {
     });
 
     it('is not stated in any content file but the partial', async () => {
-      const violations = await findRestatements(`_partials/${name}.md`, phrases);
+      const violations = await findRestatements(source ?? `_partials/${name}.md`, phrases);
 
       const message = `The rule is stated once and inlined from there; these files restate it instead of including it:\n  ${violations.join('\n  ')}`;
       expect(violations, message).toEqual([]);
@@ -209,13 +215,13 @@ async function expandSubagent(slug: string): Promise<string> {
   return readContentFile(`subagents/${slug}.md`);
 }
 
-/** Returns `file -> phrase` for every content file but the partial that states one of the phrases. */
-async function findRestatements(partialPath: string, phrases: ReadonlyArray<string>): Promise<ReadonlyArray<string>> {
+/** Returns `file -> phrase` for every content file but the source that states one of the phrases. */
+async function findRestatements(sourcePath: string, phrases: ReadonlyArray<string>): Promise<ReadonlyArray<string>> {
   const violations: Array<string> = [];
   const files = await CONTENT_FILES;
 
   for (const { relativePath, content } of files) {
-    if (relativePath === partialPath) continue;
+    if (relativePath === sourcePath) continue;
 
     for (const phrase of phrases) {
       if (content.includes(phrase)) {

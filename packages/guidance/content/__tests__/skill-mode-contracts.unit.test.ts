@@ -22,7 +22,7 @@ interface ModeContract {
 const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
   {
     caller: {
-      path: '_partials/next-steps-after-review.md',
+      path: 'review-branch/SKILL.md',
       phrase: 'which revises acceptance criteria alone',
     },
     callee: {
@@ -33,7 +33,7 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
   },
   {
     caller: {
-      path: '_partials/next-steps-after-review.md',
+      path: 'review-branch/SKILL.md',
       phrase: 'bound to the previewed delta',
     },
     callee: {
@@ -44,7 +44,7 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
   },
   {
     caller: {
-      path: '_partials/next-steps-after-review.md',
+      path: 'review-branch/SKILL.md',
       phrase: 'and writes the ticket of record',
     },
     callee: {
@@ -55,7 +55,7 @@ const MODE_CONTRACTS: ReadonlyArray<ModeContract> = [
   },
   {
     caller: {
-      path: '_partials/next-steps-after-review.md',
+      path: 'review-branch/SKILL.md',
       phrase: 'run the delegate with `--write-target=local`',
     },
     callee: {

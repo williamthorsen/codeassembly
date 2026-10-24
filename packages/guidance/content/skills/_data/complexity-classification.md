@@ -49,7 +49,7 @@ Each consuming skill defines which complexity levels qualify for its "simple eno
 | `design-and-plan` / `plan` handoff pass | 1–2    | Skip the handoff pass; the session reports the skip in one line that names the level, and saves the artifacts                                                                                           |
 | `next-steps-after-plan`                 | 1–2    | Recommend "Implement". When a review pass would catch nothing meaningful (e.g., a typo or unused-import removal), note on the option that the review can be skipped at `implement-plan`'s closing menu. |
 | `implement-plan` closing menu           | 1–2    | Recommend "Create PR without review"; the realized diff is trivial enough that a review pass would catch nothing meaningful                                                                             |
-| `next-steps-after-review`               | n/a    | Trivial findings usually name a single change, for which the skill recommends "Implement directly and commit"; the recommendation depends on the finding's shape rather than on the level.              |
+| `review-branch` closing menu            | n/a    | Trivial findings usually name a single change, for which the skill recommends "Implement directly and commit"; the recommendation depends on the finding's shape rather than on the level.              |
 
 When characteristics span two levels, prefer the higher level.
 
