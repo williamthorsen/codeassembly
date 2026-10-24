@@ -25,13 +25,27 @@ Inline a spec **once per skill, as a section**, and point every use site at it w
 
 Several skill bodies (`collaborate`, `design-and-plan`, and `refine-plan` among them) contain a pointer to the option-format rules at their question-asking steps, duplicating the universal rule in `AGENTS.md`. That duplication is intentional, and a DRY-driven refactor must not strip it. The rule and its rationale are stated in the repo-local `codeassembly-repo-conventions` rulebook (`.agents/content/guidance/rulebooks/`), under "Skill-local reinforcement".
 
+## When content becomes a partial
+
+A partial exists to share text. Content becomes a partial when two or more files include it, another partial or a `_data` doc counting as a file that includes it, and a partial that only one file includes is inlined back into that file. Write a doctrine in its one host until a second file needs it.
+
+Partials that the same files include are one partial when every one of those files includes them at one point, with none of its own text between them. When a host's own text separates them, they stay apart: Passing that text through the `<!-- children -->` slot would change the rendered whitespace, as [Verbatim slot substitution](#verbatim-slot-substitution) explains. The list below names each such group and the text that separates it.
+
+`content/__tests__/partial-consumers.unit.test.ts` fails when a partial is included by fewer than two files, or when partials that the same files include are missing from the list.
+
+### Partials kept apart
+
+- `skills/_partials/ticket-skeleton.md`, `skills/_partials/ticket-composition.md`, `skills/_partials/ticket-criteria-conventions.md`: Each host closes the skeleton's code fence, which `design-and-plan` opens with a title line, before the composition; `create-ticket` adds its spike-mode paragraph there, and `align-ticket-with-implementation` its `## Guidance` heading. Each host then follows the composition with its own sentence on what _the implementation_ is.
+- `skills/_partials/plan-template.md`, `skills/_partials/ticket-and-plan-completeness.md`: Each host places them in different sections.
+- `skills/_partials/split-ticket-compose.md`, `skills/_partials/split-ticket-create.md`, `skills/_partials/split-launch-prompts.md`: Each host puts its own steps before and after `split-ticket-create.md`.
+
 ## Directive grammar
 
 Three include shapes are recognized. Each must occupy a full line, with optional leading and trailing whitespace. That whitespace affects recognition alone; injected lines keep the partial's own indentation rather than the directive's, so a directive cannot appear inside a list item. Inline directives inside prose or code spans are not expanded.
 
 | Shape         | Syntax                                           | Use                                                                               |
 | ------------- | ------------------------------------------------ | --------------------------------------------------------------------------------- |
-| Self-close    | `<!-- include: path / -->`                       | Inline a partial without slot content (or use the partial's empty-slot defaults).  |
+| Self-close    | `<!-- include: path / -->`                       | Inline a partial without slot content (or use the partial's empty-slot defaults). |
 | Open + close  | `<!-- include: path -->` ... `<!-- /include -->` | Inline a partial and pass slot content into its `<!-- children -->` placeholder.  |
 | Children slot | `<!-- children -->`                              | Inside a partial: Marks where the caller's slot content is substituted.           |
 
@@ -79,7 +93,7 @@ Partials are stored in `_partials/` directories. The directory is recognized at 
 
 - `content/_partials/`: Cross-cutting partials shared across skills, subagents, and platform guidance.
 - `content/skills/_partials/`: Partials shared across skills.
-- `content/skills/{name}/_partials/`: Partials internal to a single skill.
+- `content/skills/{name}/_partials/`: Partials shared by one skill's own files.
 
 The `_partials` directory itself never appears in installed output.
 
@@ -108,7 +122,7 @@ When a placeholder names a tool outside that set, the rewriter aborts install wi
 
 **Authoring guidance:**
 
-- Use `{tool:NAME}` for body prose that names a tool *as a tool*, not for English verbs ("Read the file", "Write a paragraph", "Read project guidelines" are not migrated).
+- Use `{tool:NAME}` for body prose that names a tool _as a tool_, not for English verbs ("Read the file", "Write a paragraph", "Read project guidelines" are not migrated).
 - Preserve surrounding context: `` `Write` `` becomes `` `{tool:Write}` ``; bare `Write` becomes `{tool:Write}`.
 - Do **not** use placeholders in frontmatter `tools:` values. Frontmatter is replaced wholesale by the overlay merger; placeholders there would create two overlapping mechanisms.
 - The placeholder mechanism is body-only, applied to subagent and skill `.md` files. Guidance files (`content/guidance/`) are not passed through the rewriter.
@@ -118,6 +132,8 @@ When a placeholder names a tool outside that set, the rewriter aborts install wi
 When a partial contains `<!-- children -->`, expansion removes that line and inserts the caller's slot lines verbatim: It does not trim leading or trailing lines, and it does not collapse blank lines. Partial authors control the spacing on their side; caller authors control the spacing on theirs.
 
 A consequence: Avoid placing blank lines on both sides of a `<!-- children -->` boundary. If the partial has a blank line above `<!-- children -->` and the caller's slot content begins with a blank line, the result is two consecutive blank lines.
+
+Prettier sets part of that spacing on both sides: It puts a blank line after an open directive, so slot content begins with one, and it puts one before `<!-- children -->` unless a paragraph line precedes the placeholder. A partial that keeps its placeholder directly under a paragraph line therefore renders one blank line at the boundary, and any other placement renders two.
 
 ## Common patterns
 
