@@ -1,8 +1,8 @@
 ---
 slug: cli-conventions
-description: 'How a command-line tool talks to its user: subcommands and options, standard option names, configuration, writing modes, help on every command, exit codes, error messages, JSON output, progress and outcome reports, color, the split of logic from presentation, and help topics. Consult before writing or changing any command-line tool, in any language.'
+description: 'How a command-line tool talks to its user: subcommands and options, standard option names, configuration, writing modes, help on every command, exit codes, error messages, JSON output, progress and outcome reports, check results, color, the split of logic from presentation, and help topics. Consult before writing or changing any command-line tool, in any language.'
 delivery: skill
-version: '4'
+version: '5'
 ---
 
 # CLI conventions
