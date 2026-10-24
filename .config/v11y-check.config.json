@@ -2,7 +2,15 @@
   "$schema": "https://github.com/williamthorsen/node-monorepo-tools/raw/v11y-check-v0.19.0/packages/v11y-check/schemas/config.json",
   "dev": {
     "severityThreshold": "moderate",
-    "allowlist": []
+    "allowlist": [
+      {
+        "addedAt": "2026-10-24T03:41:58.432Z",
+        "id": "1243084",
+        "path": "packages__factory>happy-dom",
+        "reason": "Added by v11y sync at 2026-10-24 03:41:58 UTC",
+        "url": "https://github.com/advisories/GHSA-834v-8h66-3h79"
+      }
+    ]
   },
   "prod": {
     "severityThreshold": "low",
