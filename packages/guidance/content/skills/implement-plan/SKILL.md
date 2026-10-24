@@ -58,7 +58,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    A task step or a verification check that writes to shared state from the branch is material divergence, even when the plan directs it: Do not run it; report the conflict, citing {rulebook:shared-data-conventions}.
 
-   A step that names the developer as its actor is yours to carry out, unless the task has a `**Residue:**` line: Perform every part that you can, and raise the residue as the one ask that it states. Such a step is not material divergence, and it is never handed back as a step for the developer to run.
+   A step that names the developer as its actor is yours to carry out, unless the task has a `**Residue:**` line: Perform every part that you can, and raise the residue as the one ask that it states. Such a step is not material divergence, and it is never handed back as a step for the developer to run. The records of a step, such as a log entry or a ticket comment, stay yours even when the step has a residue line.
 
    Commit each task's work as its own commit with the `{skill:create-commit}` skill. Everything the closing menu offers reads committed history, so work left uncommitted is work that the next step cannot see.
 
