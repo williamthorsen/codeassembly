@@ -25,7 +25,8 @@ describe.each(Object.entries(DOCTRINE_REACH))('%s reach', (_name, { carriers, he
 
   it('is not stated in any content file but its source', async () => {
     const violations: Array<string> = [];
-    for (const { relativePath, content } of await CONTENT_FILES) {
+    const files = await CONTENT_FILES;
+    for (const { relativePath, content } of files) {
       if (relativePath === source) continue;
 
       for (const phrase of phrases) {
