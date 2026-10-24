@@ -52,7 +52,7 @@ The plan artifact is read-only. It is a record of what was decided at plan time,
 
    Then check the branch per [branch currency](../_data/branch-currency.md), passing the paths in the plan's **Files:** lists. Do not start the first task while a question about the gap is unanswered.
 
-5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Audit the comments that you write along the way per [Comment discipline](#comment-discipline).
+5. **Execute the tasks in plan order.** Each task is done when its own acceptance criteria are met, not when its files have been touched. Task order encodes dependencies; do not reorder for convenience. Audit the comments that you write along the way per [Comment discipline](#comment-discipline), and the guidance and documentation that you write per the "Documentation placement" section of the shared agent instructions.
 
    Raise material divergence to the user before proceeding, rather than departing from the plan silently. **Material** means the plan's approach no longer fits what the code turns out to be: A named file or symbol does not exist, a task's premise is false, or meeting the acceptance criteria requires an approach that the plan did not consider. Adapting details within the plan's approach (a different helper name, an extra test case, a step that turns out unnecessary because the code already does it) is ordinary implementation; continue and note it in the closing summary.
 
