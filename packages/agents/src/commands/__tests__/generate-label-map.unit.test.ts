@@ -82,7 +82,7 @@ describe(generateLabelMap, () => {
     const result = await readGeneratedFile({ force: false }, tempDir);
     const parsed = parseLabelMap(result);
 
-    expect(parsed.types).toStrictEqual(deriveLabelMap(CANONICAL_TAXONOMY, []).types);
+    expect(parsed.types).toStrictEqual(deriveLabelMap(CANONICAL_TAXONOMY, [], { isMonorepo: false }).types);
   });
 
   it('derives scopes from packages/ subdirectories', async () => {
@@ -187,8 +187,55 @@ describe(generateLabelMap, () => {
       expect(parsed.scopes).toEqual({ alpha: 'scope:alpha', root: 'scope:root' });
     });
 
-    it('exits with an error naming the cause and the patterns, without writing the file, when the globs match no workspace', async () => {
-      await writeWorkspaceManifest(tempDir, ['apps/*']);
+    it.each([
+      {
+        description: 'the globs match no workspace',
+        patterns: ['apps/*'],
+        workspaces: [],
+        cause: 'no matched directory contains a package.json',
+      },
+      {
+        description: 'the exclusions remove every match',
+        patterns: ['packages/*', '!packages/core'],
+        workspaces: ['packages/core'],
+        cause: 'its exclusions remove every match',
+      },
+      {
+        description: 'the list does not declare a positive pattern',
+        patterns: ['!packages/legacy'],
+        workspaces: [],
+        cause: 'it does not declare a positive pattern',
+      },
+    ])(
+      'writes root as the only scope and warns with the cause and the patterns when $description',
+      async ({ cause, patterns, workspaces }) => {
+        await writeWorkspaceManifest(tempDir, patterns);
+        for (const workspace of workspaces) {
+          await createWorkspace(tempDir, workspace);
+        }
+
+        using silent = silenceConsole(['error']);
+
+        const parsed = parseLabelMap(await readGeneratedFile({ force: false }, tempDir));
+
+        expect(parsed.scopes).toEqual({ root: 'scope:root' });
+        expect(silent.error).toHaveBeenCalledWith(expect.stringMatching(/^Warning: /));
+        expect(silent.error).toHaveBeenCalledWith(expect.stringContaining(cause));
+        for (const pattern of patterns) {
+          expect(silent.error).toHaveBeenCalledWith(expect.stringContaining(`\`${pattern}\``));
+        }
+      },
+    );
+
+    it.each([
+      { description: 'cannot be parsed', content: 'packages: [unclosed\n', cause: 'the file cannot be parsed' },
+      {
+        description: 'declares `packages` as a string',
+        content: "packages: 'apps/*'\n",
+        cause: '`packages` is not a list of strings',
+      },
+    ])('exits with an error, without writing the file, when the manifest $description', async ({ cause, content }) => {
+      await writeFile(path.join(tempDir, 'pnpm-workspace.yaml'), content, 'utf8');
 
       using _exit = throwOnProcessExit();
       using silent = silenceConsole(['error']);
@@ -196,10 +243,7 @@ describe(generateLabelMap, () => {
       const error = await captureError(ProcessExitError, () => generateLabelMap({ force: false }, tempDir));
 
       expect(error.code).toBe(1);
-      expect(silent.error).toHaveBeenCalledWith(
-        expect.stringContaining('no matched directory contains a package.json'),
-      );
-      expect(silent.error).toHaveBeenCalledWith(expect.stringContaining('`apps/*`'));
+      expect(silent.error).toHaveBeenCalledWith(expect.stringContaining(cause));
       await expect(readFile(path.join(tempDir, '.meta', 'label-map.json'), 'utf8')).rejects.toThrow('ENOENT');
     });
   });
