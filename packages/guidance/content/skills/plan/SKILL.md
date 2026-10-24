@@ -36,7 +36,7 @@ The body following the frontmatter uses the shared implementation-plan template,
 - Focus on clarity and actionability
 - Include concrete steps, not vague goals
 - Call out risks and unknowns explicitly
-- When comparing approaches, rank options per [design priorities](../_data/design-priorities.md)
+- When comparing approaches, rank options per [design priorities](../_data/design-priorities.md), including [who applies the change](../_data/design-priorities.md#who-applies-the-change): A design that needs a person to act on each machine is a defect to raise, not a step to document
 
 ## Sweep for completeness
 
