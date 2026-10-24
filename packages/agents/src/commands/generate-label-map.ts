@@ -14,6 +14,11 @@ interface GenerateLabelMapOptions {
   readonly force: boolean;
 }
 
+interface ScopeSource {
+  readonly isMonorepo: boolean;
+  readonly workspaces: readonly string[];
+}
+
 /**
  * Reads the version of `@williamthorsen/change-grammar` that the installed release-kit depends on.
  *
@@ -52,9 +57,9 @@ export async function generateLabelMap(options: GenerateLabelMapOptions, working
     }
   }
 
-  const workspaceNames = await listWorkspaceNames(cwd);
+  const { isMonorepo, workspaces } = await resolveScopeSource(cwd);
   const version = await readChangeGrammarVersion(cwd);
-  const { scopes, types } = deriveLabelMap(CANONICAL_TAXONOMY, workspaceNames);
+  const { scopes, types } = deriveLabelMap(CANONICAL_TAXONOMY, workspaces, { isMonorepo });
 
   const labelMap = {
     $schema: buildSchemaUrl(version),
@@ -117,6 +122,16 @@ async function findRequiredPackage(name: string, baseDir: string): Promise<Insta
   return installed;
 }
 
+/** Describes a workspace manifest that resolves to no workspace, naming the cause and any declared patterns. */
+function describeEmptyResolution(
+  cause: Exclude<EmptyWorkspaceCause, 'no-packages-list'>,
+  patterns: readonly string[],
+): string {
+  const patternList = patterns.map((pattern) => `\`${pattern}\``).join(', ');
+  const patternSentence = patternList === '' ? '' : ` Declared patterns: ${patternList}.`;
+  return `pnpm-workspace.yaml does not resolve to any workspace (${describeEmptyCause(cause)}).${patternSentence}`;
+}
+
 /** Lists the names of the directories under `packages/` in `workingDir`, sorted, or none when `packages/` is absent. */
 async function listPackagesDirectoryNames(workingDir: string): Promise<string[]> {
   const packagesDir = path.join(workingDir, 'packages');
@@ -141,38 +156,49 @@ async function listPackagesDirectoryNames(workingDir: string): Promise<string[]>
   return names.toSorted();
 }
 
+/** Lists the directories under `packages/` as the scope source, a monorepo only when the listing is non-empty. */
+async function listPackagesDirectoryScopes(workingDir: string): Promise<ScopeSource> {
+  const workspaces = await listPackagesDirectoryNames(workingDir);
+  return { isMonorepo: workspaces.length > 0, workspaces };
+}
+
 /**
- * Lists the directory names of the workspaces that `pnpm-workspace.yaml` in `workingDir` declares, sorted and
- * without duplicates, excluding the workspace root.
+ * Resolves the workspace names that become scopes in `workingDir`, sorted and without duplicates, excluding the
+ * workspace root, and whether the repo is a monorepo.
  *
- * Falls back to the directories under `packages/` when the manifest is absent or does not declare a `packages`
- * list, and exits with an error when the declared patterns resolve to no workspace.
+ * A `packages` list in `pnpm-workspace.yaml` makes the repo a monorepo, with a warning when the list resolves to no
+ * workspace. Falls back to the directories under `packages/` when the manifest is absent or does not declare a
+ * `packages` list, and exits with an error when the manifest or its `packages` value cannot be read.
  */
-async function listWorkspaceNames(workingDir: string): Promise<string[]> {
+async function resolveScopeSource(workingDir: string): Promise<ScopeSource> {
   const resolution = resolveWorkspace(workingDir);
 
   if (resolution.kind === 'not-a-workspace') {
-    return listPackagesDirectoryNames(workingDir);
+    return listPackagesDirectoryScopes(workingDir);
   }
 
   if (resolution.kind === 'empty') {
     const { cause, patterns } = resolution;
-    if (cause === 'no-packages-list') {
-      return listPackagesDirectoryNames(workingDir);
+    switch (cause) {
+      case 'no-packages-list':
+        return listPackagesDirectoryScopes(workingDir);
+      case 'all-excluded':
+      case 'no-package':
+      case 'no-pattern':
+        console.error(`Warning: ${describeEmptyResolution(cause, patterns)} Writing \`root\` as the only scope.`);
+        return { isMonorepo: true, workspaces: [] };
+      case 'unreadable-manifest':
+      case 'unreadable-packages':
+        console.error(`Error: ${describeEmptyResolution(cause, patterns)}`);
+        process.exit(1);
     }
-    const patternList = patterns.map((pattern) => `\`${pattern}\``).join(', ');
-    const patternSentence = patternList === '' ? '' : ` Declared patterns: ${patternList}.`;
-    console.error(
-      `Error: pnpm-workspace.yaml does not resolve to any workspace (${describeEmptyCause(cause)}).${patternSentence}`,
-    );
-    process.exit(1);
   }
 
   const rootDir = path.resolve(workingDir);
   const names = resolution.packageDirs
     .filter((packageDir) => packageDir !== rootDir)
     .map((packageDir) => path.basename(packageDir));
-  return [...new Set(names)].toSorted();
+  return { isMonorepo: true, workspaces: [...new Set(names)].toSorted() };
 }
 
 // endregion | Helpers
