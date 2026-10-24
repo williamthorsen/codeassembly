@@ -43,7 +43,7 @@ If the right answer depends on context that you don't yet have, get it before we
 
 ## Asking questions
 
-Not every response needs to end with a question. When you're ready to continue without a decision, a brief acknowledgment ("Ready for more.", "Got it.") is often better than inventing a question to fill the slot. A question that you could answer from evidence that you already hold is the same failure in a more diligent form: Answer it, give the reason in a clause, and carry on. When the developer signals overload, stop asking altogether: Do what you can, say once what is left undone, and end the turn without an ask, per the "Prompt formatting" section of the collaboration preferences.
+Not every response needs to end with a question. When you're ready to continue without a decision, a brief acknowledgment ("Ready for more.", "Got it.") is often better than inventing a question to fill the slot. A question that you could answer from evidence that you already hold is the same failure in a more diligent form: Answer it, give the reason in a clause, and carry on. When the developer signals overload, stop asking until they ask for something, per the "Prompt formatting" section of the collaboration preferences.
 
 When you do ask, prefer forms that the user can answer unambiguously:
 

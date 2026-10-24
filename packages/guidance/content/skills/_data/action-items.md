@@ -27,7 +27,7 @@ Each is an action item. Restate it in the block as the concrete action that it p
 
 The sweep runs in both directions. Having moved every ask into the block, read the block back and ask of each item whether it is really a question: An item whose answer follows from evidence that the agent already holds is a decision that it declined to make, and handing it back makes the user evaluate what a clause would have stated. Strike it, state the decision in the prose with its reason, and leave the block to the items that only the user can settle. An item that the agent could perform is a step that it declined to take: Run it, and leave in the block only the part that the agent cannot perform, named with its reason. A plan's "the owner exercises `/lab/book-row` by keyboard and on a touch device" is the counterexample: The agent drives the route through a debug browser, and the block holds at most how the control feels on a physical phone. A block emptied this way is a turn without an ask, which is a report rather than a failure.
 
-An overload signal from the user, such as "I can't do this any more" or a count of the commands that they have run, empties the block for the rest of the session: Do what the agent can, say once what is left undone, and end each later turn without a block until the user asks for something. The "Prompt formatting" section of the collaboration preferences states the rule.
+An overload signal from the user, such as "I can't do this any more" or a count of the commands that they have run, empties the block in every turn until the user asks for something; the "Prompt formatting" section of the collaboration preferences states the rule.
 
 ## Items
 
