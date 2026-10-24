@@ -84,7 +84,8 @@ export function printGenerateUsage(): void {
 Targets:
   label-map   Generate .meta/label-map.json with type and scope mappings; the scopes
               are the workspaces that pnpm-workspace.yaml declares, or the
-              directories under packages/ when it declares none
+              directories under packages/ when it declares none; root is the
+              only scope when its packages list matches no workspace
 
 Options:
   --force      Overwrite an existing file`);

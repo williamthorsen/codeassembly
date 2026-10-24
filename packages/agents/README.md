@@ -56,18 +56,18 @@ Optional: For a project whose tickets live in Jira, the deployed guidance resolv
 
 Run via the `codeassembly` CLI: `codeassembly <command> [options]`.
 
-| Command             | Description                                                                                                |
-| ------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `install`           | Install harness guidance files and scripts from the declared sources                                       |
-| `init`              | Scaffold `.agents/codeassembly.yaml` for the project, or `--global` for `~/.agents/codeassembly.yaml`      |
-| `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections |
-| `uninstall`         | Remove installed guidance, skills, and subagents                                                           |
-| `sizes`             | Rank the last recorded deployment's documents by size, with the context aggregates beneath them            |
-| `status`            | Show the current state of installed items                                                                  |
-| `validate`          | Check a content root for defects that would affect a consumer; writes nothing                              |
-| `bundle-helpers`    | Bundle the helpers that a content root declares; `--check` fails on a stale bundle                         |
-| `library list`      | List each declared source's artifacts, marking those that a higher-precedence source shadows               |
-| `generate <target>` | Generate a configuration file (e.g., `label-map`, whose scopes come from `pnpm-workspace.yaml`)            |
+| Command             | Description                                                                                                                                                                  |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `install`           | Install harness guidance files and scripts from the declared sources                                                                                                         |
+| `init`              | Scaffold `.agents/codeassembly.yaml` for the project, or `--global` for `~/.agents/codeassembly.yaml`                                                                        |
+| `sync`              | Resolve `.agents/codeassembly.yaml` and materialize declared rulebooks, skills, subagents, and collections                                                                   |
+| `uninstall`         | Remove installed guidance, skills, and subagents                                                                                                                             |
+| `sizes`             | Rank the last recorded deployment's documents by size, with the context aggregates beneath them                                                                              |
+| `status`            | Show the current state of installed items                                                                                                                                    |
+| `validate`          | Check a content root for defects that would affect a consumer; writes nothing                                                                                                |
+| `bundle-helpers`    | Bundle the helpers that a content root declares; `--check` fails on a stale bundle                                                                                           |
+| `library list`      | List each declared source's artifacts, marking those that a higher-precedence source shadows                                                                                 |
+| `generate <target>` | Generate a configuration file (e.g., `label-map`, whose scopes come from `pnpm-workspace.yaml`, with `root` as the only scope when its `packages` list matches no workspace) |
 
 Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--force`, `--dry-run`, `--output-style <auto\|plain\|rich>`, and `--help`. `--output-style` prints status glyphs as emoji (`rich`) or as words (`plain`); `auto`, the default, prints plain to a stream that is not a terminal or in CI, and `CODEASSEMBLY_OUTPUT_STYLE` sets it when the flag is absent. `--content <dir>` applies to `validate` and `bundle-helpers`, and `--check` to `bundle-helpers` alone, and `--override-writer` to `install` and `sync --global` (see [Designated home-domain writer](docs/project-declaration.md#designated-home-domain-writer)). Run `codeassembly --help` for the authoritative list.
 
