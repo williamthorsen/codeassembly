@@ -10,6 +10,7 @@ import { amendEntry, type EntryAmendment } from './amend-entry.ts';
 import { type ChangeEntry, consolidateChangeEntries, findEntryComment, readChangeEntries } from './change-entries.ts';
 import { type ChangeRecordBlock, readMergeChangeRecordBlock, renderChangeRecordBlock } from './change-record-block.ts';
 import { consolidateBranch } from './consolidate-branch.ts';
+import { findEntryDefects } from './find-defects.ts';
 import { readCommits } from './read-commits.ts';
 import { renderDetails } from './render-details.ts';
 import { loadTemplatesWithTaxonomy } from './templates.ts';
@@ -127,9 +128,9 @@ export async function runConsolidateBranch(baseRef: string, input: RunInput): Pr
 }
 
 /**
- * Consolidates a change's entries into the record that represents the change. Only the taxonomy is loaded, which ranks
- * the types, so the run does not read a title template or the repository. An empty list determines nothing, as a branch
- * without a commit entry does.
+ * Consolidates a change's entries into the record that represents the change, and reports each entry whose type or
+ * breaking marker the taxonomy does not accept. Only the taxonomy is loaded, so the run does not read a title template or
+ * the repository. An empty list determines nothing, as a branch without a commit entry does.
  */
 export async function runConsolidateEntries(entriesFile: string, input: RunInput): Promise<DescribeResult> {
   const taxonomy = await loadTaxonomy(input.dataDir);
@@ -149,6 +150,7 @@ export async function runConsolidateEntries(entriesFile: string, input: RunInput
             scope: consolidated.scope ?? null,
             type: consolidated.type ?? null,
           },
+    defects: findEntryDefects(entries, taxonomy),
   };
   return { output, warnings: [] };
 }
