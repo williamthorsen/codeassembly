@@ -59,7 +59,7 @@ Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is
 
 ## Decisions taken
 
-- {⏳ while it awaits the checkpoint} {A decision that the agent took without asking, with its one-line reason.}
+- {🔲 while it awaits the checkpoint} {A decision that the agent took without asking, with its one-line reason.}
 
 ## Timebox
 
