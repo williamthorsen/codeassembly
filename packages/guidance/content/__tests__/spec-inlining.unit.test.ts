@@ -60,7 +60,7 @@ const OPTION_FORMAT: Spec = {
     'Do everything that does not depend on an answer first',
     // The marker on a provisional decision. Without it the agent marks one only in the plan's record, and a turn's
     // narrative states it as a parenthetical or not at all, so the developer reads every line to find what to overrule.
-    'Start each line that states a decision awaiting the checkpoint with ⏳, wherever you state it',
+    'Start each line that states a decision awaiting the checkpoint with 🔲, wherever you state it',
     // The test that tells a real bullet from a manufactured one. Without it the rule states what a bullet must be
     // and not how to tell, which is the wording that four captured failures got through.
     'must be false for at least one other option',
