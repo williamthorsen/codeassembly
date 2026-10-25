@@ -57,7 +57,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/toolbelt.strings": "8.0.3",
+    "@williamthorsen/toolbelt.strings": "8.0.4",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "esbuild": "catalog:",
