@@ -23,8 +23,9 @@ export interface CheckSummary {
 export type CheckScope = 'vault' | 'patterns' | 'vs';
 
 /**
- * Renders the default human output. Findings are grouped by file, in the order in which each file first appears, each
- * line reading `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints the `passed`
+ * Renders the default human output. Findings are grouped by file in path order, and within a file in line order, with
+ * findings that do not have a line first and ties kept in input order; each line reads
+ * `<severity> <rule> (line N): message`. A clean run (notes checked, no findings) prints the `passed`
  * status glyph in `style`, then `no findings (N notes checked)`; a run that checked nothing prints a zero-match line
  * worded for its `scope` (naming the config targets for a whole-vault run, and a scope-appropriate line for a targeted
  * one) without the glyph, since the run did not perform any check.
@@ -53,7 +54,8 @@ export function formatHuman(input: {
   if (summary.notes === 0) {
     lines.push(zeroMatchLine(scope, targets), '');
   }
-  for (const [path, group] of groupByPath(findings)) {
+  const groups = groupByPath(findings.toSorted(compareFindings));
+  for (const [path, group] of groups) {
     lines.push(path);
     for (const finding of group) {
       const location = finding.line === undefined ? '' : ` (line ${finding.line})`;
@@ -84,6 +86,17 @@ export function summarize(findings: readonly Finding[], noteCount: number): Chec
 }
 
 // region | Helpers
+
+/**
+ * Orders findings by path in code-unit order, which does not vary with the locale, then by line, placing a finding
+ * that does not have a line before the lined ones of its file.
+ */
+function compareFindings(left: Finding, right: Finding): number {
+  if (left.path !== right.path) {
+    return left.path < right.path ? -1 : 1;
+  }
+  return (left.line ?? 0) - (right.line ?? 0);
+}
 
 /** Groups findings by their `path`, preserving each path's first-seen order and the findings' input order within it. */
 function groupByPath(findings: readonly Finding[]): Map<string, Finding[]> {
