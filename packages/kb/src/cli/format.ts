@@ -54,7 +54,8 @@ export function formatHuman(input: {
   if (summary.notes === 0) {
     lines.push(zeroMatchLine(scope, targets), '');
   }
-  for (const [path, group] of groupByPath(findings.toSorted(compareFindings))) {
+  const groups = groupByPath(findings.toSorted(compareFindings));
+  for (const [path, group] of groups) {
     lines.push(path);
     for (const finding of group) {
       const location = finding.line === undefined ? '' : ` (line ${finding.line})`;

@@ -119,11 +119,16 @@ function nameRegisteredMessage(name: string, registryPath: string): string {
  * writer put there survives.
  */
 async function removeCreatedSet(storePath: string, created: readonly string[]): Promise<void> {
-  const directories = created.filter((path) => path.endsWith('/'));
-  for (const path of created.filter((path) => !path.endsWith('/'))) {
-    await rm(join(storePath, path), { force: true });
+  const directories = [`${KB_DIR}/`];
+  for (const path of created) {
+    if (path.endsWith('/')) {
+      directories.push(path);
+    } else {
+      await rm(join(storePath, path), { force: true });
+    }
   }
-  for (const path of [...directories, `${KB_DIR}/`].toSorted((left, right) => right.length - left.length)) {
+  const deepestFirst = directories.toSorted((left, right) => right.length - left.length);
+  for (const path of deepestFirst) {
     await removeEmptyDirectory(join(storePath, path));
   }
 }
@@ -134,7 +139,7 @@ async function removeEmptyDirectory(path: string): Promise<void> {
     await rmdir(path);
   } catch (error) {
     // POSIX lets `rmdir` report a non-empty directory as either `ENOTEMPTY` or `EEXIST`.
-    if (!['EEXIST', 'ENOENT', 'ENOTEMPTY'].some((code) => isErrorCode(error, code))) {
+    if (['EEXIST', 'ENOENT', 'ENOTEMPTY'].every((code) => !isErrorCode(error, code))) {
       throw error;
     }
   }

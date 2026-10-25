@@ -46,7 +46,7 @@ function readFindingRules(report: string): string[] {
   return report
     .split('\n')
     .filter((line) => line.startsWith('  '))
-    .map((line) => line.trim().split(/[ :]/)[1] ?? '');
+    .map((line) => line.trim().split(/[ :]/, 2)[1] ?? '');
 }
 
 /** Reads the file heading lines of a report, which are the unindented lines before the summary. */
