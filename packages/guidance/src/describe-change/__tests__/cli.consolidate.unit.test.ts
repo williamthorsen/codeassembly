@@ -175,7 +175,10 @@ describe('consolidate-entries', () => {
       home,
     });
 
-    expect(output).toStrictEqual({ consolidated_record: { breaking: false, scope: 'agents', type: 'feat' } });
+    expect(output).toStrictEqual({
+      consolidated_record: { breaking: false, scope: 'agents', type: 'feat' },
+      defects: [],
+    });
   });
 
   it('drops the scope when the entries name different ones, and reports a breaking entry', async () => {
@@ -201,7 +204,10 @@ describe('consolidate-entries', () => {
       home,
     });
 
-    expect(output).toStrictEqual({ consolidated_record: { breaking: true, scope: null, type: 'feat' } });
+    expect(output).toStrictEqual({
+      consolidated_record: { breaking: true, scope: null, type: 'feat' },
+      defects: [],
+    });
   });
 
   it('determines nothing from an empty list', async () => {
@@ -216,7 +222,40 @@ describe('consolidate-entries', () => {
       home,
     });
 
-    expect(output).toStrictEqual({ consolidated_record: { breaking: null, scope: null, type: null } });
+    expect(output).toStrictEqual({
+      consolidated_record: { breaking: null, scope: null, type: null },
+      defects: [],
+    });
+  });
+
+  it('reports each entry whose breaking marker breaks its policy or whose type is undeclared, by index', async () => {
+    const { cwd, git, home } = await makeRepo(HOUSE_TEMPLATES);
+    const entriesFile = await writeEntries(
+      [
+        '- type: feat',
+        '  text: Adds foo',
+        '- type: refactor',
+        '  breaking: true',
+        '  text: Restructures the parser',
+        '- type: chore',
+        '  text: Tidies the config',
+      ].join('\n'),
+    );
+
+    const { output } = await runDescribe({
+      argv: ['consolidate-entries', '--entries-file', entriesFile],
+      cwd,
+      git,
+      dataDir: DATA_DIR,
+      home,
+    });
+
+    expect(output).toMatchObject({
+      defects: [
+        { entry: 1, kind: 'policy-violation', policy: 'forbidden', type: 'refactor' },
+        { entry: 2, kind: 'undeclared-type', type: 'chore' },
+      ],
+    });
   });
 
   it('if the entries file cannot be read, refuses the invocation', async () => {

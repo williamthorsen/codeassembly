@@ -199,12 +199,14 @@ node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entrie
 ```
 
 ```json
-{ "consolidated_record": { "breaking": false, "scope": "agents", "type": "feat" } }
+{ "consolidated_record": { "breaking": false, "scope": "agents", "type": "feat" }, "defects": [] }
 ```
 
 **Each entry expands to one record per scope**, and an entry that does not name a scope expands to one record without a scope, so that a change that does not touch any scope can still be ranked by its type. The expanded list is then ranked exactly as `consolidate-branch` ranks the commit entries, so one rule serves both sources: breaking outranks non-breaking, then the tier and listing order in [`work-types.json`](./work-types.json), and exactly one distinct scope survives.
 
 **An entry whose `type` the taxonomy does not declare is left as written and is unrankable**, so it does not contribute a type, as an unrankable commit entry does. Every field of `consolidated_record` is `null` for an empty list, which is how a caller distinguishes a change without entries from one whose consolidated record does not name a scope.
+
+**`defects` lists the entry defects that [`resolve-merge`](#resolve-merge) reports for the same entries**: an `undeclared-type` or `policy-violation` whose `entry` names the entry's 0-based index, in entry order, or `[]` when every entry passes. The run reports them and continues.
 
 **The run reads the entries from a file rather than from flags** because `text` is arbitrary prose containing backticks and quotes, which a shell argument would expand or truncate.
 

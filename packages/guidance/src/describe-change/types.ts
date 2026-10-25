@@ -42,9 +42,10 @@ export interface ConsolidatedRecordOutcome {
   type: string | null;
 }
 
-/** What a change's entries consolidated to, in the shape that the JSON output names. */
+/** What a change's entries consolidated to, and the defects of each entry, in the shape that the JSON output names. */
 export interface ConsolidateEntriesOutcome {
   consolidated_record: ConsolidatedRecordOutcome;
+  defects: RecordDefect[];
 }
 
 /**
