@@ -1,4 +1,6 @@
 import assert from 'node:assert/strict';
+import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
@@ -22,5 +24,27 @@ describe('create with a write-time registry collision', () => {
 
     assert.ok(!outcome.ok);
     expect(outcome.reason).toBe('name-registered');
+  });
+
+  it('leaves an empty target directory empty', async () => {
+    const targetDir = await makeTempDir('kb-create-race-');
+    const registryPath = await makeRegistryPath();
+
+    await create({ targetDir, register: true, registryPath });
+
+    expect(await readdir(targetDir)).toEqual([]);
+  });
+
+  it('keeps content that was in the target directory before the call', async () => {
+    const targetDir = await makeTempDir('kb-create-race-');
+    const registryPath = await makeRegistryPath();
+    await mkdir(join(targetDir, 'content'));
+    await writeFile(join(targetDir, 'content', 'note.md'), '# Note\n');
+
+    await create({ targetDir, register: true, registryPath });
+
+    expect(await readdir(targetDir)).toEqual(['content']);
+    expect(await readdir(join(targetDir, 'content'))).toEqual(['note.md']);
+    expect(await readFile(join(targetDir, 'content', 'note.md'), 'utf8')).toBe('# Note\n');
   });
 });
