@@ -11,10 +11,10 @@ catalog:
   '@vitejs/plugin-react': '6.1.2'
   '@williamthorsen/change-grammar': '0.3.0'
   '@williamthorsen/nmr': '0.50.1'
-  '@williamthorsen/toolbelt.errors': '0.8.3'
+  '@williamthorsen/toolbelt.errors': '0.8.4'
   '@williamthorsen/toolbelt.terminal': '0.2.1'
-  '@williamthorsen/toolbelt.testing': '0.6.3'
-  '@williamthorsen/toolbelt.vitest': '0.10.3'
+  '@williamthorsen/toolbelt.testing': '0.7.0'
+  '@williamthorsen/toolbelt.vitest': '0.11.0'
   esbuild: '0.28.2'
   eslint: '10.13.0'
   eslint-plugin-react: '7.37.5'
@@ -39,3 +39,11 @@ allowBuilds:
 savePrefix: ''
 
 minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
+
+# Refuse a release whose provenance is weaker than that of an earlier release of the same package,
+# which can signal a compromised publisher.
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # A 2023 backport of a ReDoS fix to the v6 line, published without provenance after 7.5.x had it;
+  # Babel and eslint-plugin-react require semver ^6.
+  - semver@6.3.1
