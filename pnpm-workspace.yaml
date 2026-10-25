@@ -39,3 +39,11 @@ allowBuilds:
 savePrefix: ''
 
 minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
+
+# Refuse a release whose provenance is weaker than that of an earlier release of the same package,
+# which can signal a compromised publisher.
+trustPolicy: no-downgrade
+trustPolicyExclude:
+  # A 2023 backport of a ReDoS fix to the v6 line, published without provenance after 7.5.x had it;
+  # Babel and eslint-plugin-react require semver ^6.
+  - semver@6.3.1
