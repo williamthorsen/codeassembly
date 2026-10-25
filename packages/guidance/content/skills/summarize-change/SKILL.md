@@ -138,7 +138,7 @@ Both are optional, and each is recorded as an override beside the consolidated r
      node {harness_home_dir}/scripts/describe-change.mjs consolidate-entries --entries-file "$entries_path"
      ```
 
-     [`consolidate-entries`](../_data/title-templates.md#consolidate-entries) states the output. Its `consolidated_record` is what the frontmatter's `scope`, `type`, and `breaking` record, each absent when it is `null` and `breaking` only when it is `true`. If the call fails, relay its error and leave all three out.
+     [`consolidate-entries`](../_data/title-templates.md#consolidate-entries) states the output. Its `consolidated_record` is what the frontmatter's `scope`, `type`, and `breaking` record, each absent when it is `null` and `breaking` only when it is `true`. If the call fails, relay its error and leave all three out. Report each entry in `defects` to the developer, naming the entry by its `text`, then continue; change nothing.
 
    - **Re-resolve the effective record** by running `resolve-effective-record` again, on this consolidated record and the overrides resolved in step 2. The first run in step 2 used the commit-derived record, which this one supersedes, and the title and the labels downstream read the effective record. Report each `policy-violation` in `defects` and change nothing.
 
