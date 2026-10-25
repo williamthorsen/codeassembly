@@ -30,13 +30,10 @@ const LIST_RETURNING_SUBAGENTS: ReadonlySet<string> = new Set(['handoff-reviewer
  * with the bug.
  */
 export const SHARED_DOCTRINE_CARRIERS: Readonly<Record<string, ReadonlyArray<string>>> = {
-  'code-descriptions': [],
-  'code-style': [],
   concision: listGovernedSubagents().filter(
     (slug) => !CUTTING_SUBAGENTS.has(slug) && !LIST_RETURNING_SUBAGENTS.has(slug),
   ),
   'file-access': listGovernedSubagents(),
-  'live-repo-writes': [],
   'plain-speech': listGovernedSubagents(),
   'shell-commands': listGovernedSubagents().filter((slug) => !SHELL_LESS_SUBAGENTS.has(slug)),
   'technical-recommendations': listApproachChoosingSubagents(),

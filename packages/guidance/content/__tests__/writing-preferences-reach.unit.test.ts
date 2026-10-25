@@ -15,56 +15,31 @@ import { readFrontmatterList } from '../test-utils/read-frontmatter-list.ts';
 const RULEBOOK = 'guidance/rulebooks/williamthorsen-writing-preferences.md';
 const SLUG = 'williamthorsen-writing-preferences';
 
-/**
- * The partial inlined by the rulebook, so a rule stated there appears in the expanded rulebook without being written
- * into it.
- */
-const PARTIAL = '_partials/reduced-object-relative.md';
-
-/** A rule stated by the rulebook: the one file permitted to state it, and phrases that must survive an edit to it. */
-interface Rule {
-  readonly home: string;
-  readonly phrases: ReadonlyArray<string>;
-}
-
-// The phrases keep a rule gutted to its heading from passing. The home keys the corpus scan per rule rather than per
-// file, so a home is skipped for its own rule's phrases alone and still has to stay clear of every other rule's.
-const RULES: ReadonlyArray<Rule> = [
-  {
-    home: PARTIAL,
-    phrases: [
-      'A `by`-phrase names the actor in the same breath',
-      'A relative clause with an object gap takes an overt relativizer',
-      'Neither a short embedded subject nor a tight word budget exempts anything',
-    ],
-  },
-  {
-    home: RULEBOOK,
-    phrases: [
-      'Capitalize a complete sentence, keep a fragment or list lowercase',
-      'Capitalize what follows as though the label were absent',
-      'Documentation describes; it does not address',
-      'Dropping the pronoun by hiding who acted',
-      'If it names the agent that the document instructs',
-      'Keep every apostrophe that a possessive or a contraction takes',
-      'Join two clauses with `so` only when the second states a direct result of the first',
-      'Leave at least three sentences between one clause-joining `so` and the next',
-      'Never use title case',
-      'never drop or replace the character',
-      'Use sentence case',
-      'Use `where` for a place, or after an expression to state what a symbol, variable, placeholder, or value in it stands for',
-    ],
-  },
+/** Phrases from each rule that the rulebook states, so that a rule gutted to its heading does not pass. */
+const RULE_PHRASES: ReadonlyArray<string> = [
+  'A `by`-phrase names the actor in the same breath',
+  'A relative clause with an object gap takes an overt relativizer',
+  'Capitalize a complete sentence, keep a fragment or list lowercase',
+  'Capitalize what follows as though the label were absent',
+  'Documentation describes; it does not address',
+  'Dropping the pronoun by hiding who acted',
+  'If it names the agent that the document instructs',
+  'Keep every apostrophe that a possessive or a contraction takes',
+  'Join two clauses with `so` only when the second states a direct result of the first',
+  'Leave at least three sentences between one clause-joining `so` and the next',
+  'Neither a short embedded subject nor a tight word budget exempts anything',
+  'Never use title case',
+  'never drop or replace the character',
+  'Use sentence case',
+  'Use `where` for a place, or after an expression to state what a symbol, variable, placeholder, or value in it stands for',
 ];
 
 describe('writing-preferences reach', () => {
   it('states every rule', async () => {
     const content = await readExpandedRulebook();
 
-    for (const { phrases } of RULES) {
-      for (const phrase of phrases) {
-        expect(content).toContain(phrase);
-      }
+    for (const phrase of RULE_PHRASES) {
+      expect(content).toContain(phrase);
     }
   });
 
@@ -80,27 +55,24 @@ describe('writing-preferences reach', () => {
     const files = await listMarkdownFiles(CONTENT_ROOT);
     for (const file of files) {
       const relativePath = path.relative(CONTENT_ROOT, file);
+      if (relativePath === RULEBOOK) continue;
+
       const content = await readFile(file, 'utf8');
-
-      for (const { home, phrases } of RULES) {
-        if (relativePath === home) continue;
-
-        for (const phrase of phrases) {
-          if (content.includes(phrase)) {
-            violations.push(`${relativePath} -> ${phrase}`);
-          }
+      for (const phrase of RULE_PHRASES) {
+        if (content.includes(phrase)) {
+          violations.push(`${relativePath} -> ${phrase}`);
         }
       }
     }
 
-    const message = `Each rule is stated in one file alone, the rulebook or a partial inlined by it; these files restate one instead:\n  ${violations.join('\n  ')}`;
+    const message = `Each rule is stated in the rulebook alone; these files restate one instead:\n  ${violations.join('\n  ')}`;
     expect(violations, message).toEqual([]);
   });
 });
 
 // region | Helpers
 
-/** Returns the rulebook with its includes expanded, so an inlined rule counts as stated in it. */
+/** Returns the rulebook as the pipeline delivers it. */
 async function readExpandedRulebook(): Promise<string> {
   return readContentFile(RULEBOOK);
 }

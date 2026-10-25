@@ -4,7 +4,13 @@
 
 - Invoke the `collaborate` skill when working interactively with the user (not applicable to dispatched subagent work)
 
-<!-- include: ../../_partials/code-style.md / -->
+## Style
+
+- Follow `.editorconfig`, and fill new comments to its `max_line_length`.
+- Order lists and collections logically (alphabetically unless there is a good reason to sort or group differently).
+- Use long-form CLI options (`--force`, not `-f`) in generated commands and scripts.
+- Structure code so that the primary logic comes first; place helper functions at the end.
+- Name functions with a leading verb (`show_usage`, not `usage`; `build_payload`, not `payload`).
 
 <!-- include: ../../_partials/concision.md / -->
 
@@ -12,13 +18,28 @@
 
 <!-- include: ../../_partials/plain-speech.md / -->
 
-<!-- include: ../../_partials/code-descriptions.md / -->
+## Code descriptions
+
+- Every function, method, class, and component gets a brief description. One line is usually enough.
+- Do not repeat information already provided by the signature (parameter names, types, return types). In languages with doc-tag conventions (`@param`, `@returns`, `:param`, `Args:`, etc.), omit them: The description alone is sufficient.
 
 <!-- include: ../../_partials/file-access.md / -->
 
 <!-- include: ../../_partials/shell-commands.md / -->
 
-<!-- include: ../../_partials/live-repo-writes.md / -->
+## Don't test write operations against a live repo
+
+Never exercise destructive or side-effecting operations against the user's working repo as verification. If a script's behavior requires running a command that mutates git state (`git tag`, `git commit`, `git push`, `git branch`, `git reset`, `git rebase`), file state, package state, or any other shared resource, exercise it in a disposable environment: a scratch directory (`mktemp -d "${TMPDIR:-/tmp}/probe.XXXXXX"`, since bare `mktemp -d` picks a path denied by the agent sandbox and then leaves the variable empty), a fresh `git init` with minimal fixtures, or a container.
+
+Write absolute paths beneath that directory rather than changing into it and writing relative ones, unless the change of directory is chained to the creation succeeding, as `enter_tmpdir` is. `cd ""` returns 0, so a failed `mktemp` otherwise sends every later write into the working repo, which is the outcome that this rule exists to prevent.
+
+Why it matters:
+
+- Other sessions, file watchers, CI, release tooling, or IDE extensions on the user's machine can observe in-progress mutations, even if you intend to clean up after.
+- Some projects treat new tags/commits as release signals. Once the artifact exists, downstream effects may fire before you can undo it; some release configurations are immutable (published tags produce permanent artifacts).
+- "I can just clean up afterward" is not a substitute for never creating the artifact: Between create and cleanup, anything else on the machine can act on it.
+
+Read-only exercises (`--dry-run`, help text, preview tables, `--list`, exit-code checks on pure-read commands) are safe in the working repo. Anything that writes, even "just for a second", is not.
 
 <!-- include: ../../_partials/technical-recommendations.md / -->
 

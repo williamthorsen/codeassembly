@@ -16,11 +16,6 @@ import { listRuleSections } from '../test-utils/rule-markers.ts';
 /** A phrase of `_partials/prose-line-breaks.md` that `commit-conventions` contains only by including the partial. */
 const INCLUDED_PARTIAL_MARKER = '**No hard line breaks.**';
 
-/**
- * A phrase of `_partials/reduced-object-relative.md` that the rule's section contains only by including the partial.
- */
-const INCLUDED_RULE_PHRASE = '**Repairs, in preference order.**';
-
 /** A rule's section text and the sweep version declared by its marker. */
 interface DeclaredRule {
   readonly text: string;
@@ -261,13 +256,6 @@ describe('rule version pins', () => {
       .map(([id]) => id);
 
     expect(drifted, `${RULE_DRIFT_MESSAGE}\n  ${drifted.join('\n  ')}`).toEqual([]);
-  });
-
-  it('hashes the content of an included partial', async () => {
-    const message =
-      `reduced-object-relative contains ${INCLUDED_RULE_PHRASE} only through an include, so its absence means the ` +
-      'pinned section no longer covers the partial that states the rule';
-    expect((await readRuleSections()).get('reduced-object-relative')?.text, message).toContain(INCLUDED_RULE_PHRASE);
   });
 
   it('reports drift from a one-character change', async () => {

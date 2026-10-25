@@ -67,7 +67,7 @@ describe('scratch-directory conventions', () => {
     const files = await listScannedFiles(PACKAGE_ROOT);
 
     expect(files.some((file) => file.endsWith(path.join('spec', 'spec_helper.sh')))).toBe(true);
-    expect(files.some((file) => file.endsWith(path.join('_partials', 'live-repo-writes.md')))).toBe(true);
+    expect(files.some((file) => file.endsWith(path.join('guidance', 'shared', 'AGENTS.md')))).toBe(true);
   });
 
   it.each([
