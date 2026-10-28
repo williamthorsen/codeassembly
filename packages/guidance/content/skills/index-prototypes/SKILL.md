@@ -78,7 +78,7 @@ Then, for each prototype:
 
 Stop the server once every prototype is captured.
 
-The Playwright MCP attaches to the worktree's debug browser. When a call reports a refused connection, ask the developer to run `chrome-debug` from the worktree, and wait for it rather than publishing an index without screenshots.
+The Playwright MCP attaches to the worktree's debug browser, and a call that reports a refused connection means that the browser is not running. Run `thor-chrome` from the worktree; the next call then reaches the browser without restarting the MCP. When `thor-chrome` refuses the launch with `session-unavailable`, as it can in the agent sandbox, ask the developer to run `thor-chrome` from the worktree in a terminal in the GUI login session, and wait for it rather than publishing an index without screenshots.
 
 ### 4. Register each prototype
 
