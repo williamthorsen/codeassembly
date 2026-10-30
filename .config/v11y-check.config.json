@@ -4,11 +4,11 @@
     "severityThreshold": "moderate",
     "allowlist": [
       {
-        "addedAt": "2026-10-24T03:41:58.432Z",
-        "id": "1243084",
-        "path": "packages__factory>happy-dom",
-        "reason": "Added by v11y sync at 2026-10-24 03:41:58 UTC",
-        "url": "https://github.com/advisories/GHSA-834v-8h66-3h79"
+        "addedAt": "2026-10-31T04:49:28.619Z",
+        "id": "1244012",
+        "path": ".>typescript-eslint>eslint>minimatch",
+        "reason": "Added by v11y sync at 2026-10-31 04:49:28 UTC",
+        "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
       }
     ]
   },
