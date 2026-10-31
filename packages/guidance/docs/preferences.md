@@ -157,6 +157,16 @@ Produces (for `--scope agents --type feat --title 'Add foo' --ticket-ref '#466' 
 
 Append `!` after the type: `agents|feat!: Remove deprecated API`
 
+### `pr.initial_state`
+
+The state in which `create-pr` opens a pull request. It applies only when the pull request is created; the developer marks a draft ready on the platform.
+
+| Key                | Type               | Default | Description                                                                   |
+| ------------------ | ------------------ | ------- | ----------------------------------------------------------------------------- |
+| `pr.initial_state` | `draft` \| `ready` | `draft` | `draft` opens the pull request as a draft; `ready` opens it ready for review. |
+
+The project file's value takes precedence over the global file's, key by key: A project `pr` section that sets only `title_format` keeps the global `pr.initial_state`. `derive-session-context` reports the resolved value as `pr_initial_state`.
+
 ### `ticket.pull`
 
 Settings of the `pull-from-backlog` skill, read from the project preferences file only. See the [next-ticket helper](pull-from-backlog-helper.md).
@@ -233,6 +243,7 @@ commit:
 ticket:
   title_format: '{title}'
 pr:
+  initial_state: draft
   title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}'
 merge:
   title_format: '[{ticket_ref} ][[{scope}|]{type}: ]{title}[ (#{pr_number})]'
