@@ -169,6 +169,38 @@ describe(readPreferences, () => {
       /'ticket\.base_url' must be a string/,
     );
   });
+
+  it('takes pr.initial_state from the project file over the global file', async () => {
+    await writeGlobalYaml(homeDir, 'pr:\n  initial_state: draft\n');
+    await writeProjectYaml(projectDir, 'pr:\n  initial_state: ready\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.pr).toEqual({ initial_state: 'ready' });
+  });
+
+  it('keeps a global pr.initial_state when the project pr section sets other keys only', async () => {
+    await writeGlobalYaml(homeDir, 'pr:\n  initial_state: ready\n');
+    await writeProjectYaml(projectDir, "pr:\n  title_format: '{title}'\n");
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.pr).toEqual({ initial_state: 'ready' });
+  });
+
+  it('omits pr when neither file sets pr.initial_state', async () => {
+    await writeProjectYaml(projectDir, "pr:\n  title_format: '{title}'\n");
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.pr).toBeUndefined();
+  });
+
+  it('throws with the offending key path when pr.initial_state is outside the allowed enum', async () => {
+    await writeProjectYaml(projectDir, 'pr:\n  initial_state: open\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
+      /'pr\.initial_state' must be "draft" or "ready"/,
+    );
+  });
+
+  it('throws with the offending key path when the pr section is not an object', async () => {
+    await writeProjectYaml(projectDir, 'pr: draft\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/'pr' must be an object/);
+  });
 });
 
 describe(readProjectPreferences, () => {

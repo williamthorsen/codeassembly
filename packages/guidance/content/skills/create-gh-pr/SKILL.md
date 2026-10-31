@@ -21,6 +21,7 @@ This skill receives the following inputs from the orchestrator:
 | `ticket_id`         | string   | Ticket ID for artifact path resolution                                                                 |
 | `project_slug`      | string   | Project slug for artifact path resolution                                                              |
 | `artifact_base_dir` | string   | Base directory for artifact storage                                                                    |
+| `initial_state`     | string   | `draft` to open the pull request as a draft, `ready` to open it ready for review                       |
 
 ## Process
 
@@ -41,10 +42,12 @@ gh pr create \
   --title "{title}" \
   --body-file "$body_path" \
   --base "{base_branch}" \
-  --draft \
+  {draft_flag} \
   --assignee "@me" \
   {label_flags}
 ```
+
+`{draft_flag}` is `--draft` when `initial_state` is `draft`, and is left out of the call entirely when it is `ready`. Write it into the call as literal text, as the label flags are.
 
 `--assignee "@me"` assigns the pull request to the authenticated `gh` user, who is the developer creating it.
 

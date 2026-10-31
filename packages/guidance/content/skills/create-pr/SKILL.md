@@ -21,7 +21,7 @@ Both are passed to `summarize-change`, which records them as overrides beside th
 
 ### 1. Get session context
 
-Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `scm`, `default_branch`, `branch_name`, and `artifact_base_dir` from it.
+Invoke `node {harness_home_dir}/skills/derive-session-context/derive-session-context.mjs` via Bash. The bundle emits the session-context manifest JSON to stdout; extract `ticket_id`, `ticket_ref`, `project_slug`, `scm`, `default_branch`, `branch_name`, `artifact_base_dir`, and `pr_initial_state` from it.
 
 ### 2. Check branch sync
 
@@ -134,6 +134,7 @@ Pass the following inputs to the selected delegate per the delegate interface:
 | `ticket_id`         | From session context                                                                                |
 | `project_slug`      | From session context                                                                                |
 | `artifact_base_dir` | From session context                                                                                |
+| `initial_state`     | `pr_initial_state` from session context: `draft` or `ready`                                         |
 
 ### 11. Persist the PR URL
 

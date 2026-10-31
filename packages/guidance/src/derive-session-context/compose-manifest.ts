@@ -4,9 +4,10 @@ import path from 'node:path';
 import { parseRemoteToOwnerRepo } from '../shared/parse-remote-url.ts';
 import { extractPrNumber, extractTicketId, isPrIdentifier } from './extract-ticket-id.ts';
 import type { ProjectStage } from './read-project-stage.ts';
-import type { BranchManifest, ResolvedPreferences } from './types.ts';
+import type { BranchManifest, PrInitialState, ResolvedPreferences } from './types.ts';
 
 const DEFAULT_SCM = 'github';
+const DEFAULT_PR_INITIAL_STATE = 'draft';
 export const DEFAULT_ARTIFACT_BASE_DIR = '~/ai-artifacts';
 export const DEFAULT_REMOTE_NAME = 'origin';
 const DEFAULT_REMOTE_BRANCH = 'main';
@@ -77,6 +78,7 @@ export function composeManifest(input: {
     ticket_url: ticketUrl,
     ticket_base_url: ticketBaseUrl,
     pr_url: prUrl,
+    pr_initial_state: resolvePrInitialState(preferences),
   };
 }
 
@@ -121,6 +123,11 @@ function resolveTicketUrls(
  */
 function joinTicketUrl(baseUrl: string, ticketId: string): string {
   return `${baseUrl.replace(/\/+$/, '')}/${ticketId}`;
+}
+
+/** Resolves the state in which `create-pr` opens a pull request, defaulting to `draft`. */
+function resolvePrInitialState(preferences: ResolvedPreferences): PrInitialState {
+  return preferences.pr?.initial_state ?? DEFAULT_PR_INITIAL_STATE;
 }
 
 /**

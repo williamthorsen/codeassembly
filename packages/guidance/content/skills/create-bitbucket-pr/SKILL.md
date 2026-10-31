@@ -21,6 +21,7 @@ This skill receives the following inputs from the orchestrator:
 | `ticket_id`         | string   | Ticket ID for artifact path resolution                                                                 |
 | `project_slug`      | string   | Project slug for artifact path resolution                                                              |
 | `artifact_base_dir` | string   | Base directory for artifact storage                                                                    |
+| `initial_state`     | string   | `draft` to open the pull request as a draft, `ready` to open it ready for review                       |
 
 ## Process
 
@@ -32,7 +33,7 @@ Call `action: "create"` on the tool named in [Bitbucket pull-request access](../
 - **Description**: Use `body` as provided.
 - **Source branch**: Use the current branch, `git rev-parse --abbrev-ref HEAD`. The action requires it, and the delegate interface does not have a head-branch input.
 - **Destination branch**: Use `base_branch`.
-- **Draft/WIP**: Create as draft if the platform supports it.
+- **Draft/WIP**: When `initial_state` is `draft`, create as draft if the platform supports it. When it is `ready`, create an open pull request.
 
 ### 2. Report every label as skipped
 

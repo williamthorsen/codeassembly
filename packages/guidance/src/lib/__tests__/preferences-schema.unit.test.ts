@@ -108,8 +108,20 @@ describe('preferences.v1.json schema', () => {
 
   it('rejects an empty `commit` object missing the required `title_format`', async () => {
     // Guards the `commit.required: ["title_format"]` sub-constraint. (One sub-section is sufficient
-    // to exercise the pattern; `pr` and `ticket` use the same shape.)
+    // to exercise the pattern; `ticket` uses the same shape.)
     const output = await validate(schemaId, { commit: {} }, FLAG);
+    expect(output).toMatchObject({ valid: false });
+  });
+
+  it('accepts a `pr` section that sets only `initial_state`, for each declared value', async () => {
+    for (const value of ['draft', 'ready']) {
+      const output = await validate(schemaId, { pr: { initial_state: value } }, FLAG);
+      expect(output, value).toMatchObject({ valid: true });
+    }
+  });
+
+  it('rejects a `pr.initial_state` value outside the allowed enum', async () => {
+    const output = await validate(schemaId, { pr: { initial_state: 'open' } }, FLAG);
     expect(output).toMatchObject({ valid: false });
   });
 

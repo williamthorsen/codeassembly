@@ -121,14 +121,18 @@
     },
     "pr": {
       "type": "object",
-      "description": "Pull-request title rendering configuration.",
+      "description": "Pull-request configuration: title rendering and the state at creation.",
       "properties": {
+        "initial_state": {
+          "type": "string",
+          "enum": ["draft", "ready"],
+          "description": "The state in which `create-pr` opens a pull request: `draft`, or `ready` for review. Defaults to `draft`."
+        },
         "title_format": {
           "type": "string",
           "description": "Template string used to render pull-request titles. Supports the same token vocabulary as `commit.title_format`."
         }
-      },
-      "required": ["title_format"]
+      }
     },
     "project": {
       "type": "object",

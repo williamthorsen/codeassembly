@@ -218,6 +218,30 @@ describe(composeManifest, () => {
       expect(manifest.scm).toBe('github');
     });
 
+    it('defaults pr_initial_state to draft when the preferences do not set pr.initial_state', () => {
+      const manifest = composeManifest({
+        preferences: { project: { slug: 'x' } },
+        projectStage: NO_STAGE,
+        branchName: 'main',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.pr_initial_state).toBe('draft');
+    });
+
+    it('takes pr_initial_state from pr.initial_state', () => {
+      const manifest = composeManifest({
+        preferences: { pr: { initial_state: 'ready' } },
+        projectStage: NO_STAGE,
+        branchName: 'main',
+        cwd: CWD,
+        home: HOME,
+        now: NOW,
+      });
+      expect(manifest.pr_initial_state).toBe('ready');
+    });
+
     it('defaults default_branch to origin/main when the preferences do not configure a remote', () => {
       const manifest = composeManifest({
         preferences: { project: { slug: 'x' } },

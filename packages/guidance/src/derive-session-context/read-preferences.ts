@@ -11,7 +11,7 @@ import { chainError } from '@williamthorsen/toolbelt.errors/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { isEnoent, isRecord } from '../lib/type-guards.ts';
-import type { PreferencesReadResult, ResolvedPreferences } from './types.ts';
+import type { PreferencesReadResult, PrInitialState, ResolvedPreferences } from './types.ts';
 
 /**
  * Reads the project and global preferences files, merges them with the project's values taking precedence, and projects
@@ -27,7 +27,11 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
   const global = await readOptionalYaml(globalPath);
 
   const merged = mergeTopLevel(global?.value, project?.value);
-  const preferences = projectPreferences(merged);
+  const initialState = resolvePrInitialState([project?.value, global?.value]);
+  const preferences: ResolvedPreferences = {
+    ...projectPreferences(merged),
+    ...(initialState !== undefined && { pr: { initial_state: initialState } }),
+  };
 
   const sources: PreferencesReadResult['sources'] = {
     ...(project !== null && { project: projectPath }),
@@ -174,6 +178,23 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
   return result;
 }
 
+/**
+ * Returns `pr.initial_state` from the first source, in precedence order, whose `pr` section names it. Resolution is per
+ * key, so a project `pr` section that sets only `title_format` does not hide a global `initial_state`.
+ */
+function resolvePrInitialState(sources: readonly unknown[]): PrInitialState | undefined {
+  for (const source of sources) {
+    if (!isRecord(source) || source['pr'] === undefined) {
+      continue;
+    }
+    const section = expectRecord(source['pr'], 'pr');
+    if (section['initial_state'] !== undefined) {
+      return expectPrInitialState(section['initial_state']);
+    }
+  }
+  return undefined;
+}
+
 /** Mutable version of `ResolvedPreferences` used during projection construction. */
 interface WritablePreferences {
   scm?: 'github' | 'bitbucket';
@@ -195,6 +216,17 @@ interface WritablePreferences {
   ticket?: {
     base_url?: string;
   };
+}
+
+/**
+ * Narrows `value` to the `pr.initial_state` enum. Throws with the offending key path when the value is neither `"draft"`
+ * nor `"ready"`.
+ */
+function expectPrInitialState(value: unknown): PrInitialState {
+  if (value === 'draft' || value === 'ready') {
+    return value;
+  }
+  throw new Error(`preferences: 'pr.initial_state' must be "draft" or "ready" (got ${formatValue(value)})`);
 }
 
 /**
