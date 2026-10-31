@@ -8,6 +8,7 @@ The artifact directory is the developer's audit trail of development. Its plans,
 
 - **Durable content.** Put instructions, a procedure, or a reference that a later session must find in the repository (its docs, `AGENTS.md`, or a README), or in a skill or rulebook when they apply across repositories. A later session looks there, not in the artifact directory.
 - **Authority.** An artifact is not authority on the current state of code, design, or decisions. Treat what a search of artifacts turns up as history, and verify it against the repository, the tickets, and the pull requests.
+- **Conclusions.** A conclusion that a reader of the ticket needs is posted on the ticket, and the artifact keeps the evidence. For a spike, see [Closing post](spike-conventions.md#closing-post).
 - **Inputs to the same work.** A skill that reads an artifact as an input to the same piece of work, such as the plan that `implement-plan` executes or the change summary that `create-pr` publishes, uses the artifact as the workflow intends.
 
 ## Directory structure

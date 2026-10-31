@@ -196,6 +196,9 @@ const NEXT_STEPS_AFTER_PLAN: Spec = {
     // The spike carve-out. Without it option 3 offers `implement-plan` for a spike plan, which the skill reads far
     // enough to turn away: the round trip that the carve-out exists to prevent.
     'Render option 3 as 🔬 Investigate, without invoking a skill',
+    // The end of an investigation. Without it the run stops at the artifact, and the spike's ticket closes without its
+    // conclusion.
+    "ends the run with the plan's `## Deliverable`, which includes offering the [closing post]",
     // The rule that a spike falls through to. Without it rule 2 can match on an investigation and propose cutting
     // into tickets work that produces findings rather than a diff.
     'Investigate is the fallthrough whenever rule 1 does not match',
