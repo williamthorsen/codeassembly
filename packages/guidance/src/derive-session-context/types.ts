@@ -25,7 +25,14 @@ export interface ResolvedPreferences {
     /** The org-stable base to which a bare ticket id is appended (e.g. Jira `https://org.atlassian.net/browse/`). */
     readonly base_url?: string;
   };
+  readonly pr?: {
+    /** The state in which `create-pr` opens a pull request, resolved per key rather than per section. */
+    readonly initial_state?: PrInitialState;
+  };
 }
+
+/** The state in which `create-pr` opens a pull request. */
+export type PrInitialState = 'draft' | 'ready';
 
 /** Result of reading and merging the project and global preferences files. */
 export interface PreferencesReadResult {
@@ -74,6 +81,8 @@ export interface BranchManifest {
    * initializes it from a `PR-<n>` branch identity, or to `null` otherwise.
    */
   readonly pr_url?: string | null;
+  /** The state in which `create-pr` opens a pull request: the `pr.initial_state` preference, or `draft`. */
+  readonly pr_initial_state?: PrInitialState;
   /**
    * The `ticket_url` and `pr_url` values written by the mutation flags. A present key overrides the composed value,
    * `null` included; an absent one leaves the field to composition.

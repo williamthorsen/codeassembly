@@ -7,6 +7,7 @@ import type { ProjectStage } from './read-project-stage.ts';
 import type { BranchManifest, ResolvedPreferences } from './types.ts';
 
 const DEFAULT_SCM = 'github';
+const DEFAULT_PR_INITIAL_STATE = 'draft';
 export const DEFAULT_ARTIFACT_BASE_DIR = '~/ai-artifacts';
 export const DEFAULT_REMOTE_NAME = 'origin';
 const DEFAULT_REMOTE_BRANCH = 'main';
@@ -77,6 +78,7 @@ export function composeManifest(input: {
     ticket_url: ticketUrl,
     ticket_base_url: ticketBaseUrl,
     pr_url: prUrl,
+    pr_initial_state: preferences.pr?.initial_state ?? DEFAULT_PR_INITIAL_STATE,
   };
 }
 
