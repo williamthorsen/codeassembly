@@ -165,7 +165,7 @@ The state in which `create-pr` opens a pull request. It applies only when the pu
 | ------------------ | ------------------ | ------- | ----------------------------------------------------------------------------- |
 | `pr.initial_state` | `draft` \| `ready` | `draft` | `draft` opens the pull request as a draft; `ready` opens it ready for review. |
 
-The project file's value takes precedence over the global file's, key by key: A project `pr` section that sets only `title_format` keeps the global `pr.initial_state`. `derive-session-context` reports the resolved value as `pr_initial_state`.
+The project and global values resolve per the [cascade](../README.md#preferences). `derive-session-context` reports the resolved value as `pr_initial_state`.
 
 ### `ticket.pull`
 
