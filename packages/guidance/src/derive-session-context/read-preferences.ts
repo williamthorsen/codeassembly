@@ -26,12 +26,8 @@ export async function readPreferences(input: { cwd: string; home?: string }): Pr
   const project = await readOptionalYaml(projectPath);
   const global = await readOptionalYaml(globalPath);
 
-  const merged = mergeTopLevel(global?.value, project?.value);
-  const initialState = resolvePrInitialState([project?.value, global?.value]);
-  const preferences: ResolvedPreferences = {
-    ...projectPreferences(merged),
-    ...(initialState !== undefined && { pr: { initial_state: initialState } }),
-  };
+  const merged = mergeSections(global?.value, project?.value);
+  const preferences: ResolvedPreferences = projectPreferences(merged);
 
   const sources: PreferencesReadResult['sources'] = {
     ...(project !== null && { project: projectPath }),
@@ -82,21 +78,19 @@ async function readOptionalYaml(filePath: string): Promise<{ value: unknown } | 
 }
 
 /**
- * Merges two preference objects at the top level: A key present in `project` replaces the global value verbatim, and a
- * key only in `global` is retained. The merge stays shallow so that a project setting one `artifacts.paths` key does
- * not inherit the rest from the global file.
+ * Merges two preference objects section by section, with `project` taking precedence. When both files set a top-level
+ * key to an object, the section is merged key by key; any other value in `project` replaces the global one. The merge
+ * stops at that level, so a map inside a section, such as `artifacts.paths`, is a single value that the project
+ * replaces whole rather than one that inherits the global entries.
  */
-function mergeTopLevel(global: unknown, project: unknown): Record<string, unknown> {
-  const result: Record<string, unknown> = {};
-  if (isRecord(global)) {
-    for (const [key, value] of Object.entries(global)) {
-      result[key] = value;
-    }
+function mergeSections(global: unknown, project: unknown): Record<string, unknown> {
+  const result: Record<string, unknown> = isRecord(global) ? { ...global } : {};
+  if (!isRecord(project)) {
+    return result;
   }
-  if (isRecord(project)) {
-    for (const [key, value] of Object.entries(project)) {
-      result[key] = value;
-    }
+  for (const [key, projectValue] of Object.entries(project)) {
+    const globalValue = result[key];
+    result[key] = isRecord(globalValue) && isRecord(projectValue) ? { ...globalValue, ...projectValue } : projectValue;
   }
   return result;
 }
@@ -175,24 +169,14 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
     result.ticket = ticket;
   }
 
-  return result;
-}
-
-/**
- * Returns `pr.initial_state` from the first source, in precedence order, whose `pr` section names it. Resolution is per
- * key, so a project `pr` section that sets only `title_format` does not hide a global `initial_state`.
- */
-function resolvePrInitialState(sources: readonly unknown[]): PrInitialState | undefined {
-  for (const source of sources) {
-    if (!isRecord(source) || source['pr'] === undefined) {
-      continue;
-    }
-    const section = expectRecord(source['pr'], 'pr');
+  if (merged['pr'] !== undefined) {
+    const section = expectRecord(merged['pr'], 'pr');
     if (section['initial_state'] !== undefined) {
-      return expectPrInitialState(section['initial_state']);
+      result.pr = { initial_state: expectPrInitialState(section['initial_state']) };
     }
   }
-  return undefined;
+
+  return result;
 }
 
 /** Mutable version of `ResolvedPreferences` used during projection construction. */
@@ -212,6 +196,9 @@ interface WritablePreferences {
   artifacts?: {
     base_dir?: string;
     paths?: Record<string, string>;
+  };
+  pr?: {
+    initial_state?: PrInitialState;
   };
   ticket?: {
     base_url?: string;

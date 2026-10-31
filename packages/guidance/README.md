@@ -50,7 +50,7 @@ Agent behavior is configured through `.agents/preferences.yaml` files. The resol
 2. **Global**: `~/.agents/preferences.yaml` in the user's home directory (personal defaults)
 3. **Default**: built-in fallback (documented per key in [Preferences](docs/preferences.md))
 
-Project-level values take precedence over global. An explicitly empty value at the project level (e.g., `title_format: ''`) overrides a non-empty global value.
+Project-level values take precedence over global, key by key within each section: A project `ticket` section that sets only `title_format` keeps the global `ticket.base_url`. A map-valued key inside a section, such as `artifacts.paths` or `repository.default_remote`, is one value, which a project value replaces whole. An explicitly empty value at the project level (e.g., `title_format: ''`) overrides a non-empty global value.
 
 The package publishes a JSON Schema for the file; [Schemas](docs/schemas.md) gives its identifier and versioning. To validate preferences files in a repository's own checks, install this package and run its bin on them; [Validation](docs/preferences.md#validation) states its options and rules.
 
