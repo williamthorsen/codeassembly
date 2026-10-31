@@ -81,7 +81,7 @@ Differences from the feature ticket: `Question` replaces `Problem`; `Timebox` is
 
 ## Deliverable
 
-{The findings & recommendation artifact (the answers reached, a recommendation, and residual unknowns), and the closing post on the ticket, offered at the closing checkpoint and made on consent, per spike conventions.}
+{The findings & recommendation artifact (the answers reached, a recommendation, and residual unknowns), and the closing post on the ticket, offered at the closing checkpoint and made on consent, per `spike-conventions.md` § Closing post.}
 ```
 
 Differences from the feature plan: Investigation steps, each framed by the question that it probes, replace tasks with create/modify/test file lists; `Timebox` is first-class; `Deliverable` replaces `Verification`, since a spike produces findings rather than verifiable behavior, and it names the [closing post](#closing-post); a step does not have a test or documentation criterion.
@@ -93,7 +93,7 @@ The agent that ends a spike posts its conclusion on the ticket as a comment. The
 - The answer to each of the ticket's questions to answer.
 - The recommendation on each of the ticket's decisions to enable.
 - The counts and the proposed groupings, when the spike produced them.
-- Links to the published page and to the findings artifact, with the artifact's path written `~/`-relative, so that the post does not publish a home-directory path.
+- Links to the published page, when the spike published one, and to the findings artifact, with the artifact's path written `~/`-relative, so that the post does not publish a home-directory path.
 
 Offer the post as an item in the closing action-items block, show its body, and post it only on consent: It is a remote write, and the developer is the one who can tell whether a finding is fit for the ticket's tracker. When the session does not have a ticket, do not offer it.
 
