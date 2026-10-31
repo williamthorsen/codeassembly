@@ -47,17 +47,51 @@ describe(readPreferences, () => {
     expect(result.sources.project).toBeUndefined();
   });
 
-  it('merges with project values taking precedence over global at the top-level key', async () => {
-    // The project file replaces the entire `project:` section. Top-level keys not set at the
-    // project level (like `scm:`) come from the global file.
-    await writeGlobalYaml(homeDir, 'scm: github\nproject:\n  slug: global-default\n');
+  it('merges a section that both files contain key by key, with project values taking precedence', async () => {
+    await writeGlobalYaml(homeDir, 'scm: github\nproject:\n  slug: global-default\n  ticket_ref_prefix: "#"\n');
     await writeProjectYaml(projectDir, 'project:\n  slug: my-project\n');
     const result = await readPreferences({ cwd: projectDir, home: homeDir });
     expect(result.preferences.scm).toBe('github');
-    expect(result.preferences.project?.slug).toBe('my-project');
-    // Both sources contributed; confirm the merge does not clear `sources.global`.
+    expect(result.preferences.project).toEqual({ slug: 'my-project', ticket_ref_prefix: '#' });
     expect(result.sources.project).toBeDefined();
     expect(result.sources.global).toBeDefined();
+  });
+
+  it('keeps a global ticket.base_url when the project ticket section sets other keys only', async () => {
+    await writeGlobalYaml(homeDir, 'ticket:\n  base_url: https://org.atlassian.net/browse/\n');
+    await writeProjectYaml(projectDir, "ticket:\n  title_format: '{title}'\n");
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.ticket).toEqual({ base_url: 'https://org.atlassian.net/browse/' });
+  });
+
+  it('takes an explicitly empty project value over a global one', async () => {
+    await writeGlobalYaml(homeDir, 'ticket:\n  base_url: https://org.atlassian.net/browse/\n');
+    await writeProjectYaml(projectDir, "ticket:\n  base_url: ''\n");
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.ticket).toEqual({ base_url: '' });
+  });
+
+  it('replaces the global artifacts.paths whole with the project one', async () => {
+    await writeGlobalYaml(
+      homeDir,
+      'artifacts:\n  base_dir: ~/global\n  paths:\n    chats: g-chats\n    plans: g-plans\n',
+    );
+    await writeProjectYaml(projectDir, 'artifacts:\n  paths:\n    chats: p-chats\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.artifacts).toEqual({ base_dir: '~/global', paths: { chats: 'p-chats' } });
+  });
+
+  it('replaces the global repository.default_remote whole with the project one', async () => {
+    await writeGlobalYaml(homeDir, 'repository:\n  default_remote:\n    name: upstream\n    default_branch: trunk\n');
+    await writeProjectYaml(projectDir, 'repository:\n  default_remote:\n    default_branch: main\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.repository).toEqual({ default_remote: { default_branch: 'main' } });
+  });
+
+  it('lets a project section that is not an object replace the global one and rejects it', async () => {
+    await writeGlobalYaml(homeDir, 'ticket:\n  base_url: https://org.atlassian.net/browse/\n');
+    await writeProjectYaml(projectDir, 'ticket: none\n');
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/'ticket' must be an object/);
   });
 
   it('throws with a file-anchored message on malformed YAML', async () => {

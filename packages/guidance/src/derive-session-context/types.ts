@@ -26,7 +26,7 @@ export interface ResolvedPreferences {
     readonly base_url?: string;
   };
   readonly pr?: {
-    /** The state in which `create-pr` opens a pull request, resolved per key rather than per section. */
+    /** The state in which `create-pr` opens a pull request. */
     readonly initial_state?: PrInitialState;
   };
 }
