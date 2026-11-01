@@ -1,6 +1,6 @@
 import type { EventImpact } from '@williamthorsen/kb/records';
 
-export type OperationName = 'add-addressed-by' | 'retag' | 'set-impact';
+export type OperationName = 'add-addressed-by' | 'add-tag' | 'retag' | 'set-impact';
 
 /**
  * Parsed command-line invocation. `store` is `null` when `--store` was omitted, which the resolver refuses with
@@ -8,6 +8,7 @@ export type OperationName = 'add-addressed-by' | 'retag' | 'set-impact';
  */
 export type ParsedArgs =
   | { operation: 'add-addressed-by'; store: string | null; ids: string[]; references: string[] }
+  | { operation: 'add-tag'; store: string | null; ids: string[]; tags: string[] }
   | { operation: 'retag'; store: string | null; ids: string[]; tags: string[] }
   | { operation: 'set-impact'; store: string | null; ids: string[]; impact: EventImpact };
 

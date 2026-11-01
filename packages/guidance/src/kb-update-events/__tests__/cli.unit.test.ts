@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -6,7 +6,7 @@ import { readNoteContent } from '@williamthorsen/kb/note-io';
 import { parseEvent } from '@williamthorsen/kb/records';
 import { describe, expect, it } from 'vitest';
 
-import { parseArgs, runUpdate } from '../cli.ts';
+import { buildHelp, parseArgs, runUpdate } from '../cli.ts';
 
 const EVENT_ID = '01HZCEVENTAAAAAAAAAAAAAAAA';
 
@@ -51,6 +51,12 @@ async function readBackEvent(path: string): Promise<ReturnType<typeof parseEvent
   return parseEvent(fields, body);
 }
 
+describe(buildHelp, () => {
+  it.each(['--store', '--add-addressed-by', '--add-tag', '--retag', '--set-impact', '--help'])('names %s', (flag) => {
+    expect(buildHelp()).toContain(flag);
+  });
+});
+
 describe(parseArgs, () => {
   it('parses an add-addressed-by invocation with a store and ids', () => {
     const parsed = parseArgs(['--store', 'codeassembly', '--add-addressed-by', '#849,#850', EVENT_ID]);
@@ -69,6 +75,16 @@ describe(parseArgs, () => {
       store: 'codeassembly',
       ids: [EVENT_ID, 'id-two'],
       tags: ['fix', 'observation'],
+    });
+  });
+
+  it('parses an add-tag invocation, splitting and trimming the list', () => {
+    const parsed = parseArgs(['--store', 'codeassembly', '--add-tag=obsolete, review', EVENT_ID]);
+    expect(parsed).toEqual({
+      operation: 'add-tag',
+      store: 'codeassembly',
+      ids: [EVENT_ID],
+      tags: ['obsolete', 'review'],
     });
   });
 
@@ -109,6 +125,10 @@ describe(parseArgs, () => {
       argv: ['--store', 's', '--add-addressed-by', '#1', '--set-impact', 'high', EVENT_ID],
       pattern: /mutually exclusive/,
     },
+    { argv: ['--store', 's', '--add-tag', 'x', '--add-addressed-by', '#1', EVENT_ID], pattern: /mutually exclusive/ },
+    { argv: ['--store', 's', '--add-tag', 'x', '--retag', 'y', EVENT_ID], pattern: /mutually exclusive/ },
+    { argv: ['--store', 's', '--add-tag', 'x', '--set-impact', 'high', EVENT_ID], pattern: /mutually exclusive/ },
+    { argv: ['--store', 's', '--add-tag', '', EVENT_ID], pattern: /--add-tag requires at least one tag/ },
     { argv: ['--store', 's', '--set-impact', 'urgent', EVENT_ID], pattern: /--set-impact must be one of/ },
     { argv: ['--store', 's', '--add-addressed-by', '#1'], pattern: /at least one event id/ },
     { argv: ['--store', 's', '--add-addressed-by', '', EVENT_ID], pattern: /at least one reference/ },
@@ -166,6 +186,35 @@ describe(runUpdate, () => {
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) return;
     expect(parsed.record.tags).toEqual(['fix', 'observation']);
+  });
+
+  it('adds tags to an event, keeping its existing tags and canonicalizing the added ones', async () => {
+    const { storePath, home } = await makeStore('codeassembly');
+    await writeFile(join(storePath, '.kb', 'tag-aliases.yaml'), 'aliases:\n  obsolete: [stale]\n', 'utf8');
+    const path = await seedEvent(storePath, EVENT_ID, ['tags: [fix, observation]']);
+
+    const result = await runUpdate({ argv: ['--store', 'codeassembly', '--add-tag', 'stale', EVENT_ID], home });
+
+    expect(result.ok).toBe(true);
+    const parsed = await readBackEvent(path);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.record.tags).toEqual(['fix', 'observation', 'obsolete']);
+  });
+
+  it('leaves the file untouched when every added tag is already present', async () => {
+    const { storePath, home } = await makeStore('codeassembly');
+    const path = await seedEvent(storePath, EVENT_ID, ['tags: [fix, obsolete]']);
+    const before = await readFile(path, 'utf8');
+    const { ino } = await stat(path);
+
+    const result = await runUpdate({ argv: ['--store', 'codeassembly', '--add-tag', 'obsolete', EVENT_ID], home });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.results).toEqual([{ ok: true, id: EVENT_ID, path }]);
+    expect(await readFile(path, 'utf8')).toBe(before);
+    expect((await stat(path)).ino).toBe(ino);
   });
 
   it('sets impact on a previously unrated event', async () => {
