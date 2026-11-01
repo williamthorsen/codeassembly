@@ -133,10 +133,10 @@ export function checkRules(record: TriageRecord): RuleViolation[] {
 
 // region | Helpers
 
-/** Checks that the challenge records a replaced priority only on a `modified` outcome, and only when it differs. */
+/** Checks that the challenge records a replaced priority only when it changed the priority, and only when it differs. */
 function checkChallenge(cluster: Cluster): string[] {
   const { challenge } = cluster;
-  if (challenge.outcome !== 'modified') {
+  if (challenge.outcome !== 'modified' && challenge.outcome !== 'abandoned') {
     return challenge.originalPriority === undefined
       ? []
       : [`originalPriority is set, but the challenge outcome is ${challenge.outcome}`];

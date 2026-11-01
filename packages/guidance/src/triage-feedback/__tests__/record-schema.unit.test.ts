@@ -35,11 +35,12 @@ describe(checkRules, () => {
     expect(violations).toEqual([{ cluster: null, message: expect.stringContaining('artifactPath') }]);
   });
 
-  it('accepts a modified challenge without originalPriority, and refuses one on another outcome or equal to the priority', () => {
+  it('accepts originalPriority on a modified or abandoned challenge, and refuses it on another outcome or equal to the priority', () => {
     const empty = { clusters: 0, events: 0, excluded: 0 };
     const check = (challenge: Cluster['challenge']): string[] =>
       checkRules(buildRecord({ clusters: [buildCluster({ challenge })], remainder: empty })).map((v) => v.message);
     expect(check({ argument: 'a', outcome: 'modified', note: 'n' })).toEqual([]);
+    expect(check({ argument: 'a', outcome: 'abandoned', originalPriority: 'low', note: 'n' })).toEqual([]);
     expect(check({ argument: 'a', outcome: 'defended', originalPriority: 'low', note: 'n' })).toEqual([
       'originalPriority is set, but the challenge outcome is defended',
     ]);
