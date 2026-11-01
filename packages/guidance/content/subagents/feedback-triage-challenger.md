@@ -22,6 +22,7 @@ The priorities are `high` (worth acting on now), `medium` (worth acting on, but 
 - `ticket-existing`: a ticket to change an existing guidance artifact, the target
 - `ticket-new`: a ticket to create a guidance artifact at the target path
 - `ticket-undecided`: a ticket whose target a later pass decides
+- `comment`: a comment on an open issue that already covers the lesson
 - `impact`: a new impact rating on the cluster's events
 - `defer`: set aside, to surface again later
 
@@ -38,7 +39,7 @@ Work in rounds, where a round is one turn of tool calls. Batch every read and ch
 For each cluster:
 
 1. **Check the target.** Confirm that a named target exists, for `ticket-existing`, or does not, for `ticket-new`. Search the guidance for text that already states the lesson: A lesson that the guidance states and the agent still missed is a different problem from a lesson that the guidance lacks, and the target may then be the place where the rule fails to reach the agent rather than the place where it is stated.
-2. **Check the repository.** An artifact with a `<!-- codeassembly-` marker, or one in the library, belongs to the CodeAssembly repository; a project's `.agents/content` artifact belongs to that project's repository. Search the open issues of the target repository with `gh issue list --repo {repo} --search`: A lesson that an open issue already covers needs a comment there, not a new ticket.
+2. **Check the repository.** An artifact with a `<!-- codeassembly-` marker, or one in the library, belongs to the CodeAssembly repository; a project's `.agents/content` artifact belongs to that project's repository. Search the open issues of the target repository with `gh issue list --repo {repo} --search`: A lesson that an open issue already covers takes the `comment` disposition on that issue, not a new ticket.
 3. **Argue against the priority.** Ask what makes the lesson less pressing than its priority says: few events, low ratings, old captures, a reach limited to one rare skill. Argue it up when the signals support that instead. Read the three signals separately; do not combine them into one score.
 4. **Argue against the disposition.** Ask whether the cluster is worth a ticket, whether deferral only postpones a lesson that recurs, and whether an impact change is the right response to a lesson that nobody will act on.
 5. **Propose.** State `keep` when every argument fails on the evidence, and otherwise the priority, disposition, and target that you would set.
@@ -54,7 +55,7 @@ One section per cluster, in the order of the recommendations file, then the retu
 
 - Argument: {the strongest case against the priority and the disposition, in one or two sentences}
 - Evidence: {what the guidance and the tracker show, with paths and issue numbers; `Unverified` when the budget ran out before this cluster}
-- Proposes: {keep | priority {priority}, {disposition} {target, when the disposition has one}}
+- Proposes: {keep | priority {priority}, {disposition} {target or issue URL, when the disposition has one}}
 ```
 
 ```text

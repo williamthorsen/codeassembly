@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { checkRules, findPending, orderClusters, RecordSchema } from '../record-schema.ts';
+import { checkRules, type Cluster, findPending, orderClusters, RecordSchema } from '../record-schema.ts';
 import { buildCluster, buildPoolCluster, buildRecord } from '../test-utils/build-record.ts';
 
 describe('RecordSchema', () => {
@@ -37,7 +37,7 @@ describe(checkRules, () => {
 
   it('accepts a modified challenge without originalPriority, and refuses one on another outcome or equal to the priority', () => {
     const empty = { clusters: 0, events: 0, excluded: 0 };
-    const check = (challenge: Parameters<typeof buildCluster>[0]['challenge']): string[] =>
+    const check = (challenge: Cluster['challenge']): string[] =>
       checkRules(buildRecord({ clusters: [buildCluster({ challenge })], remainder: empty })).map((v) => v.message);
     expect(check({ argument: 'a', outcome: 'modified', note: 'n' })).toEqual([]);
     expect(check({ argument: 'a', outcome: 'defended', originalPriority: 'low', note: 'n' })).toEqual([
@@ -88,6 +88,35 @@ describe(checkRules, () => {
       remainder: { clusters: 1, events: 9, excluded: 0 },
     });
     expect(checkRules(swapped).map((violation) => violation.cluster)).toEqual(['sentence-case', 'commit-scope', null]);
+  });
+});
+
+describe('comment dispositions', () => {
+  const comment = { kind: 'comment', issue: 'https://github.com/o/r/issues/7' } as const;
+  const empty = { clusters: 0, events: 0, excluded: 0 };
+
+  it('accepts a comment disposition whose events are marked once the comment is posted', () => {
+    const cluster = buildCluster({
+      suggested: comment,
+      result: { comment: 'https://github.com/o/r/issues/7#issuecomment-1', marked: true },
+    });
+    expect(checkRules(buildRecord({ clusters: [cluster], remainder: empty }))).toEqual([]);
+  });
+
+  it('refuses marked events before the comment is posted, and a comment on another disposition', () => {
+    const early = buildCluster({ suggested: comment, result: { marked: true } });
+    const stray = buildCluster({
+      id: 'two',
+      eventIds: ['01Z'],
+      suggested: { kind: 'defer' },
+      result: { comment: 'https://github.com/o/r/issues/7#issuecomment-1', marked: true },
+    });
+    expect(
+      checkRules(buildRecord({ clusters: [early, stray], limit: 2, remainder: empty })).map((v) => v.message),
+    ).toEqual([
+      'a comment disposition cannot mark its events before the comment is posted',
+      'a defer disposition must not have a comment',
+    ]);
   });
 });
 

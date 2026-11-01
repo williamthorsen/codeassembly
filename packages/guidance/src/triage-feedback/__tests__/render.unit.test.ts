@@ -55,6 +55,10 @@ describe(describeSuggestion, () => {
       'ticket for new `skills/x/SKILL.md` in o/r',
     ],
     [{ kind: 'ticket-undecided', target: null, repo: 'o/r' } as const, 'ticket, target undecided, in o/r'],
+    [
+      { kind: 'comment', issue: 'https://github.com/o/r/issues/7' } as const,
+      'comment on https://github.com/o/r/issues/7',
+    ],
     [{ kind: 'impact', level: 'low' } as const, 'set impact to low'],
     [{ kind: 'defer' } as const, 'defer'],
   ])('describes %o', (suggestion, expected) => {

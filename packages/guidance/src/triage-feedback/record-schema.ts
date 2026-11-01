@@ -29,6 +29,7 @@ const SuggestionSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('ticket-existing'), target: z.string().min(1), repo: RepoSlug }),
   z.object({ kind: z.literal('ticket-new'), target: z.string().min(1), repo: RepoSlug }),
   z.object({ kind: z.literal('ticket-undecided'), target: z.null(), repo: RepoSlug }),
+  z.object({ kind: z.literal('comment'), issue: z.url() }),
   z.object({ kind: z.literal('impact'), level: z.enum(EVENT_IMPACT_LEVELS) }),
   z.object({ kind: z.literal('defer') }),
 ]);
@@ -36,6 +37,7 @@ const SuggestionSchema = z.discriminatedUnion('kind', [
 const ResultSchema = z
   .object({
     ticket: z.url().exactOptional(),
+    comment: z.url().exactOptional(),
     marked: z.boolean(),
   })
   .nullable();
@@ -179,6 +181,12 @@ function checkResult(cluster: Cluster, result: NonNullable<Cluster['result']>): 
   }
   if (result.marked && filesTicket && result.ticket === undefined) {
     messages.push('a ticket disposition cannot mark its events before the ticket exists');
+  }
+  if (result.comment !== undefined && cluster.suggested.kind !== 'comment') {
+    messages.push(`a ${cluster.suggested.kind} disposition must not have a comment`);
+  }
+  if (result.marked && cluster.suggested.kind === 'comment' && result.comment === undefined) {
+    messages.push('a comment disposition cannot mark its events before the comment is posted');
   }
   return messages;
 }

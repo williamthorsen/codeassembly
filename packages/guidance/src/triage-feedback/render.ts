@@ -42,6 +42,8 @@ export function describeSuggestion(suggestion: Suggestion): string {
       return `ticket for new \`${suggestion.target}\` in ${suggestion.repo}`;
     case 'ticket-undecided':
       return `ticket, target undecided, in ${suggestion.repo}`;
+    case 'comment':
+      return `comment on ${suggestion.issue}`;
     case 'impact':
       return `set impact to ${suggestion.level}`;
     case 'defer':
@@ -74,6 +76,7 @@ function describeResult(cluster: Cluster): string {
   if (cluster.result === undefined || cluster.result === null) return 'pending';
   const parts = [
     ...(cluster.result.ticket === undefined ? [] : [cluster.result.ticket]),
+    ...(cluster.result.comment === undefined ? [] : [cluster.result.comment]),
     cluster.result.marked ? 'events marked' : 'events not marked',
   ];
   return parts.join('; ');

@@ -36,6 +36,7 @@ Each surfaced cluster takes one disposition:
 - `ticket-existing`: a ticket to change the guidance artifact that should have taught the lesson.
 - `ticket-new`: a ticket to create a guidance artifact for a lesson that no artifact covers.
 - `ticket-undecided`: a ticket whose target a later refinement pass places.
+- `comment`: a comment on an open issue that already covers the lesson, so that the issue gains the cluster's evidence rather than a duplicate ticket.
 - `impact`: a new impact rating on the cluster's events, for a cluster whose ratings misstate it.
 - `defer`: set aside until the deferral interval passes or the cluster gains a new event.
 
@@ -88,7 +89,7 @@ An inventory is clustered in batches, because one clusterer cannot place every e
 
 ### 3. Recommend
 
-Read `clusters.json`. Assign every candidate a priority and a reason, then order the clusters by priority, recurrence, and latest capture; the first `--limit` clusters are surfaced. For each surfaced cluster, suggest a disposition, and for a ticket disposition, find the target: Search the guidance for the artifact that states or should state the lesson, and decide its repository by the rules above.
+Read `clusters.json`. Assign every candidate a priority and a reason, then order the clusters by priority, recurrence, and latest capture; the first `--limit` clusters are surfaced. For each surfaced cluster, suggest a disposition, and for a ticket disposition, find the target: Search the guidance for the artifact that states or should state the lesson, and decide its repository by the rules above. Then search that repository's open issues with `gh issue list --repo {repo} --search`; when one already covers the lesson, suggest `comment` on it instead.
 
 Write `{work}/recommendations.md`: one line per cluster, with its id, priority, disposition, target, target repository, and a one-sentence reason. Write a line for every candidate, not only the surfaced ones, because the challenger argues against every priority. Nothing else goes in the file, because the challenger reads it and a sentence of your reasoning there would bias its judgment toward yours.
 
@@ -106,7 +107,7 @@ root: {repository root}
 
 Save the reply as `{work}/challenge.md`. Then take each cluster in turn: Defend the priority and the disposition when the argument fails on the evidence, modify them when the argument stands in part, and abandon the priority, by lowering it, when the argument stands. A changed priority can change which clusters are surfaced; re-apply the order and the limit.
 
-Write `{work}/record.json` in the helper's record shape: `store` (the store name that the inventory reports), `limit`, `artifactPath` (the artifact's path with the home directory written as `~`), `clusters` (the candidates), `unranked` (as `clusters.json` reports it), and `remainder` (`clusters` and `events`, the count of clusters not surfaced, unranked ones included, and of their events, and `excluded`, the number of clusters in the `excluded` list of `clusters.json`). Each cluster carries the fields of `clusters.json` plus `priority`, `reason`, `challenge` (`argument`, `outcome`, `originalPriority` when the outcome changed the priority, and `note`), and `surfaced`. A surfaced cluster also carries `suggested` (`kind`, then `target` and `repo` for a ticket kind, with `target: null` for `ticket-undecided`, or `level` for `impact`) and `result: null`. Run `triage-feedback validate --file {work}/record.json`, which reports every violation at once, and fix the record until it passes.
+Write `{work}/record.json` in the helper's record shape: `store` (the store name that the inventory reports), `limit`, `artifactPath` (the artifact's path with the home directory written as `~`), `clusters` (the candidates), `unranked` (as `clusters.json` reports it), and `remainder` (`clusters` and `events`, the count of clusters not surfaced, unranked ones included, and of their events, and `excluded`, the number of clusters in the `excluded` list of `clusters.json`). Each cluster carries the fields of `clusters.json` plus `priority`, `reason`, `challenge` (`argument`, `outcome`, `originalPriority` when the outcome changed the priority, and `note`), and `surfaced`. A surfaced cluster also carries `suggested` (`kind`, then `target` and `repo` for a ticket kind, with `target: null` for `ticket-undecided`, `issue` (the issue URL) for `comment`, or `level` for `impact`) and `result: null`. Run `triage-feedback validate --file {work}/record.json`, which reports every violation at once, and fix the record until it passes.
 
 ### 5. Checkpoint: The dispositions
 
@@ -120,11 +121,21 @@ The developer may change a row in the reply. Record the change in the record, se
 
 For each ticket disposition, compose the body in the ticket skeleton that {skill:create-ticket} step 2 states. The problem states the lesson; the context lists the event ids under the store name, with the signals; the proposed solution names the target, or states "Target: undecided; a refinement pass places it."; the acceptance criteria state the behavior that the lesson asks for.
 
+For each `comment` disposition, compose a comment that opens with the line `Feedback triage: {cluster id}`, states the lesson, and lists the event ids under the store name, with the signals.
+
 ### 7. Write
 
 Nothing before this step writes to a tracker or a store. Process each approved or modified cluster in surfacing order, and write its `result` into the record as soon as each write returns, so that a `--resume` run repeats only what is missing. On a failed write, stop and report which cluster failed.
 
 - **A ticket disposition**: When `result.ticket` is not yet set, create the ticket with {skill:create-ticket}, adding `--repo {repo}` when the target's repository differs from the current one, and record its URL as `result.ticket`, with `marked: false`. Then mark the events with {skill:kb-update-events}: `--store <store> --add-addressed-by={ticket URL}` and the event ids. Set `marked: true`.
+- **`comment`**: When `result.comment` is not yet set, read the issue's comments with `gh issue view {issue} --json comments`, and post the comment only when none already opens with its first line; record the comment's URL as `result.comment`, with `marked: false`. Then mark the events with {skill:kb-update-events}: `--store <store> --add-addressed-by={issue URL}` and the event ids. Set `marked: true`.
+
+  ```bash
+  body_path="{absolute path of the composed comment}"
+  [ -s "$body_path" ] || { echo "Body file missing or empty: $body_path" >&2; exit 1; }
+  gh issue comment {issue} --body-file "$body_path"
+  ```
+
 - **`defer`**: Run {skill:kb-update-events} with `--store <store> --add-tag deferred` and the event ids, then with `--add-addressed-by={artifactPath}`. Set `result` to `{ "marked": true }`.
 - **`impact`**: Run {skill:kb-update-events} with `--store <store> --set-impact {level}` and the event ids. Set `result` to `{ "marked": true }`.
 
@@ -135,3 +146,5 @@ Each {skill:kb-update-events} result reports each event; treat any event whose r
 Run `triage-feedback validate` on the final record, then `triage-feedback render --file {work}/record.json --out {work}/artifact.md`. Save the rendered body, with frontmatter, at the artifact path fixed in step 1, per {skill:save-artifact}.
 
 Report each filed ticket with its repository, each deferred or rated cluster, each declined cluster, the remainder line, and the artifact's path.
+
+<!-- include: ../_partials/gh-body-file.md / -->
