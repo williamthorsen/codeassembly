@@ -85,6 +85,7 @@ const HOOK_GUARDS: ReadonlyArray<HookGuard> = [
     hook: 'implementation-preferences',
     role: 'writes, plans, or judges code',
     declaringBodies: [
+      { label: 'code-health-assessor', relativePath: 'subagents/code-health-assessor.md' },
       { label: 'implement-plan', relativePath: 'skills/implement-plan/SKILL.md' },
       { label: 'plan-reviewer', relativePath: 'subagents/plan-reviewer.md' },
       { label: 'plan-reviser', relativePath: 'subagents/plan-reviser.md' },

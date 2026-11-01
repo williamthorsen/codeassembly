@@ -66,3 +66,4 @@ codeassembly-validate-preferences --strict .agents/preferences.yaml
 - [Prototype index helper](docs/index-prototypes-helper.md): the helper that the `index-prototypes` skill runs.
 - [Guidance streamlining helper](docs/streamline-guidance-helper.md): the helper that the `streamline-guidance` skill runs.
 - [Findings triage helper](docs/triage-spike-findings-helper.md): the helper that the `triage-spike-findings` skill runs.
+- [Code-health helper](docs/assess-code-health-helper.md): the helper that the `assess-code-health` skill runs.
