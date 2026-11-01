@@ -1,9 +1,9 @@
 ---
 slug: codeassembly-content-specification
-description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, how broad a guidance change goes, and when a procedure belongs in a helper.
+description: The declaration contract and authoring doctrine for CodeAssembly skills, subagents, rulebooks, and collections -- frontmatter, dependencies, invocation tokens, how broad a guidance change goes, which kind of artifact it goes in, and when a procedure belongs in a helper.
 standalone: wanted by repositories that author CodeAssembly content, which declare it directly
 delivery: skill
-version: '31'
+version: '32'
 ---
 
 # CodeAssembly content specification
@@ -156,6 +156,23 @@ Correct a behavior at the fewest surfaces that plausibly account for it, deploy 
 A proposal justifies its breadth rather than assuming it. A contributing surface left unaddressed is recorded as an observation for a later pass rather than offered as an option to adopt now. Before adding exposition to a rulebook, check whether its existing examples already teach the point. _(Convention; not enforced.)_
 
 Before making any change to a guidance file, identify whether the new text makes any existing text redundant (whether in that file or any other) and trim the redundancy in the same change. If the file is larger after the change than before, offer to run {skill:streamline-guidance} against it. _(Convention; not enforced.)_
+
+## Choosing a kind
+
+A lesson goes into the kind of artifact that puts it in the agent's context at the moment the agent needs it:
+
+- An `ambient` rulebook: a rule that nearly every session needs, per the `delivery` row of "Frontmatter fields".
+- A `skill`-delivered rulebook: a rule that a class of tasks consults, such as the conventions for a commit message.
+- A `hook`-delivered rulebook: local taste that a project or a machine binds, as "Guidance hooks" states.
+- A skill: a procedure that runs when it is invoked.
+- A subagent: work that needs a context of its own, such as a review that must not share the author's view.
+- A partial: text that two or more artifacts must contain. `content/_partials/README.md` states when content becomes a partial and when it stays in a `_data/` document.
+- A section of a repository's `AGENTS.md`: a fact about that one repository that every session in it needs.
+- A helper: a step whose result is fixed by its inputs, as "Procedures in helpers" states.
+
+A lesson specific to one repository belongs in that repository's own content root or its `AGENTS.md`; any other lesson belongs in the library.
+
+When an existing rule already states the lesson, change that rule rather than add a parallel one, which would leave two statements to drift apart. Strengthen its wording when the agent reads the rule and still misses it; relocate it, or restate it at the step at which the agent acts, when the agent does not have it in context at that step; illustrate it with an example when the agent follows the directive but produces the wrong shape. _(Convention; not enforced.)_
 
 ## Procedures in helpers
 
