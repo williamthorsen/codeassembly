@@ -30,9 +30,11 @@ const BLOCK_SCALAR_VALUE = /^[a-z][a-z0-9-]*: [|>][+-]?$/;
 const DECLARED_KEYS: ReadonlySet<string> = new Set([
   'brief',
   'candidates',
+  'clusters',
   'files',
   'findings',
   'id',
+  'inventory',
   'lens',
   'output',
   'plan',

@@ -235,6 +235,20 @@ describe(readPreferences, () => {
     await writeProjectYaml(projectDir, 'pr: draft\n');
     await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(/'pr' must be an object/);
   });
+
+  it('takes triage_feedback.defer_days from the project file over the global file', async () => {
+    await writeGlobalYaml(homeDir, 'triage_feedback:\n  defer_days: 30\n');
+    await writeProjectYaml(projectDir, 'triage_feedback:\n  defer_days: 14\n');
+    const result = await readPreferences({ cwd: projectDir, home: homeDir });
+    expect(result.preferences.triage_feedback).toEqual({ defer_days: 14 });
+  });
+
+  it.each([0, 1.5, '30'])('throws with the offending key path when triage_feedback.defer_days is %j', async (value) => {
+    await writeProjectYaml(projectDir, `triage_feedback:\n  defer_days: ${JSON.stringify(value)}\n`);
+    await expect(readPreferences({ cwd: projectDir, home: homeDir })).rejects.toThrow(
+      /'triage_feedback\.defer_days' must be a positive integer/,
+    );
+  });
 });
 
 describe(readProjectPreferences, () => {

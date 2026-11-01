@@ -67,3 +67,4 @@ codeassembly-validate-preferences --strict .agents/preferences.yaml
 - [Guidance streamlining helper](docs/streamline-guidance-helper.md): the helper that the `streamline-guidance` skill runs.
 - [Findings triage helper](docs/triage-spike-findings-helper.md): the helper that the `triage-spike-findings` skill runs.
 - [Code-health helper](docs/assess-code-health-helper.md): the helper that the `assess-code-health` skill runs.
+- [Feedback triage helpers](docs/triage-feedback-helper.md): the helpers that the `triage-feedback` skill runs.

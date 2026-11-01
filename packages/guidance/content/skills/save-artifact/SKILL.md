@@ -50,7 +50,7 @@ Create the directory if needed.
 
 Read `artifact_paths` from the session-context manifest for category paths (chats, devlogs, plans). These are relative to the project directory: `{artifact_base_dir}/projects/{project_slug}/{category}/`.
 
-Devlogs and deferred-findings artifacts use their non-ticket category paths only as a fallback: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule. For frontmatter shapes, see `create-devlog/SKILL.md` (devlogs) and the deferred-findings step in `wrap-up/SKILL.md` (deferred-findings).
+Devlogs, deferred-findings, and feedback-triage artifacts use their non-ticket category paths only as a fallback: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket_id}/` instead. See [artifact conventions](../_data/artifact-conventions.md#non-ticket-paths) for the dual-homing rule. For frontmatter shapes, see `create-devlog/SKILL.md` (devlogs), the deferred-findings step in `wrap-up/SKILL.md` (deferred-findings), and step 8 of `triage-feedback/SKILL.md` (feedback-triage).
 
 Follow [artifact conventions](../_data/artifact-conventions.md).
 

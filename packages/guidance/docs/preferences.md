@@ -181,6 +181,16 @@ Settings of the `pull-from-backlog` skill, read from the project preferences fil
 | `ticket.pull.staleGroomDays`       | integer  | `14`                                   | Days since the last groom at which the skill offers `/groom-backlog`.                                                                                                                                               |
 | `ticket.pull.staleGroomNewTickets` | integer  | `10`                                   | Open tickets created since the last groom at which the skill offers `/groom-backlog`.                                                                                                                               |
 
+### `triage_feedback`
+
+Settings of the `triage-feedback` skill. See the [feedback triage helpers](triage-feedback-helper.md).
+
+| Key                          | Type    | Default | Description                                                                                                                         |
+| ---------------------------- | ------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `triage_feedback.defer_days` | integer | `30`    | Days for which a deferred feedback cluster stays out of a triage, unless it gains an undeferred event. `--defer-days` overrides it. |
+
+The project and global values resolve per the [cascade](../README.md#preferences).
+
 ### `integrations`
 
 | Key                             | Type    | Default                                                  | Description                                                                                                                                                                     |

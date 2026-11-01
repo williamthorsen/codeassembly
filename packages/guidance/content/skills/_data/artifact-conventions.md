@@ -54,6 +54,9 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │   └── {timestamp}_{slug}_deferred-findings.md      ← project-scoped fallback when a ticket is not in session
         ├── devlogs/
         │   └── {timestamp}_{concise-title}.md               ← project-scoped fallback when a ticket is not in session
+        ├── feedback-triage/
+        │   ├── {timestamp}_{slug}_feedback-triage.md        ← project-scoped fallback when a ticket is not in session
+        │   └── {timestamp}_work/                             ← the run's working files
         └── plans/
             └── {design-documents}.md
 ```
@@ -143,11 +146,12 @@ Ticket-level artifacts and run directories are both stored here. Invoke the bund
 | chats             | `chats`             | `{base_dir}/projects/{project-slug}/chats/`             |
 | deferred-findings | `deferred-findings` | `{base_dir}/projects/{project-slug}/deferred-findings/` |
 | devlogs           | `devlogs`           | `{base_dir}/projects/{project-slug}/devlogs/`           |
+| feedback-triage   | `feedback-triage`   | `{base_dir}/projects/{project-slug}/feedback-triage/`   |
 | plans             | `plans`             | `{base_dir}/projects/{project-slug}/plans/`             |
 
-Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with one exception: `deferred-findings` is hardcoded and cannot be overridden.
+Non-ticket paths are relative to the project directory. Category names remain configurable via `artifacts.paths.{category}` in preferences.yaml, with two exceptions: `deferred-findings` and `feedback-triage` are hardcoded and cannot be overridden.
 
-Devlogs and deferred-findings artifacts are dual-homed: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/` for devlogs, `deferred-findings/` for deferred-findings). All filenames in both types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of which directory they are written to.
+Devlogs, deferred-findings, and feedback-triage artifacts are dual-homed: When a ticket is in session context they are written as ticket-level artifacts under `tickets/{ticket-id}/`; otherwise they fall back to the project-scoped paths above (`devlogs/`, `deferred-findings/`, and `feedback-triage/`). All filenames in these types use the standard `YYYYMMDD-HHMMSSZ` ticket-level timestamp shape regardless of which directory they are written to.
 
 ## Naming conventions
 
@@ -749,6 +753,7 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 - `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when a ticket is not in session)
 - `dispositions`: The rendered dispositions of a triage of findings, the text that `triage-spike-findings` posts on the triage ticket: every item with its disposition, its confidence and value, where it went, and its reason, with the challenge's summary; the JSON record from which it is rendered stays in `triage/`
 - `devlog`: Development log entry (falls back to non-ticket path when a ticket is not in session)
+- `feedback-triage`: The record of a `triage-feedback` run: each surfaced cluster of feedback events with its signals, priority, challenge, disposition, and result, and the remainder left in the pool. A deferred event's `addressed-by` names the artifact, whose filename timestamp dates the deferral; the run's working files stay in `{timestamp}_work/` beside it (falls back to non-ticket path when a ticket is not in session)
 - `idea-decisions`: The idea table of a round of prototypes with the decision on each idea filled; `prepare-prototype-brief` saves it after the developer decides each idea, and the end vision cites it
 - `merge`: Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
 - `plan`: Implementation plan document

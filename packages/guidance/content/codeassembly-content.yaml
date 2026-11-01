@@ -53,6 +53,10 @@ helpers:
     out: skills/create-ticket/resolve-ticket-target.mjs
   - entry: ../src/assess-code-health/cli.ts
     out: skills/assess-code-health/assess-code-health.mjs
+  - entry: ../src/lesson-clusters/cli.ts
+    out: skills/lesson-clusters/lesson-clusters.mjs
+  - entry: ../src/triage-feedback/cli.ts
+    out: skills/triage-feedback/triage-feedback.mjs
   - entry: ../src/triage-spike-findings/cli.ts
     out: skills/triage-spike-findings/triage-spike-findings.mjs
   - entry: ../src/check-branch-currency/cli.ts

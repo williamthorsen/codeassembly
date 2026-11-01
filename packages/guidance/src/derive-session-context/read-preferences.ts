@@ -176,7 +176,23 @@ function projectPreferences(merged: Record<string, unknown>): ResolvedPreference
     }
   }
 
+  Object.assign(result, projectTriageFeedback(merged['triage_feedback']));
+
   return result;
+}
+
+/** Projects the `triage_feedback` section, returning an empty object when the section does not set a consumed key. */
+function projectTriageFeedback(value: unknown): Pick<WritablePreferences, 'triage_feedback'> {
+  if (value === undefined) {
+    return {};
+  }
+  const section = expectRecord(value, 'triage_feedback');
+  if (section['defer_days'] === undefined) {
+    return {};
+  }
+  return {
+    triage_feedback: { defer_days: expectPositiveInteger(section['defer_days'], 'triage_feedback.defer_days') },
+  };
 }
 
 /** Mutable version of `ResolvedPreferences` used during projection construction. */
@@ -203,6 +219,9 @@ interface WritablePreferences {
   ticket?: {
     base_url?: string;
   };
+  triage_feedback?: {
+    defer_days?: number;
+  };
 }
 
 /**
@@ -225,6 +244,14 @@ function expectScm(value: unknown): 'github' | 'bitbucket' {
     return value;
   }
   throw new Error(`preferences: 'scm' must be "github" or "bitbucket" (got ${formatValue(value)})`);
+}
+
+/** Narrows `value` to a positive integer. Throws with the offending key path when the value is not one. */
+function expectPositiveInteger(value: unknown, keyPath: string): number {
+  if (typeof value === 'number' && Number.isSafeInteger(value) && value > 0) {
+    return value;
+  }
+  throw new Error(`preferences: '${keyPath}' must be a positive integer (got ${formatValue(value)})`);
 }
 
 /** Narrows `value` to `string`. Throws with the offending key path when the value is not a string. */
