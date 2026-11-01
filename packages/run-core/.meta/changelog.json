@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.5.1",
+    "date": "2026-11-01",
+    "sections": [
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that publishing `codeassembly-run-core` from a clean checkout packed a tarball without `dist/`, as happened with 0.5.0, by adding a `prepublishOnly` script that runs `nmr build`. (#2230)",
+            "hash": "1c34acc29972a5844f761d68879494e1e6ce31a9",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.5.0",
     "date": "2026-11-01",
     "sections": [

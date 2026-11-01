@@ -1,5 +1,16 @@
 [
   {
+    "version": "0.2.16",
+    "date": "2026-11-01",
+    "sections": [
+      {
+        "title": "📦 Dependencies",
+        "audience": "dev",
+        "items": [{ "description": "Bumped `codeassembly-run-core` to 0.5.1" }]
+      }
+    ]
+  },
+  {
     "version": "0.2.15",
     "date": "2026-11-01",
     "sections": [

@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.1 — 2026-11-01
+
+### 🐛 Bug fixes
+
+- Fixes the issue that publishing `codeassembly-run-core` from a clean checkout packed a tarball without `dist/`, as happened with 0.5.0, by adding a `prepublishOnly` script that runs `nmr build`. (#2230)
+
 ## 0.5.0 — 2026-11-01
 
 ### 🎉 Features
