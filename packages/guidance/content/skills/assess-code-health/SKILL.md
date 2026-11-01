@@ -92,7 +92,7 @@ Never pass one lens's report, or anything learned from it, to another lens: Each
 As each lens returns:
 
 1. Run `git status --porcelain`. When it prints anything, stop the run and report the changed paths and the lens that returned last.
-2. Save the report as `{ticket_dir}/code-health/{lens slug}-report.md`, and its JSON block as `{ticket_dir}/code-health/{lens slug}/proposals.json`.
+2. Confirm that the lens saved `{ticket_dir}/code-health/{lens slug}/report.md` and `proposals.json`. When either is missing, save it from the reply: the report, or the report's JSON block.
 3. Run `check-evidence --proposals {that file} --sense {ticket_dir}/code-health/sense.json`. Drop every proposal that it lists under `failed`, and record each with its reason under residual unknowns. When the block fails the schema as a whole, record the lens's proposals as unchecked and drop them all.
 
 ### 5. Synthesize

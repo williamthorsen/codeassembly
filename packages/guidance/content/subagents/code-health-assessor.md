@@ -81,6 +81,8 @@ Phase: code-health-assessment
 
 `{ID}` is the lens's prefix from the brief followed by a number, starting at 1. The JSON block contains the same proposals as the **Proposals** section, as one array with exactly the fields shown, and `[]` when you have none. Write `- none` under **Proposals** when it is empty rather than omitting it. End with the `Phase: code-health-assessment` line, which tells the dispatching session that the report is complete.
 
+Before you return, save the report as `{output}/report.md` and the JSON block's array as `{output}/proposals.json`, each with a quoted shell heredoc (`<<'EOF'`), so that the dispatching session reads them from disk rather than copying them from your reply.
+
 ## How you write
 
 <!-- include: ../_partials/plain-speech.md / -->

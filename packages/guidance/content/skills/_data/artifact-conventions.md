@@ -31,7 +31,7 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │       │   └── {lens}/{finding-id}-{slug}.png
         │       ├── code-health/                              ← a code-health assessment's sense document, reports, and proposals, kept by `assess-code-health`
         │       │   ├── sense.json
-        │       │   ├── {lens}-report.md
+        │       │   ├── {lens}/report.md
         │       │   └── {lens}/proposals.json
         │       ├── triage/                                   ← a findings triage's working files, kept by `triage-spike-findings`
         │       │   ├── findings.md
