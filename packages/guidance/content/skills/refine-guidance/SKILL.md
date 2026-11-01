@@ -51,7 +51,7 @@ Run `resolve` on the target, or on the files that the search found:
 node {harness_home_dir}/skills/streamline-guidance/streamline-guidance.mjs resolve {paths}
 ```
 
-It maps each deployed copy to its source (`redirectedFrom`) and reports each file's `dirty` state and `generatedRegions`. Report every redirect. Stop if a file to be edited is `dirty`, and name it: The commit must contain only this run's edits.
+It maps each deployed copy to its source (`redirectedFrom`) and reports each file's `dirty` state and `generatedRegions`. Report every redirect.
 
 ### 4. Place the change
 
@@ -67,6 +67,8 @@ Present the placement: the lesson, the mode and its reason, and the target file 
 ### 5. Draft the edits
 
 Draft under "Adding guidance" in the content specification: Change the fewest surfaces that plausibly account for the behavior, and trim any text that the change makes redundant, in that file or another. A new artifact follows the content specification and the repository's content conventions: its frontmatter, its naming, its dependency declarations, and the tests that the repository runs over its content.
+
+Before presenting the edits, run `resolve` on every existing file that a drafted edit changes and on each rulebook whose `version` step 6 will bump. Stop if any of them is `dirty`, and name it: The commit must contain only this run's edits.
 
 Present each edit as a numbered row: file, line, the text that it replaces (or `new file`), and the new text. Ask for one approval that covers applying the edits, the commit, the push, and the pull request. A row that the developer declines is dropped; re-draft only when the developer asks.
 
