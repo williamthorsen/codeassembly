@@ -17,6 +17,15 @@ export const VALUE_GRADES = ['must-have', 'nice-to-have', 'questionable', 'shoul
 
 const PositiveInteger = z.number().int().positive();
 
+/** What an item is about, so that a later run can recognize the same subject: a stable key and the paths it covers. */
+export const EvidenceSchema = z.object({
+  key: z.string().min(1),
+  paths: z.array(z.string().min(1)).min(1),
+});
+
+/** A full commit SHA, which stays unambiguous as the repository grows. */
+export const CommitSchema = z.string().regex(/^[0-9a-f]{40}$/);
+
 export const ItemSchema = z.object({
   id: z.string().min(1),
   title: z.string().min(1),
@@ -28,6 +37,7 @@ export const ItemSchema = z.object({
   ticket: PositiveInteger.nullable(),
   /** The blockers of a `ticket` item: the ids of other `ticket` items, and the numbers of issues outside the triage. */
   blockedBy: z.array(z.union([PositiveInteger, z.string().min(1)])).optional(),
+  evidence: EvidenceSchema.optional(),
   challenge: z.object({
     argument: z.string(),
     outcome: z.enum(CHALLENGE_OUTCOMES),
@@ -39,6 +49,8 @@ export const RecordSchema = z.object({
   source: z.string().min(1),
   triageTicket: PositiveInteger,
   umbrella: PositiveInteger.nullable(),
+  /** The HEAD at which the dispositions were approved; required when any item has evidence. */
+  commit: CommitSchema.optional(),
   items: z.array(ItemSchema).min(1),
   challengeSummary: z.string(),
   notes: z.array(z.string()),
@@ -48,6 +60,7 @@ export type ChallengeOutcome = (typeof CHALLENGE_OUTCOMES)[number];
 export type ConfidenceGrade = (typeof CONFIDENCE_GRADES)[number];
 export type Disposition = (typeof DISPOSITIONS)[number];
 export type DispositionsRecord = z.infer<typeof RecordSchema>;
+export type Evidence = z.infer<typeof EvidenceSchema>;
 export type Item = z.infer<typeof ItemSchema>;
 export type ValueGrade = (typeof VALUE_GRADES)[number];
 
@@ -60,8 +73,8 @@ export interface GateViolation {
 /**
  * Checks a parsed record against the gate: a `low` item never takes a ticket; a `merge` targets a `ticket` item by id; a
  * `comment` targets an issue number; a `ticket` or `drop` item does not have a target; only a `ticket` item has a
- * ticket number or blockers; a blocker id names another `ticket` item, once; the blockers do not form a cycle; and ids
- * are unique.
+ * ticket number or blockers; a blocker id names another `ticket` item, once; the blockers do not form a cycle; an item
+ * has evidence only when the record has a commit; and ids are unique.
  * Returns every violation, so that one run reports them all.
  */
 export function checkGate(record: DispositionsRecord): GateViolation[] {
@@ -74,6 +87,9 @@ export function checkGate(record: DispositionsRecord): GateViolation[] {
   for (const item of record.items) {
     if (item.disposition === 'ticket' && item.confidence === 'low') {
       violations.push({ id: item.id, clause: 'a low item does not take a ticket' });
+    }
+    if (item.evidence !== undefined && record.commit === undefined) {
+      violations.push({ id: item.id, clause: 'an item has evidence only when the record has a commit' });
     }
     if (item.disposition !== 'ticket' && item.ticket !== null) {
       violations.push({ id: item.id, clause: `a ${item.disposition} item does not have a ticket number` });
