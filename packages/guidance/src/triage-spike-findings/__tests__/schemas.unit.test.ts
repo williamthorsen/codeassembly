@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { checkGate, findMissingTickets, RecordSchema } from '../schemas.ts';
 import { buildItem, buildRecord } from '../test-utils/build-record.ts';
 
+const COMMIT = '0123456789abcdef0123456789abcdef01234567';
+const EVIDENCE = { key: 'src/a.ts:duplicated-setup', paths: ['src/a.ts'] };
+
 describe('RecordSchema', () => {
   it('accepts a record with one item per disposition', () => {
     expect(RecordSchema.safeParse(buildRecord()).success).toBe(true);
@@ -10,6 +13,20 @@ describe('RecordSchema', () => {
 
   it('rejects a record without items', () => {
     expect(RecordSchema.safeParse(buildRecord({ items: [] })).success).toBe(false);
+  });
+
+  it('accepts an item with evidence and a record with a commit', () => {
+    const record = buildRecord({ commit: COMMIT, items: [buildItem({ evidence: EVIDENCE })] });
+    expect(RecordSchema.safeParse(record).success).toBe(true);
+  });
+
+  it.each([
+    ['an empty key', { commit: COMMIT, items: [buildItem({ evidence: { key: '', paths: ['a.ts'] } })] }],
+    ['empty paths', { commit: COMMIT, items: [buildItem({ evidence: { key: 'a.ts:dup', paths: [] } })] }],
+    ['a short commit', { commit: COMMIT.slice(0, 8) }],
+    ['an uppercase commit', { commit: COMMIT.toUpperCase() }],
+  ])('rejects %s', (_label, overrides) => {
+    expect(RecordSchema.safeParse({ ...buildRecord(), ...overrides }).success).toBe(false);
   });
 
   it('rejects a grade outside its family', () => {
@@ -21,6 +38,11 @@ describe('RecordSchema', () => {
 describe(checkGate, () => {
   it('passes a record that meets every clause', () => {
     expect(checkGate(buildRecord())).toEqual([]);
+  });
+
+  it('refuses evidence on a record without a commit', () => {
+    const record = buildRecord({ items: [buildItem({ evidence: EVIDENCE })] });
+    expect(checkGate(record)).toEqual([{ id: '10', clause: 'an item has evidence only when the record has a commit' }]);
   });
 
   it('refuses a ticket at low confidence', () => {

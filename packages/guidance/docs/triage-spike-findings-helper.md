@@ -25,6 +25,7 @@ The error codes are `gate-violation`, `gh-failed`, `invalid-args`, `invalid-reco
   "source": "spike #270",
   "triageTicket": 278,
   "umbrella": null,
+  "commit": "0c30f1be9e8d7c6b5a4f3e2d1c0b9a8f7e6d5c4b",
   "items": [
     {
       "id": "10",
@@ -36,6 +37,7 @@ The error codes are `gate-violation`, `gh-failed`, `invalid-args`, `invalid-reco
       "target": null,
       "ticket": null,
       "blockedBy": ["12", 415],
+      "evidence": { "key": "src/search.ts:duplicated-ranking", "paths": ["src/search.ts"] },
       "challenge": { "argument": "...", "outcome": "defended", "note": "..." }
     }
   ],
@@ -44,7 +46,7 @@ The error codes are `gate-violation`, `gh-failed`, `invalid-args`, `invalid-reco
 }
 ```
 
-`disposition` is `ticket`, `comment`, `merge`, or `drop`. `target` is the issue number for a `comment`, the id of a `ticket` item for a `merge`, and null otherwise. `ticket` is the created child's number, null until the skill creates it; `umbrella` likewise. `blockedBy`, optional and on a `ticket` item alone, lists its blockers: the ids of other `ticket` items, and the numbers of issues outside the triage. `challenge.outcome` is `defended`, `modified`, or `abandoned`. `notes` contains the lines of the comment's "Labels and follow-ups" section, which is omitted when the list is empty.
+`disposition` is `ticket`, `comment`, `merge`, or `drop`. `target` is the issue number for a `comment`, the id of a `ticket` item for a `merge`, and null otherwise. `ticket` is the created child's number, null until the skill creates it; `umbrella` likewise. `blockedBy`, optional and on a `ticket` item alone, lists its blockers: the ids of other `ticket` items, and the numbers of issues outside the triage. `evidence`, optional, states what the item is about, so that a later run can recognize the same subject: `key` is a stable identifier copied from the findings and matched as an exact string, and `paths` lists the files that it covers, at least one. `commit`, optional, is the full 40-character SHA of the HEAD at which the dispositions were approved. `challenge.outcome` is `defended`, `modified`, or `abandoned`. `notes` contains the lines of the comment's "Labels and follow-ups" section, which is omitted when the list is empty.
 
 ## The gate
 
@@ -57,10 +59,21 @@ A record passes when every clause holds, and `validate` and `render` report ever
 - Only a `ticket` item has a ticket number or blockers.
 - A blocker id names another `ticket` item, and an item does not list any blocker twice.
 - The blockers do not form a cycle; a cycle is reported once, with its ids in order.
+- An item has evidence only when the record has a commit.
 - Every id is declared once.
 
 ## The rendered comment
 
 `dispositions-comment.md` opens with a heading naming the source, a paragraph stating the grading convention and, when an item takes a ticket, the umbrella, and a table with the columns item, disposition, confidence, value, where, blocked by, and reason, whose rows follow the display order that `validate` reports. The where column is `#N` for a `ticket` or `comment` item, `merged into {id}` for a `merge`, and empty for a `drop`. The blocked-by column lists a `ticket` item's blockers as `#N`, with `(pending)` for a blocker not yet created. A `## Challenge` section contains `challengeSummary`, and a `## Labels and follow-ups` section contains `notes`.
+
+When any item has evidence, the comment ends with a hidden evidence block, an HTML comment that does not appear on the rendered page:
+
+```
+<!-- codeassembly:triage-evidence v1
+{"version":1,"source":"spike #270","triageTicket":278,"commit":"<sha>","items":[{"id":"10","key":"src/search.ts:duplicated-ranking","paths":["src/search.ts"],"disposition":"ticket","where":282}]}
+-->
+```
+
+The JSON contains the record's `source`, `triageTicket`, and `commit`, and one entry per item with evidence, in display order, whatever its disposition. `where` is the ticket number of a `ticket` item (null until it is created), the issue number of a `comment`, the target id of a `merge`, and null for a `drop`. Every `>` in the JSON is written as `\u003e`, so that a value cannot close the HTML comment. `parseEvidenceBlock` in `src/triage-spike-findings/evidence.ts` reads the block from a comment body, and returns `undefined` for a body without one, for another version, or for a malformed payload. A change that adds a field keeps version 1; a change that renames or removes one takes a new version.
 
 `comment-{issue}.md` opens with one line naming the source and the triage ticket, then one bullet per item: its title, its grades, and its reason.
