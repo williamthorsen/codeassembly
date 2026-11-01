@@ -47,7 +47,7 @@ A ticket disposition names the repository that owns its target:
 
 ## Process
 
-Every helper command prints one JSON result. When a result has `ok: false`, stop and report its `error` and `message`, except when a step below says otherwise. Invoke the helpers as:
+`<store>` below is the `--store` argument, `@feedback` when it is omitted. Every helper command prints one JSON result. When a result has `ok: false`, stop and report its `error` and `message`, except when a step below says otherwise. Invoke the helpers as:
 
 ```bash
 node {harness_home_dir}/skills/lesson-clusters/lesson-clusters.mjs {command} {flags}
@@ -63,7 +63,7 @@ node {harness_home_dir}/skills/triage-feedback/triage-feedback.mjs {command} {fl
 
 ### 2. Cluster
 
-1. Run `lesson-clusters inventory --store {store} --out {work}/inventory.json`. Report each `skipped` file, and stop when `pool` and `deferred` are both zero: Nothing awaits triage.
+1. Run `lesson-clusters inventory --store <store> --out {work}/inventory.json`. Report each `skipped` file, and stop when `pool` and `deferred` are both zero: Nothing awaits triage.
 2. Send one {tool:Task} call, `subagent_type: lesson-clusterer`, with this block and nothing else composed into it:
 
    ```dispatch
@@ -111,9 +111,9 @@ For each ticket disposition, compose the body in the ticket skeleton that {skill
 
 Nothing before this step writes to a tracker or a store. Process each approved or modified cluster in surfacing order, and write its `result` into the record as soon as each write returns, so that a `--resume` run repeats only what is missing. On a failed write, stop and report which cluster failed.
 
-- **A ticket disposition**: When `result.ticket` is not yet set, create the ticket with {skill:create-ticket}, adding `--repo {repo}` when the target's repository differs from the current one, and record its URL as `result.ticket`, with `marked: false`. Then mark the events with {skill:kb-update-events}: `--store {store} --add-addressed-by={ticket URL}` and the event ids. Set `marked: true`.
-- **`defer`**: Run {skill:kb-update-events} with `--store {store} --add-tag deferred` and the event ids, then with `--add-addressed-by={artifactPath}`. Set `result` to `{ "marked": true }`.
-- **`impact`**: Run {skill:kb-update-events} with `--store {store} --set-impact {level}` and the event ids. Set `result` to `{ "marked": true }`.
+- **A ticket disposition**: When `result.ticket` is not yet set, create the ticket with {skill:create-ticket}, adding `--repo {repo}` when the target's repository differs from the current one, and record its URL as `result.ticket`, with `marked: false`. Then mark the events with {skill:kb-update-events}: `--store <store> --add-addressed-by={ticket URL}` and the event ids. Set `marked: true`.
+- **`defer`**: Run {skill:kb-update-events} with `--store <store> --add-tag deferred` and the event ids, then with `--add-addressed-by={artifactPath}`. Set `result` to `{ "marked": true }`.
+- **`impact`**: Run {skill:kb-update-events} with `--store <store> --set-impact {level}` and the event ids. Set `result` to `{ "marked": true }`.
 
 Each {skill:kb-update-events} result reports each event; treat any event whose result has `ok: false` as a failed write. A declined cluster does not write anything.
 
