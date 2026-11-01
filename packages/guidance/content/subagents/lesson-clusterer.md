@@ -28,6 +28,7 @@ Write only the file at `output`. Do not create, edit, or delete any other file, 
 - **Treat a deferred event like any other.** A deferred event joins the cluster whose lesson it teaches, beside the open events; do not keep the deferred events apart.
 - **Keep a lesson specific.** A cluster's lesson is one sentence that states the behavior to change, such as "Headings use sentence case, not title case." A lesson as broad as "Follow the writing rules" groups events that different changes would address; split it.
 - **Leave a singleton alone.** An event that shares its lesson with no other event is a cluster of one.
+- **Merge earlier clusters the same way.** In a merge pass, each inventory entry is a cluster that an earlier pass formed over one batch of events: Its `summary` states the cluster's lesson, and its `excerpt` contains its events' summaries. Group the entries that teach the same lesson, as you would group events.
 
 ## What you write and return
 

@@ -16,6 +16,12 @@ Every command prints one JSON result to stdout: `ok: true` with the command's fi
 
 Each entry contains the event's id, summary, capture time, `skill`, `repo`, and `impact` when set, and an excerpt: the body's first paragraph, cut to 400 characters. An event file that does not parse is reported in `skipped`.
 
+An inventory too large for one clusterer is clustered in batches:
+
+- `batch --inventory <file> --out <dir>` writes `batch-NN.json` files of at most `--batch-size` events (default 150), each in the inventory's shape. It orders the events by `skill`, with the events that do not have one last, then by capture time, so that events likely to share a lesson land in one batch.
+- `lessons --batches <dir> --out <file>` checks each batch against the `map-NN.json` beside it, as `clusters` checks a map, and reports every batch's violations at once, each naming its batch. It writes the batch clusters as a lesson inventory: one entry per batch cluster, with the id `{batch}/{cluster}`, the lesson as its summary, and its events' summaries as its excerpt.
+- `combine --batches <dir> --lessons <file> --map <file> --out <file>` checks the merge pass's map against the lesson inventory and expands it into one event map.
+
 `clusters --inventory <file> --map <file>` checks the clusterer's map against the inventory, reporting every unknown, duplicated, and missing event and every empty cluster at once as `invalid-map` with a `violations` list. A valid map is written with each cluster's signals: `recurrence`, `impact` (counts per rating, `unrated` included), `firstCapturedAt`, `latestCapturedAt`, and `status`. A cluster is `deferred-active`, and written to `excluded` rather than `clusters`, when every member is deferred and its latest deferral is more recent than the deferral interval. The interval is `--defer-days`, then [`triage_feedback.defer_days`](preferences.md#triage_feedback), then 30 days.
 
 ## Triage records

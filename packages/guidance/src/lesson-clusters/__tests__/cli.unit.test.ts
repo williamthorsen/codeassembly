@@ -4,7 +4,8 @@ import { join } from 'node:path';
 
 import { describe, expect, it } from 'vitest';
 
-import { buildHelp, type CommandResult, DEFAULT_DEFER_DAYS, runCli } from '../cli.ts';
+import { buildHelp, DEFAULT_DEFER_DAYS, runCli } from '../cli.ts';
+import type { CommandResult } from '../command-support.ts';
 import { makeStore, seedEvents } from '../test-utils/seed-store.ts';
 
 const NOW = new Date('2026-11-01T00:00:00Z');
@@ -169,5 +170,95 @@ describe('arguments', () => {
       ok: false,
       error: 'invalid-args',
     });
+  });
+});
+
+describe('batched clustering', () => {
+  it('splits, merges, and combines batch maps into one map that clusters accepts', async () => {
+    const fixture = await setUp({ inventory: true });
+    const batched = await fixture.run(
+      'batch',
+      '--inventory',
+      'inventory.json',
+      '--batch-size',
+      '2',
+      '--out',
+      'batches',
+    );
+    expect(batched).toMatchObject({
+      ok: true,
+      batches: [
+        { name: '01', events: 2 },
+        { name: '02', events: 2 },
+      ],
+    });
+
+    const write = (name: string, value: unknown): Promise<void> =>
+      writeFile(join(fixture.work, name), JSON.stringify(value), 'utf8');
+    const batchOne = await fixture.readJson('batches/batch-01.json');
+    expect(batchOne).toMatchObject({ pool: [{ id: '01C' }], deferred: [{ id: '01D' }] });
+    await write('batches/map-01.json', { clusters: [{ id: 'x', lesson: 'X', eventIds: ['01C', '01D'] }] });
+    await write('batches/map-02.json', { clusters: [{ id: 'x', lesson: 'X', eventIds: ['01A', '01B'] }] });
+
+    await expect(fixture.run('lessons', '--batches', 'batches', '--out', 'lessons.json')).resolves.toMatchObject({
+      ok: true,
+      lessons: 2,
+    });
+    await write('merge.json', { clusters: [{ id: 'x', lesson: 'X', eventIds: ['01/x', '02/x'] }] });
+    await expect(
+      fixture.run(
+        'combine',
+        '--batches',
+        'batches',
+        '--lessons',
+        'lessons.json',
+        '--map',
+        'merge.json',
+        '--out',
+        'map.json',
+      ),
+    ).resolves.toMatchObject({ ok: true, clusters: 1 });
+    await expect(runClusters(fixture)).resolves.toMatchObject({ ok: true, clusters: 1, events: 4 });
+  });
+
+  it('refuses a merge map that leaves out a batch cluster', async () => {
+    const fixture = await setUp({ inventory: true });
+    await fixture.run('batch', '--inventory', 'inventory.json', '--out', 'batches');
+    await writeFile(
+      join(fixture.work, 'batches', 'map-01.json'),
+      JSON.stringify({ clusters: [{ id: 'all', lesson: 'All', eventIds: ['01A', '01B', '01C', '01D'] }] }),
+      'utf8',
+    );
+    await fixture.run('lessons', '--batches', 'batches', '--out', 'lessons.json');
+    await writeFile(join(fixture.work, 'merge.json'), JSON.stringify({ clusters: [] }), 'utf8');
+    await expect(
+      fixture.run(
+        'combine',
+        '--batches',
+        'batches',
+        '--lessons',
+        'lessons.json',
+        '--map',
+        'merge.json',
+        '--out',
+        'map.json',
+      ),
+    ).resolves.toMatchObject({ ok: false, error: 'invalid-map', violations: [{ code: 'missing-event' }] });
+  });
+
+  it('refuses a batch whose map is missing', async () => {
+    const fixture = await setUp({ inventory: true });
+    await fixture.run('batch', '--inventory', 'inventory.json', '--out', 'batches');
+    await expect(fixture.run('lessons', '--batches', 'batches', '--out', 'lessons.json')).resolves.toMatchObject({
+      ok: false,
+      error: 'file-not-found',
+    });
+  });
+
+  it.each(['0', 'many'])('refuses --batch-size %s', async (value) => {
+    const fixture = await setUp({ inventory: true });
+    await expect(
+      fixture.run('batch', '--inventory', 'inventory.json', '--batch-size', value, '--out', 'batches'),
+    ).resolves.toMatchObject({ ok: false, error: 'invalid-args' });
   });
 });

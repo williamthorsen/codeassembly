@@ -6,12 +6,10 @@
  * `clusters` validates the clusterer's map against that inventory and writes each cluster with its signals. The
  * grouping itself is a judgment that a subagent makes between the two commands.
  */
-import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
-import type { z } from 'zod';
 
 import { readPreferences } from '../derive-session-context/read-preferences.ts';
 import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
@@ -19,10 +17,22 @@ import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
 import { resolveCaptureTarget, type ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
 import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
+import { runBatch, runCombine, runLessons } from './batch-commands.ts';
+import { DEFAULT_BATCH_SIZE } from './batches.ts';
+import {
+  CommandError,
+  type CommandResult,
+  describeViolations,
+  type FlagName,
+  type ParsedFlags,
+  readJsonFile,
+  readRequired,
+  writeJson,
+} from './command-support.ts';
 import { buildInventory } from './inventory.ts';
 import { ClusterMapSchema, InventorySchema } from './schemas.ts';
 import { computeSignals } from './signals.ts';
-import type { ClusterViolation, Inventory, InventoryEntry, SignalledCluster } from './types.ts';
+import type { Inventory, InventoryEntry, SignalledCluster } from './types.ts';
 import { validateClusters } from './validate-clusters.ts';
 
 /** The deferral interval, in days, when neither `--defer-days` nor `triage_feedback.defer_days` sets one. */
@@ -35,33 +45,18 @@ export interface CommandContext {
   now: Date;
 }
 
-/** A command's result: a success payload, or a structured failure that the helper reports at exit 1. */
-export type CommandResult =
-  | { ok: false; error: string; message: string; violations?: ClusterViolation[] }
-  | ({ ok: true } & Record<string, unknown>);
-
-const COMMANDS = ['clusters', 'inventory'] as const;
-
-type FlagName = 'defer-days' | 'inventory' | 'map' | 'out' | 'store';
+const COMMANDS = ['batch', 'clusters', 'combine', 'inventory', 'lessons'] as const;
 
 const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
+  { name: 'batch-size', takesValue: true },
+  { name: 'batches', takesValue: true },
   { name: 'defer-days', takesValue: true },
   { name: 'inventory', takesValue: true },
+  { name: 'lessons', takesValue: true },
   { name: 'map', takesValue: true },
   { name: 'out', takesValue: true },
   { name: 'store', takesValue: true },
 ];
-
-/** A failure that a command reports as a structured result rather than throwing to `main`. */
-class CommandError extends Error {
-  constructor(
-    readonly code: string,
-    message: string,
-    readonly violations?: ClusterViolation[],
-  ) {
-    super(message);
-  }
-}
 
 /** Executes the helper from `process.argv`, writing the JSON result, or the help, to stdout. */
 async function main(): Promise<void> {
@@ -90,10 +85,16 @@ export async function runCli(argv: readonly string[], context: CommandContext): 
   try {
     const flags = parseFlags(rest);
     switch (command) {
+      case 'batch':
+        return await runBatch(flags, context.cwd);
       case 'clusters':
         return await runClusters(flags, context);
+      case 'combine':
+        return await runCombine(flags, context.cwd);
       case 'inventory':
         return await runInventory(flags, context);
+      case 'lessons':
+        return await runLessons(flags, context.cwd);
       default:
         throw new CommandError('invalid-args', `expected a command (${COMMANDS.join(', ')}), got "${command ?? ''}"`);
     }
@@ -117,16 +118,25 @@ export function buildHelp(): string {
     '',
     'Usage:',
     '  lesson-clusters inventory --store <name|@default|@feedback> --out <file>',
+    '  lesson-clusters batch --inventory <file> [--batch-size <n>] --out <dir>',
+    '  lesson-clusters lessons --batches <dir> --out <file>',
+    '  lesson-clusters combine --batches <dir> --lessons <file> --map <file> --out <file>',
     '  lesson-clusters clusters --inventory <file> --map <file> [--defer-days <n>] --out <file>',
     '',
     'Commands:',
     '  inventory   Write the open feedback events and the deferred ones, each with a short excerpt',
+    '  batch       Split an inventory into batch-NN.json files, grouped by skill, then by capture time',
+    '  lessons     Validate each batch-NN.json against its map-NN.json, then write the batch clusters as a lesson inventory',
+    '  combine     Validate the merge map against the lesson inventory, then expand it into one event map',
     '  clusters    Validate the map against the inventory, then write each cluster with its signals',
     '',
     'Options:',
     '  --store <name>       A store registered in kb.yaml; @default or @feedback selects that role',
     '  --inventory <file>   The file that the inventory command wrote',
-    '  --map <file>         The cluster map: {"clusters": [{"id", "lesson", "eventIds"}]}',
+    `  --batch-size <n>     The most events in one batch (default ${DEFAULT_BATCH_SIZE})`,
+    '  --batches <dir>      The directory that batch wrote, with a map-NN.json beside each batch-NN.json',
+    '  --lessons <file>     The file that the lessons command wrote',
+    '  --map <file>         A cluster map: {"clusters": [{"id", "lesson", "eventIds"}]}',
     `  --defer-days <n>     Days for which a deferred cluster stays out; overrides triage_feedback.defer_days (default ${DEFAULT_DEFER_DAYS})`,
     '  --out <file>         Where to write the command output',
     '  -h, --help           Print this help',
@@ -139,18 +149,14 @@ export function buildHelp(): string {
  * map with any violation, listing every one, and writes nothing.
  */
 async function runClusters(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
-  const inventory = await readJsonFile(flags, 'inventory', InventorySchema, context);
-  const map = await readJsonFile(flags, 'map', ClusterMapSchema, context);
+  const inventory = await readJsonFile(flags, 'inventory', InventorySchema, context.cwd);
+  const map = await readJsonFile(flags, 'map', ClusterMapSchema, context.cwd);
   const out = path.resolve(context.cwd, readRequired(flags, 'out'));
   const deferDays = await resolveDeferDays(flags, context);
 
   const violations = validateClusters(inventory, map);
   if (violations.length > 0) {
-    throw new CommandError(
-      'invalid-map',
-      `the cluster map has ${violations.length} ${violations.length === 1 ? 'violation' : 'violations'}`,
-      violations,
-    );
+    throw new CommandError('invalid-map', `the cluster map has ${describeViolations(violations.length)}`, violations);
   }
 
   const entries = new Map<string, InventoryEntry>(
@@ -204,9 +210,6 @@ async function runInventory(flags: ParsedFlags, context: CommandContext): Promis
 
 // region | Helpers
 
-/** Parsed flags: each flag's value. */
-type ParsedFlags = ReadonlyMap<FlagName, string>;
-
 /** Orders clusters by recurrence, then by latest capture, newest first, then by id. */
 function compareClusters(a: SignalledCluster, b: SignalledCluster): number {
   return (
@@ -240,41 +243,6 @@ function parseFlags(argv: readonly string[]): ParsedFlags {
     flags.set(flag.name, flag.value ?? '');
   }
   return flags;
-}
-
-/** Reads, parses, and validates the JSON file named by a flag, throwing `file-not-found` or `invalid-file`. */
-async function readJsonFile<Schema extends z.ZodType>(
-  flags: ParsedFlags,
-  flag: FlagName,
-  schema: Schema,
-  context: CommandContext,
-): Promise<z.infer<Schema>> {
-  const file = path.resolve(context.cwd, readRequired(flags, flag));
-  let text: string;
-  try {
-    text = await readFile(file, 'utf8');
-  } catch (error) {
-    throw new CommandError('file-not-found', `could not read ${file}: ${describeError(error)}`);
-  }
-  let json: unknown;
-  try {
-    json = JSON.parse(text);
-  } catch (error) {
-    throw new CommandError('invalid-file', `${file} is not JSON: ${describeError(error)}`);
-  }
-  const parsed = schema.safeParse(json);
-  if (!parsed.success) {
-    const issues = parsed.error.issues.map((issue) => `${issue.path.join('.')}: ${issue.message}`);
-    throw new CommandError('invalid-file', `${file}: ${issues.join('; ')}`);
-  }
-  return parsed.data;
-}
-
-/** Returns the value of a required flag, throwing `invalid-args` when it is absent or empty. */
-function readRequired(flags: ParsedFlags, flag: FlagName): string {
-  const value = flags.get(flag);
-  if (value === undefined || value === '') throw new CommandError('invalid-args', `--${flag} <value> is required`);
-  return value;
 }
 
 /** Resolves the deferral interval: `--defer-days`, then `triage_feedback.defer_days`, then the default. */
@@ -325,12 +293,6 @@ function resolutionFailure(resolved: Extract<ResolveCaptureTargetOutcome, { ok: 
       throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);
     }
   }
-}
-
-/** Writes `value` as indented JSON, creating the parent directory. */
-async function writeJson(file: string, value: unknown): Promise<void> {
-  await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 // endregion | Helpers
