@@ -51,6 +51,8 @@ helpers:
     out: skills/review-gh-pr/select-pr-ticket.mjs
   - entry: ../src/resolve-ticket-target/cli.ts
     out: skills/create-ticket/resolve-ticket-target.mjs
+  - entry: ../src/assess-code-health/cli.ts
+    out: skills/assess-code-health/assess-code-health.mjs
   - entry: ../src/triage-spike-findings/cli.ts
     out: skills/triage-spike-findings/triage-spike-findings.mjs
   - entry: ../src/check-branch-currency/cli.ts
