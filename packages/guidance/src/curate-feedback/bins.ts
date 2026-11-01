@@ -10,6 +10,16 @@ export interface JudgedAssignment {
   file: string;
 }
 
+/** A failure of the bins check, carrying every violation so that a caller reports them all at once. */
+export class BinsError extends Error {
+  constructor(
+    message: string,
+    readonly violations: BinViolation[],
+  ) {
+    super(message);
+  }
+}
+
 /** Reports whether a file exists at a pinned commit, relative to the root of the pinned repository. */
 export type FileAtPin = (root: string, sha: string, file: string) => boolean;
 

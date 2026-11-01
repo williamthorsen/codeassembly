@@ -21,7 +21,7 @@ import { validateClusters } from '../lesson-clusters/validate-clusters.ts';
 import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { buildAssignments, DEFAULT_GROUP_SIZE, formatSequence } from './assign.ts';
-import { buildRecord, checkBins, type JudgedAssignment } from './bins.ts';
+import { BinsError, buildRecord, checkBins, type JudgedAssignment } from './bins.ts';
 import { type CurateGit, realGit } from './git.ts';
 import { pinSources } from './pin.ts';
 import { buildReferences } from './references.ts';
@@ -258,16 +258,6 @@ async function runValidate(flags: ParsedFlags, context: CommandContext): Promise
 
 /** Parsed flags: each flag's values, in order. */
 type ParsedFlags = ReadonlyMap<FlagName, string[]>;
-
-/** A bins defect, reported with every violation at once. */
-class BinsError extends Error {
-  constructor(
-    message: string,
-    readonly violations: BinViolation[],
-  ) {
-    super(message);
-  }
-}
 
 /** Scans the command's flags, refusing a positional argument and a repeated flag that may not repeat. */
 function parseFlags(argv: readonly string[]): ParsedFlags {

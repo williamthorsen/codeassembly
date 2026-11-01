@@ -9,14 +9,16 @@ const GITHUB_REMOTE =
   /^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/]+)\/([^/]+?)(?:\.git)?\/?$/;
 
 /**
- * Pins the repository of each source directory at the commit of its default branch. Directories in one repository
- * share a pin; a directory that cannot be pinned is reported in `skipped` rather than failing the rest.
+ * Pins the repository of each source directory at the commit of its default branch. Directories in one repository,
+ * including those in different worktrees of it, share the pin of the first root that resolved to it; a directory that
+ * cannot be pinned is reported in `skipped` rather than failing the rest.
  */
 export async function pinSources(
   sources: readonly string[],
   git: CurateGit,
 ): Promise<{ pins: Pin[]; skipped: SkippedSource[] }> {
   const pins = new Map<string, Pin>();
+  const rootRepos = new Map<string, string>();
   const failedRoots = new Map<string, string>();
   const skipped: SkippedSource[] = [];
 
@@ -27,18 +29,25 @@ export async function pinSources(
       skipped.push({ source, reason: 'not in a git repository' });
       continue;
     }
-    const existing = pins.get(root);
-    if (existing !== undefined) {
-      existing.sources.push(source);
+    const knownRepo = rootRepos.get(root);
+    const known = knownRepo === undefined ? undefined : pins.get(knownRepo);
+    if (known !== undefined) {
+      known.sources.push(source);
       continue;
     }
-    const failure = failedRoots.get(root) ?? pinRoot(root, git);
-    if (typeof failure === 'string') {
-      failedRoots.set(root, failure);
-      skipped.push({ source, reason: failure });
+    const pinned = failedRoots.get(root) ?? pinRoot(root, git);
+    if (typeof pinned === 'string') {
+      failedRoots.set(root, pinned);
+      skipped.push({ source, reason: pinned });
       continue;
     }
-    pins.set(root, { ...failure, sources: [source] });
+    rootRepos.set(root, pinned.repo);
+    const sameRepo = pins.get(pinned.repo);
+    if (sameRepo === undefined) {
+      pins.set(pinned.repo, { ...pinned, sources: [source] });
+    } else {
+      sameRepo.sources.push(source);
+    }
   }
 
   return { pins: pins.values().toArray(), skipped };

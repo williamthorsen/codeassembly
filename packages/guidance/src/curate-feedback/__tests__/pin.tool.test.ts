@@ -40,6 +40,16 @@ describe(pinSources, () => {
     ]);
   });
 
+  it('gives a second worktree of the same repository the first worktree pin', async () => {
+    const worktree = path.join(base, 'guide.live');
+    git(guide, 'worktree', 'add', '--quiet', '--detach', worktree);
+
+    const result = await pinSources([guide, worktree], realGit);
+
+    expect(result.pins).toHaveLength(1);
+    expect(result.pins[0]).toMatchObject({ root: guide, sources: [guide, worktree] });
+  });
+
   it('resolves the default branch from the remote when origin/HEAD is not set locally', async () => {
     git(guide, 'remote', 'set-head', 'origin', '--delete');
 
