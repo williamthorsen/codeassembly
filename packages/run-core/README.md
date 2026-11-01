@@ -1,6 +1,12 @@
+<!-- readme-type: library -->
+
 # codeassembly-run-core
 
 The domain model and parsers for CodeAssembly's orchestrated development runs. Given a run directory in any of the three formats that runs have written, it returns one `CanonicalRunStatus`.
+
+```sh
+npm install codeassembly-run-core
+```
 
 ```ts
 import { parseRunData } from 'codeassembly-run-core/parsers';
