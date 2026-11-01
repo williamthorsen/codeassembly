@@ -80,12 +80,20 @@ const COLUMN_GAP = 2;
  */
 const MIN_DESCRIPTION_WIDTH = 20;
 
+/** One declared source in the `--json` listing: its name, its absolute content directory, and its artifacts. */
+export interface LibrarySourceListing {
+  readonly name: string;
+  readonly dir: string;
+  readonly artifacts: ReadonlyArray<{ readonly type: ArtifactType; readonly slug: string; readonly delivery: string }>;
+}
+
 /**
  * Enumerates the artifacts of every source declared by the chain that `sync` reads from `cwd`, or by the home chain
- * when `global` is set, and prints them as an aligned table. Throws when the chain does not declare a usable source.
+ * when `global` is set, and prints them as an aligned table, or under `json` as `{ sources: LibrarySourceListing[] }`
+ * in precedence order. Throws when the chain does not declare a usable source.
  */
 export async function libraryListCommand(
-  options: { global: boolean },
+  options: { global: boolean; json?: boolean },
   cwd: string = process.cwd(),
   homeDir: string = homedir(),
 ): Promise<void> {
@@ -98,18 +106,26 @@ export async function libraryListCommand(
   emitReport(missingSources.map(describeMissingSource));
 
   const rows: Array<LibraryRow> = [];
+  const sources: Array<LibrarySourceListing> = [];
   const seen = new Set<string>();
   for (const [precedence, root] of roots.entries()) {
+    const artifacts: Array<LibrarySourceListing['artifacts'][number]> = [];
     for (const descriptor of ARTIFACT_DESCRIPTORS) {
       const entries = await descriptor.list(root.dir);
       for (const entry of entries) {
         const key = `${descriptor.type}:${entry.slug}`;
         rows.push({ ...entry, type: descriptor.type, source: root.name, precedence, isShadowed: seen.has(key) });
+        artifacts.push({ type: descriptor.type, slug: entry.slug, delivery: entry.delivery });
         seen.add(key);
       }
     }
+    sources.push({ name: root.name, dir: path.resolve(root.dir), artifacts });
   }
 
+  if (options.json === true) {
+    console.info(JSON.stringify({ sources }, null, 2));
+    return;
+  }
   console.info(renderLibraryTable(rows, resolveTerminalWidth(), readOutputStyle('stdout')));
 }
 
@@ -121,7 +137,8 @@ Subcommands:
   list   List the artifacts (rulebooks, skills, subagents, collections) of every declared source
 
 Options:
-  --global   List the sources declared by the home chain (~/.agents/codeassembly.yaml) instead of the project's`);
+  --global   List the sources declared by the home chain (~/.agents/codeassembly.yaml) instead of the project's
+  --json     Print each declared source's name, content directory, and artifacts as JSON instead of a table`);
 }
 
 /**

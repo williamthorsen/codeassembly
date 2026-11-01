@@ -162,6 +162,34 @@ describe(libraryListCommand, () => {
       expect(lines.find((line) => line.includes('alpha-skill'))).not.toContain('(shadowed)');
       expect(lines.find((line) => line.includes('charlie-skill'))).not.toContain('(shadowed)');
     });
+
+    it('prints each source with its absolute directory and artifacts, in precedence order, under json', async () => {
+      const { output } = await captureList({ global: false, json: true }, projectDir, homeDir);
+      const parsed: unknown = JSON.parse(output);
+
+      expect(parsed).toMatchObject({
+        sources: [
+          {
+            name: 'team',
+            dir: teamDir,
+            artifacts: expect.arrayContaining([{ type: 'skill', slug: 'bravo-skill', delivery: '—' }]),
+          },
+          {
+            name: FIXTURE_SOURCE_NAME,
+            dir: contentDir,
+            artifacts: expect.arrayContaining([expect.objectContaining({ type: 'rulebook', slug: 'sample-rulebook' })]),
+          },
+        ],
+      });
+    });
+  });
+
+  it('lists the home chain as json when global and json are both set', async () => {
+    await declareFixtureSource(homeDir, contentDir);
+
+    const { output } = await captureList({ global: true, json: true }, projectDir, homeDir);
+
+    expect(JSON.parse(output)).toMatchObject({ sources: [{ name: FIXTURE_SOURCE_NAME, dir: contentDir }] });
   });
 
   it('reads the home chain when global is set', async () => {
@@ -289,7 +317,7 @@ describe(renderLibraryTable, () => {
 
 /** Runs the command from `cwd`, returning its captured stdout table and stderr warnings. */
 async function captureList(
-  options: { global: boolean },
+  options: { global: boolean; json?: boolean },
   cwd: string,
   homeDir: string,
 ): Promise<{ output: string; warnings: string }> {

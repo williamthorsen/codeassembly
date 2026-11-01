@@ -21,6 +21,7 @@ export function parseArgs(argv: ReadonlyArray<string>): {
   content: string | undefined;
   help: boolean;
   global: boolean;
+  json: boolean;
   warnOnly: boolean;
 } {
   const args = argv.slice(2);
@@ -34,6 +35,7 @@ export function parseArgs(argv: ReadonlyArray<string>): {
   let dryRun = false;
   let help = false;
   let global = false;
+  let json = false;
   let warnOnly = false;
   let shouldOverrideWriter = false;
 
@@ -60,6 +62,9 @@ export function parseArgs(argv: ReadonlyArray<string>): {
         break;
       case 'global':
         global = true;
+        break;
+      case 'json':
+        json = true;
         break;
       case 'override-writer':
         shouldOverrideWriter = true;
@@ -103,6 +108,7 @@ export function parseArgs(argv: ReadonlyArray<string>): {
     content,
     help,
     global,
+    json,
     warnOnly,
   };
 }
@@ -122,6 +128,7 @@ type FlagName =
   | 'global'
   | 'harness'
   | 'help'
+  | 'json'
   | 'link'
   | 'output-style'
   | 'override-writer'
@@ -137,6 +144,7 @@ function parseFlag(arg: string): FlagName | null {
     '--force': 'force',
     '--dry-run': 'dry-run',
     '--global': 'global',
+    '--json': 'json',
     '--override-writer': 'override-writer',
     '--warn-only': 'warn-only',
     '--check': 'check',
