@@ -171,7 +171,7 @@ function parseExcludeTags(flags: readonly MatchedFlag[]): string[] {
       continue;
     }
     const entries = (flag.value ?? '').split(',').map((entry) => entry.trim());
-    if (entries.some((entry) => entry === '')) {
+    if (entries.includes('')) {
       throw new Error('--exclude-tag requires a comma-separated list of non-empty tags');
     }
     tags.push(...entries);

@@ -202,7 +202,7 @@ describe(runRetrieveEvents, () => {
     expect(byTag.candidates.map((candidate) => candidate.summary)).toEqual(['A quillfrond fix kept in the pool']);
 
     const byImpact = await run(['--min-impact', 'high', '--exclude-tag', 'fix']);
-    expect(byImpact.candidates.map((candidate) => candidate.summary).sort()).toEqual([
+    expect(byImpact.candidates.map((candidate) => candidate.summary).toSorted()).toEqual([
       'A quillfrond event culled as obsolete',
       'A quillfrond event tagged with the stale alias',
     ]);
@@ -216,7 +216,7 @@ describe(runRetrieveEvents, () => {
       recall: buildRecallStub({ hits: quillfrondEvents() }),
     });
 
-    expect(Object.keys(result).sort()).toEqual(['candidates', 'diagnostic', 'scopedKbs', 'warnings']);
+    expect(Object.keys(result).toSorted()).toEqual(['candidates', 'diagnostic', 'scopedKbs', 'warnings']);
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toBe('all matches were filtered out');
   });

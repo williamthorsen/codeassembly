@@ -155,7 +155,8 @@ function formatConfigInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; err
 /** Loads the tag-alias map of every KB that produced a hit, keyed by KB root path. */
 async function loadAliasesForHits(hits: readonly RawHit[]): Promise<Map<string, AliasMap>> {
   const aliasesByKb = new Map<string, AliasMap>();
-  for (const kbPath of new Set(hits.map((hit) => hit.kbPath))) {
+  const kbPaths = new Set(hits.map((hit) => hit.kbPath));
+  for (const kbPath of kbPaths) {
     aliasesByKb.set(kbPath, await loadAliasesOrEmpty(kbPath));
   }
   return aliasesByKb;
