@@ -33,6 +33,8 @@ By default the helper searches up to two knowledge bases: the one discovered by 
 
 Within each knowledge base, recall is limited to the notes declared by the store, the files matching its configured `targets`/`exclude` (the same note set that `kb check` enforces). Events are stored under `content/events/`.
 
+<!-- include: ../../_partials/kb-standard-tags.md / -->
+
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.

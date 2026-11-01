@@ -31,6 +31,8 @@ A value-bearing flag accepts both `--diataxis howto` and `--diataxis=howto`. The
 
 By default the helper writes to the knowledge base discovered by walking up from the current directory for a `.kb/` folder. When the walk does not discover a `.kb/` and the caller does not pass `--kb`, the helper refuses to write rather than guessing a destination. `--kb <name>` names a specific entry from the merged `kb.yaml` registry and overrides discovery; `--kb @default` is the only way to reach the registry's `default_kb`. The chosen KB is shown in the proposal so that the user can redirect the write via `--kb` if it is wrong.
 
+<!-- include: ../../_partials/kb-standard-tags.md / -->
+
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.

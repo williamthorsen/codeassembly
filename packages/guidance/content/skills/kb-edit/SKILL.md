@@ -34,6 +34,8 @@ A value-bearing flag accepts both `--retag node,react` and `--retag=node,react`.
 
 The destination knowledge base is inferred by walking up from the note's directory for a `.kb/` folder. The helper does not accept a `--kb` override: The note's location is the selector, and a note outside any discoverable `.kb/` is refused with `missing-destination`. The helper refuses to write into a KB whose `kb.yaml` entry sets `readonly: true`, reporting `readonly-kb`.
 
+<!-- include: ../../_partials/kb-standard-tags.md / -->
+
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.

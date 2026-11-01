@@ -40,8 +40,8 @@
     "schemas"
   ],
   "scripts": {
-    "build": "codeassembly bundle-helpers && node scripts/generate-work-types.ts",
-    "check:content": "codeassembly validate && codeassembly bundle-helpers --check && node scripts/generate-work-types.ts --check",
+    "build": "codeassembly bundle-helpers && node scripts/generate-work-types.ts && node scripts/generate-kb-standard-tags.ts",
+    "check:content": "codeassembly validate && codeassembly bundle-helpers --check && node scripts/generate-work-types.ts --check && node scripts/generate-kb-standard-tags.ts --check",
     "check:post": "pnpm run check:content",
     "check:strict:post": "pnpm run check:content",
     "prepack": "node scripts/generate-schemas.ts",

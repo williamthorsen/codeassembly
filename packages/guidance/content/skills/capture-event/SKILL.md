@@ -55,6 +55,8 @@ A caller whose destination is a configured role rather than a per-lesson judgmen
 
 Amend is a plain in-place edit and does not consult push state. To correct an event that may already have been shared, prefer appending a supersession with `kb-update-events --add-addressed-by` over rewriting it, so that the correction becomes a new record rather than a change to history.
 
+<!-- include: ../../_partials/kb-standard-tags.md / -->
+
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.

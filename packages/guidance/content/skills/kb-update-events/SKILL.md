@@ -29,6 +29,8 @@ A value-bearing flag accepts both `--retag fix,observation` and `--retag=fix,obs
 
 `--store` is required: Every edit names its store. The helper resolves the store by registry name only and never walks the working directory for a `.kb/` folder. The store must be registered in `kb.yaml`. Pass `--store <name>` for a named store, `--store @default` for the registry's `default_kb`, or `--store @feedback` for its `feedback_kb`. The helper refuses an edit that omits `--store`, with an error that lists the registered stores.
 
+<!-- include: ../../_partials/kb-standard-tags.md / -->
+
 ## Runtime dependencies
 
 - **`node` ≥ 24**: The bundled helper inherits the Node version floor of `@williamthorsen/kb`.
