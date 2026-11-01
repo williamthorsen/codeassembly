@@ -52,7 +52,7 @@ Write the bins file to `output` as JSON:
       "id": "01K...",
       "bin": "covered",
       "source": "owner/repo",
-      "path": "packages/guidance/content/guidance/rulebooks/writing.md",
+      "path": "content/guidance/rulebooks/writing.md",
       "reason": "States that headings use sentence case."
     },
     { "id": "01K...", "bin": "duplicate", "duplicateOf": "01J...", "reason": "Same lesson: headings use sentence case." },
