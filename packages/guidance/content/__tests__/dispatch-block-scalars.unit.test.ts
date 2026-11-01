@@ -28,6 +28,7 @@ const BLOCK_SCALAR_VALUE = /^[a-z][a-z0-9-]*: [|>][+-]?$/;
  * the drafter exactly as the block form does, so the closed set makes the check a guard rather than a formality.
  */
 const DECLARED_KEYS: ReadonlySet<string> = new Set([
+  'assignment',
   'brief',
   'candidates',
   'clusters',
