@@ -33,7 +33,7 @@ Resolve the ticket directory per {skill:save-artifact}, and create `{ticket_dir}
 
 Find the repository's own commands for lint, typecheck, and tests with coverage, in its manifest, its `AGENTS.md`, or its README. Run the tests with coverage once, with a reporter that writes an istanbul `json-summary` and a JUnit reporter, both into `{ticket_dir}/code-health/`. Run every command by the repository's own scripts, and never one that writes outside the working tree's ignored output or reaches a hosted service.
 
-Find the repository's tracked build output: the paths that its guidance or configuration declares as generated, which `.gitattributes` does not already mark `linguist-generated`. Pass each as an `--exclude` glob.
+Find the repository's tracked build output: the paths that its guidance or configuration declares as generated, and the changelogs and release metadata that its release tooling writes, which `.gitattributes` does not already mark `linguist-generated`. Pass each as an `--exclude` glob. Release files otherwise lead the hotspot ranking, because every release rewrites them.
 
 Then run `sense`:
 
