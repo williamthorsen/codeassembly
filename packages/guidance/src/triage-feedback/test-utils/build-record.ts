@@ -31,6 +31,7 @@ export function buildRecord(overrides: Partial<TriageRecord> = {}): TriageRecord
     limit: 1,
     artifactPath: '~/ai-artifacts/projects/codeassembly/feedback-triage/20261101-120000Z_triage_feedback-triage.md',
     clusters: [buildCluster(), buildPoolCluster()],
+    unranked: { clusters: 0, events: 0 },
     remainder: { clusters: 1, events: 1, excluded: 0 },
     ...overrides,
   };

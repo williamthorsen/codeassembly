@@ -5,9 +5,13 @@ import path from 'node:path';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import type { z } from 'zod';
 
+import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
+import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
+import type { ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
 import type { ClusterViolation } from './types.ts';
 
-export type FlagName = 'batch-size' | 'batches' | 'defer-days' | 'inventory' | 'lessons' | 'map' | 'out' | 'store';
+export type FlagName =
+  'batch-size' | 'batches' | 'defer-days' | 'inventory' | 'lessons' | 'limit' | 'map' | 'out' | 'store';
 
 /** A command's result: a success payload, or a structured failure that the helper reports at exit 1. */
 export type CommandResult =
@@ -87,4 +91,33 @@ export function readRequired(flags: ParsedFlags, flag: FlagName): string {
 export async function writeJson(file: string, value: unknown): Promise<void> {
   await mkdir(path.dirname(file), { recursive: true });
   await writeFile(file, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+}
+
+/** Maps a store-resolution failure onto the helper's structured failure. */
+export function resolutionFailure(resolved: Extract<ResolveCaptureTargetOutcome, { ok: false }>): CommandError {
+  switch (resolved.reason) {
+    case 'missing-store':
+      return new CommandError('missing-store', formatMissingStoreMessage(resolved));
+    case 'not-registered':
+      return new CommandError(
+        'store-not-registered',
+        resolved.registryError !== undefined
+          ? `could not load kb.yaml registry: ${resolved.registryError}`
+          : `event store "${resolved.requestedName}" is not registered in kb.yaml`,
+      );
+    case 'readonly-store':
+      return new CommandError(
+        'readonly-store',
+        `event store "${resolved.name}" is marked readonly in kb.yaml; a triage cannot mark its events`,
+      );
+    case 'no-default':
+    case 'no-feedback': {
+      const failure = formatRoleFailure(resolved);
+      return new CommandError(failure.error, failure.message);
+    }
+    default: {
+      const _exhaustive: never = resolved;
+      throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);
+    }
+  }
 }

@@ -95,6 +95,19 @@ describe(checkRules, () => {
   });
 });
 
+describe('unranked clusters', () => {
+  it('counts them in the remainder', () => {
+    const record = buildRecord({
+      unranked: { clusters: 3, events: 7 },
+      remainder: { clusters: 4, events: 8, excluded: 0 },
+    });
+    expect(checkRules(record)).toEqual([]);
+    expect(checkRules({ ...record, remainder: { clusters: 1, events: 1, excluded: 0 } })).toEqual([
+      { cluster: null, message: 'remainder must count 4 clusters and 8 events (got 1 and 1)' },
+    ]);
+  });
+});
+
 describe(orderClusters, () => {
   it('orders by priority, then recurrence, then latest capture', () => {
     const base = buildCluster();

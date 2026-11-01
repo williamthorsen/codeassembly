@@ -113,6 +113,28 @@ describe('clusters', () => {
   });
 });
 
+describe('candidate cut', () => {
+  it('reports the unranked clusters and writes the limit', async () => {
+    const fixture = await setUp({ inventory: true });
+    await fixture.writeMap([
+      { id: 'a', lesson: 'A', eventIds: ['01A', '01B'] },
+      { id: 'c', lesson: 'C', eventIds: ['01C', '01D'] },
+    ]);
+    await expect(runClusters(fixture, '--limit', '1', '--defer-days', '0')).resolves.toMatchObject({
+      ok: true,
+      clusters: 2,
+      unranked: { clusters: 0, events: 0 },
+    });
+    await expect(fixture.readJson('out.json')).resolves.toMatchObject({ limit: 1, unranked: { clusters: 0 } });
+  });
+
+  it('refuses --limit 0', async () => {
+    const fixture = await setUp({ inventory: true });
+    await fixture.writeMap([{ id: 'a', lesson: 'A', eventIds: ['01A', '01B', '01C', '01D'] }]);
+    await expect(runClusters(fixture, '--limit', '0')).resolves.toMatchObject({ ok: false, error: 'invalid-args' });
+  });
+});
+
 describe('deferral interval', () => {
   /** Sets up a fixture whose map puts the deferred event in a cluster of its own. */
   async function setUpParked(): Promise<Fixture> {

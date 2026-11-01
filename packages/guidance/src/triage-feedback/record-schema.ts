@@ -61,6 +61,7 @@ export const RecordSchema = z.object({
   limit: z.number().int().positive(),
   artifactPath: z.string().min(1),
   clusters: z.array(ClusterSchema),
+  unranked: z.object({ clusters: Count, events: Count }),
   remainder: z.object({ clusters: Count, events: Count, excluded: Count }),
 });
 
@@ -183,7 +184,10 @@ function checkResult(cluster: Cluster, result: NonNullable<Cluster['result']>): 
   return messages;
 }
 
-/** Checks that the surfaced clusters are the first `limit` in surfacing order and that the remainder counts the rest. */
+/**
+ * Checks that the surfaced clusters are the first `limit` in surfacing order, and that the remainder counts the rest
+ * together with the clusters that the candidate cut left unranked.
+ */
 function checkSurfacing(record: TriageRecord, add: (cluster: string | null, message: string) => void): void {
   const ordered = orderClusters(record.clusters);
   const expected = Math.min(record.limit, ordered.length);
@@ -199,11 +203,12 @@ function checkSurfacing(record: TriageRecord, add: (cluster: string | null, mess
   });
 
   const rest = ordered.slice(expected);
-  const events = rest.reduce((sum, cluster) => sum + cluster.eventIds.length, 0);
-  if (record.remainder.clusters !== rest.length || record.remainder.events !== events) {
+  const clusters = rest.length + record.unranked.clusters;
+  const events = rest.reduce((sum, cluster) => sum + cluster.eventIds.length, 0) + record.unranked.events;
+  if (record.remainder.clusters !== clusters || record.remainder.events !== events) {
     add(
       null,
-      `remainder must count ${rest.length} clusters and ${events} events (got ${record.remainder.clusters} and ${record.remainder.events})`,
+      `remainder must count ${clusters} clusters and ${events} events (got ${record.remainder.clusters} and ${record.remainder.events})`,
     );
   }
 }

@@ -84,13 +84,13 @@ An inventory is clustered in batches, because one clusterer cannot place every e
    ```
 
 7. Run `lesson-clusters combine --batches {work}/batches --lessons {work}/lessons.json --map {work}/merge.json --out {work}/map.json`. On `invalid-map`, resume the merge clusterer once with the violations, run `combine` again, and on a second failure, stop and report them.
-8. Run `lesson-clusters clusters --inventory {work}/inventory.json --map {work}/map.json --out {work}/clusters.json`, adding `--defer-days {n}` when it was given.
+8. Run `lesson-clusters clusters --inventory {work}/inventory.json --map {work}/map.json --limit {limit} --out {work}/clusters.json`, adding `--defer-days {n}` when it was given. `clusters.json` lists the candidates, the clusters that the triage ranks: each signal nominates its own top clusters, four times `--limit` of them, so that a single critical event or a recent spike is considered beside the clusters that recur most. `unranked` counts the clusters that no signal nominated.
 
 ### 3. Recommend
 
-Read `clusters.json`. Assign every cluster a priority and a reason, then order the clusters by priority, recurrence, and latest capture; the first `--limit` clusters are surfaced. For each surfaced cluster, suggest a disposition, and for a ticket disposition, find the target: Search the guidance for the artifact that states or should state the lesson, and decide its repository by the rules above.
+Read `clusters.json`. Assign every candidate a priority and a reason, then order the clusters by priority, recurrence, and latest capture; the first `--limit` clusters are surfaced. For each surfaced cluster, suggest a disposition, and for a ticket disposition, find the target: Search the guidance for the artifact that states or should state the lesson, and decide its repository by the rules above.
 
-Write `{work}/recommendations.md`: one line per cluster, with its id, priority, disposition, target, target repository, and a one-sentence reason. Write a line for every cluster, not only the surfaced ones, because the challenger argues against every priority. Nothing else goes in the file, because the challenger reads it and a sentence of your reasoning there would bias its judgment toward yours.
+Write `{work}/recommendations.md`: one line per cluster, with its id, priority, disposition, target, target repository, and a one-sentence reason. Write a line for every candidate, not only the surfaced ones, because the challenger argues against every priority. Nothing else goes in the file, because the challenger reads it and a sentence of your reasoning there would bias its judgment toward yours.
 
 ### 4. Challenge
 
@@ -106,7 +106,7 @@ root: {repository root}
 
 Save the reply as `{work}/challenge.md`. Then take each cluster in turn: Defend the priority and the disposition when the argument fails on the evidence, modify them when the argument stands in part, and abandon the priority, by lowering it, when the argument stands. A changed priority can change which clusters are surfaced; re-apply the order and the limit.
 
-Write `{work}/record.json` in the helper's record shape: `store` (the store name that the inventory reports), `limit`, `artifactPath` (the artifact's path with the home directory written as `~`), `clusters`, and `remainder` (`clusters` and `events`, the count of clusters not surfaced and of their events, and `excluded`, the `excluded` count that `clusters` reported). Each cluster carries the fields of `clusters.json` plus `priority`, `reason`, `challenge` (`argument`, `outcome`, `originalPriority` when the outcome changed the priority, and `note`), and `surfaced`. A surfaced cluster also carries `suggested` (`kind`, then `target` and `repo` for a ticket kind, with `target: null` for `ticket-undecided`, or `level` for `impact`) and `result: null`. Run `triage-feedback validate --file {work}/record.json`, which reports every violation at once, and fix the record until it passes.
+Write `{work}/record.json` in the helper's record shape: `store` (the store name that the inventory reports), `limit`, `artifactPath` (the artifact's path with the home directory written as `~`), `clusters` (the candidates), `unranked` (as `clusters.json` reports it), and `remainder` (`clusters` and `events`, the count of clusters not surfaced, unranked ones included, and of their events, and `excluded`, the number of clusters in the `excluded` list of `clusters.json`). Each cluster carries the fields of `clusters.json` plus `priority`, `reason`, `challenge` (`argument`, `outcome`, `originalPriority` when the outcome changed the priority, and `note`), and `surfaced`. A surfaced cluster also carries `suggested` (`kind`, then `target` and `repo` for a ticket kind, with `target: null` for `ticket-undecided`, or `level` for `impact`) and `result: null`. Run `triage-feedback validate --file {work}/record.json`, which reports every violation at once, and fix the record until it passes.
 
 ### 5. Checkpoint: The dispositions
 

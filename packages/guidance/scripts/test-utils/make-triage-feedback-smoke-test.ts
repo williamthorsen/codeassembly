@@ -37,6 +37,7 @@ export function makeTriageFeedbackSmokeTest(): SmokeTestInvocation {
         result: null,
       },
     ],
+    unranked: { clusters: 0, events: 0 },
     remainder: { clusters: 0, events: 0, excluded: 0 },
   };
   writeFileSync(file, JSON.stringify(record), 'utf8');

@@ -12,13 +12,12 @@ import process from 'node:process';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { readPreferences } from '../derive-session-context/read-preferences.ts';
-import { formatMissingStoreMessage } from '../kb-shared/format-missing-store.ts';
-import { formatRoleFailure } from '../kb-shared/format-role-failure.ts';
-import { resolveCaptureTarget, type ResolveCaptureTargetOutcome } from '../kb-shared/resolve-capture-target.ts';
+import { resolveCaptureTarget } from '../kb-shared/resolve-capture-target.ts';
 import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
 import { runBatch, runCombine, runLessons } from './batch-commands.ts';
 import { DEFAULT_BATCH_SIZE } from './batches.ts';
+import { CANDIDATE_FACTOR, selectCandidates } from './candidates.ts';
 import {
   CommandError,
   type CommandResult,
@@ -26,7 +25,9 @@ import {
   type FlagName,
   type ParsedFlags,
   readJsonFile,
+  readPositiveInteger,
   readRequired,
+  resolutionFailure,
   writeJson,
 } from './command-support.ts';
 import { buildInventory } from './inventory.ts';
@@ -34,6 +35,9 @@ import { ClusterMapSchema, InventorySchema } from './schemas.ts';
 import { computeSignals } from './signals.ts';
 import type { Inventory, InventoryEntry, SignalledCluster } from './types.ts';
 import { validateClusters } from './validate-clusters.ts';
+
+/** The number of clusters that a run surfaces when `--limit` does not set another. */
+export const DEFAULT_LIMIT = 5;
 
 /** The deferral interval, in days, when neither `--defer-days` nor `triage_feedback.defer_days` sets one. */
 export const DEFAULT_DEFER_DAYS = 30;
@@ -53,6 +57,7 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'defer-days', takesValue: true },
   { name: 'inventory', takesValue: true },
   { name: 'lessons', takesValue: true },
+  { name: 'limit', takesValue: true },
   { name: 'map', takesValue: true },
   { name: 'out', takesValue: true },
   { name: 'store', takesValue: true },
@@ -121,14 +126,14 @@ export function buildHelp(): string {
     '  lesson-clusters batch --inventory <file> [--batch-size <n>] --out <dir>',
     '  lesson-clusters lessons --batches <dir> --out <file>',
     '  lesson-clusters combine --batches <dir> --lessons <file> --map <file> --out <file>',
-    '  lesson-clusters clusters --inventory <file> --map <file> [--defer-days <n>] --out <file>',
+    '  lesson-clusters clusters --inventory <file> --map <file> [--limit <n>] [--defer-days <n>] --out <file>',
     '',
     'Commands:',
     '  inventory   Write the open feedback events and the deferred ones, each with a short excerpt',
     '  batch       Split an inventory into batch-NN.json files, grouped by skill, then by capture time',
     '  lessons     Validate each batch-NN.json against its map-NN.json, then write the batch clusters as a lesson inventory',
     '  combine     Validate the merge map against the lesson inventory, then expand it into one event map',
-    '  clusters    Validate the map against the inventory, then write each cluster with its signals',
+    '  clusters    Validate the map against the inventory, then write the candidate clusters with their signals',
     '',
     'Options:',
     '  --store <name>       A store registered in kb.yaml; @default or @feedback selects that role',
@@ -137,6 +142,7 @@ export function buildHelp(): string {
     '  --batches <dir>      The directory that batch wrote, with a map-NN.json beside each batch-NN.json',
     '  --lessons <file>     The file that the lessons command wrote',
     '  --map <file>         A cluster map: {"clusters": [{"id", "lesson", "eventIds"}]}',
+    `  --limit <n>          The clusters that a run surfaces; each signal nominates 4 times as many candidates (default ${DEFAULT_LIMIT})`,
     `  --defer-days <n>     Days for which a deferred cluster stays out; overrides triage_feedback.defer_days (default ${DEFAULT_DEFER_DAYS})`,
     '  --out <file>         Where to write the command output',
     '  -h, --help           Print this help',
@@ -169,18 +175,24 @@ async function runClusters(flags: ParsedFlags, context: CommandContext): Promise
       { now: context.now, deferDays },
     ),
   }));
-  const clusters = signalled.filter((cluster) => cluster.signals.status === 'eligible').toSorted(compareClusters);
+  const eligible = signalled.filter((cluster) => cluster.signals.status === 'eligible').toSorted(compareClusters);
   const excluded = signalled
     .filter((cluster) => cluster.signals.status === 'deferred-active')
     .toSorted(compareClusters);
+  const limit = readPositiveInteger(flags, 'limit') ?? DEFAULT_LIMIT;
+  const candidateIds = selectCandidates(eligible, CANDIDATE_FACTOR * limit);
+  const clusters = eligible.filter((cluster) => candidateIds.has(cluster.id));
+  const rest = eligible.filter((cluster) => !candidateIds.has(cluster.id));
+  const unranked = { clusters: rest.length, events: countEvents(rest) };
 
-  await writeJson(out, { store: inventory.store, deferDays, clusters, excluded });
+  await writeJson(out, { store: inventory.store, deferDays, limit, clusters, unranked, excluded });
   return {
     ok: true,
     out,
     deferDays,
     clusters: clusters.length,
-    events: clusters.reduce((sum, cluster) => sum + cluster.signals.recurrence, 0),
+    events: countEvents(clusters),
+    unranked,
     excluded: excluded.length,
   };
 }
@@ -217,6 +229,11 @@ function compareClusters(a: SignalledCluster, b: SignalledCluster): number {
     b.signals.latestCapturedAt.localeCompare(a.signals.latestCapturedAt) ||
     a.id.localeCompare(b.id)
   );
+}
+
+/** Returns the number of events in `clusters`. */
+function countEvents(clusters: readonly SignalledCluster[]): number {
+  return clusters.reduce((sum, cluster) => sum + cluster.signals.recurrence, 0);
 }
 
 /** Returns the inventory entry for `id`, which the map validation has already checked. */
@@ -263,35 +280,6 @@ async function resolveDeferDays(flags: ParsedFlags, context: CommandContext): Pr
     return preferences.triage_feedback?.defer_days ?? DEFAULT_DEFER_DAYS;
   } catch (error) {
     throw new CommandError('invalid-preferences', describeError(error));
-  }
-}
-
-/** Maps a store-resolution failure onto the helper's structured failure. */
-function resolutionFailure(resolved: Extract<ResolveCaptureTargetOutcome, { ok: false }>): CommandError {
-  switch (resolved.reason) {
-    case 'missing-store':
-      return new CommandError('missing-store', formatMissingStoreMessage(resolved));
-    case 'not-registered':
-      return new CommandError(
-        'store-not-registered',
-        resolved.registryError !== undefined
-          ? `could not load kb.yaml registry: ${resolved.registryError}`
-          : `event store "${resolved.requestedName}" is not registered in kb.yaml`,
-      );
-    case 'readonly-store':
-      return new CommandError(
-        'readonly-store',
-        `event store "${resolved.name}" is marked readonly in kb.yaml; a triage cannot mark its events`,
-      );
-    case 'no-default':
-    case 'no-feedback': {
-      const failure = formatRoleFailure(resolved);
-      return new CommandError(failure.error, failure.message);
-    }
-    default: {
-      const _exhaustive: never = resolved;
-      throw new Error(`unhandled resolveCaptureTarget failure: ${JSON.stringify(_exhaustive)}`);
-    }
   }
 }
 
