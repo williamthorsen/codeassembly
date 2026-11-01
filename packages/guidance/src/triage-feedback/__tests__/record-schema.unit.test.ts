@@ -35,20 +35,16 @@ describe(checkRules, () => {
     expect(violations).toEqual([{ cluster: null, message: expect.stringContaining('artifactPath') }]);
   });
 
-  it('requires originalPriority exactly when the challenge modified the priority', () => {
-    const modified = buildCluster({
-      challenge: { argument: 'a', outcome: 'modified', note: 'n' },
-    });
-    const defended = buildCluster({
-      challenge: { argument: 'a', outcome: 'defended', originalPriority: 'low', note: 'n' },
-    });
-    expect(
-      checkRules(buildRecord({ clusters: [modified], remainder: { clusters: 0, events: 0, excluded: 0 } })),
-    ).toEqual([{ cluster: 'sentence-case', message: 'a modified priority must record originalPriority' }]);
-    expect(
-      checkRules(buildRecord({ clusters: [defended], remainder: { clusters: 0, events: 0, excluded: 0 } })),
-    ).toEqual([
-      { cluster: 'sentence-case', message: 'originalPriority is set, but the challenge outcome is defended' },
+  it('accepts a modified challenge without originalPriority, and refuses one on another outcome or equal to the priority', () => {
+    const empty = { clusters: 0, events: 0, excluded: 0 };
+    const check = (challenge: Parameters<typeof buildCluster>[0]['challenge']): string[] =>
+      checkRules(buildRecord({ clusters: [buildCluster({ challenge })], remainder: empty })).map((v) => v.message);
+    expect(check({ argument: 'a', outcome: 'modified', note: 'n' })).toEqual([]);
+    expect(check({ argument: 'a', outcome: 'defended', originalPriority: 'low', note: 'n' })).toEqual([
+      'originalPriority is set, but the challenge outcome is defended',
+    ]);
+    expect(check({ argument: 'a', outcome: 'modified', originalPriority: 'high', note: 'n' })).toEqual([
+      'originalPriority must differ from the final priority',
     ]);
   });
 

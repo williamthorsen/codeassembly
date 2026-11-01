@@ -131,7 +131,7 @@ export function checkRules(record: TriageRecord): RuleViolation[] {
 
 // region | Helpers
 
-/** Checks that the challenge records the priority that it replaced, and only when it replaced one. */
+/** Checks that the challenge records a replaced priority only on a `modified` outcome, and only when it differs. */
 function checkChallenge(cluster: Cluster): string[] {
   const { challenge } = cluster;
   if (challenge.outcome !== 'modified') {
@@ -139,7 +139,6 @@ function checkChallenge(cluster: Cluster): string[] {
       ? []
       : [`originalPriority is set, but the challenge outcome is ${challenge.outcome}`];
   }
-  if (challenge.originalPriority === undefined) return ['a modified priority must record originalPriority'];
   if (challenge.originalPriority === cluster.priority) return ['originalPriority must differ from the final priority'];
   return [];
 }
