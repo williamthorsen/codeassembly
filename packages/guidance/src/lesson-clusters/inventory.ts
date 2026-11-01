@@ -72,10 +72,8 @@ export function buildExcerpt(body: string): string {
   return paragraph.length <= EXCERPT_LIMIT ? paragraph : `${paragraph.slice(0, EXCERPT_LIMIT - 1)}…`;
 }
 
-// region | Helpers
-
 /** Lists the store's event files in name order, which is capture order for ULID ids; a missing directory is empty. */
-async function listEventFiles(eventsDir: string): Promise<string[]> {
+export async function listEventFiles(eventsDir: string): Promise<string[]> {
   try {
     const names = await readdir(eventsDir);
     return names.filter((name) => name.endsWith('.md')).toSorted();
@@ -88,7 +86,9 @@ async function listEventFiles(eventsDir: string): Promise<string[]> {
 }
 
 /** Reads and parses one event file, mapping a read or validation defect onto a message. */
-async function loadEvent(filePath: string): Promise<{ ok: true; event: KbEvent } | { ok: false; message: string }> {
+export async function loadEvent(
+  filePath: string,
+): Promise<{ ok: true; event: KbEvent } | { ok: false; message: string }> {
   let read;
   try {
     read = await readNote(filePath);
@@ -101,6 +101,8 @@ async function loadEvent(filePath: string): Promise<{ ok: true; event: KbEvent }
   const parsed = parseEvent(read.fields, read.body);
   return parsed.ok ? { ok: true, event: parsed.record } : { ok: false, message: parsed.errors.join('; ') };
 }
+
+// region | Helpers
 
 /** Projects an event onto the fields that the clusterer reads. */
 function toEntry(event: KbEvent): InventoryEntry {
