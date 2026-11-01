@@ -50,6 +50,9 @@
     "CHANGELOG.md",
     ".meta/changelog.json"
   ],
+  "scripts": {
+    "prepublishOnly": "nmr build"
+  },
   "dependencies": {
     "@williamthorsen/toolbelt.errors": "catalog:",
     "yaml": "catalog:",
