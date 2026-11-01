@@ -2,16 +2,20 @@
 /**
  * CLI entry for the code-health assessment.
  *
- * `sense` runs the sensors for one unit and writes the sense document. Every command prints one JSON result.
+ * `sense` runs the sensors for one unit and writes the sense document; `check-evidence` checks a lens's proposals
+ * against the tree. Every command prints one JSON result.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
+import type { z } from 'zod';
 
 import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
+import { checkEvidence } from './check-evidence.ts';
+import { ProposalsSchema, SenseDocumentSchema } from './schemas.ts';
 import {
   type CheckSpec,
   realSenseDependencies,
@@ -32,9 +36,10 @@ export type CommandResult = { ok: false; error: string; message: string } | ({ o
 /** The hotspot window, in days, when `--window` is not given. */
 export const DEFAULT_WINDOW_DAYS = 180;
 
-const COMMANDS = ['sense'] as const;
+const COMMANDS = ['check-evidence', 'sense'] as const;
 
-type FlagName = 'check' | 'coverage-summary' | 'exclude' | 'junit' | 'out' | 'root' | 'unit' | 'window';
+type FlagName =
+  'check' | 'coverage-summary' | 'exclude' | 'junit' | 'out' | 'proposals' | 'root' | 'sense' | 'unit' | 'window';
 
 const REPEATABLE_FLAGS: ReadonlySet<FlagName> = new Set(['check', 'exclude']);
 
@@ -44,7 +49,9 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'exclude', takesValue: true },
   { name: 'junit', takesValue: true },
   { name: 'out', takesValue: true },
+  { name: 'proposals', takesValue: true },
   { name: 'root', takesValue: true },
+  { name: 'sense', takesValue: true },
   { name: 'unit', takesValue: true },
   { name: 'window', takesValue: true },
 ];
@@ -81,6 +88,8 @@ export function runCli(argv: readonly string[], context: CommandContext): Comman
   try {
     const flags = parseFlags(rest);
     switch (command) {
+      case 'check-evidence':
+        return runCheckEvidence(flags, context);
       case 'sense':
         return runSenseCommand(flags, context);
       default:
@@ -90,6 +99,14 @@ export function runCli(argv: readonly string[], context: CommandContext): Comman
     if (error instanceof CommandError) return { ok: false, error: error.code, message: error.message };
     return { ok: false, error: 'command-failed', message: describeError(error) };
   }
+}
+
+/** Checks the proposals at `--proposals` against the tree under `--root` and the sense document at `--sense`. */
+function runCheckEvidence(flags: ParsedFlags, context: CommandContext): CommandResult {
+  const root = path.resolve(context.root, readSingle(flags, 'root') ?? '.');
+  const proposals = readJsonFile(flags, 'proposals', context, ProposalsSchema, 'invalid-proposals');
+  const sense = readJsonFile(flags, 'sense', context, SenseDocumentSchema, 'invalid-sense');
+  return { ok: true, ...checkEvidence(proposals, sense, root) };
 }
 
 /** Writes the sense document to `--out` and reports each sensor's status. */
@@ -164,6 +181,38 @@ function parseFlags(argv: readonly string[]): ParsedFlags {
     flags.set(flag.name, values);
   }
   return flags;
+}
+
+/**
+ * Reads the JSON file named by a required flag and validates it, throwing `file-not-found`, or `invalidCode` for a file
+ * that is not JSON or that fails the schema.
+ */
+function readJsonFile<T>(
+  flags: ParsedFlags,
+  name: FlagName,
+  context: CommandContext,
+  schema: z.ZodType<T>,
+  invalidCode: string,
+): T {
+  const file = path.resolve(context.root, readRequired(flags, name));
+  let text: string;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (error) {
+    throw new CommandError('file-not-found', `could not read ${file}: ${describeError(error)}`);
+  }
+  let json: unknown;
+  try {
+    json = JSON.parse(text);
+  } catch (error) {
+    throw new CommandError(invalidCode, `${file} is not JSON: ${describeError(error)}`);
+  }
+  const parsed = schema.safeParse(json);
+  if (!parsed.success) {
+    const issues = parsed.error.issues.map((issue) => `${issue.path.map(String).join('.')}: ${issue.message}`);
+    throw new CommandError(invalidCode, issues.join('; '));
+  }
+  return parsed.data;
 }
 
 /** Parses `--window` as a positive whole number of days. */
