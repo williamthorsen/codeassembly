@@ -1,8 +1,24 @@
 {
   "name": "codeassembly-run-core",
   "version": "0.4.3",
-  "private": true,
   "description": "Core runtime for orchestrated development runs",
+  "keywords": [
+    "agents",
+    "ai",
+    "orchestration",
+    "run-data",
+    "schemas"
+  ],
+  "homepage": "https://github.com/williamthorsen/codeassembly/tree/main/packages/run-core#readme",
+  "bugs": {
+    "url": "https://github.com/williamthorsen/codeassembly/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamthorsen/codeassembly.git",
+    "directory": "packages/run-core"
+  },
+  "license": "ISC",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
   "type": "module",
   "exports": {
@@ -29,7 +45,9 @@
   },
   "main": "./dist/esm/index.js",
   "files": [
-    "dist"
+    "dist",
+    "CHANGELOG.md",
+    ".meta/changelog.json"
   ],
   "dependencies": {
     "@williamthorsen/toolbelt.errors": "catalog:",
