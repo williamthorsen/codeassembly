@@ -99,7 +99,7 @@ As each lens returns:
 
 Merge the passed proposals of every lens into one list, and write it to `{ticket_dir}/code-health/proposals.json`:
 
-- **Merge** proposals that share a key: Keep every source ID, the union of paths and evidence, the strongest strength (`sensor`, then `rule`, then `reading`), the largest size, and the largest reach.
+- **Merge** proposals that share a key: Keep the first source ID as the merged entry's `id`, which the schema limits to one, and list every source ID with the proposal in the findings document. Keep the union of paths and evidence, the strongest strength (`sensor`, then `rule`, then `reading`), the largest size, and the largest reach.
 - **Tracked.** Run `check-tracked --proposals {ticket_dir}/code-health/proposals.json` with one `--prior` for each `*_dispositions.md` under `{artifact_base_dir}/projects/{project_slug}/tickets/`. Move every proposal that it lists under `tracked` out of the ranking, into a **Tracked** section with its source and reason. When `tracker.checked` is false, record its reason under residual unknowns.
 - **Rank** the rest by reach, then by the best hotspot rank among the proposal's paths (a proposal without a ranked path sorts last), then by ID.
 

@@ -1,6 +1,6 @@
 ---
 name: code-health-assessor
-description: Assess one unit of a codebase through one lens of a code-health brief, asking of its code and tests whether they would be written the same way today. Returns refactoring proposals, each with an evidence key, checkable evidence, one proposed change, and its strength, size, and reach, and does not write any file.
+description: Assess one unit of a codebase through one lens of a code-health brief, asking of its code and tests whether they would be written the same way today. Returns refactoring proposals, each with an evidence key, checkable evidence, one proposed change, and its strength, size, and reach, and writes only its report and proposals, into its evidence directory.
 disallowedTools: Edit, NotebookEdit, Task, Write
 ---
 
