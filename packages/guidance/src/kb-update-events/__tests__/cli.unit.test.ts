@@ -6,7 +6,7 @@ import { readNoteContent } from '@williamthorsen/kb/note-io';
 import { parseEvent } from '@williamthorsen/kb/records';
 import { describe, expect, it } from 'vitest';
 
-import { parseArgs, runUpdate } from '../cli.ts';
+import { buildHelp, parseArgs, runUpdate } from '../cli.ts';
 
 const EVENT_ID = '01HZCEVENTAAAAAAAAAAAAAAAA';
 
@@ -50,6 +50,12 @@ async function readBackEvent(path: string): Promise<ReturnType<typeof parseEvent
   const { fields, body } = readNoteContent(written);
   return parseEvent(fields, body);
 }
+
+describe(buildHelp, () => {
+  it.each(['--store', '--add-addressed-by', '--add-tag', '--retag', '--set-impact', '--help'])('names %s', (flag) => {
+    expect(buildHelp()).toContain(flag);
+  });
+});
 
 describe(parseArgs, () => {
   it('parses an add-addressed-by invocation with a store and ids', () => {

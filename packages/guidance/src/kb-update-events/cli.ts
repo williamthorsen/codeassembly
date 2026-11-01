@@ -31,10 +31,15 @@ const FLAGS: readonly FlagSpec[] = [
   { name: 'set-impact', takesValue: true },
 ];
 
-/** Executes the helper from `process.argv` and writes the JSON result to stdout. */
+/** Executes the helper from `process.argv` and writes the JSON result, or the help under `--help`, to stdout. */
 async function main(): Promise<void> {
+  const argv = process.argv.slice(2);
+  if (argv.includes('--help') || argv.includes('-h')) {
+    process.stdout.write(buildHelp());
+    return;
+  }
   try {
-    const result = await runUpdate({ argv: process.argv.slice(2) });
+    const result = await runUpdate({ argv });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
     const message = describeError(error);
@@ -137,6 +142,38 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     throw new Error(`--set-impact must be one of ${EVENT_IMPACT_LEVELS.join(', ')}`);
   }
   return { operation: 'set-impact', store, ids, impact };
+}
+
+/**
+ * Returns the usage text that `--help` prints.
+ *
+ * @internal - Exported to allow testing.
+ */
+export function buildHelp(): string {
+  return [
+    'kb-update-events: apply one curatorial edit to one or more events in a knowledge store, and print a JSON result',
+    '',
+    'Usage: kb-update-events --store <name|@default|@feedback> <operation> <event-id> [<event-id> ...]',
+    '',
+    'Arguments:',
+    '  <event-id>                    An event ULID, resolved to {store}/content/events/{id}.md',
+    '',
+    'Options:',
+    '  --store <name>                A store registered in kb.yaml; @default or @feedback selects that role',
+    '  -h, --help                    Print this help',
+    '',
+    'Operations (exactly one per invocation):',
+    "  --add-addressed-by <refs>     Append the comma-separated references to each event's addressed-by list",
+    "  --add-tag <tags>              Append the comma-separated tags to each event's tags, keeping the existing ones",
+    "  --retag <tags>                Replace each event's tags with the comma-separated list",
+    "  --set-impact <level>          Set each event's impact: low, medium, high, or critical",
+    '',
+    "Tags from --add-tag and --retag are canonicalized through the store's .kb/tag-aliases.yaml.",
+    '',
+    'Example:',
+    '  kb-update-events --store @feedback --add-tag obsolete 01HZCEVENTAAAAAAAAAAAAAAAA 01HZCEVENTBBBBBBBBBBBBBBBB',
+    '',
+  ].join('\n');
 }
 
 // region | Helpers
