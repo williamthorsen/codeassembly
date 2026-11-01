@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildRecallStub } from '../../test-utils/build-recall-stub.ts';
 import type { RecallFn } from '../recall.ts';
 import { searchNotes } from '../search.ts';
+import type { RecallFilters } from '../types.ts';
 
 const FIXTURES = join(import.meta.dirname, 'fixtures');
 const NOTES_VAULT = join(FIXTURES, 'notes-vault');
@@ -55,6 +56,43 @@ describe(searchNotes, () => {
 
     expect(result.hits).toEqual([]);
     expect(result.recalledCount).toBe(1);
+  });
+
+  it('matches --tag through the alias map, keeping a note that carries the canonical tag', async () => {
+    const result = await searchNotes({
+      query: 'anything',
+      allKbs: false,
+      filters: { tag: 'Node' },
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: [notePath('streams.md'), notePath('sub/hooks.md')] }),
+    });
+
+    expect(result.hits.map((hit) => hit.hit.path)).toEqual([notePath('streams.md')]);
+  });
+
+  it('drops a note carrying any excluded tag in alias form, counting it in recalledCount', async () => {
+    const result = await searchNotes({
+      query: 'anything',
+      allKbs: false,
+      filters: { excludeTags: ['kitchen', 'ReactJS'] },
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: [notePath('streams.md'), notePath('sub/hooks.md')] }),
+    });
+
+    expect(result.hits.map((hit) => hit.hit.path)).toEqual([notePath('streams.md')]);
+    expect(result.recalledCount).toBe(2);
+  });
+
+  it('canonicalizes a note tag left in alias form, so that both filters match it', async () => {
+    const stale = notePath('content/events/01HZCEVENTQSAAAAAAAAAAAAAA.md');
+    const recall = buildRecallStub({ hits: [stale] });
+    const search = (filters: RecallFilters) =>
+      searchNotes({ query: 'quillfrond', allKbs: false, filters, startDir: NOTES_VAULT, home: FIXTURES, recall });
+
+    expect((await search({ tag: 'obsolete' })).hits).toHaveLength(1);
+    expect((await search({ excludeTags: ['obsolete'] })).hits).toEqual([]);
   });
 
   it('sets an empty-scope diagnostic and recalls nothing for an unregistered store', async () => {

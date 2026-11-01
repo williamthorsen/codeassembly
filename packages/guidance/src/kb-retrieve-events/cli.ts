@@ -9,7 +9,7 @@ import type { RecallFn } from '../kb-search/recall.ts';
 import { recordTypeOf, searchNotes } from '../kb-search/search.ts';
 import type { RecallFilters } from '../kb-search/types.ts';
 import { isEntryPoint } from '../lib/is-entry-point.ts';
-import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
+import { type FlagSpec, type MatchedFlag, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { normalizeEvents } from './normalize.ts';
 import type { EventCandidate, EventRetrieveResult } from './types.ts';
 
@@ -17,6 +17,7 @@ const EVENT = 'event';
 
 const FLAGS: readonly FlagSpec[] = [
   { name: 'all-kbs', takesValue: false },
+  { name: 'exclude-tag', takesValue: true },
   { name: 'min-impact', takesValue: true },
   { name: 'store', aliases: ['kb'], takesValue: true },
   { name: 'tag', takesValue: true },
@@ -69,11 +70,16 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
     throw new Error('--tag requires a value');
   }
 
+  const excludeTags = parseExcludeTags(flags);
+
   return {
     query: positionals.join(' ').trim(),
     allKbs: flags.some((flag) => flag.name === 'all-kbs'),
     storeName,
-    filters: tag !== undefined ? { tag } : {},
+    filters: {
+      ...(tag !== undefined && { tag }),
+      ...(excludeTags.length > 0 && { excludeTags }),
+    },
     minImpact: parseMinImpact(values['min-impact']),
   };
 }
@@ -152,6 +158,25 @@ function meetsMinImpact(candidate: EventCandidate, floor: EventImpact): boolean 
     return false;
   }
   return EVENT_IMPACT_LEVELS.indexOf(candidate.impact) >= EVENT_IMPACT_LEVELS.indexOf(floor);
+}
+
+/**
+ * Collects the tags of every `--exclude-tag` occurrence, each a comma-separated list, rejecting an empty value or an
+ * empty entry.
+ */
+function parseExcludeTags(flags: readonly MatchedFlag[]): string[] {
+  const tags: string[] = [];
+  for (const flag of flags) {
+    if (flag.name !== 'exclude-tag') {
+      continue;
+    }
+    const entries = (flag.value ?? '').split(',').map((entry) => entry.trim());
+    if (entries.includes('')) {
+      throw new Error('--exclude-tag requires a comma-separated list of non-empty tags');
+    }
+    tags.push(...entries);
+  }
+  return tags;
 }
 
 /** Resolves the `--min-impact` value to a level floor, or `null` when the flag is absent. */

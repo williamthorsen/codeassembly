@@ -8,9 +8,11 @@ import {
 } from '@williamthorsen/kb/config';
 import type { ParsedNote } from '@williamthorsen/kb/frontmatter';
 import { resolveKbDir } from '@williamthorsen/kb/layout';
+import { type AliasMap, canonicalize } from '@williamthorsen/kb/tags';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { extractString, parseNoteSafely } from '../kb-shared/note-helpers.ts';
+import { loadAliasesOrEmpty } from '../kb-shared/tag-helpers.ts';
 import { type RecallFn, recallNotes } from './recall.ts';
 import { resolveScope } from './scope.ts';
 import type { RawHit, RecallFilters, ScopedKb, SearchHit, SearchResult } from './types.ts';
@@ -59,6 +61,7 @@ export async function searchNotes(input: {
 
   const { matchers, warnings: configWarnings } = await loadMatchersForHits({ hits: rawHits, scopedKbs: inScopeKbs });
   const noteHits = rawHits.filter((hit) => isNoteHit(hit, matchers));
+  const aliasesByKb = await loadAliasesForHits(noteHits);
 
   const unreadableWarnings: string[] = [];
   const hits: SearchHit[] = [];
@@ -68,7 +71,8 @@ export async function searchNotes(input: {
       unreadableWarnings.push(`note at "${hit.path}" could not be read: ${parsed.error}`);
       continue;
     }
-    if (!passesFilters({ note: parsed.note, path: hit.path, filters: input.filters })) {
+    const aliases = aliasesByKb.get(hit.kbPath) ?? new Map<string, string>();
+    if (!passesFilters({ note: parsed.note, path: hit.path, filters: input.filters, aliases })) {
       continue;
     }
     hits.push({ hit, note: parsed.note });
@@ -93,6 +97,13 @@ export function recordTypeOf(hit: SearchHit): string {
 }
 
 // region | Helpers
+
+/** Reports whether any of the note's tags equals one of `wanted` once both sides are canonicalized through `aliases`. */
+function hasAnyTag(input: { noteTags: readonly string[]; wanted: readonly string[]; aliases: AliasMap }): boolean {
+  const { noteTags, wanted, aliases } = input;
+  const wantedCanonical = new Set(wanted.map((tag) => canonicalize(tag, aliases).toLowerCase()));
+  return noteTags.some((tag) => wantedCanonical.has(canonicalize(tag, aliases).toLowerCase()));
+}
 
 /**
  * Returns true when a hit's path is inside its KB's configured note set, or when that KB does not have a matcher, which
@@ -141,12 +152,23 @@ function formatConfigInvalid(input: { kbPath: string; scopedKbs: ScopedKb[]; err
     : `registry KB "${name}" config invalid: ${message}`;
 }
 
+/** Loads the tag-alias map of every KB that produced a hit, keyed by KB root path. */
+async function loadAliasesForHits(hits: readonly RawHit[]): Promise<Map<string, AliasMap>> {
+  const aliasesByKb = new Map<string, AliasMap>();
+  const kbPaths = new Set(hits.map((hit) => hit.kbPath));
+  for (const kbPath of kbPaths) {
+    aliasesByKb.set(kbPath, await loadAliasesOrEmpty(kbPath));
+  }
+  return aliasesByKb;
+}
+
 /**
- * Applies the mechanical filters to one note. A note without parseable frontmatter fails `--diataxis` and `--tag`; the
- * path-based `--folder` filter still applies to it.
+ * Applies the mechanical filters to one note, matching tags through the note's KB `aliases`. A note without parseable
+ * frontmatter fails `--diataxis` and `--tag` and passes `excludeTags`; the path-based `--folder` filter still applies
+ * to it.
  */
-function passesFilters(input: { note: ParsedNote; path: string; filters: RecallFilters }): boolean {
-  const { note, path, filters } = input;
+function passesFilters(input: { note: ParsedNote; path: string; filters: RecallFilters; aliases: AliasMap }): boolean {
+  const { note, path, filters, aliases } = input;
 
   if (filters.folder !== undefined && !path.toLowerCase().includes(`/${filters.folder.toLowerCase()}/`)) {
     return false;
@@ -159,12 +181,12 @@ function passesFilters(input: { note: ParsedNote; path: string; filters: RecallF
   ) {
     return false;
   }
-  if (filters.tag !== undefined) {
-    const wanted = filters.tag.toLowerCase();
-    const tags = frontmatter?.tags ?? [];
-    if (tags.every((tag) => tag.toLowerCase() !== wanted)) {
-      return false;
-    }
+  const noteTags = frontmatter?.tags ?? [];
+  if (filters.tag !== undefined && !hasAnyTag({ noteTags, wanted: [filters.tag], aliases })) {
+    return false;
+  }
+  if (filters.excludeTags !== undefined && hasAnyTag({ noteTags, wanted: filters.excludeTags, aliases })) {
+    return false;
   }
   return true;
 }

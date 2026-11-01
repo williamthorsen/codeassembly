@@ -1,4 +1,5 @@
-# Tag-alias fixture for recall expansion tests.
+# Tag-alias fixture for recall expansion and tag-filter tests.
 aliases:
   nodejs: [node.js, node]
+  obsolete: [stale]
   react: [reactjs, react.js]

@@ -2,9 +2,10 @@ import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 
 import { directoryExists } from '@williamthorsen/kb/filesystem';
-import { KB_DIR, resolveKbDir } from '@williamthorsen/kb/layout';
-import { type AliasMap, loadAliases } from '@williamthorsen/kb/tags';
+import { KB_DIR } from '@williamthorsen/kb/layout';
+import type { AliasMap } from '@williamthorsen/kb/tags';
 
+import { loadAliasesOrEmpty } from '../kb-shared/tag-helpers.ts';
 import { isErrorCode, isRecord } from '../lib/type-guards.ts';
 import type { RawHit, ScopedKb } from './types.ts';
 
@@ -64,7 +65,7 @@ export async function recallNotes(input: {
       missingKbs.push(kb);
       continue;
     }
-    const aliases = await loadAliasesForKb(kb.path);
+    const aliases = await loadAliasesOrEmpty(kb.path);
     const terms = expandTerms(baseTerms, aliases);
     const kbHits = await searchKb({ kb, terms, runner });
     hits.push(...kbHits);
@@ -124,15 +125,6 @@ function isRipgrepLineEvent(value: unknown): value is RipgrepLineEvent {
     isRecord(data['lines']) &&
     typeof data['lines']['text'] === 'string'
   );
-}
-
-/** Loads a KB's `tag-aliases.yaml`, returning an empty map when the file is absent or unreadable. */
-async function loadAliasesForKb(kbPath: string): Promise<AliasMap> {
-  try {
-    return await loadAliases({ kbRoot: { path: kbPath, kbDir: resolveKbDir(kbPath) } });
-  } catch {
-    return new Map();
-  }
 }
 
 /**

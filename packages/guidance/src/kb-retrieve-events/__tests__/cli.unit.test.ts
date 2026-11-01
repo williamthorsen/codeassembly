@@ -55,6 +55,23 @@ describe(parseArgs, () => {
   it('throws when --min-impact is outside the declared levels', () => {
     expect(() => parseArgs(['q', '--min-impact', 'louder'])).toThrow(/--min-impact must be one of/);
   });
+
+  it('collects --exclude-tag lists across repeated occurrences, trimming each entry', () => {
+    expect(parseArgs(['q', '--exclude-tag', 'obsolete, deferred', '--exclude-tag=fix']).filters.excludeTags).toEqual([
+      'obsolete',
+      'deferred',
+      'fix',
+    ]);
+  });
+
+  it('omits excludeTags when --exclude-tag is absent', () => {
+    expect(parseArgs(['q']).filters).not.toHaveProperty('excludeTags');
+  });
+
+  it('throws when --exclude-tag has an empty value or an empty entry', () => {
+    expect(() => parseArgs(['q', '--exclude-tag='])).toThrow(/--exclude-tag requires/);
+    expect(() => parseArgs(['q', '--exclude-tag', 'obsolete,,fix'])).toThrow(/--exclude-tag requires/);
+  });
 });
 
 describe(runRetrieveEvents, () => {
@@ -160,7 +177,60 @@ describe(runRetrieveEvents, () => {
     expect(result.candidates).toEqual([]);
     expect(result.diagnostic).toBe('all matches were below the --min-impact threshold of critical');
   });
+
+  it('drops events carrying an excluded tag in canonical or alias form', async () => {
+    const result = await runRetrieveEvents({
+      argv: ['quillfrond', '--exclude-tag', 'Obsolete,deferred'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: quillfrondEvents() }),
+    });
+
+    expect(result.candidates.map((candidate) => candidate.summary)).toEqual(['A quillfrond fix kept in the pool']);
+  });
+
+  it('composes --exclude-tag with --tag, --store, and --min-impact', async () => {
+    const run = (argv: string[]) =>
+      runRetrieveEvents({
+        argv: ['quillfrond', '--store', 'live-vault', ...argv],
+        startDir: NOTES_VAULT,
+        home: join(FIXTURES, 'mixed-registry'),
+        recall: buildRecallStub({ hits: quillfrondEvents() }),
+      });
+
+    const byTag = await run(['--tag', 'fix', '--exclude-tag', 'deferred']);
+    expect(byTag.candidates.map((candidate) => candidate.summary)).toEqual(['A quillfrond fix kept in the pool']);
+
+    const byImpact = await run(['--min-impact', 'high', '--exclude-tag', 'fix']);
+    expect(byImpact.candidates.map((candidate) => candidate.summary).toSorted()).toEqual([
+      'A quillfrond event culled as obsolete',
+      'A quillfrond event tagged with the stale alias',
+    ]);
+  });
+
+  it('reports the filtered-out diagnostic when --exclude-tag drops every event', async () => {
+    const result = await runRetrieveEvents({
+      argv: ['quillfrond', '--exclude-tag', 'stale,fix'],
+      startDir: NOTES_VAULT,
+      home: FIXTURES,
+      recall: buildRecallStub({ hits: quillfrondEvents() }),
+    });
+
+    expect(Object.keys(result).toSorted()).toEqual(['candidates', 'diagnostic', 'scopedKbs', 'warnings']);
+    expect(result.candidates).toEqual([]);
+    expect(result.diagnostic).toBe('all matches were filtered out');
+  });
 });
+
+/** The fixture events mentioning `quillfrond`, tagged `obsolete`, `stale` (an `obsolete` alias), `deferred, fix`, and `fix`. */
+function quillfrondEvents(): string[] {
+  return [
+    eventNote('01HZCEVENTQXAAAAAAAAAAAAAA.md'),
+    eventNote('01HZCEVENTQSAAAAAAAAAAAAAA.md'),
+    eventNote('01HZCEVENTQDAAAAAAAAAAAAAA.md'),
+    eventNote('01HZCEVENTQKAAAAAAAAAAAAAA.md'),
+  ];
+}
 
 /** Resolves an event record's filename to its absolute path in the shared fixture vault. */
 function eventNote(name: string): string {
