@@ -18,10 +18,12 @@ export interface RawHit {
 export interface RecallFilters {
   /** Restricts to notes whose Diátaxis facet (the `diataxis` extra field) matches, case-insensitively. */
   diataxis?: string;
-  /** Restricts to notes that have this tag (canonical or alias), case-insensitively. */
-  tag?: string;
+  /** Drops notes that have any of these tags (canonical or alias), case-insensitively. */
+  excludeTags?: string[];
   /** Restricts to notes whose path contains this folder segment, case-insensitively. */
   folder?: string;
+  /** Restricts to notes that have this tag (canonical or alias), case-insensitively. */
+  tag?: string;
 }
 
 /** A knowledge base resolved as in-scope for the current query. */
