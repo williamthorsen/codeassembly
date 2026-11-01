@@ -23,6 +23,7 @@ const REINFORCED_SKILLS: ReadonlyArray<string> = [
   'migrate-feedback-memories',
   'people-report',
   'pull-from-backlog',
+  'refine-guidance',
   'refine-plan',
   'revise-prose',
   'streamline-guidance',

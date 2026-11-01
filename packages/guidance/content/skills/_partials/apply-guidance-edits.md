@@ -1,0 +1,5 @@
+1. Apply each approved edit with {tool:Edit}, phrase to phrase. Stop at the first edit that does not match, and report which edit diverged.
+2. Bump the `version` of each rulebook for which an edit changed what the rulebook asks: a rulebook that an edit changed, and a rulebook that includes an edited file. Find the second kind by searching the rulebooks for an include directive that names the edited file.
+3. Run the project's quality gate as {skill:development-workflows} resolves it.
+   - If it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone if the edits did not change what the rulebook asks.
+   - If it fails on anything else that an edit caused, restore that edit's text, report the edit, and run the gate again. If the restored edit was the only edit to change what its rulebook asks, also restore that rulebook's `version`, and its pin if this step updated it.

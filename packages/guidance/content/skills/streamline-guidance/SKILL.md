@@ -46,7 +46,7 @@ At any level, in any file:
 - The part of a frontmatter `description` that says when to invoke the skill. The rest of a description is worth cutting, since the harness loads every description into the skill index of every session.
 - Text inside a generated region, which the next deployment rewrites.
 
-Do not edit any file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 7 updates.
+Do not edit any file outside the targets and their transitive files, except a rulebook `version`, a version pin, or a content hash that step 6 updates.
 
 ## Process
 
@@ -103,26 +103,21 @@ Drop every candidate that touches an output shape or its skill-local reinforceme
 - At any level, propose at most two cuts in transitive files, ranked the same way.
 - Otherwise, propose every remaining candidate.
 
-If nothing remains, report that the files do not have any cut to propose at this level, then continue at step 8.
+If nothing remains, report that the files do not have any cut to propose at this level, then continue at step 7.
 
 ### 5. Present the cuts
 
 Present one numbered table per [Cut table](#cut-table), then ask which rows to apply and which to decline, in the form `apply 1, 3; decline 2`. A row named in neither list is deferred: You do nothing with it, and a later run may propose it again.
 
-### 6. Apply
+### 6. Apply, bump versions, and run the quality gate
 
-Apply each row named to apply with {tool:Edit}, phrase to phrase. Stop at the first edit that does not match, and report which row diverged.
+Skip this step if the user did not name any row to apply. The approved edits are the rows named to apply, and each is one cut.
 
-### 7. Bump versions and run the quality gate
+<!-- include: ../_partials/apply-guidance-edits.md / -->
 
-Skip this step if the run did not apply any row.
+A `conservative` cut directs nothing, so it changes nothing that a rulebook asks.
 
-1. Bump the `version` of each rulebook for which a cut changed what the rulebook asks: a rulebook that a cut edited, and a rulebook that includes an edited file. Find the second kind by searching the rulebooks for an include directive that names the edited file. A `conservative` cut directs nothing, so it changes nothing that a rulebook asks.
-2. Run the project's quality gate as {skill:development-workflows} resolves it.
-   - If it fails only on a version pin or content hash that records a file edited by this run, apply the remedy that its failure message names: Update the pin to the version bumped above, or update the pin alone if the cuts did not change what the rulebook asks.
-   - If it fails on anything else that a cut caused, restore that cut's text, report the cut, and run the gate again. If the restored cut was the only cut to change what its rulebook asks, also restore that rulebook's `version`, and its pin if this step updated it.
-
-### 8. Record the run
+### 7. Record the run
 
 Record what the run read and what the user declined, whether or not the run proposed or applied a cut: A run that proposes nothing has still reviewed the files. Pipe the fold to `record`, the only write path of `.agents/streamline-guidance.yaml`:
 
@@ -134,11 +129,11 @@ EOF
 
 `date` is today's ISO calendar date. `declined` lists each row that the user declined, its `phrase` as the text reads in the file, and is empty when the user declined none. `reviewed` names every target and every transitive file from step 1: A transitive file is read whole, so it was reviewed. `record` measures each reviewed file as it now stands, so the record states the size at which this run left it, the baseline for the growth that a later run reports.
 
-### 9. Commit
+### 8. Commit
 
-Commit per {skill:create-commit}, staging only the edited guidance files, any pin or version that step 7 updated, and the record. The body names each applied cut by file, class, and the text removed or reworded; when the run applied none, the commit contains the record alone.
+Commit per {skill:create-commit}, staging only the edited guidance files, any pin or version that step 6 updated, and the record. The body names each applied cut by file, class, and the text removed or reworded; when the run applied none, the commit contains the record alone.
 
-### 10. Emit the summary
+### 9. Emit the summary
 
 Emit the summary per [Summary format](#summary-format). For the sizes after the run, run `resolve` again with the same paths; its `lastReview` now states this run, so take `Reviewed` and `Growth` from step 1.
 
