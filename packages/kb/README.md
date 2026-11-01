@@ -25,7 +25,7 @@ The package exposes thirteen subpath entries plus a root barrel:
 | `./note-io`         | Type-blind note read/write as an ordered frontmatter field map                 |
 | `./records`         | The typed `assertion`/`event` record parsers and renderers                     |
 | `./scaffold`        | The canonical set that a store contains, and the idempotent writer over it     |
-| `./tags`            | `.kb/tag-aliases.yaml` loading and tag canonicalization                        |
+| `./tags`            | `.kb/tag-aliases.yaml` loading, tag canonicalization, and the standard tags    |
 | `./taxonomy`        | `.kb/taxonomy.yaml` loading, comment-preserving declaration, and path mapping  |
 | `./vault-integrity` | Type-blind `[[link]]` scanning, resolution, and basename-uniqueness checks     |
 
@@ -113,6 +113,8 @@ Writing is type-blind and lives in `@williamthorsen/kb/note-io`. `readNote(path)
 
 `loadAliases({ kbRoot })` reads `.kb/tag-aliases.yaml` into an `AliasMap`, rejecting collisions and self-aliases at load time; an absent file yields an empty map.
 `canonicalize(tag, aliases)` resolves a tag to its canonical form; `findAliasFor(tag, aliases)` returns the canonical form only when the input is a known alias.
+
+`STANDARD_TAGS` lists the disposition tags that every store inherits (`deferred`, `obsolete`, and `rejected`), each with a one-line meaning, so that every skill applies them by the same name. A store is never required to use one, and it can alias its own spelling to one in `.kb/tag-aliases.yaml`. The set is defined in code rather than seeded into each store's files, because a seed would reach only stores created after it and would leave a copy in each store to drift.
 
 ## Vault integrity
 
