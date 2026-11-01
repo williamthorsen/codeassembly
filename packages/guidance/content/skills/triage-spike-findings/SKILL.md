@@ -1,6 +1,6 @@
 ---
 name: triage-spike-findings
-description: Dispose of the findings that a spike or a usability assessment left without a ticket. Inventories every undisposed item, grades each one's confidence and value, has a subagent without session context challenge every grade, and then creates the labelled tickets under an umbrella and records every disposition on the triage ticket. Use when a findings artifact has proposals or ideas that the existing tickets have not absorbed.
+description: Dispose of the findings that a spike, a usability assessment, or a code-health assessment left without a ticket. Inventories every undisposed item, grades each one's confidence and value, has a subagent without session context challenge every grade, and then creates the labelled tickets under an umbrella and records every disposition on the triage ticket. Use when a findings artifact has proposals or ideas that the existing tickets have not absorbed.
 user-invocable: true
 ---
 
@@ -12,7 +12,7 @@ Dispose of every item that a findings artifact leaves undisposed: the proposals,
 
 ## Inputs
 
-- **The findings artifact**: A spike's findings or a `usability-findings` artifact, by local path or by artifact URL. Read a URL with the Artifact tool and save the content to `{ticket_dir}/triage/findings.md`, so that the challenger can read it from a path; on a harness without that tool, the input is a local path.
+- **The findings artifact**: A spike's findings, a `usability-findings` artifact, or a `code-health-findings` artifact, by local path or by artifact URL. Read a URL with the Artifact tool and save the content to `{ticket_dir}/triage/findings.md`, so that the challenger can read it from a path; on a harness without that tool, the input is a local path.
 - **The triage ticket**: The ticket on which the dispositions are posted and under which the working files are kept, resolved per [ticket source resolution](../_data/ticket-source-resolution.md); when none is given, the session's ticket. The umbrella is created as a separate ticket, so the triage ticket may be the spike's own ticket.
 
 GitHub alone is supported, through `gh`. When the session-context manifest's `scm` is not `github`, stop at preflight and report that the skill does not support the platform.

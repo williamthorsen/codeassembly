@@ -29,6 +29,10 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │       ├── usability/                                ← a usability assessment's lens reports and evidence, kept by `assess-usability`
         │       │   ├── {lens}-report.md
         │       │   └── {lens}/{finding-id}-{slug}.png
+        │       ├── code-health/                              ← a code-health assessment's sense document, reports, and proposals, kept by `assess-code-health`
+        │       │   ├── sense.json
+        │       │   ├── {lens}-report.md
+        │       │   └── {lens}/proposals.json
         │       ├── triage/                                   ← a findings triage's working files, kept by `triage-spike-findings`
         │       │   ├── findings.md
         │       │   ├── inventory.md
@@ -71,6 +75,10 @@ A `project.ticket_ref_prefix` other than `#` is part of the ticket ID, so it nam
 ### Usability evidence
 
 `usability/` contains the working files of the ticket's usability assessment: each lens's report and each lens's evidence, which is screenshots in a browser assessment and transcripts in a CLI assessment. The `usability-findings` artifact cites the evidence by paths relative to the ticket directory, so the evidence stays in the ticket directory. A CLI assessment's fixtures are scratch directories outside the ticket directory, and nothing keeps them.
+
+### Code-health working files
+
+`code-health/` contains the working files of the ticket's code-health assessment: the sense document with each check's log beside it, the test reports that the sensors read, each lens's report and checked proposals, and the merged proposals. The `code-health-findings` artifact cites code by paths relative to the repository root, so it does not depend on these files; they record what the run measured.
 
 ### Triage working files
 
@@ -735,6 +743,8 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 
 - `brief`: The shared brief that a round of prototype builders receives; `prepare-prototype-brief` saves it at its checkpoint
 - `change-summary`: Branch change summary for PRs
+- `code-health-brief`: The brief that every lens of a code-health assessment reads: the unit and its hotspots, the reuse-candidate directory and library inventory, the lenses with their rulebooks and caps, and the exclusions; `assess-code-health` saves it at its checkpoint
+- `code-health-findings`: The merged, ungraded proposals of a code-health assessment, ranked by reach and hotspot rank, with the proposed groupings, the proposals that a prior triage or an issue already tracks, the residual unknowns, and the lens reports; `assess-code-health` saves it, and `triage-spike-findings` reads it
 - `comparison`: Findings across a round of prototypes: the points on which they agree and those on which they diverge, a table of every distinctive idea with an empty decision, and which decisions the round leaves open; `prepare-prototype-brief` saves it after the index
 - `deferred-findings`: Record of findings deferred during a `wrap-up` session, with cross-references to created tickets (falls back to non-ticket path when a ticket is not in session)
 - `dispositions`: The rendered dispositions of a triage of findings, the text that `triage-spike-findings` posts on the triage ticket: every item with its disposition, its confidence and value, where it went, and its reason, with the challenge's summary; the JSON record from which it is rendered stays in `triage/`
