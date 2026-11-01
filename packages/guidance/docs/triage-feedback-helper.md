@@ -2,7 +2,7 @@
 
 The `triage-feedback` skill runs two helpers. Neither writes to a store or a tracker: The skill marks events through `kb-update-events` and files tickets through `create-ticket`.
 
-- `src/lesson-clusters/`, bundled to `content/skills/lesson-clusters/lesson-clusters.mjs`, groups feedback events into lesson clusters. Its directory does not contain a `SKILL.md`, so it deploys as a helper alone, and any skill that clusters feedback runs the same bundle.
+- `src/lesson-clusters/`, bundled to `content/skills/lesson-clusters/lesson-clusters.mjs`, groups feedback events into lesson clusters. Its directory does not contain a `SKILL.md`, so it deploys as a helper alone, and any skill that clusters feedback runs the same bundle. The steps that run it are the shared partial `content/skills/_partials/cluster-feedback-events.md`, which `triage-feedback` and `curate-feedback` include.
 - `src/triage-feedback/`, bundled to `content/skills/triage-feedback/triage-feedback.mjs`, validates the triage record and renders the `feedback-triage` artifact.
 
 Every command prints one JSON result to stdout: `ok: true` with the command's fields, or `ok: false` with an `error` code and a `message`, in which case the command exits 1. Each bundle's `--help` lists its commands and flags.
