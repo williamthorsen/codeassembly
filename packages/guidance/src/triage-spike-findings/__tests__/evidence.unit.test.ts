@@ -53,6 +53,14 @@ describe(parseEvidenceBlock, () => {
     expect(parseEvidenceBlock(block ?? '')?.items[0]?.key).toBe(key);
   });
 
+  it('reads a block whose line endings are CRLF', () => {
+    const block = renderEvidenceBlock(
+      buildRecord({ commit: COMMIT, items: [buildItem({ evidence: { key: 'k', paths: ['p'] } })] }),
+    );
+
+    expect(parseEvidenceBlock(`Edited.\r\n\r\n${(block ?? '').replaceAll('\n', '\r\n')}\r\n`)?.items[0]?.key).toBe('k');
+  });
+
   it.each([
     ['a body without a block', 'Just prose.'],
     ['a block of another version', '<!-- codeassembly:triage-evidence v2\n{}\n-->'],

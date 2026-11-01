@@ -9,7 +9,7 @@ import { CommitSchema, DISPOSITIONS, type DispositionsRecord, type Item } from '
 
 const MARKER = 'codeassembly:triage-evidence';
 const VERSION = 1;
-const BLOCK_PATTERN = new RegExp(String.raw`<!-- ${MARKER} v(\d+)\n([\s\S]*?)\n-->`);
+const BLOCK_PATTERN = new RegExp(String.raw`<!-- ${MARKER} v(\d+)\r?\n([\s\S]*?)\r?\n-->`);
 
 export const EvidenceBlockSchema = z.object({
   version: z.literal(VERSION),
