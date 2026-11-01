@@ -35,7 +35,7 @@ Each surfaced cluster takes one disposition:
 
 - `ticket-existing`: a ticket to change the guidance artifact that should have taught the lesson.
 - `ticket-new`: a ticket to create a guidance artifact for a lesson that no artifact covers.
-- `ticket-undecided`: a ticket whose target a later refinement pass places.
+- `ticket-undecided`: a ticket whose target {skill?:refine-guidance} places.
 - `comment`: a comment on an open issue that already covers the lesson, so that the issue gains the cluster's evidence rather than a duplicate ticket.
 - `impact`: a new impact rating on the cluster's events, for a cluster whose ratings misstate it.
 - `defer`: set aside until the deferral interval passes or the cluster gains a new event.
@@ -119,7 +119,7 @@ The developer may change a row in the reply. Record the change in the record, se
 
 ### 6. Compose
 
-For each ticket disposition, compose the body in the ticket skeleton that {skill:create-ticket} step 2 states. The problem states the lesson; the context lists the event ids under the store name, with the signals; the proposed solution names the target, or states "Target: undecided; a refinement pass places it."; the acceptance criteria state the behavior that the lesson asks for.
+For each ticket disposition, compose the body in the ticket skeleton that {skill:create-ticket} step 2 states. The problem states the lesson; the context lists the event ids under the store name, with the signals; the proposed solution names the target, or states "Target: undecided; `refine-guidance` places it."; the acceptance criteria state the behavior that the lesson asks for.
 
 For each `comment` disposition, compose a comment that opens with the line `Feedback triage: {cluster id}`, states the lesson, and lists the event ids under the store name, with the signals.
 
