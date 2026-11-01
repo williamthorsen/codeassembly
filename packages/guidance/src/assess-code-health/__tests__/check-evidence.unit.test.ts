@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { checkEvidence, extractSection } from '../check-evidence.ts';
 import { runCli } from '../cli.ts';
 import { type Evidence, type Proposal, ProposalsSchema, type SenseDocument } from '../schemas.ts';
-import { realSenseDependencies } from '../sense.ts';
+import { buildContext } from '../test-utils/build-context.ts';
 
 const SENSE: SenseDocument = {
   unit: 'src',
@@ -91,16 +91,16 @@ describe('checkEvidence', () => {
     expect(report.failed[0]?.reason).toMatch(reason);
   });
 
-  it('reports invalid-proposals through the CLI for a proposal that has a grade', () => {
+  it('reports invalid-proposals through the CLI for a proposal that has a grade', async () => {
     const proposalsPath = path.join(root, 'proposals.json');
     const sensePath = path.join(root, 'sense.json');
     writeFileSync(proposalsPath, JSON.stringify([{ ...buildProposal(), confidence: 'high' }]));
     writeFileSync(sensePath, JSON.stringify(SENSE));
 
-    const result = runCli(['check-evidence', '--proposals', proposalsPath, '--sense', sensePath, '--root', root], {
-      root,
-      sense: realSenseDependencies,
-    });
+    const result = await runCli(
+      ['check-evidence', '--proposals', proposalsPath, '--sense', sensePath, '--root', root],
+      buildContext(root),
+    );
 
     expect(result).toMatchObject({ ok: false, error: 'invalid-proposals' });
   });

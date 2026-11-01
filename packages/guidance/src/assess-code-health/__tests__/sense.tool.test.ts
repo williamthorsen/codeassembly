@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { runCli } from '../cli.ts';
 import { SenseDocumentSchema } from '../schemas.ts';
-import { realSenseDependencies } from '../sense.ts';
+import { buildContext } from '../test-utils/build-context.ts';
 
 describe('sense', () => {
   let scratch: string;
@@ -31,13 +31,10 @@ describe('sense', () => {
     await rm(scratch, { recursive: true, force: true });
   });
 
-  it('writes hotspots and co-change for the unit, excluding generated files and lockfiles', () => {
+  it('writes hotspots and co-change for the unit, excluding generated files and lockfiles', async () => {
     const out = path.join(scratch, 'out', 'sense.json');
 
-    const result = runCli(['sense', '--unit', 'pkg', '--out', out, '--window', '30'], {
-      root: scratch,
-      sense: realSenseDependencies,
-    });
+    const result = await runCli(['sense', '--unit', 'pkg', '--out', out, '--window', '30'], buildContext(scratch));
 
     expect(result).toMatchObject({ ok: true });
     const document = SenseDocumentSchema.parse(JSON.parse(readFileSync(out, 'utf8')));
@@ -50,10 +47,10 @@ describe('sense', () => {
     expect(document.windowStart).not.toBeNull();
   });
 
-  it('records a check exit code as evidence and a missing command as a failed sensor', () => {
+  it('records a check exit code as evidence and a missing command as a failed sensor', async () => {
     const out = path.join(scratch, 'out', 'sense.json');
 
-    runCli(
+    await runCli(
       [
         'sense',
         '--unit',
@@ -65,7 +62,7 @@ describe('sense', () => {
         '--check',
         'gone=no-such-tool-xyz',
       ],
-      { root: scratch, sense: realSenseDependencies },
+      buildContext(scratch),
     );
 
     const document = SenseDocumentSchema.parse(JSON.parse(readFileSync(out, 'utf8')));

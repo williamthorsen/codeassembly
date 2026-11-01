@@ -3,7 +3,8 @@
  * CLI entry for the code-health assessment.
  *
  * `sense` runs the sensors for one unit and writes the sense document; `check-evidence` checks a lens's proposals
- * against the tree. Every command prints one JSON result.
+ * against the tree; `check-tracked` reports the proposals that a prior triage or an issue already covers. Every
+ * command prints one JSON result.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
@@ -14,7 +15,9 @@ import type { z } from 'zod';
 
 import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags } from '../lib/parse-flags.ts';
+import { runCommand } from '../triage-spike-findings/labels.ts';
 import { checkEvidence } from './check-evidence.ts';
+import { checkTracked, realTrackedDependencies, type TrackedDependencies } from './check-tracked.ts';
 import { ProposalsSchema, SenseDocumentSchema } from './schemas.ts';
 import {
   type CheckSpec,
@@ -28,6 +31,7 @@ import {
 export interface CommandContext {
   root: string;
   sense: SenseDependencies;
+  tracked: TrackedDependencies;
 }
 
 /** A command's result: a success payload, or a structured failure that the helper reports at exit 1. */
@@ -36,12 +40,22 @@ export type CommandResult = { ok: false; error: string; message: string } | ({ o
 /** The hotspot window, in days, when `--window` is not given. */
 export const DEFAULT_WINDOW_DAYS = 180;
 
-const COMMANDS = ['check-evidence', 'sense'] as const;
+const COMMANDS = ['check-evidence', 'check-tracked', 'sense'] as const;
 
 type FlagName =
-  'check' | 'coverage-summary' | 'exclude' | 'junit' | 'out' | 'proposals' | 'root' | 'sense' | 'unit' | 'window';
+  | 'check'
+  | 'coverage-summary'
+  | 'exclude'
+  | 'junit'
+  | 'out'
+  | 'prior'
+  | 'proposals'
+  | 'root'
+  | 'sense'
+  | 'unit'
+  | 'window';
 
-const REPEATABLE_FLAGS: ReadonlySet<FlagName> = new Set(['check', 'exclude']);
+const REPEATABLE_FLAGS: ReadonlySet<FlagName> = new Set(['check', 'exclude', 'prior']);
 
 const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'check', takesValue: true },
@@ -49,6 +63,7 @@ const FLAG_SPECS: ReadonlyArray<FlagSpec<FlagName>> = [
   { name: 'exclude', takesValue: true },
   { name: 'junit', takesValue: true },
   { name: 'out', takesValue: true },
+  { name: 'prior', takesValue: true },
   { name: 'proposals', takesValue: true },
   { name: 'root', takesValue: true },
   { name: 'sense', takesValue: true },
@@ -67,9 +82,13 @@ class CommandError extends Error {
 }
 
 /** Executes the helper from `process.argv`, writing the JSON result to stdout and exiting non-zero on a failure. */
-function main(): void {
+async function main(): Promise<void> {
   try {
-    const result = runCli(process.argv.slice(2), { root: process.cwd(), sense: realSenseDependencies });
+    const result = await runCli(process.argv.slice(2), {
+      root: process.cwd(),
+      sense: realSenseDependencies,
+      tracked: { ...realTrackedDependencies, run: runCommand },
+    });
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
     if (!result.ok) process.exitCode = 1;
   } catch (error) {
@@ -79,17 +98,19 @@ function main(): void {
 }
 
 if (isEntryPoint(import.meta.url, 'assess-code-health')) {
-  main();
+  await main();
 }
 
 /** Runs one command. Invalid arguments and a failure to read the repository become structured `{ ok: false }` results. */
-export function runCli(argv: readonly string[], context: CommandContext): CommandResult {
+export async function runCli(argv: readonly string[], context: CommandContext): Promise<CommandResult> {
   const [command, ...rest] = argv;
   try {
     const flags = parseFlags(rest);
     switch (command) {
       case 'check-evidence':
         return runCheckEvidence(flags, context);
+      case 'check-tracked':
+        return await runCheckTracked(flags, context);
       case 'sense':
         return runSenseCommand(flags, context);
       default:
@@ -107,6 +128,14 @@ function runCheckEvidence(flags: ParsedFlags, context: CommandContext): CommandR
   const proposals = readJsonFile(flags, 'proposals', context, ProposalsSchema, 'invalid-proposals');
   const sense = readJsonFile(flags, 'sense', context, SenseDocumentSchema, 'invalid-sense');
   return { ok: true, ...checkEvidence(proposals, sense, root) };
+}
+
+/** Classifies the proposals at `--proposals` against the `--prior` files and the GitHub tracker. */
+async function runCheckTracked(flags: ParsedFlags, context: CommandContext): Promise<CommandResult> {
+  const root = path.resolve(context.root, readSingle(flags, 'root') ?? '.');
+  const proposals = readJsonFile(flags, 'proposals', context, ProposalsSchema, 'invalid-proposals');
+  const prior = (flags.get('prior') ?? []).map((file) => path.resolve(context.root, file));
+  return { ok: true, ...(await checkTracked(proposals, prior, root, context.tracked)) };
 }
 
 /** Writes the sense document to `--out` and reports each sensor's status. */
