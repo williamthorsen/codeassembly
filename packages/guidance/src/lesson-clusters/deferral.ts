@@ -36,5 +36,5 @@ export function findLatestDeferral(references: readonly string[]): string | null
 
 /** Reports whether a deferral made at `deferredAt` still holds at `now`. */
 export function isDeferralActive(input: { deferredAt: string; now: Date; deferDays: number }): boolean {
-  return input.now.getTime() - Date.parse(input.deferredAt) < input.deferDays * DAY_MS;
+  return input.deferDays > 0 && input.now.getTime() - Date.parse(input.deferredAt) < input.deferDays * DAY_MS;
 }

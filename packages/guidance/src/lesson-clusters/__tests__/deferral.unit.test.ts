@@ -49,5 +49,6 @@ describe(isDeferralActive, () => {
 
   it('never holds for a zero-day interval', () => {
     expect(isDeferralActive({ deferredAt, now: new Date(deferredAt), deferDays: 0 })).toBe(false);
+    expect(isDeferralActive({ deferredAt, now: new Date('2026-09-30T12:00:00Z'), deferDays: 0 })).toBe(false);
   });
 });
