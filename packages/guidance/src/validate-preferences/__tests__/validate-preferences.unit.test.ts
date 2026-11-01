@@ -15,6 +15,13 @@ describe(validatePreferences, () => {
     expect(validatePreferences(document, preferencesSchema)).toEqual([]);
   });
 
+  it('accepts a triage_feedback deferral interval and rejects one below 1', () => {
+    expect(validatePreferences({ triage_feedback: { defer_days: 14 } }, preferencesSchema)).toEqual([]);
+    expect(
+      validatePreferences({ triage_feedback: { defer_days: 0 } }, preferencesSchema).map((finding) => finding.path),
+    ).toEqual(['triage_feedback.defer_days']);
+  });
+
   it('reports a known key with an invalid value as an error', () => {
     expect(validatePreferences({ project: { maturity: 'prod' } }, preferencesSchema).map(formatFinding)).toEqual([
       'error project.maturity: must be one of "hobby", "early", "production" (got "prod")',

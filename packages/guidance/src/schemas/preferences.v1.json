@@ -275,6 +275,17 @@
         }
       },
       "required": ["title_format"]
+    },
+    "triage_feedback": {
+      "type": "object",
+      "description": "Settings of the `triage-feedback` skill.",
+      "properties": {
+        "defer_days": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "The days for which a deferred feedback cluster stays out of a triage, unless it gains an undeferred event. Defaults to 30."
+        }
+      }
     }
   },
   "additionalProperties": false
