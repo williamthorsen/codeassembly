@@ -48,6 +48,7 @@ import { makeReviseProseSmokeTest } from '../test-utils/make-revise-prose-smoke-
 import { makeSelectLedeExemplarsSmokeTest } from '../test-utils/make-select-lede-exemplars-smoke-test.ts';
 import { makeSelectPrTicketSmokeTest } from '../test-utils/make-select-pr-ticket-smoke-test.ts';
 import { makeStreamlineGuidanceSmokeTest } from '../test-utils/make-streamline-guidance-smoke-test.ts';
+import { makeTriageFeedbackSmokeTest } from '../test-utils/make-triage-feedback-smoke-test.ts';
 import { makeTriageSpikeFindingsSmokeTest } from '../test-utils/make-triage-spike-findings-smoke-test.ts';
 import { makeUpdateJiraTicketSmokeTest } from '../test-utils/make-update-jira-ticket-smoke-test.ts';
 import { makeValidatePreferencesSmokeTest } from '../test-utils/make-validate-preferences-smoke-test.ts';
@@ -81,6 +82,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   '../src/select-lede-exemplars/cli.ts': makeSelectLedeExemplarsSmokeTest(),
   '../src/select-pr-ticket/cli.ts': makeSelectPrTicketSmokeTest(),
   '../src/streamline-guidance/cli.ts': makeStreamlineGuidanceSmokeTest(),
+  '../src/triage-feedback/cli.ts': makeTriageFeedbackSmokeTest(),
   '../src/triage-spike-findings/cli.ts': makeTriageSpikeFindingsSmokeTest(),
   '../src/update-jira-ticket/cli.ts': makeUpdateJiraTicketSmokeTest(),
   '../src/validate-preferences/cli.ts': makeValidatePreferencesSmokeTest(),
