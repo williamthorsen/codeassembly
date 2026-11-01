@@ -10,9 +10,10 @@ import { dedupeInOrder } from '../../kb-shared/note-helpers.ts';
  * the write.
  */
 export function addTag(record: KbEvent, tags: readonly string[], aliases: AliasMap): KbEvent {
-  const merged = dedupeInOrder([...record.tags, ...tags.map((tag) => canonicalize(tag, aliases))]);
-  if (merged.length === record.tags.length) {
+  const existing = new Set(record.tags);
+  const added = dedupeInOrder(tags.map((tag) => canonicalize(tag, aliases))).filter((tag) => !existing.has(tag));
+  if (added.length === 0) {
     return record;
   }
-  return { ...record, tags: merged };
+  return { ...record, tags: [...record.tags, ...added] };
 }

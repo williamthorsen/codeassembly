@@ -30,6 +30,11 @@ describe(addTag, () => {
     expect(result.tags).toEqual(['javascript', 'react']);
   });
 
+  it('appends a new tag and keeps duplicated existing tags verbatim', () => {
+    const result = addTag(makeEvent({ tags: ['fix', 'fix'] }), ['obsolete'], noAliases);
+    expect(result.tags).toEqual(['fix', 'fix', 'obsolete']);
+  });
+
   it('returns the input record itself when every added tag is already present', () => {
     const input = makeEvent({ tags: ['fix', 'obsolete'] });
     expect(addTag(input, ['obsolete'], noAliases)).toBe(input);
