@@ -29,6 +29,10 @@ export interface ResolvedPreferences {
     /** The state in which `create-pr` opens a pull request. */
     readonly initial_state?: PrInitialState;
   };
+  readonly triage_feedback?: {
+    /** The days for which `triage-feedback` leaves a deferred cluster out of a run. */
+    readonly defer_days?: number;
+  };
 }
 
 /** The state in which `create-pr` opens a pull request. */

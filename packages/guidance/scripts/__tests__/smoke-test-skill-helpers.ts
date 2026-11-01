@@ -38,6 +38,7 @@ import { makeKbCurateSmokeTest } from '../test-utils/make-kb-curate-smoke-test.t
 import { makeKbEditSmokeTest } from '../test-utils/make-kb-edit-smoke-test.ts';
 import { makeKbRetrieveEventsSmokeTest } from '../test-utils/make-kb-retrieve-events-smoke-test.ts';
 import { makeKbUpdateEventsSmokeTest } from '../test-utils/make-kb-update-events-smoke-test.ts';
+import { makeLessonClustersSmokeTest } from '../test-utils/make-lesson-clusters-smoke-test.ts';
 import { makeManageJiraTicketSmokeTest } from '../test-utils/make-manage-jira-ticket-smoke-test.ts';
 import { makeMergeGhPrSmokeTest } from '../test-utils/make-merge-gh-pr-smoke-test.ts';
 import { makePullFromBacklogSmokeTest } from '../test-utils/make-pull-from-backlog-smoke-test.ts';
@@ -70,6 +71,7 @@ const smokeTests: Record<string, SmokeTestInvocation> = {
   '../src/kb-edit/cli.ts': makeKbEditSmokeTest(),
   '../src/kb-retrieve-events/cli.ts': makeKbRetrieveEventsSmokeTest(),
   '../src/kb-update-events/cli.ts': makeKbUpdateEventsSmokeTest(),
+  '../src/lesson-clusters/cli.ts': makeLessonClustersSmokeTest(),
   '../src/manage-jira-ticket/cli.ts': makeManageJiraTicketSmokeTest(),
   '../src/merge-gh-pr/cli.ts': makeMergeGhPrSmokeTest(),
   '../src/pull-from-backlog/cli.ts': makePullFromBacklogSmokeTest(),
