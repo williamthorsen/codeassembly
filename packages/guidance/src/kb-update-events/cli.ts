@@ -18,6 +18,7 @@ import { isEntryPoint } from '../lib/is-entry-point.ts';
 import { type FlagSpec, scanFlags, valueFlagMap } from '../lib/parse-flags.ts';
 import { isMissingFile } from '../lib/type-guards.ts';
 import { addAddressedBy } from './operations/add-addressed-by.ts';
+import { addTag } from './operations/add-tag.ts';
 import { retag } from './operations/retag.ts';
 import { setImpact } from './operations/set-impact.ts';
 import type { EventResult, ParsedArgs, UpdateFailure, UpdateResult } from './types.ts';
@@ -25,6 +26,7 @@ import type { EventResult, ParsedArgs, UpdateFailure, UpdateResult } from './typ
 const FLAGS: readonly FlagSpec[] = [
   { name: 'store', takesValue: true },
   { name: 'add-addressed-by', takesValue: true },
+  { name: 'add-tag', takesValue: true },
   { name: 'retag', takesValue: true },
   { name: 'set-impact', takesValue: true },
 ];
@@ -71,9 +73,11 @@ export async function runUpdate(input: { argv: readonly string[]; home?: string 
   }
   const store = resolved.store;
 
-  // Load the alias map only for `retag`, because the other operations do not canonicalize through it.
+  // Load the alias map only for the tag operations, because the others do not canonicalize through it.
   const aliases: AliasMap =
-    args.operation === 'retag' ? await loadAliasesForStore(store.path) : new Map<string, string>();
+    args.operation === 'add-tag' || args.operation === 'retag'
+      ? await loadAliasesForStore(store.path)
+      : new Map<string, string>();
 
   const results = await Array.fromAsync(args.ids, (id) => editOne({ storePath: store.path, id, args, aliases }));
 
@@ -95,16 +99,17 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
   }
 
   const hasAddressedBy = raw['add-addressed-by'] !== undefined;
+  const hasAddTag = raw['add-tag'] !== undefined;
   const hasRetag = raw['retag'] !== undefined;
   const hasSetImpact = raw['set-impact'] !== undefined;
-  const operationCount = [hasAddressedBy, hasRetag, hasSetImpact].filter(Boolean).length;
+  const operationCount = [hasAddressedBy, hasAddTag, hasRetag, hasSetImpact].filter(Boolean).length;
   if (operationCount > 1) {
     throw new Error(
-      'operation flags are mutually exclusive; pass exactly one of --add-addressed-by, --retag, or --set-impact',
+      'operation flags are mutually exclusive; pass exactly one of --add-addressed-by, --add-tag, --retag, or --set-impact',
     );
   }
   if (operationCount === 0) {
-    throw new Error('one operation flag is required (--add-addressed-by, --retag, or --set-impact)');
+    throw new Error('one operation flag is required (--add-addressed-by, --add-tag, --retag, or --set-impact)');
   }
   if (ids.length === 0) {
     throw new Error('at least one event id is required');
@@ -116,6 +121,13 @@ export function parseArgs(argv: readonly string[]): ParsedArgs {
       throw new Error('--add-addressed-by requires at least one reference');
     }
     return { operation: 'add-addressed-by', store, ids, references };
+  }
+  if (hasAddTag) {
+    const tags = parseTagList(raw['add-tag'] ?? '');
+    if (tags.length === 0) {
+      throw new Error('--add-tag requires at least one tag');
+    }
+    return { operation: 'add-tag', store, ids, tags };
   }
   if (hasRetag) {
     return { operation: 'retag', store, ids, tags: parseTagList(raw['retag'] ?? '') };
@@ -139,6 +151,8 @@ function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): K
   switch (args.operation) {
     case 'add-addressed-by':
       return addAddressedBy(record, args.references);
+    case 'add-tag':
+      return addTag(record, args.tags, aliases);
     case 'retag':
       return retag(record, args.tags, aliases);
     case 'set-impact':
@@ -152,7 +166,8 @@ function applyOperation(record: KbEvent, args: ParsedArgs, aliases: AliasMap): K
 
 /**
  * Applies the operation to a single event id, mapping any recoverable failure onto a per-event result. It re-parses
- * the rendered output before the write, so that it never overwrites the file with an invalid event.
+ * the rendered output before the write, so that it never overwrites the file with an invalid event, and skips the
+ * write when the operation returns the parsed record itself, which signals that nothing changed.
  */
 async function editOne(input: {
   storePath: string;
@@ -193,6 +208,9 @@ async function editOne(input: {
   }
 
   const updated = applyOperation(parsed.record, args, aliases);
+  if (updated === parsed.record) {
+    return { ok: true, id, path };
+  }
 
   const rendered = renderEvent(updated);
 
