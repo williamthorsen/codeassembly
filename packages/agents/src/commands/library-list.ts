@@ -4,7 +4,6 @@ import path from 'node:path';
 import process from 'node:process';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
-import { defineGlyphSet, type Glyph, type OutputStyle } from '@williamthorsen/toolbelt.terminal/candidate';
 import { parse as parseYaml } from 'yaml';
 
 import { ARTIFACT_TYPES, type ArtifactType } from '../lib/artifact-types.ts';
@@ -18,23 +17,16 @@ import { listSkillDirectories } from '../lib/library-catalog.ts';
 import { resolveTerminalWidth } from '../lib/resolve-terminal-width.ts';
 import { parseRulebookFile } from '../lib/rulebook-schema.ts';
 import { isRecord } from '../lib/type-guards.ts';
-
-/** A single artifact's normalized listing fields, before its type is attached. */
-interface ArtifactEntry {
-  readonly slug: string;
-  readonly delivery: string;
-  readonly description: string;
-}
+import { type LibraryRow, renderLibraryTable } from './render-library-table.ts';
 
 /**
- * A listing row: an artifact entry tagged with its type, the source that provides it, that source's rank in precedence
- * order (0 = highest), and whether a higher-precedence source provides the same `(type, slug)`.
+ * A single artifact's normalized listing fields, before its type is attached. `delivery` is undefined for an artifact
+ * that doesn't declare a delivery mode.
  */
-export interface LibraryRow extends ArtifactEntry {
-  readonly type: ArtifactType;
-  readonly source: string;
-  readonly precedence: number;
-  readonly isShadowed: boolean;
+interface ArtifactEntry {
+  readonly slug: string;
+  readonly delivery: string | undefined;
+  readonly description: string;
 }
 
 /** Pairs an artifact type with the enumerator that lists it from a content directory. */
@@ -51,40 +43,14 @@ const ARTIFACT_DESCRIPTORS: ReadonlyArray<ArtifactDescriptor> = [
   { type: 'collection', list: listCollections },
 ];
 
-/** The glyph leading each type's cell; plain output has none, leaving the label alone. */
-const TYPE_GLYPHS = defineGlyphSet<ArtifactType>({
-  collection: { plain: '', rich: '📦' },
-  rulebook: { plain: '', rich: '📕' },
-  skill: { plain: '', rich: '🪄' },
-  subagent: { plain: '', rich: '🤖' },
-});
-
-/** Rank used to group rows by type before the within-type slug sort. */
-const TYPE_ORDER: Readonly<Record<ArtifactType, number>> = { rulebook: 0, skill: 1, subagent: 2, collection: 3 };
-
-/** Delivery cell for an artifact type that doesn't declare a delivery mode. */
-const NO_DELIVERY_MODE = '—';
-
-const HEADERS = {
-  type: 'type',
-  slug: 'slug',
-  source: 'source',
-  delivery: 'delivery',
-  description: 'description',
-} as const;
-
-const COLUMN_GAP = 2;
 /**
- * Floor for the description column so that, on a narrow terminal, the table still wraps the description rather than
- * collapsing the column.
+ * One declared source in the `--json` listing: its name, its absolute content directory, and its artifacts, each with
+ * its delivery value when it declares one.
  */
-const MIN_DESCRIPTION_WIDTH = 20;
-
-/** One declared source in the `--json` listing: its name, its absolute content directory, and its artifacts. */
 export interface LibrarySourceListing {
   readonly name: string;
   readonly dir: string;
-  readonly artifacts: ReadonlyArray<{ readonly type: ArtifactType; readonly slug: string; readonly delivery: string }>;
+  readonly artifacts: ReadonlyArray<{ readonly type: ArtifactType; readonly slug: string; readonly delivery?: string }>;
 }
 
 /**
@@ -115,7 +81,11 @@ export async function libraryListCommand(
       for (const entry of entries) {
         const key = `${descriptor.type}:${entry.slug}`;
         rows.push({ ...entry, type: descriptor.type, source: root.name, precedence, isShadowed: seen.has(key) });
-        artifacts.push({ type: descriptor.type, slug: entry.slug, delivery: entry.delivery });
+        artifacts.push({
+          type: descriptor.type,
+          slug: entry.slug,
+          ...(entry.delivery !== undefined && { delivery: entry.delivery }),
+        });
         seen.add(key);
       }
     }
@@ -141,61 +111,6 @@ Options:
   --json     Print each declared source's name, content directory, and artifacts as JSON instead of a table`);
 }
 
-/**
- * Renders rows as an aligned table, sorted by type, then slug, then source precedence: type (the type's glyph in
- * `style`, then its label), slug, source (followed by `(shadowed)` on a shadowed row), delivery, then a
- * hanging-indent-wrapped description. `width` bounds the description column; the others size to their content. Pure
- * and deterministic for a given (rows, width, style).
- */
-export function renderLibraryTable(rows: ReadonlyArray<LibraryRow>, width: number, style: OutputStyle): string {
-  const sorted = rows.toSorted(compareRows);
-  const glyphs = TYPE_GLYPHS[style];
-
-  const typeColWidth = Math.max(
-    HEADERS.type.length,
-    ...sorted.map((row) => measureTypeCell(glyphs[row.type], row.type)),
-  );
-  const slugColWidth = Math.max(HEADERS.slug.length, ...sorted.map((row) => row.slug.length));
-  const sourceColWidth = Math.max(HEADERS.source.length, ...sorted.map((row) => formatSourceCell(row).length));
-  const deliveryColWidth = Math.max(HEADERS.delivery.length, ...sorted.map((row) => row.delivery.length));
-  const prefixWidth =
-    typeColWidth + COLUMN_GAP + slugColWidth + COLUMN_GAP + sourceColWidth + COLUMN_GAP + deliveryColWidth + COLUMN_GAP;
-  const descriptionWidth = Math.max(MIN_DESCRIPTION_WIDTH, width - prefixWidth);
-
-  const gap = ' '.repeat(COLUMN_GAP);
-  const indent = ' '.repeat(prefixWidth);
-
-  const headerPrefix =
-    HEADERS.type.padEnd(typeColWidth) +
-    gap +
-    HEADERS.slug.padEnd(slugColWidth) +
-    gap +
-    HEADERS.source.padEnd(sourceColWidth) +
-    gap +
-    HEADERS.delivery.padEnd(deliveryColWidth) +
-    gap;
-  const lines: Array<string> = [(headerPrefix + HEADERS.description).trimEnd()];
-
-  for (const row of sorted) {
-    const prefix =
-      padType(glyphs[row.type], row.type, typeColWidth) +
-      gap +
-      row.slug.padEnd(slugColWidth) +
-      gap +
-      formatSourceCell(row).padEnd(sourceColWidth) +
-      gap +
-      row.delivery.padEnd(deliveryColWidth) +
-      gap;
-    const [first = '', ...rest] = wrapText(row.description, descriptionWidth);
-    lines.push((prefix + first).trimEnd());
-    for (const continuation of rest) {
-      lines.push((indent + continuation).trimEnd());
-    }
-  }
-
-  return lines.join('\n');
-}
-
 // region | Helpers
 
 /** Runs `build` to produce an artifact entry, warning to stderr and skipping it if it throws. */
@@ -206,21 +121,6 @@ function buildEntryOrSkip(type: ArtifactType, source: string, build: () => Artif
     warnSkipped(type, source, error);
     return undefined;
   }
-}
-
-/** Orders rows by artifact type, then by slug, then by source precedence. */
-function compareRows(a: LibraryRow, b: LibraryRow): number {
-  if (a.type !== b.type) {
-    return TYPE_ORDER[a.type] - TYPE_ORDER[b.type];
-  }
-  return a.slug.localeCompare(b.slug) || a.precedence - b.precedence;
-}
-
-/**
- * Builds a row's source cell: the source name, followed by `(shadowed)` when a higher-precedence source provides it.
- */
-function formatSourceCell(row: LibraryRow): string {
-  return row.isShadowed ? `${row.source} (shadowed)` : row.source;
 }
 
 /** Lists collection artifacts from `content/collections`, reading each markdown file's name and description. */
@@ -234,7 +134,7 @@ async function listCollections(contentDir: string): Promise<Array<ArtifactEntry>
       const meta = readNameAndDescription(content);
       return {
         slug: meta.name ?? path.basename(file, '.md'),
-        delivery: NO_DELIVERY_MODE,
+        delivery: undefined,
         description: meta.description ?? '',
       };
     });
@@ -300,7 +200,7 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
       const meta = readNameAndDescription(content);
       return {
         slug: meta.name ?? path.basename(file, '.md'),
-        delivery: NO_DELIVERY_MODE,
+        delivery: undefined,
         description: meta.description ?? '',
       };
     });
@@ -311,32 +211,21 @@ async function listSubagents(contentDir: string): Promise<Array<ArtifactEntry>> 
   return entries;
 }
 
-/** Measures a type cell in display cells: the glyph and a separating space when the glyph is visible, then the label. */
-function measureTypeCell(glyph: Glyph, label: string): number {
-  return (glyph.width === 0 ? 0 : glyph.width + 1) + label.length;
-}
-
-/** Builds a type cell (`{glyph} {label}`, or the label alone for an empty glyph) padded to `colWidth` display cells. */
-function padType(glyph: Glyph, label: string, colWidth: number): string {
-  const cell = glyph.width === 0 ? label : `${glyph.text} ${label}`;
-  return cell + ' '.repeat(Math.max(0, colWidth - measureTypeCell(glyph, label)));
-}
-
 /**
  * Reads a skill's `supported-harnesses:` frontmatter for the delivery column, formatting it as the comma-joined
- * harness list that a skill targets, or `—` when the field is absent or empty (meaning all harnesses). Display-only
+ * harness list that a skill targets, or undefined when the field is absent or empty (meaning all harnesses). Display-only
  * and tolerant: A non-string entry is dropped rather than rejected.
  */
-function readHarnessAffinity(content: string): string {
+function readHarnessAffinity(content: string): string | undefined {
   const { lines } = parseFrontmatter(content);
   const parsed: unknown = parseYaml(lines.join('\n'));
   const declared = isRecord(parsed) ? parsed[SUPPORTED_HARNESSES_KEY] : undefined;
   if (declared === undefined || declared === null) {
-    return NO_DELIVERY_MODE;
+    return undefined;
   }
   const values = Array.isArray(declared) ? declared : [declared];
   const harnesses = values.filter((value): value is string => typeof value === 'string');
-  return harnesses.length === 0 ? NO_DELIVERY_MODE : harnesses.join(', ');
+  return harnesses.length === 0 ? undefined : harnesses.join(', ');
 }
 
 /**
@@ -372,25 +261,6 @@ function readNameAndDescription(content: string): { name?: string; description?:
 function warnSkipped(type: ArtifactType, file: string, error: unknown): void {
   const reason = describeError(error);
   printLine({ glyph: 'warning', indent: 2, level: 'warn', text: `Skipping ${type} ${file}: ${reason}` });
-}
-
-/** Greedily wraps `text` into lines no wider than `width`; a word longer than `width` overflows on its own line. */
-function wrapText(text: string, width: number): Array<string> {
-  const lines: Array<string> = [];
-  let current = '';
-  for (const word of text.split(/\s+/)) {
-    if (word === '') continue;
-    if (current === '') {
-      current = word;
-    } else if (current.length + 1 + word.length <= width) {
-      current += ` ${word}`;
-    } else {
-      lines.push(current);
-      current = word;
-    }
-  }
-  lines.push(current);
-  return lines;
 }
 
 // endregion | Helpers
