@@ -14,15 +14,16 @@ For assertion recall (the canonical knowledge-base notes), use `kb-retrieve` ins
 
 ## Arguments
 
-| Argument       | Description                                                                       | Required |
-| -------------- | --------------------------------------------------------------------------------- | -------- |
-| `<query>`      | The free-text search query. All non-flag tokens are joined into the query string. | Yes      |
-| `--all-kbs`    | Widen the search to every registered knowledge base, not just the default scope.  | No       |
-| `--min-impact` | Keep only events rated at or above the given level; unrated events are dropped.   | No       |
-| `--store`      | Scope the search to a single registered knowledge base by name (alias: `--kb`).   | No       |
-| `--tag`        | Keep only events with this tag (canonical or alias form), case-insensitively.     | No       |
+| Argument        | Description                                                                                       | Required |
+| --------------- | ------------------------------------------------------------------------------------------------- | -------- |
+| `<query>`       | The free-text search query. All non-flag tokens are joined into the query string.                 | Yes      |
+| `--all-kbs`     | Widen the search to every registered knowledge base, not just the default scope.                  | No       |
+| `--exclude-tag` | Drop events with any of these comma-separated tags (canonical or alias form), case-insensitively. | No       |
+| `--min-impact`  | Keep only events rated at or above the given level; unrated events are dropped.                   | No       |
+| `--store`       | Scope the search to a single registered knowledge base by name (alias: `--kb`).                   | No       |
+| `--tag`         | Keep only events with this tag (canonical or alias form), case-insensitively.                     | No       |
 
-A value-bearing flag accepts both `--tag fix` and `--tag=fix`. `--min-impact` takes one of the impact levels, ordered `low` < `medium` < `high` < `critical`; an absent or out-of-range value is rejected with a usage message.
+A value-bearing flag accepts both `--tag fix` and `--tag=fix`. A repeated `--exclude-tag` adds to the list, and an empty value or an empty list entry is rejected with a usage message. `--min-impact` takes one of the impact levels, ordered `low` < `medium` < `high` < `critical`; an absent or out-of-range value is rejected with a usage message.
 
 ### Scope
 
@@ -44,7 +45,13 @@ Within each knowledge base, recall is limited to the notes declared by the store
 Invoke the co-located bundled helper with `node`, passing the query and any flags through verbatim:
 
 ```bash
-node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs <query> [--all-kbs] [--store <name>] [--tag <tag>] [--min-impact <level>]
+node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs <query> [--all-kbs] [--store <name>] [--tag <tag>] [--exclude-tag <tag[,tag...]>] [--min-impact <level>]
+```
+
+Read a curated pool, leaving out the events culled with a disposition tag:
+
+```bash
+node {harness_home_dir}/skills/kb-retrieve-events/kb-retrieve-events.mjs "flaky timer" --store <name> --exclude-tag obsolete,deferred
 ```
 
 Triage the most consequential events with an impact floor:
@@ -82,7 +89,7 @@ When the helper returns a `diagnostic` without any candidates, report the empty 
 - `store "<name>" is not registered in kb.yaml`: The named `--store` did not match any registry entry.
 - `registry invalid: …`: The only configured `kb.yaml` registry failed to load; this is a setup problem to fix, not a missing-events outcome.
 - `the query did not match any notes`: The knowledge bases were searched but nothing matched; suggest broadening the query or adding `--all-kbs`.
-- `all matches were filtered out`: Matches were found but every one was excluded by `--tag`; suggest dropping or loosening the filter.
+- `all matches were filtered out`: Matches were found but every one was excluded by `--tag` or `--exclude-tag`; suggest dropping or loosening the filter.
 - `all matches were below the --min-impact threshold of <level>`: Events matched, but every one was rated below the `--min-impact` floor or was unrated; suggest lowering or dropping the filter.
 - `matches were found but none are events; use kb-retrieve for assertion recall`: The query matched only non-event records; the reader likely wants `kb-retrieve`.
 
