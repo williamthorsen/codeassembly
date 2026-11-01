@@ -119,11 +119,11 @@ guidance, deployed, so that nothing is deleted before its new home works.
 
 ## Decisions taken
 
-- 🔲 The new repositories are named `codeassembly-guidance` and `codeassembly-studio`; both names are free on GitHub.
-- 🔲 The guidance repository is a flat single package, with `content/` at the root, rather than a one-package
+- The new repositories are named `codeassembly-guidance` and `codeassembly-studio`; both names are free on GitHub.
+- The guidance repository is a flat single package, with `content/` at the root, rather than a one-package
   workspace, because the deployed path is shorter and the workspace scaffolding serves nothing there. Whether nmr
   runs a repository whose root is the package is confirmed in step 2; the fallback is a one-package workspace.
-- 🔲 The `run-index.json` specification moves to the packages repository rather than staying in guidance.
-- 🔲 Open issues transfer by scope label; closed issues stay here.
-- 🔲 The deploy script keeps running the CLI built in the packages repository's `live` worktree, rather than the
+- The `run-index.json` specification moves to the packages repository rather than staying in guidance.
+- Open issues transfer by scope label; closed issues stay here.
+- The deploy script keeps running the CLI built in the packages repository's `live` worktree, rather than the
   version that guidance pins, so that a CLI change still reaches the machine on a `live` advance alone.
