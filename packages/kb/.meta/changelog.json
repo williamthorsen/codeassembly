@@ -1,5 +1,38 @@
 [
   {
+    "version": "0.11.0",
+    "date": "2026-11-01",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Orders the human report of `kb check` by file path and, within a file, by line, so that a file's position no longer depends on which rule reported it first; the `--json` output keeps the findings in their original order. (#2187)",
+            "hash": "d64ba9c90009fcc86930cbfd063e71c19b2b85c2",
+            "entry": 1
+          },
+          {
+            "description": "Exports `STANDARD_TAGS` and the `StandardTag` type from `@williamthorsen/kb/tags`, which list the disposition tags `deferred`, `obsolete`, and `rejected` that every store shares, each with a one-line meaning. (#2212)",
+            "hash": "2c1413e55ca6061c6133c6ed74ddcae6809923e6",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that `kb create` left its scaffold behind when the registry reported a name collision at write time, which made a retry under another name fail with `kb-exists`; `kb create` now removes the files that it created and any of its directories left empty. (#2187)",
+            "hash": "d64ba9c90009fcc86930cbfd063e71c19b2b85c2",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.10.0",
     "date": "2026-10-23",
     "sections": [

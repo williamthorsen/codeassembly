@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.0 — 2026-11-01
+
+### 🎉 Features
+
+- Makes `codeassembly-run-core` publishable to npm under the ISC license, with its changelog included in the package and an install command in its README. (#2228)
+
 ## 0.4.3 — 2026-10-23
 
 ### ♻️ Refactoring

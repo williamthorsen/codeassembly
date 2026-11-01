@@ -2,6 +2,65 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 — 2026-11-01
+
+### 🎉 Features
+
+- Adds a "Who applies the change" section to `design-priorities.md`, which ranks a design that the agent applies and verifies itself above one that needs a person to run a step on each machine, orders three ways to shape a step that stays (reach the machine through its existing access, route the step through its existing provisioning, or leave one self-checking script per machine), and is cited by `design-and-plan` and `plan` when they rank approaches. (#2175)
+- Changes the plan template's `**Residue:**` rule so that a step that a person must run on each machine is written as one script per machine that checks its own result, and so that a record of the work, such as a log entry or a ticket comment, is never residue, which `implement-plan` also states. (#2175)
+- Adds a rule to the `williamthorsen-collaboration-preferences` rulebook and the `collaborate` skill that directs the agent to answer a question from the developer rather than hand over a procedure to run, to run any check that the answer needs, and to count the commands that it hands over across the session. (#2175)
+- Adds a rule to the `williamthorsen-collaboration-preferences` rulebook that directs the agent, once the developer signals overload, to stop adding asks and to end each turn without an action-items block until the developer asks for something, and points `action-items.md` and the `collaborate` skill to it. (#2175)
+- Adds a "Check results" section to the `cli-conventions` rulebook, which requires a `check` or `verify` mode, a health probe, or a pre-flight to state on each item's line what it checked and the state that it found, to show a failure's evidence (a diff or the actual state) without `--verbose`, and to probe end to end the function that a configuration-only check serves. (#2178)
+- Adds a "Documentation placement" section to the shared `AGENTS.md` guidance, which directs an agent that writes a guidance or documentation file to point to the config, code, README section, or rulebook that defines a fact and to add only what that source does not state. (#2181)
+- Directs the plan template used by `plan` and `design-and-plan` to name, in the key decisions of each task that writes guidance or documentation, the source that defines each documented fact. (#2181)
+- Adds a placement item to the diff audit run by `implement-plan`, `respond-to-review`, and `revise-comments`, which checks that each guidance or documentation hunk points to a fact's source rather than copying the fact. (#2181)
+- Extends the duplication check in `update-project-guidance` from the global guidance file to rulebooks loaded into the session and to repository files, so that the skill omits what loaded guidance already states and points to a repository file that defines a fact. (#2181)
+- Changes the marker that the `williamthorsen-collaboration-preferences` rulebook and the plan and option-format templates prescribe for a decision awaiting the developer's checkpoint from ⏳ to 🔲, an unchecked box that reads as an item still to approve rather than as work in progress. (#2185)
+- Adds a `defects` field to the JSON output of `consolidate-entries`, which lists each entry whose breaking marker violates its type's policy or whose type the taxonomy does not declare, naming the entry by its 0-based index with the same `policy-violation` and `undeclared-type` kinds that `resolve-merge` reports. (#2186)
+- Directs `summarize-change` to report each entry defect that `consolidate-entries` returns, naming the entry by its `text`, and to continue without changing anything. (#2186)
+- Adds the closing post to `spike-conventions.md`, a ticket comment that contains the answers to the ticket's questions, the recommendations on its decisions, and links to the findings artifact and, when the spike published one, to its page, and names the post in the deliverables of the spike ticket and plan templates. (#2196)
+- Adds an offer of the closing post to the action-items block of the `assess-usability` report step, and replaces the skill's statement that it writes nothing remote with one that names this post, made on consent, as its one remote write. (#2196)
+- Extends the 🔬 Investigate option for a spike plan, shown in the next-steps menu of `design-and-plan`, `plan`, `refine-plan`, and `save-plan`, to end the run with the plan's `## Deliverable`, which includes the offer of the closing post. (#2196)
+- Adds a rule to `artifact-conventions.md` that a conclusion needed by a reader of the ticket is posted on the ticket, while the artifact keeps the evidence. (#2196)
+- Adds the `pr.initial_state` preference (`draft` or `ready`, default `draft`), which `create-pr` reads from the project or global preferences file to open a pull request as a draft or ready for review, and makes `pr.title_format` optional so that a `pr` section can set only the state. (#2198)
+- Adds the `--add-tag` operation to `kb-update-events`, which appends the given tags, canonicalized through the store's alias map, to each named event's tags and leaves an event that already has all of them untouched, unlike `--retag`, which replaces the whole set. (#2208)
+- Adds `--help` to the `kb-update-events` helper, which prints usage describing every operation and exits without updating any event. (#2208)
+- Adds an `--exclude-tag` flag to `kb-retrieve-events` that takes a comma-separated list of tags, matched in canonical or alias form, and drops every event that has any of them; a repeated flag adds to the list. (#2209)
+- Adds a "Standard tags" section, generated from `STANDARD_TAGS`, to the skills that write or filter knowledge-base tags, such as `capture-event` and `kb-update-events`, which directs the agent to tag a record's disposition by a standard name rather than a variant spelling. (#2212)
+- Adds an optional `evidence` field (a stable `key` and the `paths` that it covers) to each item of the `triage-spike-findings` record and an optional `commit` field to the record, which `validate` requires once any item has evidence, and adds to the end of the dispositions comment a hidden, versioned JSON block that the exported `parseEvidenceBlock` function reads back. (#2213)
+- Has the `triage-spike-findings` skill copy each item's evidence key and paths from the findings into the inventory and the record, and set the record's `commit` to the HEAD at which the developer approved the dispositions. (#2213)
+- Adds the `assess-code-health` skill, which measures git hotspots and test coverage for one package or subtree, dispatches five `code-health-assessor` subagents (conventions, structure, extraction, error handling, and tests), and ranks the proposals whose cited evidence resolves against the tree in a `code-health-findings` artifact that `triage-spike-findings` now accepts as input. (#2216)
+- Adds the `triage-feedback` skill, which groups the open events of a feedback store by lesson, shows the top `--limit` clusters with each one's recurrence, impact, and latest capture, has a subagent without session context challenge every priority, and after one approval files a ticket, comments on an open issue that already covers the lesson, defers the cluster, or changes its impact rating. (#2217)
+- Adds the `triage_feedback.defer_days` preference, which sets the number of days for which `triage-feedback` leaves a deferred cluster out of a triage unless the cluster gains a new event, 30 by default. (#2217)
+- Adds the `refine-guidance` skill, which finds the rule that already states a lesson or places a new artifact, drafts the edits for approval, opens a pull request, and marks the lesson's feedback events as addressed by it. (#2227)
+- Adds a "Choosing a kind" section to the `codeassembly-content-specification` rulebook, which states the kind of artifact and the content root in which a lesson belongs, and when to change an existing rule rather than add a parallel one. (#2227)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that the commit guidance did not say which source sets a commit title's format, by stating in `commit-conventions` that `commit.title_format` alone sets it and by directing agents in `create-commit` and the shared `AGENTS.md` not to change a rendered title to match other commits or comment on whether it contains a ticket reference. (#2172)
+- Fixes the issue that `create-commit` and `condense-branch` did not give agents a title to use when `commit.title_format` is empty or unset and the renderer printed an empty title; both now fall back to the bare title. (#2172)
+- Fixes the issue that `index-prototypes` had the agent ask the developer to run `chrome-debug`, which is no longer installed, on a refused Playwright connection, rather than run `thor-chrome` itself and ask only when `thor-chrome` refuses the launch with `session-unavailable`. (#2192)
+- Fixes the issue that a section in the project `.agents/preferences.yaml` hid every global key of the same section, such as a `ticket.base_url` set only in `~/.agents/preferences.yaml`, which made `derive-session-context` report `ticket_base_url: null` and leave a Jira ticket ID without a URL. (#2199)
+- Fixes the issue that the `--tag` filter of `kb-retrieve` and `kb-retrieve-events` compared tags literally and missed a note tagged with an alias of the requested tag, although both skills document a match on the canonical or alias form. (#2209)
+
+### 🏗️ Internal features
+
+- Adds a section to `_partials/README.md` that states when content becomes a partial and when partials merge, and adds `partial-consumers.unit.test.ts`, which fails when fewer than two files include a partial or when partials with the same includers are neither merged nor listed in that section. (#2183)
+
+### ♻️ Refactoring
+
+- Inlines the partials that only one file includes into that file, and merges the five ticket partials into `ticket-skeleton` and `ticket-composition`. (#2183)
+
+### 🧪 Tests
+
+- Replaces six per-doctrine reach test files with `doctrine-reach.unit.test.ts`, which runs the same checks for each entry in the `DOCTRINE_REACH` table in `test-utils/doctrine-reach.ts`. (#2183)
+
+### 📦 Dependencies
+
+- Move the test runner to Vitest 5 (#2193)
+
+  Upgrades `vitest` and `@vitest/coverage-v8` from v4 to 5.0.5, and lowers from 7 days to pnpm's 24-hour `minimumReleaseAge` the age at which `nmr upgrade` proposes a third-party release.
+
 ## 0.2.0 — 2026-10-23
 
 ### 🎉 Features

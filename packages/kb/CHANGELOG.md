@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.0 — 2026-11-01
+
+### 🎉 Features
+
+- Orders the human report of `kb check` by file path and, within a file, by line, so that a file's position no longer depends on which rule reported it first; the `--json` output keeps the findings in their original order. (#2187)
+- Exports `STANDARD_TAGS` and the `StandardTag` type from `@williamthorsen/kb/tags`, which list the disposition tags `deferred`, `obsolete`, and `rejected` that every store shares, each with a one-line meaning. (#2212)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that `kb create` left its scaffold behind when the registry reported a name collision at write time, which made a retry under another name fail with `kb-exists`; `kb create` now removes the files that it created and any of its directories left empty. (#2187)
+
 ## 0.10.0 — 2026-10-23
 
 ### 🎉 Features

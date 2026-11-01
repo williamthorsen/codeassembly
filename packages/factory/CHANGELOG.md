@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.15 — 2026-11-01
+
+### 📦 Dependencies
+
+- Bumped `codeassembly-run-core` to 0.5.0
+
 ## 0.2.14 — 2026-10-23
 
 ### ♻️ Refactoring

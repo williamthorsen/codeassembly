@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.19.0 — 2026-11-01
+
+### 🎉 Features
+
+- Makes `codeassembly generate label-map` write `.meta/label-map.json` with `root` as the only scope when the `packages` list in `pnpm-workspace.yaml` does not resolve to any workspace, which happens when its globs match nothing, when its exclusions remove every match, or when it does not declare a positive pattern. (#2184)
+
+### 📦 Dependencies
+
+- Upgrades `@williamthorsen/toolbelt.testing` to 0.7.0, `@williamthorsen/toolbelt.vitest` to 0.11.0, and the patch releases of `@williamthorsen/toolbelt.errors`, `@williamthorsen/toolbelt.strings`, `@williamthorsen/eslint-config-typescript`, and `@williamthorsen/tsconfig`. (#2190)
+
 ## 0.18.0 — 2026-10-23
 
 ### 🎉 Features
