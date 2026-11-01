@@ -59,7 +59,7 @@ build, check, test, and release scripts do.
 The current repository minus the extracted trees. It keeps the pnpm workspace, nmr, the publish and release workflows,
 and the root `CHANGELOG.md`.
 
-- `codeassembly-run-core` drops `private: true` and is published, because the apps repository consumes it from npm.
+- `codeassembly-run-core` drops `private: true` and is published, because the studio repository consumes it from npm.
 - The `run-index.json` specification, now a section of guidance's `artifact-conventions.md`, moves here beside the Zod
   schemas that implement it, and the guidance file points at it. Nothing mechanical ties the two today; the split
   makes the gap a cross-repository one, so the spec lives with the implementation.
@@ -75,16 +75,17 @@ It consumes `codeassembly-run-core` from npm and guidance as a `package:` source
 
 Each new repository is created from this one with `git filter-repo`, keeping the history of the extracted paths and
 renaming them to their new location (`packages/guidance/` to the root for guidance, `packages/factory/` kept as is for
-apps). The extracted trees are then deleted here in one commit per repository, after the new repository's CI is green.
+studio). The extracted trees are then deleted here in one commit per repository, after the new repository's CI is green.
 
 Open issues are transferred with `gh issue transfer` by scope label (`scope:guidance`, `scope:factory`). Closed issues
 stay.
 
 ## Machine and config changes
 
-The configs repository names the guidance path in base-only `~/.agents/codeassembly.yaml`, and one profile links
-`@williamthorsen/kb` from `codeassembly.live/packages/kb` in `node-globals.yaml`. Both change in one configs PR, which
-takes effect on each machine once that repository's `live` is advanced. Each machine then clones
+The configs repository names the guidance path in base-only `~/.agents/codeassembly.yaml`, which changes in one
+configs PR that takes effect on each machine once that repository's `live` is advanced. The profiles that link
+`@williamthorsen/kb` from `codeassembly.live/packages/kb` in `node-globals.yaml` keep that link, because kb stays in
+this repository. Each machine then clones
 `codeassembly-guidance`, creates its `live` worktree, and relinks `codeassembly-sync-live` to the new path.
 
 `~/.config/repos.yaml` gains two entries and moves the `live` tag.
@@ -98,21 +99,25 @@ takes effect on each machine once that repository's `live` is advanced. Each mac
 
 ## Order of work
 
-The apps leave first, so that this repository holds only public material as early as possible, and the guidance
+The studio trees leave first, so that this repository holds only public material as early as possible, and the guidance
 extraction, which touches every machine, follows on its own.
 
-1. Publish `codeassembly-run-core`: drop `private: true` and release it, so that the apps repository can pin it.
-2. Extract the apps repository: filter-repo, pin `codeassembly-run-core` from npm, get CI green.
-3. Remove the apps trees here and transfer the open `scope:factory` issues.
+1. Publish `codeassembly-run-core`: drop `private: true` and release it, so that the studio repository can pin it.
+2. Extract the studio repository: filter-repo, pin `codeassembly-run-core` from npm, get CI green.
+3. Remove the studio trees here and transfer the open `scope:factory` issues.
 4. Prepare the guidance extraction in place: move the `run-index.json` spec next to run-core, and confirm that the
    guidance package builds with pinned npm versions of `codeassembly` and `@williamthorsen/kb` instead of
-   `workspace:*`.
+   `workspace:*`. Confirm also that `nmr ci` passes on a scratch `git filter-repo` extraction of `packages/guidance`
+   flattened to the root.
 5. Extract the guidance repository: filter-repo, flatten to the root, carry the workflows over, get CI green, publish
    a version from the new repository.
 6. Switch the machines: configs PR, registry entries, `live` worktrees, relink the sync command, and deploy once from
    the new clone.
 7. Remove the guidance tree here, switch this repository to the `package:` guidance source, and transfer the open
-   `scope:guidance` issues.
+   `scope:guidance` issues. Update the references here that name guidance content or paths: the
+   `codeassembly-repo-conventions` rulebook and the `codeassembly-repo` source in `.agents/codeassembly.yaml`, the
+   `docs/live-deployment.md` link in `README.md`, the `packages/guidance` pointers in `AGENTS.md`, and the example
+   path in `packages/agents/src/lib/declared-sources.ts`.
 
 Step 4 can start as soon as step 1 is merged. Each removal step waits for the new repository to be green and, for
 guidance, deployed, so that nothing is deleted before its new home works.
@@ -122,7 +127,7 @@ guidance, deployed, so that nothing is deleted before its new home works.
 - The new repositories are named `codeassembly-guidance` and `codeassembly-studio`; both names are free on GitHub.
 - The guidance repository is a flat single package, with `content/` at the root, rather than a one-package
   workspace, because the deployed path is shorter and the workspace scaffolding serves nothing there. Whether nmr
-  runs a repository whose root is the package is confirmed in step 2; the fallback is a one-package workspace.
+  runs a repository whose root is the package is confirmed in step 4; the fallback is a one-package workspace.
 - The `run-index.json` specification moves to the packages repository rather than staying in guidance.
 - Open issues transfer by scope label; closed issues stay here.
 - The deploy script keeps running the CLI built in the packages repository's `live` worktree, rather than the
