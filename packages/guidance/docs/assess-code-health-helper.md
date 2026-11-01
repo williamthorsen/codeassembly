@@ -53,7 +53,7 @@ A proposals file is a JSON array. Each proposal has `id` (a capital prefix and a
 Each evidence entry is one of three kinds, and `check-evidence` resolves it as stated:
 
 - **`span`** (`path`, `startLine`, `endLine`, `quote`): The file exists, the range lies within it, and the quote appears in the range.
-- **`rule`** (`rulebook`, `section`, `quote`): The rulebook exists, contains a heading whose text without `#` equals `section` (case-sensitively), and the quote appears in that section, which runs to the next heading of the same or a higher level.
+- **`rule`** (`rulebook`, `section`, `quote`): The rulebook exists, contains a heading whose text without `#` equals `section` (case-sensitively), and the quote appears in that section, which runs to the next heading of the same or a higher level. A `#` line inside a fenced code block is not a heading.
 - **`sensor`** (`sensor`, `detail`): The sense document has the sensor with status `ok`.
 
 Quotes match after every run of whitespace is collapsed. Every entry of `paths` must also exist.

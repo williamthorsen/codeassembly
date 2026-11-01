@@ -30,20 +30,17 @@ export function checkEvidence(proposals: readonly Proposal[], sense: SenseDocume
 
 /**
  * Returns the lines of the section whose heading text, without its `#` markers, equals `section`: from the heading to
- * the next heading of the same or a higher level. Returns undefined when the document does not have the heading.
+ * the next heading of the same or a higher level. A `#` line inside a fenced code block is not a heading. Returns
+ * undefined when the document does not have the heading.
  */
 export function extractSection(markdown: string, section: string): string | undefined {
   const lines = markdown.split('\n');
-  const start = lines.findIndex((line) => parseHeading(line)?.text === section);
-  if (start === -1) return undefined;
-  const level = parseHeading(lines[start] ?? '')?.level ?? 0;
-  let end = start + 1;
-  while (end < lines.length) {
-    const heading = parseHeading(lines[end] ?? '');
-    if (heading !== undefined && heading.level <= level) break;
-    end += 1;
-  }
-  return lines.slice(start, end).join('\n');
+  const headings = listHeadings(lines);
+  const startIndex = headings.findIndex((heading) => heading.text === section);
+  const start = headings[startIndex];
+  if (start === undefined) return undefined;
+  const end = headings.slice(startIndex + 1).find((heading) => heading.level <= start.level);
+  return lines.slice(start.line, end?.line ?? lines.length).join('\n');
 }
 
 // region | Helpers
@@ -91,6 +88,26 @@ function findFailure(proposal: Proposal, okSensors: ReadonlySet<string>, root: s
     if (reason !== undefined) return reason;
   }
   return undefined;
+}
+
+/** Lists the ATX headings outside fenced code blocks, each with its line index, level, and text. */
+function listHeadings(lines: readonly string[]): Array<{ line: number; level: number; text: string }> {
+  const headings: Array<{ line: number; level: number; text: string }> = [];
+  let fence: string | undefined;
+  for (const [index, line] of lines.entries()) {
+    const marker = /^ {0,3}(`{3,}|~{3,})/.exec(line)?.[1];
+    if (fence === undefined && marker !== undefined) {
+      fence = marker;
+      continue;
+    }
+    if (fence !== undefined) {
+      if (marker !== undefined && marker[0] === fence[0] && marker.length >= fence.length) fence = undefined;
+      continue;
+    }
+    const heading = parseHeading(line);
+    if (heading !== undefined) headings.push({ line: index, ...heading });
+  }
+  return headings;
 }
 
 /** Parses an ATX heading into its level and text, or returns undefined for any other line. */

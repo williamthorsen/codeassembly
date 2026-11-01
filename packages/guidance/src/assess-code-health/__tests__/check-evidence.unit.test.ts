@@ -120,6 +120,16 @@ describe('extractSection', () => {
     expect(extractSection(markdown, 'A.1')).toBe('### A.1\ntwo');
     expect(extractSection(markdown, 'C')).toBeUndefined();
   });
+
+  it('ignores a # line inside a fenced code block', () => {
+    const markdown =
+      '## A\n```bash\n# a shell comment\n```\nafter the fence\n~~~\n## not a heading\n~~~\nend\n## B\nnext';
+
+    expect(extractSection(markdown, 'A')).toBe(
+      '## A\n```bash\n# a shell comment\n```\nafter the fence\n~~~\n## not a heading\n~~~\nend',
+    );
+    expect(extractSection(markdown, 'a shell comment')).toBeUndefined();
+  });
 });
 
 // region | Helpers
