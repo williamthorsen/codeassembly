@@ -80,7 +80,7 @@ node {harness_home_dir}/skills/curate-feedback/curate-feedback.mjs {command} {fl
 
 Under `--apply`, skip this step.
 
-Present the `counts` lines that `validate` reports, one per bin, then the marks from `record.json`: one line per `marks.addressedBy` group, with its reference and event count, and one line for `marks.obsolete`. Under `--list`, add a table of every event in `record.json` with its summary, bin, reference, and reason. Ask in the action-items block for one approval of every mark.
+Present the `counts` lines that `validate` reports, one per bin, then the marks from `record.json`: one line per `marks.addressedBy` group, with its reference and event count, and one line for `marks.obsolete`. Under `--list`, add a table of every event in `record.json` with its summary, bin, reference, reason, and quote. Ask in the action-items block for one approval of every mark.
 
 The developer may move events between bins by id in the reply. For each move, edit the entry in the bins file that the event's `file` in `record.json` names. A move into `covered` needs the guidance file, and a move into `duplicate` needs the addressed event; ask for either when the reply does not name it. For a move into `covered`, read the file at its pin with `git -C {root} show {sha}:{path}` and copy the sentence that states the lesson into the entry's `quote`. Then run `validate` again, and present only the changed counts and marks before writing. The approval covers every mark that step 7 applies.
 
