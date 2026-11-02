@@ -33,6 +33,9 @@ All artifacts are stored under a configurable base directory (`base_dir`, defaul
         │       │   ├── sense.json
         │       │   ├── {lens}/report.md
         │       │   └── {lens}/proposals.json
+        │       ├── performance/                              ← a performance analysis's measurements and summary, kept by `analyze-performance`
+        │       │   ├── summary.json
+        │       │   └── raw/                                  ← the helper's run directory: `manifest.json` and each page's raw responses
         │       ├── triage/                                   ← a findings triage's working files, kept by `triage-spike-findings`
         │       │   ├── findings.md
         │       │   ├── inventory.md
@@ -85,6 +88,10 @@ A `project.ticket_ref_prefix` other than `#` is part of the ticket ID, so it nam
 ### Code-health working files
 
 `code-health/` contains the working files of the ticket's code-health assessment: the sense document with each check's log beside it, the test reports that the sensors read, each lens's report and checked proposals, and the merged proposals. The `code-health-findings` artifact cites code by paths relative to the repository root, so it does not depend on these files; they record what the run measured.
+
+### Performance measurements
+
+`performance/` contains the working files of the ticket's performance analysis: `raw/`, the run directory that the `analyze-performance` helper writes, with its manifest and every PSI response, Lighthouse report, and CrUX record, and `summary.json`, the helper's summary of that directory. The `performance-findings` artifact cites raw files by paths relative to the ticket directory, so the measurements stay in the ticket directory.
 
 ### Triage working files
 
@@ -396,6 +403,7 @@ The first `coder_change-summary` in a run does not have dispositions (nothing to
 - `feedback-triage`: The record of a `triage-feedback` run: each surfaced cluster of feedback events with its signals, priority, challenge, disposition, and result, and the remainder left in the pool. A deferred event's `addressed-by` names the artifact, whose filename timestamp dates the deferral; the run's working files stay in `{timestamp}_work/` beside it (falls back to non-ticket path when a ticket is not in session)
 - `idea-decisions`: The idea table of a round of prototypes with the decision on each idea filled; `prepare-prototype-brief` saves it after the developer decides each idea, and the end vision cites it
 - `merge`: Record of a merged pull request; `capture-lede-decision` reads its `## Body` as the merged side of a lede episode
+- `performance-findings`: The measured performance of a site and the improvements ranked by expected effect, with field and lab data reported separately, each improvement's evidence, metric, and effort, what was left unmeasured, and the method; `analyze-performance` saves it, and `triage-spike-findings` reads it
 - `plan`: Implementation plan document
 - `plan-review`: Plan review findings (completeness and correctness analysis)
 - `plan-v2`: Refined implementation plan after review and revision
