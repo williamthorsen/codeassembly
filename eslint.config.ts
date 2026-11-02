@@ -63,13 +63,6 @@ const config = defineConfig([
       '@typescript-eslint/no-unsafe-assignment': 'off',
     },
   },
-  {
-    // Dormant: Restructured on revival rather than split now.
-    files: ['demos/catwalk/**'],
-    rules: {
-      'max-lines': 'off',
-    },
-  },
 ]);
 
 export default config;
