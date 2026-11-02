@@ -28,10 +28,8 @@
     "prepare": "lefthook install"
   },
   "devDependencies": {
-    "@testing-library/dom": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native-preview": "7.0.0-dev.20260707.2",
-    "@vitejs/plugin-react": "catalog:",
     "@vitest/coverage-v8": "5.0.5",
     "@vitest/eslint-plugin": "1.6.28",
     "@williamthorsen/eslint-config-typescript": "20.1.3",
@@ -47,9 +45,6 @@
     "dotenv": "18.0.9",
     "eslint": "catalog:",
     "eslint-import-resolver-typescript": "4.4.5",
-    "eslint-plugin-jest-dom": "5.10.1",
-    "eslint-plugin-react-hooks": "7.1.1",
-    "eslint-plugin-testing-library": "7.16.2",
     "glob": "14.0.3",
     "lefthook": "2.2.1",
     "prettier": "catalog:",

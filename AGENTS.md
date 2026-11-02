@@ -9,12 +9,11 @@ This repository is public. Anything committed here is world-readable, so it must
 A pnpm monorepo centered on deploying agent guidance: the `codeassembly` CLI, the guidance library that it deploys, and their supporting packages. Each package's own README describes its internals.
 
 - **agents** (`packages/agents/`): The `codeassembly` CLI, which deploys guidance from declared content sources. See `packages/agents/README.md`.
-- **factory** (`packages/factory/`): Dormant demo visualization of run data. See `packages/factory/README.md`.
 - **guidance** (`packages/guidance/`): The `codeassembly-guidance` library of rulebooks, skills, and subagents, with the helpers that its skills run. See `packages/guidance/README.md`.
 - **kb** (`packages/kb/`): Knowledge-base foundation library. See `packages/kb/README.md`.
 - **run-core** (`packages/run-core/`): Canonical domain model, schemas, and run-data parsing. See `packages/run-core/README.md`.
 
-The dependency chain: factory depends on run-core, and guidance on agents and kb. Guidance depends on agents only through the `codeassembly` CLI and `codeassembly/api`, and agents does not read anything from guidance.
+The dependency chain: Guidance depends on agents and kb, and the other packages do not depend on any package here. Guidance depends on agents only through the `codeassembly` CLI and `codeassembly/api`, and agents does not read anything from guidance.
 
 ## Content authoring
 

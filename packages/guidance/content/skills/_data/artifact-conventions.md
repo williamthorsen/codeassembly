@@ -730,7 +730,7 @@ Full run state (phases, artifacts, review rounds, criticalities) is reconstructe
 
 ### Backward compatibility
 
-V2 and v1 `run-index.json` formats remain supported by the Factory consumer.
+The run-core parser, `parseRunData`, still reads the v2 `run-index.json` format and the v1 `status.json` format.
 
 ## Artifact types
 
