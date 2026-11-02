@@ -29,7 +29,7 @@ An artifact belongs to the developer's audit trail, as [artifact-conventions.md]
 ```
 
 - **timestamp**: UTC time in `YYYYMMDD-HHMMSSZ` format
-- **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. Each role has a `roleType`. See [artifact-conventions.md](../_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list and [roleType taxonomy](../_data/artifact-conventions.md#roletype-taxonomy).
+- **role**: Kebab-case identifier; hyphens are free within the name, underscores are reserved as structural separators. See [artifact-conventions.md](../_data/artifact-conventions.md#run-artifacts-review-workflow) for the current role list.
 - **artifact**: Kebab-case identifier following the same naming conventions. See [artifact-conventions.md](../_data/artifact-conventions.md#artifact-types) for the artifact type list.
 
 Run artifacts are saved by the skills that produce them (`review-branch`, `respond-to-review`), into the ticket's active run. See [artifact-conventions.md](../_data/artifact-conventions.md#run-directories) for how the active run is identified.
