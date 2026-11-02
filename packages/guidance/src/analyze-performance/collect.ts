@@ -49,7 +49,10 @@ export interface CollectOptions {
   privateUrls: ReadonlySet<string>;
   runs: number;
   out: string;
-  /** The directory from which `pnpm dlx` runs, so that the measured project's pnpm settings, its trust policy among them, apply. */
+  /**
+   * The directory from which `pnpm dlx` runs, so that the measured project's pnpm settings, its trust policy among
+   * them, apply.
+   */
   cwd: string;
 }
 
@@ -77,7 +80,10 @@ export const realCollectDependencies: CollectDependencies = {
   now: () => new Date(),
 };
 
-/** Measures every URL in both form factors, writes the raw files and `manifest.json` under `out`, and returns the manifest. */
+/**
+ * Measures every URL in both form factors, writes the raw files and `manifest.json` under `out`, and returns the
+ * manifest.
+ */
 export async function collect(options: CollectOptions, dependencies: CollectDependencies): Promise<Manifest> {
   mkdirSync(options.out, { recursive: true });
   const cruxKey = dependencies.readCruxKey();
@@ -111,6 +117,14 @@ const execFileAsync = promisify(execFile);
 
 type FormFactor = (typeof FORM_FACTORS)[number];
 
+/** What a page's PSI runs yielded in each form factor: whether any run succeeded, and the first one with field data. */
+type PsiRuns = Record<FormFactor, { measured: boolean; fieldFile: string | null }>;
+
+/** Builds the PSI record of a page before any PSI run. */
+function buildPsiRuns(): PsiRuns {
+  return { desktop: { measured: false, fieldFile: null }, mobile: { measured: false, fieldFile: null } };
+}
+
 /** Derives a file-safe slug from a URL's host and path, suffixed when an earlier URL took the same slug. */
 function buildUniqueSlug(url: string, taken: Set<string>): string {
   const parsed = new URL(url);
@@ -128,7 +142,7 @@ function buildUniqueSlug(url: string, taken: Set<string>): string {
 /**
  * Measures one page: PSI first for a public URL, switching the whole page to the Lighthouse CLI on the first PSI
  * failure that falls back, so that every run of a page comes from one tool. Field data comes from the CrUX API when a
- * key is set, and otherwise from the first successful PSI run of each form factor.
+ * key is set, and otherwise from the first PSI run of each form factor that returned it.
  */
 async function collectPage(
   url: string,
@@ -138,33 +152,40 @@ async function collectPage(
   dependencies: CollectDependencies,
 ): Promise<ManifestPage> {
   const isPrivate = selectTool(url, options.privateUrls) === 'lighthouse';
-  if (isPrivate) return collectWithLighthouse(url, slug, true, null, options, cruxKey, dependencies);
+  if (isPrivate) return collectWithLighthouse(url, slug, true, null, buildPsiRuns(), options, cruxKey, dependencies);
 
   const runs: ManifestRun[] = [];
-  const psiField: Partial<Record<FormFactor, boolean>> = {};
+  const psi = buildPsiRuns();
   for (const formFactor of FORM_FACTORS) {
     for (let index = 1; index <= options.runs; index += 1) {
       const result = await runPsi(url, slug, formFactor, index, options.out, dependencies);
       if (result.kind === 'ok') {
         runs.push({ formFactor, index, file: result.file, error: null });
-        psiField[formFactor] ||= result.hasField;
+        psi[formFactor].measured = true;
+        if (result.hasField) psi[formFactor].fieldFile ??= result.file;
         continue;
       }
       const reason = readFallbackReason(result.failure);
-      if (reason !== null) return collectWithLighthouse(url, slug, false, reason, options, cruxKey, dependencies);
+      if (reason !== null) {
+        return collectWithLighthouse(url, slug, false, reason, psi, options, cruxKey, dependencies);
+      }
       runs.push({ formFactor, index, file: null, error: `PSI failed: ${result.failure.message}` });
     }
   }
-  const field = await collectField(url, slug, false, 'psi', psiField, options.out, cruxKey, dependencies);
+  const field = await collectField(url, slug, false, psi, options.out, cruxKey, dependencies);
   return { url, slug, private: false, tool: 'psi', fallbackReason: null, ...field, runs };
 }
 
-/** Measures one page with the Lighthouse CLI alone, recording why PSI did not measure it. */
+/**
+ * Measures one page with the Lighthouse CLI alone, recording why PSI did not measure it and keeping the field data of
+ * the PSI runs that preceded a fallback.
+ */
 async function collectWithLighthouse(
   url: string,
   slug: string,
   isPrivate: boolean,
   fallbackReason: string | null,
+  psi: PsiRuns,
   options: CollectOptions,
   cruxKey: string | undefined,
   dependencies: CollectDependencies,
@@ -175,7 +196,7 @@ async function collectWithLighthouse(
       runs.push(await runLighthouse(url, slug, formFactor, index, options, dependencies));
     }
   }
-  const field = await collectField(url, slug, isPrivate, 'lighthouse', {}, options.out, cruxKey, dependencies);
+  const field = await collectField(url, slug, isPrivate, psi, options.out, cruxKey, dependencies);
   return { url, slug, private: isPrivate, tool: 'lighthouse', fallbackReason, ...field, runs };
 }
 
@@ -184,16 +205,22 @@ async function collectField(
   url: string,
   slug: string,
   isPrivate: boolean,
-  tool: ManifestPage['tool'],
-  psiField: Partial<Record<FormFactor, boolean>>,
+  psi: PsiRuns,
   out: string,
   cruxKey: string | undefined,
   dependencies: CollectDependencies,
-): Promise<Pick<ManifestPage, 'crux' | 'fieldSource' | 'fieldUnavailableReason'>> {
+): Promise<Pick<ManifestPage, 'crux' | 'fieldSource' | 'fieldUnavailableReason' | 'psiField'>> {
   const crux: Record<FormFactor, string | null> = { desktop: null, mobile: null };
+  const psiField = { desktop: psi.desktop.fieldFile, mobile: psi.mobile.fieldFile };
   if (isPrivate) {
-    return { crux, fieldSource: null, fieldUnavailableReason: 'the URL is private, so CrUX has no data for it' };
+    return {
+      crux,
+      psiField,
+      fieldSource: null,
+      fieldUnavailableReason: 'the URL is private, so CrUX has no data for it',
+    };
   }
+  const hasPsiField = FORM_FACTORS.some((formFactor) => psiField[formFactor] !== null);
   if (cruxKey !== undefined) {
     const errors: string[] = [];
     for (const formFactor of FORM_FACTORS) {
@@ -206,27 +233,31 @@ async function collectField(
         errors.push(`${formFactor}: ${describeError(error)}`);
       }
     }
-    if (errors.length === 0) return { crux, fieldSource: 'crux-api', fieldUnavailableReason: null };
-    if (tool === 'psi' && FORM_FACTORS.some((formFactor) => psiField[formFactor] === true)) {
-      return { crux, fieldSource: 'psi', fieldUnavailableReason: `CrUX API failed (${errors.join('; ')})` };
-    }
-    return { crux, fieldSource: null, fieldUnavailableReason: `CrUX API failed (${errors.join('; ')})` };
-  }
-  if (tool === 'lighthouse') {
+    if (errors.length === 0) return { crux, psiField, fieldSource: 'crux-api', fieldUnavailableReason: null };
     return {
       crux,
-      fieldSource: null,
-      fieldUnavailableReason: `PSI did not measure the page and ${CRUX_KEY_VARIABLE} is not set`,
+      psiField,
+      fieldSource: hasPsiField ? 'psi' : null,
+      fieldUnavailableReason: `CrUX API failed (${errors.join('; ')})`,
     };
   }
-  if (FORM_FACTORS.every((formFactor) => psiField[formFactor] !== true)) {
-    return {
-      crux,
-      fieldSource: null,
-      fieldUnavailableReason: 'CrUX has too little traffic for the URL and its origin',
-    };
+  const unmeasured = FORM_FACTORS.filter((formFactor) => !psi[formFactor].measured);
+  if (!hasPsiField) {
+    const fieldUnavailableReason =
+      unmeasured.length === FORM_FACTORS.length
+        ? `PSI did not measure the page and ${CRUX_KEY_VARIABLE} is not set`
+        : 'CrUX has too little traffic for the URL and its origin';
+    return { crux, psiField, fieldSource: null, fieldUnavailableReason };
   }
-  return { crux, fieldSource: 'psi', fieldUnavailableReason: null };
+  return {
+    crux,
+    psiField,
+    fieldSource: 'psi',
+    fieldUnavailableReason:
+      unmeasured.length === 0
+        ? null
+        : `PSI did not measure the ${unmeasured.join(' and ')} form factor and ${CRUX_KEY_VARIABLE} is not set`,
+  };
 }
 
 /** Queries the CrUX API for the URL and its origin; a 404 means too little traffic and yields a null record. */

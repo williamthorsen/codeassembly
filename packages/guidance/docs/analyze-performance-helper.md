@@ -24,7 +24,7 @@ The Lighthouse CLI runs as `pnpm dlx lighthouse@{version}` from the working dire
 
 ## Field data
 
-`CRUX_API_KEY` is the one credential that the helper reads. When it is set and the page is public, `collect` queries the CrUX API for the URL and its origin in both form factors; a 404, by which the API reports too little traffic, is recorded as a missing record. Without the key, field data comes from the CrUX block of the first successful PSI run of each form factor. A private page, or a page measured by the Lighthouse CLI without the key, has no field data, and `fieldUnavailableReason` states why. When the CrUX API fails and PSI supplied field data, the PSI data is used and the reason records the API failure.
+`CRUX_API_KEY` is the one credential that the helper reads. When it is set and the page is public, `collect` queries the CrUX API for the URL and its origin in both form factors; a 404, by which the API reports too little traffic, is recorded as a missing record. Without the key, field data comes from the CrUX block of the first PSI run of each form factor that returned one, including the runs that preceded a fallback to the Lighthouse CLI. A private page has no field data, a public page without the key has none in a form factor that PSI did not measure, and `fieldUnavailableReason` states why. When the CrUX API fails and PSI supplied field data, the PSI data is used and the reason records the API failure.
 
 ## Hosts
 
@@ -41,7 +41,7 @@ The Lighthouse CLI runs as `pnpm dlx lighthouse@{version}` from the working dire
     └── crux-{form-factor}.json               ← the CrUX API records for the URL and the origin, when the key is set
 ```
 
-A page's slug is its host and path in kebab case, suffixed with `-2`, `-3`, and so on when an earlier URL took it. `manifest.json` is defined by `ManifestSchema` in `schemas.ts`: the creation time, the Lighthouse version, the runs per form factor, and each page with its tool, fallback reason, field-data source and reason, CrUX files, and runs, each with its form factor, index, file, and error. `summarize` reads only the files that the manifest names.
+A page's slug is its host and path in kebab case, suffixed with `-2`, `-3`, and so on when an earlier URL took it. `manifest.json` is defined by `ManifestSchema` in `schemas.ts`: the creation time, the Lighthouse version, the runs per form factor, and each page with its tool, fallback reason, field-data source and reason, CrUX files, the PSI response that supplies its field data in each form factor, and runs, each with its form factor, index, file, and error. `summarize` reads only the files that the manifest names.
 
 ## The summary
 

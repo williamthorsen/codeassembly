@@ -61,6 +61,27 @@ describe('collect', () => {
     expect(page?.runs.every((run) => run.file?.endsWith('.lighthouse.json'))).toBe(true);
   });
 
+  it('keeps the field data of the PSI runs that preceded a fallback', async () => {
+    let call = 0;
+    const { dependencies } = buildFakeDependencies({
+      psi: () =>
+        call++ < 3
+          ? { status: 200, body: buildPsiResponse(buildReport(), { field: true }) }
+          : { status: 429, body: { error: { code: 429, message: 'Quota exceeded' } } },
+      lighthouse: () => buildReport(),
+    });
+
+    const [page] = (await collect(options(out, ['https://example.com/']), dependencies)).pages;
+
+    expect(page).toMatchObject({
+      tool: 'lighthouse',
+      fieldSource: 'psi',
+      psiField: { mobile: path.join('example-com', 'mobile-1.psi.json'), desktop: null },
+      fieldUnavailableReason: 'PSI did not measure the desktop form factor and CRUX_API_KEY is not set',
+    });
+    expect(page?.runs.every((run) => run.file?.endsWith('.lighthouse.json'))).toBe(true);
+  });
+
   it('records a PSI failure that does not fall back on its run and keeps measuring with PSI', async () => {
     const { dependencies, calls } = buildFakeDependencies({
       psi: () => ({ status: 400, body: { error: { code: 400, message: 'Invalid value at url' } } }),

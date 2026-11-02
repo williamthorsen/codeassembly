@@ -190,7 +190,9 @@ function readSingle(flags: ParsedFlags, name: FlagName): string | undefined {
   return flags.get(name)?.[0];
 }
 
-/** Caps `--runs`, since PSI's quota and a Lighthouse run's minute make more runs costly without steadying the median. */
+/**
+ * Caps `--runs`, since PSI's quota and a Lighthouse run's minute make more runs costly without steadying the median.
+ */
 const MAX_RUNS = 10;
 
 // endregion | Helpers

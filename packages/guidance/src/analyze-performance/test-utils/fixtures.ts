@@ -36,6 +36,13 @@ export function buildReport(values: ReportValues = {}, runtimeError?: { code: st
   return runtimeError === undefined ? report : { ...report, runtimeError };
 }
 
+/** Removes one audit from a report built by `buildReport`. */
+export function removeAudit(report: Record<string, unknown>, id: string): Record<string, unknown> {
+  const audits = report['audits'];
+  if (!isRecord(audits)) throw new Error('the report lacks audits');
+  return { ...report, audits: Object.fromEntries(Object.entries(audits).filter(([key]) => key !== id)) };
+}
+
 const REPORT_KEYS = ['cls', 'fcp', 'lcp', 'tbt'] as const;
 
 const AUDIT_IDS: Readonly<Record<keyof ReportValues, string>> = {

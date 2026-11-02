@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { collect } from '../collect.ts';
 import { summarize } from '../summarize.ts';
 import { buildFakeDependencies, type FakeHandlers } from '../test-utils/fake-dependencies.ts';
-import { buildPsiResponse, buildReport } from '../test-utils/fixtures.ts';
+import { buildPsiResponse, buildReport, removeAudit } from '../test-utils/fixtures.ts';
 
 describe('summarize', () => {
   let out: string;
@@ -73,6 +73,18 @@ describe('summarize', () => {
     expect(styles[0]?.files).toHaveLength(12);
   });
 
+  it('counts each run that does not report an insight as a zero saving', async () => {
+    let run = 0;
+    const summary = await collectAndSummarize(out, ['http://localhost/'], {
+      lighthouse: () => (run++ % 3 === 0 ? buildReport() : removeAudit(buildReport(), 'render-blocking-insight')),
+    });
+
+    const styles = summary.insights.find(
+      (insight) => insight.id === 'render-blocking-insight' && insight.culprit === 'https://example.com/styles.css',
+    );
+    expect(styles?.savings).toEqual({ FCP: 0, LCP: 0 });
+  });
+
   it('orders insights by their largest millisecond saving', async () => {
     const summary = await collectAndSummarize(out, ['http://localhost/'], { lighthouse: () => buildReport() });
 
@@ -90,6 +102,22 @@ describe('summarize', () => {
     expect(field?.byFormFactor.mobile.url?.lcp).toEqual({ value: 3_100, class: 'needs-improvement' });
     expect(field?.byFormFactor.mobile.origin?.cls).toEqual({ value: 0.3, class: 'poor' });
     expect(summary.unmeasured).toEqual([]);
+  });
+
+  it('classes the field data of the PSI runs that preceded a fallback', async () => {
+    let call = 0;
+    const summary = await collectAndSummarize(out, ['https://example.com/'], {
+      psi: () =>
+        call++ === 0
+          ? { status: 200, body: buildPsiResponse(buildReport(), { field: true }) }
+          : { status: 429, body: { error: { code: 429, message: 'Quota exceeded' } } },
+      lighthouse: () => buildReport(),
+    });
+
+    const page = summary.pages[0];
+    expect(page?.tool).toBe('lighthouse');
+    expect(page?.field.byFormFactor.mobile.url?.lcp).toEqual({ value: 3_100, class: 'needs-improvement' });
+    expect(page?.field.byFormFactor.desktop).toEqual({ url: null, origin: null });
   });
 
   it('lists a page without field data as unmeasured, with the reason', async () => {

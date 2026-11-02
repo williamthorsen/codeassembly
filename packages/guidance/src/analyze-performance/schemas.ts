@@ -1,4 +1,6 @@
-/** The documents that the performance helper reads and writes: the run manifest and the tool responses that it parses. */
+/**
+ * The documents that the performance helper reads and writes: the run manifest and the tool responses that it parses.
+ */
 import { z } from 'zod';
 
 export const FORM_FACTORS = ['mobile', 'desktop'] as const;
@@ -23,6 +25,7 @@ const PageSchema = z.object({
   fieldSource: z.enum(FIELD_SOURCES).nullable(),
   fieldUnavailableReason: z.string().nullable(),
   crux: z.record(z.enum(FORM_FACTORS), z.string().nullable()),
+  psiField: z.record(z.enum(FORM_FACTORS), z.string().nullable()),
   runs: z.array(RunSchema),
 });
 

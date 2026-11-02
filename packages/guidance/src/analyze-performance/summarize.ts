@@ -216,14 +216,16 @@ function mergeInsights(
     target.files.push(...entry.files);
     const metrics = new Set(entry.savings.flatMap((savings) => Object.keys(savings)));
     for (const metric of metrics) {
-      const value = median(entry.savings.map((savings) => savings[metric] ?? 0));
+      // Count each run that does not report the insight as a zero saving.
+      const unreported = Array.from({ length: reports.length - entry.savings.length }, () => 0);
+      const value = median([...entry.savings.map((savings) => savings[metric] ?? 0), ...unreported]);
       target.savings[metric] = Math.max(target.savings[metric] ?? 0, value);
     }
     merged.set(key, target);
   }
 }
 
-/** Reads a page's field data in one form factor from its CrUX file or its first successful PSI run. */
+/** Reads a page's field data in one form factor from its CrUX file or the PSI response that the manifest names. */
 function readField(page: ManifestPage, formFactor: FormFactor, directory: string): FieldRow {
   if (page.fieldSource === 'crux-api') {
     const file = page.crux[formFactor];
@@ -232,11 +234,9 @@ function readField(page: ManifestPage, formFactor: FormFactor, directory: string
     return { url: classifyField(crux.url), origin: classifyField(crux.origin) };
   }
   if (page.fieldSource === 'psi') {
-    const run = page.runs.find(
-      (candidate) => candidate.formFactor === formFactor && candidate.error === null && candidate.file !== null,
-    );
-    if (run === undefined || run.file === null) return { url: null, origin: null };
-    const response = PsiResponseSchema.parse(readJson(directory, run.file));
+    const file = page.psiField[formFactor];
+    if (file === null) return { url: null, origin: null };
+    const response = PsiResponseSchema.parse(readJson(directory, file));
     return {
       url: classifyField(readPsiField(response.loadingExperience, 'url')),
       origin: classifyField(readPsiField(response.originLoadingExperience, 'origin')),
