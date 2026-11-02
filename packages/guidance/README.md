@@ -68,3 +68,4 @@ codeassembly-validate-preferences --strict .agents/preferences.yaml
 - [Findings triage helper](docs/triage-spike-findings-helper.md): the helper that the `triage-spike-findings` skill runs.
 - [Code-health helper](docs/assess-code-health-helper.md): the helper that the `assess-code-health` skill runs.
 - [Feedback triage helpers](docs/triage-feedback-helper.md): the helpers that the `triage-feedback` skill runs.
+- [Feedback curation helper](docs/curate-feedback-helper.md): the helper that the `curate-feedback` skill runs.

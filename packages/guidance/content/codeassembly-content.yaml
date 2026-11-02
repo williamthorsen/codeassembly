@@ -53,6 +53,8 @@ helpers:
     out: skills/create-ticket/resolve-ticket-target.mjs
   - entry: ../src/assess-code-health/cli.ts
     out: skills/assess-code-health/assess-code-health.mjs
+  - entry: ../src/curate-feedback/cli.ts
+    out: skills/curate-feedback/curate-feedback.mjs
   - entry: ../src/lesson-clusters/cli.ts
     out: skills/lesson-clusters/lesson-clusters.mjs
   - entry: ../src/triage-feedback/cli.ts

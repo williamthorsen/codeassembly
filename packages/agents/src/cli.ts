@@ -35,7 +35,7 @@ const SYNC_FAILURE_EFFECT = 'Nothing was written; the previously deployed guidan
  */
 async function main(): Promise<void> {
   configureStreamStyles();
-  const { command, subcommand, options, check, content, help, global, warnOnly } = parseArgs(process.argv);
+  const { command, subcommand, options, check, content, help, global, json, warnOnly } = parseArgs(process.argv);
 
   if (help || !command) {
     printUsage();
@@ -76,7 +76,7 @@ async function main(): Promise<void> {
         }
         break;
       case 'library':
-        await runLibrary(subcommand, global);
+        await runLibrary(subcommand, { global, json });
         break;
       case 'generate':
         await runGenerate(subcommand, options);
@@ -136,6 +136,7 @@ Options:
   --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync, init, and library list, and reads the home deployment's record under sizes
+  --json             Print the listing as JSON, with each source's content directory (library list only)
   --output-style <auto|plain|rich>  Print status glyphs as emoji (rich) or words (plain); auto (default) prints plain off a terminal, in CI, or under TERM=linux. Overrides CODEASSEMBLY_OUTPUT_STYLE
   --override-writer  Write the home domain from an installation not designated by \`home-writer\` (install and sync --global only)
   --warn-only        Report a failure and exit 0 instead of failing (sync only; for lifecycle hooks)
@@ -182,13 +183,13 @@ async function runGenerate(subcommand: string, options: InstallOptions): Promise
 }
 
 /** Dispatches a `library` subcommand, printing that command's usage and exiting non-zero when it is unknown. */
-async function runLibrary(subcommand: string, global: boolean): Promise<void> {
+async function runLibrary(subcommand: string, options: { global: boolean; json: boolean }): Promise<void> {
   if (subcommand !== 'list') {
     if (subcommand) console.error(`Error: Unknown library subcommand "${subcommand}"`);
     printLibraryUsage();
     process.exit(1);
   }
-  await libraryListCommand({ global });
+  await libraryListCommand(options);
 }
 
 /**
