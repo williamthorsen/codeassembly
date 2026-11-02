@@ -18,7 +18,7 @@ const config = defineConfig({
   },
   workspaces: [
     { dir: 'agents', legacyIdentities: [{ name: '@codeassembly/agents', tagPrefix: 'agents-v' }] },
-    { dir: 'guidance' },
+    { dir: 'guidance', shouldExclude: true },
     { dir: 'run-core', legacyIdentities: [{ name: '@codeassembly/run-core', tagPrefix: 'run-core-v' }] },
   ],
   retiredPackages: [
