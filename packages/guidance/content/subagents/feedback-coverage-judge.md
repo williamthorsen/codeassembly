@@ -29,6 +29,7 @@ Read guidance only at the pinned commits, never in a working tree, which may con
 - Search a repository with `git -C {root} grep -n -i -e {pattern} {sha} -- {pathspec}`.
 - Read a file with `git -C {root} show {sha}:{path}`.
 - List files with `git -C {root} ls-tree -r --name-only {sha} -- {pathspec}`.
+- Find the change that removed or renamed a path with `git -C {root} log --first-parent --diff-filter=DR --name-status -1 {sha} -- {path}`, and read its full message with `git -C {root} show --no-patch --format=%B {commit}`. On the first-parent line, the commit is the one whose message contains the change's `change-record` block, when the change has one.
 
 Start from the cluster's lesson, then search for the behavior that it names, in the source directories of each pin and anywhere else in its repository that states guidance, such as `AGENTS.md`. Judge a cluster's events together, since they teach one lesson, but place each one on its own: One event of a cluster may be covered while another names a detail that the guidance does not state.
 
@@ -37,6 +38,9 @@ Start from the cluster's lesson, then search for the behavior that it names, in 
 - **`covered`**: A guidance file at its pin states the lesson, so an agent that follows the file behaves as the event asks. A file that only relates to the lesson, or states a broader rule from which the lesson would have to be inferred, does not cover it. Give the pin's `repo` as `source` and the file's path relative to the repository root as `path`, and quote or paraphrase the stating sentence in `reason`.
 - **`duplicate`**: An entry of `references` teaches the same lesson, so the lesson is already addressed by what that entry references. Give the entry's `id` as `duplicateOf`, and state the shared lesson in `reason`.
 - **`obsolete`**: The lesson no longer applies, because its target was removed without a successor, because a later deliberate decision overruled the lesson, or because it concerns a harness or model no longer in use. A removal or a decision must be visible in the guidance or the git history at the pin. State which of the three holds and the evidence in `reason`.
+
+  Before you choose `obsolete` because the target was removed, find the change that removed it and read its message. The target has a successor when the change renamed or moved it, when a `migration` line of the message's `change-record` block names a replacement, or when the message's prose names one. An event whose target has a successor is not obsolete on the removal ground: Judge its lesson against the successor, and place it in `covered` when guidance about the successor states the lesson, in `kept` otherwise. When the message does not name any replacement, the removal ground stands, and `reason` names the commit.
+
 - **`kept`**: Anything else. The event stays in the pool for a triage to weigh.
 
 When you are unsure, choose `kept`. A wrong `covered`, `duplicate`, or `obsolete` takes a live lesson out of the pool, and nothing removes the mark afterward; a wrong `kept` costs one more look at a later run.
@@ -56,7 +60,7 @@ Write the bins file to `output` as JSON:
       "reason": "States that headings use sentence case."
     },
     { "id": "01K...", "bin": "duplicate", "duplicateOf": "01J...", "reason": "Same lesson: headings use sentence case." },
-    { "id": "01K...", "bin": "obsolete", "reason": "The target was removed: the skill was deleted in 3f2a1c0 without a successor." },
+    { "id": "01K...", "bin": "obsolete", "reason": "The target was removed without a successor: 3f2a1c0 deleted the skill, and its message does not name any replacement." },
     { "id": "01K...", "bin": "kept" }
   ]
 }
