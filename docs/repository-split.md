@@ -39,8 +39,8 @@ guidance.
 ### `codeassembly-guidance`
 
 A single package at the repository root, with `content/` at `<repo>/content`, so that the deployed path on a machine
-is `~/repos/projects/codeassembly-guidance.live/content`. The pnpm workspace scaffolding does not carry over; the
-build, check, test, and release scripts do.
+is `~/repos/projects/codeassembly-guidance.live/content`. The workspace's package list does not carry over; the build,
+check, test, and release scripts do.
 
 - `codeassembly` and `@williamthorsen/kb` move from `workspace:*` to pinned npm versions.
 - The helper bundles under `content/scripts` stay tracked build output, so a clone deploys without an install.
@@ -52,6 +52,18 @@ build, check, test, and release scripts do.
   `live` worktree, found at the sibling path `codeassembly.live` or at the path that an override variable names. Both
   repositories carry the `live` tag in `~/.config/repos.yaml`.
 - The release workflow, `.meta/changelog.json`, and `CHANGELOG.md` carry over, so the npm path keeps working.
+- The extraction adds these root files, which a scratch extraction needed before `nmr ci` passed:
+  - `pnpm-workspace.yaml`, without its `packages:` list, for the catalog and the install settings.
+  - `.config/strict-lint.config.ts`, `.editorconfig`, `.prettierrc.js`, and `vitest.root.config.ts`, copied as they
+    are.
+  - `.config/release-kit.config.ts`, rewritten for one package, with `scope:root` as its only scope label.
+  - `.agents/preferences.yaml`, which the repository's own title-template and preferences tests read.
+  - The root `tsconfig.json` options, the root `eslint.config.ts`, the root `devDependencies`, `engines`, and
+    `packageManager`, and the root `.gitignore` and `.prettierignore` entries, merged into guidance's own files.
+    `tsconfig.json` adds `.config/**/*.ts` to its `include`, and `package.json` drops `repository.directory`.
+- The extraction also changes guidance: Four tests that resolve the monorepo root through `../../` resolve the
+  package root instead, and the helper bundles are rebuilt and committed once, because a bundle built at the new path
+  differs in bytes from one built under `packages/guidance`.
 
 ### `codeassembly` (packages)
 
@@ -59,8 +71,8 @@ The current repository minus the extracted trees. It keeps the pnpm workspace, n
 and the root `CHANGELOG.md`.
 
 - `codeassembly-run-core` drops `private: true` and is published, so that a repository outside this one can consume it.
-- The `run-index.json` specification, now a section of guidance's `artifact-conventions.md`, moves here beside the Zod
-  schemas that implement it, and the guidance file points at it. Nothing mechanical ties the two today; the split
+- The `run-index.json` specification is in `packages/run-core/docs/run-data-format.md`, beside the Zod schemas that
+  implement it, and guidance's `artifact-conventions.md` points at it. Nothing mechanical ties the two; the split
   makes the gap a cross-repository one, so the spec lives with the implementation.
 - The repository consumes guidance as a `package: codeassembly-guidance` source rather than a path, which makes it
   the first consumer of the npm path.
@@ -137,8 +149,9 @@ that nothing is deleted before its new home works.
 
 - The new repositories are named `codeassembly-guidance` and `codeassembly-studio`.
 - The guidance repository is a flat single package, with `content/` at the root, rather than a one-package
-  workspace, because the deployed path is shorter and the workspace scaffolding serves nothing there. Whether nmr
-  runs a repository whose root is the package is confirmed in step 3; the fallback is a one-package workspace.
+  workspace, because the deployed path is shorter and the workspace scaffolding serves nothing there. A scratch
+  extraction flattened to the root passed `nmr ci` with the files listed under
+  [`codeassembly-guidance`](#codeassembly-guidance).
 - The `run-index.json` specification moves to the packages repository rather than staying in guidance.
 - The factory and the demos are removed rather than extracted: Extraction would not make their history private, and
   the factory is dormant.
