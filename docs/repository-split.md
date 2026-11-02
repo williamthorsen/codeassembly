@@ -38,32 +38,24 @@ guidance.
 
 ### `codeassembly-guidance`
 
-A single package at the repository root, with `content/` at `<repo>/content`, so that the deployed path on a machine
-is `~/repos/projects/codeassembly-guidance.live/content`. The workspace's package list does not carry over; the build,
-check, test, and release scripts do.
+A pnpm workspace whose one package stays at `packages/guidance`, so that the deployed path on a machine is
+`~/repos/projects/codeassembly-guidance.live/packages/guidance/content`, and so that a second package doesn't move it.
 
 - `codeassembly` and `@williamthorsen/kb` move from `workspace:*` to pinned npm versions.
-- The helper bundles under `content/scripts` stay tracked build output, so a clone deploys without an install.
-- The repository's own `.agents/codeassembly.yaml` names `content` as a path source, as it does now.
+- The helper bundles stay tracked build output, so a clone deploys without an install. A bundle that embeds
+  `package.json` is rebuilt once, because the manifest names the new repository.
+- The repository's own `.agents/codeassembly.yaml` keeps its sources, as it does now.
 - `codeassembly-repo-conventions` (now `.agents/content/guidance/rulebooks/`) moves here, because it describes the
   library.
 - `scripts/codeassembly-sync-live.sh` and `docs/live-deployment.md` move here. The script advances this repository's
-  `live`, installs dependencies, builds the helpers, and deploys with the binary built in the packages repository's
-  `live` worktree, found at the sibling path `codeassembly.live` or at the path that an override variable names. Both
-  repositories carry the `live` tag in `~/.config/repos.yaml`.
-- The release workflow, `.meta/changelog.json`, and `CHANGELOG.md` carry over, so the npm path keeps working.
-- The extraction adds these root files, which a scratch extraction needed before `nmr ci` passed:
-  - `pnpm-workspace.yaml`, without its `packages:` list, for the catalog and the install settings.
-  - `.config/strict-lint.config.ts`, `.editorconfig`, `.prettierrc.js`, and `vitest.root.config.ts`, copied as they
-    are.
-  - `.config/release-kit.config.ts`, rewritten for one package, with `scope:root` as its only scope label.
-  - `.agents/preferences.yaml`, which the repository's own title-template and preferences tests read.
-  - The root `tsconfig.json` options, the root `eslint.config.ts`, the root `devDependencies`, `engines`, and
-    `packageManager`, and the root `.gitignore` and `.prettierignore` entries, merged into guidance's own files.
-    `tsconfig.json` adds `.config/**/*.ts` to its `include`, and `package.json` drops `repository.directory`.
-- The extraction also changes guidance: Four tests that resolve the monorepo root through `../../` resolve the
-  package root instead, and the helper bundles are rebuilt and committed once, because a bundle built at the new path
-  differs in bytes from one built under `packages/guidance`.
+  `live` and builds it, then builds the packages repository's `live` worktree without advancing it, and deploys with
+  that worktree's binary. It finds that worktree at the sibling path `codeassembly.live` or at the path that
+  `CODEASSEMBLY_LIVE_DIR` names.
+- The release workflow, `.meta/changelog.json`, `CHANGELOG.md`, and the `codeassembly-guidance-v*` tags carry over, so
+  the npm path keeps working. npm trusted publishing moves to this repository's `publish.yaml`, and the packages
+  repository stops releasing guidance.
+- The root files are copied from the packages repository and narrowed to one package; the new repository's
+  `AGENTS.md` describes them.
 
 ### `codeassembly` (packages)
 
@@ -86,7 +78,9 @@ does not take the factory or the demos, which were removed from this repository 
 ## Extraction method
 
 The guidance repository is created from this one with `git filter-repo`, keeping the history of `packages/guidance/`
-and moving it to the root. The tree is then deleted here in one commit, after the new repository's CI is green.
+at the same path, together with each file's earlier paths, chiefly under `packages/agents/` before the library became
+its own package. From the extraction on, `packages/guidance` here is frozen, and the tree is deleted here in one
+commit, after every machine deploys from the new repository.
 
 Open `scope:guidance` issues are transferred with `gh issue transfer`; closed issues stay. The open `scope:factory`
 issues were closed as not planned when the factory was removed, and the `scope:factory` label is archived rather than
@@ -112,7 +106,8 @@ configs PR that takes effect on each machine once that repository's `live` is ad
 this repository. Each machine then clones
 `codeassembly-guidance`, creates its `live` worktree, and relinks `codeassembly-sync-live` to the new path.
 
-`~/.config/repos.yaml` gains two entries and moves the `live` tag.
+`~/.config/repos.yaml` gains a `codeassembly-guidance` entry with the `live` tag, which this repository keeps for the
+CLI.
 
 ## Known costs
 
@@ -132,8 +127,9 @@ possible, and the guidance extraction, which touches every machine, follows on i
    guidance package builds with pinned npm versions of `codeassembly` and `@williamthorsen/kb` instead of
    `workspace:*`. Confirm also that `nmr ci` passes on a scratch `git filter-repo` extraction of `packages/guidance`
    flattened to the root.
-4. Extract the guidance repository: filter-repo, flatten to the root, carry the workflows over, get CI green, publish
-   a version from the new repository.
+4. Extract the guidance repository: filter-repo, keep `packages/guidance` at its path, carry the workflows over, get
+   CI green, move npm trusted publishing, publish a version from the new repository, and stop releasing guidance
+   here.
 5. Switch the machines: configs PR, registry entries, `live` worktrees, relink the sync command, and deploy once from
    the new clone.
 6. Remove the guidance tree here, switch this repository to the `package:` guidance source, and transfer the open
@@ -148,10 +144,19 @@ that nothing is deleted before its new home works.
 ## Decisions taken
 
 - The new repositories are named `codeassembly-guidance` and `codeassembly-studio`.
-- The guidance repository is a flat single package, with `content/` at the root, rather than a one-package
-  workspace, because the deployed path is shorter and the workspace scaffolding serves nothing there. A scratch
-  extraction flattened to the root passed `nmr ci` with the files listed under
-  [`codeassembly-guidance`](#codeassembly-guidance).
+- The guidance repository is a one-package workspace with the package at `packages/guidance`, rather than a flat
+  package at the root, which the extraction first planned: The workspace does no harm with one package and is ready
+  for the next, and a later conversion would move the deployed path on every machine. A scratch extraction in the flat
+  layout had passed `nmr ci`; the extraction itself passed `nmr ci` in the workspace layout.
+- The extraction keeps each file's earlier paths, so that the history reaches back before the library was its own
+  package, and the triage check of whether guidance changed after a feedback capture keeps working for captures made
+  before the split. Commit messages are not rewritten.
+- Only the `codeassembly-guidance-v*` tags carry over; the other packages' tags would point at commits that never
+  released them.
+- The deploy script builds the packages repository's `live` worktree as well as running its binary, because once the
+  guidance tree leaves this repository, no other command builds that worktree.
+- `packages/guidance` here is frozen from the extraction until its removal; `AGENTS.md` says so, rather than a CI
+  check.
 - The `run-index.json` specification moves to the packages repository rather than staying in guidance.
 - The factory and the demos are removed rather than extracted: Extraction would not make their history private, and
   the factory is dormant.
