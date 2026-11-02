@@ -25,6 +25,10 @@ catalog:
   zod: '4.6.7'
 
 minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
+# Published by this repository's CI and consumed by guidance right after release.
+minimumReleaseAgeExclude:
+  - '@williamthorsen/kb'
+  - codeassembly
 
 packages:
   - packages/*

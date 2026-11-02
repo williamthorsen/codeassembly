@@ -4,13 +4,14 @@ import { describe, expect, it, vi } from 'vitest';
 
 import type { ScopedKb } from '../types.ts';
 
-const { mockedStat } = vi.hoisted(() => {
-  return { mockedStat: vi.fn() };
+const { mockedDirectoryExists } = vi.hoisted(() => {
+  return { mockedDirectoryExists: vi.fn() };
 });
 
-vi.mock('node:fs/promises', async (importOriginal) => {
-  const original = await importOriginal<typeof import('node:fs/promises')>();
-  return { ...original, stat: mockedStat };
+// `directoryExists` returns false for an absent directory and rethrows any other stat error.
+vi.mock('@williamthorsen/kb/filesystem', async (importOriginal) => {
+  const original = await importOriginal<typeof import('@williamthorsen/kb/filesystem')>();
+  return { ...original, directoryExists: mockedDirectoryExists };
 });
 
 const NOTES_VAULT = join(import.meta.dirname, 'fixtures', 'notes-vault');
@@ -18,7 +19,7 @@ const scope: ScopedKb[] = [{ name: 'notes', path: NOTES_VAULT, via: 'discovery' 
 
 describe('recallNotes permission handling', () => {
   it('skips a KB directory that is genuinely absent (ENOENT)', async () => {
-    mockedStat.mockRejectedValue(fsError('ENOENT'));
+    mockedDirectoryExists.mockResolvedValue(false);
 
     const { recallNotes } = await import('../recall.ts');
     const { hits, missingKbs } = await recallNotes({ query: 'backpressure', scopedKbs: scope });
@@ -28,7 +29,7 @@ describe('recallNotes permission handling', () => {
   });
 
   it('throws when a KB directory exists but is permission-denied (EACCES)', async () => {
-    mockedStat.mockRejectedValue(fsError('EACCES'));
+    mockedDirectoryExists.mockRejectedValue(fsError('EACCES'));
 
     const { recallNotes } = await import('../recall.ts');
     await expect(recallNotes({ query: 'backpressure', scopedKbs: scope })).rejects.toThrow(/EACCES/);
