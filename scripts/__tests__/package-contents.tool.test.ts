@@ -14,7 +14,7 @@ const requiredPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
   'codeassembly-guidance': ['content/codeassembly-content.yaml'],
 };
 
-describe.each(findPublishablePackages())('$name packs correctly', ({ bins, contentDir, dir, name }) => {
+describe.each(findPublishablePackages())('$name packs correctly', ({ bins, contentDir, dir, exportTargets, name }) => {
   const packed = readPackedPaths(dir);
 
   it('includes build output', () => {
@@ -37,6 +37,10 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, conte
     expect(packed.filter((entry) => entry.startsWith(required))).not.toHaveLength(0);
   });
 
+  it.each(exportTargets)('packs the target $target of export $subpath', ({ target }) => {
+    expect(packed.some((entry) => matchesTarget(entry, target))).toBe(true);
+  });
+
   it('excludes the TypeScript sources', () => {
     // A package without a `files` allowlist falls back to `.gitignore`, which ignores `dist/` and includes `src/`.
     expect(packed.filter((entry) => entry.startsWith('src/'))).toEqual([]);
@@ -50,12 +54,40 @@ describe.each(findPublishablePackages())('$name packs correctly', ({ bins, conte
 
 // region | Helpers
 
-/** One workspace package that publishes, with the bin paths and the content directory declared by its manifest. */
+/** One target that a manifest's `exports` declares, under the subpath that exposes it. */
+interface ExportTarget {
+  readonly subpath: string;
+  readonly target: string;
+}
+
+/**
+ * One workspace package that publishes, with the bin paths, the content directory, and the export targets declared by
+ * its manifest.
+ */
 interface PublishablePackage {
   readonly bins: ReadonlyArray<string>;
   readonly contentDir: string | undefined;
   readonly dir: string;
+  readonly exportTargets: ReadonlyArray<ExportTarget>;
   readonly name: string;
+}
+
+/**
+ * Collects the string targets under one export entry, through nested condition objects and fallback arrays. Each
+ * target is returned without its leading `./`, the form in which a pack report lists paths.
+ */
+function collectTargets(value: unknown): ReadonlyArray<string> {
+  if (typeof value === 'string') {
+    return [value.replace(/^\.\//, '')];
+  }
+  if (Array.isArray(value)) {
+    const entries: ReadonlyArray<unknown> = value;
+    return entries.flatMap((entry) => collectTargets(entry));
+  }
+  if (typeof value === 'object' && value !== null) {
+    return Object.values(value).flatMap((entry) => collectTargets(entry));
+  }
+  return [];
 }
 
 /**
@@ -73,9 +105,27 @@ function findPublishablePackages(): ReadonlyArray<PublishablePackage> {
     if (isPrivate || name === undefined) {
       return [];
     }
-    return { bins: readBinPaths(manifest), contentDir: readContentDir(manifest), dir, name };
+    return {
+      bins: readBinPaths(manifest),
+      contentDir: readContentDir(manifest),
+      dir,
+      exportTargets: readExportTargets(manifest),
+      name,
+    };
   });
   return packages.toSorted((a, b) => a.name.localeCompare(b.name));
+}
+
+/** Reports whether a packed path satisfies an export target, in which each `*` matches any run of characters. */
+function matchesTarget(entry: string, target: string): boolean {
+  if (!target.includes('*')) {
+    return entry === target;
+  }
+  const pattern = target
+    .split('*')
+    .map((part) => part.replaceAll(/[.+?^${}()|[\]\\]/g, String.raw`\$&`))
+    .join('.+');
+  return new RegExp(`^${pattern}$`).test(entry);
 }
 
 /** Reads the bin target paths that a manifest declares, tolerating both the string and object forms of the field. */
@@ -101,6 +151,26 @@ function readContentDir(manifest: object): string | undefined {
   }
   const { codeassembly } = manifest;
   return 'content' in codeassembly && typeof codeassembly.content === 'string' ? codeassembly.content : undefined;
+}
+
+/**
+ * Reads every target that a manifest's `exports` declares, keyed by subpath. A string or a bare condition object
+ * declares the `.` subpath alone.
+ */
+function readExportTargets(manifest: object): ReadonlyArray<ExportTarget> {
+  if (!('exports' in manifest)) {
+    return [];
+  }
+  const exportsValue: unknown = manifest.exports;
+  const isSubpathMap =
+    typeof exportsValue === 'object' &&
+    exportsValue !== null &&
+    !Array.isArray(exportsValue) &&
+    Object.keys(exportsValue).some((key) => key.startsWith('.'));
+  const entries: ReadonlyArray<readonly [string, unknown]> = isSubpathMap
+    ? Object.entries(exportsValue)
+    : [['.', exportsValue]];
+  return entries.flatMap(([subpath, value]) => collectTargets(value).map((target) => ({ subpath, target })));
 }
 
 /**
