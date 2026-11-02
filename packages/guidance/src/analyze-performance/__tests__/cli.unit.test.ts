@@ -50,6 +50,17 @@ describe('runCli', () => {
     expect(summary).toMatchObject({ ok: true, lighthouseVersion: '13.6.0' });
   });
 
+  it('runs the Lighthouse CLI from the root, so that the project pnpm settings apply, rather than from --out', async () => {
+    const { dependencies, calls } = buildFakeDependencies({ lighthouse: () => buildReport() });
+
+    await runCli(['collect', '--url', 'http://localhost/', '--out', 'raw', '--runs', '1'], {
+      root,
+      collect: dependencies,
+    });
+
+    expect(calls.lighthouse.map(({ cwd }) => cwd)).toEqual([root, root]);
+  });
+
   it('routes a --private URL to the Lighthouse CLI', async () => {
     const result = await runCli(
       ['collect', '--url', 'https://preview.example.com/', '--private', 'https://preview.example.com/', '--out', 'raw'],

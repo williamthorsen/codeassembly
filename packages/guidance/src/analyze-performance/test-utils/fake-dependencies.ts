@@ -18,7 +18,7 @@ export interface FakeHandlers {
 /** The calls that the fakes received, in order. */
 export interface FakeCalls {
   psi: Array<{ url: string; strategy: string }>;
-  lighthouse: Array<{ url: string; formFactor: 'desktop' | 'mobile' }>;
+  lighthouse: Array<{ url: string; formFactor: 'desktop' | 'mobile'; cwd: string }>;
   crux: Array<Record<string, unknown>>;
 }
 
@@ -42,10 +42,10 @@ export function buildFakeDependencies(handlers: FakeHandlers): { dependencies: C
       if (handlers.crux === undefined) throw new Error('CrUX must not be called');
       return answer(handlers.crux(record));
     },
-    runPnpm: (args) => {
+    runPnpm: (args, cwd) => {
       const url = args[2] ?? '';
       const formFactor = args.includes('--preset=desktop') ? 'desktop' : 'mobile';
-      calls.lighthouse.push({ url, formFactor });
+      calls.lighthouse.push({ url, formFactor, cwd });
       if (handlers.lighthouse === undefined) return Promise.reject(new Error('Lighthouse must not run'));
       const report = handlers.lighthouse(url, formFactor);
       if (report instanceof Error) return Promise.reject(report);

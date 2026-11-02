@@ -99,7 +99,7 @@ async function runCollect(flags: ParsedFlags, context: CommandContext): Promise<
   const runs = parseRuns(readSingle(flags, 'runs'));
   const out = path.resolve(context.root, readRequired(flags, 'out'));
 
-  const manifest = await collect({ urls, privateUrls, runs, out }, context.collect);
+  const manifest = await collect({ urls, privateUrls, runs, out, cwd: context.root }, context.collect);
   const pages = manifest.pages.map((page) => ({
     url: page.url,
     slug: page.slug,

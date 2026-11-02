@@ -142,7 +142,7 @@ describe('collect', () => {
 
 /** Builds collect options for the URLs, writing to the test's output directory. */
 function options(out: string, urls: string[]): Parameters<typeof collect>[0] {
-  return { urls, privateUrls: new Set(), runs: 3, out };
+  return { urls, privateUrls: new Set(), runs: 3, out, cwd: out };
 }
 
 // endregion | Helpers

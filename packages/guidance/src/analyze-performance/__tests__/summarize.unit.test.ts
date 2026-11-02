@@ -111,7 +111,7 @@ async function collectAndSummarize(
   handlers: FakeHandlers,
 ): Promise<ReturnType<typeof summarize>> {
   const { dependencies } = buildFakeDependencies(handlers);
-  const manifest = await collect({ urls, privateUrls: new Set(), runs: 3, out }, dependencies);
+  const manifest = await collect({ urls, privateUrls: new Set(), runs: 3, out, cwd: out }, dependencies);
   return summarize(manifest, out);
 }
 

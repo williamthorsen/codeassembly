@@ -49,6 +49,8 @@ export interface CollectOptions {
   privateUrls: ReadonlySet<string>;
   runs: number;
   out: string;
+  /** The directory from which `pnpm dlx` runs, so that the measured project's pnpm settings, its trust policy among them, apply. */
+  cwd: string;
 }
 
 /** Real dependencies: the global `fetch`, `pnpm` through `execFile`, and `CRUX_API_KEY` from the environment. */
@@ -170,7 +172,7 @@ async function collectWithLighthouse(
   const runs: ManifestRun[] = [];
   for (const formFactor of FORM_FACTORS) {
     for (let index = 1; index <= options.runs; index += 1) {
-      runs.push(await runLighthouse(url, slug, formFactor, index, options.out, dependencies));
+      runs.push(await runLighthouse(url, slug, formFactor, index, options, dependencies));
     }
   }
   const field = await collectField(url, slug, isPrivate, 'lighthouse', {}, options.out, cruxKey, dependencies);
@@ -275,7 +277,7 @@ async function runLighthouse(
   slug: string,
   formFactor: FormFactor,
   index: number,
-  out: string,
+  { out, cwd }: CollectOptions,
   dependencies: CollectDependencies,
 ): Promise<ManifestRun> {
   const relative = path.join(slug, `${formFactor}-${index}.lighthouse.json`);
@@ -291,7 +293,7 @@ async function runLighthouse(
     ...(formFactor === 'desktop' ? ['--preset=desktop'] : []),
   ];
   try {
-    await dependencies.runPnpm(args, out);
+    await dependencies.runPnpm(args, cwd);
   } catch (error) {
     return { formFactor, index, file: null, error: `Lighthouse CLI failed: ${describeError(error)}` };
   }

@@ -20,7 +20,7 @@ The error codes are `command-failed`, `input-not-found`, `invalid-args`, `invali
 
 `select-tool.ts` defines the rule. A URL passed as `--private`, or one on a loopback, private, or link-local address, or on a `localhost`, `.local`, `.localhost`, or `.internal` host, is measured by the Lighthouse CLI alone. Every other URL is measured by PSI, without a key, until a PSI failure falls back: a 429, a 5xx, a request that does not complete, or a PSI error that reports the page unreachable. The first such failure switches the whole page to the Lighthouse CLI, so that every run of a page comes from one tool, and the page's `fallbackReason` states why. Any other PSI failure is recorded on its run without a fallback.
 
-The Lighthouse CLI runs as `pnpm dlx lighthouse@{version}`, with the version pinned by `LIGHTHOUSE_VERSION` in `collect.ts`. It needs `pnpm`, Node 22.19 or later, and a local Chrome; when any of them is missing, or pnpm refuses to install the pinned release, each run records the CLI's error. The desktop form factor adds `--preset=desktop`.
+The Lighthouse CLI runs as `pnpm dlx lighthouse@{version}` from the working directory in which `collect` is invoked, so that the measured project's pnpm settings, such as a `trustPolicy`, govern the install, with the version pinned by `LIGHTHOUSE_VERSION` in `collect.ts`. It needs `pnpm`, Node 22.19 or later, and a local Chrome; when any of them is missing, or pnpm refuses to install the pinned release, each run records the CLI's error. The desktop form factor adds `--preset=desktop`.
 
 ## Field data
 
