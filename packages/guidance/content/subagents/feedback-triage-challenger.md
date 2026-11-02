@@ -40,11 +40,16 @@ For each cluster:
 
 1. **Check the target.** Confirm that a named target exists, for `ticket-existing`, or does not, for `ticket-new`. Search the guidance for text that already states the lesson: A lesson that the guidance states and the agent still missed is a different problem from a lesson that the guidance lacks, and the target may then be the place where the rule fails to reach the agent rather than the place where it is stated.
 2. **Check the repository.** An artifact with a `<!-- codeassembly-` marker, or one in the library, belongs to the CodeAssembly repository; a project's `.agents/content` artifact belongs to that project's repository. Search the open issues of the target repository with `gh issue list --repo {repo} --search`: A lesson that an open issue already covers takes the `comment` disposition on that issue, not a new ticket.
-3. **Argue against the priority.** Ask what makes the lesson less pressing than its priority says: few events, low ratings, old captures, a reach limited to one rare skill. Argue it up when the signals support that instead. Read the three signals separately; do not combine them into one score.
-4. **Argue against the disposition.** Ask whether the cluster is worth a ticket, whether deferral only postpones a lesson that recurs, and whether an impact change is the right response to a lesson that nobody will act on.
-5. **Propose.** State `keep` when every argument fails on the evidence, and otherwise the priority, disposition, and target that you would set.
+3. **Check the guidance history.** Check whether the guidance that governs the lesson changed after the cluster's latest capture, per [Guidance history](#guidance-history).
+4. **Argue against the priority.** Ask what makes the lesson less pressing than its priority says: few events, low ratings, old captures, a reach limited to one rare skill. When the guidance changed after the latest capture, argue that the events show nothing about the current guidance, name the change in the argument, and propose `low` unless evidence shows the failure recurring under the changed guidance. Argue the priority up when the signals support that instead. Read the three signals separately; do not combine them into one score.
+5. **Argue against the disposition.** Ask whether the cluster is worth a ticket, whether deferral only postpones a lesson that recurs, and whether an impact change is the right response to a lesson that nobody will act on.
+6. **Propose.** State `keep` when every argument fails on the evidence, and otherwise the priority, disposition, and target that you would set.
 
 Do not propose a new cluster or a change to a cluster's events: The clustering is settled, and you judge what the triage recommends for each cluster. Do not draft the guidance change.
+
+## Guidance history
+
+<!-- include: ../_partials/guidance-change-since-capture.md / -->
 
 ## What you return
 
@@ -54,7 +59,7 @@ One section per cluster, in the order of the recommendations file, then the retu
 ### {id}: {lesson}
 
 - Argument: {the strongest case against the priority and the disposition, in one or two sentences}
-- Evidence: {what the guidance and the tracker show, with paths and issue numbers; `Unverified` when the budget ran out before this cluster}
+- Evidence: {what the guidance, its history, and the tracker show, with paths, commits, and issue numbers; `Unverified` when the budget ran out before this cluster}
 - Proposes: {keep | priority {priority}, {disposition} {target or issue URL, when the disposition has one}}
 ```
 
