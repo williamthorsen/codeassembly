@@ -10,6 +10,7 @@ import { realGit } from '../git.ts';
 import { pinSources } from '../pin.ts';
 
 const GITHUB_URL = 'https://github.com/acme/guide.git';
+const QUOTE = 'Headings use sentence case.';
 
 describe(pinSources, () => {
   let base: string;
@@ -77,7 +78,7 @@ describe(pinSources, () => {
 });
 
 describe('validate against a pinned repository', () => {
-  it('accepts a covered path that exists at the pin and rejects one that does not', async () => {
+  it('accepts a covered quote that the file contains at the pin, and rejects an absent path or quote', async () => {
     const base = await realpath(await mkdtemp(path.join(tmpdir(), 'curate-validate-')));
     try {
       const { guide, sha } = await makeGuideClone(base);
@@ -93,6 +94,7 @@ describe('validate against a pinned repository', () => {
             events: [
               { id: '01A', summary: 'A', excerpt: '' },
               { id: '01B', summary: 'B', excerpt: '' },
+              { id: '01C', summary: 'C', excerpt: '' },
             ],
           },
         ],
@@ -102,8 +104,16 @@ describe('validate against a pinned repository', () => {
       await writeFile(path.join(work, 'assignment-01.json'), JSON.stringify(assignment), 'utf8');
       const bins = {
         events: [
-          { id: '01A', bin: 'covered', source: 'acme/guide', path: 'rules/headings.md', reason: 'States it.' },
-          { id: '01B', bin: 'covered', source: 'acme/guide', path: 'rules/missing.md', reason: 'States it.' },
+          { id: '01A', bin: 'covered', source: 'acme/guide', path: 'rules/headings.md', quote: QUOTE, reason: 'It.' },
+          { id: '01B', bin: 'covered', source: 'acme/guide', path: 'rules/missing.md', quote: QUOTE, reason: 'It.' },
+          {
+            id: '01C',
+            bin: 'covered',
+            source: 'acme/guide',
+            path: 'rules/headings.md',
+            quote: 'Use title case.',
+            reason: 'It.',
+          },
         ],
       };
       await writeFile(path.join(work, 'bins-01.json'), JSON.stringify(bins), 'utf8');
@@ -115,7 +125,10 @@ describe('validate against a pinned repository', () => {
       expect(result).toMatchObject({
         ok: false,
         error: 'invalid-bins',
-        violations: [{ event: '01B', message: `rules/missing.md does not exist in acme/guide at ${sha}` }],
+        violations: [
+          { event: '01B', message: `rules/missing.md does not exist in acme/guide at ${sha}` },
+          { event: '01C', message: `the quote does not appear in rules/headings.md in acme/guide at ${sha}` },
+        ],
       });
     } finally {
       await rm(base, { recursive: true, force: true });
@@ -142,7 +155,7 @@ async function makeGuideClone(base: string): Promise<{ guide: string; sha: strin
   execFileSync('git', ['init', '--quiet', '--initial-branch=main', seed]);
   await mkdir(path.join(seed, 'rules'));
   await mkdir(path.join(seed, 'content'));
-  await writeFile(path.join(seed, 'rules', 'headings.md'), 'Headings use sentence case.\n', 'utf8');
+  await writeFile(path.join(seed, 'rules', 'headings.md'), 'Headings use **sentence\ncase**.\n', 'utf8');
   await writeFile(path.join(seed, 'content', 'index.md'), 'Index.\n', 'utf8');
   git(seed, 'add', '.');
   git(seed, '-c', 'user.name=Test', '-c', 'user.email=test@example.test', 'commit', '--quiet', '--message', 'Seed');

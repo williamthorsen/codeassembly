@@ -27,7 +27,7 @@ Never edit a guidance artifact: a skill, a subagent, a rulebook, a partial, a gu
 
 Each judge sorts each event into one bin, and step 7 marks it accordingly:
 
-- `covered`: Guidance at its pinned commit states the lesson. The event is marked `addressed-by` a GitHub permalink to the file at that commit.
+- `covered`: Guidance at its pinned commit states the lesson, in a sentence that the judge quotes and that `validate` finds in the file. The event is marked `addressed-by` a GitHub permalink to the file at that commit.
 - `duplicate`: An already-addressed event teaches the same lesson. The event is marked `addressed-by` that event's references, other than triage artifacts and covered permalinks.
 - `obsolete`: The target was removed without a successor, a later deliberate decision overruled the lesson, or it concerns a harness or model no longer in use. The event is tagged `obsolete`.
 - `kept`: The event stays in the pool, and nothing is written.
@@ -80,9 +80,9 @@ node {harness_home_dir}/skills/curate-feedback/curate-feedback.mjs {command} {fl
 
 Under `--apply`, skip this step.
 
-Present the `counts` lines that `validate` reports, one per bin, then the marks from `record.json`: one line per `marks.addressedBy` group, with its reference and event count, and one line for `marks.obsolete`. Under `--list`, add a table of every event in `record.json` with its summary, bin, reference, and reason. Ask in the action-items block for one approval of every mark.
+Present the `counts` lines that `validate` reports, one per bin, then the marks from `record.json`: one line per `marks.addressedBy` group, with its reference and event count, and one line for `marks.obsolete`. Under `--list`, add a table of every event in `record.json` with its summary, bin, reference, reason, and quote. Ask in the action-items block for one approval of every mark.
 
-The developer may move events between bins by id in the reply. For each move, edit the entry in the bins file that the event's `file` in `record.json` names. A move into `covered` needs the guidance file, and a move into `duplicate` needs the addressed event; ask for either when the reply does not name it. Then run `validate` again, and present only the changed counts and marks before writing. The approval covers every mark that step 7 applies.
+The developer may move events between bins by id in the reply. For each move, edit the entry in the bins file that the event's `file` in `record.json` names. A move into `covered` needs the guidance file, and a move into `duplicate` needs the addressed event; ask for either when the reply does not name it. For a move into `covered`, read the file at its pin with `git -C {root} show {sha}:{path}` and copy the sentence that states the lesson into the entry's `quote`. Then run `validate` again, and present only the changed counts and marks before writing. The approval covers every mark that step 7 applies.
 
 <!-- include: ../_partials/action-items.md / -->
 

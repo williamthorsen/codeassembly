@@ -239,7 +239,7 @@ async function runValidate(flags: ParsedFlags, context: CommandContext): Promise
       continue;
     }
     const entry = { assignment, bins, file };
-    violations.push(...checkBins(entry, (root, sha, relative) => git.hasFileAt(root, sha, relative)));
+    violations.push(...checkBins(entry, (root, sha, relative) => git.readFileAt(root, sha, relative)));
     judged.push(entry);
   }
   if (violations.length > 0) {

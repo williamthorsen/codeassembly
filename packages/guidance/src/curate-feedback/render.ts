@@ -40,15 +40,15 @@ export function renderArtifact(record: CurationRecord): string {
   ];
   const rows = record.events.map((event) => {
     const reference = event.reference ?? (event.duplicateOf === undefined ? '' : `duplicate of ${event.duplicateOf}`);
-    return `| ${event.id} | ${escapeCell(event.summary)} | ${event.bin} | ${escapeCell(reference)} | ${escapeCell(event.reason ?? '')} |`;
+    return `| ${event.id} | ${escapeCell(event.summary)} | ${event.bin} | ${escapeCell(reference)} | ${escapeCell(event.reason ?? '')} | ${escapeCell(event.quote ?? '')} |`;
   });
   lines.push(
     ...(marks.length === 0 ? ['None.'] : marks),
     '',
     '## Events',
     '',
-    '| Event | Summary | Bin | Reference | Reason |',
-    '| --- | --- | --- | --- | --- |',
+    '| Event | Summary | Bin | Reference | Reason | Quote |',
+    '| --- | --- | --- | --- | --- | --- |',
     ...rows,
   );
   return `${lines.join('\n')}\n`;

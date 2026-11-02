@@ -35,7 +35,7 @@ Start from the cluster's lesson, then search for the behavior that it names, in 
 
 ## The bins
 
-- **`covered`**: A guidance file at its pin states the lesson, so an agent that follows the file behaves as the event asks. A file that only relates to the lesson, or states a broader rule from which the lesson would have to be inferred, does not cover it. Give the pin's `repo` as `source` and the file's path relative to the repository root as `path`, and quote or paraphrase the stating sentence in `reason`.
+- **`covered`**: A guidance file at its pin states the lesson, so an agent that follows the file behaves as the event asks. A file that only relates to the lesson, or states a broader rule from which the lesson would have to be inferred, does not cover it. Give the pin's `repo` as `source`, the file's path relative to the repository root as `path`, the sentence that states the lesson as `quote`, copied verbatim from the file at the pin, and how that sentence covers the event as `reason`. `validate` rejects a quote that the file does not contain, ignoring only differences in whitespace and in `*`, `_`, and backtick markers.
 - **`duplicate`**: An entry of `references` teaches the same lesson, so the lesson is already addressed by what that entry references. Give the entry's `id` as `duplicateOf`, and state the shared lesson in `reason`.
 - **`obsolete`**: The lesson no longer applies, because its target was removed without a successor, because a later deliberate decision overruled the lesson, or because it concerns a harness or model no longer in use. A removal or a decision must be visible in the guidance or the git history at the pin. State which of the three holds and the evidence in `reason`.
 
@@ -56,8 +56,9 @@ Write the bins file to `output` as JSON:
       "id": "01K...",
       "bin": "covered",
       "source": "owner/repo",
-      "path": "content/guidance/rulebooks/writing.md",
-      "reason": "States that headings use sentence case."
+      "path": "content/guidance/rulebooks/releases.md",
+      "quote": "Tag a release only from the default branch.",
+      "reason": "The event asks that a release never be tagged from a feature branch, which the sentence forbids."
     },
     { "id": "01K...", "bin": "duplicate", "duplicateOf": "01J...", "reason": "Same lesson: headings use sentence case." },
     { "id": "01K...", "bin": "obsolete", "reason": "The target was removed without a successor: 3f2a1c0 deleted the skill, and its message does not name any replacement." },
