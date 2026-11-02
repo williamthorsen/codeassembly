@@ -1,5 +1,69 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-11-02",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds the `curate-feedback` skill, which has `feedback-coverage-judge` subagents sort each open feedback event into covered, duplicate, obsolete, or kept against guidance pinned at a commit, and then, after approval or under `--apply`, marks every event that is not kept through `kb-update-events` and records the run in a `feedback-curation` artifact. (#2231)",
+            "hash": "6bb5907a3426bb91a6f1a4a340b3a4180576a503",
+            "entry": 1
+          },
+          {
+            "description": "Adds each covered entry's quote to the `feedback-curation` artifact's events table and to the approval table that `curate-feedback --list` presents, so that the developer can check every covered verdict against its stating sentence before approving the marks. (#2236)",
+            "hash": "73c4bd7e28cccf9b4875a18c491993ac371869df",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "🪦 Removed",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Remove the factory and the demos (#2234)",
+            "body": "Removes the dormant factory visualization package and the catwalk demos, together with the docs, repo-local skills, dependencies, and configuration that only they used. Adds to `docs/repository-split.md` the command that finds the last commit containing the factory, which is the commit from which a revival restores it.",
+            "hash": "a2715300691038525090dd8299b4c6602fbba607"
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that the `feedback-coverage-judge` subagent of `curate-feedback` marked a feedback event `obsolete` when the change that removed the event's target had renamed or moved it, or had named a replacement for it. (#2233)",
+            "hash": "628e9f86e2b47f4b63922468157f31e4da5c2155",
+            "entry": 1
+          },
+          {
+            "description": "Fixes the issue that `curate-feedback validate` accepted a `covered` entry after checking only that the cited guidance file existed, by requiring a verbatim `quote` of the stating sentence and rejecting the entry when the file at the pin does not contain it, ignoring differences in whitespace and in `*`, `_`, and backtick markers. (#2236)",
+            "hash": "73c4bd7e28cccf9b4875a18c491993ac371869df",
+            "entry": 1
+          },
+          {
+            "description": "Fixes the issue that `triage-feedback` ranked a feedback cluster by its events even when all of them predated a change to the guidance that governs its lesson, and directs the skill and its `feedback-triage-challenger` subagent to check that guidance's commit history and set such a cluster to `low` unless evidence shows the failure recurring under the changed guidance. (#2243)",
+            "hash": "4d16db28a5e06835ecee87bd6d07c758d9ce00b4",
+            "entry": 1
+          },
+          {
+            "description": "Fixes the issue that `triage-feedback` and `triage-spike-findings` accepted a defense against the challenger that rested on grounds other than the evidence named by the challenger's argument. (#2243)",
+            "hash": "4d16db28a5e06835ecee87bd6d07c758d9ce00b4",
+            "entry": 2
+          },
+          {
+            "description": "Remove the unshipped `source` export condition from the published packages (#2244)",
+            "body": "Removes the `source` export condition from `codeassembly`, `@williamthorsen/kb`, and `codeassembly-run-core`, because it pointed at TypeScript files that their tarballs don't contain, so that a consumer that enables the condition resolves the shipped `dist/` output instead of failing.",
+            "hash": "1e1dfc9f376b90956f1c769e0d439a142d43a84b"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.3.0",
     "date": "2026-11-01",
     "sections": [

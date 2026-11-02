@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 — 2026-11-02
+
+### 🎉 Features
+
+- Adds the `curate-feedback` skill, which has `feedback-coverage-judge` subagents sort each open feedback event into covered, duplicate, obsolete, or kept against guidance pinned at a commit, and then, after approval or under `--apply`, marks every event that is not kept through `kb-update-events` and records the run in a `feedback-curation` artifact. (#2231)
+- Adds each covered entry's quote to the `feedback-curation` artifact's events table and to the approval table that `curate-feedback --list` presents, so that the developer can check every covered verdict against its stating sentence before approving the marks. (#2236)
+
+### 🪦 Removed
+
+- Remove the factory and the demos (#2234)
+
+  Removes the dormant factory visualization package and the catwalk demos, together with the docs, repo-local skills, dependencies, and configuration that only they used. Adds to `docs/repository-split.md` the command that finds the last commit containing the factory, which is the commit from which a revival restores it.
+
+### 🐛 Bug fixes
+
+- Fixes the issue that the `feedback-coverage-judge` subagent of `curate-feedback` marked a feedback event `obsolete` when the change that removed the event's target had renamed or moved it, or had named a replacement for it. (#2233)
+- Fixes the issue that `curate-feedback validate` accepted a `covered` entry after checking only that the cited guidance file existed, by requiring a verbatim `quote` of the stating sentence and rejecting the entry when the file at the pin does not contain it, ignoring differences in whitespace and in `*`, `_`, and backtick markers. (#2236)
+- Fixes the issue that `triage-feedback` ranked a feedback cluster by its events even when all of them predated a change to the guidance that governs its lesson, and directs the skill and its `feedback-triage-challenger` subagent to check that guidance's commit history and set such a cluster to `low` unless evidence shows the failure recurring under the changed guidance. (#2243)
+- Fixes the issue that `triage-feedback` and `triage-spike-findings` accepted a defense against the challenger that rested on grounds other than the evidence named by the challenger's argument. (#2243)
+- Remove the unshipped `source` export condition from the published packages (#2244)
+
+  Removes the `source` export condition from `codeassembly`, `@williamthorsen/kb`, and `codeassembly-run-core`, because it pointed at TypeScript files that their tarballs don't contain, so that a consumer that enables the condition resolves the shipped `dist/` output instead of failing.
+
 ## 0.3.0 — 2026-11-01
 
 ### 🎉 Features

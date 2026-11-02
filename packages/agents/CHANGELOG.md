@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.20.0 — 2026-11-02
+
+### 🎉 Features
+
+- Adds a `--json` option to `codeassembly library list`, which prints each declared source's name, absolute content directory, and artifacts in precedence order. (#2231)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that `codeassembly`, `@williamthorsen/kb`, and `codeassembly-run-core` failed to resolve for a consumer that enables the `source` export condition, such as `codeassembly bundle-helpers` or a TypeScript project that sets `customConditions: ["source"]`, because the condition pointed at TypeScript files that the published packages don't contain. (#2244)
+
 ## 0.19.0 — 2026-11-01
 
 ### 🎉 Features

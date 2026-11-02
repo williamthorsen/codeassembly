@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.1 — 2026-11-02
+
+### 🐛 Bug fixes
+
+- Fixes the issue that `codeassembly`, `@williamthorsen/kb`, and `codeassembly-run-core` failed to resolve for a consumer that enables the `source` export condition, such as `codeassembly bundle-helpers` or a TypeScript project that sets `customConditions: ["source"]`, because the condition pointed at TypeScript files that the published packages don't contain. (#2244)
+
 ## 0.11.0 — 2026-11-01
 
 ### 🎉 Features
