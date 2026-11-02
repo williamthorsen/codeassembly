@@ -65,7 +65,7 @@ root: {repository root}
 
 **A reply that lacks the `Phase: disposition-challenge` line is a challenger stopped by its turn limit.** Resume it once, asking only for its report; on Claude Code, send it a message with `SendMessage`, addressed by the agent ID that its dispatch returned. When the resumed challenger still does not return a report, do not dispatch again: Record the challenge as not returned, treat every item as unchallenged, and say so in the record's `challengeSummary`.
 
-Save the reply as `challenge.md`. Then take each item in turn: Defend the recommendation when the argument fails on the evidence, modify it when the argument stands in part, and abandon it when the argument stands.
+Save the reply as `challenge.md`. Then take each item in turn: Defend the recommendation when the argument fails on the evidence, modify it when the argument stands in part, and abandon it when the argument stands. A defense answers the argument on the evidence that the argument names; a defense that rests on other grounds fails.
 
 Decide the blockers of every `ticket` item under the threshold in the ticketing preferences rulebook: An item is blocked by another ticket when there is some probability that the other ticket affects it and should be merged first, and a ticket whose design takes another ticket's outcome as an input is blocked by it. A blocker is another `ticket` item, by id, or an open issue in this repository outside the triage, by number; check each issue with `gh issue view {issue} --json state`, and omit a closed one, which does not block. Record every such dependency in `blockedBy`, never in `notes`.
 
