@@ -12,6 +12,7 @@ import { describe, expect, it } from 'vitest';
 // skill that begins asking as a matter of course belongs here.
 const REINFORCED_SKILLS: ReadonlyArray<string> = [
   'add-change-record',
+  'analyze-performance',
   'assess-ticket',
   'brainstorming',
   'collaborate',
