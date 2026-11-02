@@ -20,7 +20,7 @@ describe.each(HARNESS_IDS)('content rendered for %s', (harness) => {
 });
 ```
 
-Every function takes the content root as a filesystem path. A workspace consumer resolves the subpath to TypeScript source through the `source` export condition; any other consumer resolves it to the built output.
+Every function takes the content root as a filesystem path. Every consumer, in the workspace or not, resolves the subpath to the built output.
 
 ## Functions
 

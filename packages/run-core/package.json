@@ -24,22 +24,18 @@
   "type": "module",
   "exports": {
     ".": {
-      "source": "./src/index.ts",
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js"
     },
     "./config": {
-      "source": "./src/config.ts",
       "types": "./dist/esm/config.d.ts",
       "import": "./dist/esm/config.js"
     },
     "./parsers": {
-      "source": "./src/parsers/run-data-parser.ts",
       "types": "./dist/esm/parsers/run-data-parser.d.ts",
       "import": "./dist/esm/parsers/run-data-parser.js"
     },
     "./scanners": {
-      "source": "./src/scanners/index.ts",
       "types": "./dist/esm/scanners/index.d.ts",
       "import": "./dist/esm/scanners/index.js"
     }

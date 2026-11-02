@@ -23,72 +23,58 @@
   "type": "module",
   "exports": {
     ".": {
-      "source": "./src/index.ts",
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js"
     },
     "./check": {
-      "source": "./src/check/index.ts",
       "types": "./dist/esm/check/index.d.ts",
       "import": "./dist/esm/check/index.js"
     },
     "./config": {
-      "source": "./src/config/index.ts",
       "types": "./dist/esm/config/index.d.ts",
       "import": "./dist/esm/config/index.js"
     },
     "./create": {
-      "source": "./src/create/index.ts",
       "types": "./dist/esm/create/index.d.ts",
       "import": "./dist/esm/create/index.js"
     },
     "./discovery": {
-      "source": "./src/discovery/index.ts",
       "types": "./dist/esm/discovery/index.d.ts",
       "import": "./dist/esm/discovery/index.js"
     },
     "./filesystem": {
-      "source": "./src/filesystem/index.ts",
       "types": "./dist/esm/filesystem/index.d.ts",
       "import": "./dist/esm/filesystem/index.js"
     },
     "./frontmatter": {
-      "source": "./src/frontmatter/index.ts",
       "types": "./dist/esm/frontmatter/index.d.ts",
       "import": "./dist/esm/frontmatter/index.js"
     },
     "./layout": {
-      "source": "./src/layout/index.ts",
       "types": "./dist/esm/layout/index.d.ts",
       "import": "./dist/esm/layout/index.js"
     },
     "./note-io": {
-      "source": "./src/note-io/index.ts",
       "types": "./dist/esm/note-io/index.d.ts",
       "import": "./dist/esm/note-io/index.js"
     },
     "./records": {
-      "source": "./src/records/index.ts",
       "types": "./dist/esm/records/index.d.ts",
       "import": "./dist/esm/records/index.js"
     },
     "./scaffold": {
-      "source": "./src/scaffold/index.ts",
       "types": "./dist/esm/scaffold/index.d.ts",
       "import": "./dist/esm/scaffold/index.js"
     },
     "./tags": {
-      "source": "./src/tags/index.ts",
       "types": "./dist/esm/tags/index.d.ts",
       "import": "./dist/esm/tags/index.js"
     },
     "./taxonomy": {
-      "source": "./src/taxonomy/index.ts",
       "types": "./dist/esm/taxonomy/index.d.ts",
       "import": "./dist/esm/taxonomy/index.js"
     },
     "./vault-integrity": {
-      "source": "./src/vault-integrity/index.ts",
       "types": "./dist/esm/vault-integrity/index.d.ts",
       "import": "./dist/esm/vault-integrity/index.js"
     }
