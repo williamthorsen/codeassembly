@@ -20,8 +20,8 @@ export class BinsError extends Error {
   }
 }
 
-/** Reports whether a file exists at a pinned commit, relative to the root of the pinned repository. */
-export type FileAtPin = (root: string, sha: string, file: string) => boolean;
+/** Returns a file's content at a pinned commit, relative to the pinned repository's root, or `undefined` when absent. */
+export type ReadFileAtPin = (root: string, sha: string, file: string) => string | undefined;
 
 /**
  * Builds the curation record from judged assignments that {@link checkBins} accepts: each event's bin, the covered
@@ -51,7 +51,7 @@ export function buildRecord(judged: readonly JudgedAssignment[]): CurationRecord
         const pin = pins.get(entry.source ?? '');
         if (pin === undefined || entry.path === undefined) throw new Error(`covered entry ${entry.id} was not checked`);
         const reference = `https://github.com/${pin.repo}/blob/${pin.sha}/${entry.path}`;
-        events.push({ ...base, reference });
+        events.push({ ...base, ...(entry.quote !== undefined && { quote: entry.quote }), reference });
         addToGroup(groups, [reference], entry.id);
       } else if (entry.bin === 'duplicate') {
         const copied = references.get(entry.duplicateOf ?? '') ?? [];
@@ -75,10 +75,10 @@ export function buildRecord(judged: readonly JudgedAssignment[]): CurationRecord
 
 /**
  * Checks one judge's bins file against its assignment and reports every violation: an event missing, placed twice, or
- * not in the assignment; a covered entry without a pinned source or a path that exists at the pin; a duplicate that
- * does not name a reference entry; and a non-kept entry without a reason.
+ * not in the assignment; a covered entry without a pinned source, a path that exists at the pin, or a quote that the
+ * file contains; a duplicate that does not name a reference entry; and a non-kept entry without a reason.
  */
-export function checkBins(judged: JudgedAssignment, fileAtPin: FileAtPin): BinViolation[] {
+export function checkBins(judged: JudgedAssignment, readFileAtPin: ReadFileAtPin): BinViolation[] {
   const { assignment, bins, file } = judged;
   const violations: BinViolation[] = [];
   function report(event: string | null, message: string): void {
@@ -101,7 +101,7 @@ export function checkBins(judged: JudgedAssignment, fileAtPin: FileAtPin): BinVi
     if (entry.bin !== 'kept' && (entry.reason === undefined || entry.reason.trim() === '')) {
       report(entry.id, `an entry in the ${entry.bin} bin needs a reason`);
     }
-    const coveredDefect = entry.bin === 'covered' ? findCoveredDefect(entry, pins, fileAtPin) : undefined;
+    const coveredDefect = entry.bin === 'covered' ? findCoveredDefect(entry, pins, readFileAtPin) : undefined;
     if (coveredDefect !== undefined) report(entry.id, coveredDefect);
     if (entry.bin === 'duplicate' && !referenceIds.has(entry.duplicateOf ?? '')) {
       report(entry.id, `a duplicate must name a reference entry (got "${entry.duplicateOf ?? ''}")`);
@@ -132,20 +132,32 @@ function addToGroup(
   }
 }
 
-/** Returns what is wrong with a covered entry's source or path, or `undefined` when both check out at the pin. */
+/**
+ * Returns what is wrong with a covered entry's source, path, or quote, or `undefined` when all three check out at the
+ * pin.
+ */
 function findCoveredDefect(
   entry: BinsFile['events'][number],
   pins: ReadonlyMap<string, Assignment['pins'][number]>,
-  fileAtPin: FileAtPin,
+  readFileAtPin: ReadFileAtPin,
 ): string | undefined {
   const pin = pins.get(entry.source ?? '');
   if (pin === undefined) return `a covered entry must name a pinned source (got "${entry.source ?? ''}")`;
   if (entry.path === undefined || entry.path === '' || path.isAbsolute(entry.path)) {
     return 'a covered entry needs a path relative to the repository root';
   }
-  return fileAtPin(pin.root, pin.sha, entry.path)
+  const content = readFileAtPin(pin.root, pin.sha, entry.path);
+  if (content === undefined) return `${entry.path} does not exist in ${pin.repo} at ${pin.sha}`;
+  const quote = normalizeForQuote(entry.quote ?? '');
+  if (quote === '') return 'a covered entry needs a quote of the sentence that states the lesson';
+  return normalizeForQuote(content).includes(quote)
     ? undefined
-    : `${entry.path} does not exist in ${pin.repo} at ${pin.sha}`;
+    : `the quote does not appear in ${entry.path} in ${pin.repo} at ${pin.sha}`;
+}
+
+/** Strips emphasis and code markers and collapses whitespace, so that a faithful quote of formatted text matches. */
+function normalizeForQuote(text: string): string {
+  return text.replaceAll(/[*_`]/g, '').replaceAll(/\s+/g, ' ').trim();
 }
 
 // endregion | Helpers

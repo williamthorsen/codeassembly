@@ -11,12 +11,12 @@ import type { CurateGit } from '../git.ts';
 const SHA = 'b'.repeat(40);
 const TICKET = 'https://github.com/acme/guide/issues/7';
 
-/** A git adapter that pins every directory to one repository and reports every path as present. */
+/** A git adapter that pins every directory to one repository and reads every path as one stating sentence. */
 const fakeGit: CurateGit = {
   fetchBranchHead: () => SHA,
   findDefaultBranch: () => 'main',
   findTopLevel: () => '/repos/guide',
-  hasFileAt: () => true,
+  readFileAt: () => 'Headings use sentence case.\n',
   readOriginUrl: () => 'git@github.com:acme/guide.git',
 };
 
@@ -72,7 +72,14 @@ describe(runCli, () => {
       join(work, 'assignments', 'bins-01.json'),
       JSON.stringify({
         events: [
-          { id: '01A', bin: 'covered', source: 'acme/guide', path: 'rules/a.md', reason: 'States it.' },
+          {
+            id: '01A',
+            bin: 'covered',
+            source: 'acme/guide',
+            path: 'rules/a.md',
+            quote: 'Headings use sentence case.',
+            reason: 'States it.',
+          },
           { id: '01B', bin: 'duplicate', duplicateOf: '01Z', reason: 'Same lesson.' },
         ],
       }),
