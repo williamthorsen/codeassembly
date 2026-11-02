@@ -12,6 +12,7 @@ import { isTestDirectory } from '../test-utils/test-directories.ts';
 // every installed context, so they are forbidden in installable Markdown, except in the small set of files below,
 // whose references are intentional source-tree citations (documentation naming where the canonical source is).
 const ALLOWLIST: ReadonlyArray<string> = [
+  '_partials/guidance-change-since-capture.md',
   '_partials/README.md',
   'skills/_data/artifact-conventions.md',
   'skills/_data/deployed-file-provenance.md',

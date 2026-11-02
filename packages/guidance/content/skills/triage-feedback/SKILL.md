@@ -46,6 +46,10 @@ A ticket disposition names the repository that owns its target:
 - A project's `.agents/content` artifact belongs to that project's repository: Take it from the events' `repo` field, and confirm it with `gh repo view {repo} --json nameWithOwner`.
 - A new or undecided target belongs to the current repository.
 
+## Guidance history
+
+<!-- include: ../../_partials/guidance-change-since-capture.md / -->
+
 ## Process
 
 `<store>` below is the `--store` argument, `@feedback` when it is omitted. Every helper command prints one JSON result. When a result has `ok: false`, stop and report its `error` and `message`, except when a step below says otherwise. Invoke the helpers as:
@@ -70,7 +74,7 @@ node {harness_home_dir}/skills/triage-feedback/triage-feedback.mjs {command} {fl
 
 ### 3. Recommend
 
-Read `clusters.json`. Assign every candidate a priority and a reason, then order the clusters by priority, recurrence, and latest capture; the first `--limit` clusters are surfaced. For each surfaced cluster, suggest a disposition, and for a ticket disposition, find the target: Search the guidance for the artifact that states or should state the lesson, and decide its repository by the rules above. Then search that repository's open issues with `gh issue list --repo {repo} --search`; when one already covers the lesson, suggest `comment` on it instead.
+Read `clusters.json`. For every candidate, search the guidance for the artifact that states or should state the lesson, decide its repository by the rules above, and check its history per [Guidance history](#guidance-history). Then assign every candidate a priority and a reason. A cluster whose latest capture predates a change to its guidance takes `low`, unless an event or other evidence shows the failure recurring under the changed guidance. Its reason names the change, and when the priority is above `low`, it also cites that evidence. Order the clusters by priority, recurrence, and latest capture; the first `--limit` clusters are surfaced. For each surfaced cluster, suggest a disposition, and for a ticket disposition, take the artifact found above as the target. Then search the target repository's open issues with `gh issue list --repo {repo} --search`; when one already covers the lesson, suggest `comment` on it instead.
 
 Write `{work}/recommendations.md`: one line per cluster, with its id, priority, disposition, target, target repository, and a one-sentence reason. Write a line for every candidate, not only the surfaced ones, because the challenger argues against every priority. Nothing else goes in the file, because the challenger reads it and a sentence of your reasoning there would bias its judgment toward yours.
 
@@ -86,7 +90,7 @@ root: {repository root}
 
 **A reply that lacks the `Phase: feedback-triage-challenge` line is a challenger stopped by its turn limit.** Resume it once, asking only for its report. When the resumed challenger still does not return a report, do not dispatch again: Record every challenge with the outcome `not-returned`.
 
-Save the reply as `{work}/challenge.md`. Then take each cluster in turn: Defend the priority and the disposition when the argument fails on the evidence, modify them when the argument stands in part, and abandon the priority, by lowering it, when the argument stands. A changed priority can change which clusters are surfaced; re-apply the order and the limit.
+Save the reply as `{work}/challenge.md`. Then take each cluster in turn: Defend the priority and the disposition when the argument fails on the evidence, modify them when the argument stands in part, and abandon the priority, by lowering it, when the argument stands. A defense answers the argument on the evidence that the argument names. A defense that rests on other grounds, such as guidance text that permits the failure when the argument names a change to the guidance, fails, and the priority is lowered. A changed priority can change which clusters are surfaced; re-apply the order and the limit.
 
 Write `{work}/record.json` in the helper's record shape: `store` (the store name that the inventory reports), `limit`, `artifactPath` (the artifact's path with the home directory written as `~`), `clusters` (the candidates), `unranked` (as `clusters.json` reports it), and `remainder` (`clusters` and `events`, the count of clusters not surfaced, unranked ones included, and of their events, and `excluded`, the number of clusters in the `excluded` list of `clusters.json`). Each cluster carries the fields of `clusters.json` plus `priority`, `reason`, `challenge` (`argument`, `outcome`, `originalPriority` when the outcome changed the priority, and `note`), and `surfaced`. A surfaced cluster also carries `suggested` (`kind`, then `target` and `repo` for a ticket kind, with `target: null` for `ticket-undecided`, `issue` (the issue URL) for `comment`, or `level` for `impact`) and `result: null`. Run `triage-feedback validate --file {work}/record.json`, which reports every violation at once, and fix the record until it passes.
 
