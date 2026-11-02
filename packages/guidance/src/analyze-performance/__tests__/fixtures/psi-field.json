@@ -1,0 +1,21 @@
+{
+  "_fixture": "Hand-written from the PageSpeed Insights v5 response documented at developers.google.com/speed/docs/insights/rest/v5/pagespeedapi/runpagespeed, because PSI's keyless quota was exhausted (HTTP 429) during the live capture. Tests place a Lighthouse report under lighthouseResult. PSI reports CLS's percentile multiplied by 100.",
+  "loadingExperience": {
+    "id": "https://example.com/",
+    "metrics": {
+      "LARGEST_CONTENTFUL_PAINT_MS": { "percentile": 3100, "category": "AVERAGE" },
+      "INTERACTION_TO_NEXT_PAINT": { "percentile": 240, "category": "AVERAGE" },
+      "CUMULATIVE_LAYOUT_SHIFT_SCORE": { "percentile": 8, "category": "FAST" }
+    },
+    "overall_category": "AVERAGE"
+  },
+  "originLoadingExperience": {
+    "id": "https://example.com",
+    "metrics": {
+      "LARGEST_CONTENTFUL_PAINT_MS": { "percentile": 2400, "category": "FAST" },
+      "INTERACTION_TO_NEXT_PAINT": { "percentile": 150, "category": "FAST" },
+      "CUMULATIVE_LAYOUT_SHIFT_SCORE": { "percentile": 30, "category": "SLOW" }
+    },
+    "overall_category": "AVERAGE"
+  }
+}

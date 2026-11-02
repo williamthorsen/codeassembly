@@ -1,0 +1,115 @@
+{
+  "_fixture": "Hand-written from the Lighthouse 13.6.0 source (core/audits/insights/insight-audit.js and types/lhr/audit-result.d.ts), trimmed to the fields that the normalizer reads, because pnpm's no-downgrade trust policy refused to install 13.6.0 for a live capture.",
+  "lighthouseVersion": "13.6.0",
+  "requestedUrl": "https://example.com/",
+  "finalDisplayedUrl": "https://example.com/",
+  "configSettings": { "formFactor": "mobile" },
+  "audits": {
+    "first-contentful-paint": {
+      "id": "first-contentful-paint",
+      "title": "First Contentful Paint",
+      "score": 0.4,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 3100,
+      "numericUnit": "millisecond"
+    },
+    "largest-contentful-paint": {
+      "id": "largest-contentful-paint",
+      "title": "Largest Contentful Paint",
+      "score": 0.2,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 4200,
+      "numericUnit": "millisecond"
+    },
+    "total-blocking-time": {
+      "id": "total-blocking-time",
+      "title": "Total Blocking Time",
+      "score": 0.6,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 450,
+      "numericUnit": "millisecond"
+    },
+    "cumulative-layout-shift": {
+      "id": "cumulative-layout-shift",
+      "title": "Cumulative Layout Shift",
+      "score": 1,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 0.02,
+      "numericUnit": "unitless"
+    },
+    "speed-index": {
+      "id": "speed-index",
+      "title": "Speed Index",
+      "score": 0.5,
+      "scoreDisplayMode": "numeric",
+      "numericValue": 4800,
+      "numericUnit": "millisecond"
+    },
+    "render-blocking-insight": {
+      "id": "render-blocking-insight",
+      "title": "Render blocking requests",
+      "score": 0,
+      "scoreDisplayMode": "metricSavings",
+      "metricSavings": { "FCP": 900, "LCP": 900 },
+      "details": {
+        "type": "table",
+        "headings": [{ "key": "url", "valueType": "url", "label": "URL" }],
+        "items": [
+          { "url": "https://example.com/styles.css?v=3", "totalBytes": 48000, "wastedMs": 600 },
+          { "url": "https://example.com/app.js", "totalBytes": 120000, "wastedMs": 300 }
+        ]
+      }
+    },
+    "lcp-breakdown-insight": {
+      "id": "lcp-breakdown-insight",
+      "title": "LCP breakdown",
+      "score": 0,
+      "scoreDisplayMode": "metricSavings",
+      "metricSavings": { "LCP": 0 },
+      "details": {
+        "type": "list",
+        "items": [
+          {
+            "type": "table",
+            "headings": [{ "key": "label", "valueType": "text", "label": "Subpart" }],
+            "items": [
+              { "subpart": "timeToFirstByte", "label": "Time to first byte", "duration": 600 },
+              { "subpart": "resourceLoadDelay", "label": "Resource load delay", "duration": 2400 }
+            ]
+          }
+        ]
+      }
+    },
+    "image-delivery-insight": {
+      "id": "image-delivery-insight",
+      "title": "Improve image delivery",
+      "score": 0.5,
+      "scoreDisplayMode": "metricSavings",
+      "metricSavings": { "FCP": 0, "LCP": 350 },
+      "details": {
+        "type": "table",
+        "items": [
+          {
+            "url": "https://example.com/hero.jpg#top",
+            "totalBytes": 900000,
+            "wastedBytes": 700000,
+            "subItems": { "type": "subitems", "items": [{ "reason": "Use a modern image format" }] }
+          }
+        ]
+      }
+    },
+    "cls-culprits-insight": {
+      "id": "cls-culprits-insight",
+      "title": "Layout shift culprits",
+      "score": null,
+      "scoreDisplayMode": "notApplicable"
+    },
+    "cache-insight": {
+      "id": "cache-insight",
+      "title": "Use efficient cache lifetimes",
+      "score": 1,
+      "scoreDisplayMode": "metricSavings",
+      "metricSavings": { "FCP": 0, "LCP": 0 }
+    }
+  }
+}
