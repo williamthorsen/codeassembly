@@ -5,6 +5,7 @@ import { isPrivateUrl, readFallbackReason, selectTool } from '../select-tool.ts'
 describe('isPrivateUrl', () => {
   it.each([
     'http://localhost:3000/',
+    'http://0.0.0.0:4173/',
     'http://127.0.0.1/',
     'http://10.1.2.3/',
     'http://172.20.0.1/',

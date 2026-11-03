@@ -2,8 +2,8 @@
 import { isIP } from 'node:net';
 
 /**
- * Reports whether PSI cannot reach a URL: one that the caller marks private, or one on a loopback, private, or
- * link-local address or a `localhost`, `.local`, or `.internal` host.
+ * Reports whether PSI cannot reach a URL: one that the caller marks private, or one on an unspecified, loopback,
+ * private, or link-local address or a `localhost`, `.local`, or `.internal` host.
  */
 export function isPrivateUrl(url: string, privateUrls: ReadonlySet<string>): boolean {
   if (privateUrls.has(url)) return true;
@@ -39,11 +39,16 @@ const UNREACHABLE_PATTERN = /FAILED_DOCUMENT_REQUEST|ERRORED_DOCUMENT_REQUEST|DN
 
 // region | Helpers
 
-/** Reports whether an IPv4 address is loopback, private, or link-local. */
+/** Reports whether an IPv4 address is unspecified, loopback, private, or link-local. */
 function isPrivateIpv4(host: string): boolean {
   const [a = 0, b = 0] = host.split('.').map(Number);
   return (
-    a === 10 || a === 127 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254)
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 169 && b === 254)
   );
 }
 
