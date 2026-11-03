@@ -100,14 +100,21 @@ their history into a repository of their own by `git filter-repo`.
 
 ## Machine and config changes
 
-The configs repository names the guidance path in base-only `~/.agents/codeassembly.yaml`, which changes in one
-configs PR that takes effect on each machine once that repository's `live` is advanced. The profiles that link
-`@williamthorsen/kb` from `codeassembly.live/packages/kb` in `node-globals.yaml` keep that link, because kb stays in
-this repository. Each machine then clones
-`codeassembly-guidance`, creates its `live` worktree, and relinks `codeassembly-sync-live` to the new path.
+A machine deploys guidance in one of two modes, which `codeassembly-sync-live` chooses by whether the clone has a
+`live` worktree:
 
-`~/.config/repos.yaml` gains a `codeassembly-guidance` entry with the `live` tag, which this repository keeps for the
-CLI.
+- **Developer**, on a machine that develops guidance: The machine deploys from the `codeassembly-guidance.live`
+  worktree with the CLI built in this repository's `live` worktree, and links `@williamthorsen/kb` from
+  `codeassembly.live/packages/kb`.
+- **Consumer**, on any other machine: The machine deploys from the clone kept on `main`, and takes the CLI and
+  `@williamthorsen/kb` from npm. It does not need a `live` worktree or a clone of this repository.
+
+The base-only `~/.agents/codeassembly.yaml` in the configs repository names the consumer path, and a developer profile
+or a machine whose clone lives elsewhere overrides it in `~/.agents/codeassembly.local.yaml`. The configs repository's
+`prepare-codeassembly-guidance` makes a machine match its declaration: It clones the repository, adds the `live`
+worktree on a developer machine, links `codeassembly-sync-live`, and with `--deploy` deploys and checks the result. The
+configs repository's README, section "Installing on a new Mac", and `docs/live-deployment.md` in the guidance
+repository describe both.
 
 ## Known costs
 
@@ -130,8 +137,7 @@ possible, and the guidance extraction, which touches every machine, follows on i
 4. Extract the guidance repository: filter-repo, keep `packages/guidance` at its path, carry the workflows over, get
    CI green, move npm trusted publishing, publish a version from the new repository, and stop releasing guidance
    here.
-5. Switch the machines: configs PR, registry entries, `live` worktrees, relink the sync command, and deploy once from
-   the new clone.
+5. Switch the machines: the configs PR, then `prepare-codeassembly-guidance` and one deploy on each machine.
 6. Remove the guidance tree here, switch this repository to the `package:` guidance source, and transfer the open
    `scope:guidance` issues. Update the references here that name guidance content or paths: the
    `codeassembly-repo-conventions` rulebook and the `codeassembly-repo` source in `.agents/codeassembly.yaml`, the
@@ -161,5 +167,10 @@ that nothing is deleted before its new home works.
 - The factory and the demos are removed rather than extracted: Extraction would not make their history private, and
   the factory is dormant.
 - Open `scope:guidance` issues transfer to the guidance repository; closed issues stay here.
-- The deploy script keeps running the CLI built in the packages repository's `live` worktree, rather than the
-  version that guidance pins, so that a CLI change still reaches the machine on a `live` advance alone.
+- In the developer mode, the deploy script keeps running the CLI built in the packages repository's `live` worktree,
+  rather than the version that guidance pins, so that a CLI change still reaches the machine on a `live` advance alone.
+- A machine that does not develop guidance deploys from a clone on `main`, with the CLI and kb from npm, because the
+  `live` worktrees exist to stage changes that the machine's developer makes.
+- The base declaration names the consumer path, and developer profiles override it in `codeassembly.local.yaml`
+  rather than in a variant of the base-only file, so that a machine without a profile works and a variant does not
+  drop the base's rulebooks and collections.
