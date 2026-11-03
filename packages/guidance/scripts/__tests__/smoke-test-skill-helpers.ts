@@ -25,6 +25,7 @@ import { fileURLToPath } from 'node:url';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
+import { makeAnalyzePerformanceSmokeTest } from '../test-utils/make-analyze-performance-smoke-test.ts';
 import { makeAssessCodeHealthSmokeTest } from '../test-utils/make-assess-code-health-smoke-test.ts';
 import { makeCaptureEventSmokeTest } from '../test-utils/make-capture-event-smoke-test.ts';
 import { makeCheckBranchCurrencySmokeTest } from '../test-utils/make-check-branch-currency-smoke-test.ts';
@@ -60,6 +61,7 @@ import type { SmokeTestInvocation } from '../test-utils/smoke-test-invocation.ts
 // with empty stdin. Because the builders run here, and not on import of the utilities module, building a bundle never
 // triggers fixture setup.
 const smokeTests: Record<string, SmokeTestInvocation> = {
+  '../src/analyze-performance/cli.ts': makeAnalyzePerformanceSmokeTest(),
   '../src/assess-code-health/cli.ts': makeAssessCodeHealthSmokeTest(),
   '../src/capture-event/cli.ts': makeCaptureEventSmokeTest(),
   '../src/check-branch-currency/cli.ts': makeCheckBranchCurrencySmokeTest(),
