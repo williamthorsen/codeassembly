@@ -29,6 +29,11 @@ export type CommandResult = { ok: false; error: string; message: string } | ({ o
 
 const COMMANDS = ['collect', 'summarize'] as const;
 
+/**
+ * Caps `--runs`, since PSI's quota and a Lighthouse run's minute make more runs costly without steadying the median.
+ */
+const MAX_RUNS = 10;
+
 type FlagName = 'in' | 'out' | 'private' | 'runs' | 'url';
 
 const REPEATABLE_FLAGS: ReadonlySet<FlagName> = new Set(['private', 'url']);
@@ -189,10 +194,5 @@ function readRequired(flags: ParsedFlags, name: FlagName): string {
 function readSingle(flags: ParsedFlags, name: FlagName): string | undefined {
   return flags.get(name)?.[0];
 }
-
-/**
- * Caps `--runs`, since PSI's quota and a Lighthouse run's minute make more runs costly without steadying the median.
- */
-const MAX_RUNS = 10;
 
 // endregion | Helpers
