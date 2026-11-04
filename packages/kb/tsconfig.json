@@ -3,6 +3,7 @@
   "extends": "../../tsconfig.json",
   // prettier-ignore
   "include": [
+    "scripts/",
     "src/",
     "*.ts",
   ],
