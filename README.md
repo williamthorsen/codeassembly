@@ -2,7 +2,7 @@
 
 # CodeAssembly
 
-A pnpm monorepo for deploying agent guidance: the `codeassembly` CLI that installs skills, subagents, and rulebooks into agent harnesses, the guidance library that it deploys, and their supporting packages.
+A pnpm monorepo for deploying agent guidance: the `codeassembly` CLI that installs skills, subagents, and rulebooks into agent harnesses, and its supporting packages. The guidance library that the CLI deploys is [`codeassembly-guidance`](https://github.com/williamthorsen/codeassembly-guidance).
 
 ## For AI agents
 
@@ -18,4 +18,4 @@ pnpm run bootstrap   # Build every package and deploy current guidance; required
 pnpm exec nmr check  # Run all checks (typecheck, format, lint, test)
 ```
 
-To deploy guidance on a developer machine from the `live` worktree, see [Deploying guidance from the live worktree](docs/live-deployment.md).
+To deploy guidance on a developer machine from the `live` worktree, see [Deploying guidance from the live worktree](https://github.com/williamthorsen/codeassembly-guidance/blob/main/docs/live-deployment.md) in the guidance repository.

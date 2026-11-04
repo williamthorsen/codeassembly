@@ -1,7 +1,0 @@
-# Malformed registry fixture: invalid YAML so `loadKbRegistry` throws.
-# `resolveScope` must degrade this to an empty registry rather than propagating the throw.
-kbs:
-  vault-a:
-    path: ../../vault-a
-   default: true
-  : [unterminated

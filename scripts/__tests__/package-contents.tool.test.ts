@@ -11,20 +11,14 @@ import { describe, expect, it } from 'vitest';
  */
 const requiredPaths: Readonly<Record<string, ReadonlyArray<string>>> = {
   codeassembly: ['dist/esm/cli.js'],
-  'codeassembly-guidance': ['content/codeassembly-content.yaml'],
 };
 
-describe.each(findPublishablePackages())('$name packs correctly', ({ bins, contentDir, dir, exportTargets, name }) => {
+describe.each(findPublishablePackages())('$name packs correctly', ({ bins, dir, exportTargets, name }) => {
   const packed = readPackedPaths(dir);
 
   it('includes build output', () => {
-    // A content package's build output is the helper bundles inside its content directory rather than `dist/`.
-    const isBuildOutput = (entry: string): boolean =>
-      contentDir === undefined
-        ? entry.startsWith('dist/')
-        : entry.startsWith(`${contentDir}/`) && entry.endsWith('.mjs');
     expect(
-      packed.filter((entry) => isBuildOutput(entry)),
+      packed.filter((entry) => entry.startsWith('dist/')),
       `${name} doesn't pack any build output. Run \`nmr build\` before this suite.`,
     ).not.toHaveLength(0);
   });
@@ -60,13 +54,9 @@ interface ExportTarget {
   readonly target: string;
 }
 
-/**
- * One workspace package that publishes, with the bin paths, the content directory, and the export targets declared by
- * its manifest.
- */
+/** One workspace package that publishes, with the bin paths and the export targets declared by its manifest. */
 interface PublishablePackage {
   readonly bins: ReadonlyArray<string>;
-  readonly contentDir: string | undefined;
   readonly dir: string;
   readonly exportTargets: ReadonlyArray<ExportTarget>;
   readonly name: string;
@@ -107,7 +97,6 @@ function findPublishablePackages(): ReadonlyArray<PublishablePackage> {
     }
     return {
       bins: readBinPaths(manifest),
-      contentDir: readContentDir(manifest),
       dir,
       exportTargets: readExportTargets(manifest),
       name,
@@ -142,15 +131,6 @@ function readBinPaths(manifest: object): ReadonlyArray<string> {
   }
   const targets: ReadonlyArray<unknown> = Object.values(bin);
   return targets.filter((target): target is string => typeof target === 'string');
-}
-
-/** Reads the content directory that a manifest declares under `codeassembly.content`, if any. */
-function readContentDir(manifest: object): string | undefined {
-  if (!('codeassembly' in manifest) || typeof manifest.codeassembly !== 'object' || manifest.codeassembly === null) {
-    return undefined;
-  }
-  const { codeassembly } = manifest;
-  return 'content' in codeassembly && typeof codeassembly.content === 'string' ? codeassembly.content : undefined;
 }
 
 /**

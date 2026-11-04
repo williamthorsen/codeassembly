@@ -21,10 +21,8 @@
   "type": "module",
   "scripts": {
     "agents:install": "node packages/agents/src/cli.ts install",
-    "agents:install-launchers": "bash packages/guidance/scripts/install-launchers.sh",
     "agents:sync": "node packages/agents/bin/codeassembly.js sync",
     "bootstrap": "nmr build && pnpm run agents:sync",
-    "check:strict:post": "pnpm --filter codeassembly-guidance run check:content",
     "prepare": "lefthook install"
   },
   "devDependencies": {
@@ -42,6 +40,7 @@
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "@williamthorsen/tsconfig": "0.12.1",
     "codeassembly": "workspace:*",
+    "codeassembly-guidance": "0.5.0",
     "dotenv": "18.0.9",
     "eslint": "catalog:",
     "eslint-import-resolver-typescript": "4.4.5",

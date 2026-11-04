@@ -185,7 +185,7 @@ describe(initGlobalCommand, () => {
     expect((await resolveDeclaration({ cwd: homeDir }))?.sources).toEqual([
       {
         name: 'codeassembly-guidance',
-        dir: path.join(homedir(), 'repos', 'codeassembly', 'packages', 'guidance', 'content'),
+        dir: path.join(homedir(), 'repos', 'codeassembly-guidance', 'packages', 'guidance', 'content'),
       },
     ]);
   });

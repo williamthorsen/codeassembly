@@ -1,4 +1,0 @@
-targets:
-  - 'content/**/*.md'
-exclude:
-  - 'content/drafts/**'

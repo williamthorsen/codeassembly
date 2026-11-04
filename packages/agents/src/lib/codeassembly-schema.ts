@@ -18,10 +18,10 @@ export const EntrySchema = z
 const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose());
 
 /**
- * A declared content source: a directory structured like `packages/guidance/content/`, named either by a `path` or by
- * the installed `package` that contains it. A path source requires `name`; a package source's `name` is optional and
- * defaults to the package name when the declaration is resolved. Unknown keys pass through (`.loose()`) so that a
- * later version can add per-source config without a breaking change, mirroring `EntrySchema`.
+ * A declared content source: a directory structured like the `codeassembly-guidance` package's `content/`, named either
+ * by a `path` or by the installed `package` that contains it. A path source requires `name`; a package source's `name`
+ * is optional and defaults to the package name when the declaration is resolved. Unknown keys pass through
+ * (`.loose()`) so that a later version can add per-source config without a breaking change, mirroring `EntrySchema`.
  */
 export const SourceSchema = z
   .object({
