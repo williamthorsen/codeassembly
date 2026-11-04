@@ -89,6 +89,7 @@
 - name: scope:guidance
   color: 00ff96
   description: ''
+  archived: true
 - name: scope:kb
   color: 00ff96
   description: ''

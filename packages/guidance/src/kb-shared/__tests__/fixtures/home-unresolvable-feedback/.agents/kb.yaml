@@ -1,5 +1,0 @@
-# Registry fixture whose `feedback_kb` does not name any registered entry, so resolution reports a load error.
-feedback_kb: ghost
-kbs:
-  real:
-    path: ../../vault-b

@@ -10,7 +10,7 @@ const config = defineConfig({
       'scope:root': { color: '00ff96' },
       'scope:agents': { color: '00ff96' },
       'scope:factory': { color: '00ff96', archived: true },
-      'scope:guidance': { color: '00ff96' },
+      'scope:guidance': { color: '00ff96', archived: true },
       'scope:kb': { color: '00ff96' },
       'scope:mcp': { color: '00ff96', archived: true },
       'scope:run-core': { color: '00ff96' },
@@ -18,7 +18,6 @@ const config = defineConfig({
   },
   workspaces: [
     { dir: 'agents', legacyIdentities: [{ name: '@codeassembly/agents', tagPrefix: 'agents-v' }] },
-    { dir: 'guidance', shouldExclude: true },
     { dir: 'run-core', legacyIdentities: [{ name: '@codeassembly/run-core', tagPrefix: 'run-core-v' }] },
   ],
   retiredPackages: [

@@ -19,7 +19,6 @@
   },
   "scopes": {
     "agents": "scope:agents",
-    "guidance": "scope:guidance",
     "kb": "scope:kb",
     "run-core": "scope:run-core",
     "root": "scope:root"

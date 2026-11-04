@@ -1,4 +1,0 @@
-# Tag-alias fixture for kb-add canonicalization tests.
-aliases:
-  nodejs: [node.js, node]
-  react: [reactjs, react.js]
