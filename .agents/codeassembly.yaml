@@ -11,10 +11,6 @@ packages:
 rulebooks:
   use:
     - codeassembly-content-specification
-    - codeassembly-repo-conventions
     - live-worktree-policy
 sources:
-  - name: codeassembly-guidance
-    path: ../packages/guidance/content
-  - name: codeassembly-repo
-    path: content
+  - package: codeassembly-guidance

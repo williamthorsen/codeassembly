@@ -42,6 +42,7 @@
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "@williamthorsen/tsconfig": "0.12.1",
     "codeassembly": "workspace:*",
+    "codeassembly-guidance": "0.5.0",
     "dotenv": "18.0.9",
     "eslint": "catalog:",
     "eslint-import-resolver-typescript": "4.4.5",

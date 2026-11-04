@@ -259,6 +259,9 @@ importers:
       codeassembly:
         specifier: workspace:*
         version: link:packages/agents
+      codeassembly-guidance:
+        specifier: 0.5.0
+        version: 0.5.0
       dotenv:
         specifier: 18.0.9
         version: 18.0.9
@@ -1625,6 +1628,11 @@ packages:
   cliui@8.0.1:
     resolution: {integrity: sha512-BSeNnyus75C4//NQ9gQt1/csTXyo/8Sb+afLAkzAptFuMsod9HFokGNudZpi/oQV73hnVK+sR+5PVRMd+Dr7YQ==}
     engines: {node: '>=12'}
+
+  codeassembly-guidance@0.5.0:
+    resolution: {integrity: sha512-5crmrlK89QLR5gIQP67bTZM2NLCZyyoZtqpfRCnGXpTFnTiAZn7xY51oTva3UAxS6UC8Vv+WKBgEHTu5BV8AzA==}
+    engines: {node: '>=24'}
+    hasBin: true
 
   codeassembly@0.20.0:
     resolution: {integrity: sha512-NEqRY0h1vThJC3urjDqxxpohL4PkY6fbJOIm3C+EOxiKCPS8wHFIGDxvYiWWszAuGIIww6HKyy1y+D3iNZv3dQ==}
@@ -4061,6 +4069,8 @@ snapshots:
       string-width: 4.2.3
       strip-ansi: 6.0.1
       wrap-ansi: 7.0.0
+
+  codeassembly-guidance@0.5.0: {}
 
   codeassembly@0.20.0(esbuild@0.28.2):
     dependencies:
