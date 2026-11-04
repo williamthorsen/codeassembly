@@ -61,13 +61,13 @@ const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt
 #
 # sources declares the content directories from which artifacts resolve, each a { name, path } pair (or a { package }
 # entry, resolved from the home directory's node_modules). install and sync --global resolve from these alone, and
-# stop until one is declared. Clone the CodeAssembly repository, then uncomment the entry below and point its path at
-# the clone's packages/guidance/content (~ and absolute paths are allowed; a relative path resolves against this
-# .agents/ directory). A path that differs between machines belongs in codeassembly.local.yaml instead. A
+# stop until one is declared. Clone the codeassembly-guidance repository, then uncomment the entry below and point its
+# path at the clone's packages/guidance/content (~ and absolute paths are allowed; a relative path resolves against
+# this .agents/ directory). A path that differs between machines belongs in codeassembly.local.yaml instead. A
 # later-declared source shadows an earlier one.
 # sources:
 #   - name: codeassembly-guidance
-#     path: ~/repos/codeassembly/packages/guidance/content
+#     path: ~/repos/codeassembly-guidance/packages/guidance/content
 #
 # Each collection makes a claim about its members: \`recommended\` is vetted and generally applicable, and \`triage\`
 # contains what nobody has examined yet. Add any other collection provided by a declared source, or declare \`all\` in

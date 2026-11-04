@@ -115,7 +115,7 @@ Three further mismatches are reported without failing the run, on a live sync an
 
 The last two are not defects. A collection can add a hook-declaring rulebook to a project that never binds it, and a home-tier binding applies to every project, including those that deploy nothing declaring the hook. Each line names an affordance going unused rather than something broken. A binding that reaches nothing is also how `sync` reports a mistyped hook name, since nothing else would say so.
 
-A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none of them, and two things make the pairing legitimate. A hook that only subagents declare duplicates nothing: A subagent's context never contains the ambient region. The two routes are how one rulebook reaches a session and a subagent both. When a skill declares the hook, ambient delivery places the rulebook in the guidance file loaded by that session, so the fill gives the session a second copy; the author who wrote both routes into `delivery` has weighed that, and the skill may be parsing what the fill delivers rather than only containing it, as `revise-prose` does. The library's `content/__tests__/guidance-hook-reach.unit.test.ts`, in `packages/guidance`, contains its record of which skills may.
+A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none of them, and two things make the pairing legitimate. A hook that only subagents declare duplicates nothing: A subagent's context never contains the ambient region. The two routes are how one rulebook reaches a session and a subagent both. When a skill declares the hook, ambient delivery places the rulebook in the guidance file loaded by that session, so the fill gives the session a second copy; the author who wrote both routes into `delivery` has weighed that, and the skill may be parsing what the fill delivers rather than only containing it, as `revise-prose` does. The library's `content/__tests__/guidance-hook-reach.unit.test.ts`, in the [`codeassembly-guidance`](https://github.com/williamthorsen/codeassembly-guidance) repository's `packages/guidance`, contains its record of which skills may.
 
 A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance that every consumer of the library should get is a partial; guidance that one user or one project wants is a hook. See `content/_partials/README.md`.
 
@@ -187,12 +187,12 @@ The resolver follows `members:` and `dependencies:` identically; the split is se
 
 ## Sources
 
-A declared artifact resolves from the content directories that the declaration names, and from nowhere else. A top-level `sources:` list names them (a clone of the CodeAssembly library, a machine-local directory, a project-local one, or a third-party guidance repo), each structured like `packages/guidance/content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`); a package adopted via [`packages`](#packages) is a source too. `sync`, `sync --global`, and `install` stop before writing anything, `--dry-run` included, when the governing chain does not declare any source, or when none of the declared sources has a directory, and the message names the file that the declaration belongs in. A project resolves from its own chain alone, never from the sources that the home chain declares, so a project deploys the same content on every machine.
+A declared artifact resolves from the content directories that the declaration names, and from nowhere else. A top-level `sources:` list names them (a clone of the CodeAssembly library, a machine-local directory, a project-local one, or a third-party guidance repo), each structured like the `codeassembly-guidance` package's `content/` (`guidance/rulebooks/`, `guidance/_harnesses/`, `guidance/shared/`, `skills/`, `subagents/`, `collections/`, `scripts/`); a package adopted via [`packages`](#packages) is a source too. `sync`, `sync --global`, and `install` stop before writing anything, `--dry-run` included, when the governing chain does not declare any source, or when none of the declared sources has a directory, and the message names the file that the declaration belongs in. A project resolves from its own chain alone, never from the sources that the home chain declares, so a project deploys the same content on every machine.
 
 ```yaml
 sources:
   - name: codeassembly-guidance
-    path: ~/repos/codeassembly/packages/guidance/content
+    path: ~/repos/codeassembly-guidance/packages/guidance/content
   - name: org-guidance
     path: ../shared-guidance
   - name: personal
@@ -253,7 +253,7 @@ Upgrading an already-declared package is the other case. Its catalog is read fro
 
 ### Shipping guidance from a package
 
-A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like `packages/guidance/content/`:
+A package declares where its content lives with a `codeassembly` key in its `package.json`, pointing at a directory structured like the `codeassembly-guidance` package's `content/`:
 
 ```json
 {

@@ -2,7 +2,7 @@
 
 # codeassembly
 
-A CLI that deploys reusable AI agent guidance (rulebooks, skills, and subagents) from the content sources that a declaration names into coding-harness directories. The CodeAssembly library of that guidance is the sibling package [`codeassembly-guidance`](../guidance/README.md).
+A CLI that deploys reusable AI agent guidance (rulebooks, skills, and subagents) from the content sources that a declaration names into coding-harness directories. The CodeAssembly library of that guidance is [`codeassembly-guidance`](https://github.com/williamthorsen/codeassembly-guidance).
 
 <!-- section:release-notes --><!-- /section:release-notes -->
 
@@ -11,7 +11,7 @@ A CLI that deploys reusable AI agent guidance (rulebooks, skills, and subagents)
 The tool deploys only what a declaration names, so the first run starts by declaring where the content is. To deploy the CodeAssembly library into the home harness directories:
 
 ```bash
-git clone https://github.com/williamthorsen/codeassembly.git ~/repos/codeassembly
+git clone https://github.com/williamthorsen/codeassembly-guidance.git ~/repos/codeassembly-guidance
 npx codeassembly init --global
 ```
 
@@ -20,7 +20,7 @@ Uncomment the `sources:` entry in `~/.agents/codeassembly.yaml` and point it at 
 ```yaml
 sources:
   - name: codeassembly-guidance
-    path: ~/repos/codeassembly/packages/guidance/content
+    path: ~/repos/codeassembly-guidance/packages/guidance/content
 ```
 
 Then deploy:
@@ -75,7 +75,7 @@ Global options: `--harness <claude\|rovo\|all>` (default `all`), `--link`, `--fo
 
 A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `codeassembly init` to scaffold one, declare the artifacts that the project needs, then run `codeassembly sync` to materialize them. The same declaration format resolves in two independent domains: the repo (via `sync`) and the user-global home (via `sync --global`). For the home domain, `codeassembly init --global` scaffolds `~/.agents/codeassembly.yaml`, seeded with the `recommended` and `triage` collections. See [Scopes](docs/project-declaration.md#scopes).
 
-Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) are stated in the library's `codeassembly-content-specification` rulebook ([`codeassembly-content-specification.md`](../guidance/content/guidance/rulebooks/codeassembly-content-specification.md)). [Project declaration](docs/project-declaration.md) documents the declaration mechanism itself:
+Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) are stated in the library's `codeassembly-content-specification` rulebook ([`codeassembly-content-specification.md`](https://github.com/williamthorsen/codeassembly-guidance/blob/main/packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md)). [Project declaration](docs/project-declaration.md) documents the declaration mechanism itself:
 
 - [Format](docs/project-declaration.md#format): the `use` and `drop` lists, harness targeting, and guidance hooks.
 - [Collections](docs/project-declaration.md#collections): aggregates that pull in their members, and the `@library` token.
@@ -121,7 +121,7 @@ For the record's path and line shape, the conditions under which a snapshot is a
 
 ## Preferences
 
-The library's skills read `.agents/preferences.yaml`; the [`codeassembly-guidance` README](../guidance/README.md#preferences) documents the cascade and every key.
+The library's skills read `.agents/preferences.yaml`; the [`codeassembly-guidance` README](https://github.com/williamthorsen/codeassembly-guidance/blob/main/packages/guidance/README.md#preferences) documents the cascade and every key.
 
 ## Development
 

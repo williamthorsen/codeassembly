@@ -125,7 +125,7 @@ function describeNoSource(baseDir: string, missing: ReadonlyArray<DeclaredSource
   const file = `${path.join(agentsDir, 'codeassembly.yaml')}, or in ${path.join(agentsDir, 'codeassembly.local.yaml')} for a path that is specific to this machine`;
   return (
     `${problem} Declare a \`sources:\` entry, or a \`packages:\` entry, in ${file}. For example:\n\n` +
-    'sources:\n  - name: codeassembly-guidance\n    path: ~/repos/codeassembly/packages/guidance/content\n\n' +
+    'sources:\n  - name: codeassembly-guidance\n    path: ~/repos/codeassembly-guidance/packages/guidance/content\n\n' +
     'A relative `path` resolves against the `.agents/` directory that contains the declaration.'
   );
 }
