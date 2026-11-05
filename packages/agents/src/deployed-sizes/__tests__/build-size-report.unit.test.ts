@@ -24,12 +24,12 @@ const BELOW_CEILING = GROWTH_CEILING_BYTES - 1;
 describe(buildSizeReport, () => {
   it('reports a document that this deployment resized, with its size and its change', () => {
     const report = build({
-      measured: { 'claude/skills/plan/SKILL.md': 2_048 },
-      previous: { 'claude/skills/plan/SKILL.md': 1_024 },
+      measured: { 'claude/skills/plan/SKILL.md': 2048 },
+      previous: { 'claude/skills/plan/SKILL.md': 1024 },
     });
 
     expect(report.changes).toEqual([
-      { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 2_048, delta: 1_024, explained: 0 },
+      { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 2048, delta: 1024, explained: 0 },
     ]);
   });
 
@@ -50,7 +50,7 @@ describe(buildSizeReport, () => {
   });
 
   it('does not report a change for a document whose bytes are unchanged', () => {
-    const report = build({ measured: { 'a.md': 1_024 }, previous: { 'a.md': 1_024 } });
+    const report = build({ measured: { 'a.md': 1024 }, previous: { 'a.md': 1024 } });
 
     expect(report.changes).toEqual([]);
   });
@@ -69,8 +69,8 @@ describe(buildSizeReport, () => {
 
   it('orders changes by the bytes that each change accounts for, putting a large removal where a large addition would be', () => {
     const report = build({
-      measured: { 'small-growth.md': 1_100, 'large-growth.md': 9_000 },
-      previous: { 'small-growth.md': 1_000, 'large-removal.md': 5_000 },
+      measured: { 'small-growth.md': 1100, 'large-growth.md': 9000 },
+      previous: { 'small-growth.md': 1000, 'large-removal.md': 5000 },
     });
 
     expect(report.changes.map((change) => change.key)).toEqual([
@@ -192,8 +192,8 @@ describe(buildSizeReport, () => {
 
   it('reports a changed partial once, with its own delta and the documents whose change it explains', () => {
     const report = build({
-      measured: { 'a.md': 1_100, 'b.md': 2_100 },
-      previous: { 'a.md': 1_000, 'b.md': 2_000 },
+      measured: { 'a.md': 1100, 'b.md': 2100 },
+      previous: { 'a.md': 1000, 'b.md': 2000 },
       expansions: { [SHARED]: { bytes: 400, reach: 2 } },
       previousExpansions: { [SHARED]: { bytes: 300, reach: 2 } },
       documentExpansions: { 'a.md': [SHARED], 'b.md': [SHARED] },
@@ -206,8 +206,8 @@ describe(buildSizeReport, () => {
 
   it('leaves out a partial extracted from text that was already deployed, which did not grow any document', () => {
     const report = build({
-      measured: { 'a.md': 1_000, 'b.md': 2_000 },
-      previous: { 'a.md': 1_000, 'b.md': 2_000 },
+      measured: { 'a.md': 1000, 'b.md': 2000 },
+      previous: { 'a.md': 1000, 'b.md': 2000 },
       expansions: { [SHARED]: { bytes: 400, reach: 2 } },
       previousExpansions: {},
       documentExpansions: { 'a.md': [SHARED], 'b.md': [SHARED] },
@@ -218,8 +218,8 @@ describe(buildSizeReport, () => {
 
   it('counts a newly wired partial across the documents that it grew', () => {
     const report = build({
-      measured: { 'a.md': 1_400, 'b.md': 2_400 },
-      previous: { 'a.md': 1_000, 'b.md': 2_000 },
+      measured: { 'a.md': 1400, 'b.md': 2400 },
+      previous: { 'a.md': 1000, 'b.md': 2000 },
       expansions: { [SHARED]: { bytes: 400, reach: 2 } },
       previousExpansions: {},
       documentExpansions: { 'a.md': [SHARED], 'b.md': [SHARED] },
@@ -232,8 +232,8 @@ describe(buildSizeReport, () => {
 
   it('drops a resized document whose delta is wholly the sum of its changed partials', () => {
     const report = build({
-      measured: { 'a.md': 1_100 },
-      previous: { 'a.md': 1_000 },
+      measured: { 'a.md': 1100 },
+      previous: { 'a.md': 1000 },
       expansions: { [SHARED]: { bytes: 400, reach: 1 }, [INNER]: { bytes: 260, reach: 1 } },
       previousExpansions: { [SHARED]: { bytes: 340, reach: 1 }, [INNER]: { bytes: 220, reach: 1 } },
       documentExpansions: { 'a.md': [SHARED, INNER] },
@@ -244,34 +244,34 @@ describe(buildSizeReport, () => {
 
   it('states the residual of a document that grew beyond what its changed partials explain', () => {
     const report = build({
-      measured: { 'a.md': 1_500 },
-      previous: { 'a.md': 1_000 },
+      measured: { 'a.md': 1500 },
+      previous: { 'a.md': 1000 },
       expansions: { [SHARED]: { bytes: 400, reach: 1 } },
       previousExpansions: { [SHARED]: { bytes: 300, reach: 1 } },
       documentExpansions: { 'a.md': [SHARED] },
     });
 
     expect(report.changes.filter((change) => change.kind !== 'expansion')).toEqual([
-      { kind: 'resized', key: 'a.md', bytes: 1_500, delta: 500, explained: 100 },
+      { kind: 'resized', key: 'a.md', bytes: 1500, delta: 500, explained: 100 },
     ]);
   });
 
   it('attributes nothing to an added document, whose whole bytes are not a change to explain', () => {
     const report = build({
-      measured: { 'a.md': 1_000 },
+      measured: { 'a.md': 1000 },
       previous: {},
       expansions: { [SHARED]: { bytes: 400, reach: 1 } },
       previousExpansions: { [SHARED]: { bytes: 300, reach: 1 } },
       documentExpansions: { 'a.md': [SHARED] },
     });
 
-    expect(report.changes).toEqual([{ kind: 'added', key: 'a.md', bytes: 1_000, delta: 1_000, explained: 0 }]);
+    expect(report.changes).toEqual([{ kind: 'added', key: 'a.md', bytes: 1000, delta: 1000, explained: 0 }]);
   });
 
   it('skips a partial that the previous snapshot contained and this measurement does not', () => {
     const report = build({
       measured: { 'a.md': 900 },
-      previous: { 'a.md': 1_000 },
+      previous: { 'a.md': 1000 },
       expansions: {},
       previousExpansions: { [SHARED]: { bytes: 100, reach: 1 } },
       documentExpansions: { 'a.md': [] },
@@ -282,21 +282,21 @@ describe(buildSizeReport, () => {
 
   it('reports the same changes as before this block existed when the previous snapshot states none', () => {
     const report = build({
-      measured: { 'a.md': 1_100 },
-      previous: { 'a.md': 1_000 },
+      measured: { 'a.md': 1100 },
+      previous: { 'a.md': 1000 },
       expansions: { [SHARED]: { bytes: 400, reach: 1 } },
       documentExpansions: { 'a.md': [SHARED] },
       statesNoPreviousExpansions: true,
     });
 
-    expect(report.changes).toEqual([{ kind: 'resized', key: 'a.md', bytes: 1_100, delta: 100, explained: 0 }]);
+    expect(report.changes).toEqual([{ kind: 'resized', key: 'a.md', bytes: 1100, delta: 100, explained: 0 }]);
   });
 
   it('orders a partial by the deployment that its edit caused rather than by the edit itself', () => {
     const includers = Array.from({ length: 20 }, (_, index) => `doc-${index}.md`);
     const report = build({
-      measured: { ...bytesByKey(includers, 1_132), 'big.md': 21_000 },
-      previous: { ...bytesByKey(includers, 1_000), 'big.md': 20_000 },
+      measured: { ...bytesByKey(includers, 1132), 'big.md': 21_000 },
+      previous: { ...bytesByKey(includers, 1000), 'big.md': 20_000 },
       expansions: { [SHARED]: { bytes: 300, reach: 20 } },
       previousExpansions: { [SHARED]: { bytes: 168, reach: 20 } },
       documentExpansions: Object.fromEntries(includers.map((key) => [key, [SHARED]])),

@@ -21,9 +21,9 @@ describe(renderSizesReport, () => {
   it('ranks documents by descending size', () => {
     const report = renderText(
       buildSnapshot({
-        'claude/skills/small/SKILL.md': { bytes: 1_024, kind: 'document' },
-        'claude/skills/large/SKILL.md': { bytes: 8_192, kind: 'document' },
-        'claude/skills/medium/SKILL.md': { bytes: 4_096, kind: 'document' },
+        'claude/skills/small/SKILL.md': { bytes: 1024, kind: 'document' },
+        'claude/skills/large/SKILL.md': { bytes: 8192, kind: 'document' },
+        'claude/skills/medium/SKILL.md': { bytes: 4096, kind: 'document' },
       }),
     );
 
@@ -37,8 +37,8 @@ describe(renderSizesReport, () => {
   it('orders two documents of one size by key, so that the ranking is stable', () => {
     const report = renderText(
       buildSnapshot({
-        'claude/skills/beta/SKILL.md': { bytes: 1_024, kind: 'document' },
-        'claude/skills/alpha/SKILL.md': { bytes: 1_024, kind: 'document' },
+        'claude/skills/beta/SKILL.md': { bytes: 1024, kind: 'document' },
+        'claude/skills/alpha/SKILL.md': { bytes: 1024, kind: 'document' },
       }),
     );
 
@@ -48,7 +48,7 @@ describe(renderSizesReport, () => {
   it('excludes assets from the ranking and reports them as the asset total alone', () => {
     const snapshot = {
       ...buildSnapshot({
-        'claude/skills/plan/SKILL.md': { bytes: 1_024, kind: 'document' },
+        'claude/skills/plan/SKILL.md': { bytes: 1024, kind: 'document' },
         'claude/skills/plan/run.mjs': { bytes: 600_000, kind: 'asset' },
       }),
       aggregates: aggregates({ assets: 600_000 }),
@@ -62,10 +62,10 @@ describe(renderSizesReport, () => {
 
   it('reports the three aggregates beneath the ranking', () => {
     const snapshot = {
-      ...buildSnapshot({ 'claude/skills/plan/SKILL.md': { bytes: 2_048, kind: 'document' } }),
+      ...buildSnapshot({ 'claude/skills/plan/SKILL.md': { bytes: 2048, kind: 'document' } }),
       aggregates: aggregates({
-        alwaysLoaded: { total: 3_072, ambientRegions: 1_024, skillDescriptions: 1_536, subagentDescriptions: 512 },
-        onInvocation: 2_048,
+        alwaysLoaded: { total: 3072, ambientRegions: 1024, skillDescriptions: 1536, subagentDescriptions: 512 },
+        onInvocation: 2048,
       }),
     };
 
@@ -90,7 +90,7 @@ describe(renderSizesReport, () => {
   });
 
   it('states that the aggregates overlap rather than partition', () => {
-    const report = renderText(buildSnapshot({ 'a.md': { bytes: 1_024, kind: 'document' } }));
+    const report = renderText(buildSnapshot({ 'a.md': { bytes: 1024, kind: 'document' } }));
 
     expect(report).toContain('do not sum to a whole');
   });
@@ -120,7 +120,7 @@ describe(sizesCommand, () => {
   it('reads the home record under --global whatever the working directory', async () => {
     await appendSnapshot(
       resolveRecordPath({ home: homeDir, domain: 'home' }),
-      buildSnapshot({ 'claude/skills/home-only/SKILL.md': { bytes: 1_024, kind: 'document' } }),
+      buildSnapshot({ 'claude/skills/home-only/SKILL.md': { bytes: 1024, kind: 'document' } }),
     );
 
     await sizesCommand({ global: true }, process.cwd(), homeDir, fakeGit);

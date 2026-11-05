@@ -5,7 +5,7 @@ import type { DeploymentMeasurement } from './measure-deployment.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from './types.ts';
 
 /** Size at or above which the report warns about a document that has just grown past it. */
-export const GROWTH_CEILING_BYTES = 5 * 1_024;
+export const GROWTH_CEILING_BYTES = 5 * 1024;
 
 /** Directory name whose presence in a source's path marks it as an installed dependency rather than the reader's own. */
 const VENDOR_DIR = 'node_modules';

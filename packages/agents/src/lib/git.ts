@@ -56,10 +56,10 @@ const execFileAsync = promisify(execFile);
  * Output cap for one synchronous git invocation, sized well past a bundle. The 1 MiB default throws `ENOBUFS` on a
  * larger blob, which `readHeadBlob` cannot distinguish from an absent one, so a recorded bundle would read as absent.
  */
-const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
+const GIT_MAX_BUFFER = 64 * 1024 * 1024;
 
 /** How long a lookup on the sync path may take before it times out without a result. */
-const GIT_LOOKUP_TIMEOUT_MS = 5_000;
+const GIT_LOOKUP_TIMEOUT_MS = 5000;
 
 /** `git check-ignore`'s exit status for a path that it does not ignore, as distinct from a failure to answer at all. */
 const NOT_IGNORED_EXIT_CODE = 1;

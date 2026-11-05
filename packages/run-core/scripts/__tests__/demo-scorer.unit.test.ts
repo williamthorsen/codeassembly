@@ -129,7 +129,7 @@ function perfectStatus(): CanonicalRunStatus {
 /** Builds 50 events, a count inside the scored range, the first of which contains a usage field. */
 function perfectEvents(): RunEvent[] {
   const events: RunEvent[] = [
-    { t: '2026-04-10T00:01:00Z', event: 'phase_completed', phase: 'architecture', status: 'completed', tokens: 1_000 },
+    { t: '2026-04-10T00:01:00Z', event: 'phase_completed', phase: 'architecture', status: 'completed', tokens: 1000 },
   ];
   for (let i = 1; i < 50; i++) {
     events.push({ t: '2026-04-10T00:00:00Z', event: 'run_started' });
@@ -270,19 +270,19 @@ describe('scoreRun', () => {
 
   describe('recency boundaries', () => {
     it('startedAt exactly 30 days before now is recent', () => {
-      const thirtyDaysAgo = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1_000).toISOString();
+      const thirtyDaysAgo = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const status = buildStatus({ startedAt: thirtyDaysAgo });
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(true);
     });
 
     it('startedAt 30 days + 1 second before now is not recent', () => {
-      const justTooOld = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1_000 - 1_000).toISOString();
+      const justTooOld = new Date(NOW.getTime() - 30 * 24 * 60 * 60 * 1000 - 1000).toISOString();
       const status = buildStatus({ startedAt: justTooOld });
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(false);
     });
 
     it("future startedAt is treated as recent (scoreRun doesn't correct for clock skew)", () => {
-      const future = new Date(NOW.getTime() + 24 * 60 * 60 * 1_000).toISOString();
+      const future = new Date(NOW.getTime() + 24 * 60 * 60 * 1000).toISOString();
       const status = buildStatus({ startedAt: future });
       expect(scoreRun(status, buildEvents(5), NOW).signals.recent).toBe(true);
     });
@@ -388,7 +388,7 @@ describe('scoreRun', () => {
           event: 'phase_completed',
           phase: 'architecture',
           status: 'completed',
-          durationMs: 1_234,
+          durationMs: 1234,
         },
       ];
       expect(scoreRun(status(), events, NOW).signals.usageData).toBe(true);

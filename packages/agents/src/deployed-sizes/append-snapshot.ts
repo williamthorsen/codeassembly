@@ -16,7 +16,7 @@ export const RETAINED_LINES = 200;
  * bounds what a prune retains, so that the two limits cannot disagree: A deployment whose lines are large enough for
  * `RETAINED_LINES` of them to exceed this would otherwise leave every later append to prune again.
  */
-export const PRUNE_THRESHOLD_BYTES = 8 * 1_024 * 1_024;
+export const PRUNE_THRESHOLD_BYTES = 8 * 1024 * 1024;
 
 /** Appends one snapshot to the record at `recordPath`. */
 export async function appendSnapshot(recordPath: string, snapshot: SizeSnapshot): Promise<void> {

@@ -389,9 +389,9 @@ describe('deployed sizes', () => {
       renderSyncReport(
         withSizes({
           changes: [
-            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 12_698, delta: 1_331, explained: 0 },
+            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 12_698, delta: 1331, explained: 0 },
             { kind: 'added', key: 'claude/skills/new/SKILL.md', bytes: 512, delta: 512, explained: 0 },
-            { kind: 'removed', key: 'claude/skills/old/SKILL.md', bytes: 0, delta: -8_294, explained: 0 },
+            { kind: 'removed', key: 'claude/skills/old/SKILL.md', bytes: 0, delta: -8294, explained: 0 },
           ],
         }),
       ),
@@ -411,7 +411,7 @@ describe('deployed sizes', () => {
             {
               kind: 'expansion',
               key: 'partial:codeassembly/_partials/plain-speech.md',
-              bytes: 1_229,
+              bytes: 1229,
               delta: 132,
               explainedDocumentCount: 17,
             },
@@ -448,7 +448,7 @@ describe('deployed sizes', () => {
       renderSyncReport(
         withSizes({
           changes: [
-            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 73_600, delta: 1_000, explained: 400 },
+            { kind: 'resized', key: 'claude/skills/plan/SKILL.md', bytes: 73_600, delta: 1000, explained: 400 },
           ],
         }),
       ),
@@ -468,7 +468,7 @@ describe('deployed sizes', () => {
             delta: 500,
             explainedDocumentCount: 20,
           },
-          { kind: 'resized', key: 'a.md', bytes: 1_100, delta: 100, explained: 0 },
+          { kind: 'resized', key: 'a.md', bytes: 1100, delta: 100, explained: 0 },
         ],
       }),
     );
@@ -486,8 +486,8 @@ describe('deployed sizes', () => {
         withSizes({
           documentCount: 3,
           aggregates: {
-            alwaysLoaded: { total: 3_072, ambientRegions: 1_024, skillDescriptions: 1_536, subagentDescriptions: 512 },
-            onInvocation: 2_048,
+            alwaysLoaded: { total: 3072, ambientRegions: 1024, skillDescriptions: 1536, subagentDescriptions: 512 },
+            onInvocation: 2048,
             assets: 600_000,
           },
         }),

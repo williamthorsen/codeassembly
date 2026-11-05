@@ -11,7 +11,7 @@ import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from '
 const SHARED = 'partial:codeassembly/_partials/shared.md';
 
 const VECTOR: Record<string, DeployedFile> = {
-  'claude/skills/plan/SKILL.md': { bytes: 1_200, kind: 'document' },
+  'claude/skills/plan/SKILL.md': { bytes: 1200, kind: 'document' },
   'claude/skills/plan/run.mjs': { bytes: 400, kind: 'asset' },
 };
 
@@ -33,7 +33,7 @@ describe(shouldAppend, () => {
   });
 
   it('appends a vector whose keys match but whose bytes differ', async () => {
-    const grown = { ...VECTOR, 'claude/skills/plan/SKILL.md': { bytes: 1_300, kind: 'document' as const } };
+    const grown = { ...VECTOR, 'claude/skills/plan/SKILL.md': { bytes: 1300, kind: 'document' as const } };
 
     expect(
       await shouldAppend({ measured: measure(grown), previous: snapshotOf(measure(VECTOR)), sourceRoot, git }),
@@ -57,8 +57,8 @@ describe(shouldAppend, () => {
   });
 
   it('appends an ambient-region edit, which changes an aggregate but does not change any file', async () => {
-    const previous = snapshotOf(measure(VECTOR, { ambientRegions: 2_000 }));
-    const edited = measure(VECTOR, { ambientRegions: 2_400 });
+    const previous = snapshotOf(measure(VECTOR, { ambientRegions: 2000 }));
+    const edited = measure(VECTOR, { ambientRegions: 2400 });
 
     expect(await shouldAppend({ measured: edited, previous, sourceRoot, git })).toBe(true);
   });
@@ -71,13 +71,13 @@ describe(shouldAppend, () => {
   });
 
   it('does not append when the files and every aggregate are unchanged', async () => {
-    const measured = measure(VECTOR, { ambientRegions: 2_000, skillDescriptions: 40, subagentDescriptions: 12 });
+    const measured = measure(VECTOR, { ambientRegions: 2000, skillDescriptions: 40, subagentDescriptions: 12 });
 
     expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot, git })).toBe(false);
   });
 
   it('reads an unchanged previous snapshot back out of a record line as unchanged', async () => {
-    const measured = measure(VECTOR, { ambientRegions: 2_000, skillDescriptions: 40, subagentDescriptions: 12 });
+    const measured = measure(VECTOR, { ambientRegions: 2000, skillDescriptions: 40, subagentDescriptions: 12 });
     const previous = parseSnapshotLine(JSON.stringify(snapshotOf(measured)));
 
     expect(await shouldAppend({ measured, previous, sourceRoot, git })).toBe(false);
@@ -97,7 +97,7 @@ describe(shouldAppend, () => {
   });
 
   it('does not append when the files, the expansions, and every aggregate are unchanged', async () => {
-    const measured = measure(VECTOR, { ambientRegions: 2_000 }, { [SHARED]: { bytes: 300, reach: 4 } });
+    const measured = measure(VECTOR, { ambientRegions: 2000 }, { [SHARED]: { bytes: 300, reach: 4 } });
 
     expect(await shouldAppend({ measured, previous: snapshotOf(measured), sourceRoot, git })).toBe(false);
   });

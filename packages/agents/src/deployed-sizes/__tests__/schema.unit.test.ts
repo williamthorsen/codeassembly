@@ -9,11 +9,11 @@ const SNAPSHOT: SizeSnapshot = {
   recordedAt: '2026-09-19T08:00:00.000Z',
   version: '0.15.0',
   sourceCommit: '9b4f4b9a',
-  files: { 'skills/plan/SKILL.md': { bytes: 1_200, kind: 'document' } },
+  files: { 'skills/plan/SKILL.md': { bytes: 1200, kind: 'document' } },
   expansions: { 'partial:codeassembly/_partials/shared.md': { bytes: 300, reach: 4 } },
   aggregates: {
     alwaysLoaded: { total: 300, ambientRegions: 100, skillDescriptions: 150, subagentDescriptions: 50 },
-    onInvocation: 1_200,
+    onInvocation: 1200,
     assets: 0,
   },
 };

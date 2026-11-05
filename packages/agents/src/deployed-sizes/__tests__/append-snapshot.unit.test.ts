@@ -84,7 +84,7 @@ describe(appendSnapshot, () => {
 function buildBulkySnapshot(): SizeSnapshot {
   const files: Record<string, { bytes: number; kind: 'document' }> = {};
   for (let i = 0; i < 600; i++) {
-    files[`claude/skills/consult-some-deployed-skill-${i}/SKILL.md`] = { bytes: 4_096, kind: 'document' };
+    files[`claude/skills/consult-some-deployed-skill-${i}/SKILL.md`] = { bytes: 4096, kind: 'document' };
   }
   return { ...buildSnapshot(1), files };
 }

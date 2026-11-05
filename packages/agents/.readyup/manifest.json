@@ -42,7 +42,7 @@
           "path": "lib/guidance-size.ts"
         },
         {
-          "hash": "acb8761f",
+          "hash": "99189d28",
           "kind": "module",
           "path": "lib/guidance-staleness.ts"
         }

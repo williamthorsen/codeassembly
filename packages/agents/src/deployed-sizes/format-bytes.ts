@@ -1,5 +1,5 @@
 /** Bytes in one kibibyte, the unit in which a deployment's sizes are readable. */
-const BYTES_PER_KIB = 1_024;
+const BYTES_PER_KIB = 1024;
 
 /**
  * Renders one byte count at the scale that keeps it readable: kibibytes to one decimal place above a kibibyte, and

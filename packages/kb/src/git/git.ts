@@ -45,7 +45,7 @@ export const realGit: KbGit = {
 // region | Helpers
 
 /** Output cap for one `git ls-files`, sized past the listing produced by a large store. */
-const GIT_MAX_BUFFER = 64 * 1_024 * 1_024;
+const GIT_MAX_BUFFER = 64 * 1024 * 1024;
 
 /** Extracts git's stderr from a thrown `execFileSync` error, falling back to the error's own message. */
 function extractGitErrorMessage(error: unknown): string {
