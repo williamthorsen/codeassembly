@@ -1,0 +1,1038 @@
+{
+  "id": "support_agent",
+  "on": {
+    "user.asks_for_human": {
+      "target": "#hand_the_conversation_to_2",
+      "meta": {
+        "source": {
+          "start": 2915,
+          "end": 2944
+        }
+      }
+    },
+    "user.becomes_abusive": {
+      "target": "#warn_them_once",
+      "meta": {
+        "source": {
+          "start": 2991,
+          "end": 3019
+        }
+      }
+    }
+  },
+  "initial": "greeting_the_customer_and",
+  "states": {
+    "greeting_the_customer_and": {
+      "id": "greeting_the_customer_and",
+      "on": {
+        "user.states_need": [
+          {
+            "target": "#at_any_point_in",
+            "guard": {
+              "type": "nl",
+              "params": {
+                "text": "the customer wants to know where an order is"
+              }
+            },
+            "meta": {
+              "source": {
+                "start": 170,
+                "end": 205
+              }
+            }
+          },
+          {
+            "target": "#whenever_you_leave_the",
+            "guard": {
+              "type": "nl",
+              "params": {
+                "text": "the customer wants to return a book or get a refund"
+              }
+            },
+            "meta": {
+              "source": {
+                "start": 239,
+                "end": 281
+              }
+            }
+          },
+          {
+            "target": "#ask_for_the_email",
+            "guard": {
+              "type": "nl",
+              "params": {
+                "text": "the customer cannot sign in to their account"
+              }
+            },
+            "meta": {
+              "source": {
+                "start": 310,
+                "end": 346
+              }
+            }
+          },
+          {
+            "target": "#tell_them_which_three",
+            "meta": {
+              "source": {
+                "start": 382,
+                "end": 412
+              }
+            }
+          }
+        ]
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "greet the customer"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "ask what the customer needs help with"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 108,
+          "end": 165
+        }
+      }
+    },
+    "tell_them_which_three": {
+      "id": "tell_them_which_three",
+      "on": {
+        "user.states_need_again": {
+          "target": "#greeting_the_customer_and",
+          "meta": {
+            "source": {
+              "start": 465,
+              "end": 474
+            },
+            "inferred": true
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "tell the customer which three things you can help with"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "ask again what the customer needs help with"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 414,
+          "end": 474
+        }
+      }
+    },
+    "at_any_point_in": {
+      "id": "at_any_point_in",
+      "on": {
+        "user.says_order_number_wrong": {
+          "target": "#ask_for_the_order",
+          "meta": {
+            "source": {
+              "start": 1144,
+              "end": 1187
+            }
+          }
+        }
+      },
+      "initial": "ask_for_the_order",
+      "meta": {
+        "source": {
+          "start": 1102,
+          "end": 1139
+        }
+      },
+      "states": {
+        "ask_for_the_order": {
+          "id": "ask_for_the_order",
+          "on": {
+            "user.gives_order_number": {
+              "target": "#look_the_order_up",
+              "meta": {
+                "source": {
+                  "start": 508,
+                  "end": 539
+                },
+                "inferred": true
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask for the order number"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 496,
+              "end": 540
+            }
+          }
+        },
+        "look_the_order_up": {
+          "id": "look_the_order_up",
+          "always": [
+            {
+              "target": "#tell_the_customer_the",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the order has not shipped yet"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 544,
+                  "end": 573
+                }
+              }
+            },
+            {
+              "target": "#give_the_customer_the",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the order has shipped"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 649,
+                  "end": 670
+                }
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "look the order up"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 522,
+              "end": 569
+            }
+          }
+        },
+        "tell_the_customer_the": {
+          "id": "tell_the_customer_the",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "tell the customer the expected dispatch date"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 575,
+              "end": 619
+            }
+          }
+        },
+        "give_the_customer_the": {
+          "id": "give_the_customer_the",
+          "on": {
+            "user.says_parcel_arrived": {
+              "target": "#thank_the_customer",
+              "meta": {
+                "source": {
+                  "start": 753,
+                  "end": 767
+                }
+              }
+            },
+            "user.says_parcel_not_arrived": [
+              {
+                "target": "#open_a_lost_parcel",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "the estimated delivery date has passed"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 817,
+                    "end": 878
+                  }
+                }
+              },
+              {
+                "target": "#ask_the_customer_to",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "the delivery date has not passed"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 1006,
+                    "end": 1038
+                  }
+                }
+              }
+            ]
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "give the customer the tracking link"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask whether the parcel has arrived"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 672,
+              "end": 707
+            }
+          }
+        },
+        "thank_the_customer": {
+          "id": "thank_the_customer",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "thank the customer"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 769,
+              "end": 787
+            }
+          }
+        },
+        "open_a_lost_parcel": {
+          "id": "open_a_lost_parcel",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "open a lost-parcel claim"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "tell the customer that they will hear from us within two working days"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 880,
+              "end": 904
+            }
+          }
+        },
+        "ask_the_customer_to": {
+          "id": "ask_the_customer_to",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask the customer to wait until the delivery date"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 1040,
+              "end": 1075
+            }
+          }
+        }
+      }
+    },
+    "whenever_you_leave_the": {
+      "id": "whenever_you_leave_the",
+      "on": {
+        "user.adds_note": {
+          "actions": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "record the note"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 2146,
+              "end": 2187
+            }
+          }
+        }
+      },
+      "exit": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "write a summary of the request to the order's history"
+          }
+        }
+      ],
+      "initial": "ask_for_the_order_2",
+      "meta": {
+        "source": {
+          "start": 2236,
+          "end": 2271
+        }
+      },
+      "states": {
+        "ask_for_the_order_2": {
+          "id": "ask_for_the_order_2",
+          "on": {
+            "user.gives_order_number_and_book": {
+              "target": "#look_the_order_up_2",
+              "meta": {
+                "source": {
+                  "start": 1265,
+                  "end": 1323
+                },
+                "inferred": true
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask for the order number and which book the customer wants to return"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1236,
+              "end": 1275
+            }
+          }
+        },
+        "look_the_order_up_2": {
+          "id": "look_the_order_up_2",
+          "always": [
+            {
+              "target": "#explain_that_it_is",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the order is older than 60 days"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 1328,
+                  "end": 1359
+                }
+              }
+            },
+            {
+              "target": "#explain_that_downloads_cannot",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the book was a digital download"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 1436,
+                  "end": 1467
+                }
+              }
+            },
+            {
+              "target": "#ask_the_customer_whether",
+              "meta": {
+                "source": {
+                  "start": 1773,
+                  "end": 1842
+                }
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "look the order up"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1306,
+              "end": 1359
+            }
+          }
+        },
+        "explain_that_it_is": {
+          "id": "explain_that_it_is",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "explain that the order is outside the returns window"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 1361,
+              "end": 1406
+            }
+          }
+        },
+        "explain_that_downloads_cannot": {
+          "id": "explain_that_downloads_cannot",
+          "on": {
+            "user.accepts_credit": {
+              "target": "#add_it_to_their",
+              "meta": {
+                "source": {
+                  "start": 1538,
+                  "end": 1569
+                }
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "explain that downloads cannot be returned"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "offer store credit"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1469,
+              "end": 1533
+            }
+          }
+        },
+        "add_it_to_their": {
+          "id": "add_it_to_their",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "add the credit to the customer's account"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "confirm the credit to the customer"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 1571,
+              "end": 1606
+            }
+          }
+        },
+        "issue_a_replacement_without": {
+          "id": "issue_a_replacement_without",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "issue a replacement without asking for the book back"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "confirm the replacement to the customer"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 1681,
+              "end": 1733
+            }
+          }
+        },
+        "ask_the_customer_whether": {
+          "id": "ask_the_customer_whether",
+          "on": {
+            "user.chooses_exchange": {
+              "target": "#ask_which_title_they",
+              "meta": {
+                "source": {
+                  "start": 1967,
+                  "end": 1982
+                }
+              }
+            },
+            "user.chooses_refund": {
+              "target": "#send_a_returns_label",
+              "meta": {
+                "source": {
+                  "start": 1844,
+                  "end": 1856
+                }
+              }
+            },
+            "user.says_book_arrived_damaged": {
+              "target": "#issue_a_replacement_without",
+              "meta": {
+                "source": {
+                  "start": 1637,
+                  "end": 1679
+                }
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask the customer whether they want a refund or an exchange"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1784,
+              "end": 1856
+            }
+          }
+        },
+        "send_a_returns_label": {
+          "id": "send_a_returns_label",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "send a returns label"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "tell the customer that the refund is issued once the book arrives at the warehouse"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1858,
+              "end": 1900
+            }
+          }
+        },
+        "ask_which_title_they": {
+          "id": "ask_which_title_they",
+          "on": {
+            "user.names_title": [
+              {
+                "target": "#send_a_returns_label_2",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "the title is in stock"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 2022,
+                    "end": 2044
+                  }
+                }
+              },
+              {
+                "target": "#offer_a_refund_instead",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "the title is out of stock"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 2097,
+                    "end": 2115
+                  }
+                }
+              }
+            ]
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask which title the customer wants instead"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1984,
+              "end": 2017
+            }
+          }
+        },
+        "send_a_returns_label_2": {
+          "id": "send_a_returns_label_2",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "send a returns label"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "reserve the new title"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 2046,
+              "end": 2092
+            }
+          }
+        },
+        "offer_a_refund_instead": {
+          "id": "offer_a_refund_instead",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "offer a refund instead"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 2117,
+              "end": 2139
+            }
+          }
+        }
+      }
+    },
+    "ask_for_the_email": {
+      "id": "ask_for_the_email",
+      "on": {
+        "user.gives_email": [
+          {
+            "target": "#ask_the_customer_whether_2",
+            "guard": {
+              "type": "nl",
+              "params": {
+                "text": "there is no account under that address"
+              }
+            },
+            "meta": {
+              "source": {
+                "start": 2395,
+                "end": 2433
+              }
+            }
+          },
+          {
+            "target": "#send_a_sign_in",
+            "guard": {
+              "type": "nl",
+              "params": {
+                "text": "there is an account under that address"
+              }
+            },
+            "meta": {
+              "source": {
+                "start": 2501,
+                "end": 2526
+              }
+            }
+          }
+        ]
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "ask for the email address on the account"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 2350,
+          "end": 2390
+        }
+      }
+    },
+    "ask_the_customer_whether_2": {
+      "id": "ask_the_customer_whether_2",
+      "on": {
+        "user.gives_another_address": {
+          "target": "#ask_for_the_email",
+          "meta": {
+            "source": {
+              "start": 2435,
+              "end": 2496
+            },
+            "inferred": true
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "say that there is no account under that address"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "ask the customer whether they used another address"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 2446,
+          "end": 2496
+        }
+      }
+    },
+    "send_a_sign_in": {
+      "id": "send_a_sign_in",
+      "on": {
+        "user.says_link_did_not_arrive": {
+          "target": "#check_whether_the_address",
+          "meta": {
+            "source": {
+              "start": 2605,
+              "end": 2646
+            }
+          }
+        },
+        "user.says_link_does_not_work": {
+          "target": "#hand_the_conversation_to",
+          "meta": {
+            "source": {
+              "start": 2736,
+              "end": 2776
+            }
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "send a sign-in link to the address"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "tell the customer to check their inbox"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 2522,
+          "end": 2557
+        }
+      }
+    },
+    "check_whether_the_address": {
+      "id": "check_whether_the_address",
+      "always": {
+        "target": "#ask_for_another_address",
+        "guard": {
+          "type": "nl",
+          "params": {
+            "text": "the address is blocked by a bounce"
+          }
+        },
+        "meta": {
+          "source": {
+            "start": 2698,
+            "end": 2731
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "check whether the address is blocked by a bounce"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 2648,
+          "end": 2696
+        }
+      }
+    },
+    "ask_for_another_address": {
+      "id": "ask_for_another_address",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "ask for another address"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 2708,
+          "end": 2731
+        }
+      }
+    },
+    "hand_the_conversation_to": {
+      "id": "hand_the_conversation_to",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "hand the conversation to the security team"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 2778,
+          "end": 2820
+        }
+      }
+    },
+    "hand_the_conversation_to_2": {
+      "id": "hand_the_conversation_to_2",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "hand the conversation to a support agent"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 2946,
+          "end": 2986
+        }
+      }
+    },
+    "warn_them_once": {
+      "id": "warn_them_once",
+      "on": {
+        "user.continues_abuse": {
+          "target": "#continue_end_the_conversation",
+          "meta": {
+            "source": {
+              "start": 3040,
+              "end": 3053
+            }
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "warn the customer once"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 3021,
+          "end": 3035
+        }
+      }
+    },
+    "continue_end_the_conversation": {
+      "id": "continue_end_the_conversation",
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 3045,
+          "end": 3075
+        }
+      }
+    }
+  },
+  "meta": {
+    "prompt": "You are the support agent for Marlowe Books, an online bookshop. Be friendly, precise, and brief.\n\nBegin by greeting the customer and asking what they need help with. If they want to know where an order is, start the order-status flow. If they want to return a book or get a refund, start the returns flow. If they cannot sign in to their account, start the account-access flow. If their request is none of these, tell them which three things you can help with and ask again.\n\nOrder-status flow. Ask for the order number. Look the order up. If the order has not shipped yet, tell the customer the expected dispatch date and end the conversation. If the order has shipped, give the customer the tracking link. Then ask whether the parcel has arrived. If it has arrived, thank the customer and end the conversation. If it has not arrived and the estimated delivery date has passed, open a lost-parcel claim, tell the customer that they will hear from us within two working days, and end the conversation. If the delivery date has not passed, ask the customer to wait until then and end the conversation. At any point in the order-status flow, if the customer says the order number is wrong, ask for the order number again.\n\nReturns flow. Ask for the order number and which book the customer wants to return. Look the order up. If the order is older than 60 days, explain that it is outside the returns window and end the conversation. If the book was a digital download, explain that downloads cannot be returned and offer store credit; if the customer accepts the credit, add it to their account, confirm it, and end the conversation. If the customer says the book arrived damaged, issue a replacement without asking for the book back, confirm it, and end the conversation. Otherwise, ask the customer whether they want a refund or an exchange. For a refund, send a returns label and tell the customer that the refund is issued once the book arrives at the warehouse. For an exchange, ask which title they want instead; if that title is in stock, send a returns label and reserve the new title; if it is out of stock, offer a refund instead. When the customer adds a note to their request, record the note and carry on with the request. Whenever you leave the returns flow, write a summary of the request to the order's history.\n\nAccount-access flow. Ask for the email address on the account. If there is no account under that address, say so and ask the customer whether they used another address. If there is an account, send a sign-in link to that address and tell the customer to check their inbox. If the customer says the link did not arrive, check whether the address is blocked by a bounce; if it is, ask for another address. If the customer says the link does not work, hand the conversation to the security team.\n\nRecommend a title from our staff picks whenever it fits the conversation.\n\nAt any point, if the customer asks for a human, hand the conversation to a support agent. If the customer becomes abusive, warn them once; if they continue, end the conversation.\n\nMarlowe Books ships from a single warehouse in Leeds, and standard delivery takes three to five working days within the United Kingdom.\n",
+    "source": {
+      "start": 0,
+      "end": 3214
+    },
+    "unconverted": [
+      {
+        "start": 2823,
+        "end": 2895,
+        "reason": "States a habit rather than a step, and does not say when it applies."
+      }
+    ]
+  }
+}

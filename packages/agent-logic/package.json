@@ -19,13 +19,16 @@
   },
   "license": "ISC",
   "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
-  "sideEffects": false,
+  "sideEffects": [
+    "*.css"
+  ],
   "type": "module",
   "exports": {
     ".": {
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js"
     },
+    "./agent-logic.schema.json": "./schema/agent-logic.schema.json",
     "./contract": {
       "types": "./dist/esm/contract/index.d.ts",
       "import": "./dist/esm/contract/index.js"
@@ -34,6 +37,7 @@
       "types": "./dist/esm/react/index.d.ts",
       "import": "./dist/esm/react/index.js"
     },
+    "./react/styles.css": "./dist/esm/react/styles.css",
     "./server": {
       "types": "./dist/esm/server/index.d.ts",
       "import": "./dist/esm/server/index.js"
@@ -46,16 +50,29 @@
   "files": [
     "bin",
     "dist",
+    "docs",
+    "schema",
     "CHANGELOG.md",
     ".meta/changelog.json"
   ],
   "scripts": {
+    "build:post": "cp src/react/styles.css dist/esm/react/styles.css",
+    "generate:schema": "node src/schema/write-json-schema.ts",
     "prepublishOnly": "nmr build"
+  },
+  "dependencies": {
+    "@hono/node-server": "2.1.6",
+    "@williamthorsen/toolbelt.errors": "catalog:",
+    "@xyflow/react": "12.12.1",
+    "elkjs": "0.12.1",
+    "hono": "4.13.16",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
+    "@testing-library/user-event": "14.6.8",
     "@types/node": "catalog:",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
@@ -71,7 +88,8 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "vite": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "xstate": "5.33.3"
   },
   "peerDependencies": {
     "@williamthorsen/telefactor": "^0.4.1",
