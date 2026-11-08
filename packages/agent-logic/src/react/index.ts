@@ -1,1 +1,24 @@
-export { AgentLogicPlaceholder } from './AgentLogicPlaceholder.tsx';
+/** `./react` entry: the statechart canvas, the data of its key, and the hooks of a page that presents a chart. */
+export * from './canvas/canvas-key-entries.tsx';
+export * from './canvas/list-chart-marks.ts';
+export * from './canvas/marks.tsx';
+export * from './canvas/StatechartCanvas.tsx';
+export * from './hooks/conversion-client.ts';
+export * from './hooks/describe-agent-selection.ts';
+export * from './hooks/describe-load-outcome.ts';
+export * from './hooks/download-config.ts';
+export * from './hooks/example-location.ts';
+export * from './hooks/label-source.ts';
+export * from './hooks/parse-config-text.ts';
+export * from './hooks/useAgentBridge.ts';
+export * from './hooks/useAgentSync.ts';
+export * from './hooks/useChartLayout.ts';
+export * from './hooks/useConversion.ts';
+export * from './hooks/useConvertDraft.ts';
+export * from './hooks/useDocumentTitle.ts';
+export * from './hooks/useEscapeToClear.ts';
+export * from './hooks/useHarnessList.ts';
+export * from './hooks/usePromptDirectory.ts';
+export * from './hooks/useSelection.ts';
+export * from './hooks/useShowAmbient.ts';
+export * from './hooks/useUnknownExample.ts';
