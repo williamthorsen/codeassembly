@@ -1,0 +1,90 @@
+{
+  "name": "codeassembly-agent-logic",
+  "version": "0.0.0",
+  "description": "Model of an agent prompt's states and transitions, with React and server entries for the apps that present it",
+  "keywords": [
+    "agents",
+    "ai",
+    "react",
+    "statechart"
+  ],
+  "homepage": "https://github.com/williamthorsen/codeassembly/tree/main/packages/agent-logic#readme",
+  "bugs": {
+    "url": "https://github.com/williamthorsen/codeassembly/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/williamthorsen/codeassembly.git",
+    "directory": "packages/agent-logic"
+  },
+  "license": "ISC",
+  "author": "William Thorsen <william@thorsen.dev> (https://github.com/williamthorsen)",
+  "sideEffects": false,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/esm/index.d.ts",
+      "import": "./dist/esm/index.js"
+    },
+    "./contract": {
+      "types": "./dist/esm/contract/index.d.ts",
+      "import": "./dist/esm/contract/index.js"
+    },
+    "./react": {
+      "types": "./dist/esm/react/index.d.ts",
+      "import": "./dist/esm/react/index.js"
+    },
+    "./server": {
+      "types": "./dist/esm/server/index.d.ts",
+      "import": "./dist/esm/server/index.js"
+    }
+  },
+  "main": "./dist/esm/index.js",
+  "bin": {
+    "agent-logic": "bin/agent-logic.js"
+  },
+  "files": [
+    "bin",
+    "dist",
+    "CHANGELOG.md",
+    ".meta/changelog.json"
+  ],
+  "scripts": {
+    "prepublishOnly": "nmr build"
+  },
+  "devDependencies": {
+    "@testing-library/dom": "10.4.2",
+    "@testing-library/react": "16.3.3",
+    "@types/node": "catalog:",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.2.1",
+    "@williamthorsen/nmr": "catalog:",
+    "@williamthorsen/telefactor": "0.4.1",
+    "eslint": "catalog:",
+    "eslint-plugin-jest-dom": "5.10.1",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-testing-library": "7.16.2",
+    "happy-dom": "21.0.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "peerDependencies": {
+    "@williamthorsen/telefactor": "^0.4.1",
+    "react": "^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@williamthorsen/telefactor": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">=24"
+  }
+}

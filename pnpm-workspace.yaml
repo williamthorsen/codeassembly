@@ -2,6 +2,7 @@ allowBuilds:
   '@tailwindcss/oxide': true
   esbuild: true
   lefthook: true
+  node-pty: true
   sharp: true
   svelte-preprocess: true
   unrs-resolver: false
@@ -28,6 +29,7 @@ minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
 minimumReleaseAgeExclude:
   - codeassembly-guidance
   - '@williamthorsen/change-grammar@0.3.1'
+  - '@williamthorsen/telefactor@0.4.1'
   - '@williamthorsen/toolbelt.arrays@6.4.1'
   - '@williamthorsen/toolbelt.numbers@7.3.1'
   - '@williamthorsen/toolbelt.strings@8.2.1'
@@ -35,6 +37,12 @@ minimumReleaseAgeExclude:
 
 packages:
   - packages/*
+
+# eslint-plugin-react 7.37.5 declares ESLint up to 9 but runs on 10 under the shared config, which pins its React version
+# because the plugin's `detect` mode calls an API that ESLint 10 removed.
+peerDependencyRules:
+  allowedVersions:
+    eslint-plugin-react>eslint: '10'
 
 savePrefix: ''
 
