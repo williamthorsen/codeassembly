@@ -48,6 +48,13 @@ describe(findPromptBlocks, () => {
     ]);
   });
 
+  it('finds the same blocks in a prompt with CRLF line endings, front matter and fences included', () => {
+    const prompt =
+      '---\r\nname: refund\r\n---\r\nRun the script.\r\n\r\n```shell\r\n\r\npnpm run convert\r\n```\r\n\r\nDone.';
+
+    expect(blockTexts(prompt)).toStrictEqual(['Run the script.', '```shell\r\n\r\npnpm run convert\r\n```', 'Done.']);
+  });
+
   it('joins a one-line lead-in that ends with a colon to the fenced block after it', () => {
     const prompt = 'Example:\n\n```\nplan\n```\n\nRun it:\nthen wait.\n\n```\ndone\n```';
 

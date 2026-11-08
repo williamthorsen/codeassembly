@@ -38,6 +38,14 @@ describe(findCommentSpans, () => {
     expect(findCommentSpans('Greet.\n```md\n<!-- example -->\n```\nWait.\n~~~\n<!-- open -->')).toStrictEqual([]);
   });
 
+  it('ends a fenced code block at its closing fence in a prompt with CRLF line endings', () => {
+    const prompt = 'Greet.\r\n```md\r\n<!-- example -->\r\n```\r\n<!-- note -->\r\nWait.';
+
+    const spans = findCommentSpans(prompt);
+
+    expect(spans.map(({ start, end }) => prompt.slice(start, end))).toStrictEqual(['<!-- note -->']);
+  });
+
   it('does not let an unclosed opener in a code span reach a later comment', () => {
     const prompt = 'A `<!-- codeassembly-` marker. Greet.\n<!-- note -->';
 

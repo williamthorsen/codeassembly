@@ -58,6 +58,12 @@ describe(createViewerContractImplementation, () => {
       expect(readFailure(await run('save_prompt', { name: '  ', text: 'Text.' }))).toContain('Enter a name');
     });
 
+    it('refuses a name without an ASCII letter or digit, which leaves nothing to name the file by', async () => {
+      expect(readFailure(await run('save_prompt', { name: '日本語', text: 'Text.' }))).toContain(
+        'a letter from a to z or a digit',
+      );
+    });
+
     it('refuses a prompt that the directory could not read back', async () => {
       const outcome = await run('save_prompt', { name: 'big', text: 'x'.repeat(MAX_PROMPT_FILE_BYTES + 1) });
 

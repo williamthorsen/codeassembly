@@ -29,6 +29,8 @@ export function createViewerContractImplementation({ readSettings }: ViewerContr
     handlers: {
       save_prompt: async (state, { name, text }) => {
         if (name.trim() === '') throw new Error('Enter a name.');
+        // A file name keeps only ASCII letters and digits, so a name without them has nothing to name the file by.
+        if (!/[a-z0-9]/i.test(name)) throw new Error('Enter a name that contains a letter from a to z or a digit.');
         if (Buffer.byteLength(text, 'utf8') > MAX_PROMPT_FILE_BYTES) {
           throw new Error('The prompt is larger than 1 MiB, which the prompts directory does not read.');
         }

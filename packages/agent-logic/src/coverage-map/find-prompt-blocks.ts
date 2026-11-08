@@ -178,9 +178,11 @@ function skipFrontMatter(lines: Line[]): number {
 function splitLines(text: string): Line[] {
   const lines: Line[] = [];
   let start = 0;
-  for (const [index, lineText] of text.split('\n').entries()) {
+  for (const [index, rawLine] of text.split('\n').entries()) {
+    // A CRLF ending leaves `\r` on the line, which is no part of its text.
+    const lineText = rawLine.endsWith('\r') ? rawLine.slice(0, -1) : rawLine;
     lines.push({ start, end: start + lineText.length, number: index + 1, text: lineText });
-    start += lineText.length + 1;
+    start += rawLine.length + 1;
   }
   return lines;
 }
