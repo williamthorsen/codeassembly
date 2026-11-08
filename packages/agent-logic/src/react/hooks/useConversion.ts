@@ -8,7 +8,7 @@ import type { ClientResult, ConversionClient } from './conversion-client.ts';
 export const POLL_INTERVAL_MS = 2000;
 
 /** The `sessionStorage` key under which the running job's id and name are kept, so that a reload resumes it. */
-export const CONVERSION_STORAGE_KEY = 'agent-logic-viewer.conversion';
+export const CONVERSION_STORAGE_KEY = 'agent-logic.conversion';
 
 /** What the page does with a conversion's outcome, each call naming the prompt. */
 export interface ConversionHandlers {

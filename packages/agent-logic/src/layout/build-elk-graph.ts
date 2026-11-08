@@ -29,7 +29,7 @@ const STATE_PADDING = 12;
 const COMPOUND_GAP = 16;
 // The glyphs beside a state's title.
 const GLYPH_COLUMN_WIDTH = 20;
-// The indent of an action's list item, which `canvas.css` sets on the list.
+// The indent of an action's list item, which `styles.css` sets on the list.
 const ACTION_INDENT = 18;
 
 /** The width below which a flow cannot hold its preamble. */

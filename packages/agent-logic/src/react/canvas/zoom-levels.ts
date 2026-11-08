@@ -27,10 +27,10 @@ export function findDetailLevel(zoom: number): DetailLevel {
   return 'shapes';
 }
 
-/** The screen height of a flow's name, its padding included, which `canvas.css` holds at every zoom. */
+/** The screen height of a flow's name, its padding included, which `styles.css` holds at every zoom. */
 export const FLOW_NAME_HEIGHT = 24;
 
-// The flow name's average character width and maximum width in `canvas.css`, at its fixed screen size.
+// The flow name's average character width and maximum width in `styles.css`, at its fixed screen size.
 const FLOW_NAME_CHARACTER_WIDTH = 7.5;
 const FLOW_NAME_MAX_WIDTH = 360;
 const FLOW_NAME_GAP = 12;

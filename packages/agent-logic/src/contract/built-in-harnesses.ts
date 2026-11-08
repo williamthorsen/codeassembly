@@ -22,7 +22,7 @@ export const viewerBuiltInHarnesses = {
       ],
       test: ['claude', '-p', 'Reply with OK.'],
       interactive: ['claude'],
-      mcpArgs: ['--mcp-config', '{"mcpServers":{"agent-logic-viewer":{"type":"http","url":"{mcpUrl}"}}}'],
+      mcpArgs: ['--mcp-config', '{"mcpServers":{"agent-logic":{"type":"http","url":"{mcpUrl}"}}}'],
     },
   },
 } satisfies BuiltInHarnesses;

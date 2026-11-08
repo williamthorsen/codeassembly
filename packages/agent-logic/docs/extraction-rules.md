@@ -81,7 +81,7 @@ What a conversion under these rules does not achieve. [`corpus/scorecard.md`](..
 
 ## The draft
 
-The package's `draftSchema` export, in [`src/convert/draft-schema.ts`](../src/convert/draft-schema.ts), defines the draft's shape. The draft is the config without ids or offsets: states are keyed by names that you choose, unique across the draft; `initial` names a child's key; a `target` is `#` followed by a state's key. The script writes each key as words to the state's name, which the viewer shows, and gives each state an id derived from its quote.
+The package's `draftSchema` export, in [`src/convert/draft-schema.ts`](https://github.com/williamthorsen/codeassembly/blob/main/packages/agent-logic/src/convert/draft-schema.ts), defines the draft's shape. The draft is the config without ids or offsets: states are keyed by names that you choose, unique across the draft; `initial` names a child's key; a `target` is `#` followed by a state's key. The script writes each key as words to the state's name, which the viewer shows, and gives each state an id derived from its quote.
 
 Key each state by a short snake_case verb phrase that names its step, such as `ask_for_the_email`. Write an acronym in capitals, such as `open_the_PR`, because the script capitalizes only the first word.
 

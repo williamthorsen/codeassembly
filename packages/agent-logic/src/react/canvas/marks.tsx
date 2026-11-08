@@ -71,7 +71,7 @@ export function InitialMark({ className, hasTitle = true }: GlyphProps & { class
   );
 }
 
-/** The arrowheads of the canvas's transitions, one per edge colour, which `canvas.css` assigns to each edge's path. */
+/** The arrowheads of the canvas's transitions, one per edge colour, which `styles.css` assigns to each edge's path. */
 export function ArrowheadDefs(): ReactElement {
   return (
     <svg className="arrowhead-defs" width="0" height="0" aria-hidden="true">

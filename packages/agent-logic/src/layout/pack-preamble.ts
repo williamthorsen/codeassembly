@@ -2,7 +2,7 @@ import { MAX_AMBIENT_LINES, PREAMBLE_WIDTH } from './card-limits.ts';
 import type { AmbientDescription } from './describe-config.ts';
 import { COMPOUND_PADDING_LEFT, COMPOUND_PADDING_RIGHT, countWrappedLines } from './layout-metrics.ts';
 
-// -- Text metrics of a preamble; they match the preamble's styles in `canvas.css` --
+// -- Text metrics of a preamble; they match the preamble's styles in `styles.css` --
 // The prompt's serif face at the preamble's 14px; wider than its true average, so that a line never overflows.
 const PROMPT_CHARACTER_WIDTH = 7.2;
 const PREAMBLE_LINE_HEIGHT = 20;

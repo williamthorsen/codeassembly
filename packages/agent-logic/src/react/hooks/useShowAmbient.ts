@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 
 /** The `localStorage` key under which the viewer remembers whether flows show their preambles. */
-export const SHOW_AMBIENT_KEY = 'agent-logic-viewer:show-ambient';
+export const SHOW_AMBIENT_KEY = 'agent-logic.show-ambient';
 
 /**
  * Holds whether flows show their preambles of ambient instructions, remembered across loads and reloads; shown when

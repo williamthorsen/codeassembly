@@ -95,8 +95,8 @@ function runCli(args: readonly string[], stdout: string[], stderr: string[]): nu
   const result = convertPrompt(prompt, draftText, promptFile);
   const problemsFile = parsed.values['problems-file'];
   if ('outOfScope' in result) {
-    if (problemsFile !== undefined)
-      writeFileSync(problemsFile, `${JSON.stringify({ outOfScope: result.outOfScope }, undefined, 2)}\n`);
+    const text = `${JSON.stringify({ outOfScope: result.outOfScope }, undefined, 2)}\n`;
+    if (problemsFile !== undefined && !runFileOperation(() => writeFileSync(problemsFile, text), stderr)) return 2;
     stderr.push(
       `${PROGRAM}: the prompt is out of scope: ${result.outOfScope.reason}\n`,
       `${PROGRAM}: wrote no config\n`,
@@ -104,8 +104,8 @@ function runCli(args: readonly string[], stdout: string[], stderr: string[]): nu
     return 3;
   }
   if (!result.ok) {
-    if (problemsFile !== undefined)
-      writeFileSync(problemsFile, `${JSON.stringify({ problems: result.problems }, undefined, 2)}\n`);
+    const text = `${JSON.stringify({ problems: result.problems }, undefined, 2)}\n`;
+    if (problemsFile !== undefined && !runFileOperation(() => writeFileSync(problemsFile, text), stderr)) return 2;
     for (const { path: problemPath, message } of result.problems) {
       stderr.push(`${PROGRAM}: ${problemPath === '' ? '' : `${problemPath}: `}${message}\n`);
     }
@@ -113,9 +113,20 @@ function runCli(args: readonly string[], stdout: string[], stderr: string[]): nu
     return 1;
   }
 
-  writeFileSync(outputFile, result.text);
-  if (problemsFile !== undefined) rmSync(problemsFile, { force: true });
+  if (!runFileOperation(() => writeFileSync(outputFile, result.text), stderr)) return 2;
+  if (problemsFile !== undefined && !runFileOperation(() => rmSync(problemsFile, { force: true }), stderr)) return 2;
   stdout.push(`${PROGRAM}: wrote ${outputFile}\n`);
   return 0;
+}
+
+/** Runs a file operation and returns whether it succeeded, reporting a failure as an argument error. */
+function runFileOperation(operation: () => void, stderr: string[]): boolean {
+  try {
+    operation();
+    return true;
+  } catch (error) {
+    stderr.push(`${PROGRAM}: ${describeError(error)}; pass a path in a directory that exists and is writable\n`);
+    return false;
+  }
 }
 // endregion | Helpers

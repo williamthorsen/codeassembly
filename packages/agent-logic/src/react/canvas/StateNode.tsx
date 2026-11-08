@@ -129,7 +129,7 @@ function Preamble({
 }): ReactElement | undefined {
   const { selectedPath, onSelect } = useContext(AmbientSelectionContext);
   if (ambient === undefined || ambient.length === 0) return undefined;
-  // `canvas.css` sizes the preamble from these; without a layout's columns, it draws one column at its natural height.
+  // `styles.css` sizes the preamble from these; without a layout's columns, it draws one column at its natural height.
   const style: CSSProperties & Record<`--${string}`, string> = {
     pointerEvents: 'auto',
     '--preamble-column-width': `${PREAMBLE_WIDTH}px`,
