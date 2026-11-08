@@ -311,7 +311,7 @@
   background: none;
   color: var(--agent-logic-text);
   cursor: pointer;
-  /* ADS has no serif token; this is the prompt pane's face. */
+  /* The serif face in which an app's prompt pane quotes the prompt. */
   font-family: 'Iowan Old Style', Charter, 'Source Serif 4', Georgia, ui-serif, serif;
   font-size: 14px;
   line-height: 20px;
