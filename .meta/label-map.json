@@ -18,6 +18,7 @@
     "fmt": "formatting"
   },
   "scopes": {
+    "agent-logic": "scope:agent-logic",
     "agents": "scope:agents",
     "kb": "scope:kb",
     "run-core": "scope:run-core",

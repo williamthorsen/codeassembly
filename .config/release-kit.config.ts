@@ -8,6 +8,7 @@ const config = defineConfig({
     extends: ['common'],
     labels: {
       'scope:root': { color: '00ff96' },
+      'scope:agent-logic': { color: '00ff96' },
       'scope:agents': { color: '00ff96' },
       'scope:factory': { color: '00ff96', archived: true },
       'scope:guidance': { color: '00ff96', archived: true },
@@ -17,6 +18,7 @@ const config = defineConfig({
     },
   },
   workspaces: [
+    { dir: 'agent-logic' },
     { dir: 'agents', legacyIdentities: [{ name: '@codeassembly/agents', tagPrefix: 'agents-v' }] },
     { dir: 'run-core', legacyIdentities: [{ name: '@codeassembly/run-core', tagPrefix: 'run-core-v' }] },
   ],

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    // The `./react` entry renders in the browser.
+    "jsx": "react-jsx",
+    // `lib` replaces rather than extends, so the base's entries are repeated alongside the DOM libs.
+    "lib": ["DOM", "DOM.Iterable", "ES2025", "ESNext.Array", "ESNext.Disposable"],
+  },
+  // prettier-ignore
+  "include": [
+    "src/",
+    "*.ts",
+  ],
+}
