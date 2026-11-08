@@ -8,7 +8,7 @@ This repository is public. Anything committed here is world-readable, so it must
 
 A pnpm monorepo of CodeAssembly packages: the `codeassembly` CLI, which deploys agent guidance, its supporting packages, and the agent-logic model. Each package's own README describes its internals. The guidance library that the CLI deploys lives in [williamthorsen/codeassembly-guidance](https://github.com/williamthorsen/codeassembly-guidance), and this repository consumes it as the published `codeassembly-guidance` package.
 
-- **agent-logic** (`packages/agent-logic/`): The agent-logic model of a prompt's states and transitions, with React and server entries for the apps that present it, published as `codeassembly-agent-logic`.
+- **agent-logic** (`packages/agent-logic/`): The agent-logic model of a prompt's states and transitions, with React and server entries for the apps that present it, published as `codeassembly-agent-logic`. See `packages/agent-logic/README.md`.
 - **agents** (`packages/agents/`): The `codeassembly` CLI, which deploys guidance from declared content sources. See `packages/agents/README.md`.
 - **kb** (`packages/kb/`): Knowledge-base foundation library. See `packages/kb/README.md`.
 - **run-core** (`packages/run-core/`): Canonical domain model, schemas, and run-data parsing. See `packages/run-core/README.md`.
