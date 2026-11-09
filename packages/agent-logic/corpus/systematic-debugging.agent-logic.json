@@ -1,0 +1,1077 @@
+{
+  "id": "systematic_debugging",
+  "initial": "all_of_these_mean",
+  "states": {
+    "claiming_success": {
+      "id": "claiming_success",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "claim success: the bug is resolved and the tests pass"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 5322,
+          "end": 5338
+        },
+        "name": "Claim success"
+      }
+    },
+    "question_architecture": {
+      "id": "question_architecture",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "look for the pattern indicating an architectural problem: each fix reveals new shared state, coupling, or a problem in a different place; fixes require \"massive refactoring\" to implement; each fix creates new symptoms elsewhere"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "stop and question fundamentals: whether the pattern is fundamentally sound, whether the work is \"sticking with it through sheer inertia\", and whether to refactor the architecture rather than continue fixing symptoms"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "discuss with the human partner before attempting more fixes"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "treat the failure as a wrong architecture, not a failed hypothesis"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 5636,
+          "end": 5657
+        },
+        "name": "Question the architecture"
+      }
+    },
+    "all_of_these_mean": {
+      "id": "all_of_these_mean",
+      "on": {
+        "agent.catches_red_flag": [
+          {
+            "target": "#question_architecture",
+            "guard": {
+              "type": "nl",
+              "params": {
+                "text": "3 or more fixes have failed"
+              }
+            },
+            "meta": {
+              "source": {
+                "start": 6889,
+                "end": 6930
+              }
+            }
+          },
+          {
+            "target": "#read_error_messages_carefully",
+            "meta": {
+              "source": {
+                "start": 6265,
+                "end": 6296
+              }
+            }
+          }
+        ],
+        "user.signals_wrong_approach": {
+          "target": "#read_error_messages_carefully",
+          "meta": {
+            "source": {
+              "start": 6989,
+              "end": 7018
+            }
+          }
+        }
+      },
+      "initial": "read_error_messages_carefully",
+      "meta": {
+        "source": {
+          "start": 6818,
+          "end": 6861
+        },
+        "ambient": [
+          {
+            "start": 1099,
+            "end": 1158
+          },
+          {
+            "start": 1201,
+            "end": 1227
+          }
+        ],
+        "name": "Follow the four phases"
+      },
+      "states": {
+        "read_error_messages_carefully": {
+          "id": "read_error_messages_carefully",
+          "always": {
+            "target": "#reproduce_consistently",
+            "meta": {
+              "source": {
+                "start": 1439,
+                "end": 1461
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "don't skip past errors or warnings"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "look for the exact solution, which errors and warnings often contain"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "read stack traces completely"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "note line numbers, file paths, and error codes"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1236,
+              "end": 1265
+            },
+            "name": "Read the error messages carefully"
+          }
+        },
+        "reproduce_consistently": {
+          "id": "reproduce_consistently",
+          "always": {
+            "target": "#check_recent_changes",
+            "meta": {
+              "source": {
+                "start": 1624,
+                "end": 1644
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "check whether the issue can be triggered reliably"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "find the exact steps that reproduce the issue"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "check whether the issue happens every time"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when the issue is not reproducible, gather more data and don't guess"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1439,
+              "end": 1461
+            },
+            "name": "Reproduce the issue consistently"
+          }
+        },
+        "check_recent_changes": {
+          "id": "check_recent_changes",
+          "always": {
+            "target": "#gather_evidence_in_multi",
+            "meta": {
+              "source": {
+                "start": 1793,
+                "end": 1835
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask what changed that could cause the issue"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "review the git diff and recent commits"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "review new dependencies and config changes"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "look for environmental differences"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1624,
+              "end": 1644
+            },
+            "name": "Check recent changes"
+          }
+        },
+        "gather_evidence_in_multi": {
+          "id": "gather_evidence_in_multi",
+          "always": {
+            "target": "#trace_data_flow",
+            "meta": {
+              "source": {
+                "start": 3020,
+                "end": 3035
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "when the system has multiple components, add diagnostic instrumentation before proposing fixes"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "at each component boundary, log what data enters the component and what data exits it"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "at each component boundary, verify environment and config propagation and check the state at each layer"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "run once to gather evidence showing where the system breaks"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "analyze the evidence to identify the failing component"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "investigate that specific component"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 1793,
+              "end": 1835
+            },
+            "name": "Gather evidence in multi component systems"
+          }
+        },
+        "trace_data_flow": {
+          "id": "trace_data_flow",
+          "always": [
+            {
+              "target": "#you_ve_completed_the",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the investigation reveals that the issue is truly environmental, timing-dependent, or external"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 8776,
+                  "end": 8868
+                }
+              }
+            },
+            {
+              "target": "#find_working_examples",
+              "meta": {
+                "source": {
+                  "start": 3369,
+                  "end": 3385
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "when the error is deep in the call stack, use the complete backward tracing technique in `root-cause-tracing.md`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "find where the bad value originates"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "find what called the code with the bad value"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "keep tracing up until the source is found"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "fix at the source, not at the symptom"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 3020,
+              "end": 3035
+            },
+            "name": "Trace the data flow"
+          }
+        },
+        "find_working_examples": {
+          "id": "find_working_examples",
+          "always": {
+            "target": "#compare_against_references",
+            "meta": {
+              "source": {
+                "start": 3558,
+                "end": 3584
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "find the pattern before fixing"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "locate similar working code in the same codebase"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask what works that's similar to what's broken"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 3429,
+              "end": 3450
+            },
+            "name": "Find working examples"
+          }
+        },
+        "compare_against_references": {
+          "id": "compare_against_references",
+          "always": {
+            "target": "#identify_differences",
+            "meta": {
+              "source": {
+                "start": 3748,
+                "end": 3768
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "when implementing a pattern, read the reference implementation completely"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "don't skim; read every line"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "understand the pattern fully before applying it"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 3558,
+              "end": 3584
+            },
+            "name": "Compare against references"
+          }
+        },
+        "identify_differences": {
+          "id": "identify_differences",
+          "always": {
+            "target": "#understand_dependencies",
+            "meta": {
+              "source": {
+                "start": 3907,
+                "end": 3930
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask what's different between working and broken"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "list every difference, however small"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "don't assume that a difference can't matter"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 3748,
+              "end": 3768
+            },
+            "name": "Identify differences"
+          }
+        },
+        "understand_dependencies": {
+          "id": "understand_dependencies",
+          "always": {
+            "target": "#form_single_hypothesis",
+            "meta": {
+              "source": {
+                "start": 4067,
+                "end": 4089
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask what other components the code needs"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask what settings, config, and environment the code needs"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask what assumptions the code makes"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 3907,
+              "end": 3930
+            },
+            "name": "Understand dependencies"
+          }
+        },
+        "form_single_hypothesis": {
+          "id": "form_single_hypothesis",
+          "always": [
+            {
+              "target": "#say_i_don_t",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the agent doesn't know the root cause"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 4542,
+                  "end": 4561
+                }
+              }
+            },
+            {
+              "target": "#test_minimally",
+              "meta": {
+                "source": {
+                  "start": 4258,
+                  "end": 4272
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "follow the scientific method"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "state clearly: \"I think X is the root cause because Y\""
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "write the hypothesis down"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "be specific, not vague"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4120,
+              "end": 4142
+            },
+            "name": "Form a single hypothesis"
+          }
+        },
+        "test_minimally": {
+          "id": "test_minimally",
+          "always": {
+            "target": "#verify_before_continuing",
+            "meta": {
+              "source": {
+                "start": 4406,
+                "end": 4430
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "make the smallest possible change to test the hypothesis"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "change one variable at a time"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "don't fix multiple things at once"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4258,
+              "end": 4272
+            },
+            "name": "Test the hypothesis minimally"
+          }
+        },
+        "verify_before_continuing": {
+          "id": "verify_before_continuing",
+          "always": [
+            {
+              "target": "#create_failing_test_case",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the change worked"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 4438,
+                  "end": 4464
+                }
+              }
+            },
+            {
+              "target": "#form_single_hypothesis",
+              "meta": {
+                "source": {
+                  "start": 4470,
+                  "end": 4502
+                }
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "check whether the change worked"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "don't add more fixes on top"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4406,
+              "end": 4430
+            },
+            "name": "Verify before continuing"
+          }
+        },
+        "say_i_don_t": {
+          "id": "say_i_don_t",
+          "on": {
+            "user.offers_help": {
+              "target": "#form_single_hypothesis",
+              "meta": {
+                "source": {
+                  "start": 4628,
+                  "end": 4640
+                },
+                "inferred": true
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "say \"I don't understand X\""
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "don't pretend to know"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask for help"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "research more"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4569,
+              "end": 4595
+            },
+            "name": "Admit not knowing"
+          }
+        },
+        "create_failing_test_case": {
+          "id": "create_failing_test_case",
+          "always": {
+            "target": "#implement_single_fix",
+            "meta": {
+              "source": {
+                "start": 4998,
+                "end": 5018
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "fix the root cause, not the symptom"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "write the simplest possible reproduction"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "write an automated test if possible"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "write a one-off test script if there is no framework"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "have the failing test case before fixing"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "use the `superpowers:test-driven-development` skill for writing proper failing tests"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4737,
+              "end": 4761
+            },
+            "name": "Create a failing test case"
+          }
+        },
+        "implement_single_fix": {
+          "id": "implement_single_fix",
+          "always": {
+            "target": "#verify_fix",
+            "meta": {
+              "source": {
+                "start": 5158,
+                "end": 5168
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "address the root cause identified"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "make one change at a time"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "make no \"while I'm here\" improvements"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "do no bundled refactoring"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4998,
+              "end": 5018
+            },
+            "name": "Implement a single fix"
+          }
+        },
+        "verify_fix": {
+          "id": "verify_fix",
+          "always": [
+            {
+              "target": "#claiming_success",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the test passes, no other tests are broken, and the issue is actually resolved"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 5226,
+                  "end": 5250
+                }
+              }
+            },
+            {
+              "target": "#count_how_many_fixes",
+              "meta": {
+                "source": {
+                  "start": 5345,
+                  "end": 5364
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "check that the test passes now"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "check that no other tests are broken"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "check that the issue is actually resolved"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "use the `superpowers:verification-before-completion` skill before claiming success"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5158,
+              "end": 5168
+            },
+            "name": "Verify the fix"
+          }
+        },
+        "count_how_many_fixes": {
+          "id": "count_how_many_fixes",
+          "always": [
+            {
+              "target": "#read_error_messages_carefully",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "fewer than 3 fixes have been tried"
+                }
+              },
+              "actions": [
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "re-analyze with the new information"
+                  }
+                }
+              ],
+              "meta": {
+                "source": {
+                  "start": 5433,
+                  "end": 5483
+                }
+              }
+            },
+            {
+              "target": "#question_architecture",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "3 or more fixes have been tried"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 5499,
+                  "end": 5548
+                }
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "stop"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "count how many fixes have been tried"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "don't attempt fix #4 without architectural discussion"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5382,
+              "end": 5419
+            },
+            "name": "Count the fixes tried"
+          }
+        }
+      }
+    },
+    "you_ve_completed_the": {
+      "id": "you_ve_completed_the",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "treat the process as completed"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "document what was investigated"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "implement appropriate handling, such as a retry, a timeout, or an error message"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "add monitoring or logging for future investigation"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "remember that 95% of \"no root cause\" cases are incomplete investigation"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 8874,
+          "end": 8902
+        },
+        "name": "Handle the issue without a root cause"
+      }
+    }
+  },
+  "meta": {
+    "name": "Systematic debugging",
+    "prompt": "---\nname: systematic-debugging\ndescription: Use when encountering any bug, test failure, or unexpected behavior, before proposing fixes\n---\n\n# Systematic Debugging\n\n## Overview\n\n**Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.\n\n**Violating the letter of this process is violating the spirit of debugging.**\n\n## The Iron Law\n\n```\nNO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST\n```\n\nIf you haven't completed Phase 1, you cannot propose fixes.\n\n## When to Use\n\nUse for ANY technical issue:\n- Test failures\n- Bugs in production\n- Unexpected behavior\n- Performance problems\n- Build failures\n- Integration issues\n\n**Use this ESPECIALLY when:**\n- Under time pressure (emergencies make guessing tempting)\n- \"Just one quick fix\" seems obvious\n- You've already tried multiple fixes\n- Previous fix didn't work\n- You don't fully understand the issue\n\n**Don't skip when:**\n- Issue seems simple (simple bugs have root causes too)\n- You're in a hurry (rushing guarantees rework)\n- Manager wants it fixed NOW (systematic is faster than thrashing)\n\n## The Four Phases\n\nYou MUST complete each phase before proceeding to the next.\n\n### Phase 1: Root Cause Investigation\n\n**BEFORE attempting ANY fix:**\n\n1. **Read Error Messages Carefully**\n   - Don't skip past errors or warnings\n   - They often contain the exact solution\n   - Read stack traces completely\n   - Note line numbers, file paths, error codes\n\n2. **Reproduce Consistently**\n   - Can you trigger it reliably?\n   - What are the exact steps?\n   - Does it happen every time?\n   - If not reproducible → gather more data, don't guess\n\n3. **Check Recent Changes**\n   - What changed that could cause this?\n   - Git diff, recent commits\n   - New dependencies, config changes\n   - Environmental differences\n\n4. **Gather Evidence in Multi-Component Systems**\n\n   **WHEN system has multiple components (CI → build → signing, API → service → database):**\n\n   **BEFORE proposing fixes, add diagnostic instrumentation:**\n   ```\n   For EACH component boundary:\n     - Log what data enters component\n     - Log what data exits component\n     - Verify environment/config propagation\n     - Check state at each layer\n\n   Run once to gather evidence showing WHERE it breaks\n   THEN analyze evidence to identify failing component\n   THEN investigate that specific component\n   ```\n\n   **Example (multi-layer system):**\n   ```bash\n   # Layer 1: Workflow\n   echo \"=== Secrets available in workflow: ===\"\n   echo \"IDENTITY: $([ -n \"${IDENTITY:-}\" ] && echo SET || echo UNSET)\"\n\n   # Layer 2: Build script\n   echo \"=== Env vars in build script: ===\"\n   printenv IDENTITY >/dev/null 2>&1 && echo \"IDENTITY in environment\" || echo \"IDENTITY not in environment\"\n\n   # Layer 3: Signing script\n   echo \"=== Keychain state: ===\"\n   security list-keychains\n   security find-identity -v\n\n   # Layer 4: Actual signing\n   codesign --sign \"$IDENTITY\" --verbose=4 \"$APP\"\n   ```\n\n   **This reveals:** Which layer fails (secrets → workflow ✓, workflow → build ✗)\n\n5. **Trace Data Flow**\n\n   **WHEN error is deep in call stack:**\n\n   See `root-cause-tracing.md` in this directory for the complete backward tracing technique.\n\n   **Quick version:**\n   - Where does bad value originate?\n   - What called this with bad value?\n   - Keep tracing up until you find the source\n   - Fix at source, not at symptom\n\n### Phase 2: Pattern Analysis\n\n**Find the pattern before fixing:**\n\n1. **Find Working Examples**\n   - Locate similar working code in same codebase\n   - What works that's similar to what's broken?\n\n2. **Compare Against References**\n   - If implementing pattern, read reference implementation COMPLETELY\n   - Don't skim - read every line\n   - Understand the pattern fully before applying\n\n3. **Identify Differences**\n   - What's different between working and broken?\n   - List every difference, however small\n   - Don't assume \"that can't matter\"\n\n4. **Understand Dependencies**\n   - What other components does this need?\n   - What settings, config, environment?\n   - What assumptions does it make?\n\n### Phase 3: Hypothesis and Testing\n\n**Scientific method:**\n\n1. **Form Single Hypothesis**\n   - State clearly: \"I think X is the root cause because Y\"\n   - Write it down\n   - Be specific, not vague\n\n2. **Test Minimally**\n   - Make the SMALLEST possible change to test hypothesis\n   - One variable at a time\n   - Don't fix multiple things at once\n\n3. **Verify Before Continuing**\n   - Did it work? Yes → Phase 4\n   - Didn't work? Form NEW hypothesis\n   - DON'T add more fixes on top\n\n4. **When You Don't Know**\n   - Say \"I don't understand X\"\n   - Don't pretend to know\n   - Ask for help\n   - Research more\n\n### Phase 4: Implementation\n\n**Fix the root cause, not the symptom:**\n\n1. **Create Failing Test Case**\n   - Simplest possible reproduction\n   - Automated test if possible\n   - One-off test script if no framework\n   - MUST have before fixing\n   - Use the `superpowers:test-driven-development` skill for writing proper failing tests\n\n2. **Implement Single Fix**\n   - Address the root cause identified\n   - ONE change at a time\n   - No \"while I'm here\" improvements\n   - No bundled refactoring\n\n3. **Verify Fix**\n   - Test passes now?\n   - No other tests broken?\n   - Issue actually resolved?\n   - Use the `superpowers:verification-before-completion` skill before claiming success\n\n4. **If Fix Doesn't Work**\n   - STOP\n   - Count: How many fixes have you tried?\n   - If < 3: Return to Phase 1, re-analyze with new information\n   - **If ≥ 3: STOP and question the architecture (step 5 below)**\n   - DON'T attempt Fix #4 without architectural discussion\n\n5. **If 3+ Fixes Failed: Question Architecture**\n\n   **Pattern indicating architectural problem:**\n   - Each fix reveals new shared state/coupling/problem in different place\n   - Fixes require \"massive refactoring\" to implement\n   - Each fix creates new symptoms elsewhere\n\n   **STOP and question fundamentals:**\n   - Is this pattern fundamentally sound?\n   - Are we \"sticking with it through sheer inertia\"?\n   - Should we refactor architecture vs. continue fixing symptoms?\n\n   **Discuss with your human partner before attempting more fixes**\n\n   This is NOT a failed hypothesis - this is a wrong architecture.\n\n## Red Flags - STOP and Follow Process\n\nIf you catch yourself thinking:\n- \"Quick fix for now, investigate later\"\n- \"Just try changing X and see if it works\"\n- \"Add multiple changes, run tests\"\n- \"Skip the test, I'll manually verify\"\n- \"It's probably X, let me fix that\"\n- \"I don't fully understand but this might work\"\n- \"Pattern says X but I'll adapt it differently\"\n- \"Here are the main problems: [lists fixes without investigation]\"\n- Proposing solutions before tracing data flow\n- **\"One more fix attempt\" (when already tried 2+)**\n- **Each fix reveals new problem in different place**\n\n**ALL of these mean: STOP. Return to Phase 1.**\n\n**If 3+ fixes failed:** Question the architecture (see Phase 4.5)\n\n## your human partner's Signals You're Doing It Wrong\n\n**Watch for these redirections:**\n- \"Is that not happening?\" - You assumed without verifying\n- \"Will it show us...?\" - You should have added evidence gathering\n- \"Stop guessing\" - You're proposing fixes without understanding\n- \"Ultra-think this\" - Question fundamentals, not just symptoms\n- \"We're stuck?\" (frustrated) - Your approach isn't working\n\n**When you see these:** STOP. Return to Phase 1.\n\n## Common Rationalizations\n\n| Excuse | Reality |\n|--------|---------|\n| \"Issue is simple, don't need process\" | Simple issues have root causes too. Process is fast for simple bugs. |\n| \"Emergency, no time for process\" | Systematic debugging is FASTER than guess-and-check thrashing. |\n| \"Just try this first, then investigate\" | First fix sets the pattern. Do it right from the start. |\n| \"I'll write test after confirming fix works\" | Untested fixes don't stick. Test first proves it. |\n| \"Multiple fixes at once saves time\" | Can't isolate what worked. Causes new bugs. |\n| \"Reference too long, I'll adapt the pattern\" | Partial understanding guarantees bugs. Read it completely. |\n| \"I see the problem, let me fix it\" | Seeing symptoms ≠ understanding root cause. |\n| \"One more fix attempt\" (after 2+ failures) | 3+ failures = architectural problem. Question pattern, don't fix again. |\n\n## Quick Reference\n\n| Phase | Key Activities | Success Criteria |\n|-------|---------------|------------------|\n| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |\n| **2. Pattern** | Find working examples, compare | Identify differences |\n| **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |\n| **4. Implementation** | Create test, fix, verify | Bug resolved, tests pass |\n\n## When Process Reveals \"No Root Cause\"\n\nIf systematic investigation reveals issue is truly environmental, timing-dependent, or external:\n\n1. You've completed the process\n2. Document what you investigated\n3. Implement appropriate handling (retry, timeout, error message)\n4. Add monitoring/logging for future investigation\n\n**But:** 95% of \"no root cause\" cases are incomplete investigation.\n\n## Supporting Techniques\n\nThese techniques are part of systematic debugging and available in this directory:\n\n- **`root-cause-tracing.md`** - Trace bugs backward through call stack to find original trigger\n- **`defense-in-depth.md`** - Add validation at multiple layers after finding root cause\n- **`condition-based-waiting.md`** - Replace arbitrary timeouts with condition polling\n",
+    "source": {
+      "start": 0,
+      "end": 9506
+    },
+    "unconverted": [
+      {
+        "start": 9150,
+        "end": 9505,
+        "reason": "The section names supporting technique files whose content the prompt does not contain, without a step at which to use each."
+      }
+    ],
+    "ambient": [
+      {
+        "start": 198,
+        "end": 272
+      },
+      {
+        "start": 276,
+        "end": 350
+      },
+      {
+        "start": 375,
+        "end": 422
+      },
+      {
+        "start": 428,
+        "end": 487
+      },
+      {
+        "start": 505,
+        "end": 653
+      },
+      {
+        "start": 655,
+        "end": 884
+      },
+      {
+        "start": 886,
+        "end": 1077
+      },
+      {
+        "start": 7415,
+        "end": 8276
+      }
+    ]
+  }
+}

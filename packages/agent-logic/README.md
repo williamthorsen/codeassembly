@@ -66,4 +66,4 @@ pnpm dlx codeassembly-agent-logic convert prompt.md draft.json prompt.agent-logi
 pnpm dlx codeassembly-agent-logic check-coverage prompt.md coverage-map.json
 ```
 
-`rules` prints the [extraction rules](docs/extraction-rules.md) by which a model drafts a prompt's logic; `convert` turns the draft into a config; `check-coverage` checks a map of the prompt's instructions against the prompt. `agent-logic <command> --help` describes each command's arguments. [Conversion agreement](docs/conversion-agreement.md) records how consistently a model converts the same prompt.
+`rules` prints the [extraction rules](docs/extraction-rules.md) by which a model drafts a prompt's logic; `convert` turns the draft into a config; `check-coverage` checks a map of the prompt's instructions against the prompt. `agent-logic <command> --help` describes each command's arguments. [Conversion agreement](docs/conversion-agreement.md) records how consistently a model converts the same prompt, and the [corpus](docs/corpus.md) measures conversions of real prompts.

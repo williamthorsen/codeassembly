@@ -1,0 +1,44 @@
+{
+  "date": "2026-11-02",
+  "model": "Claude Opus 5.5 (claude-opus-5-5)",
+  "sources": {
+    "codeassembly": {
+      "kind": "codeassembly",
+      "repository": "williamthorsen/codeassembly",
+      "license": "ISC",
+      "build": {
+        "version": "0.20.0",
+        "sourcePath": "~/repos/codeassembly/packages/agents",
+        "sourceCommit": "1111111111111111111111111111111111111111",
+        "command": "sync --global",
+        "writtenAt": "2026-11-02T10:26:38.594Z"
+      },
+      "declared": [
+        {
+          "name": "codeassembly-guidance",
+          "path": "~/repos/codeassembly/packages/guidance/content",
+          "commit": "1111111111111111111111111111111111111111",
+          "pinnedByBuild": true
+        },
+        {
+          "name": "personal",
+          "path": "~/.agents/content",
+          "commit": "2222222222222222222222222222222222222222",
+          "pinnedByBuild": false
+        }
+      ]
+    },
+    "superpowers": {
+      "kind": "plugin",
+      "plugin": "superpowers@claude-plugins-official",
+      "repository": "obra/superpowers",
+      "license": "MIT",
+      "version": "7.0.0",
+      "commit": "3333333333333333333333333333333333333333"
+    }
+  },
+  "prompts": {
+    "greeter": { "source": "codeassembly", "path": "skills/greeter/SKILL.md" },
+    "rules": { "source": "superpowers", "path": "skills/rules/SKILL.md" }
+  }
+}

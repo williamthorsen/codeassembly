@@ -13,7 +13,7 @@ A pnpm monorepo of CodeAssembly packages: the `codeassembly` CLI, which deploys 
 - **kb** (`packages/kb/`): Knowledge-base foundation library. See `packages/kb/README.md`.
 - **run-core** (`packages/run-core/`): Canonical domain model, schemas, and run-data parsing. See `packages/run-core/README.md`.
 
-None of the packages here depends on another package here, and none reads anything from guidance.
+None of the packages here depends on another package here. None reads anything from guidance, except the agent-logic corpus scorer, which is not published and hashes the pinned `convert-agent-prompt` skill.
 
 ## Content authoring
 
@@ -23,6 +23,7 @@ Guidance content is authored in the guidance repository. The contract that any c
 
 - `pnpm run bootstrap` builds every package, then deploys current guidance into the worktree's harness directories. The CLI bins do not run until it has. `pnpm run agents:sync` does the deploy half alone.
 - The guidance deployed here is the version that the root `package.json` pins. A guidance change reaches this repository's harness directories only once that pin is upgraded and `pnpm run agents:sync` runs.
+- A guidance upgrade that changes `convert-agent-prompt`, or an edit to `packages/agent-logic/docs/extraction-rules.md`, fails the agent-logic scorecard test until every corpus result is rechecked; see `packages/agent-logic/docs/corpus.md`. Run `pnpm run score-corpus` rather than `nmr score-corpus`, because nmr can run it on another machine, which then writes the scorecard there.
 - Deleting `dist/` does not force a rebuild. Because the `nmr-compile` cache is in `node_modules/.cache/nmr-compile/` and is keyed on inputs alone, the rebuild skips and leaves `dist/` empty. Clear the cache too. Tracked upstream at williamthorsen/node-monorepo-tools#470.
 - A package has a `vitest.config.ts` only when it configures something of its own; every other package runs against the repo-root config, which nmr's `nmr-vitest` names with `--config` because Vitest 5 doesn't look in parent directories. A bare `vitest` started from such a package needs the same flag; see `node_modules/@williamthorsen/nmr/docs/vitest.md`. nmr's Vitest factory supplies the git-isolation setup file, so the configs here don't declare it. It leaves `resolve.tsconfigPaths` to the consumer, which needs it only once a tsconfig declares `paths`; none here does.
 - Because the root `tsconfig.json` names `"types": ["node"]`, every package declares `@types/node` as `catalog:`. TypeScript 6 doesn't include any ambient `@types` package automatically, and naming one here excludes the rest: An `@types/*` supplying globals doesn't take effect until that list includes it.

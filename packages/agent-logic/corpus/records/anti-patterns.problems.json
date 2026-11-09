@@ -1,0 +1,5 @@
+{
+  "outOfScope": {
+    "reason": "The prompt states standing rules against anti-patterns in dependency management, development approach, suppression directives, and error handling, but no steps that the agent moves between."
+  }
+}

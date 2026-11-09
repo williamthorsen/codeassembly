@@ -1,0 +1,3 @@
+# Rules
+
+Extract the logic.

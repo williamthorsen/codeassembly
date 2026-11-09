@@ -12,5 +12,8 @@ rulebooks:
   use:
     - codeassembly-content-specification
     - live-worktree-policy
+skills:
+  use:
+    - convert-agent-prompt
 sources:
   - package: codeassembly-guidance

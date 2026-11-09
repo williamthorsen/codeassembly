@@ -1,0 +1,36 @@
+{
+  "convertRuns": 1,
+  "skillBlob": "8e8aba33395ed9735066082aab046a9755230e12",
+  "rulesBlob": "2db0dd048d7f9f7d55908f3e4b64d2364a2f8de2",
+  "recheck": {
+    "skillBlob": "00acbbd4f89f5cc9b6c586001721e03e50d57bd4",
+    "rulesBlob": "515207202adad816e9a2cc57fc35e855d35f383b",
+    "note": "Converted before the rules added findings and the draft check of inputs, which add to no part of the rubric and leave every other rule unchanged. The public skill changes only how the converter runs the package's commands and where it reads the rules, and the package's rules change only their links. The verdicts stand; a conversion under the current rules would also record findings."
+  },
+  "verdicts": {
+    "coverage": "fail",
+    "fidelity": "pass",
+    "placement": "fail",
+    "gates": "pass",
+    "unconverted": "fail",
+    "gapsReport": "pass"
+  },
+  "gaps": [
+    {
+      "criterion": "coverage",
+      "text": "State resolve_the_title_s drops the rule \"the repair of a writing-rule violation is the former\": its action \"type a wording correction `fix` when the text failed to say what its author intended, and `feat` when it states a new decision\" omits that a writing-rule repair is `fix`. The rules keep every instruction of a step as an action of its state, so the chart needs this rule as an action of resolve_the_title_s."
+    },
+    {
+      "criterion": "placement",
+      "text": "The transition stage_the_unit -> report_the_result quotes \"if they don't, stop without committing and report the units that you found\", which starts at the leading connective \"if\" and runs on into the transition's actions. The Quotes section requires a transition to quote its condition from the subject, without a leading connective, so the quote should start at \"they don't\"."
+    },
+    {
+      "criterion": "unconverted",
+      "text": "The root ambient entry \"When the arguments do not state one, compose the body from the diff alone, and never state a reason that the diff does not show\" limits one step, composing the body, rather than every state. The rules state that an instruction that limits one step is an action of that step's state, so it belongs as a conditional action and a prohibition of compose_the_body, not under meta.ambient."
+    },
+    {
+      "criterion": "unconverted",
+      "text": "The root ambient entry \"Consult it before composing; this skill states the procedure alone.\" orders a one-time step, consulting `/consult-commit-conventions` before the message is composed, rather than a standing rule that constrains every state. The rules list under meta.ambient only persona, tone, background, and standing rules, so the consultation is an action of the step that precedes composition, such as resolve_the_title_s."
+    }
+  ]
+}
