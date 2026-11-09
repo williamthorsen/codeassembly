@@ -65,7 +65,7 @@
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@xyflow/react": "12.12.1",
     "elkjs": "0.12.1",
-    "hono": "4.13.16",
+    "hono": "4.13.17",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -89,7 +89,7 @@
     "react-dom": "19.3.1",
     "vite": "catalog:",
     "vitest": "catalog:",
-    "xstate": "5.33.3"
+    "xstate": "5.33.4"
   },
   "peerDependencies": {
     "@williamthorsen/telefactor": "^0.4.1",
