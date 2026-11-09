@@ -86,7 +86,7 @@ describe(refreshCorpus, () => {
     });
   });
 
-  it.each<[string, () => GitReader, RegExp]>([
+  it.each([
     [
       'the source that the build pins has moved past the build',
       () => buildGitReader(home, { guidance: { head: '4444444444444444444444444444444444444444' } }),
@@ -107,10 +107,13 @@ describe(refreshCorpus, () => {
       () => buildGitReader(home, { personal: { status: '?? rulebooks/new.md' } }),
       /personal has uncommitted changes/,
     ],
-  ])('throws and writes nothing when %s', (_condition, readGit, message) => {
-    expect(() => refreshCorpus({ corpusDirectory: corpus, home, readGit: readGit() })).toThrow(message);
-    expectUntouched(corpus);
-  });
+  ] satisfies [string, () => GitReader, RegExp][])(
+    'throws and writes nothing when %s',
+    (_condition, readGit, message) => {
+      expect(() => refreshCorpus({ corpusDirectory: corpus, home, readGit: readGit() })).toThrow(message);
+      expectUntouched(corpus);
+    },
+  );
 
   it('throws and writes nothing when a deployed file is missing', () => {
     rmSync(path.join(home, '.claude/skills/greeter/SKILL.md'));

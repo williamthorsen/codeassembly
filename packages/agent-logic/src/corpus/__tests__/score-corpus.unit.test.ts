@@ -5,7 +5,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { buildMinimalConfig, MINIMAL_PROMPT } from '../../test-utils/minimal-config.ts';
-import { readCorpus, renderPromptScore, renderScorecard, scoreChart } from '../score-corpus.ts';
+import { scoreChart } from '../score-chart.ts';
+import { readCorpus, renderPromptScore, renderScorecard } from '../score-corpus.ts';
 
 const FIXTURE = path.join(import.meta.dirname, 'fixtures/corpus');
 const SOURCES = {
