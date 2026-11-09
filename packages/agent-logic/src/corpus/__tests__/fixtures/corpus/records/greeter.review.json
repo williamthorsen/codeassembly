@@ -1,0 +1,23 @@
+{
+  "convertRuns": 2,
+  "skillBlob": "f888c2767f69b25f843df0597ac7c20e95427819",
+  "rulesBlob": "59d89862c8e93819b31b1542606053accda2db9b",
+  "verdicts": {
+    "coverage": "pass",
+    "fidelity": "fail",
+    "placement": "fail",
+    "gates": "pass",
+    "unconverted": "pass",
+    "gapsReport": "pass"
+  },
+  "gaps": [
+    {
+      "criterion": "fidelity",
+      "text": "The guard on `user.asks_again` is not stated by the prompt."
+    },
+    {
+      "criterion": "placement",
+      "text": "The transition from `ask_the_user_for` quotes \"When the user gives it\", which starts with a leading connective."
+    }
+  ]
+}

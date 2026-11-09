@@ -58,7 +58,9 @@
   "scripts": {
     "build:post": "cp src/react/styles.css dist/esm/react/styles.css",
     "generate:schema": "node src/schema/write-json-schema.ts",
-    "prepublishOnly": "nmr build"
+    "prepublishOnly": "nmr build",
+    "refresh-corpus": "node src/corpus/refresh-corpus.ts",
+    "score-corpus": "node src/corpus/score-corpus-command.ts"
   },
   "dependencies": {
     "@hono/node-server": "2.1.6",

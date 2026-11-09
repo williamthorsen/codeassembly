@@ -1,0 +1,99 @@
+{
+  "id": "greeter",
+  "initial": "ask_the_user_for",
+  "states": {
+    "ask_the_user_for": {
+      "id": "ask_the_user_for",
+      "on": {
+        "user.gives_order_number": {
+          "target": "#look_up_the_order",
+          "meta": {
+            "source": {
+              "start": 51,
+              "end": 68
+            }
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "ask the user for their order number"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 9,
+          "end": 44
+        }
+      }
+    },
+    "look_up_the_order": {
+      "id": "look_up_the_order",
+      "on": {
+        "user.asks_again": {
+          "target": "#finish",
+          "guard": {
+            "type": "nl",
+            "params": {
+              "text": "the order exists"
+            }
+          },
+          "meta": {
+            "source": {
+              "start": 70,
+              "end": 87
+            },
+            "inferred": true
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "look up the order"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 70,
+          "end": 91
+        }
+      }
+    },
+    "finish": {
+      "id": "finish",
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 92,
+          "end": 98
+        }
+      }
+    }
+  },
+  "meta": {
+    "prompt": "Be kind. Ask the user for their order number. When the user gives it, look up the order and finish. Mention the sale whenever it fits.\n",
+    "source": {
+      "start": 0,
+      "end": 135
+    },
+    "unconverted": [
+      {
+        "start": 100,
+        "end": 133,
+        "reason": "A habit without a stated trigger."
+      }
+    ],
+    "ambient": [
+      {
+        "start": 0,
+        "end": 8
+      }
+    ]
+  }
+}
