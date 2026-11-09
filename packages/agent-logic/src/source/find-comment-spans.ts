@@ -32,12 +32,10 @@ export function findCommentSpans(prompt: string): Span[] {
 // region | Helpers
 /**
  * Returns the offset after the backtick run of exactly `length` that closes a code span, if one follows within the
- * paragraph, which ends at the next blank line.
+ * paragraph, which ends at the next blank line or fence opener.
  */
 function findClosingRun(prompt: string, from: number, length: number): number | undefined {
-  const blank = /\n[ \t]*\r?\n/g;
-  blank.lastIndex = from;
-  const limit = blank.exec(prompt)?.index ?? prompt.length;
+  const limit = findParagraphEnd(prompt, from);
   const runs = /`+/g;
   runs.lastIndex = from;
   for (let run = runs.exec(prompt); run !== null && run.index < limit; run = runs.exec(prompt)) {
@@ -53,6 +51,15 @@ function findFenceEnd(prompt: string, opening: number, fence: Fence): number {
     const lineStart = lineEnd + 1;
     lineEnd = prompt.indexOf('\n', lineStart);
     if (isFenceCloser(readLine(prompt, lineStart), fence)) return lineEnd === -1 ? prompt.length : lineEnd;
+  }
+  return prompt.length;
+}
+
+/** Returns the offset of the first blank line or fence opener after the line that contains the offset. */
+function findParagraphEnd(prompt: string, from: number): number {
+  for (let lineEnd = prompt.indexOf('\n', from); lineEnd !== -1; lineEnd = prompt.indexOf('\n', lineEnd + 1)) {
+    const line = readLine(prompt, lineEnd + 1);
+    if (line.trim() === '' || matchFenceOpener(line) !== undefined) return lineEnd + 1;
   }
   return prompt.length;
 }

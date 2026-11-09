@@ -62,6 +62,14 @@ describe(findCommentSpans, () => {
     expect(spans.map(({ start, end }) => prompt.slice(start, end))).toStrictEqual(['<!-- note -->']);
   });
 
+  it('does not pair a lone backtick with a backtick inside a fence that follows it', () => {
+    const prompt = 'Quote a ` mark.\n```md\n`x` <!-- example -->\n```\n<!-- note -->';
+
+    const spans = findCommentSpans(prompt);
+
+    expect(spans.map(({ start, end }) => prompt.slice(start, end))).toStrictEqual(['<!-- note -->']);
+  });
+
   it('does not open a fence at a line whose backtick run is an inline code span', () => {
     const prompt = '```js``` is a span. <!-- note -->';
 
