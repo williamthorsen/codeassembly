@@ -48,6 +48,34 @@ describe(findPromptBlocks, () => {
     ]);
   });
 
+  it('makes a fence nested under a list item one block that ends at its indented closing line', () => {
+    const prompt = [
+      '- Look up the order.',
+      '  - Run the script:',
+      '',
+      '      ```shell',
+      '      pnpm run convert',
+      '',
+      '      pnpm run check',
+      '      ```',
+      '',
+      'Done.',
+    ].join('\n');
+
+    expect(blockTexts(prompt)).toStrictEqual([
+      '- Look up the order.',
+      '- Run the script:',
+      '```shell\n      pnpm run convert\n\n      pnpm run check\n      ```',
+      'Done.',
+    ]);
+  });
+
+  it('does not open a fence at a line whose backtick run is an inline code span', () => {
+    const prompt = '```js``` is a span.\n\nThen ask.\n\n- Refund it.';
+
+    expect(blockTexts(prompt)).toStrictEqual(['```js``` is a span.', 'Then ask.', '- Refund it.']);
+  });
+
   it('finds the same blocks in a prompt with CRLF line endings, front matter and fences included', () => {
     const prompt =
       '---\r\nname: refund\r\n---\r\nRun the script.\r\n\r\n```shell\r\n\r\npnpm run convert\r\n```\r\n\r\nDone.';

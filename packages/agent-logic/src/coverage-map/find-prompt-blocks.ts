@@ -1,3 +1,4 @@
+import { isFenceCloser, matchFenceOpener } from '../source/fence.ts';
 import { findCommentSpans } from '../source/find-comment-spans.ts';
 
 /** A paragraph, list item, table body row, or fenced block of a prompt, which a coverage map must quote. */
@@ -24,7 +25,6 @@ interface Line {
 type LineKind = 'blank' | 'fence' | 'item' | 'quote' | 'row' | 'skip' | 'text';
 
 const BLOCKQUOTE = /^\s*>/;
-const FENCE = /^ {0,3}(`{3,}|~{3,})/;
 const HEADING = /^ {0,3}#{1,6}(?:\s|$)/;
 const LIST_ITEM = /^\s*(?:[-*+]|\d+[.)])\s+/;
 const LONE_TAG = /^\s*<\/?[A-Za-z][\w-]*>\s*$/;
@@ -133,7 +133,7 @@ function blankComments(prompt: string): string {
 /** Returns what the line at the index is, as far as cutting the prompt into blocks goes. */
 function classifyLine(lines: Line[], index: number): LineKind {
   const text = lines[index]?.text ?? '';
-  if (FENCE.test(text)) return 'fence';
+  if (matchFenceOpener(text) !== undefined) return 'fence';
   if (text.trim() === '') return 'blank';
   if (HEADING.test(text) || THEMATIC_BREAK.test(text) || LONE_TAG.test(text)) return 'skip';
   if (TABLE_ROW.test(text)) {
@@ -148,11 +148,10 @@ function classifyLine(lines: Line[], index: number): LineKind {
 
 /** Returns the index of the line that closes the fence opened at the index, or the last line's when nothing does. */
 function findFenceClose(lines: Line[], opening: number): number {
-  const fence = FENCE.exec(lines[opening]?.text ?? '')?.[1] ?? '```';
-  const character = fence.charAt(0) === '`' ? '`' : '~';
-  const closing = new RegExp(String.raw`^ {0,3}${character}{${fence.length},}[ \t]*$`);
+  const fence = matchFenceOpener(lines[opening]?.text ?? '');
+  if (fence === undefined) return opening;
   for (let index = opening + 1; index < lines.length; index++) {
-    if (closing.test(lines[index]?.text ?? '')) return index;
+    if (isFenceCloser(lines[index]?.text ?? '', fence)) return index;
   }
   return lines.length - 1;
 }
