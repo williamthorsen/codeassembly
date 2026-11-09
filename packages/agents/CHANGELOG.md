@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.20.1 — 2026-11-09
+
+### 🐛 Bug fixes
+
+- Fixes the issue that `codeassembly init --global` and the missing-source error suggested a guidance path inside a clone of this repository, which no longer contains the guidance library, by naming `~/repos/codeassembly-guidance/packages/guidance/content` instead. (#2251)
+
 ## 0.20.0 — 2026-11-02
 
 ### 🎉 Features

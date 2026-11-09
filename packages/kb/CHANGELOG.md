@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.2 — 2026-11-09
+
+### ⚙️ Tooling
+
+- Adds `packages/kb/scripts/truncate-millisecond-captured-at.ts`, which truncates each event's millisecond `captured-at` to second precision in the store named by `--kb` or in the nearest `.kb/` directory, changes only that line, and writes the result only under `--write`. (#2252)
+
 ## 0.11.1 — 2026-11-02
 
 ### 🐛 Bug fixes

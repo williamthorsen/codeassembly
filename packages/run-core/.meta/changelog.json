@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.5.3",
+    "date": "2026-11-09",
+    "sections": [
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Moves the `run-index.json`, `run-log.jsonl`, and `status.json` specification from guidance's `artifact-conventions.md` to `packages/run-core/docs/run-data-format.md`, beside the Zod schemas that implement it. (#2246)",
+            "hash": "ff6dae0aa454f0f6d66c1fb6fcd67b07004f00a5",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.5.2",
     "date": "2026-11-02",
     "sections": [

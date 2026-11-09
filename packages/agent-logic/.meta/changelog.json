@@ -1,0 +1,77 @@
+[
+  {
+    "version": "0.1.0",
+    "date": "2026-11-09",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds the initial `codeassembly-agent-logic` package, whose `contract`, `react`, and `server` subpath entries are placeholders and whose `agent-logic` command prints a usage message that doesn't list any commands yet. (#2257)",
+            "hash": "31e8c6a216923573684d79616fab1e6e4ec5b185",
+            "entry": 1
+          },
+          {
+            "description": "Adds the agent-logic config schema, its validation, the converter, the coverage check, the chart layout, source marking, and the bundled examples to the root entry of `codeassembly-agent-logic`, and exports the config's JSON Schema as `codeassembly-agent-logic/agent-logic.schema.json`. (#2260)",
+            "hash": "1c5e60ae35d1cc4da908491eccc2215987368dee",
+            "entry": 1
+          },
+          {
+            "description": "Adds `StatechartCanvas` and the hooks of a page that presents a chart to `codeassembly-agent-logic/react`, with a `renderKey` slot through which each app draws the canvas's key, and a `react/styles.css` stylesheet that an app themes through `--agent-logic-*` custom properties. (#2260)",
+            "hash": "1c5e60ae35d1cc4da908491eccc2215987368dee",
+            "entry": 2
+          },
+          {
+            "description": "Adds `createViewerServerPlugins` to `codeassembly-agent-logic/server`, which returns the Vite plugins that serve a prompts directory and run conversions through a harness hosted by telefactor, and adds the viewer contract, the conversion job contract, and the built-in harnesses to `codeassembly-agent-logic/contract`. (#2260)",
+            "hash": "1c5e60ae35d1cc4da908491eccc2215987368dee",
+            "entry": 3
+          },
+          {
+            "description": "Adds the `convert`, `check-coverage`, and `rules` commands to the `agent-logic` bin, which turn a model's draft of a prompt's logic into a config, check a coverage map against the prompt, and print the extraction rules that the package ships, so that a skill can run them through `pnpm dlx` without an installed copy. (#2260)",
+            "hash": "1c5e60ae35d1cc4da908491eccc2215987368dee",
+            "entry": 4
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that `agent-logic check-coverage` did not recognize a fenced code block indented under a list item, so that it reported the block's lines as unmapped and ran the block to the end of the prompt. (#2261)",
+            "hash": "0cc0406dc9d5a7581181a5ca3dab517867c02f4c",
+            "entry": 1
+          },
+          {
+            "description": "Fixes the issue that `agent-logic` read an HTML comment as prompt text when the comment followed a lone backtick or a line that opens with an inline triple-backtick span. (#2261)",
+            "hash": "0cc0406dc9d5a7581181a5ca3dab517867c02f4c",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Configures ESLint and Vitest in `packages/agent-logic` to lint and test TSX, using the shared config's React and Testing Library rules and the jest-dom matchers. (#2257)",
+            "hash": "31e8c6a216923573684d79616fab1e6e4ec5b185",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Adds the `codeassembly-agent-logic` README, which describes the entries, what an app supplies, theming, and the bin, and adds `docs/conversion-agreement.md`, which records how consistently a model converts the same prompt. (#2260)",
+            "hash": "1c5e60ae35d1cc4da908491eccc2215987368dee",
+            "entry": 5
+          }
+        ]
+      }
+    ]
+  }
+]

@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.20.1",
+    "date": "2026-11-09",
+    "sections": [
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that `codeassembly init --global` and the missing-source error suggested a guidance path inside a clone of this repository, which no longer contains the guidance library, by naming `~/repos/codeassembly-guidance/packages/guidance/content` instead. (#2251)",
+            "hash": "aa05f5eefc8b185a41ffca90d7e7916f828348cd",
+            "entry": 3
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.20.0",
     "date": "2026-11-02",
     "sections": [
