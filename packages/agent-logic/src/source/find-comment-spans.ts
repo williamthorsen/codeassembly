@@ -1,4 +1,5 @@
 import type { Span } from '../schema/agent-logic-schema.ts';
+import { type Fence, isFenceCloser, matchFenceOpener } from './fence.ts';
 
 /**
  * Returns the span of each HTML comment in the prompt, delimiters included, in order. An unclosed `<!--` has none, and
@@ -7,15 +8,17 @@ import type { Span } from '../schema/agent-logic-schema.ts';
 export function findCommentSpans(prompt: string): Span[] {
   const spans: Span[] = [];
   // Match whichever construct starts first: a fence at a line start, a backtick run, or a comment opener.
-  const tokens = /^ {0,3}(`{3,}|~{3,})|`+|<!--/gm;
+  const tokens = /^[ \t]*(`{3,}|~{3,})|`+|<!--/gm;
   for (let match = tokens.exec(prompt); match !== null; match = tokens.exec(prompt)) {
-    const [token, fence] = match;
+    const [token, run] = match;
+    const fence = run === undefined ? undefined : matchFenceOpener(readLine(prompt, match.index));
     if (fence !== undefined) {
-      tokens.lastIndex = findFenceEnd(prompt, match.index + token.length, fence);
-    } else if (token.startsWith('`')) {
-      const closing = findClosingRun(prompt, tokens.lastIndex, token.length);
+      tokens.lastIndex = findFenceEnd(prompt, match.index, fence);
+    } else if (token.trimStart().startsWith('`')) {
+      const length = run?.length ?? token.length;
+      const closing = findClosingRun(prompt, tokens.lastIndex, length);
       if (closing !== undefined) tokens.lastIndex = closing;
-    } else {
+    } else if (token === '<!--') {
       const close = prompt.indexOf('-->', tokens.lastIndex);
       if (close === -1) continue;
       const end = close + '-->'.length;
@@ -27,24 +30,37 @@ export function findCommentSpans(prompt: string): Span[] {
 }
 
 // region | Helpers
-/** Returns the offset after the backtick run of exactly `length` that closes a code span, if one follows. */
+/**
+ * Returns the offset after the backtick run of exactly `length` that closes a code span, if one follows within the
+ * paragraph, which ends at the next blank line.
+ */
 function findClosingRun(prompt: string, from: number, length: number): number | undefined {
+  const blank = /\n[ \t]*\r?\n/g;
+  blank.lastIndex = from;
+  const limit = blank.exec(prompt)?.index ?? prompt.length;
   const runs = /`+/g;
   runs.lastIndex = from;
-  for (let run = runs.exec(prompt); run !== null; run = runs.exec(prompt)) {
+  for (let run = runs.exec(prompt); run !== null && run.index < limit; run = runs.exec(prompt)) {
     if (run[0].length === length) return runs.lastIndex;
   }
   return undefined;
 }
 
-/** Returns the offset after the line that closes a fenced code block, or the prompt's end when nothing closes it. */
-function findFenceEnd(prompt: string, from: number, fence: string): number {
-  const fenceCharacter = fence.charAt(0) === '`' ? '`' : '~';
-  const closing = new RegExp(String.raw`^ {0,3}${fenceCharacter}{${fence.length},}[ \t]*$`, 'gm');
+/** Returns the offset after the line that closes the fence opened at the offset, or the prompt's end when none does. */
+function findFenceEnd(prompt: string, opening: number, fence: Fence): number {
+  let lineEnd = prompt.indexOf('\n', opening);
+  while (lineEnd !== -1) {
+    const lineStart = lineEnd + 1;
+    lineEnd = prompt.indexOf('\n', lineStart);
+    if (isFenceCloser(readLine(prompt, lineStart), fence)) return lineEnd === -1 ? prompt.length : lineEnd;
+  }
+  return prompt.length;
+}
+
+/** Returns the text of the line from the offset to its end, excluding its newline and any `\r`. */
+function readLine(prompt: string, from: number): string {
   const lineEnd = prompt.indexOf('\n', from);
-  if (lineEnd === -1) return prompt.length;
-  closing.lastIndex = lineEnd;
-  const match = closing.exec(prompt);
-  return match === null ? prompt.length : closing.lastIndex;
+  const line = prompt.slice(from, lineEnd === -1 ? prompt.length : lineEnd);
+  return line.endsWith('\r') ? line.slice(0, -1) : line;
 }
 // endregion | Helpers

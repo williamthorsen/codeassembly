@@ -54,6 +54,41 @@ describe(findCommentSpans, () => {
     expect(spans.map(({ start, end }) => prompt.slice(start, end))).toStrictEqual(['<!-- note -->']);
   });
 
+  it('does not pair a lone backtick with a backtick past a blank line', () => {
+    const prompt = 'Quote a ` mark.\n\nKeep `x` <!-- note -->';
+
+    const spans = findCommentSpans(prompt);
+
+    expect(spans.map(({ start, end }) => prompt.slice(start, end))).toStrictEqual(['<!-- note -->']);
+  });
+
+  it('does not open a fence at a line whose backtick run is an inline code span', () => {
+    const prompt = '```js``` is a span. <!-- note -->';
+
+    const spans = findCommentSpans(prompt);
+
+    expect(spans.map(({ start, end }) => prompt.slice(start, end))).toStrictEqual(['<!-- note -->']);
+  });
+
+  it('returns no span inside a fence nested under a list item, and returns a comment after it', () => {
+    const prompt = [
+      '- Look up the order.',
+      '  - Show the template:',
+      '',
+      '      ```md',
+      '      <!-- example -->',
+      '',
+      '      Done.',
+      '      ```',
+      '',
+      '<!-- note -->',
+    ].join('\n');
+
+    const spans = findCommentSpans(prompt);
+
+    expect(spans.map(({ start, end }) => prompt.slice(start, end))).toStrictEqual(['<!-- note -->']);
+  });
+
   it('returns a comment that contains a backtick', () => {
     const prompt = 'Greet. <!-- see `notes.md -->';
 
