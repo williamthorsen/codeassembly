@@ -1,0 +1,233 @@
+{
+  "id": "refund_agent",
+  "initial": "handling",
+  "states": {
+    "handling": {
+      "id": "handling",
+      "initial": "asking_for_order",
+      "exit": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "log a summary of the conversation"
+          }
+        }
+      ],
+      "on": {
+        "user.asks_for_human": {
+          "target": "#handed_off",
+          "meta": {
+            "source": {
+              "start": 319,
+              "end": 365
+            }
+          }
+        }
+      },
+      "states": {
+        "asking_for_order": {
+          "id": "asking_for_order",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask the customer for their order number"
+              }
+            }
+          ],
+          "on": {
+            "user.gives_order_number": {
+              "target": "#looking_up",
+              "meta": {
+                "source": {
+                  "start": 69,
+                  "end": 108
+                },
+                "inferred": true
+              }
+            }
+          },
+          "meta": {
+            "name": "Ask for the order number",
+            "source": {
+              "start": 62,
+              "end": 109
+            }
+          }
+        },
+        "looking_up": {
+          "id": "looking_up",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "look up the order"
+              }
+            }
+          ],
+          "always": [
+            {
+              "target": "#outside_window",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the order is older than 30 days"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 129,
+                  "end": 163
+                }
+              }
+            },
+            {
+              "target": "#refunding",
+              "meta": {
+                "source": {
+                  "start": 236,
+                  "end": 245
+                }
+              }
+            }
+          ],
+          "meta": {
+            "name": "Look up the order",
+            "source": {
+              "start": 110,
+              "end": 128
+            }
+          }
+        },
+        "outside_window": {
+          "id": "outside_window",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "explain that the order is outside the refund window"
+              }
+            }
+          ],
+          "always": {
+            "target": "#closed",
+            "meta": {
+              "source": {
+                "start": 184,
+                "end": 234
+              }
+            }
+          },
+          "meta": {
+            "name": "Explain the refund window",
+            "source": {
+              "start": 165,
+              "end": 209
+            }
+          }
+        },
+        "refunding": {
+          "id": "refunding",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "issue the refund"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "confirm the refund to the customer"
+              }
+            }
+          ],
+          "always": {
+            "target": "#closed",
+            "meta": {
+              "source": {
+                "start": 265,
+                "end": 317
+              }
+            }
+          },
+          "meta": {
+            "name": "Issue the refund",
+            "source": {
+              "start": 247,
+              "end": 291
+            }
+          }
+        }
+      },
+      "meta": {
+        "name": "Handle the refund",
+        "source": {
+          "start": 409,
+          "end": 454
+        },
+        "ambient": [
+          {
+            "start": 549,
+            "end": 628
+          }
+        ]
+      }
+    },
+    "handed_off": {
+      "id": "handed_off",
+      "type": "final",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "hand the conversation to a support agent"
+          }
+        }
+      ],
+      "meta": {
+        "name": "Hand off to support",
+        "source": {
+          "start": 367,
+          "end": 407
+        }
+      }
+    },
+    "closed": {
+      "id": "closed",
+      "type": "final",
+      "meta": {
+        "name": "End the conversation",
+        "source": {
+          "start": 196,
+          "end": 234
+        }
+      }
+    }
+  },
+  "meta": {
+    "name": "Refund agent",
+    "prompt": "You help customers with refund requests. Be warm and concise.\nFirst, ask the customer for their order number. Look up the order. If the order is older than 30 days, explain that it is outside the refund window and end the conversation. Otherwise, issue the refund, confirm it to the customer, and end the conversation.\nAt any point, if the customer asks for a human, hand the conversation to a support agent.\nWhen you leave the refund flow for any reason, log a summary of the conversation.\nMention our seasonal promotion whenever it feels natural.\nWhile in the refund flow, never promise a refund before the order is looked up.",
+    "source": {
+      "start": 0,
+      "end": 628
+    },
+    "unconverted": [
+      {
+        "start": 491,
+        "end": 548,
+        "reason": "States a habit rather than a step, and does not say when it applies."
+      }
+    ],
+    "ambient": [
+      {
+        "start": 0,
+        "end": 40
+      },
+      {
+        "start": 41,
+        "end": 61
+      }
+    ]
+  }
+}

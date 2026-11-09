@@ -1,0 +1,475 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "on": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string",
+        "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$",
+        "description": "A dotted lowercase event name; events from the user start with `user.`."
+      },
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/Transition"
+          },
+          {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "$ref": "#/$defs/Transition"
+            }
+          }
+        ]
+      }
+    },
+    "always": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Transition"
+        },
+        {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Transition"
+          }
+        }
+      ]
+    },
+    "entry": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Action"
+      }
+    },
+    "exit": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Action"
+      }
+    },
+    "initial": {
+      "type": "string"
+    },
+    "states": {
+      "type": "object",
+      "propertyNames": {
+        "type": "string"
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/State"
+      }
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "The name that the viewer shows for the state, written as words. Absent, the viewer shows the id.",
+          "type": "string",
+          "minLength": 1
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/Span"
+        },
+        "unconverted": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "start": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "start",
+              "end"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "ambient": {
+          "description": "Spans of the ambient instructions that hold throughout the state, such as persona, tone, background knowledge, and standing rules. Allowed only on the root and on a compound state.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AmbientSpan"
+          }
+        },
+        "findings": {
+          "description": "The converter's judgment of flaws in the prompt that concern this element, or the prompt as a whole on the root. An `inferred-resolution` finding sits on the inferred element that it explains.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        }
+      },
+      "required": [
+        "prompt",
+        "source",
+        "unconverted"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "initial",
+    "states",
+    "meta"
+  ],
+  "additionalProperties": false,
+  "title": "Agent logic config",
+  "$defs": {
+    "Transition": {
+      "type": "object",
+      "properties": {
+        "target": {
+          "description": "The `#id` of the target state. Omitted, the transition runs its actions without leaving.",
+          "type": "string",
+          "pattern": "^#.+$"
+        },
+        "guard": {
+          "$ref": "#/$defs/NlEntry"
+        },
+        "actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          }
+        },
+        "meta": {
+          "$ref": "#/$defs/ElementMeta"
+        }
+      },
+      "required": [
+        "meta"
+      ],
+      "additionalProperties": false
+    },
+    "NlEntry": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "nl"
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "Action": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "nl"
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "text": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "text"
+          ],
+          "additionalProperties": false
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "source": {
+              "$ref": "#/$defs/Span"
+            },
+            "gate": {
+              "type": "boolean",
+              "const": true
+            }
+          },
+          "required": [
+            "source",
+            "gate"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "type",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    "Span": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "ElementMeta": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/Span"
+        },
+        "inferred": {
+          "type": "boolean",
+          "const": true
+        },
+        "gate": {
+          "description": "Present when the passage is the body of a `<HARD-GATE>`, an absolute instruction, in the prompt.",
+          "type": "boolean",
+          "const": true
+        },
+        "ambient": {
+          "description": "Spans of the ambient instructions that hold throughout the state, such as persona, tone, background knowledge, and standing rules. Allowed only on the root and on a compound state.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AmbientSpan"
+          }
+        },
+        "findings": {
+          "description": "The converter's judgment of flaws in the prompt that concern this element, or the prompt as a whole on the root. An `inferred-resolution` finding sits on the inferred element that it explains.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
+    },
+    "AmbientSpan": {
+      "type": "object",
+      "properties": {
+        "start": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "end": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "gate": {
+          "description": "Present when the passage is the body of a `<HARD-GATE>`, an absolute instruction, in the prompt.",
+          "type": "boolean",
+          "const": true
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "additionalProperties": false
+    },
+    "Finding": {
+      "type": "object",
+      "properties": {
+        "kind": {
+          "$ref": "#/$defs/FindingKind"
+        },
+        "sources": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Span"
+          }
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "kind",
+        "sources",
+        "reason"
+      ],
+      "additionalProperties": false
+    },
+    "FindingKind": {
+      "type": "string",
+      "enum": [
+        "contradiction",
+        "unused-input",
+        "unhandled-case",
+        "inferred-resolution"
+      ]
+    },
+    "State": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "on": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*(\\.[a-z0-9_]+)+$",
+            "description": "A dotted lowercase event name; events from the user start with `user.`."
+          },
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/Transition"
+              },
+              {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/Transition"
+                }
+              }
+            ]
+          }
+        },
+        "always": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Transition"
+            },
+            {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Transition"
+              }
+            }
+          ]
+        },
+        "entry": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          }
+        },
+        "exit": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Action"
+          }
+        },
+        "type": {
+          "type": "string",
+          "const": "final"
+        },
+        "initial": {
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/$defs/StateMeta"
+        },
+        "states": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/State"
+          }
+        }
+      },
+      "required": [
+        "id",
+        "meta"
+      ],
+      "additionalProperties": false
+    },
+    "StateMeta": {
+      "type": "object",
+      "properties": {
+        "source": {
+          "$ref": "#/$defs/Span"
+        },
+        "inferred": {
+          "type": "boolean",
+          "const": true
+        },
+        "gate": {
+          "description": "Present when the passage is the body of a `<HARD-GATE>`, an absolute instruction, in the prompt.",
+          "type": "boolean",
+          "const": true
+        },
+        "ambient": {
+          "description": "Spans of the ambient instructions that hold throughout the state, such as persona, tone, background knowledge, and standing rules. Allowed only on the root and on a compound state.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/AmbientSpan"
+          }
+        },
+        "findings": {
+          "description": "The converter's judgment of flaws in the prompt that concern this element, or the prompt as a whole on the root. An `inferred-resolution` finding sits on the inferred element that it explains.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Finding"
+          }
+        },
+        "name": {
+          "description": "The name that the viewer shows for the state, written as words. Absent, the viewer shows the id.",
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "source"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
