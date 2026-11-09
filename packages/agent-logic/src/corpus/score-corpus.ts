@@ -177,6 +177,7 @@ export function renderScorecard({ run, current, entries }: Corpus): string {
 }
 
 // region | Helpers
+/** Returns a sentence per source, in `sources` order, that names its provenance and the prompts that it supplied. */
 function describeOrigins(run: Run): string[] {
   return Object.entries(run.sources).map(([key, source]) => {
     const prompts = Object.entries(run.prompts)
@@ -214,6 +215,7 @@ function hashBlob(file: string): string {
   return createHash('sha1').update(`blob ${content.length}\0`).update(content).digest('hex');
 }
 
+/** Reads one prompt's files, and checks that its review agrees with its output and with itself. */
 function readEntry(directory: string, name: string, current: SourceBlobs): CorpusEntry {
   const prompt = readFileSync(path.join(directory, `${name}.md`), 'utf8');
   const output = readOutput(directory, name);

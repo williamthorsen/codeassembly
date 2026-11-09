@@ -65,8 +65,6 @@ function describeGapLines(element: StateDescription | TransitionDescription): st
   return lines;
 }
 
-/** Returns a sentence per source, in `sources` order, that names its provenance and the prompts that it supplied. */
-
 /** Returns the share of the prompt's non-whitespace characters that lie inside at least one span. */
 function measureCoverage(prompt: string, spans: Span[]): number {
   const covered = Array.from({ length: prompt.length }, () => false);
@@ -81,6 +79,4 @@ function measureCoverage(prompt: string, spans: Span[]): number {
   }
   return total === 0 ? 0 : inside / total;
 }
-
-/** Reads one prompt's files, and checks that its review agrees with its output and with itself. */
 // endregion | Helpers
