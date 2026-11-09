@@ -12,7 +12,7 @@ const OPENER = /^[ \t]*(`{3,}|~{3,})(.*)$/;
  */
 export function isFenceCloser(line: string, fence: Fence): boolean {
   const run = line.trim();
-  return run.length >= fence.length && [...run].every((character) => character === fence.character);
+  return run.length >= fence.length && run.replaceAll(fence.character, '') === '';
 }
 
 /**
