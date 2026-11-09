@@ -4,6 +4,7 @@ export * from './convert/draft-schema.ts';
 export * from './coverage-map/check-coverage.ts';
 export * from './coverage-map/coverage-map-schema.ts';
 export * from './examples/examples.ts';
+export { buildElkGraph, type ElkGraphOptions } from './layout/build-elk-graph.ts';
 export * from './layout/describe-config.ts';
 export * from './layout/layout-config.ts';
 export * from './layout/to-flow-elements.ts';
