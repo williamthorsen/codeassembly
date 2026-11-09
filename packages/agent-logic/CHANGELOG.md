@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.2.0 — 2026-11-09
+
+### 🎉 Features
+
+- Exports `buildElkGraph` and its `ElkGraphOptions` type from the root entry of `codeassembly-agent-logic`, so that a consumer can build the unpositioned graph that `toFlowElements` reads without running the ELK layout engine. (#2265)
+
+### ⚙️ Tooling
+
+- Adds the agent-logic corpus under `packages/agent-logic/corpus/` and the `refresh-corpus` and `score-corpus` scripts, which copy each prompt from the file that Claude Code loads and regenerate `corpus/scorecard.md`, with a test that fails when the committed scorecard differs. (#2264)
+
 ## 0.1.0 — 2026-11-09
 
 ### 🎉 Features
