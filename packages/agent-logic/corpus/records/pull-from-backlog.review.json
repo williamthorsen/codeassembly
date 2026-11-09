@@ -1,0 +1,52 @@
+{
+  "convertRuns": 1,
+  "skillBlob": "8e8aba33395ed9735066082aab046a9755230e12",
+  "rulesBlob": "2db0dd048d7f9f7d55908f3e4b64d2364a2f8de2",
+  "recheck": {
+    "skillBlob": "00acbbd4f89f5cc9b6c586001721e03e50d57bd4",
+    "rulesBlob": "515207202adad816e9a2cc57fc35e855d35f383b",
+    "note": "Converted before the rules added findings and the draft check of inputs, which add to no part of the rubric and leave every other rule unchanged. The public skill changes only how the converter runs the package's commands and where it reads the rules, and the package's rules change only their links. The verdicts stand; a conversion under the current rules would also record findings."
+  },
+  "verdicts": {
+    "coverage": "fail",
+    "fidelity": "fail",
+    "placement": "fail",
+    "gates": "pass",
+    "unconverted": "fail",
+    "gapsReport": "pass"
+  },
+  "gaps": [
+    {
+      "criterion": "coverage",
+      "text": "The root ambient instruction quoted as \"Prefix them `Q1`, `Q2`, and so on, so that the user can reference answers unambiguously.\" drops the condition that the prompt states before it, \"**Identify each question** when a single response contains 2 or more option-style questions:\", so the chart shows the prefix as required for every question, and the condition is on the chart nowhere. The rules require an ambient instruction to quote the passage that states it, which here includes its condition."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The root ambient instruction quoted as \"identifiers are mandatory whenever the block contains more than one item ...\" omits its scope, \"Inside an [action-items block](...)\", which no other element quotes, so the chart states the rule for every list rather than for the action-items block. The rules require the instruction's quote to cover the passage that states it."
+    },
+    {
+      "criterion": "fidelity",
+      "text": "The `always` list of state `run_gh_auth_status` guards its first transition, to `stop_at_step_1`, with \"the repository is on a platform other than GitHub\", and its second, to `stop_and_report_why`, with \"either command fails, or the repository is not on GitHub\", so both guards hold for a repository off GitHub and the second guard's last clause is unreachable. The rules allow a list of guarded transitions only for conditions of which at most one leads on; the second guard should state only \"either command fails\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The compound state `when_a_result_has` quotes \"When a result has `ok: false`, stop and report its `error` and `message`.\", which starts at the leading connective \"When\". The Quotes section requires a quote without leading connectives such as \"When\"; it should start at \"a result has `ok: false`, stop\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The transition from `run_it_then` to `run_gh_auth_status` quotes \"then start again at step 1: A groom can change the candidates\", which starts at the leading connective \"then\". The Quotes section requires the quote to start at the clause itself, \"start again at step 1: A groom can change the candidates\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The inferred transition `user.picks_ticket` from `render_candidates_as_a` to `record_it` quotes \"The pick happened\", taken from step 4's note on a failed assignment rather than from the passage from which the event is inferred, and it does not name who acts. The Quotes section requires an inferred event to quote the words of the passage from which it was inferred that name what happened and who did it, such as \"after a pick\" or the step 3 request for the pick."
+    },
+    {
+      "criterion": "unconverted",
+      "text": "The root `meta.ambient` lists \"Example:\", a label that introduces an exhibit of the option format, not a persona, tone, background, or standing rule. The rules list only ambient instructions there; the label should be left off the chart."
+    },
+    {
+      "criterion": "unconverted",
+      "text": "The root `meta.ambient` lists \"**Action items**\", a line inside the fenced example of an action-items block, which is a sample of the output rather than an instruction. The rules list only ambient instructions under `meta.ambient`, and the instruction to close with a labelled block is already quoted from \"Move every ask into one labelled block at the end of the response\"."
+    }
+  ]
+}

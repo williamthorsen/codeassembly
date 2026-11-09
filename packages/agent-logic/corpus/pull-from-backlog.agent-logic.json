@@ -1,0 +1,1141 @@
+{
+  "id": "pull_from_backlog",
+  "initial": "when_a_result_has",
+  "states": {
+    "when_a_result_has": {
+      "id": "when_a_result_has",
+      "on": {
+        "helper.returns_failure": {
+          "target": "#stop_and_report_its",
+          "meta": {
+            "source": {
+              "start": 1812,
+              "end": 1836
+            }
+          }
+        }
+      },
+      "initial": "run_gh_auth_status",
+      "meta": {
+        "source": {
+          "start": 1807,
+          "end": 1880
+        },
+        "name": "Run the skill"
+      },
+      "states": {
+        "stop_at_step_1": {
+          "id": "stop_at_step_1",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "report that the skill does not support the platform"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 1458,
+              "end": 1518
+            },
+            "name": "Report that the platform is unsupported"
+          }
+        },
+        "stop_and_report_its": {
+          "id": "stop_and_report_its",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "report the result's `error` and `message`"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 1838,
+              "end": 1879
+            },
+            "name": "Stop and report the helper error"
+          }
+        },
+        "stop_and_ask_the": {
+          "id": "stop_and_ask_the",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask the user to allow the ledger path"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 2164,
+              "end": 2205
+            },
+            "name": "Ask to allow the ledger path"
+          }
+        },
+        "run_gh_auth_status": {
+          "id": "run_gh_auth_status",
+          "always": [
+            {
+              "target": "#stop_at_step_1",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the repository is on a platform other than GitHub"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 1435,
+                  "end": 1456
+                }
+              }
+            },
+            {
+              "target": "#stop_and_report_why",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "either command fails, or the repository is not on GitHub"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 2294,
+                  "end": 2342
+                }
+              }
+            },
+            {
+              "target": "#run_the_survey_passing",
+              "meta": {
+                "source": {
+                  "start": 2365,
+                  "end": 2382
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "announce \"Using pull-from-backlog to recommend the next ticket of {repository}.\""
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `gh auth status` and `gh repo view --json nameWithOwner`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 2229,
+              "end": 2289
+            },
+            "name": "Check GitHub access"
+          }
+        },
+        "stop_and_report_why": {
+          "id": "stop_and_report_why",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "report why the preflight stopped"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 2344,
+              "end": 2363
+            },
+            "name": "Report why the preflight stopped"
+          }
+        },
+        "run_the_survey_passing": {
+          "id": "run_the_survey_passing",
+          "always": {
+            "target": "#present_the_picture_and",
+            "meta": {
+              "source": {
+                "start": 2556,
+                "end": 2582
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `node ~/.claude/skills/pull-from-backlog/pull-from-backlog.mjs survey --limit {N} --now {milestone}`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "pass only the flags that the invocation names"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 2368,
+              "end": 2432
+            },
+            "name": "Run the survey"
+          }
+        },
+        "present_the_picture_and": {
+          "id": "present_the_picture_and",
+          "always": [
+            {
+              "target": "#say_so_name_the",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "`candidates` is empty"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 4554,
+                  "end": 4575
+                }
+              }
+            },
+            {
+              "target": "#render_candidates_as_a",
+              "meta": {
+                "source": {
+                  "start": 3997,
+                  "end": 4026
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "present, in this order, Now, Umbrellas, In progress, Blocked, and Warnings"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "omit a section that is empty rather than reporting a zero"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "under Now, present the milestone and its due date, with how it was resolved (`now.source`)"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when `now.source` is `backlog`, say in one line that the repository does not have an open milestone with open eligible issues, so the whole backlog is the Now set"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when the milestone is not null and `counts.inNow` is 0, say that the milestone has no eligible open tickets left, and suggest closing it or planning a new one"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "do not offer to change any ticket's milestone"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when `counts.excluded` is not 0, add one line stating how many open tickets have a `ticket.pull.excludeLabels` label and are not offered"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "under Umbrellas, present each umbrella as `#N title: completed/total done`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "under In progress, present each ticket with its branch (`ref`) and the days since its last commit, or its assignees when the ticket does not have a branch"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "list the user's own in-progress tickets (`yours`) first, under their own heading"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "under Blocked, present each blocked Now ticket with its open blockers"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "under Warnings, present each warning on one line"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "for `now-not-found`, state that the configured milestone is not open"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "for `milestone-past-due`, state the milestone and the days overdue"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "for `stale-branch`, state the ticket, the branch, and the days since its last commit"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "for `blocked-outside-now`, state the Now ticket and its blockers outside Now"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "for `groom-stale`, state the last groom's date and age, the open tickets created since it, or that the backlog has never been groomed"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 2563,
+              "end": 2599
+            },
+            "name": "Present the picture and the warnings"
+          }
+        },
+        "render_candidates_as_a": {
+          "id": "render_candidates_as_a",
+          "on": {
+            "user.picks_ticket": {
+              "target": "#record_it",
+              "meta": {
+                "source": {
+                  "start": 5510,
+                  "end": 5527
+                },
+                "inferred": true
+              }
+            },
+            "user.takes_groom_offer": {
+              "target": "#run_it_then",
+              "meta": {
+                "source": {
+                  "start": 4965,
+                  "end": 4982
+                }
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "render `candidates` as a numbered gradient menu, per Option format, with every candidate's `reasons` as its `➕` lines and its URL"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "give the candidate ranked first the strongest marker"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when a candidate has `inNow: false`, say in one line above the menu that Now was exhausted and the menu includes backlog tickets"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "append `(outside Now)` to the title of each candidate that has `inNow: false`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "always render the menu, because which ticket the user works on next is a preference about their time, which is in the gated class"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "close the turn with an action-items block that asks for the pick"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when `groomStale.stale`, put in the block, before the pick, an offer to groom the backlog: `/groom-backlog` without arguments, which assesses every open ticket, applies its recommendations after one confirmation per digest page, and asks nothing per ticket"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4028,
+              "end": 4075
+            },
+            "name": "Present the candidates"
+          }
+        },
+        "say_so_name_the": {
+          "id": "say_so_name_the",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "say that `candidates` is empty"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "name the counts from `counts`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "skip recording the pick"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 4577,
+              "end": 4631
+            },
+            "name": "Say that no candidates remain"
+          }
+        },
+        "run_it_then": {
+          "id": "run_it_then",
+          "always": {
+            "target": "#run_gh_auth_status",
+            "meta": {
+              "source": {
+                "start": 4992,
+                "end": 5053
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `/groom-backlog` without arguments"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4984,
+              "end": 4996
+            },
+            "name": "Run the groom"
+          }
+        },
+        "record_it": {
+          "id": "record_it",
+          "on": {
+            "sandbox.denies_write": {
+              "target": "#stop_and_ask_the",
+              "meta": {
+                "source": {
+                  "start": 2130,
+                  "end": 2162
+                }
+              }
+            }
+          },
+          "always": [
+            {
+              "target": "#assign_the_user",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "the survey's `assignOnPick` is `true`"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 5224,
+                  "end": 5261
+                }
+              }
+            },
+            {
+              "target": "#ask_first_with",
+              "meta": {
+                "source": {
+                  "start": 5289,
+                  "end": 5308
+                }
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `node ~/.claude/skills/pull-from-backlog/pull-from-backlog.mjs record --ticket {N}`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5083,
+              "end": 5092
+            },
+            "name": "Record the pick"
+          }
+        },
+        "assign_the_user": {
+          "id": "assign_the_user",
+          "on": {
+            "gh.command_fails": {
+              "target": "#close_with_one_line",
+              "actions": [
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "report `gh`'s message"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "do not retry the assignment"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "keep the `pull` record, because the pick happened and only the assignment failed"
+                  }
+                }
+              ],
+              "meta": {
+                "source": {
+                  "start": 5425,
+                  "end": 5442
+                }
+              }
+            }
+          },
+          "always": {
+            "target": "#close_with_one_line",
+            "meta": {
+              "source": {
+                "start": 5562,
+                "end": 5584
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `gh issue edit {N} --add-assignee @me`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5202,
+              "end": 5218
+            },
+            "name": "Assign the user"
+          }
+        },
+        "ask_first_with": {
+          "id": "ask_first_with",
+          "on": {
+            "user.replies": [
+              {
+                "target": "#assign_the_user",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "the reply is a clear yes"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 5346,
+                    "end": 5357
+                  }
+                }
+              },
+              {
+                "target": "#close_with_one_line",
+                "meta": {
+                  "source": {
+                    "start": 5331,
+                    "end": 5342
+                  },
+                  "inferred": true
+                }
+              }
+            ]
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask whether to assign the user, with `👍🏼👎🏼`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5299,
+              "end": 5325
+            },
+            "name": "Ask to assign the user"
+          }
+        },
+        "close_with_one_line": {
+          "id": "close_with_one_line",
+          "on": {
+            "user.reports_ticket_done": {
+              "target": "#run_gh_auth_status",
+              "meta": {
+                "source": {
+                  "start": 737,
+                  "end": 793
+                }
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "close with one line: \"Start #{N} in its own session.\""
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5565,
+              "end": 5618
+            },
+            "name": "Close with the start line"
+          }
+        }
+      }
+    }
+  },
+  "meta": {
+    "name": "Pull from backlog",
+    "prompt": "---\nname: pull-from-backlog\ndescription: Recommend the next ticket to pull from a GitHub backlog, with the backlog's picture, its warnings, and a ranked menu of candidates with each one's reasons\nuser-invocable: true\n---\n<!-- codeassembly-skill:pull-from-backlog -->\n\n# Pull from backlog\n\nRecommend the next ticket to work on. A bundled helper reads GitHub, the repository's branches, and groom-backlog's ledger, and reports the picture, the warnings, and the ranked candidates. You present them, offer the grooms that the backlog needs, record the pick, and assign the user on consent.\n\nThe skill is re-entrant: Everything it reads is in GitHub and the ledger, so a fresh session and one already in progress produce the same menu. When the user says \"merged #N\" or \"done with #N\" after a pick, start again at step 1.\n\n**Announce at start:** \"Using pull-from-backlog to recommend the next ticket of {repository}.\"\n\n## Arguments\n\n| Argument            | Description                                                      | Default                |\n| ------------------- | ---------------------------------------------------------------- | ---------------------- |\n| `--limit <N>`       | Offer the top `N` candidates.                                    | 3                      |\n| `--now <milestone>` | Take this open milestone as the Now set, over `ticket.pull.now`. | Resolved by the helper |\n\nGitHub alone is supported, through `gh`. On any other platform, stop at step 1 and report that the skill does not support it.\n\n## Boundary\n\nThe skill's one write to GitHub is the assignee, with the user's consent or under `ticket.pull.assignOnPick`. It does not comment on, label, close, or edit any ticket, and its one ledger write is the `pull` record.\n\n## Process\n\nEvery helper command prints one JSON result. When a result has `ok: false`, stop and report its `error` and `message`. Invoke the helper as:\n\n```bash\nnode ~/.claude/skills/pull-from-backlog/pull-from-backlog.mjs {command} {flags}\n```\n\nThe ledger is `local/ticket-triage/ledger.jsonl` in the primary worktree, shared with groom-backlog; the helper reports its path. If the sandbox denies a write there, stop, and ask the user to allow that path.\n\n### 1. Preflight\n\n1. Run `gh auth status` and `gh repo view --json nameWithOwner`. If either fails, or the repository is not on GitHub, stop and report why.\n2. Run the survey, passing only the flags that the invocation names:\n\n   ```bash\n   node ~/.claude/skills/pull-from-backlog/pull-from-backlog.mjs survey --limit {N} --now {milestone}\n   ```\n\n### 2. Present the picture and the warnings\n\nPresent, in this order, and omit a section that is empty rather than reporting a zero:\n\n1. **Now**: the milestone and its due date, with how it was resolved (`now.source`). For `backlog`, say in one line that the repository does not have an open milestone with open eligible issues, so the whole backlog is the Now set. When the milestone is not null and `counts.inNow` is 0, say that it has no eligible open tickets left, and suggest closing it or planning a new one; do not offer to change any ticket's milestone. When `counts.excluded` is not 0, add one line stating how many open tickets have a `ticket.pull.excludeLabels` label and are not offered.\n2. **Umbrellas**: each as `#N title: completed/total done`.\n3. **In progress**: each ticket with its branch (`ref`) and the days since its last commit, or its assignees when it does not have a branch. List the user's own (`yours`) first, under their own heading.\n4. **Blocked**: each blocked Now ticket with its open blockers.\n5. **Warnings**: one line each. `now-not-found`: the configured milestone is not open. `milestone-past-due`: the milestone and the days overdue. `stale-branch`: the ticket, the branch, and the days since its last commit. `blocked-outside-now`: the Now ticket and its blockers outside Now. `groom-stale`: the last groom's date and age, the open tickets created since it, or that the backlog has never been groomed.\n\n### 3. Present the candidates\n\nRender `candidates` as a numbered gradient menu, per [Option format](#option-format), with every candidate's `reasons` as its `➕` lines and its URL. The candidate ranked first takes the strongest marker. When a candidate has `inNow: false`, say in one line above the menu that Now was exhausted and the menu includes backlog tickets, and append `(outside Now)` to each such candidate's title. The menu is always rendered: Which ticket the user works on next is a preference about their time, which is in the gated class. When `candidates` is empty, say so, name the counts from `counts`, and skip step 4.\n\nClose the turn with an action-items block that asks for the pick. When `groomStale.stale`, the block contains, before the pick, an offer to groom the backlog: `/groom-backlog` without arguments, which assesses every open ticket, applies its recommendations after one confirmation per digest page, and asks nothing per ticket. When the user takes it, run it, then start again at step 1: A groom can change the candidates.\n\n### 4. Record the pick\n\n1. Record it:\n\n   ```bash\n   node ~/.claude/skills/pull-from-backlog/pull-from-backlog.mjs record --ticket {N}\n   ```\n\n2. Assign the user. When the survey's `assignOnPick` is `true`, run the command directly; otherwise ask first, with `👍🏼👎🏼`, and run it only on a clear yes:\n\n   ```bash\n   gh issue edit {N} --add-assignee @me\n   ```\n\n   If the command fails, report `gh`'s message and do not retry. The `pull` record stands: The pick happened, and only the assignment failed.\n\n3. Close with one line: \"Start #{N} in its own session.\"\n\n## Option format\n\n**Confirm that the menu is needed before rendering it.** Mark the options first, check the leader as \"Check the leader before rendering\" below states, then read the markers: Render the menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class below. Decide every other field: State the decision in one line with its reason, record it, and proceed. Decide an all-■□□ field too. An unmarked list is a pure-preference call, and a preference is in the gated class. The rejected alternative belongs in a clause (\"X rather than Y, because Z\"), never as a numbered option awaiting selection.\n\nA determination that has one right answer under a governing document, such as a change's work type under the work-type test, is not a fork. Resolve doubt about which answer the test yields by applying the test and picking: Two options marked ■■□ are a fork between acceptable options, not doubt about a fact. The developer holds less of the evidence than the agent, so handing the doubt back produces a worse-informed answer.\n\nThe gated class is closed. Ask about these decisions whatever the markers say:\n\n- the shape of a public API or a contract\n- remote shared state: a ticket edit, a push, a merge, the creation of a branch or a ticket\n- data loss, or any action that cannot be undone\n- spend or budget\n- a preference for which you do not hold any evidence\n\nDecide everything else yourself by default. Never decide a gated action in your own voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; hold the gated action itself until the developer authorizes it. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you do not hold any evidence. Verification is never in the gated class: Run a check that a command, a test, or a browser could settle.\n\n**Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only when the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it 🔲 as \"Record what you did not ask\" states, and ask at the checkpoint; revise if overruled. In a skill without a phase structure, treat the skill's own approval gate, or the end of its work, as the checkpoint.\n\n**Batch, never stream.** Collect the asks that survive the gate into one review at the checkpoint, not one per turn.\n\n**Record what you did not ask.** Write every decision that the gate let you take into the plan's `## Decisions taken` section, with a one-line reason; when the work does not have a plan, write it into the turn's summary. Always record: A silent decision is worse than an ask. Start each line that states a decision awaiting the checkpoint with 🔲, wherever you state it: in the record, and in a turn's narrative, such as a checkpoint summary or a list of decisions. The marker lets the developer find what they may overrule without reading every line. Drop it once the developer approves the checkpoint at which the decision was presented.\n\n**Never rank the options by your own elapsed time, round trips, or effort.** You measure these costs yourself, and that measure counts the user's context switch and review cycles as nothing. Measuring one does not make the call yours, and a more accurate measurement still cannot rank the options.\n\nOrdering follows from the gate. When the order changes the code or the total effort -- upstream before downstream, a refactor before the feature that would otherwise be written twice -- recommend it and mark it, naming the delay that it causes and saying nothing about delay when none is involved. When the outcomes are identical and only the timing differs, such as when queued work is picked up, present the cost, render the options unmarked, and put the choice at the checkpoint.\n\nAsking is not neutral. It costs the developer a context switch, and it idles the session until the answer arrives. A wrong-but-stated recommendation costs them a word to correct; a decision handed back costs them an evaluation and costs the session the wait.\n\nRender every option-style question in this form: any numbered list of 2 or more choices with substantive tradeoffs, including templated next-steps menus and yes/no choices in which both paths are concrete actions. Reserve `👍🏼👎🏼` for confirmation prompts, in which a single action has been proposed and \"no\" means \"let's adjust or discuss\" rather than a concrete alternative.\n\n**Number every option**: `1.`, `2.`, `3.` The number is how the user selects. Never render the options as bullets or bare prose.\n\n**Mark every option with a strength marker.** The recommended option is the one with the strongest marker. Do not write a separate \"I recommend option N\" sentence, and a recommendation that does not match the strongest marker is a defect.\n\n| Marker | Label                | When to use                                                                                                                                   |\n| ------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |\n| ■■■    | strongly recommended | One option is clearly better on the criteria governing the decision, and your ranking does not turn on a preference that only the user holds. |\n| ■■□    | recommended          | Your lean. Default level when you have a preference.                                                                                          |\n| ■□□    | weakly recommended   | A slight edge; mostly preference.                                                                                                             |\n| □□□    | not recommended      | Clear drawbacks; included for completeness or to rule out explicitly.                                                                         |\n\nMarking is all-or-none: Once any option has a marker, give every option one. Without a preference (a pure taste call), omit markers from every option and don't explain the omission; the absence is the signal. Mark at the strength that you actually hold: A marker that reads the same whatever the analysis found does not convey any information, and the reader must do all the work of telling a real choice from a formality. Render markers as plain text, never inside backticks; backticks shrink the glyphs and hurt readability.\n\n**Format each option** as marker, then title, then a colon. Make each pro (`➕`) and con (`➖`) a nested list item beneath its option, without terminal punctuation. Apply this even when an option has only one pro or con. Lead with the strongest argument.\n\nMake every line subordinate to an option (a pro, a con, invocation guidance) a nested list item, never a whitespace-indented continuation. Indentation by spaces, ASCII or non-breaking alike, does not survive terminal rendering: The lines collapse to the left margin, and the reader cannot tell which reason belongs to which option. Markdown structure survives; whitespace does not.\n\nStop nesting at one level: Never put a sub-option in an option or a sub-pro in a pro. Terminal rendering stops being reliable at deeper nesting, so this contract is written never to need it.\n\n**Write only bullets that are real.** Bullets report the weight of each option, not a balance between the options: When the options differ in quality, an uneven menu is the accurate one, and a menu that looks balanced misreports the analysis. A `➕` or `➖` asserts that the reader should weigh it, and bullets render at equal visual weight. A manufactured one reads exactly like a load-bearing one, and it takes a round trip to discover that it was empty. Seven tests:\n\n- **Falsifiability.** A `➖` must be false for at least one other option on the menu, and a `➕` likewise. Anything that would still be true if this were the only option is a mechanic of carrying it out rather than a tradeoff; it belongs on the invocation line or nowhere.\n- **Decision weight.** Would a reader who believed this bullet choose differently? Bookkeeping, mechanically-implied, and trivially-reversible consequences (a doc line to update, a criterion to reword, a rename to propagate) are real, specific, and decision-irrelevant. Restatements of an option's inherent properties (\"longer wall time\", \"structured review pass\", \"ships faster\") are one instance of the same failure.\n- **Session context.** Cut a bullet that cites the conversation, what the session holds, or what is \"already in context\". Every handoff goes through a saved artifact, so session context does not distinguish one option from another, and a bullet that rests on it tells the reader that the artifact is incomplete. When the bullet is true, the artifact has a gap: Add the fact to the artifact rather than citing the session.\n- **Consequence.** State in a `➖` what breaks or what it costs, and for whom, concretely enough that the reader can weigh it without investigating. Cut a con that cannot be stated that way.\n- **The qualifier tell.** A bullet undercut by its own qualifier (\"negligible\", \"inert\", \"harmless\") is filler. The only repair is to cut the bullet: Deleting the qualifier leaves the same minor con, now looking weighty.\n- **One tradeoff, stated once.** When one option's `➕` restates another option's `➖`, the two options are the sides of one tradeoff. State it once, in a line above the list, rather than as bullets split between the options, which the reader counts as separate reasons.\n- **Check before you hedge.** If a cheap check would settle whether a con is real, run the check. Presenting the uncertainty as a bullet transfers the check to the user.\n\nAsymmetry is a report, not a defect. Give an option that has three real pros but lacks a real con its three pros, and do not give it a con. Never add a bullet to fill a slot, reach parity between options, or avoid looking one-sided; when the honest cost is hard to find, that difficulty is itself evidence the option is strong. When every option lacks a real bullet, omit them all and let the markers alone convey the recommendation. Do not add tiebreaker text for equal-strength options; the developer picks the number.\n\nKeep on a `□□□` option the `➖` that explains why you ruled it out. Under the falsifiability test that bullet is real by construction, and without it the reader is left with a veto that they cannot check.\n\n**Check the leader before rendering.** Once you have drafted the bullets, and before you read the markers against the gate, run this check. It applies to a gated decision as fully as to any other: The menu renders whatever the markers say, and the marker tells the developer how much deliberation the ask needs.\n\n1. For each alternative, look for a cost that disqualifies it, including one that follows from the constraints and acceptance criteria of the work at hand. When you find one, state it as the alternative's `➖`.\n2. For each `➖` on the strongest-marked option, name the reader who would choose differently because of it. Cut the bullet if there is none.\n3. Re-mark the options. When every alternative has a disqualifying `➖`, mark the leader ■■■. The observed bias is a marker set too weak, not one set too strong.\n4. Re-apply the gate. Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and do not render a menu. Inside the class, render the menu with the leader's marker as the check set it.\n\n**Identify each question** when a single response contains 2 or more option-style questions: Prefix them `Q1`, `Q2`, and so on, so that the user can reference answers unambiguously. When the underlying data already has stable identifiers (plan-review findings such as `C1` or `X2`), use those in place of `Q1`/`Q2`. For a single option-style question, omit the identifier. Inside an [action-items block](~/.claude/skills/_sources/codeassembly-guidance/_data/action-items.md), identifiers are mandatory whenever the block contains more than one item (or more than one independently-numbered list), and they distinguish actions (`A`) from questions (`Q`).\n\nExample:\n\n```\nHow should the exported `loadConfig` report a missing file?\n1. ■■■ Return `undefined`:\n   - ➕ matches the package's three other loaders, so callers keep one pattern\n2. ■□□ Throw `ConfigNotFoundError`:\n   - ➖ each of the 14 call sites needs a new `try`/`catch` to keep its current behavior\n3. □□□ Return an empty config:\n   - ➖ a caller cannot tell a missing file from an empty one, so a mistyped path silently disables every setting\n```\n\nThe decision is the shape of a public API, so the gate renders the menu although one option leads. The leader does not have a `➖` because none survived the check.\n\n**Close the turn with an action-items block.** Before sending, sweep the draft for anything that invites a response: A soft offer (\"let me know if\", \"say the word and I will\", \"worth knowing\", \"I can also\") is an ask, and leaving it in the narrative is how asks get missed. Run a check that a command, a test, or a browser could settle rather than ask for it; a command for the developer to run is a handoff. Prose may discuss; only the block may ask. Move every ask into one labelled block at the end of the response, stated as the concrete action and punctuated as the question that it is. Do not add a block to a turn without an ask. When this skill defines its own canonical block for asks (a next-steps menu, an action menu, a finding-keyed question list), use that block: Add the ad-hoc ask to it, keeping the block's own identifiers, and never close a turn with two competing blocks.\n\nPrefix with `A` an action that you propose to take (a \"yes\" makes you act) and with `Q` information or a judgment that you need (a \"yes\" only informs you). Number each so that the user can answer the whole block in one line. Leave a non-ask, such as a status note, in the prose without a prefix, and keep each prefix in agreement with its marker. Do not prefix the item of a single-item block.\n\n```\n---\n\n**Action items**\n\n**A1:** Add the packaging note to #977? 👍🏼👎🏼\n\n**A2:** The fixture helper now has three call sites. Extract, or leave inline?\n\n1. ■■□ Extract it into `test-utils/`:\n   - ➕ the third call site copy-pasted a stale variant, which is how the leak got in\n2. ■■□ Leave it inline until #981 settles the fixture format:\n   - ➕ #981 changes every fixture's shape, so an extracted helper would be rewritten within the week\n\n**Q1:** Which package owns the shared fixture once it moves? 🤔\n```\n\nWhen the block presents more than one independently-numbered list (a next-steps menu with two or more selects), put each list's identifier as a bold prefix on its header (`**A1: Remote issue**`) and keep each list's own 1-based numbering, so a bare numeral always names an option and `A1: 1, A2: 3` answers the block. A single-list block does not need that prefix.\n",
+    "source": {
+      "start": 0,
+      "end": 20742
+    },
+    "unconverted": [],
+    "ambient": [
+      {
+        "start": 289,
+        "end": 326
+      },
+      {
+        "start": 327,
+        "end": 478
+      },
+      {
+        "start": 588,
+        "end": 731
+      },
+      {
+        "start": 1185,
+        "end": 1214
+      },
+      {
+        "start": 1301,
+        "end": 1365
+      },
+      {
+        "start": 1394,
+        "end": 1434
+      },
+      {
+        "start": 1534,
+        "end": 1643
+      },
+      {
+        "start": 1644,
+        "end": 1748
+      },
+      {
+        "start": 1762,
+        "end": 1806
+      },
+      {
+        "start": 1912,
+        "end": 1991
+      },
+      {
+        "start": 1997,
+        "end": 2126
+      },
+      {
+        "start": 5695,
+        "end": 5954
+      },
+      {
+        "start": 5955,
+        "end": 6052
+      },
+      {
+        "start": 6053,
+        "end": 6081
+      },
+      {
+        "start": 6082,
+        "end": 6165
+      },
+      {
+        "start": 6166,
+        "end": 6289
+      },
+      {
+        "start": 6291,
+        "end": 6430
+      },
+      {
+        "start": 6431,
+        "end": 6599
+      },
+      {
+        "start": 6600,
+        "end": 6716
+      },
+      {
+        "start": 6718,
+        "end": 6796
+      },
+      {
+        "start": 6800,
+        "end": 6839
+      },
+      {
+        "start": 6842,
+        "end": 6931
+      },
+      {
+        "start": 6934,
+        "end": 6980
+      },
+      {
+        "start": 6983,
+        "end": 6998
+      },
+      {
+        "start": 7001,
+        "end": 7052
+      },
+      {
+        "start": 7054,
+        "end": 7097
+      },
+      {
+        "start": 7098,
+        "end": 7254
+      },
+      {
+        "start": 7255,
+        "end": 7382
+      },
+      {
+        "start": 7383,
+        "end": 7535
+      },
+      {
+        "start": 7536,
+        "end": 7640
+      },
+      {
+        "start": 7669,
+        "end": 7800
+      },
+      {
+        "start": 7801,
+        "end": 7964
+      },
+      {
+        "start": 7965,
+        "end": 8082
+      },
+      {
+        "start": 8109,
+        "end": 8200
+      },
+      {
+        "start": 8235,
+        "end": 8422
+      },
+      {
+        "start": 8423,
+        "end": 8477
+      },
+      {
+        "start": 8478,
+        "end": 8667
+      },
+      {
+        "start": 8668,
+        "end": 8753
+      },
+      {
+        "start": 8754,
+        "end": 8841
+      },
+      {
+        "start": 8843,
+        "end": 9033
+      },
+      {
+        "start": 9034,
+        "end": 9140
+      },
+      {
+        "start": 9174,
+        "end": 9439
+      },
+      {
+        "start": 9440,
+        "end": 9624
+      },
+      {
+        "start": 9626,
+        "end": 9740
+      },
+      {
+        "start": 9741,
+        "end": 9884
+      },
+      {
+        "start": 9886,
+        "end": 10099
+      },
+      {
+        "start": 10100,
+        "end": 10264
+      },
+      {
+        "start": 10266,
+        "end": 10394
+      },
+      {
+        "start": 10442,
+        "end": 10502
+      },
+      {
+        "start": 10503,
+        "end": 10634
+      },
+      {
+        "start": 11026,
+        "end": 11167
+      },
+      {
+        "start": 11204,
+        "end": 11256
+      },
+      {
+        "start": 11382,
+        "end": 11415
+      },
+      {
+        "start": 11560,
+        "end": 11629
+      },
+      {
+        "start": 11705,
+        "end": 11781
+      },
+      {
+        "start": 11782,
+        "end": 11913
+      },
+      {
+        "start": 11914,
+        "end": 12127
+      },
+      {
+        "start": 12128,
+        "end": 12231
+      },
+      {
+        "start": 12233,
+        "end": 12292
+      },
+      {
+        "start": 12293,
+        "end": 12395
+      },
+      {
+        "start": 12396,
+        "end": 12485
+      },
+      {
+        "start": 12487,
+        "end": 12625
+      },
+      {
+        "start": 12626,
+        "end": 12868
+      },
+      {
+        "start": 12870,
+        "end": 12955
+      },
+      {
+        "start": 12956,
+        "end": 13060
+      },
+      {
+        "start": 13100,
+        "end": 13304
+      },
+      {
+        "start": 13305,
+        "end": 13516
+      },
+      {
+        "start": 13553,
+        "end": 13635
+      },
+      {
+        "start": 13636,
+        "end": 13801
+      },
+      {
+        "start": 13825,
+        "end": 13884
+      },
+      {
+        "start": 13885,
+        "end": 14071
+      },
+      {
+        "start": 14072,
+        "end": 14220
+      },
+      {
+        "start": 14244,
+        "end": 14342
+      },
+      {
+        "start": 14343,
+        "end": 14532
+      },
+      {
+        "start": 14533,
+        "end": 14642
+      },
+      {
+        "start": 14662,
+        "end": 14790
+      },
+      {
+        "start": 14791,
+        "end": 14832
+      },
+      {
+        "start": 14859,
+        "end": 14944
+      },
+      {
+        "start": 14945,
+        "end": 15053
+      },
+      {
+        "start": 15087,
+        "end": 15186
+      },
+      {
+        "start": 15187,
+        "end": 15322
+      },
+      {
+        "start": 15353,
+        "end": 15420
+      },
+      {
+        "start": 15421,
+        "end": 15492
+      },
+      {
+        "start": 15494,
+        "end": 15530
+      },
+      {
+        "start": 15531,
+        "end": 15633
+      },
+      {
+        "start": 15634,
+        "end": 15821
+      },
+      {
+        "start": 15822,
+        "end": 15927
+      },
+      {
+        "start": 15928,
+        "end": 16014
+      },
+      {
+        "start": 16016,
+        "end": 16082
+      },
+      {
+        "start": 16083,
+        "end": 16219
+      },
+      {
+        "start": 16260,
+        "end": 16360
+      },
+      {
+        "start": 16361,
+        "end": 16532
+      },
+      {
+        "start": 16537,
+        "end": 16743
+      },
+      {
+        "start": 16747,
+        "end": 16884
+      },
+      {
+        "start": 16888,
+        "end": 17045
+      },
+      {
+        "start": 17049,
+        "end": 17304
+      },
+      {
+        "start": 17399,
+        "end": 17487
+      },
+      {
+        "start": 17488,
+        "end": 17621
+      },
+      {
+        "start": 17622,
+        "end": 17678
+      },
+      {
+        "start": 17782,
+        "end": 17959
+      },
+      {
+        "start": 17961,
+        "end": 17969
+      },
+      {
+        "start": 18413,
+        "end": 18511
+      },
+      {
+        "start": 18624,
+        "end": 18850
+      },
+      {
+        "start": 18851,
+        "end": 18985
+      },
+      {
+        "start": 18986,
+        "end": 19028
+      },
+      {
+        "start": 19029,
+        "end": 19168
+      },
+      {
+        "start": 19169,
+        "end": 19213
+      },
+      {
+        "start": 19214,
+        "end": 19467
+      },
+      {
+        "start": 19469,
+        "end": 19624
+      },
+      {
+        "start": 19625,
+        "end": 19693
+      },
+      {
+        "start": 19694,
+        "end": 19815
+      },
+      {
+        "start": 19816,
+        "end": 19862
+      },
+      {
+        "start": 19873,
+        "end": 19889
+      },
+      {
+        "start": 20377,
+        "end": 20694
+      },
+      {
+        "start": 20695,
+        "end": 20741
+      }
+    ]
+  }
+}

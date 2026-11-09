@@ -1,0 +1,80 @@
+{
+  "convertRuns": 1,
+  "skillBlob": "8e8aba33395ed9735066082aab046a9755230e12",
+  "rulesBlob": "2db0dd048d7f9f7d55908f3e4b64d2364a2f8de2",
+  "recheck": {
+    "skillBlob": "00acbbd4f89f5cc9b6c586001721e03e50d57bd4",
+    "rulesBlob": "515207202adad816e9a2cc57fc35e855d35f383b",
+    "note": "Converted before the rules added findings and the draft check of inputs, which add to no part of the rubric and leave every other rule unchanged. The public skill changes only how the converter runs the package's commands and where it reads the rules, and the package's rules change only their links. The verdicts stand; a conversion under the current rules would also record findings."
+  },
+  "verdicts": {
+    "coverage": "fail",
+    "fidelity": "fail",
+    "placement": "fail",
+    "gates": "pass",
+    "unconverted": "pass",
+    "gapsReport": "pass"
+  },
+  "gaps": [
+    {
+      "criterion": "coverage",
+      "text": "The root ambient instruction quoted as \"Format each option\" shows only the paragraph's opening words, so the rule that follows them, \"as marker, then title, then a colon\", is absent from the chart. The rules require every rule of the prompt to be an element, an ambient instruction, or unconverted, so the ambient quote must reach the instruction itself."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The root ambient instruction quoted as \"Identify each question\" leaves off its condition, \"when a single response contains 2 or more option-style questions\", and the ambient \"Prefix them `Q1`, `Q2`, and so on\" does not state it either. The chart therefore shows the identifier rule as unconditional, and the rules require the condition to be covered."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The rule of the action-items paragraph \"A soft offer (\"let me know if\", \"say the word and I will\", \"worth knowing\", \"I can also\") is an ask, and leaving it in the narrative is how asks get missed\" does not appear in any element or ambient instruction: The ambient quotes \"Close the turn with an action-items block.\" and \"Before sending, sweep the draft for anything that invites a response\" both stop before it. The rules require it to be listed under `meta.ambient` with the rest of that standing rule."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The ambient instructions \"Render every option-style question in this form\" and \"Reserve `👍🏼👎🏼` for confirmation prompts\" leave off the scope that each one defines: \"any numbered list of 2 or more choices with substantive tradeoffs, including templated next-steps menus and yes/no choices in which both paths are concrete actions\" and \"in which a single action has been proposed and \"no\" means \"let's adjust or discuss\" rather than a concrete alternative\". Without them the chart does not say which questions the option format governs, which the rules require it to cover."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The option-format rule \"Give an option that has three real pros but lacks a real con its three pros, and do not give it a con.\" is absent from the chart: The ambient quotes \"Asymmetry is a report, not a defect.\" and \"Never add a bullet to fill a slot, reach parity between options, or avoid looking one-sided\" surround it without including it. The rules require it to be an ambient instruction."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The rule \"The recommended option is the one with the strongest marker.\" is absent: The ambient quote \"Mark every option with a strength marker.\" ends before it and the next ambient starts after it. The rules require each standing rule of the option format to be an ambient instruction."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The action-items rule \"A single-list block does not need that prefix.\" is absent: The ambient quote \"When the block presents more than one independently-numbered list ...\" ends at \"`**A1: Remote issue**`\", before it. The rules require it to be covered as part of that ambient instruction."
+    },
+    {
+      "criterion": "fidelity",
+      "text": "The entry action of `report_paths_and_present` that reads \"render the options like the example: 1. 🧠 ■□□ Refine plan ..., 2. ✂️ ■□□ Split the ticket ..., 3. 🚀 ■■□ Implement ...\" turns the prompt's example into an instruction with fixed markers, although the prompt says the example is \"rendered for the default case, in which the recommendation rules below select Implement\". The action contradicts the recommendation rules that the same state lists; the rules require an action to state what its passage states, so it must name the example as the default case only."
+    },
+    {
+      "criterion": "placement",
+      "text": "The state `this_ticket_may_be` quotes the message \"\"This ticket may be out of date ({N} commits since the last update on {date}). Would you like me to check for staleness and relevancy?\"\" rather than its action, \"prompt the user\". The Quotes section requires a state to quote its action from the verb."
+    },
+    {
+      "criterion": "placement",
+      "text": "The state `the_agent_works_the` quotes \"the agent works the investigation steps directly and ends the run with the plan's `## Deliverable`\", which starts at the subject rather than at the verb \"works\". The Quotes section requires a state to quote its action from the verb."
+    },
+    {
+      "criterion": "placement",
+      "text": "The transition `present_the_plan_as` on `user.approves_plan` quotes \"After the plan is approved or drafted\", which starts at the leading connective \"After\". The Quotes section requires a transition to quote its event from the subject, \"the plan is approved\", without a leading connective."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded transition of `run_the_handoff_pass` on `reviewer.replies_without_report` quotes its action, \"Resume that reviewer once, asking only for its report\", rather than its event or condition, such as \"A reply that lacks the `Phase: handoff-review` return block\". The Quotes section requires a transition to quote its condition or event, not its action."
+    },
+    {
+      "criterion": "placement",
+      "text": "The inferred transition of `report_paths_and_present` on `user.selects_investigate` quotes \"Render option 3 as 🔬 Investigate\", the agent's rendering of the menu, rather than words that name the user's pick, such as \"on a spike plan the option is 🔬 **Investigate**\". The Quotes section requires an inferred event to quote the words that name what happened and who did it."
+    },
+    {
+      "criterion": "placement",
+      "text": "The inferred fallback of `fold_in_each_item` to `save_both_artifacts` quotes \"Do not dispatch again after the fold-in\", which names a prohibition rather than the move to saving that the transition stands for, such as \"they are saved to the artifact directory only once, after this pass\". The Quotes section requires an inferred element to quote the words of its passage that name that element."
+    },
+    {
+      "criterion": "placement",
+      "text": "The root ambient instruction quoted as \"- a preference for which you do not hold any evidence\" starts at the list marker \"- \" rather than at the clause, although the clause alone occurs once in the prompt. The Quotes section requires a quote to start at the clause that states the element."
+    }
+  ]
+}

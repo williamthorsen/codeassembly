@@ -1,0 +1,52 @@
+{
+  "convertRuns": 1,
+  "skillBlob": "8e8aba33395ed9735066082aab046a9755230e12",
+  "rulesBlob": "2db0dd048d7f9f7d55908f3e4b64d2364a2f8de2",
+  "recheck": {
+    "skillBlob": "00acbbd4f89f5cc9b6c586001721e03e50d57bd4",
+    "rulesBlob": "515207202adad816e9a2cc57fc35e855d35f383b",
+    "note": "Converted before the rules added findings and the draft check of inputs, which add to no part of the rubric and leave every other rule unchanged. The public skill changes only how the converter runs the package's commands and where it reads the rules, and the package's rules change only their links. The verdicts stand; a conversion under the current rules would also record findings."
+  },
+  "verdicts": {
+    "coverage": "fail",
+    "fidelity": "fail",
+    "placement": "fail",
+    "gates": "pass",
+    "unconverted": "pass",
+    "gapsReport": "pass"
+  },
+  "gaps": [
+    {
+      "criterion": "coverage",
+      "text": "The Quick Reference table, which states each phase's success criteria such as \"Understand WHAT and WHY\" for Phase 1 and \"Confirmed or new hypothesis\" for Phase 3, is neither an element, an ambient instruction, nor unconverted. The chart moves from trace_data_flow to find_working_examples without the Phase 1 criterion, and only claiming_success paraphrases the Phase 4 criterion without quoting it. The rules require every rule of the prompt's logic to be charted, listed under meta.ambient, or listed under meta.unconverted."
+    },
+    {
+      "criterion": "fidelity",
+      "text": "question_architecture is a final state, but the passage that it represents says \"Discuss with your human partner before attempting more fixes\", which continues the conversation with the partner and allows more fixes after the discussion. The rules make a state final only for an outcome at which the conversation ends; the step waits for the partner's reply instead."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded agent.catches_red_flag transition from all_of_these_mean to question_architecture quotes \"Question the architecture (see Phase 4.5)\", which is the transition's action. The rules require a transition to quote its condition from the subject, here \"3+ fixes failed\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The unguarded agent.catches_red_flag transition from all_of_these_mean to read_error_messages_carefully quotes \"If you catch yourself thinking:\", which starts at the leading connective \"If\". The rules require the quote to start at the subject: \"you catch yourself thinking:\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded always transition from form_single_hypothesis to say_i_don_t quotes \"When You Don't Know\", which starts at the leading connective \"When\". The rules require the quote to start at the subject: \"You Don't Know\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The always fallback from verify_fix to count_how_many_fixes quotes \"If Fix Doesn't Work\", which starts at the leading connective \"If\"; it should start at \"Fix Doesn't Work\". The transition is also flagged inferred although the prompt states this outcome, which the rules say is not inferred."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded always transition from count_how_many_fixes to read_error_messages_carefully, guard \"fewer than 3 fixes have been tried\", quotes \"Return to Phase 1, re-analyze with new information\", which is the transition's action. The rules require it to quote its condition, \"< 3\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded always transition from count_how_many_fixes to question_architecture, guard \"3 or more fixes have been tried\", quotes \"STOP and question the architecture (step 5 below)\", which is the transition's action. The rules require it to quote its condition, \"≥ 3\"."
+    }
+  ]
+}

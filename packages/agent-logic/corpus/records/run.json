@@ -1,0 +1,70 @@
+{
+  "date": "2026-11-04",
+  "model": "Claude Opus 5.5 (claude-opus-5-5)",
+  "sources": {
+    "codeassembly": {
+      "kind": "codeassembly",
+      "repository": "williamthorsen/codeassembly",
+      "license": "ISC",
+      "build": {
+        "version": "0.20.0",
+        "sourcePath": "~/repos/projects/codeassembly.live/packages/agents",
+        "sourceCommit": "27344f87c858b35b1c4e325f46dea4ae1930a4c4",
+        "command": "sync --global",
+        "writtenAt": "2026-11-02T10:26:38.594Z"
+      },
+      "declared": [
+        {
+          "name": "codeassembly-guidance",
+          "path": "~/repos/projects/codeassembly.live/packages/guidance/content",
+          "commit": "27344f87c858b35b1c4e325f46dea4ae1930a4c4",
+          "pinnedByBuild": true
+        },
+        {
+          "name": "personal",
+          "path": "~/.agents/content",
+          "commit": "87ce98d1be2836e1d82388ce0ec1333c3c0277e9",
+          "pinnedByBuild": false
+        }
+      ]
+    },
+    "superpowers": {
+      "kind": "plugin",
+      "plugin": "superpowers@claude-plugins-official",
+      "repository": "obra/superpowers",
+      "license": "MIT",
+      "version": "7.0.0",
+      "commit": "bb92a77741419a4ab5f06e711a283343f1ada0c3"
+    }
+  },
+  "prompts": {
+    "anti-patterns": {
+      "source": "codeassembly",
+      "path": "skills/anti-patterns/SKILL.md"
+    },
+    "create-commit": {
+      "source": "codeassembly",
+      "path": "skills/create-commit/SKILL.md"
+    },
+    "curate-feedback": {
+      "source": "codeassembly",
+      "path": "skills/curate-feedback/SKILL.md"
+    },
+    "design-and-plan": {
+      "source": "codeassembly",
+      "path": "skills/design-and-plan/SKILL.md"
+    },
+    "pull-from-backlog": {
+      "source": "codeassembly",
+      "path": "skills/pull-from-backlog/SKILL.md"
+    },
+    "save-plan": {
+      "source": "codeassembly",
+      "path": "skills/save-plan/SKILL.md"
+    },
+    "systematic-debugging": {
+      "source": "superpowers",
+      "path": "skills/systematic-debugging/SKILL.md"
+    }
+  }
+}

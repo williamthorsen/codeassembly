@@ -1,0 +1,1147 @@
+{
+  "id": "save_plan",
+  "initial": "extract_plan_content",
+  "states": {
+    "extract_plan_content": {
+      "id": "extract_plan_content",
+      "always": {
+        "target": "#resolve_artifact_path",
+        "meta": {
+          "source": {
+            "start": 443,
+            "end": 471
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "extract the plan content from conversation context: the most recent plan discussed or produced"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 348,
+          "end": 368
+        },
+        "name": "Extract the plan content"
+      }
+    },
+    "resolve_artifact_path": {
+      "id": "resolve_artifact_path",
+      "always": {
+        "target": "#resolve_the_slug",
+        "meta": {
+          "source": {
+            "start": 794,
+            "end": 817
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "invoke `node ~/.claude/skills/_sources/codeassembly-guidance/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "take the ticket directory as `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 448,
+          "end": 469
+        },
+        "name": "Resolve the artifact path"
+      }
+    },
+    "resolve_the_slug": {
+      "id": "resolve_the_slug",
+      "always": {
+        "target": "#resolve_frontmatter_fields",
+        "meta": {
+          "source": {
+            "start": 944,
+            "end": 977
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "resolve the slug per the naming conventions of the artifact conventions"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 799,
+          "end": 815
+        },
+        "name": "Resolve the slug"
+      }
+    },
+    "resolve_frontmatter_fields": {
+      "id": "resolve_frontmatter_fields",
+      "always": {
+        "target": "#save_as_ticket_level",
+        "meta": {
+          "source": {
+            "start": 1448,
+            "end": 1484
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "make the frontmatter conform to the universal artifact frontmatter schema plus the plan provenance extensions"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "run `~/.claude/scripts/resolve-frontmatter.sh --skill plan-mode --interactive true` via Bash"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "prepend the script's output verbatim to the artifact body"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 949,
+          "end": 975
+        },
+        "name": "Resolve the frontmatter fields"
+      }
+    },
+    "save_as_ticket_level": {
+      "id": "save_as_ticket_level",
+      "always": {
+        "target": "#report_the_file_path",
+        "meta": {
+          "source": {
+            "start": 1759,
+            "end": 1772
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "save the plan as a ticket-level artifact named `{YYYYMMDD-HHMMSSZ}_{slug}_plan.md`, such as `20260226-143000Z_oauth2-migration_plan.md`"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "`mkdir -p` the target directory before writing"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 1453,
+          "end": 1484
+        },
+        "name": "Save the plan"
+      }
+    },
+    "report_the_file_path": {
+      "id": "report_the_file_path",
+      "on": {
+        "user.selects_implement": [
+          {
+            "target": "#the_agent_works_the",
+            "guard": {
+              "type": "nl",
+              "params": {
+                "text": "the plan is a spike plan"
+              }
+            },
+            "meta": {
+              "source": {
+                "start": 5239,
+                "end": 5303
+              }
+            }
+          },
+          {
+            "target": "#work_the_plan_s",
+            "meta": {
+              "source": {
+                "start": 7616,
+                "end": 7652
+              },
+              "inferred": true
+            }
+          }
+        ],
+        "user.selects_refine_plan": {
+          "target": "#review_the_plan_for",
+          "meta": {
+            "source": {
+              "start": 7499,
+              "end": 7534
+            },
+            "inferred": true
+          }
+        },
+        "user.selects_split_the_ticket": {
+          "target": "#compose_a_ticket_body",
+          "meta": {
+            "source": {
+              "start": 12510,
+              "end": 12602
+            }
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "report the plan's file path, then present a ticket prompt and the next steps together in a single message"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "present the message: \"Plan saved: {plan_path}\", followed by \"Would you like to create or update a ticket for this work? If so, use the `/create-ticket` skill.\""
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "do not wait for the user's reply before showing the next steps"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "follow the options, output format, and recommendation rules in next-steps options exactly"
+          },
+          "meta": {
+            "source": {
+              "start": 2075,
+              "end": 2188
+            },
+            "gate": true
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "do not improvise the options"
+          },
+          "meta": {
+            "source": {
+              "start": 2189,
+              "end": 2218
+            },
+            "gate": true
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "use the fact that the plan was developed in conversation with user participation as recommendation context"
+          },
+          "meta": {
+            "source": {
+              "start": 2219,
+              "end": 2318
+            },
+            "gate": true
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "omit the ticket path from option lines, because a ticket path is not available at completion time"
+          },
+          "meta": {
+            "source": {
+              "start": 2319,
+              "end": 2409
+            },
+            "gate": true
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "offer three options: 🧠 Refine plan (review the plan for completeness and correctness), ✂️ Split the ticket (cut the plan at a seam into tickets that each ship on their own), and 🚀 Implement (work the plan's tasks, then choose a review pass)"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "present all three options as a numbered list per the option format, each with a strength marker, the strongest of which the recommendation rules determine"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "omit pros and cons by default; add a `➕` or `➖` line only when the specific plan presents a tradeoff that survives the option-format tests bearing on which option fits"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "omit generic option properties, such as \"structured review pass\" or \"longer wall time\""
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "include all known paths (plan, ticket) in each option line, omitting paths that are not available in the current context, `~/`-relative when possible and absolute otherwise"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "make every line subordinate to an option, invocation guidance as much as a pro or con, a nested list item, never a whitespace-indented continuation"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "assume that every option is acted on by a fresh session from the saved ticket and plan alone; never cite the conversation, session-held context, or what is already in context in a pro, a con, or any option's invocation guidance"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when a fact that an option needs exists only in the session, add the fact to the ticket or the plan before rendering the menu"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when Refine plan is the selected option, include a `➕` line naming the specific unsettled decision that the pass would raise, never a reassurance about work already done"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when Split the ticket is the selected option, include a `➕` line naming the plan's size and the pieces"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when the `➕` line of the selected Refine plan or Split the ticket cannot be written, treat its rule as not matched and continue the cascade"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when the plan is a spike plan, with `## Investigation steps` rather than `## Tasks`, render option 3 as 🔬 Investigate without invoking a skill, render option 1 unchanged, and render option 2 at □□□ with the `➖` that a spike produces findings rather than pieces that ship"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "on a spike plan, never match rule 2, so that Investigate is the fallthrough whenever rule 1 does not match"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "render Refine plan as \"Clear context, then /refine-plan with plan: {plan_path}, ticket: {ticket_source}\", because the plan artifact is self-contained and prior conversation wastes tokens and can introduce bias"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "render Split the ticket without a \"Clear context\" prefix and without a pasted invocation line, as \"Selection runs the split in this session\""
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "render Implement without a \"Clear context\" prefix, as \"/implement-plan with plan: {plan_path}, ticket: {ticket_source}\""
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "select the recommended option by checking the recommendation rules in order and stopping at the first match"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "recommend Refine plan only when you can name a load-bearing decision that the plan leaves unsettled and that a refine pass would raise"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "treat a decision as unsettled when the plan invented it and nothing has challenged it, and as settled when it was ratified interactively, taken from prior design work, verified against source, or copied from an established codebase pattern; a `## Decisions taken` entry that survived an approval checkpoint is ratified"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "use the calling skill's recommendation context to tell settled decisions from unsettled ones"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "do not match rule 1 when the plan's residual unknowns are empirical; count only analytical residue, resolvable by a closer reading"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "do not treat \"the plan might have a flaw I missed\" as satisfying rule 1"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "weigh changes to dependency boundaries, to contracts or data structures, far-reaching downstream consequences, changes to control flow, state management, or execution order, new interfaces, modules, or subsystems, and a prior refine-plan round that significantly altered the plan as evidence of an unsettled decision, none of which matches rule 1 on its own"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when rule 1 matches, name that decision on the rendered option's `➕` line; being unable to write the line means rule 1 did not match"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "recommend Split the ticket only when the plan is too large for one implement-and-review pass and contains two or more pieces that can each be merged and verified on their own"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "give a piece its own ticket when it can be merged and verified on its own, not when it looks large enough to deserve one"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "name on the Split `➕` line the size and the pieces, each with the tasks that it takes; being unable to write the line means rule 2 did not match"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "weigh structural properties, such as new module boundaries, changed interfaces, or several packages, as evidence that the plan is too large, none of which matches rule 2 on its own"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "otherwise recommend Implement, whatever the number of modules or packages that the plan touches"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when the work is trivial enough that a review pass would catch nothing meaningful (complexity levels 1–2), add a `➕` line to Implement noting that the follow-up review can be skipped at `implement-plan`'s closing menu"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "mark the selected option ■■■ when its rule's test is met squarely and the alternatives are worse, ■■□ when an alternative stays defensible, and ■□□ when little separates the options"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when Implement is selected as the fallthrough, mark it ■■■ when neither rule 1 nor rule 2 came close, and ■■□ when one stayed defensible"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "mark the unselected options ■□□ by default, and □□□ when one has a clear drawback in the current context"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 1774,
+          "end": 1869
+        },
+        "name": "Report and present next steps"
+      }
+    },
+    "review_the_plan_for": {
+      "id": "review_the_plan_for",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "clear context, then run `/refine-plan` with the plan and the ticket"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 2697,
+          "end": 2745
+        },
+        "name": "Refine the plan"
+      }
+    },
+    "work_the_plan_s": {
+      "id": "work_the_plan_s",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "run `/implement-plan` with the plan and the ticket, in this session or a fresh one, without clearing context"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 2899,
+          "end": 2947
+        },
+        "name": "Implement the plan"
+      }
+    },
+    "the_agent_works_the": {
+      "id": "the_agent_works_the",
+      "on": {
+        "user.consents_to_the_closing_post": {
+          "target": "#making_it_on_consent",
+          "meta": {
+            "source": {
+              "start": 5860,
+              "end": 5870
+            }
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "work the plan's investigation steps directly"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "end the run with the plan's `## Deliverable`, offering the closing post on the ticket"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 5600,
+          "end": 5648
+        },
+        "name": "Investigate the spike"
+      }
+    },
+    "making_it_on_consent": {
+      "id": "making_it_on_consent",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "make the closing post on the ticket"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 5850,
+          "end": 5870
+        },
+        "name": "Make the closing post"
+      }
+    },
+    "compose_a_ticket_body": {
+      "id": "compose_a_ticket_body",
+      "always": {
+        "target": "#show_every_body_every",
+        "meta": {
+          "source": {
+            "start": 13284,
+            "end": 13297
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "compose a ticket body per piece (problem, context, acceptance criteria) from the piece's work and the ticket's criteria"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "with two pieces, compose the originating ticket's new body by rewriting it to the first piece"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "with three or more pieces, compose the originating ticket's new body as an umbrella that keeps its problem and context, lists the children, and has \"Every child is closed\" as its acceptance criterion"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when the work does not have a governing ticket, make every piece a new ticket"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "create nothing before the user selects Split"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 12723,
+          "end": 12754
+        },
+        "name": "Compose the ticket bodies"
+      }
+    },
+    "show_every_body_every": {
+      "id": "show_every_body_every",
+      "on": {
+        "user.confirms_the_split": {
+          "target": "#cut_a_plan_per",
+          "meta": {
+            "source": {
+              "start": 13422,
+              "end": 13488
+            },
+            "inferred": true
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "show every body, every relationship, and everything that the later steps create or change in one block, and confirm once, in place of `/create-ticket`'s per-ticket confirmation"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 13300,
+          "end": 13402
+        },
+        "name": "Confirm the split"
+      }
+    },
+    "cut_a_plan_per": {
+      "id": "cut_a_plan_per",
+      "always": {
+        "target": "#create_the_pieces_in",
+        "meta": {
+          "source": {
+            "start": 13827,
+            "end": 13846
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "cut a plan per piece from the approved plan, so that each piece's session can start at Implement"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "keep each piece's plan in context when its ticket is created, so that `/create-ticket` saves the plan beside the ticket artifact and posts it on the ticket"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 13569,
+          "end": 13612
+        },
+        "name": "Cut the plans"
+      }
+    },
+    "create_the_pieces_in": {
+      "id": "create_the_pieces_in",
+      "always": {
+        "target": "#write_the_originating_ticket",
+        "meta": {
+          "source": {
+            "start": 14114,
+            "end": 14145
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "create the pieces in order with `/create-ticket`, once per piece, in this session"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "with three or more pieces, pass `--parent` naming the originating ticket"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "for a piece that depends on an earlier piece being merged first, pass `--blocked-by` naming that piece's reference"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 13849,
+          "end": 13898
+        },
+        "name": "Create the tickets"
+      }
+    },
+    "write_the_originating_ticket": {
+      "id": "write_the_originating_ticket",
+      "always": {
+        "target": "#save_the_first_piece",
+        "meta": {
+          "source": {
+            "start": 14361,
+            "end": 14389
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "write the originating ticket's new body per the platform-specific write in ticket source resolution"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "when the work does not have a governing ticket, rewrite nothing"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 14148,
+          "end": 14219
+        },
+        "name": "Rewrite the originating ticket"
+      }
+    },
+    "save_the_first_piece": {
+      "id": "save_the_first_piece",
+      "always": {
+        "target": "#report_the_ticket_references",
+        "meta": {
+          "source": {
+            "start": 14609,
+            "end": 14620
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "with two pieces, save the first piece's plan in the originating ticket's directory per `/save-artifact`, so that its later timestamp makes `implement-plan` resolve it rather than the unsplit plan"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 14409,
+          "end": 14474
+        },
+        "name": "Save the first piece plan"
+      }
+    },
+    "report_the_ticket_references": {
+      "id": "report_the_ticket_references",
+      "always": {
+        "target": "#present_one_launch_prompt",
+        "meta": {
+          "source": {
+            "start": 15035,
+            "end": 15050
+          }
+        }
+      },
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "report the ticket references and the plan paths"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "choose each ticket's entry point: `/design-and-plan` when the piece's design needs a closer look, `/plan` when the ticket is ready but does not have a plan, `/refine-plan` when its plan leaves a decision unsettled by rule 1's test, and `/implement-plan` otherwise"
+          }
+        }
+      ],
+      "meta": {
+        "source": {
+          "start": 14621,
+          "end": 14669
+        },
+        "name": "Report the split"
+      }
+    },
+    "present_one_launch_prompt": {
+      "id": "present_one_launch_prompt",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "present one launch prompt, ready to paste into a fresh session, for each ticket that keeps work: with two pieces the originating ticket gets one, and an umbrella does not"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "order the prompts by work order: a ticket after every ticket that blocks it, and otherwise in creation order"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "render each prompt as a bold heading line, `**{ticket_ref}: {title}** (ready now)` or `(after {blocker_ref} merges)`, followed by a fenced block that contains only the text to paste"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "put in the fenced block the entry invocation as `{entry_skill} with plan: {plan_path}, ticket: {ticket_ref}`, with any flag that the entry rule names and without the plan when the ticket does not have one"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "put in the fenced block the scope notes that the session needs and that the artifacts do not state"
+          }
+        },
+        {
+          "type": "nl",
+          "params": {
+            "text": "put in the fenced block the ticket's blockers, by reference"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 15053,
+          "end": 15110
+        },
+        "name": "Present the launch prompts"
+      }
+    }
+  },
+  "meta": {
+    "name": "Save plan",
+    "prompt": "---\nname: save-plan\ndescription: Save plan from conversation context as a ticket-scoped artifact\nuser-invocable: true\n---\n<!-- codeassembly-skill:save-plan -->\n\n# Save plan\n\nSave the plan from the current conversation as a ticket-scoped artifact. Useful after built-in plan mode, `plan`, or any conversation that produced a plan.\n\n## Process\n\n1. **Extract plan content** from conversation context (the most recent plan discussed or produced)\n\n2. **Resolve artifact path**:\n   - Invoke `node ~/.claude/skills/_sources/codeassembly-guidance/derive-session-context/derive-session-context.mjs` via Bash to obtain `ticket_id`, `project_slug`, and `artifact_base_dir` from the manifest JSON emitted on stdout\n   - Ticket directory: `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/`\n\n3. **Resolve the slug** per [artifact conventions](~/.claude/skills/_sources/codeassembly-guidance/_data/artifact-conventions.md#naming-conventions)\n\n4. **Resolve frontmatter fields**:\n\n   The frontmatter conforms to the [universal artifact frontmatter](~/.claude/skills/_sources/codeassembly-guidance/_data/artifact-conventions.md#universal-artifact-frontmatter) schema plus the [plan provenance](~/.claude/skills/_sources/codeassembly-guidance/_data/artifact-conventions.md#plan-provenance) extensions.\n\n   Run `~/.claude/scripts/resolve-frontmatter.sh --skill plan-mode --interactive true` via Bash. Prepend the output verbatim to the artifact body.\n\n5. **Save** as ticket-level artifact:\n\n   ```\n   {YYYYMMDD-HHMMSSZ}_{slug}_plan.md\n   ```\n\n   Example: `20260226-143000Z_oauth2-migration_plan.md`\n\n   `mkdir -p` the target directory before writing.\n\nFollow [artifact conventions](~/.claude/skills/_sources/codeassembly-guidance/_data/artifact-conventions.md).\n\n## Completion\n\nReport the file path, then present a ticket prompt and next steps together in a single message. Do not wait for the user's reply before showing next steps.\n\n```\nPlan saved: {plan_path}\n\nWould you like to create or update a ticket for this work? If so, use the `/create-ticket` skill.\n```\n\n<HARD-GATE>\nFollow the options, output format, and recommendation rules in [next-steps options](#next-steps-options) exactly. Do not improvise the options. The plan was developed in conversation with user participation; use this as recommendation context. Omit the ticket path from option lines: A ticket path is not available at completion time.\n</HARD-GATE>\n\n## Next-steps options\n\n### Options\n\n| #   | Emoji | Option           | Description                                                     |\n| --- | ----- | ---------------- | --------------------------------------------------------------- |\n| 1   | 🧠    | Refine plan      | Review the plan for completeness and correctness                |\n| 2   | ✂️    | Split the ticket | Cut the plan at a seam into tickets that each ship on their own |\n| 3   | 🚀    | Implement        | Work the plan's tasks, then choose a review pass                |\n\n### Output format\n\nPresent all three options as a numbered list per [option format](#option-format). Each option has a strength marker (■■■/■■□/■□□/□□□); the recommendation rules below determine which option takes the strongest marker. Pros and cons are omitted by default; add a `➕` or `➖` line only when the specific plan presents a tradeoff that survives the option-format tests bearing on which option fits (e.g., \"the schema change ships and is verifiable before the reader that consumes it,\" \"every task follows the sibling table's established pattern\"). Generic option properties (\"structured review pass,\" \"longer wall time\") are noise and must be omitted. Include all known paths (plan, ticket) in each option line; omit paths that are not available in the current context. Use `~/`-relative paths when possible and absolute paths otherwise. Every line subordinate to an option (invocation guidance as much as a pro or con) is a nested list item, never a whitespace-indented continuation.\n\n**The ticket and plan are the complete handoff.** Every option assumes that a fresh session acts on the saved artifacts alone, whether or not one does, so nothing that only this session knows distinguishes one option from another. A pro or con never cites the conversation, session-held context, or what is \"already in context\", and neither does the invocation guidance of any option, the spike's 🔬 Investigate included. When a fact that an option needs exists only in the session, the artifact is incomplete: Add the fact to the ticket or the plan before rendering the menu, rather than citing the session.\n\n**One `➕` line is mandatory rather than omitted.** When Refine plan is the selected option, it must include a `➕` line naming the specific unsettled decision that the pass would raise (rule 1). The line names an open decision, never a reassurance about work already done: \"a refine pass is the cheap way to find out whether I missed something\" is the shape that this requirement exists to forbid. When Split the ticket is the selected option, it must include a `➕` line naming the plan's size and the pieces (rule 2). Selecting either without its line is a defect: If the line cannot be written, the rule did not match and the cascade continues.\n\n**Spike plans.** A spike plan has `## Investigation steps` rather than `## Tasks` (see [spike conventions](~/.claude/skills/_sources/codeassembly-guidance/_data/spike-conventions.md)). It is carried out to produce findings rather than implemented to produce a diff, and `implement-plan` reads only the feature shape. Render option 3 as 🔬 Investigate, without invoking a skill; the agent works the investigation steps directly and ends the run with the plan's `## Deliverable`, which includes offering the [closing post](~/.claude/skills/_sources/codeassembly-guidance/_data/spike-conventions.md#closing-post) on the ticket and making it on consent. Option 1 renders unchanged. Option 2 renders at □□□ with the `➖` that a spike produces findings rather than pieces that ship. In the recommendation rules below, rule 2 never matches on a spike plan, so Investigate is the fallthrough whenever rule 1 does not match.\n\nOptions that invoke a skill include context-clearing guidance:\n\n- **Refine plan**: Prepend \"Clear context, then...\" because the plan artifact is self-contained; prior conversation wastes tokens and can introduce bias.\n- **Split the ticket**: No \"Clear context\" prefix, and no pasted invocation line; the split runs in this session because the library doesn't have a skill for it, and it cuts the pieces from the saved plan. See [Splitting the ticket](#splitting-the-ticket).\n- **Implement**: No \"Clear context\" prefix. The ticket and plan are self-contained, so `implement-plan` works the same in this session or in a fresh one, and clearing gains nothing: Unlike a refine or review pass, implementation is not harmed by sharing the planner's view. The user can also paste the same line into a fresh session, or into the other harness with its own skill sigil, in which the skill re-resolves the plan and ticket from the environment.\n\nExample (rendered for the default case, in which the recommendation rules below select Implement):\n\n```\nNext steps:\n1. 🧠 ■□□ Refine plan:\n   - Clear context, then /refine-plan with plan: {plan_path}, ticket: {ticket_source}\n2. ✂️ ■□□ Split the ticket:\n   - Selection runs the split in this session\n3. 🚀 ■■□ Implement:\n   - /implement-plan with plan: {plan_path}, ticket: {ticket_source}\n```\n\nSkill names for each option:\n\n- 🧠 **Refine plan** -> `refine-plan`\n- ✂️ **Split the ticket** -> `/create-ticket`, once per piece, in this session\n- 🚀 **Implement** -> `implement-plan`; on a spike plan the option is 🔬 **Investigate** and does not invoke a skill\n\n### Recommendation rules\n\nSelect the recommended option by checking these rules in order and stopping at the first match.\n\n1. **Refine plan**: Recommend only when you can name a load-bearing decision that the plan leaves unsettled and that a refine pass would raise.\n\n   A decision is **unsettled** when the plan invented it and nothing has challenged it. It is **settled** when it was ratified interactively, taken from prior design work, verified against source, or copied from an established pattern already in the codebase. A `## Decisions taken` entry that survived an approval checkpoint is ratified: The developer read it and did not overrule it. The calling skill's recommendation context tells you which: A plan whose forks were challenged and ratified interactively has settled decisions, and a plan produced without a design phase is likelier to have unsettled ones.\n\n   Rule 1 also fails when the plan's residual unknowns are **empirical**, answered by running code or writing the test. A refine pass re-reads the plan and structurally cannot answer those. Only **analytical** residue, resolvable by a closer reading, counts.\n\n   \"The plan might have a flaw I missed\" does not satisfy the test. That is a reassurance about work already done, not an unsettled decision.\n\n   The following make a plan _more likely_ to have an unsettled decision. They are evidence to weigh, and none of them matches rule 1 on its own:\n   - Changes to dependency boundaries (which libraries are used, which APIs are consumed, or how they're configured)\n   - Changes to the shape or semantics of behavioral contracts or data structures\n   - Far-reaching downstream consequences\n   - Changes to control flow, state management, or execution order\n   - Introduction of new interfaces, modules, or subsystems\n   - A prior `refine-plan` round significantly altered the plan or expanded the scope of the changes needed to implement it\n\n   When rule 1 matches, the rendered option must name that decision on a `➕` line. Being unable to write the line means rule 1 did not match.\n\n2. **Split the ticket**: Recommend only when the plan is too large for one implement-and-review pass, and it contains two or more pieces that can each be merged and verified on their own. Both halves are required: Too large without a seam is not a match, and a seam in a plan that one pass would cover is not one either.\n\n   A piece gets its own ticket when it can be merged and verified on its own, not when it looks large enough to deserve one. The `➕` line names the size and the pieces, each with the tasks that it takes: `➕ eleven tasks across three packages, and two pieces ship on their own: the schema change (tasks 1–4), then the reader that consumes it (tasks 5–11)`.\n\n   Structural properties (new module boundaries, changed interfaces, several packages) make a plan _more likely_ to be too large. They are evidence to weigh, and none of them matches rule 2 on its own.\n\n   When rule 2 matches, the rendered option must name the size and the pieces on a `➕` line. Being unable to write the line means rule 2 did not match.\n\n3. **Implement**: All other cases (default), whatever the number of modules or packages that the plan touches. `implement-plan`'s closing menu re-decides the review depth from the realized diff, and it offers a split when the diff proves too large for one review pass, so a plan sent here is not committed to a single pull request.\n\n   When the work is trivial enough that a review pass would catch nothing meaningful ([complexity levels 1–2](~/.claude/skills/_sources/codeassembly-guidance/_data/complexity-classification.md): a typo fix, an unused-import removal, a single-file mechanical rename), add a `➕` line noting that the follow-up review can be skipped at `implement-plan`'s closing menu. Because that menu decides the review from the diff that the implementation actually produced, a plan-time triviality read is a hint to it rather than a commitment.\n\n#### Marker strengths\n\nThe selected option's marker follows how cleanly its rule matched: ■■■ when the rule's test is met squarely and the alternatives are worse on the criteria that decided it, ■■□ when the fit is good but an alternative stays defensible, ■□□ when little separates the options. Because rule 3 is the cascade's fallthrough rather than a positive match, its marker follows how squarely rules 1 and 2 failed: ■■■ when neither came close, ■■□ when one stayed defensible. The unselected options take ■□□ by default, and □□□ when one has a clear drawback in the current context.\n\nEach skill supplies its own recommendation context (e.g., whether the plan was developed interactively, whether a review just completed). That context applies to rule 1's settled/unsettled test.\n\n#### Splitting the ticket\n\nSelecting Split is the developer's consent to the split at the seam that its `➕` line names. Nothing is created before that selection, and the bodies get one confirmation before anything is created.\n\n**Compose.** Compose a ticket body per piece (problem, context, acceptance criteria) from the piece's work and the ticket's criteria. Compose the originating ticket's new body as well: With two pieces, rewrite it to the first piece, so that the originating ticket and one new ticket cover the two pieces; with three or more, make it an umbrella that keeps its problem and context, lists the children, and has \"Every child is closed\" as its acceptance criterion. When the work does not have a governing ticket, every piece is a new ticket and there is nothing to rewrite.\n\n**Confirm once.** Show every body, every relationship, and everything that the steps below create or change in one block, and confirm once. This single confirmation stands in for the per-ticket confirmation that `/create-ticket` would otherwise raise for each piece.\n\n**Cut the plans.** Cut a plan per piece from the approved plan, so that each piece's session can start at Implement. Keep each piece's plan in context when its ticket is created, so that `/create-ticket` saves the plan beside the ticket artifact and posts it on the ticket.\n\n**Create the tickets.** Create the pieces in order with `/create-ticket`. With three or more pieces, pass `--parent` naming the originating ticket. For a piece that depends on an earlier piece being merged first, pass `--blocked-by` naming that piece's reference, which exists by then.\n\n**Rewrite the originating ticket.** Write the originating ticket's new body per the platform-specific write in [ticket source resolution](~/.claude/skills/_sources/codeassembly-guidance/_data/ticket-source-resolution.md#platform-specific-write).\n\n**Save the first piece's plan.** With two pieces, save the first piece's plan in the originating ticket's directory per `/save-artifact`. Its timestamp is later than the approved plan's, so `implement-plan` resolves it rather than the unsplit plan.\n\n**Report.** Report the ticket references and the plan paths. Choose each ticket's entry point from what its artifacts settle: `/design-and-plan` when the piece's design needs a closer look; `/plan` when the ticket is ready but does not have a plan; `/refine-plan` when its plan leaves a decision unsettled, by the test in rule 1 above; `/implement-plan` otherwise, which is the default for a plan cut from an approved one.\n\n**Launch prompts.** Present one launch prompt for each ticket that keeps work, ready to paste into a fresh session: With two pieces, the originating ticket gets one; an umbrella does not get one. Order the prompts by work order: A ticket comes after every ticket that blocks it, and otherwise in the order in which it was created. Render each prompt as a bold heading line, `**{ticket_ref}: {title}** (ready now)` or `(after {blocker_ref} merges)`, followed by a fenced block that contains only the text to paste:\n\n- The entry invocation, which the rule above chooses, as `{entry_skill} with plan: {plan_path}, ticket: {ticket_ref}`, adding any flag that the rule names, and omitting the plan when the ticket does not have one.\n- The scope notes that the session needs and that the artifacts do not state, such as \"only tasks 2 and 3\" or \"merge only after `live` contains #N\".\n- The ticket's blockers, by reference.\n\nSee [`scope-and-deferral.md`](~/.claude/skills/_sources/codeassembly-guidance/_data/scope-and-deferral.md) for the related decision on whether a finding warrants its own ticket. That decision (do now / batch later / separate ticket) is about work that comes up alongside the plan; rule 2 is about the plan's own work, and its seam test comes from the ticketing preferences: A piece gets its own ticket when it can be merged and verified on its own.\n\n## Option format\n\n**Confirm that the menu is needed before rendering it.** Mark the options first, check the leader as \"Check the leader before rendering\" below states, then read the markers: Render the menu only when the two strongest options are both ■■□, when the list is unmarked, or when the decision is in the gated class below. Decide every other field: State the decision in one line with its reason, record it, and proceed. Decide an all-■□□ field too. An unmarked list is a pure-preference call, and a preference is in the gated class. The rejected alternative belongs in a clause (\"X rather than Y, because Z\"), never as a numbered option awaiting selection.\n\nA determination that has one right answer under a governing document, such as a change's work type under the work-type test, is not a fork. Resolve doubt about which answer the test yields by applying the test and picking: Two options marked ■■□ are a fork between acceptable options, not doubt about a fact. The developer holds less of the evidence than the agent, so handing the doubt back produces a worse-informed answer.\n\nThe gated class is closed. Ask about these decisions whatever the markers say:\n\n- the shape of a public API or a contract\n- remote shared state: a ticket edit, a push, a merge, the creation of a branch or a ticket\n- data loss, or any action that cannot be undone\n- spend or budget\n- a preference for which you do not hold any evidence\n\nDecide everything else yourself by default. Never decide a gated action in your own voice: The developer authorizes it; recommend, build on the recommendation provisionally, and ask at the checkpoint. Building on it means doing the work that depends on the answer; hold the gated action itself until the developer authorizes it. A templated next-steps menu is in the class, because what to do next is a preference about the developer's time, for which you do not hold any evidence. Verification is never in the gated class: Run a check that a command, a test, or a browser could settle.\n\n**Proceed provisionally.** Do everything that does not depend on an answer first, and raise an ask only when the work is blocked or at the skill's checkpoint. When a gated decision has a strong recommendation, build on it, mark it 🔲 as \"Record what you did not ask\" states, and ask at the checkpoint; revise if overruled. In a skill without a phase structure, treat the skill's own approval gate, or the end of its work, as the checkpoint.\n\n**Batch, never stream.** Collect the asks that survive the gate into one review at the checkpoint, not one per turn.\n\n**Record what you did not ask.** Write every decision that the gate let you take into the plan's `## Decisions taken` section, with a one-line reason; when the work does not have a plan, write it into the turn's summary. Always record: A silent decision is worse than an ask. Start each line that states a decision awaiting the checkpoint with 🔲, wherever you state it: in the record, and in a turn's narrative, such as a checkpoint summary or a list of decisions. The marker lets the developer find what they may overrule without reading every line. Drop it once the developer approves the checkpoint at which the decision was presented.\n\n**Never rank the options by your own elapsed time, round trips, or effort.** You measure these costs yourself, and that measure counts the user's context switch and review cycles as nothing. Measuring one does not make the call yours, and a more accurate measurement still cannot rank the options.\n\nOrdering follows from the gate. When the order changes the code or the total effort -- upstream before downstream, a refactor before the feature that would otherwise be written twice -- recommend it and mark it, naming the delay that it causes and saying nothing about delay when none is involved. When the outcomes are identical and only the timing differs, such as when queued work is picked up, present the cost, render the options unmarked, and put the choice at the checkpoint.\n\nAsking is not neutral. It costs the developer a context switch, and it idles the session until the answer arrives. A wrong-but-stated recommendation costs them a word to correct; a decision handed back costs them an evaluation and costs the session the wait.\n\nRender every option-style question in this form: any numbered list of 2 or more choices with substantive tradeoffs, including templated next-steps menus and yes/no choices in which both paths are concrete actions. Reserve `👍🏼👎🏼` for confirmation prompts, in which a single action has been proposed and \"no\" means \"let's adjust or discuss\" rather than a concrete alternative.\n\n**Number every option**: `1.`, `2.`, `3.` The number is how the user selects. Never render the options as bullets or bare prose.\n\n**Mark every option with a strength marker.** The recommended option is the one with the strongest marker. Do not write a separate \"I recommend option N\" sentence, and a recommendation that does not match the strongest marker is a defect.\n\n| Marker | Label                | When to use                                                                                                                                   |\n| ------ | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |\n| ■■■    | strongly recommended | One option is clearly better on the criteria governing the decision, and your ranking does not turn on a preference that only the user holds. |\n| ■■□    | recommended          | Your lean. Default level when you have a preference.                                                                                          |\n| ■□□    | weakly recommended   | A slight edge; mostly preference.                                                                                                             |\n| □□□    | not recommended      | Clear drawbacks; included for completeness or to rule out explicitly.                                                                         |\n\nMarking is all-or-none: Once any option has a marker, give every option one. Without a preference (a pure taste call), omit markers from every option and don't explain the omission; the absence is the signal. Mark at the strength that you actually hold: A marker that reads the same whatever the analysis found does not convey any information, and the reader must do all the work of telling a real choice from a formality. Render markers as plain text, never inside backticks; backticks shrink the glyphs and hurt readability.\n\n**Format each option** as marker, then title, then a colon. Make each pro (`➕`) and con (`➖`) a nested list item beneath its option, without terminal punctuation. Apply this even when an option has only one pro or con. Lead with the strongest argument.\n\nMake every line subordinate to an option (a pro, a con, invocation guidance) a nested list item, never a whitespace-indented continuation. Indentation by spaces, ASCII or non-breaking alike, does not survive terminal rendering: The lines collapse to the left margin, and the reader cannot tell which reason belongs to which option. Markdown structure survives; whitespace does not.\n\nStop nesting at one level: Never put a sub-option in an option or a sub-pro in a pro. Terminal rendering stops being reliable at deeper nesting, so this contract is written never to need it.\n\n**Write only bullets that are real.** Bullets report the weight of each option, not a balance between the options: When the options differ in quality, an uneven menu is the accurate one, and a menu that looks balanced misreports the analysis. A `➕` or `➖` asserts that the reader should weigh it, and bullets render at equal visual weight. A manufactured one reads exactly like a load-bearing one, and it takes a round trip to discover that it was empty. Seven tests:\n\n- **Falsifiability.** A `➖` must be false for at least one other option on the menu, and a `➕` likewise. Anything that would still be true if this were the only option is a mechanic of carrying it out rather than a tradeoff; it belongs on the invocation line or nowhere.\n- **Decision weight.** Would a reader who believed this bullet choose differently? Bookkeeping, mechanically-implied, and trivially-reversible consequences (a doc line to update, a criterion to reword, a rename to propagate) are real, specific, and decision-irrelevant. Restatements of an option's inherent properties (\"longer wall time\", \"structured review pass\", \"ships faster\") are one instance of the same failure.\n- **Session context.** Cut a bullet that cites the conversation, what the session holds, or what is \"already in context\". Every handoff goes through a saved artifact, so session context does not distinguish one option from another, and a bullet that rests on it tells the reader that the artifact is incomplete. When the bullet is true, the artifact has a gap: Add the fact to the artifact rather than citing the session.\n- **Consequence.** State in a `➖` what breaks or what it costs, and for whom, concretely enough that the reader can weigh it without investigating. Cut a con that cannot be stated that way.\n- **The qualifier tell.** A bullet undercut by its own qualifier (\"negligible\", \"inert\", \"harmless\") is filler. The only repair is to cut the bullet: Deleting the qualifier leaves the same minor con, now looking weighty.\n- **One tradeoff, stated once.** When one option's `➕` restates another option's `➖`, the two options are the sides of one tradeoff. State it once, in a line above the list, rather than as bullets split between the options, which the reader counts as separate reasons.\n- **Check before you hedge.** If a cheap check would settle whether a con is real, run the check. Presenting the uncertainty as a bullet transfers the check to the user.\n\nAsymmetry is a report, not a defect. Give an option that has three real pros but lacks a real con its three pros, and do not give it a con. Never add a bullet to fill a slot, reach parity between options, or avoid looking one-sided; when the honest cost is hard to find, that difficulty is itself evidence the option is strong. When every option lacks a real bullet, omit them all and let the markers alone convey the recommendation. Do not add tiebreaker text for equal-strength options; the developer picks the number.\n\nKeep on a `□□□` option the `➖` that explains why you ruled it out. Under the falsifiability test that bullet is real by construction, and without it the reader is left with a veto that they cannot check.\n\n**Check the leader before rendering.** Once you have drafted the bullets, and before you read the markers against the gate, run this check. It applies to a gated decision as fully as to any other: The menu renders whatever the markers say, and the marker tells the developer how much deliberation the ask needs.\n\n1. For each alternative, look for a cost that disqualifies it, including one that follows from the constraints and acceptance criteria of the work at hand. When you find one, state it as the alternative's `➖`.\n2. For each `➖` on the strongest-marked option, name the reader who would choose differently because of it. Cut the bullet if there is none.\n3. Re-mark the options. When every alternative has a disqualifying `➖`, mark the leader ■■■. The observed bias is a marker set too weak, not one set too strong.\n4. Re-apply the gate. Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and do not render a menu. Inside the class, render the menu with the leader's marker as the check set it.\n\n**Identify each question** when a single response contains 2 or more option-style questions: Prefix them `Q1`, `Q2`, and so on, so that the user can reference answers unambiguously. When the underlying data already has stable identifiers (plan-review findings such as `C1` or `X2`), use those in place of `Q1`/`Q2`. For a single option-style question, omit the identifier. Inside an [action-items block](~/.claude/skills/_sources/codeassembly-guidance/_data/action-items.md), identifiers are mandatory whenever the block contains more than one item (or more than one independently-numbered list), and they distinguish actions (`A`) from questions (`Q`).\n\nExample:\n\n```\nHow should the exported `loadConfig` report a missing file?\n1. ■■■ Return `undefined`:\n   - ➕ matches the package's three other loaders, so callers keep one pattern\n2. ■□□ Throw `ConfigNotFoundError`:\n   - ➖ each of the 14 call sites needs a new `try`/`catch` to keep its current behavior\n3. □□□ Return an empty config:\n   - ➖ a caller cannot tell a missing file from an empty one, so a mistyped path silently disables every setting\n```\n\nThe decision is the shape of a public API, so the gate renders the menu although one option leads. The leader does not have a `➖` because none survived the check.\n",
+    "source": {
+      "start": 0,
+      "end": 29356
+    },
+    "unconverted": [],
+    "ambient": [
+      {
+        "start": 174,
+        "end": 246
+      },
+      {
+        "start": 247,
+        "end": 329
+      },
+      {
+        "start": 1648,
+        "end": 1757
+      },
+      {
+        "start": 16231,
+        "end": 16322
+      },
+      {
+        "start": 16420,
+        "end": 16472
+      },
+      {
+        "start": 16592,
+        "end": 16734
+      },
+      {
+        "start": 16735,
+        "end": 16861
+      },
+      {
+        "start": 16946,
+        "end": 16990
+      },
+      {
+        "start": 17211,
+        "end": 17292
+      },
+      {
+        "start": 17498,
+        "end": 17575
+      },
+      {
+        "start": 17580,
+        "end": 17619
+      },
+      {
+        "start": 17622,
+        "end": 17711
+      },
+      {
+        "start": 17714,
+        "end": 17760
+      },
+      {
+        "start": 17763,
+        "end": 17778
+      },
+      {
+        "start": 17781,
+        "end": 17832
+      },
+      {
+        "start": 17834,
+        "end": 17923
+      },
+      {
+        "start": 18099,
+        "end": 18161
+      },
+      {
+        "start": 18163,
+        "end": 18206
+      },
+      {
+        "start": 18316,
+        "end": 18420
+      },
+      {
+        "start": 18449,
+        "end": 18580
+      },
+      {
+        "start": 18581,
+        "end": 18643
+      },
+      {
+        "start": 18889,
+        "end": 18980
+      },
+      {
+        "start": 19015,
+        "end": 19107
+      },
+      {
+        "start": 19258,
+        "end": 19328
+      },
+      {
+        "start": 19534,
+        "end": 19621
+      },
+      {
+        "start": 19625,
+        "end": 19697
+      },
+      {
+        "start": 20108,
+        "end": 20165
+      },
+      {
+        "start": 20320,
+        "end": 20403
+      },
+      {
+        "start": 20406,
+        "end": 20428
+      },
+      {
+        "start": 20666,
+        "end": 20713
+      },
+      {
+        "start": 20880,
+        "end": 20923
+      },
+      {
+        "start": 21048,
+        "end": 21067
+      },
+      {
+        "start": 21124,
+        "end": 21174
+      },
+      {
+        "start": 21178,
+        "end": 21219
+      },
+      {
+        "start": 21283,
+        "end": 21338
+      },
+      {
+        "start": 22485,
+        "end": 22561
+      },
+      {
+        "start": 22604,
+        "end": 22665
+      },
+      {
+        "start": 22694,
+        "end": 22737
+      },
+      {
+        "start": 22908,
+        "end": 22960
+      },
+      {
+        "start": 23036,
+        "end": 23071
+      },
+      {
+        "start": 23073,
+        "end": 23175
+      },
+      {
+        "start": 23232,
+        "end": 23265
+      },
+      {
+        "start": 23267,
+        "end": 23405
+      },
+      {
+        "start": 23650,
+        "end": 23675
+      },
+      {
+        "start": 23844,
+        "end": 23877
+      },
+      {
+        "start": 24333,
+        "end": 24394
+      },
+      {
+        "start": 24605,
+        "end": 24664
+      },
+      {
+        "start": 25024,
+        "end": 25088
+      },
+      {
+        "start": 25442,
+        "end": 25485
+      },
+      {
+        "start": 25639,
+        "end": 25677
+      },
+      {
+        "start": 25967,
+        "end": 26006
+      },
+      {
+        "start": 26133,
+        "end": 26200
+      },
+      {
+        "start": 26414,
+        "end": 26447
+      },
+      {
+        "start": 26602,
+        "end": 26654
+      },
+      {
+        "start": 26708,
+        "end": 26761
+      },
+      {
+        "start": 26796,
+        "end": 26862
+      },
+      {
+        "start": 27003,
+        "end": 27037
+      },
+      {
+        "start": 27317,
+        "end": 27375
+      },
+      {
+        "start": 27527,
+        "end": 27631
+      },
+      {
+        "start": 27689,
+        "end": 27757
+      },
+      {
+        "start": 27829,
+        "end": 27847
+      },
+      {
+        "start": 28179,
+        "end": 28212
+      },
+      {
+        "start": 28369,
+        "end": 28400
+      },
+      {
+        "start": 28562,
+        "end": 28634
+      }
+    ]
+  }
+}

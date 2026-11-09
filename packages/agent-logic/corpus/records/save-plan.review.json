@@ -1,0 +1,44 @@
+{
+  "convertRuns": 1,
+  "skillBlob": "8e8aba33395ed9735066082aab046a9755230e12",
+  "rulesBlob": "2db0dd048d7f9f7d55908f3e4b64d2364a2f8de2",
+  "recheck": {
+    "skillBlob": "00acbbd4f89f5cc9b6c586001721e03e50d57bd4",
+    "rulesBlob": "515207202adad816e9a2cc57fc35e855d35f383b",
+    "note": "Converted before the rules added findings and the draft check of inputs, which add to no part of the rubric and leave every other rule unchanged. The public skill changes only how the converter runs the package's commands and where it reads the rules, and the package's rules change only their links. The verdicts stand; a conversion under the current rules would also record findings."
+  },
+  "verdicts": {
+    "coverage": "fail",
+    "fidelity": "fail",
+    "placement": "fail",
+    "gates": "pass",
+    "unconverted": "pass",
+    "gapsReport": "pass"
+  },
+  "gaps": [
+    {
+      "criterion": "coverage",
+      "text": "The root's ambient instruction for step 4 of the leader check quotes only its heading, \"Re-apply the gate.\", so the instructions after it are off the chart: \"Outside the gated class, a leader marked above every other option means that the field is decided: State the decision in one line, and do not render a menu. Inside the class, render the menu with the leader's marker as the check set it.\" The rules require every rule of the prompt to be an element, an ambient instruction, or unconverted, and an ambient instruction shows only its quote."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The root's ambient instruction for \"Proceed provisionally\" quotes only \"When a gated decision has a strong recommendation, build on it\", which leaves off the chart \"mark it 🔲 as \\\"Record what you did not ask\\\" states, and ask at the checkpoint; revise if overruled\" and \"In a skill without a phase structure, treat the skill's own approval gate, or the end of its work, as the checkpoint.\" Neither instruction is an action of report_the_file_path or another ambient instruction, so neither is charted as the rules require."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The ambient instruction for \"Record what you did not ask\" quotes \"Write every decision that the gate let you take into the plan's `## Decisions taken` section\" and stops there, which drops the fallback \"when the work does not have a plan, write it into the turn's summary\" and \"Always record: A silent decision is worse than an ask.\" No element or ambient instruction states where a decision is recorded when the work does not have a plan."
+    },
+    {
+      "criterion": "coverage",
+      "text": "The ambient instructions for \"Identify each question\" quote \"Prefix them `Q1`, `Q2`, and so on\" and \"use those in place of `Q1`/`Q2`\", but not \"For a single option-style question, omit the identifier.\", which is a rule of its own. The rules require it to be charted as an element, an ambient instruction, or unconverted."
+    },
+    {
+      "criterion": "fidelity",
+      "text": "The final state review_the_plan_for has the action \"clear context, then run `/refine-plan` with the plan and the ticket\", which makes the agent clear its own context and then run the skill. The prompt's \"Clear context, then...\" is invocation guidance on the option line for the user, who clears the context and invokes `/refine-plan` (\"Prepend \\\"Clear context, then...\\\" because the plan artifact is self-contained\"); the rules require each action to state what the prompt states, with the actor resolved."
+    },
+    {
+      "criterion": "placement",
+      "text": "The state the_agent_works_the quotes \"the agent works the investigation steps directly\", which starts at the clause's subject rather than at its verb. The Quotes section requires a state to quote its action from the verb (\"works the investigation steps directly\"), and the state's id follows the misplaced quote."
+    }
+  ]
+}

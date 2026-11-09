@@ -1,0 +1,52 @@
+{
+  "convertRuns": 1,
+  "skillBlob": "8e8aba33395ed9735066082aab046a9755230e12",
+  "rulesBlob": "2db0dd048d7f9f7d55908f3e4b64d2364a2f8de2",
+  "recheck": {
+    "skillBlob": "00acbbd4f89f5cc9b6c586001721e03e50d57bd4",
+    "rulesBlob": "515207202adad816e9a2cc57fc35e855d35f383b",
+    "note": "Converted before the rules added findings and the draft check of inputs, which add to no part of the rubric and leave every other rule unchanged. The public skill changes only how the converter runs the package's commands and where it reads the rules, and the package's rules change only their links. The verdicts stand; a conversion under the current rules would also record findings."
+  },
+  "verdicts": {
+    "coverage": "pass",
+    "fidelity": "fail",
+    "placement": "fail",
+    "gates": "pass",
+    "unconverted": "pass",
+    "gapsReport": "pass"
+  },
+  "gaps": [
+    {
+      "criterion": "fidelity",
+      "text": "The state for_each_group_in sits inside the compound state when_a_result_has, so the global transition helper.returns_failure, which states \"When a result has `ok: false`, stop and report its `error` and `message`\", still applies to step 7, although the prompt exempts it (\"except when a step below says otherwise\") by saying \"On a failed write or an `ok: false` result, stop applying, report which group failed, and continue to step 8\". The chart names that failure with a separate event, kb_update_events.fails, which does not stop the parent's transition from ending the run. The rules require a step that the prompt exempts from a global transition to stay outside the compound state, with its transition targeting the step after it inside the compound state."
+    },
+    {
+      "criterion": "placement",
+      "text": "The compound state when_a_result_has quotes \"When a result has `ok: false`, stop and report its `error` and `message`\", which starts at the leading connective \"When\". The rules require a quote without a leading connective such as \"When\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The global transition helper.returns_failure of when_a_result_has quotes \"When a result has `ok: false`, stop and report its `error` and `message`\", which starts at the connective \"When\" and runs on into the action. The rules require a transition to quote its condition from the subject, such as \"a result has `ok: false`\"."
+    },
+    {
+      "criterion": "placement",
+      "text": "The unguarded fallback from send_one_task_call to run_lesson_clusters_lessons quotes \"when there is more than one, a merge pass groups the batch clusters that teach the same lesson\", which starts at the leading connective \"when\". The rules require the quote to start at the condition's subject."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded helper.reports_invalid_map transition from run_lesson_clusters_lessons to stop_and_report_them quotes \"Run `lessons` again, and on a second failure\", which starts at the action \"Run `lessons` again\" rather than at the condition \"a second failure\". The rules require a transition to quote its condition or event from the subject."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded helper.reports_invalid_map transition from run_lesson_clusters_combine to stop_and_report_them quotes \"run `combine` again, and on a second failure\", which starts at the action \"run `combine` again\" rather than at the condition \"a second failure\". The rules require a transition to quote its condition or event from the subject."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded helper.reports_invalid_bins transition from run_curate_feedback_validate to stop_and_report_them quotes \"Run `validate` again, and on a second failure\", which starts at the action \"Run `validate` again\" rather than at the condition \"a second failure\". The rules require a transition to quote its condition or event from the subject."
+    },
+    {
+      "criterion": "placement",
+      "text": "The guarded always transition from run_curate_feedback_validate to for_each_group_in quotes \"Under `--apply`, skip this step.\", which starts at the connective \"Under\" and continues into the action \"skip this step\". The rules require a transition to quote only its condition, from the subject, such as \"`--apply`\" lengthened until it occurs once."
+    }
+  ]
+}

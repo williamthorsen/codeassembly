@@ -1,0 +1,1228 @@
+{
+  "id": "curate_feedback",
+  "initial": "when_a_result_has",
+  "states": {
+    "when_a_result_has": {
+      "id": "when_a_result_has",
+      "on": {
+        "helper.returns_failure": {
+          "target": "#stop_and_report_its",
+          "meta": {
+            "source": {
+              "start": 3194,
+              "end": 3266
+            }
+          }
+        }
+      },
+      "initial": "run_node_claude_skills",
+      "meta": {
+        "source": {
+          "start": 3194,
+          "end": 3266
+        },
+        "ambient": [
+          {
+            "start": 3074,
+            "end": 3148
+          },
+          {
+            "start": 3149,
+            "end": 3193
+          },
+          {
+            "start": 3309,
+            "end": 3523
+          },
+          {
+            "start": 4861,
+            "end": 4963
+          },
+          {
+            "start": 11222,
+            "end": 11267
+          }
+        ],
+        "name": "Run the process"
+      },
+      "states": {
+        "run_node_claude_skills": {
+          "id": "run_node_claude_skills",
+          "always": {
+            "target": "#fix_the_artifact_s",
+            "meta": {
+              "source": {
+                "start": 3722,
+                "end": 3748
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "announce: \"Using curate-feedback to cull the feedback events that no longer need attention.\""
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "run derive-session-context.mjs and read artifact_base_dir, project_slug, and ticket_id"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 3550,
+              "end": 3720
+            },
+            "name": "Read the session context"
+          }
+        },
+        "fix_the_artifact_s": {
+          "id": "fix_the_artifact_s",
+          "always": {
+            "target": "#create_the_work_directory",
+            "meta": {
+              "source": {
+                "start": 4145,
+                "end": 4173
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "when ticket_id is set, use the directory {artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when ticket_id is not set, use the directory {artifact_base_dir}/projects/{project_slug}/feedback-curation/, whose feedback-curation/ name is hardcoded"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "name the file {YYYYMMDD-HHMMSSZ}_{slug}_feedback-curation.md, with the current UTC time and a slug per /save-artifact, or `curation` when nothing else suits"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 3725,
+              "end": 3749
+            },
+            "name": "Fix the artifact path"
+          }
+        },
+        "create_the_work_directory": {
+          "id": "create_the_work_directory",
+          "always": {
+            "target": "#run_codeassembly_library_list",
+            "meta": {
+              "source": {
+                "start": 4300,
+                "end": 4316
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "create the work directory {timestamp}_work/ beside the artifact, where {timestamp} is the filename's prefix"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "put every working file in the work directory"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4148,
+              "end": 4213
+            },
+            "name": "Create the work directory"
+          }
+        },
+        "run_codeassembly_library_list": {
+          "id": "run_codeassembly_library_list",
+          "always": {
+            "target": "#run_curate_feedback_pin",
+            "meta": {
+              "source": {
+                "start": 4553,
+                "end": 4580
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `codeassembly library list --json` and `codeassembly library list --global --json`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "collect the dir of every source in either listing"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when a listing fails because its domain does not declare a source, let it contribute nothing"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4321,
+              "end": 4407
+            },
+            "name": "Collect the sources"
+          }
+        },
+        "run_curate_feedback_pin": {
+          "id": "run_curate_feedback_pin",
+          "always": {
+            "target": "#report_each_skipped_source",
+            "meta": {
+              "source": {
+                "start": 4698,
+                "end": 4729
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `curate-feedback pin --out {work}/pins.json`, with one --source for each collected directory and one for the current repository's root"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4556,
+              "end": 4604
+            },
+            "name": "Pin the sources"
+          }
+        },
+        "report_each_skipped_source": {
+          "id": "report_each_skipped_source",
+          "always": [
+            {
+              "target": "#stop_when_pins_is",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "pins is empty"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 4827,
+                  "end": 4842
+                }
+              }
+            },
+            {
+              "target": "#run_lesson_clusters_inventory",
+              "meta": {
+                "source": {
+                  "start": 4845,
+                  "end": 4859
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "report each skipped source with its reason"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "explain that a judge cannot mark an event covered by guidance in a skipped source"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 4701,
+              "end": 4745
+            },
+            "name": "Report the skipped sources"
+          }
+        },
+        "run_lesson_clusters_inventory": {
+          "id": "run_lesson_clusters_inventory",
+          "always": [
+            {
+              "target": "#nothing_awaits_attention",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "pool and deferred are both zero"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 5223,
+                  "end": 5258
+                }
+              }
+            },
+            {
+              "target": "#run_lesson_clusters_batch",
+              "meta": {
+                "source": {
+                  "start": 5286,
+                  "end": 5315
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `lesson-clusters inventory --store <store> --out {work}/inventory.json`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "report each skipped file"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5104,
+              "end": 5179
+            },
+            "name": "Inventory the events"
+          }
+        },
+        "run_lesson_clusters_batch": {
+          "id": "run_lesson_clusters_batch",
+          "always": {
+            "target": "#send_one_task_call",
+            "meta": {
+              "source": {
+                "start": 5468,
+                "end": 5499
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `lesson-clusters batch --inventory {work}/inventory.json --out {work}/batches`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "read each batch's path and the map path to which its clusterer writes from the batches list"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5289,
+              "end": 5371
+            },
+            "name": "Batch the inventory"
+          }
+        },
+        "send_one_task_call": {
+          "id": "send_one_task_call",
+          "always": [
+            {
+              "target": "#copy_work_batches_map",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "there is one batch"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 5699,
+                  "end": 5743
+                }
+              }
+            },
+            {
+              "target": "#run_lesson_clusters_lessons",
+              "meta": {
+                "source": {
+                  "start": 5004,
+                  "end": 5098
+                }
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "send one Task call per batch, all in one message, subagent_type: lesson-clusterer, so that each batch is clustered on its own"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "compose into each call only the dispatch block \"inventory: {batch path}\" and \"output: {batch map path}\""
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5471,
+              "end": 5554
+            },
+            "name": "Dispatch the clusterers"
+          }
+        },
+        "copy_work_batches_map": {
+          "id": "copy_work_batches_map",
+          "always": {
+            "target": "#run_curate_feedback_references",
+            "meta": {
+              "source": {
+                "start": 6703,
+                "end": 6712
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "copy {work}/batches/map-01.json to {work}/map.json, and skip sub-steps 5 to 7"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5745,
+              "end": 5799
+            },
+            "name": "Copy the single map"
+          }
+        },
+        "run_lesson_clusters_lessons": {
+          "id": "run_lesson_clusters_lessons",
+          "on": {
+            "helper.reports_invalid_map": [
+              {
+                "target": "#stop_and_report_them",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "lessons fails a second time"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 6176,
+                    "end": 6220
+                  }
+                }
+              },
+              {
+                "actions": [
+                  {
+                    "type": "nl",
+                    "params": {
+                      "text": "resume the clusterer of each batch that the violations name once, sending it that batch's violations and asking it to correct its map"
+                    }
+                  },
+                  {
+                    "type": "nl",
+                    "params": {
+                      "text": "on Claude Code, send the clusterer a message with SendMessage, addressed by the agent ID that its dispatch returned"
+                    }
+                  },
+                  {
+                    "type": "nl",
+                    "params": {
+                      "text": "run lessons again"
+                    }
+                  }
+                ],
+                "meta": {
+                  "source": {
+                    "start": 5916,
+                    "end": 5997
+                  }
+                }
+              }
+            ]
+          },
+          "always": {
+            "target": "#send_one_more_task",
+            "meta": {
+              "source": {
+                "start": 6254,
+                "end": 6280
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `lesson-clusters lessons --batches {work}/batches --out {work}/lessons.json`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 5831,
+              "end": 5911
+            },
+            "name": "List the lessons"
+          }
+        },
+        "send_one_more_task": {
+          "id": "send_one_more_task",
+          "always": {
+            "target": "#run_lesson_clusters_combine",
+            "meta": {
+              "source": {
+                "start": 6424,
+                "end": 6455
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "send one more Task call, subagent_type: lesson-clusterer, for the merge pass, with the dispatch block \"inventory: {work}/lessons.json\" and \"output: {work}/merge.json\""
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 6257,
+              "end": 6335
+            },
+            "name": "Dispatch the merge clusterer"
+          }
+        },
+        "run_lesson_clusters_combine": {
+          "id": "run_lesson_clusters_combine",
+          "on": {
+            "helper.reports_invalid_map": [
+              {
+                "target": "#stop_and_report_them",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "combine fails a second time"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 6630,
+                    "end": 6674
+                  }
+                }
+              },
+              {
+                "actions": [
+                  {
+                    "type": "nl",
+                    "params": {
+                      "text": "resume the merge clusterer once with the violations"
+                    }
+                  },
+                  {
+                    "type": "nl",
+                    "params": {
+                      "text": "run combine again"
+                    }
+                  }
+                ],
+                "meta": {
+                  "source": {
+                    "start": 6562,
+                    "end": 6628
+                  }
+                }
+              }
+            ]
+          },
+          "always": {
+            "target": "#run_curate_feedback_references",
+            "meta": {
+              "source": {
+                "start": 6714,
+                "end": 6748
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `lesson-clusters combine --batches {work}/batches --lessons {work}/lessons.json --map {work}/merge.json --out {work}/map.json`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 6427,
+              "end": 6557
+            },
+            "name": "Combine the maps"
+          }
+        },
+        "run_curate_feedback_references": {
+          "id": "run_curate_feedback_references",
+          "always": {
+            "target": "#run_curate_feedback_assign",
+            "meta": {
+              "source": {
+                "start": 6796,
+                "end": 6826
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `curate-feedback references --store <store> --out {work}/references.json`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 6717,
+              "end": 6794
+            },
+            "name": "List the references"
+          }
+        },
+        "run_curate_feedback_assign": {
+          "id": "run_curate_feedback_assign",
+          "always": {
+            "target": "#send_one_task_call_2",
+            "meta": {
+              "source": {
+                "start": 7121,
+                "end": 7129
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `curate-feedback assign --inventory {work}/inventory.json --map {work}/map.json --references {work}/references.json --pins {work}/pins.json --out {work}/assignments`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when --group-size was given, add --group-size {n}"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "read each assignment's path and the bins path to which its judge writes from the assignments list"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 6799,
+              "end": 6860
+            },
+            "name": "Assign the events"
+          }
+        },
+        "send_one_task_call_2": {
+          "id": "send_one_task_call_2",
+          "on": {
+            "judge.stops_at_turn_limit": {
+              "actions": [
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "resume that judge once, asking only for its bins file and its report"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "on Claude Code, send the judge a message with SendMessage, addressed by the agent ID that its dispatch returned"
+                  }
+                }
+              ],
+              "meta": {
+                "source": {
+                  "start": 7372,
+                  "end": 7464
+                }
+              }
+            }
+          },
+          "always": {
+            "target": "#run_curate_feedback_validate",
+            "meta": {
+              "source": {
+                "start": 7645,
+                "end": 7677
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "send one Task call per assignment, all in one message, subagent_type: feedback-coverage-judge"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "compose into each call only the dispatch block \"assignment: {assignment path}\" and \"output: {bins path}\""
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 7134,
+              "end": 7229
+            },
+            "name": "Dispatch the judges"
+          }
+        },
+        "run_curate_feedback_validate": {
+          "id": "run_curate_feedback_validate",
+          "on": {
+            "helper.reports_invalid_bins": [
+              {
+                "target": "#stop_and_report_them",
+                "guard": {
+                  "type": "nl",
+                  "params": {
+                    "text": "validate fails a second time"
+                  }
+                },
+                "meta": {
+                  "source": {
+                    "start": 7899,
+                    "end": 7944
+                  }
+                }
+              },
+              {
+                "actions": [
+                  {
+                    "type": "nl",
+                    "params": {
+                      "text": "resume the judge of each bins file that the violations name once, sending it that file's violations and asking it to correct its bins file"
+                    }
+                  },
+                  {
+                    "type": "nl",
+                    "params": {
+                      "text": "run validate again"
+                    }
+                  }
+                ],
+                "meta": {
+                  "source": {
+                    "start": 7741,
+                    "end": 7823
+                  }
+                }
+              }
+            ]
+          },
+          "always": [
+            {
+              "target": "#for_each_group_in",
+              "guard": {
+                "type": "nl",
+                "params": {
+                  "text": "--apply was given"
+                }
+              },
+              "meta": {
+                "source": {
+                  "start": 8009,
+                  "end": 8041
+                }
+              }
+            },
+            {
+              "target": "#present_the_counts_lines",
+              "meta": {
+                "source": {
+                  "start": 7986,
+                  "end": 8007
+                },
+                "inferred": true
+              }
+            }
+          ],
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `curate-feedback validate --assignments {work}/assignments --out {work}/record.json`"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 7648,
+              "end": 7736
+            },
+            "name": "Validate the bins"
+          }
+        },
+        "present_the_counts_lines": {
+          "id": "present_the_counts_lines",
+          "on": {
+            "user.approves_marks": {
+              "target": "#for_each_group_in",
+              "meta": {
+                "source": {
+                  "start": 8989,
+                  "end": 9040
+                },
+                "inferred": true
+              }
+            },
+            "user.moves_events": {
+              "actions": [
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "for each move, edit the entry in the bins file that the event's file in record.json names"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "when the reply does not name the guidance file of a move into covered, or the addressed event of a move into duplicate, ask for it"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "for a move into covered, read the file at its pin with `git -C {root} show {sha}:{path}` and copy the sentence that states the lesson into the entry's quote"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "run validate again"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "present only the changed counts and marks before writing"
+                  }
+                }
+              ],
+              "meta": {
+                "source": {
+                  "start": 8430,
+                  "end": 8492
+                }
+              }
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "present the counts lines that validate reports, one per bin"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "then present the marks from record.json: one line per marks.addressedBy group, with its reference and event count, and one line for marks.obsolete"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "under --list, add a table of every event in record.json with its summary, bin, reference, reason, and quote"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "ask in the action-items block for one approval of every mark"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "close the turn with an action-items block"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "before sending, sweep the draft for anything that invites a response, and treat a soft offer such as \"let me know if\" as an ask"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "run a check that a command, a test, or a browser could settle rather than ask for it, and do not hand the developer a command to run"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "let prose discuss, and ask only in the block"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "move every ask into one labelled block at the end of the response, stated as the concrete action and punctuated as the question that it is"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "do not add a block to a turn without an ask"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when the skill defines its own canonical block for asks, add the ad-hoc ask to it, keeping the block's own identifiers, and never close a turn with two competing blocks"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "prefix with A an action that you propose to take and with Q information or a judgment that you need"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "number each ask so that the user can answer the whole block in one line"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "leave a non-ask, such as a status note, in the prose without a prefix, and keep each prefix in agreement with its marker"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "do not prefix the item of a single-item block"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "lay the block out as the example shows: a rule, a bold \"Action items\" heading, and each ask under a bold identifier, with its options marked by strength and their bullets"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "when the block presents more than one independently-numbered list, put each list's identifier as a bold prefix on its header and keep each list's own 1-based numbering"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "do not add the identifier prefix to a single-list block"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 8043,
+              "end": 8106
+            },
+            "name": "Present the marks"
+          }
+        },
+        "for_each_group_in": {
+          "id": "for_each_group_in",
+          "on": {
+            "kb_update_events.fails": {
+              "target": "#run_curate_feedback_render",
+              "actions": [
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "stop applying"
+                  }
+                },
+                {
+                  "type": "nl",
+                  "params": {
+                    "text": "report which group failed"
+                  }
+                }
+              ],
+              "meta": {
+                "source": {
+                  "start": 11923,
+                  "end": 11962
+                }
+              }
+            }
+          },
+          "always": {
+            "target": "#run_curate_feedback_render",
+            "meta": {
+              "source": {
+                "start": 12082,
+                "end": 12102
+              },
+              "inferred": true
+            }
+          },
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "for each group in marks.addressedBy, then for marks.obsolete when its eventIds is not empty, run /kb-update-events and write the result into the group's result in record.json as soon as it returns"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "for an addressedBy group, run `node ~/.claude/skills/kb-update-events/kb-update-events.mjs --store <store> --add-addressed-by={the group's references, comma-joined} {event ids}`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "for obsolete, run `node ~/.claude/skills/kb-update-events/kb-update-events.mjs --store <store> --add-tag obsolete {event ids}`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "write the result as { \"ok\": true, \"failed\": [] } when every event's result has ok: true, and as { \"ok\": false, \"failed\": [ids] } otherwise"
+              }
+            }
+          ],
+          "meta": {
+            "source": {
+              "start": 11268,
+              "end": 11388
+            },
+            "name": "Apply the marks"
+          }
+        },
+        "run_curate_feedback_render": {
+          "id": "run_curate_feedback_render",
+          "entry": [
+            {
+              "type": "nl",
+              "params": {
+                "text": "run `curate-feedback render --file {work}/record.json --out {work}/artifact.md`"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "save the rendered body, with frontmatter, at the artifact path fixed in step 1, per /save-artifact"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "report the counts lines, the marks applied, any failure, the skipped sources, and the artifact's path"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "under --list, add the per-event table; otherwise leave the listing in the artifact"
+              }
+            },
+            {
+              "type": "nl",
+              "params": {
+                "text": "give the same report under --apply"
+              }
+            }
+          ],
+          "type": "final",
+          "meta": {
+            "source": {
+              "start": 12104,
+              "end": 12183
+            },
+            "name": "Record and report"
+          }
+        }
+      }
+    },
+    "stop_and_report_its": {
+      "id": "stop_and_report_its",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "report the result's error and message"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 3225,
+          "end": 3266
+        },
+        "name": "Report the error"
+      }
+    },
+    "stop_when_pins_is": {
+      "id": "stop_when_pins_is",
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 4817,
+          "end": 4842
+        },
+        "name": "Stop without pins"
+      }
+    },
+    "nothing_awaits_attention": {
+      "id": "nothing_awaits_attention",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "report that nothing awaits attention"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 5260,
+          "end": 5285
+        },
+        "name": "Stop with nothing awaiting"
+      }
+    },
+    "stop_and_report_them": {
+      "id": "stop_and_report_them",
+      "entry": [
+        {
+          "type": "nl",
+          "params": {
+            "text": "report the violations"
+          }
+        }
+      ],
+      "type": "final",
+      "meta": {
+        "source": {
+          "start": 6676,
+          "end": 6696
+        },
+        "name": "Report the violations"
+      }
+    }
+  },
+  "meta": {
+    "name": "Curate feedback",
+    "prompt": "---\nname: curate-feedback\ndescription: Cull the open feedback events that no longer need attention. Clusters the events by the lesson that they teach, has subagents without session context read the current guidance and sort every event into covered, duplicate, obsolete, or kept, and then, once the developer approves or under --apply, marks the culled events addressed-by or obsolete, recording the run in a curation artifact. Use when the feedback pool has grown with lessons that guidance has since absorbed, or before a triage-feedback run.\nuser-invocable: true\n---\n<!-- codeassembly-skill:curate-feedback -->\n\n# Curate feedback\n\nCull the feedback events that no longer need attention, and do nothing else: This skill does not surface lessons, file tickets, or edit guidance. You inventory and cluster the open `feedback` events, pin every guidance repository at a commit, have one feedback-coverage-judge per group of clusters sort each event into a bin, and then, once the developer approves, mark the culled events. Two bundled helpers do the mechanical work: `lesson-clusters` inventories and clusters the events, and `curate-feedback` prepares the judges' assignments, checks their bins, and writes the record and the artifact.\n\n**Announce at start:** \"Using curate-feedback to cull the feedback events that no longer need attention.\"\n\n<HARD-GATE>\nNever edit a guidance artifact: a skill, a subagent, a rulebook, a partial, a guidance file, or a helper. This skill marks events and nothing else.\n</HARD-GATE>\n\n## Arguments\n\n| Argument           | Effect                                                                  | Default     |\n| ------------------ | ----------------------------------------------------------------------- | ----------- |\n| `--store <name>`   | The event store: a registry name, `@default`, or `@feedback`.           | `@feedback` |\n| `--apply`          | Apply the marks without the approval checkpoint, for an unattended run. | Off         |\n| `--group-size <n>` | The most events in one judge's assignment.                              | 60          |\n| `--list`           | Show the per-event listing at the checkpoint and in the report.         | Off         |\n\n## Bins and marks\n\nEach judge sorts each event into one bin, and step 7 marks it accordingly:\n\n- `covered`: Guidance at its pinned commit states the lesson, in a sentence that the judge quotes and that `validate` finds in the file. The event is marked `addressed-by` a GitHub permalink to the file at that commit.\n- `duplicate`: An already-addressed event teaches the same lesson. The event is marked `addressed-by` that event's references, other than triage artifacts and covered permalinks.\n- `obsolete`: The target was removed without a successor, a later deliberate decision overruled the lesson, or it concerns a harness or model no longer in use. The event is tagged `obsolete`.\n- `kept`: The event stays in the pool, and nothing is written.\n\nAn event that is marked or tagged drops out of every later inventory, so a rerun continues where a run stopped.\n\n## Process\n\n`<store>` below is the `--store` argument, `@feedback` when it is omitted. Every helper command prints one JSON result. When a result has `ok: false`, stop and report its `error` and `message`, except when a step below says otherwise. Invoke the helpers as:\n\n```bash\nnode ~/.claude/skills/_sources/codeassembly-guidance/lesson-clusters/lesson-clusters.mjs {command} {flags}\nnode ~/.claude/skills/curate-feedback/curate-feedback.mjs {command} {flags}\n```\n\n### 1. Preflight\n\n1. Run `node ~/.claude/skills/_sources/codeassembly-guidance/derive-session-context/derive-session-context.mjs` and read `artifact_base_dir`, `project_slug`, and `ticket_id`.\n2. Fix the artifact's path. The directory is `{artifact_base_dir}/projects/{project_slug}/tickets/{ticket_id}/` when `ticket_id` is set, and `{artifact_base_dir}/projects/{project_slug}/feedback-curation/` otherwise; the `feedback-curation/` name is hardcoded. The filename is `{YYYYMMDD-HHMMSSZ}_{slug}_feedback-curation.md`, with the current UTC time and a slug per /save-artifact, or `curation` when nothing else suits.\n3. Create the work directory `{timestamp}_work/` beside the artifact, where `{timestamp}` is the filename's prefix. Every working file goes there.\n\n### 2. Pin the guidance\n\n1. Run `codeassembly library list --json` and `codeassembly library list --global --json`, and collect the `dir` of every source in either listing. A listing that fails because its domain does not declare a source contributes nothing.\n2. Run `curate-feedback pin --out {work}/pins.json`, with one `--source` for each collected directory and one for the current repository's root.\n3. Report each `skipped` source with its reason: A judge cannot mark an event covered by guidance in a skipped source. Stop when `pins` is empty.\n\n### 3. Cluster\n\nAn inventory is clustered in batches, because one clusterer cannot place every event of a large store. Each batch is clustered on its own, and when there is more than one, a merge pass groups the batch clusters that teach the same lesson.\n\n1. Run `lesson-clusters inventory --store <store> --out {work}/inventory.json`. Report each `skipped` file, and stop when `pool` and `deferred` are both zero: Nothing awaits attention.\n2. Run `lesson-clusters batch --inventory {work}/inventory.json --out {work}/batches`. Its `batches` list gives each batch's `path` and the `map` path to which its clusterer writes.\n3. Send one Task call per batch, all in one message, `subagent_type: lesson-clusterer`, each with this block and nothing else composed into it:\n\n   ```dispatch\n   inventory: {batch path}\n   output: {batch map path}\n   ```\n\n4. When there is one batch, its map is the event map: Copy `{work}/batches/map-01.json` to `{work}/map.json`, and skip sub-steps 5 to 7.\n5. Run `lesson-clusters lessons --batches {work}/batches --out {work}/lessons.json`. On `invalid-map`, resume the clusterer of each batch that the `violations` name once, sending it that batch's violations and asking it to correct its map; on Claude Code, send it a message with `SendMessage`, addressed by the agent ID that its dispatch returned. Run `lessons` again, and on a second failure, stop and report the violations.\n6. Send one more Task call, `subagent_type: lesson-clusterer`, for the merge pass:\n\n   ```dispatch\n   inventory: {work}/lessons.json\n   output: {work}/merge.json\n   ```\n\n7. Run `lesson-clusters combine --batches {work}/batches --lessons {work}/lessons.json --map {work}/merge.json --out {work}/map.json`. On `invalid-map`, resume the merge clusterer once with the violations, run `combine` again, and on a second failure, stop and report them.\n\n### 4. Assign\n\n1. Run `curate-feedback references --store <store> --out {work}/references.json`.\n2. Run `curate-feedback assign --inventory {work}/inventory.json --map {work}/map.json --references {work}/references.json --pins {work}/pins.json --out {work}/assignments`, adding `--group-size {n}` when it was given. Its `assignments` list gives each assignment's `path` and the `bins` path to which its judge writes.\n\n### 5. Judge\n\n1. Send one Task call per assignment, all in one message, `subagent_type: feedback-coverage-judge`, each with this block and nothing else composed into it:\n\n   ```dispatch\n   assignment: {assignment path}\n   output: {bins path}\n   ```\n\n2. **A reply that lacks the `Phase: feedback-coverage` line is a judge stopped by its turn limit.** Resume that judge once, asking only for its bins file and its report; on Claude Code, send it a message with `SendMessage`, addressed by the agent ID that its dispatch returned.\n3. Run `curate-feedback validate --assignments {work}/assignments --out {work}/record.json`. On `invalid-bins`, resume the judge of each bins file that the `violations` name once, sending it that file's violations and asking it to correct its bins file. Run `validate` again, and on a second failure, stop and report the violations.\n\n### 6. Checkpoint: The marks\n\nUnder `--apply`, skip this step.\n\nPresent the `counts` lines that `validate` reports, one per bin, then the marks from `record.json`: one line per `marks.addressedBy` group, with its reference and event count, and one line for `marks.obsolete`. Under `--list`, add a table of every event in `record.json` with its summary, bin, reference, reason, and quote. Ask in the action-items block for one approval of every mark.\n\nThe developer may move events between bins by id in the reply. For each move, edit the entry in the bins file that the event's `file` in `record.json` names. A move into `covered` needs the guidance file, and a move into `duplicate` needs the addressed event; ask for either when the reply does not name it. For a move into `covered`, read the file at its pin with `git -C {root} show {sha}:{path}` and copy the sentence that states the lesson into the entry's `quote`. Then run `validate` again, and present only the changed counts and marks before writing. The approval covers every mark that step 7 applies.\n\n**Close the turn with an action-items block.** Before sending, sweep the draft for anything that invites a response: A soft offer (\"let me know if\", \"say the word and I will\", \"worth knowing\", \"I can also\") is an ask, and leaving it in the narrative is how asks get missed. Run a check that a command, a test, or a browser could settle rather than ask for it; a command for the developer to run is a handoff. Prose may discuss; only the block may ask. Move every ask into one labelled block at the end of the response, stated as the concrete action and punctuated as the question that it is. Do not add a block to a turn without an ask. When this skill defines its own canonical block for asks (a next-steps menu, an action menu, a finding-keyed question list), use that block: Add the ad-hoc ask to it, keeping the block's own identifiers, and never close a turn with two competing blocks.\n\nPrefix with `A` an action that you propose to take (a \"yes\" makes you act) and with `Q` information or a judgment that you need (a \"yes\" only informs you). Number each so that the user can answer the whole block in one line. Leave a non-ask, such as a status note, in the prose without a prefix, and keep each prefix in agreement with its marker. Do not prefix the item of a single-item block.\n\n```\n---\n\n**Action items**\n\n**A1:** Add the packaging note to #977? 👍🏼👎🏼\n\n**A2:** The fixture helper now has three call sites. Extract, or leave inline?\n\n1. ■■□ Extract it into `test-utils/`:\n   - ➕ the third call site copy-pasted a stale variant, which is how the leak got in\n2. ■■□ Leave it inline until #981 settles the fixture format:\n   - ➕ #981 changes every fixture's shape, so an extracted helper would be rewritten within the week\n\n**Q1:** Which package owns the shared fixture once it moves? 🤔\n```\n\nWhen the block presents more than one independently-numbered list (a next-steps menu with two or more selects), put each list's identifier as a bold prefix on its header (`**A1: Remote issue**`) and keep each list's own 1-based numbering, so a bare numeral always names an option and `A1: 1, A2: 3` answers the block. A single-list block does not need that prefix.\n\n### 7. Apply\n\nNothing before this step writes to the store. For each group in `marks.addressedBy`, then for `marks.obsolete` when its `eventIds` is not empty, run /kb-update-events and write the result into the group's `result` in `record.json` as soon as it returns:\n\n- **An `addressedBy` group**: `node ~/.claude/skills/kb-update-events/kb-update-events.mjs --store <store> --add-addressed-by={the group's references, comma-joined} {event ids}`.\n- **`obsolete`**: `node ~/.claude/skills/kb-update-events/kb-update-events.mjs --store <store> --add-tag obsolete {event ids}`.\n\nA result is `{ \"ok\": true, \"failed\": [] }` when every event's result has `ok: true`, and `{ \"ok\": false, \"failed\": [ids] }` otherwise. On a failed write or an `ok: false` result, stop applying, report which group failed, and continue to step 8, so that the artifact records what was applied.\n\n### 8. Record and report\n\nRun `curate-feedback render --file {work}/record.json --out {work}/artifact.md`. Save the rendered body, with frontmatter, at the artifact path fixed in step 1, per /save-artifact.\n\nReport the `counts` lines, the marks applied, any failure, the skipped sources, and the artifact's path. Under `--list`, add the per-event table; otherwise leave the listing in the artifact. The report is the same under `--apply`.\n",
+    "source": {
+      "start": 0,
+      "end": 12517
+    },
+    "unconverted": [],
+    "ambient": [
+      {
+        "start": 634,
+        "end": 779
+      },
+      {
+        "start": 1023,
+        "end": 1236
+      },
+      {
+        "start": 1357,
+        "end": 1504,
+        "gate": true
+      },
+      {
+        "start": 2219,
+        "end": 2293
+      },
+      {
+        "start": 2297,
+        "end": 2513
+      },
+      {
+        "start": 2516,
+        "end": 2692
+      },
+      {
+        "start": 2695,
+        "end": 2884
+      },
+      {
+        "start": 2887,
+        "end": 2947
+      },
+      {
+        "start": 2949,
+        "end": 3060
+      }
+    ]
+  }
+}
