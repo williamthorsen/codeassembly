@@ -171,8 +171,8 @@ catalogs:
       specifier: 0.3.1
       version: 0.3.1
     '@williamthorsen/nmr':
-      specifier: 0.54.1
-      version: 0.54.1
+      specifier: 0.56.0
+      version: 0.56.0
     '@williamthorsen/toolbelt.errors':
       specifier: 0.9.0
       version: 0.9.0
@@ -234,7 +234,7 @@ importers:
         version: link:packages/kb
       '@williamthorsen/nmr':
         specifier: 'catalog:'
-        version: 0.54.1(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)
+        version: 0.56.0(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)
       '@williamthorsen/release-kit':
         specifier: 16.1.2
         version: 16.1.2
@@ -346,7 +346,7 @@ importers:
         version: 6.2.1(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       '@williamthorsen/nmr':
         specifier: 'catalog:'
-        version: 0.54.1(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)
+        version: 0.56.0(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)
       '@williamthorsen/telefactor':
         specifier: 0.4.1
         version: 0.4.1(react@19.3.1)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -410,7 +410,7 @@ importers:
         version: 24.19.2
       '@williamthorsen/nmr':
         specifier: 'catalog:'
-        version: 0.54.1(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)
+        version: 0.56.0(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)
       '@williamthorsen/toolbelt.strings':
         specifier: 8.2.1
         version: 8.2.1
@@ -1422,16 +1422,16 @@ packages:
       readyup:
         optional: true
 
-  '@williamthorsen/nmr-core@0.15.0':
-    resolution: {integrity: sha512-8TKHQ8Yqh+j6I7vh3YTEjQnKgOhcW8yWZXfs/4zNO8k7RNQEr99ECyKstifLcdTstSFjghmjo/5uun1aphU3WA==}
-    engines: {node: '>=24.16.0'}
-
   '@williamthorsen/nmr-core@0.15.1':
     resolution: {integrity: sha512-lFKxByiJG7MnwN5Jg+jbO5X2jlnBgfRpldqR6O9FtkoXj3Roq5l//l2jf2va56MuieJc7day6QOGdy1/fKyf/w==}
     engines: {node: '>=24.16.0'}
 
-  '@williamthorsen/nmr@0.54.1':
-    resolution: {integrity: sha512-MX3bI5fbl4z+2gm+YAjfiuRZhRowtNmU/fKn6OIkM5aanAGwgSJMFa6Qd1m7F85VGhmvXWRROP2d7kYFwWvupw==}
+  '@williamthorsen/nmr-core@0.16.0':
+    resolution: {integrity: sha512-jbJf6uDhB1ny29TJ4TuQ1/GYFOUugFHC2cpFfAlzqwS3RMt8zzVJKOdNhRKnpAzjw5Eq4yIt+gN1qggqohhbyA==}
+    engines: {node: '>=24.16.0'}
+
+  '@williamthorsen/nmr@0.56.0':
+    resolution: {integrity: sha512-SxL1fVmrimM8uuMMzQy89czQXqhLNhizCYx6Ak4JUFzYJUYFhLykFNcGS1EUrqhtXw1mh2Fz/nBOtT4pOcdvZw==}
     engines: {node: '>=24.16.0', pnpm: '>=11'}
     hasBin: true
     peerDependencies:
@@ -1480,6 +1480,10 @@ packages:
 
   '@williamthorsen/toolbelt.arrays@6.4.1':
     resolution: {integrity: sha512-P2Und156n4N3AvfDs44VUOXB24ZbTSfycIhOJcienZw4Q0zzU0fsm99mNpFnbkqoCR6ZV10c7bRV6YpNSlUk1Q==}
+    engines: {node: '>=24.0.0'}
+
+  '@williamthorsen/toolbelt.cli@0.8.0':
+    resolution: {integrity: sha512-+zkrTzhlIF8+AkMf/d7NV1dVJL8BZTBMYCR/T9AS42rpEaWASrJ928LmsZpHjZII6qZCNpDLezFNnzvvnJkpvA==}
     engines: {node: '>=24.0.0'}
 
   '@williamthorsen/toolbelt.datetime@4.1.0':
@@ -4373,16 +4377,6 @@ snapshots:
       - supports-color
       - ts-declaration-location
 
-  '@williamthorsen/nmr-core@0.15.0':
-    dependencies:
-      '@williamthorsen/toolbelt.datetime': 4.1.0
-      '@williamthorsen/toolbelt.errors': 0.9.0
-      '@williamthorsen/toolbelt.filesystem': 0.10.0
-      '@williamthorsen/toolbelt.packaging': 0.7.0
-      '@williamthorsen/toolbelt.terminal': 0.3.0
-      diff: 9.0.0
-      yaml: 2.9.1
-
   '@williamthorsen/nmr-core@0.15.1':
     dependencies:
       '@williamthorsen/toolbelt.datetime': 4.1.0
@@ -4393,9 +4387,20 @@ snapshots:
       diff: 9.0.0
       yaml: 2.9.1
 
-  '@williamthorsen/nmr@0.54.1(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)':
+  '@williamthorsen/nmr-core@0.16.0':
     dependencies:
-      '@williamthorsen/nmr-core': 0.15.0
+      '@williamthorsen/toolbelt.cli': 0.8.0
+      '@williamthorsen/toolbelt.datetime': 4.1.0
+      '@williamthorsen/toolbelt.errors': 0.9.0
+      '@williamthorsen/toolbelt.filesystem': 0.10.0
+      '@williamthorsen/toolbelt.packaging': 0.7.0
+      '@williamthorsen/toolbelt.terminal': 0.3.0
+      diff: 9.0.0
+      yaml: 2.9.1
+
+  '@williamthorsen/nmr@0.56.0(typescript@6.0.3)(vite@8.3.6(@types/node@24.19.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.1.0)':
+    dependencies:
+      '@williamthorsen/nmr-core': 0.16.0
       '@williamthorsen/toolbelt.errors': 0.9.0
       '@williamthorsen/toolbelt.filesystem': 0.10.0
       glob: 14.0.3
@@ -4457,6 +4462,11 @@ snapshots:
     dependencies:
       '@williamthorsen/toolbelt.guards': 4.2.0
       '@williamthorsen/toolbelt.numbers': 7.3.1
+
+  '@williamthorsen/toolbelt.cli@0.8.0':
+    dependencies:
+      '@williamthorsen/toolbelt.errors': 0.9.0
+      '@williamthorsen/toolbelt.strings': 8.2.1
 
   '@williamthorsen/toolbelt.datetime@4.1.0':
     dependencies:

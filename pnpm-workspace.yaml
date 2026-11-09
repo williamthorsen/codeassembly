@@ -10,7 +10,7 @@ allowBuilds:
 catalog:
   '@types/node': '24.19.2'
   '@williamthorsen/change-grammar': '0.3.1'
-  '@williamthorsen/nmr': '0.54.1'
+  '@williamthorsen/nmr': '0.56.0'
   '@williamthorsen/toolbelt.errors': '0.9.0'
   '@williamthorsen/toolbelt.terminal': '0.3.0'
   '@williamthorsen/toolbelt.testing': '0.8.0'
@@ -29,6 +29,8 @@ minimumReleaseAge: 1440 # 24h supply-chain soak (minutes)
 minimumReleaseAgeExclude:
   - codeassembly-guidance
   - '@williamthorsen/change-grammar@0.3.1'
+  - '@williamthorsen/nmr-core@0.16.0'
+  - '@williamthorsen/nmr@0.56.0'
   - '@williamthorsen/telefactor@0.4.1'
   - '@williamthorsen/toolbelt.arrays@6.4.1'
   - '@williamthorsen/toolbelt.numbers@7.3.1'
