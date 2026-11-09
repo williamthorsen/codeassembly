@@ -22,14 +22,14 @@ if (result.ok) {
 
 ## Entries
 
-| Entry                                              | Exports                                                                                                                                             |
-| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description and layout, source marking, and the bundled examples. |
-| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.            |
-| `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                              |
-| `codeassembly-agent-logic/server`                  | `createViewerServerPlugins`, the Vite plugins that serve the prompts directory and run conversions through a harness that telefactor hosts.         |
-| `codeassembly-agent-logic/contract`                | The contracts between a page and its server: the viewer contract, the conversion job, and the built-in harnesses.                                   |
-| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                           |
+| Entry                                              | Exports                                                                                                                                                                               |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples. |
+| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.                                              |
+| `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                |
+| `codeassembly-agent-logic/server`                  | `createViewerServerPlugins`, the Vite plugins that serve the prompts directory and run conversions through a harness that telefactor hosts.                                           |
+| `codeassembly-agent-logic/contract`                | The contracts between a page and its server: the viewer contract, the conversion job, and the built-in harnesses.                                                                     |
+| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                             |
 
 React 19 is a peer of `./react`, and `@williamthorsen/telefactor` a peer of `./server` and `./contract`.
 
