@@ -39,7 +39,7 @@ guidance.
 ### `codeassembly-guidance`
 
 A pnpm workspace whose one package stays at `packages/guidance`, so that the deployed path on a machine is
-`~/repos/projects/codeassembly-guidance.live/packages/guidance/content`, and so that a second package doesn't move it.
+`~/repos/oss/codeassembly-guidance.live/packages/guidance/content`, and so that a second package doesn't move it.
 
 - `codeassembly` and `@williamthorsen/kb` move from `workspace:*` to pinned npm versions.
 - The helper bundles stay tracked build output, so a clone deploys without an install. A bundle that embeds

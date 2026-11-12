@@ -380,7 +380,7 @@ Every repository and worktree has a `codeassembly` binary of its own, at the ver
 
 ```yaml
 # ~/.agents/codeassembly.local.yaml
-home-writer: ~/repos/projects/codeassembly.live
+home-writer: ~/repos/oss/codeassembly.live
 ```
 
 The setting reads from the home domain's chain alone, the local tier overriding the base one, and it takes an absolute path (a leading `~` expands to the home directory). A project declaration that sets it is rejected by name, since a machine's designated writer is not a fact that a repository can state. It may name either a worktree root or the package directory within it: The guard passes when the running package's root is that path or lies under it, comparing both through symlinks.
