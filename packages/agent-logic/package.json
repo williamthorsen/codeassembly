@@ -1,6 +1,6 @@
 {
   "name": "codeassembly-agent-logic",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Model of an agent prompt's states and transitions, with React and server entries for the apps that present it",
   "keywords": [
     "agents",

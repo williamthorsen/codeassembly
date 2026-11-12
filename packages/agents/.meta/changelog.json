@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.20.2",
+    "date": "2026-11-12",
+    "sections": [
+      {
+        "title": "📚 Documentation",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces `~/repos/projects/` with `~/repos/oss/` in the `home-writer` example in `packages/agents/docs/project-declaration.md` and in the deployed guidance path in `docs/repository-split.md`. (#2267)",
+            "hash": "69199e0ec4232ad571df85e5cccdfe058e759cf3",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.20.1",
     "date": "2026-11-09",
     "sections": [

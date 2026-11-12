@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.4 — 2026-11-12
+
+### Notes
+
+- Forced version bump.
+
 ## 0.5.3 — 2026-11-09
 
 ### 📚 Documentation

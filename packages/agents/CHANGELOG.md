@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.20.2 — 2026-11-12
+
+### 📚 Documentation
+
+- Replaces `~/repos/projects/` with `~/repos/oss/` in the `home-writer` example in `packages/agents/docs/project-declaration.md` and in the deployed guidance path in `docs/repository-split.md`. (#2267)
+
 ## 0.20.1 — 2026-11-09
 
 ### 🐛 Bug fixes
