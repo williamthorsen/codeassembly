@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { setTimeout } from 'node:timers/promises';
 
 import {
   createHarnessRun,
@@ -10,7 +11,7 @@ import {
   type Job,
   type Jobs,
 } from '@williamthorsen/telefactor/server';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { validateConfig } from '../../schema/validate-config.ts';
 import { createConversionJobImplementation } from '../conversion-job-implementation.ts';
@@ -18,6 +19,7 @@ import { createConversionJobImplementation } from '../conversion-job-implementat
 const FAKE_HARNESS = path.join(import.meta.dirname, '../test-utils/fake-harness.ts');
 const VALID_CONFIG = path.join(import.meta.dirname, 'fixtures/refund-request.agent-logic.json');
 const PROMPT = 'Greet the user.';
+const POLL_INTERVAL_MS = 20;
 
 describe(createConversionJobImplementation, () => {
   let root = '';
@@ -101,23 +103,77 @@ describe(createConversionJobImplementation, () => {
 
   it('deletes the job directory of a cancelled run', async () => {
     const pidFile = path.join(root, 'pids');
-    const jobs = createConversionJobs(root);
+    const { jobs, settled } = createConversionJobs(root);
     const started = await start(jobs, ['hang', pidFile]);
-    await vi.waitFor(() => readFile(pidFile, 'utf8'));
+    // The fake writes the pid file once it runs; the job service does not signal that.
+    while (!existsSync(pidFile)) await setTimeout(POLL_INTERVAL_MS);
 
     await jobs.cancel(started.id);
+    await settled(started.id);
 
-    await vi.waitFor(() => {
-      expect(existsSync(path.join(root, started.id))).toBe(false);
-    });
+    expect(existsSync(path.join(root, started.id))).toBe(false);
   });
 });
 
 // region | Helpers
+/** The job service that the dev server runs, with promises of each job's recorded end and of its run's settlement. */
+interface ConversionJobs {
+  jobs: Jobs;
+  /** Resolves with the job once the job service records its final state. */
+  ended(id: string): Promise<Job<unknown>>;
+  /** Resolves once the job's run settles, which follows the release of the job's directory. */
+  settled(id: string): Promise<void>;
+}
+
 /** Creates the job service that the dev server runs, with job directories under `root`. */
-function createConversionJobs(root: string): Jobs {
+function createConversionJobs(root: string): ConversionJobs {
+  const ends = createSignals<Job<unknown>>();
+  const settlements = createSignals<undefined>();
+  const store = createInMemoryJobStore();
   const job = createConversionJobImplementation({ conversionsDirectory: root });
-  return createJobs({ run: createHarnessRun({ workingDirectory: root, job }), store: createInMemoryJobStore() });
+  const run = createHarnessRun({ workingDirectory: root, job });
+  const jobs = createJobs({
+    async run(input, signal) {
+      try {
+        return await run(input, signal);
+      } finally {
+        settlements.resolve(input.id, undefined);
+      }
+    },
+    store: {
+      get(id) {
+        return store.get(id);
+      },
+      async put(recorded) {
+        await store.put(recorded);
+        if (recorded.status !== 'running') ends.resolve(recorded.id, recorded);
+      },
+    },
+  });
+  return { jobs, ended: ends.get, settled: settlements.get };
+}
+
+/**
+ * Creates promises keyed by id. Each exists from the first call that names its id, so that a value resolved before it
+ * is read still reaches the reader.
+ */
+function createSignals<T>(): { get(id: string): Promise<T>; resolve(id: string, value: T): void } {
+  const signals = new Map<string, PromiseWithResolvers<T>>();
+  function obtain(id: string): PromiseWithResolvers<T> {
+    const existing = signals.get(id);
+    if (existing !== undefined) return existing;
+    const created = Promise.withResolvers<T>();
+    signals.set(id, created);
+    return created;
+  }
+  return {
+    get(id) {
+      return obtain(id).promise;
+    },
+    resolve(id, value) {
+      obtain(id).resolve(value);
+    },
+  };
 }
 
 function isConfigResult(result: unknown): result is { ok: true; text: string } {
@@ -126,13 +182,9 @@ function isConfigResult(result: unknown): result is { ok: true; text: string } {
 
 /** Runs the fake harness with those arguments as a conversion named "Refund Request", and returns the ended job. */
 async function runToEnd(root: string, fakeHarnessArgs: string[]): Promise<Job<unknown>> {
-  const jobs = createConversionJobs(root);
+  const { jobs, ended } = createConversionJobs(root);
   const started = await start(jobs, fakeHarnessArgs);
-  return vi.waitFor(async () => {
-    const job = await jobs.get(started.id);
-    if (job === undefined || job.status === 'running') throw new Error('the job is still running');
-    return job;
-  });
+  return ended(started.id);
 }
 
 function start(jobs: Jobs, fakeHarnessArgs: string[]): ReturnType<Jobs['start']> {
