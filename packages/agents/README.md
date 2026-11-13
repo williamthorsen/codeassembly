@@ -78,6 +78,7 @@ A project opts into shared artifacts through `.agents/codeassembly.yaml`. Run `c
 Authoring conventions for the declared artifacts (frontmatter fields, the `dependencies:` and `members:` blocks, and naming) are stated in the library's `codeassembly-content-specification` rulebook ([`codeassembly-content-specification.md`](https://github.com/williamthorsen/codeassembly-guidance/blob/main/packages/guidance/content/guidance/rulebooks/codeassembly-content-specification.md)). [Project declaration](docs/project-declaration.md) documents the declaration mechanism itself:
 
 - [Format](docs/project-declaration.md#format): the `use` and `drop` lists, harness targeting, and guidance hooks.
+- [Schema](docs/project-declaration.md#schema): the JSON Schema that editors validate a declaration against.
 - [Collections](docs/project-declaration.md#collections): aggregates that pull in their members, and the `@library` token.
 - [Dependencies](docs/project-declaration.md#dependencies): artifacts that a declared artifact pulls in.
 - [Sources](docs/project-declaration.md#sources): the content roots from which every artifact resolves, and how one shadows another.

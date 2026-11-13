@@ -119,6 +119,32 @@ A rulebook whose `delivery` names `ambient` alongside `hook` is reported by none
 
 A guidance hook is not a partial. A partial resolves by path, fixed at authoring time; a guidance hook resolves by binding, chosen per project or per machine. Guidance that every consumer of the library should get is a partial; guidance that one user or one project wants is a hook. See `content/_partials/README.md`.
 
+## Schema
+
+The package publishes a JSON Schema for the declaration, importable as `codeassembly/schemas/codeassembly.v1.json`. One schema validates every tier: `.agents/codeassembly.yaml`, `~/.agents/codeassembly.yaml`, and the `.local` override of each. The build derives it from the parser's own schema, so it describes what the parser accepts.
+
+Its `$id` names the release that publishes it: `https://unpkg.com/codeassembly@<version>/schemas/codeassembly.v1.json`. A release on npm never changes, so the URL keeps resolving to the same schema.
+
+An editor that runs the YAML language server validates a declaration through a modeline on its first line, naming either the `$id` or the installed copy:
+
+```yaml
+# yaml-language-server: $schema=https://unpkg.com/codeassembly@<version>/schemas/codeassembly.v1.json
+```
+
+```yaml
+# yaml-language-server: $schema=../node_modules/codeassembly/schemas/codeassembly.v1.json
+```
+
+`init` and `init --global` write the first form, naming the release that runs them. `init` does not create a `codeassembly.local.yaml`, so that file takes the modeline only when its author adds it.
+
+The parser enforces three rules that the schema does not express, so an editor accepts a declaration that `sync` still rejects:
+
+- `home-writer` is read only in the home domain, and a project-domain file that declares it is rejected.
+- A source declares either a `path`, with a `name`, or a `package`.
+- A `guidance-hooks` key is lowercase kebab-case and starts with a letter.
+
+The `v1` in the file name is the schema's major version. Adding an optional key keeps it. Removing, renaming, or re-typing a key bumps it, and so does widening a closed set of values, such as the harness ids.
+
 ## Collections
 
 A collection is a traversal-only aggregate: It doesn't deploy any file of its own, but declaring it pulls in its members' transitive closure, which `sync` then deploys. Declare one like any other type:
