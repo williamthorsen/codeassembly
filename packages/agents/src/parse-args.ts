@@ -21,6 +21,7 @@ export function parseArgs(argv: ReadonlyArray<string>): {
   content: string | undefined;
   help: boolean;
   global: boolean;
+  growthCeilingKib: string | undefined;
   json: boolean;
   warnOnly: boolean;
 } {
@@ -35,6 +36,7 @@ export function parseArgs(argv: ReadonlyArray<string>): {
   let dryRun = false;
   let help = false;
   let global = false;
+  let growthCeilingKib: string | undefined;
   let json = false;
   let warnOnly = false;
   let shouldOverrideWriter = false;
@@ -78,6 +80,12 @@ export function parseArgs(argv: ReadonlyArray<string>): {
         i = result.nextIndex;
         break;
       }
+      case 'growth-ceiling-kib': {
+        const result = parseValueArg(args, i, '--growth-ceiling-kib', 'a positive integer of KiB');
+        growthCeilingKib = result.value;
+        i = result.nextIndex;
+        break;
+      }
       case 'output-style':
         // `configureStreamStyles` has already validated the value; only the spaced form consumes the next argument.
         if (!arg.includes('=')) i = parseValueArg(args, i, '--output-style', 'auto, plain, rich').nextIndex;
@@ -108,6 +116,7 @@ export function parseArgs(argv: ReadonlyArray<string>): {
     content,
     help,
     global,
+    growthCeilingKib,
     json,
     warnOnly,
   };
@@ -126,6 +135,7 @@ type FlagName =
   | 'dry-run'
   | 'force'
   | 'global'
+  | 'growth-ceiling-kib'
   | 'harness'
   | 'help'
   | 'json'
@@ -149,6 +159,7 @@ function parseFlag(arg: string): FlagName | null {
     '--warn-only': 'warn-only',
     '--check': 'check',
     '--content': 'content',
+    '--growth-ceiling-kib': 'growth-ceiling-kib',
     '--harness': 'harness',
     '--output-style': 'output-style',
   };
