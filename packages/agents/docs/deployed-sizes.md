@@ -157,7 +157,7 @@ A deployment whose vector is unchanged states the aggregates and the closing lin
 
 A warning fires on a **crossing**: the previous snapshot recorded the document below the ceiling and this deployment puts it at or above, a newly deployed document above the ceiling included. A document already at or above the ceiling raises none, which keeps the warning to one appearance per document on the default branch and lets the ceiling stay low. A first recorded deployment raises none at all, since it does not have a crossing to observe.
 
-The ceiling is 5 KiB, defined in `GROWTH_CEILING_BYTES` in `src/deployed-sizes/build-size-report.ts`.
+The ceiling is 5 KiB unless the run sets another: `--growth-ceiling-kib <n>` sets it for one `sync`, and `CODEASSEMBLY_GROWTH_CEILING_KIB` sets it wherever the option is absent. Both take a positive integer of KiB, and the sync rejects any other value before it writes anything. The warning states the ceiling in effect. A crossing is judged against that ceiling alone, so lowering it does not warn about a document already above the new value; `codeassembly sizes` ranks those.
 
 ```console
 ⚠️ claude/skills/plan/SKILL.md has passed the 5.0 KiB growth ceiling (12.4 KiB). Run the `streamline-guidance` skill on its source to reduce it.

@@ -24,6 +24,9 @@ import type { SyncDomain } from './sync-domain.ts';
 import type { SyncOutcome, SyncPlan } from './sync-plan.ts';
 import { describeSyncFailure } from './sync-validation-error.ts';
 
+/** The install options that a sync shares, and the growth ceiling that its size report applies. */
+export type SyncOptions = InstallOptions & { readonly growthCeilingBytes?: number };
+
 /**
  * Resolves a project's `codeassembly.yaml` scope chain and reconciles it into that project's harness dirs (the repo
  * domain). A thin wrapper over `reconcileDomain` that supplies the repo `SyncDomain`. An absent `codeassembly.yaml`
@@ -31,7 +34,7 @@ import { describeSyncFailure } from './sync-validation-error.ts';
  * under it.
  */
 export async function syncCommand(
-  options: InstallOptions,
+  options: SyncOptions,
   projectRoot: string = process.cwd(),
   homeDir: string = homedir(),
   git: AgentsGit = realGit,
@@ -58,7 +61,7 @@ export async function syncCommand(
  * returns the outcome naming `init --global` as the remedy.
  */
 export async function syncGlobalCommand(
-  options: InstallOptions,
+  options: SyncOptions,
   homeDir: string = homedir(),
   git: AgentsGit = realGit,
 ): Promise<SyncOutcome> {
@@ -116,7 +119,7 @@ export async function syncGlobalCommand(
  * contains the user-global half of the `harnesses` chain and the harnesses to which targeting falls back.
  */
 async function reconcileDomain(
-  options: InstallOptions,
+  options: SyncOptions,
   domain: SyncDomain,
   homeDir: string,
   git: AgentsGit,
@@ -226,6 +229,7 @@ async function reconcileDomain(
     plan,
     domain,
     git,
+    growthCeilingBytes: options.growthCeilingBytes,
     homeDir,
     packageRoot: resolveRunningPackageRoot(),
     resolveSourceRoot: (source) => sourceRoots.get(source),

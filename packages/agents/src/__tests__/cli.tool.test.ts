@@ -293,3 +293,62 @@ describe('CLI output-style flag', () => {
     expect(result.stdout).toContain('CODEASSEMBLY_OUTPUT_STYLE');
   });
 });
+
+describe('CLI growth-ceiling controls', () => {
+  let projectRoot: string;
+
+  // A project without a declaration makes a sync that runs report `Nothing to sync`, so the absence of that line
+  // shows that a rejected ceiling stopped the run before sync started.
+  beforeEach(async () => {
+    projectRoot = path.join(tmpdir(), `agents-test-ceiling-${Date.now()}-${Math.random().toString(36).slice(2)}`);
+    await mkdir(projectRoot, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(projectRoot, { recursive: true, force: true });
+  });
+
+  it('accepts a positive --growth-ceiling-kib and runs the sync', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--growth-ceiling-kib', '8');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toContain('Nothing to sync');
+  });
+
+  it('rejects an invalid CODEASSEMBLY_GROWTH_CEILING_KIB with an error naming it, before the sync runs', async () => {
+    const result = await runCliWithEnv(projectRoot, { CODEASSEMBLY_GROWTH_CEILING_KIB: '8k' }, 'sync');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('CODEASSEMBLY_GROWTH_CEILING_KIB must be a positive integer (KiB); got "8k"');
+    expect(result.stdout).not.toContain('Nothing to sync');
+  });
+
+  it('reports an invalid ceiling and exits 0 under --warn-only', async () => {
+    const result = await runCliWithEnv(projectRoot, { CODEASSEMBLY_GROWTH_CEILING_KIB: '0' }, 'sync', '--warn-only');
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stderr).toContain('CODEASSEMBLY_GROWTH_CEILING_KIB must be a positive integer (KiB); got "0"');
+    expect(result.stdout).not.toContain('Nothing to sync');
+  });
+
+  it('rejects an invalid --growth-ceiling-kib under --dry-run', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--dry-run', '--growth-ceiling-kib', '1.5');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('--growth-ceiling-kib must be a positive integer (KiB); got "1.5"');
+  });
+
+  it('rejects --growth-ceiling-kib without a value', async () => {
+    const result = await runCliIn(projectRoot, 'sync', '--growth-ceiling-kib');
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain('--growth-ceiling-kib requires a value');
+  });
+
+  it('documents --growth-ceiling-kib and CODEASSEMBLY_GROWTH_CEILING_KIB in --help', async () => {
+    const result = await runCli('--help');
+
+    expect(result.stdout).toContain('--growth-ceiling-kib <n>');
+    expect(result.stdout).toContain('CODEASSEMBLY_GROWTH_CEILING_KIB');
+  });
+});

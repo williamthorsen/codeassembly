@@ -21,6 +21,7 @@ import { syncCommand, syncGlobalCommand } from './commands/sync/sync.ts';
 import { isSyncValidationError } from './commands/sync/sync-validation-error.ts';
 import { uninstallCommand } from './commands/uninstall.ts';
 import { validateCommand } from './commands/validate.ts';
+import { resolveGrowthCeiling } from './deployed-sizes/resolve-growth-ceiling.ts';
 import { formatContentDefects } from './lib/content-defects.ts';
 import { configureOutputStyle, emitReport, printLine } from './lib/emit-report.ts';
 import type { InstallOptions } from './lib/types.ts';
@@ -35,7 +36,9 @@ const SYNC_FAILURE_EFFECT = 'Nothing was written; the previously deployed guidan
  */
 async function main(): Promise<void> {
   configureStreamStyles();
-  const { command, subcommand, options, check, content, help, global, json, warnOnly } = parseArgs(process.argv);
+  const { command, subcommand, options, check, content, help, global, growthCeilingKib, json, warnOnly } = parseArgs(
+    process.argv,
+  );
 
   if (help || !command) {
     printUsage();
@@ -51,7 +54,7 @@ async function main(): Promise<void> {
         await (global ? initGlobalCommand(options) : initCommand(options));
         break;
       case 'sync':
-        await runSync(options, global, warnOnly);
+        await runSync({ options, global, growthCeilingKib, warnOnly });
         break;
       case 'uninstall':
         await uninstallCommand({ harness: options.harness, force: options.force });
@@ -135,6 +138,7 @@ Options:
   --link             Use symlinks instead of copies (install only)
   --force            Overwrite or remove modified files (install/uninstall)
   --dry-run          Show what would be done without making changes (install, sync, init)
+  --growth-ceiling-kib <n>  Warn when a document grows past n KiB (default: 5) (sync only). Overrides CODEASSEMBLY_GROWTH_CEILING_KIB
   --global           Target the user-global tier (~/.agents/codeassembly.yaml) in the home; applies to sync, init, and library list, and reads the home deployment's record under sizes
   --json             Print the listing as JSON, with each source's content directory (library list only)
   --output-style <auto|plain|rich>  Print status glyphs as emoji (rich) or words (plain); auto (default) prints plain off a terminal, in CI, or under TERM=linux. Overrides CODEASSEMBLY_OUTPUT_STYLE
@@ -198,9 +202,17 @@ async function runLibrary(subcommand: string, options: { global: boolean; json: 
  * stale guidance. The default exits 1, so an explicitly invoked sync still fails closed on every guard raised by the
  * command.
  */
-async function runSync(options: InstallOptions, global: boolean, warnOnly: boolean): Promise<void> {
+async function runSync(input: {
+  options: InstallOptions;
+  global: boolean;
+  growthCeilingKib: string | undefined;
+  warnOnly: boolean;
+}): Promise<void> {
+  const { options, global, growthCeilingKib, warnOnly } = input;
   try {
-    const outcome = await (global ? syncGlobalCommand(options) : syncCommand(options));
+    const growthCeilingBytes = resolveGrowthCeiling({ option: growthCeilingKib, env: process.env });
+    const syncOptions = { ...options, growthCeilingBytes };
+    const outcome = await (global ? syncGlobalCommand(syncOptions) : syncCommand(syncOptions));
     emitReport(options.dryRun ? renderDryRunReport(outcome) : renderSyncReport(outcome));
   } catch (error: unknown) {
     if (warnOnly) {

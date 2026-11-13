@@ -4,8 +4,8 @@ import type { DeployedPathSet } from '../commands/sync/collect-deployed-paths.ts
 import type { DeploymentMeasurement } from './measure-deployment.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from './types.ts';
 
-/** Size at or above which the report warns about a document that has just grown past it. */
-export const GROWTH_CEILING_BYTES = 5 * 1024;
+/** Size at or above which the report warns about a document that has just grown past it, when a run sets none. */
+export const DEFAULT_GROWTH_CEILING_BYTES = 5 * 1024;
 
 /** Directory name whose presence in a source's path marks it as an installed dependency rather than the reader's own. */
 const VENDOR_DIR = 'node_modules';
@@ -67,6 +67,8 @@ export interface GrowthWarning {
 export interface SizeReport {
   readonly changes: ReadonlyArray<SizeChange>;
   readonly warnings: ReadonlyArray<GrowthWarning>;
+  /** The ceiling against which this report judged each crossing. */
+  readonly ceilingBytes: number;
   readonly aggregates: SizeAggregates;
   readonly documentCount: number;
   /**
@@ -79,7 +81,7 @@ export interface SizeReport {
 /**
  * Builds what a live sync reports from the measurement, the previous snapshot, and the collected paths: every
  * document that this deployment added, removed, or resized, ordered by the bytes that each change accounts for, and a
- * warning for each document that has just reached the growth ceiling.
+ * warning for each document that has just reached `ceilingBytes`.
  *
  * Assets do not contribute any change, matching what the `sizes` command ranks: A helper bundle does not load into
  * any agent's context, so its growth does not affect the bytes that a session loads.
@@ -101,12 +103,13 @@ export interface SizeReport {
  * resolved, so containment here is lexical.
  */
 export function buildSizeReport(input: {
+  ceilingBytes: number;
   measured: DeploymentMeasurement;
   previous: SizeSnapshot | undefined;
   set: DeployedPathSet;
   repoRoot: string | undefined;
 }): SizeReport {
-  const { measured, previous, set, repoRoot } = input;
+  const { ceilingBytes, measured, previous, set, repoRoot } = input;
   const current = selectDocuments(measured.files);
   const before = selectDocuments(previous?.files ?? {});
   const isFirstRecorded = previous === undefined;
@@ -128,7 +131,7 @@ export function buildSizeReport(input: {
   if (!isFirstRecorded) {
     for (const [key, bytes] of current) {
       const previousBytes = before.get(key);
-      if (bytes < GROWTH_CEILING_BYTES || (previousBytes !== undefined && previousBytes >= GROWTH_CEILING_BYTES)) {
+      if (bytes < ceilingBytes || (previousBytes !== undefined && previousBytes >= ceilingBytes)) {
         continue;
       }
       warnings.push({ key, bytes, mayStreamline: isReaderOwned(sourceRoots.get(key), repoRoot) });
@@ -138,6 +141,7 @@ export function buildSizeReport(input: {
   return {
     changes: changes.toSorted(compareChanges),
     warnings: warnings.toSorted((left, right) => right.bytes - left.bytes || left.key.localeCompare(right.key)),
+    ceilingBytes,
     aggregates: measured.aggregates,
     documentCount: current.size,
     isFirstRecorded,

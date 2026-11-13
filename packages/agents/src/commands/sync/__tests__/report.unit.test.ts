@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { GROWTH_CEILING_BYTES, type SizeReport } from '../../../deployed-sizes/build-size-report.ts';
+import { DEFAULT_GROWTH_CEILING_BYTES, type SizeReport } from '../../../deployed-sizes/build-size-report.ts';
 import type { SizeAggregates } from '../../../deployed-sizes/types.ts';
 import type { ReportLine } from '../../../lib/report-line.ts';
 import type { SizeReportOutcome } from '../record-deployed-sizes.ts';
@@ -43,6 +43,7 @@ function withSizes(report: Partial<SizeReport>): SyncOutcome {
     report: {
       changes: [],
       warnings: [],
+      ceilingBytes: DEFAULT_GROWTH_CEILING_BYTES,
       aggregates: zeroAggregates(),
       documentCount: 0,
       isFirstRecorded: false,
@@ -537,11 +538,21 @@ describe('deployed sizes', () => {
     expect(output).not.toContain('streamline-guidance');
   });
 
+  it('states the ceiling that the run applied', () => {
+    const output = textOf(
+      renderSyncReport(
+        withSizes({ ceilingBytes: 8192, warnings: [{ key: 'a.md', bytes: 9000, mayStreamline: false }] }),
+      ),
+    );
+
+    expect(output).toContain('a.md has passed the 8.0 KiB growth ceiling (8.8 KiB).');
+  });
+
   it('sends each growth warning to the warning stream and the rest of the block to the info stream', () => {
     const lines = renderSyncReport(
       withSizes({
-        changes: [{ kind: 'resized', key: 'a.md', bytes: GROWTH_CEILING_BYTES, delta: 1, explained: 0 }],
-        warnings: [{ key: 'a.md', bytes: GROWTH_CEILING_BYTES, mayStreamline: false }],
+        changes: [{ kind: 'resized', key: 'a.md', bytes: DEFAULT_GROWTH_CEILING_BYTES, delta: 1, explained: 0 }],
+        warnings: [{ key: 'a.md', bytes: DEFAULT_GROWTH_CEILING_BYTES, mayStreamline: false }],
       }),
     );
 

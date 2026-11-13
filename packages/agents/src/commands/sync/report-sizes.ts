@@ -2,7 +2,6 @@ import {
   countAccountedBytes,
   type DocumentChange,
   type ExpansionChange,
-  GROWTH_CEILING_BYTES,
   type GrowthWarning,
   type SizeChange,
   type SizeReport,
@@ -67,9 +66,9 @@ function describeExpansionChange(change: ExpansionChange, deltaWidth: number): R
  * the reader maintains the source behind the document; otherwise the crossing is worth stating and the remedy is not
  * theirs to apply.
  */
-function describeGrowthWarning(warning: GrowthWarning): ReportLine {
+function describeGrowthWarning(warning: GrowthWarning, ceilingBytes: number): ReportLine {
   const remedy = warning.mayStreamline ? ' Run the `streamline-guidance` skill on its source to reduce it.' : '';
-  const ceiling = formatBytes(GROWTH_CEILING_BYTES);
+  const ceiling = formatBytes(ceilingBytes);
   return {
     glyph: 'warning',
     level: 'warn',
@@ -100,7 +99,7 @@ function renderSizeReport(report: SizeReport): ReadonlyArray<ReportLine> {
         ? describeExpansionChange(change, deltaWidth)
         : describeDocumentChange(change, deltaWidth),
     ),
-    ...report.warnings.map(describeGrowthWarning),
+    ...report.warnings.map((warning) => describeGrowthWarning(warning, report.ceilingBytes)),
     { level: 'info', text: '' },
     ...renderAggregates(report.aggregates, report.documentCount),
     { level: 'info', text: '' },
