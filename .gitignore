@@ -69,3 +69,6 @@ coverage/
 
 # TypeScript
 *.tsbuildinfo
+
+# Generated schemas
+packages/agents/schemas/

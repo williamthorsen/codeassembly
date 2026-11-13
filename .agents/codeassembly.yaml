@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=../node_modules/codeassembly/schemas/codeassembly.v1.json
 collections:
   use:
     - recommended

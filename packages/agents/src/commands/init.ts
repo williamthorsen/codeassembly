@@ -4,9 +4,11 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
+import { buildDeclarationSchemaUrl } from '../lib/declaration-json-schema.ts';
+import { readPackageVersion } from '../lib/package-version.ts';
 import type { InstallOptions } from '../lib/types.ts';
 
-const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
+export const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
 #
 # harnesses.use pins the harnesses that this project targets, by id (claude, rovo). Omit this key and sync targets
 # whichever harnesses are installed for this user; an empty list targets none. Use drop to withdraw a harness
@@ -50,7 +52,7 @@ rulebooks:
 #   use: []
 `;
 
-const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
+export const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
 # \`codeassembly sync --global\`. Created once by \`init --global\`; the tool never overwrites it.
 #
 # harnesses.use pins the harnesses targeted by every sync for this user, by id (claude, rovo). Omit this key and sync
@@ -99,8 +101,9 @@ export async function initGlobalCommand(options: InstallOptions, homeDir: string
 }
 
 /**
- * Writes `template` to `declarationPath`, creating its parent directory if absent. Refuses to overwrite an existing
- * file. Honors `--dry-run` by reporting the intended action without writing.
+ * Writes `template` to `declarationPath`, led by a modeline naming the declaration's JSON Schema, creating its parent
+ * directory if absent. Refuses to overwrite an existing file. Honors `--dry-run` by reporting the intended action
+ * without writing.
  */
 async function scaffoldDeclaration(declarationPath: string, template: string, options: InstallOptions): Promise<void> {
   const alreadyExists = existsSync(declarationPath);
@@ -119,6 +122,7 @@ async function scaffoldDeclaration(declarationPath: string, template: string, op
   }
 
   await mkdir(path.dirname(declarationPath), { recursive: true });
-  await writeFile(declarationPath, template, 'utf8');
+  const modeline = `# yaml-language-server: $schema=${buildDeclarationSchemaUrl(readPackageVersion())}\n`;
+  await writeFile(declarationPath, `${modeline}${template}`, 'utf8');
   console.info(`Created ${declarationPath}`);
 }
