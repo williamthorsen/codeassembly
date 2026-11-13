@@ -265,12 +265,12 @@ describe(parseCodeAssemblyFile, () => {
 
   it('throws on an unknown harness id, naming the source label and the offending entry', () => {
     expect(() => parseCodeAssemblyFile('harnesses:\n  use:\n    - claud\n', 'codeassembly.yaml')).toThrow(
-      /codeassembly\.yaml.*harnesses\.use\.0/s,
+      /codeassembly\.yaml.*harnesses\.use\.0.*claude/s,
     );
   });
 
   it('throws on an unknown harness id in the drop list', () => {
-    expect(() => parseCodeAssemblyFile('harnesses:\n  drop:\n    - cursor\n')).toThrow(/harnesses\.drop\.0/);
+    expect(() => parseCodeAssemblyFile('harnesses:\n  drop:\n    - cursor\n')).toThrow(/harnesses\.drop\.0.*claude/s);
   });
 
   it('throws on an unknown key inside the harnesses block', () => {

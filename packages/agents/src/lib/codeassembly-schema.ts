@@ -16,7 +16,9 @@ export const EntrySchema = z
  * knows both. The ids constrain the input, so a JSON Schema derived from it lists them.
  */
 const HarnessEntrySchema = z
-  .union([z.enum(ALL_HARNESS_IDS), z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose()])
+  .union([z.enum(ALL_HARNESS_IDS), z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose()], {
+    error: () => `expected a harness id (${ALL_HARNESS_IDS.join(', ')}) or a { name } entry naming one`,
+  })
   .transform((entry) => (typeof entry === 'string' ? { name: entry } : entry));
 
 /**
