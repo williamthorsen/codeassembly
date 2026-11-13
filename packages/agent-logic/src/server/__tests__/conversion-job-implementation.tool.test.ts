@@ -1,8 +1,7 @@
-import { existsSync } from 'node:fs';
+import { existsSync, watch } from 'node:fs';
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { setTimeout } from 'node:timers/promises';
 
 import {
   createHarnessRun,
@@ -19,7 +18,6 @@ import { createConversionJobImplementation } from '../conversion-job-implementat
 const FAKE_HARNESS = path.join(import.meta.dirname, '../test-utils/fake-harness.ts');
 const VALID_CONFIG = path.join(import.meta.dirname, 'fixtures/refund-request.agent-logic.json');
 const PROMPT = 'Greet the user.';
-const POLL_INTERVAL_MS = 20;
 
 describe(createConversionJobImplementation, () => {
   let root = '';
@@ -105,8 +103,7 @@ describe(createConversionJobImplementation, () => {
     const pidFile = path.join(root, 'pids');
     const { jobs, settled } = createConversionJobs(root);
     const started = await start(jobs, ['hang', pidFile]);
-    // The fake writes the pid file once it runs; the job service does not signal that.
-    while (!existsSync(pidFile)) await setTimeout(POLL_INTERVAL_MS);
+    await waitForFile(pidFile);
 
     await jobs.cancel(started.id);
     await settled(started.id);
@@ -192,5 +189,22 @@ function start(jobs: Jobs, fakeHarnessArgs: string[]): ReturnType<Jobs['start']>
     { prompt: PROMPT, input: { name: 'Refund Request' } },
     { name: 'fake', command: [process.execPath, FAKE_HARNESS, ...fakeHarnessArgs], timeoutMs: 60_000 },
   );
+}
+
+/**
+ * Resolves once the file exists. The fake harness writes its pid file once it runs, and the job service does not signal
+ * that; the check that follows the watcher's start covers a file written before it.
+ */
+async function waitForFile(file: string): Promise<void> {
+  const { promise, resolve } = Promise.withResolvers<undefined>();
+  const watcher = watch(path.dirname(file), () => {
+    if (existsSync(file)) resolve(undefined);
+  });
+  if (existsSync(file)) resolve(undefined);
+  try {
+    await promise;
+  } finally {
+    watcher.close();
+  }
 }
 // endregion | Helpers

@@ -3,7 +3,6 @@ import { existsSync } from 'node:fs';
 import { mkdir, mkdtemp, readFile, realpath, rm, stat, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
-import { setTimeout } from 'node:timers/promises';
 
 import {
   createContractClient,
@@ -22,7 +21,6 @@ import { promptListSchema } from '../prompt-directory-schemas.ts';
 const FAKE_HARNESS = path.join(import.meta.dirname, '../test-utils/fake-harness.ts');
 const VALID_CONFIG = path.join(import.meta.dirname, 'fixtures/refund-request.agent-logic.json');
 const WRITE_COMMAND = [process.execPath, FAKE_HARNESS, 'write', VALID_CONFIG, '{output}'];
-const POLL_INTERVAL_MS = 20;
 
 describe(createViewerServerPlugins, () => {
   let root = '';
@@ -124,11 +122,9 @@ describe(createViewerServerPlugins, () => {
 async function convert(origin: string): Promise<Job<unknown>> {
   const client = createClient(origin);
   const started = await client.startJob({ prompt: 'Greet the user.', name: 'Refund Request' });
+  // The client does not signal a job's end, so the test reads the job until it ends; each request paces the next.
   let job = await client.getJob(started.id);
-  while (job.status === 'running') {
-    await setTimeout(POLL_INTERVAL_MS);
-    job = await client.getJob(started.id);
-  }
+  while (job.status === 'running') job = await client.getJob(started.id);
   return job;
 }
 
