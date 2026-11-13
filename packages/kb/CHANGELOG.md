@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.12.0 — 2026-11-13
+
+### 🎉 Features
+
+- Adds an optional boolean `in_default_scope` key to `kb.yaml` registry entries, which the registry loader exposes as `inDefaultScope` on the loaded entry and rejects when its value is not a boolean, as an initial step toward letting retrieval tools search a KB by default without making it the `default_kb`. (#2270)
+
 ## 0.11.3 — 2026-11-12
 
 ### Notes
