@@ -11,11 +11,10 @@ import { resolveRecordPath } from '../../../deployed-sizes/resolve-record-path.t
 import type { AgentsGit } from '../../../lib/git.ts';
 import { resolveHarnessPaths } from '../../../lib/harness.ts';
 import { makeFakeGit } from '../../../lib/test-utils/make-fake-git.ts';
-import type { InstallOptions } from '../../../lib/types.ts';
 import { declareFixtureSource } from '../../test-utils/declare-fixture-source.ts';
 import type { DeployedPathSources, ResolveSourceRoot } from '../collect-deployed-paths.ts';
 import { recordDeployedSizes } from '../record-deployed-sizes.ts';
-import { syncCommand } from '../sync.ts';
+import { syncCommand, type SyncOptions } from '../sync.ts';
 import type { SyncDomain } from '../sync-domain.ts';
 import { renderReportText } from '../test-utils/render-report-text.ts';
 
@@ -371,6 +370,13 @@ describe('sync --dry-run', () => {
     expect(report).toContain('Assets:');
     expect(report).toContain('Run `codeassembly sizes` to rank every deployed document by size.');
   });
+
+  it('applies the growth ceiling that the sync options supply to its size report', async () => {
+    const outcome = await syncCommand(options({ growthCeilingBytes: 2048 }), projectRoot, homeDir, fakeGit);
+
+    const sizes = outcome.kind === 'reconciled' ? outcome.sizes : undefined;
+    expect(sizes?.kind === 'measured' && sizes.report.ceilingBytes).toBe(2048);
+  });
 });
 
 // region | Helpers
@@ -392,7 +398,7 @@ function homeDomain(home: string): SyncDomain {
 }
 
 /** Sync options for a live run, overridden per test. */
-function options(overrides: Partial<InstallOptions> = {}): InstallOptions {
+function options(overrides: Partial<SyncOptions> = {}): SyncOptions {
   return { harness: 'claude', link: false, force: false, dryRun: false, ...overrides };
 }
 
