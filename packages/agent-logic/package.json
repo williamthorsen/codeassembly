@@ -63,18 +63,18 @@
     "score-corpus": "node src/corpus/score-corpus-command.ts"
   },
   "dependencies": {
-    "@hono/node-server": "2.1.6",
+    "@hono/node-server": "2.1.7",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@xyflow/react": "12.12.1",
     "elkjs": "0.12.1",
-    "hono": "4.13.17",
+    "hono": "4.13.18",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
-    "@testing-library/user-event": "14.6.9",
+    "@testing-library/user-event": "14.6.10",
     "@types/node": "catalog:",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
