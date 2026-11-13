@@ -1,7 +1,11 @@
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { appendSnapshot } from '../../deployed-sizes/append-snapshot.ts';
-import { buildSizeReport, type SizeReport } from '../../deployed-sizes/build-size-report.ts';
+import {
+  buildSizeReport,
+  DEFAULT_GROWTH_CEILING_BYTES,
+  type SizeReport,
+} from '../../deployed-sizes/build-size-report.ts';
 import { measureDeployment } from '../../deployed-sizes/measure-deployment.ts';
 import { readRecordLines, selectLatestSnapshot } from '../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../deployed-sizes/resolve-record-path.ts';
@@ -40,6 +44,7 @@ export async function recordDeployedSizes(input: {
   plan: DeployedPathSources;
   domain: SyncDomain;
   git?: AgentsGit;
+  growthCeilingBytes?: number | undefined;
   homeDir: string;
   packageRoot: string;
   resolveSourceRoot: ResolveSourceRoot;
@@ -60,7 +65,13 @@ export async function recordDeployedSizes(input: {
     // is the one the gate must judge and its repository the one whose artifacts the reader can edit; the home
     // domain's comes from the running package, so both answers are that package's tree.
     const sourceRoot = domain.ambient === 'harness-home' ? packageRoot : domain.baseDir;
-    const report = buildSizeReport({ measured, previous, set, repoRoot: await git.findTopLevel(sourceRoot) });
+    const report = buildSizeReport({
+      ceilingBytes: input.growthCeilingBytes ?? DEFAULT_GROWTH_CEILING_BYTES,
+      measured,
+      previous,
+      set,
+      repoRoot: await git.findTopLevel(sourceRoot),
+    });
 
     if (await shouldAppend({ measured, previous, sourceRoot, git })) {
       const sourceCommit = await git.readHeadCommit(packageRoot);

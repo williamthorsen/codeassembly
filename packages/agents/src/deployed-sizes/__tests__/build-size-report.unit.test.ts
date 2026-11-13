@@ -3,7 +3,7 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 import type { DeployedPath, DeployedPathSet } from '../../commands/sync/collect-deployed-paths.ts';
-import { buildSizeReport, GROWTH_CEILING_BYTES, type SizeReport } from '../build-size-report.ts';
+import { buildSizeReport, DEFAULT_GROWTH_CEILING_BYTES, type SizeReport } from '../build-size-report.ts';
 import type { DeploymentMeasurement } from '../measure-deployment.ts';
 import { SNAPSHOT_SCHEMA_VERSION } from '../schema.ts';
 import type { DeployedFile, ExpansionUnit, SizeAggregates, SizeSnapshot } from '../types.ts';
@@ -18,8 +18,8 @@ const INNER = 'partial:codeassembly/_partials/inner.md';
 const SHARED = 'partial:codeassembly/_partials/shared.md';
 
 /** A document at the ceiling, and one comfortably below it, so that a crossing is stated rather than computed. */
-const AT_CEILING = GROWTH_CEILING_BYTES;
-const BELOW_CEILING = GROWTH_CEILING_BYTES - 1;
+const AT_CEILING = DEFAULT_GROWTH_CEILING_BYTES;
+const BELOW_CEILING = DEFAULT_GROWTH_CEILING_BYTES - 1;
 
 describe(buildSizeReport, () => {
   it('reports a document that this deployment resized, with its size and its change', () => {
@@ -57,6 +57,7 @@ describe(buildSizeReport, () => {
 
   it('leaves assets out of the change list, which reports what a session loads', () => {
     const report = buildSizeReport({
+      ceilingBytes: DEFAULT_GROWTH_CEILING_BYTES,
       measured: measurement({ 'claude/skills/plan/run.mjs': { bytes: 900_000, kind: 'asset' } }),
       previous: snapshot({ 'claude/skills/plan/run.mjs': { bytes: 10, kind: 'asset' } }),
       set: { files: [], ambientHostPaths: [] },
@@ -98,6 +99,19 @@ describe(buildSizeReport, () => {
     expect(report.warnings.map((warning) => warning.key)).toEqual(['a.md']);
   });
 
+  it('judges a crossing against the ceiling that the run supplies, and states that ceiling', () => {
+    const report = build({ ceilingBytes: 2048, measured: { 'a.md': 2048 }, previous: { 'a.md': 2047 } });
+
+    expect(report.warnings).toEqual([{ key: 'a.md', bytes: 2048, mayStreamline: false }]);
+    expect(report.ceilingBytes).toBe(2048);
+  });
+
+  it('does not warn about a document that was already above a lowered ceiling', () => {
+    const report = build({ ceilingBytes: 1024, measured: { 'a.md': 2049 }, previous: { 'a.md': 2048 } });
+
+    expect(report.warnings).toEqual([]);
+  });
+
   it('does not raise a warning for a document that was already at or above the ceiling', () => {
     const report = build({ measured: { 'a.md': AT_CEILING * 3 }, previous: { 'a.md': AT_CEILING } });
 
@@ -112,6 +126,7 @@ describe(buildSizeReport, () => {
 
   it('does not raise any warning on a first recorded deployment, which does not have a crossing to observe', () => {
     const report = buildSizeReport({
+      ceilingBytes: DEFAULT_GROWTH_CEILING_BYTES,
       measured: measurement({ 'a.md': { bytes: AT_CEILING * 10, kind: 'document' } }),
       previous: undefined,
       set: { files: [collected('a.md', IN_REPO_SOURCE)], ambientHostPaths: [] },
@@ -319,6 +334,7 @@ describe(buildSizeReport, () => {
 
   it('passes the measured aggregates and the document count through', () => {
     const report = buildSizeReport({
+      ceilingBytes: DEFAULT_GROWTH_CEILING_BYTES,
       measured: {
         files: { 'a.md': { bytes: 10, kind: 'document' }, 'b.mjs': { bytes: 20, kind: 'asset' } },
         expansions: {},
@@ -353,6 +369,7 @@ function aggregates(overrides: Partial<SizeAggregates> = {}): SizeAggregates {
  * own bytes; `documentExpansions` names the units in each document's closure.
  */
 function build(input: {
+  ceilingBytes?: number;
   measured: Record<string, number>;
   previous: Record<string, number>;
   expansions?: Record<string, ExpansionUnit>;
@@ -370,6 +387,7 @@ function build(input: {
   };
   const previous = snapshot(asDocuments(input.previous));
   return buildSizeReport({
+    ceilingBytes: input.ceilingBytes ?? DEFAULT_GROWTH_CEILING_BYTES,
     measured: {
       ...measurement(asDocuments(input.measured)),
       expansions: input.expansions ?? {},

@@ -5,6 +5,7 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { DEFAULT_GROWTH_CEILING_BYTES } from '../../../deployed-sizes/build-size-report.ts';
 import { readRecordLines, selectLatestSnapshot } from '../../../deployed-sizes/read-record.ts';
 import { resolveRecordPath } from '../../../deployed-sizes/resolve-record-path.ts';
 import type { AgentsGit } from '../../../lib/git.ts';
@@ -246,6 +247,19 @@ describe(recordDeployedSizes, () => {
         explained: 0,
       },
     ]);
+  });
+
+  it('applies the growth ceiling that the run supplies, and the default when it supplies none', async () => {
+    const { skillsDir } = resolveHarnessPaths('claude', homeDir);
+    await writeDeployedFile(path.join(skillsDir, 'plan', 'SKILL.md'), 'body');
+    const plan = planWithSkill('plan', skillsDir);
+    const input = { plan, domain: homeDomain(homeDir), git, homeDir, packageRoot, resolveSourceRoot };
+
+    const defaulted = await recordDeployedSizes(input);
+    const overridden = await recordDeployedSizes({ ...input, growthCeilingBytes: 2048 });
+
+    expect(defaulted.kind === 'measured' && defaulted.report.ceilingBytes).toBe(DEFAULT_GROWTH_CEILING_BYTES);
+    expect(overridden.kind === 'measured' && overridden.report.ceilingBytes).toBe(2048);
   });
 
   it('reports a deployment whose vector is unchanged as changing nothing', async () => {
