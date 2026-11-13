@@ -122,14 +122,10 @@ describe(createViewerServerPlugins, () => {
 async function convert(origin: string): Promise<Job<unknown>> {
   const client = createClient(origin);
   const started = await client.startJob({ prompt: 'Greet the user.', name: 'Refund Request' });
-  return vi.waitFor(
-    async () => {
-      const job = await client.getJob(started.id);
-      if (job.status === 'running') throw new Error('the job is still running');
-      return job;
-    },
-    { timeout: 10_000 },
-  );
+  // The client does not signal a job's end, so the test reads the job until it ends; each request paces the next.
+  let job = await client.getJob(started.id);
+  while (job.status === 'running') job = await client.getJob(started.id);
+  return job;
 }
 
 /** Creates telefactor's client for the conversion job on the dev server at the origin. */
