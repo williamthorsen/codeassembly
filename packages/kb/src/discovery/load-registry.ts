@@ -144,6 +144,7 @@ async function loadRegistryFile(
       path: resolvePath(fileEntry.path, configDir, home),
       source,
       ...(fileEntry.description !== undefined && { description: fileEntry.description }),
+      ...(fileEntry.in_default_scope !== undefined && { inDefaultScope: fileEntry.in_default_scope }),
       ...(fileEntry.readonly !== undefined && { readonly: fileEntry.readonly }),
     });
   }

@@ -1,0 +1,4 @@
+kbs:
+  solo:
+    path: ./solo-kb
+    in_default_scope: 'yes'

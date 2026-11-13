@@ -58,6 +58,7 @@ kbs:
   team:
     path: ../shared/team-kb
     description: Shared team knowledge base
+    in_default_scope: true
 ```
 
 The top-level `default_kb` key names the machine's default knowledge base: the single KB that searches and discovery-based writes fall back on when a store is neither named nor discovered. `capture-event` writes there only when explicitly selected with `--store @default`, never by omission. It must name an entry under `kbs`; a value that matches none fails the load. Set, change, or clear it from the command line with `kb set-default`.
@@ -66,11 +67,12 @@ The top-level `feedback_kb` key names the knowledge base that receives feedback 
 
 Configuration keys, per KB entry under `kbs.<name>`:
 
-| Key           | Required | Meaning                                                                                                 |
-| ------------- | -------- | ------------------------------------------------------------------------------------------------------- |
-| `path`        | yes      | KB root directory; `~` expands to `$HOME`, relative paths resolve against the registry file's directory |
-| `description` | no       | Human-readable description                                                                              |
-| `readonly`    | no       | Marks the KB as read-only                                                                               |
+| Key                | Required | Meaning                                                                                                                                                                                                                 |
+| ------------------ | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `path`             | yes      | KB root directory; `~` expands to `$HOME`, relative paths resolve against the registry file's directory                                                                                                                 |
+| `description`      | no       | Human-readable description                                                                                                                                                                                              |
+| `in_default_scope` | no       | When `true`, places the KB in the default scope of retrieval tools, which then search it without being asked to search every registered KB; `false` doesn't remove a KB that `default_kb` names or that discovery finds |
+| `readonly`         | no       | Marks the KB as read-only                                                                                                                                                                                               |
 
 An entry's name is also what a [store-qualified wikilink](#linking-into-another-store) names: `[[coding:Note title]]` resolves against the KB registered as `coding`.
 
