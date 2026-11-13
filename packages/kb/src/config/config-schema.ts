@@ -37,12 +37,13 @@ export interface KbConfig {
   targets: readonly string[];
   /** Glob patterns excluded from enumeration even when a target matches. */
   exclude: readonly string[];
-  /** How widely the store is published, which decides what may link into it. */
+  /** Whether the store's notes are written to be publishable, which decides what may link into it. */
   visibility: StoreVisibility;
 }
 
 /**
- * How widely a store is published: `shared` is available to collaborators through a remote, `private` to nobody else.
+ * What a store's notes may disclose: In a `shared` store every note is written to be publishable, whether or not the
+ * store has a remote yet; in a `private` store a note may contain detail that must never leave the author.
  */
 export type StoreVisibility = NonNullable<z.infer<typeof configFileShape>['visibility']>;
 

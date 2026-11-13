@@ -152,7 +152,7 @@ A structural defect in any loaded file throws a `KbLoaderError` (see below). Any
 
 ### Which notes are checked: `.kb/config.yaml`
 
-`.kb/config.yaml` configures which notes a check enumerates and how widely the store is published. Every key is optional; an absent file or an omitted key falls back to the default.
+`.kb/config.yaml` configures which notes a check enumerates and what the store's notes may disclose. Every key is optional; an absent file or an omitted key falls back to the default.
 
 ```yaml
 # .kb/config.yaml
@@ -163,11 +163,13 @@ exclude:
 visibility: private
 ```
 
-| Key          | Default                  | Meaning                                                                      |
-| ------------ | ------------------------ | ---------------------------------------------------------------------------- |
-| `targets`    | `['content/**/*.md']`    | Glob patterns (store-root-relative) selecting which notes a check enumerates |
-| `exclude`    | `['**/node_modules/**']` | Glob patterns excluded from enumeration even when a target matches           |
-| `visibility` | `private`                | `shared` or `private`; decides which stores may link into this one           |
+| Key          | Default                  | Meaning                                                                                            |
+| ------------ | ------------------------ | -------------------------------------------------------------------------------------------------- |
+| `targets`    | `['content/**/*.md']`    | Glob patterns (store-root-relative) selecting which notes a check enumerates                       |
+| `exclude`    | `['**/node_modules/**']` | Glob patterns excluded from enumeration even when a target matches                                 |
+| `visibility` | `private`                | `shared` or `private`, by what the notes may disclose; decides which stores may link into this one |
+
+`shared` means that every note is written to be publishable, whether or not the store has a remote yet; `private` means that a note may contain detail that must never leave the author.
 
 `visibility` belongs here rather than in the registry entry because it is intrinsic to the store: One store cloned on two machines has one visibility, whereas a per-machine declaration could let the two disagree silently. It governs [linking into another store](#linking-into-another-store).
 
