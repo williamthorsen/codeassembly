@@ -27,7 +27,8 @@
       "types": "./dist/esm/api.d.ts",
       "import": "./dist/esm/api.js"
     },
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./schemas/*.json": "./schemas/*.json"
   },
   "bin": {
     "codeassembly": "bin/codeassembly.js"
@@ -37,11 +38,12 @@
     ".readyup/manifest.json",
     "bin",
     "dist",
+    "schemas",
     "CHANGELOG.md",
     ".meta/changelog.json"
   ],
   "scripts": {
-    "build:post": "node scripts/add-cli-shebang.ts && rdy compile",
+    "build:post": "node scripts/add-cli-shebang.ts && node scripts/generate-schemas.ts && rdy compile",
     "build:pre": "rdy verify",
     "prepublishOnly": "nmr build"
   },
@@ -59,6 +61,7 @@
     "@williamthorsen/toolbelt.strings": "8.2.2",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
+    "ajv": "8.20.0",
     "esbuild": "catalog:",
     "eslint": "catalog:",
     "readyup": "catalog:",

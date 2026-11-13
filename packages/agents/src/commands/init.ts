@@ -6,7 +6,7 @@ import process from 'node:process';
 
 import type { InstallOptions } from '../lib/types.ts';
 
-const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
+export const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
 #
 # harnesses.use pins the harnesses that this project targets, by id (claude, rovo). Omit this key and sync targets
 # whichever harnesses are installed for this user; an empty list targets none. Use drop to withdraw a harness
@@ -50,7 +50,7 @@ rulebooks:
 #   use: []
 `;
 
-const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
+export const GLOBAL_DECLARATION_TEMPLATE = `# CodeAssembly user-global declaration. Opt into shared artifacts for every project here, then run
 # \`codeassembly sync --global\`. Created once by \`init --global\`; the tool never overwrites it.
 #
 # harnesses.use pins the harnesses targeted by every sync for this user, by id (claude, rovo). Omit this key and sync
