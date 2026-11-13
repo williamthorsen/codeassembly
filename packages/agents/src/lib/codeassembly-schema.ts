@@ -13,9 +13,11 @@ export const EntrySchema = z
 /**
  * A `harnesses` entry: an ordinary declaration entry whose name must be a known harness. Validating here rather than
  * where the block is resolved puts the file and the offending entry's path into the error, since only the parser
- * knows both.
+ * knows both. The ids constrain the input, so a JSON Schema derived from it lists them.
  */
-const HarnessEntrySchema = EntrySchema.pipe(z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose());
+const HarnessEntrySchema = z
+  .union([z.enum(ALL_HARNESS_IDS), z.object({ name: z.enum(ALL_HARNESS_IDS) }).loose()])
+  .transform((entry) => (typeof entry === 'string' ? { name: entry } : entry));
 
 /**
  * A declared content source: a directory structured like the `codeassembly-guidance` package's `content/`, named either
@@ -80,21 +82,50 @@ export const ReferenceSchema = z
  * `guidance-hooks` is the one map-valued key: Each hook name owns a `{ use, drop }` block of its own, so a tier binds
  * to one hook without disturbing another.
  */
-const CodeAssemblySchema = z
+export const CodeAssemblySchema = z
   .object({
-    root: z.boolean().default(false),
-    'home-writer': z.string().optional(),
-    harnesses: optionalHarnessDeclaration(),
-    sources: optionalSourceList(),
-    references: optionalReferenceList(),
-    packages: optionalTypeDeclaration(),
-    rulebooks: optionalTypeDeclaration(),
-    skills: optionalTypeDeclaration(),
-    subagents: optionalTypeDeclaration(),
-    collections: optionalTypeDeclaration(),
-    'guidance-hooks': optionalGuidanceHookBindings(),
+    root: z
+      .boolean()
+      .default(false)
+      .meta({ description: 'Ignore every broader-scope declaration, sources included, and start from this file.' }),
+    'home-writer': z.string().optional().meta({
+      description:
+        "Names the machine's designated home-domain writer. Read only from ~/.agents/codeassembly.yaml or its .local override.",
+    }),
+    harnesses: optionalHarnessDeclaration().meta({
+      description: 'The harnesses that a run deploys to, by id. Omitted, a run targets every installed harness.',
+    }),
+    sources: optionalSourceList().meta({
+      description:
+        'The content directories from which artifacts resolve: a { name, path } pair, or a { package } naming an installed package.',
+    }),
+    references: optionalReferenceList().meta({
+      description:
+        "Documentation inside an installed dependency that sync points the agent at, with the pointer's text.",
+    }),
+    packages: optionalTypeDeclaration().meta({
+      description: 'Installed packages whose whole guidance catalog sync deploys, each named by its package name.',
+    }),
+    rulebooks: optionalTypeDeclaration().meta({
+      description: 'The rulebooks that this file adopts or drops, by slug.',
+    }),
+    skills: optionalTypeDeclaration().meta({ description: 'The skills that this file adopts or drops, by slug.' }),
+    subagents: optionalTypeDeclaration().meta({
+      description: 'The subagents that this file adopts or drops, by slug.',
+    }),
+    collections: optionalTypeDeclaration().meta({
+      description:
+        "The collections that this file adopts or drops, by slug. Each pulls in its members' transitive closure.",
+    }),
+    'guidance-hooks': optionalGuidanceHookBindings().meta({
+      description: 'For each guidance-hook name, the rulebooks that fill the hook, as a { use, drop } block.',
+    }),
   })
-  .strict();
+  .strict()
+  .meta({
+    description:
+      'A CodeAssembly declaration: the guidance that codeassembly sync deploys. Validates .agents/codeassembly.yaml, ~/.agents/codeassembly.yaml, and their .local overrides.',
+  });
 
 /** A parsed, validated `codeassembly.yaml` declaration from one file in the scope chain. */
 export type CodeAssemblyDeclaration = z.infer<typeof CodeAssemblySchema>;
@@ -188,8 +219,10 @@ function guidanceHookBindingsSchema() {
 }
 
 /** Resolves an absent `guidance-hooks` key, or one whose value is `null`, to `undefined` rather than a validation error. */
-function optionalGuidanceHookBindings(): z.ZodType<GuidanceHookBindings | undefined> {
-  return z.preprocess((value) => value ?? undefined, guidanceHookBindingsSchema().optional());
+function optionalGuidanceHookBindings() {
+  return guidanceHookBindingsSchema()
+    .nullish()
+    .transform((value) => value ?? undefined);
 }
 
 /** Builds the closed `{ use, drop }` schema for the `harnesses` block, each list defaulting to empty. */
@@ -203,8 +236,10 @@ function harnessDeclarationSchema() {
 }
 
 /** Resolves an absent `harnesses` key, or one whose value is `null`, to `undefined` rather than a validation error. */
-function optionalHarnessDeclaration(): z.ZodType<HarnessDeclaration | undefined> {
-  return z.preprocess((value) => value ?? undefined, harnessDeclarationSchema().optional());
+function optionalHarnessDeclaration() {
+  return harnessDeclarationSchema()
+    .nullish()
+    .transform((value) => value ?? undefined);
 }
 
 /** Builds the closed `{ use, drop }` schema for one type's block, each list defaulting to empty. */
@@ -218,18 +253,26 @@ function typeDeclarationSchema() {
 }
 
 /** Resolves an absent type key, or one whose value is `null`, to `undefined` rather than a validation error. */
-function optionalTypeDeclaration(): z.ZodType<TypeDeclaration | undefined> {
-  return z.preprocess((value) => value ?? undefined, typeDeclarationSchema().optional());
+function optionalTypeDeclaration() {
+  return typeDeclarationSchema()
+    .nullish()
+    .transform((value) => value ?? undefined);
 }
 
 /** Resolves an absent `references` key, or one whose value is `null`, to an empty list. */
-function optionalReferenceList(): z.ZodType<Array<DeclarationReference>> {
-  return z.preprocess((value) => value ?? undefined, z.array(ReferenceSchema).default([]));
+function optionalReferenceList() {
+  return z
+    .array(ReferenceSchema)
+    .nullish()
+    .transform((value) => value ?? []);
 }
 
 /** Resolves an absent `sources` key, or one whose value is `null` (all entries commented out), to an empty list. */
-function optionalSourceList(): z.ZodType<Array<DeclarationSource>> {
-  return z.preprocess((value) => value ?? undefined, z.array(SourceSchema).default([]));
+function optionalSourceList() {
+  return z
+    .array(SourceSchema)
+    .nullish()
+    .transform((value) => value ?? []);
 }
 
 // endregion | Helpers
