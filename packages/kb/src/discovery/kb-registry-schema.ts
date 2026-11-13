@@ -4,6 +4,7 @@ import { z } from 'zod';
 export const kbRegistryFileEntrySchema = z.object({
   path: z.string().min(1),
   description: z.string().optional(),
+  in_default_scope: z.boolean().optional(),
   readonly: z.boolean().optional(),
 });
 

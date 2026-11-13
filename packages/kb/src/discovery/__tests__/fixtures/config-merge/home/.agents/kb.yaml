@@ -4,6 +4,8 @@ kbs:
   shared:
     path: ./user-shared-kb
     description: User-global shared KB
+    in_default_scope: true
   user-only:
     path: ~/user-only-kb
     description: A KB declared only by the user
+    in_default_scope: true

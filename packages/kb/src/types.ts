@@ -16,6 +16,8 @@ export interface KbRegistryEntry {
   /** Absolute path to the KB's root directory (tilde expanded, relative resolved). */
   path: string;
   description?: string;
+  /** Whether retrieval searches the KB without being asked to search every registered KB. */
+  inDefaultScope?: boolean;
   readonly?: boolean;
   /** Which registry the entry came from. */
   source: 'user' | 'project';

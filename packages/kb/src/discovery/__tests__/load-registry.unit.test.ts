@@ -59,6 +59,27 @@ describe(loadKbRegistry, () => {
     expect(config.entries.map((entry) => entry.name).toSorted()).toEqual(['project-only', 'shared', 'user-only']);
   });
 
+  it('loads in_default_scope onto the entry as inDefaultScope', async () => {
+    const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
+    const byName = new Map(config.entries.map((entry) => [entry.name, entry]));
+
+    expect(byName.get('user-only')?.inDefaultScope).toBe(true);
+    expect(byName.get('project-only')?.inDefaultScope).toBe(false);
+  });
+
+  it('omits inDefaultScope from an entry that does not declare in_default_scope', async () => {
+    const config = await loadKbRegistry({ home: join(MERGE_DIR, 'only-user-home') });
+
+    expect(config.entries[0]).not.toHaveProperty('inDefaultScope');
+  });
+
+  it('drops the user in_default_scope when a project entry of the same name omits it', async () => {
+    const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
+    const shared = config.entries.find((entry) => entry.name === 'shared');
+
+    expect(shared).not.toHaveProperty('inDefaultScope');
+  });
+
   it('resolves a relative path against the registry file directory', async () => {
     const config = await loadKbRegistry({ home: HOME, projectDir: PROJECT });
     const projectOnly = config.entries.find((entry) => entry.name === 'project-only');
@@ -142,6 +163,12 @@ describe(loadKbRegistry, () => {
     ).rejects.toHaveProperty('cause', expect.any(Error));
   });
 
+  it('throws naming the source file when in_default_scope is not a boolean', async () => {
+    await expect(
+      loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'non-boolean-scope') }),
+    ).rejects.toThrow(/non-boolean-scope.*kb\.yaml: invalid kb\.yaml:/s);
+  });
+
   it('throws naming the source file when a registry entry omits its required path', async () => {
     await expect(
       loadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'bad-structure') }),
@@ -187,6 +214,13 @@ describe(tryLoadKbRegistry, () => {
 
   it('captures the error for a schema violation', async () => {
     const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'bad-structure') });
+
+    expect(result.error).toMatch(/invalid kb\.yaml:/);
+    expect(result.config.entries).toEqual([]);
+  });
+
+  it('captures the error for a non-boolean in_default_scope', async () => {
+    const result = await tryLoadKbRegistry({ home: '/no/such/home', projectDir: join(MERGE_DIR, 'non-boolean-scope') });
 
     expect(result.error).toMatch(/invalid kb\.yaml:/);
     expect(result.config.entries).toEqual([]);

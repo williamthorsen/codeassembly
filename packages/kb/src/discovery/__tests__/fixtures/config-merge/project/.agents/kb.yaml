@@ -7,3 +7,4 @@ kbs:
   project-only:
     path: ./project-only-kb
     description: A KB declared only by the project
+    in_default_scope: false
