@@ -18,9 +18,10 @@ const CONFIG_HEADER = `# Check configuration for this knowledge store.
 #
 # Every key is optional and falls back to the default shown below; an absent file uses these defaults too. Uncomment
 # and edit to override. \`targets\` selects which notes \`kb check\` enumerates and \`exclude\` removes matches;
-# patterns are slash-separated and relative to the store root. \`visibility\` declares how widely the store is
-# published, which decides what may link into it: A \`[[store:Note title]]\` link resolves only into a store as
-# shareable as its own or more so.
+# patterns are slash-separated and relative to the store root. \`visibility\` declares what the notes may disclose:
+# \`shared\` means that every note is written to be publishable, whether or not the store has a remote yet;
+# \`private\` means that a note may contain detail that must never leave the author. It decides what may link into
+# the store: A \`[[store:Note title]]\` link resolves only into a store as shareable as its own or more so.
 #
 `;
 
