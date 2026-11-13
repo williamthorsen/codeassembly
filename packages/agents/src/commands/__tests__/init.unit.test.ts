@@ -6,6 +6,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { resolveDeclaration } from '../../lib/codeassembly-manifest.ts';
+import { buildDeclarationSchemaUrl } from '../../lib/declaration-json-schema.ts';
+import { readPackageVersion } from '../../lib/package-version.ts';
 import type { InstallOptions } from '../../lib/types.ts';
 import { initCommand, initGlobalCommand } from '../init.ts';
 
@@ -33,6 +35,13 @@ describe(initCommand, () => {
     const content = await readFile(declarationPath(), 'utf8');
     expect(content).toContain('rulebooks:');
     expect(content).toContain('use: []');
+  });
+
+  it('leads with a modeline naming the schema of this release', async () => {
+    await initCommand(makeOptions(), projectRoot);
+
+    const [firstLine] = (await readFile(declarationPath(), 'utf8')).split('\n', 1);
+    expect(firstLine).toBe(`# yaml-language-server: $schema=${buildDeclarationSchemaUrl(readPackageVersion())}`);
   });
 
   it('names the machine-local guidance file of each harness as the ambient destination', async () => {
@@ -121,6 +130,13 @@ describe(initGlobalCommand, () => {
     expect(content).toContain('- triage');
     // A personal collection is fitted to one author by definition, so the scaffold names none.
     expect(content).not.toContain('williamthorsen');
+  });
+
+  it('leads with a modeline naming the schema of this release', async () => {
+    await initGlobalCommand(makeOptions(), homeDir);
+
+    const [firstLine] = (await readFile(declarationPath(), 'utf8')).split('\n', 1);
+    expect(firstLine).toBe(`# yaml-language-server: $schema=${buildDeclarationSchemaUrl(readPackageVersion())}`);
   });
 
   it('includes the harnesses key, which belongs most naturally in this tier', async () => {

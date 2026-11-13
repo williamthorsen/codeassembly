@@ -4,6 +4,8 @@ import { homedir } from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 
+import { buildDeclarationSchemaUrl } from '../lib/declaration-json-schema.ts';
+import { readPackageVersion } from '../lib/package-version.ts';
 import type { InstallOptions } from '../lib/types.ts';
 
 export const PROJECT_DECLARATION_TEMPLATE = `# CodeAssembly project declaration. Opt into shared artifacts here, then run \`codeassembly sync\`.
@@ -99,8 +101,9 @@ export async function initGlobalCommand(options: InstallOptions, homeDir: string
 }
 
 /**
- * Writes `template` to `declarationPath`, creating its parent directory if absent. Refuses to overwrite an existing
- * file. Honors `--dry-run` by reporting the intended action without writing.
+ * Writes `template` to `declarationPath`, led by a modeline naming the declaration's JSON Schema, creating its parent
+ * directory if absent. Refuses to overwrite an existing file. Honors `--dry-run` by reporting the intended action
+ * without writing.
  */
 async function scaffoldDeclaration(declarationPath: string, template: string, options: InstallOptions): Promise<void> {
   const alreadyExists = existsSync(declarationPath);
@@ -119,6 +122,7 @@ async function scaffoldDeclaration(declarationPath: string, template: string, op
   }
 
   await mkdir(path.dirname(declarationPath), { recursive: true });
-  await writeFile(declarationPath, template, 'utf8');
+  const modeline = `# yaml-language-server: $schema=${buildDeclarationSchemaUrl(readPackageVersion())}\n`;
+  await writeFile(declarationPath, `${modeline}${template}`, 'utf8');
   console.info(`Created ${declarationPath}`);
 }
