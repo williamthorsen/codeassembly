@@ -20,6 +20,7 @@ if (!existsSync(entryPoint)) {
 try {
   await import(entryPoint.href);
 } catch (error) {
+  // eslint-disable-next-line no-restricted-syntax -- The shared helper is not a builtin; see the import note above.
   const message = error instanceof Error ? error.message : String(error);
   process.stderr.write(`kb: failed to load: ${message}\n`);
   process.exit(1);
