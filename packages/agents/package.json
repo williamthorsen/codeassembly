@@ -49,7 +49,7 @@
   },
   "dependencies": {
     "@williamthorsen/change-grammar": "catalog:",
-    "@williamthorsen/nmr-core": "0.16.1",
+    "@williamthorsen/nmr-core": "0.16.2",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.terminal": "catalog:",
     "yaml": "catalog:",
@@ -58,7 +58,7 @@
   "devDependencies": {
     "@types/node": "catalog:",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/toolbelt.strings": "8.2.2",
+    "@williamthorsen/toolbelt.strings": "9.0.0",
     "@williamthorsen/toolbelt.testing": "catalog:",
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "ajv": "8.20.0",
