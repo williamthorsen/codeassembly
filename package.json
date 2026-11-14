@@ -43,7 +43,6 @@
     "codeassembly-guidance": "0.6.0",
     "dotenv": "18.0.10",
     "eslint": "catalog:",
-    "eslint-import-resolver-typescript": "4.4.5",
     "eslint-plugin-pnpm": "1.9.1",
     "glob": "14.0.6",
     "lefthook": "2.2.1",

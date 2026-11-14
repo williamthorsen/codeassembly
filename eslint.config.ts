@@ -3,7 +3,6 @@ import path from 'node:path';
 
 import baseConfig, { commonIgnores, toolIgnores } from '@williamthorsen/eslint-config-typescript';
 import { defineConfig, globalIgnores } from 'eslint/config';
-import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
 import { configs as pnpmConfigs } from 'eslint-plugin-pnpm';
 import { parse } from 'yaml';
 
@@ -19,21 +18,6 @@ const config = defineConfig([
     '**/__tests__/**/fixtures/**/*.malformed/**',
     '**/__tests__/**/fixtures/**/*.malformed.*',
   ]),
-  {
-    settings: {
-      // `import-x/extensions` needs a resolver to tell a `.js` specifier from the `.ts` file that it names.
-      'import-x/resolver-next': [
-        createTypeScriptImportResolver({
-          noWarnOnMultipleProjects: true,
-          // Name the tsconfigs explicitly; the resolver's cwd-relative default misses packages when lint runs per workspace.
-          project: [
-            path.join(import.meta.dirname, 'tsconfig.json'),
-            path.join(import.meta.dirname, 'packages/*/tsconfig.json'),
-          ],
-        }),
-      ],
-    },
-  },
   {
     files: ['**/*.ts', '**/*.mts', '**/*.tsx'],
     languageOptions: {
