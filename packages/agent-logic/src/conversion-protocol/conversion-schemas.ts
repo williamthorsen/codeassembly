@@ -13,7 +13,9 @@ const problemSchema: z.ZodType<Problem> = z.object({ path: z.string(), message: 
 /** The body of every error response: the problems that refused the request. */
 export const problemsBodySchema = z.object({ problems: z.array(problemSchema) });
 
-/** The body that starts a conversion: the prompt, verbatim, and its file name, from which the config's root id derives. */
+/**
+ * The body that starts a conversion: the prompt, verbatim, and its file name, from which the config's root id derives.
+ */
 export const startConversionRequestSchema = z.object({
   prompt: z
     .string()
