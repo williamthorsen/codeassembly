@@ -28,6 +28,10 @@
       "types": "./dist/esm/index.d.ts",
       "import": "./dist/esm/index.js"
     },
+    "./agent": {
+      "types": "./dist/esm/agent/index.d.ts",
+      "import": "./dist/esm/agent/index.js"
+    },
     "./agent-logic.schema.json": "./schema/agent-logic.schema.json",
     "./contract": {
       "types": "./dist/esm/contract/index.d.ts",
@@ -71,6 +75,8 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@modelcontextprotocol/client": "2.4.0",
+    "@modelcontextprotocol/server": "2.4.0",
     "@testing-library/dom": "10.4.2",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
@@ -81,6 +87,7 @@
     "@vitejs/plugin-react": "6.3.0",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/telefactor": "0.4.1",
+    "@williamthorsen/toolbelt.acp": "0.3.0",
     "eslint": "catalog:",
     "eslint-plugin-jest-dom": "5.10.2",
     "eslint-plugin-react": "7.37.5",
@@ -94,11 +101,19 @@
     "xstate": "5.33.4"
   },
   "peerDependencies": {
+    "@modelcontextprotocol/server": "^2.4.0",
     "@williamthorsen/telefactor": "^0.4.1",
+    "@williamthorsen/toolbelt.acp": "^0.3.0",
     "react": "^19.0.0"
   },
   "peerDependenciesMeta": {
+    "@modelcontextprotocol/server": {
+      "optional": true
+    },
     "@williamthorsen/telefactor": {
+      "optional": true
+    },
+    "@williamthorsen/toolbelt.acp": {
       "optional": true
     },
     "react": {
