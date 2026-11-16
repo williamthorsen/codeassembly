@@ -24,7 +24,9 @@ export type ConversionOutcome =
 export interface ConversionClient {
   /** Cancels a conversion; a conversion that had already ended is reported with its ended state. */
   cancel(id: string): Promise<ConversionOutcome>;
+  /** Returns the conversion's current state. */
   read(id: string): Promise<ConversionOutcome>;
+  /** Starts a conversion and returns its `running` state. */
   start(request: StartConversionRequest): Promise<ConversionOutcome>;
   /**
    * Reads the conversion every `intervalMs` (2 s by default) and yields each outcome, stopping after an ended state or
