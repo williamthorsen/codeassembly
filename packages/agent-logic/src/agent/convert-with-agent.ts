@@ -51,7 +51,8 @@ export type ConversionEvent =
  *
  * Rejects before the agent starts when the profile cannot identify calls of the conversion's tools, which
  * `codexProfile` cannot; when the agent ends its turn without submitting a draft; with the signal's reason when the
- * signal aborts; and, when the agent fails, with an error that names the cause, such as a harness that is not signed in.
+ * signal aborts; and, when the agent fails, with an error that names the cause, such as a harness that is not signed
+ * in.
  *
  * @stage proposed
  * @experimental
