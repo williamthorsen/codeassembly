@@ -3,9 +3,10 @@ import { parseArgs } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
-import { checkCoverage, describeBlock } from '../coverage-map/check-coverage.ts';
+import { checkCoverage } from '../coverage-map/check-coverage.ts';
 import { coverageMapSchema } from '../coverage-map/coverage-map-schema.ts';
-import { readPackageVersion } from './find-package-root.ts';
+import { formatCoverageResult } from '../coverage-map/format-coverage-result.ts';
+import { readPackageVersion } from '../package-files/find-package-root.ts';
 import type { CommandOutput } from './run.ts';
 
 const PROGRAM = 'agent-logic check-coverage';
@@ -100,14 +101,9 @@ function runCli(args: readonly string[], stdout: string[], stderr: string[]): nu
     return 1;
   }
 
-  const { unmapped, quoteProblems } = checkCoverage(prompt, map.data);
-  for (const { index, quote, occurrences } of quoteProblems) {
-    stdout.push(`map[${index}]: ${JSON.stringify(quote)} occurs ${occurrences} times\n`);
-  }
-  for (const block of unmapped) {
-    stdout.push(`line ${block.line}: ${describeBlock(prompt, block)}\n`);
-  }
-  if (unmapped.length > 0 || quoteProblems.length > 0) return 1;
+  const lines = formatCoverageResult(prompt, checkCoverage(prompt, map.data));
+  for (const line of lines) stdout.push(`${line}\n`);
+  if (lines.length > 0) return 1;
 
   stdout.push(`${PROGRAM}: every block is mapped\n`);
   return 0;

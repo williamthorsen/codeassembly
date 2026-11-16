@@ -6,39 +6,44 @@ import { describe, expect, it } from 'vitest';
 import { run } from '../run.ts';
 
 describe(run, () => {
-  it.each([[[]], [['--help']], [['-h']]])('prints usage naming every command and exits 0 for %j', (argv) => {
-    const output = run(argv);
+  it.each([[[]], [['--help']], [['-h']]])('prints usage naming every command and exits 0 for %j', async (argv) => {
+    const output = await run(argv);
 
     expect(output.exitCode).toBe(0);
-    expect(output.stdout).toMatch(/convert[\s\S]*check-coverage[\s\S]*rules/);
+    expect(output.stdout).toMatch(/convert[\s\S]*convert-with-agent[\s\S]*check-coverage[\s\S]*rules/);
     expect(output.stderr).toBe('');
   });
 
-  it("prints the package's version for --version", () => {
-    expect(run(['--version']).stdout).toBe(`${MANIFEST_VERSION}\n`);
+  it("prints the package's version for --version", async () => {
+    expect((await run(['--version'])).stdout).toBe(`${MANIFEST_VERSION}\n`);
   });
 
-  it('names an unknown command and exits 2', () => {
-    const output = run(['chart']);
+  it('names an unknown command and exits 2', async () => {
+    const output = await run(['chart']);
 
     expect(output.exitCode).toBe(2);
     expect(output.stderr).toContain('unknown command: chart');
     expect(output.stdout).toBe('');
   });
 
-  it.each([['convert'], ['check-coverage'], ['rules']])('dispatches --help to %s', (command) => {
-    const output = run([command, '--help']);
+  it.each([['convert'], ['convert-with-agent'], ['check-coverage'], ['rules']])(
+    'dispatches --help to %s',
+    async (command) => {
+      const output = await run([command, '--help']);
 
-    expect(output.exitCode).toBe(0);
-    expect(output.stdout).toContain(`Usage: agent-logic ${command}`);
+      expect(output.exitCode).toBe(0);
+      expect(output.stdout).toContain(`Usage: agent-logic ${command}`);
+    },
+  );
+
+  it('prints the extraction rules that the package ships for rules', async () => {
+    expect((await run(['rules'])).stdout).toBe(
+      readFileSync(path.join(PACKAGE_ROOT, 'docs/extraction-rules.md'), 'utf8'),
+    );
   });
 
-  it('prints the extraction rules that the package ships for rules', () => {
-    expect(run(['rules']).stdout).toBe(readFileSync(path.join(PACKAGE_ROOT, 'docs/extraction-rules.md'), 'utf8'));
-  });
-
-  it('rejects an argument to rules and exits 2', () => {
-    const output = run(['rules', 'extra']);
+  it('rejects an argument to rules and exits 2', async () => {
+    const output = await run(['rules', 'extra']);
 
     expect(output.exitCode).toBe(2);
     expect(output.stderr).toContain('expected no arguments');
