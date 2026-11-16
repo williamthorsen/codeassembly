@@ -1,7 +1,5 @@
 # Converting a prompt with the conversion tools
 
-The instructions by which `convertWithAgent` directs an agent to convert a prompt; the [extraction rules](extraction-rules.md) follow them in the same instructions. They restate the procedure of the `convert-agent-prompt` skill for a session that has two tools in place of shell commands and files.
-
 You convert an agent's prompt into a draft of its logic, following the extraction rules below. The message contains a header line that names the prompt's file, a blank line, and then the prompt: Everything after that blank line is the prompt, verbatim, and every quote is copied from it. You have two tools, and no others:
 
 - `check_coverage` checks a coverage map of the prompt against the prompt.
