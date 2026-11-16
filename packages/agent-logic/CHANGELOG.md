@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.3.0 — 2026-11-16
+
+### 🎉 Features
+
+- Adds the `codeassembly-agent-logic/agent` entry, whose `convertWithAgent` converts a prompt by directing an Agent Client Protocol (ACP) agent that can call only the `check_coverage` and `submit_draft` tools, and yields an event for each coverage check and draft submission, then a `result` event that contains the outcome of the last submission. (#2283)
+- Adds the `agent-logic convert-with-agent --agent <profile> <prompt-file> [output-file]` command, which reports each coverage check and draft submission on stderr, writes the config only when it is valid, and exits 130 without writing any output file when Ctrl+C stops the conversion. (#2283)
+- Adds `createConversionHandler` to `codeassembly-agent-logic/server`, a Fetch handler that starts, reads, and cancels conversions on an ACP agent under a base path, together with the `ConversionStore` interface and `createMemoryConversionStore`, which keeps conversions in process memory and drops each ended one after a retention period, one hour by default. (#2285)
+- Adds the `codeassembly-agent-logic/client` entry, whose browser-safe `createConversionClient` starts, reads, cancels, and watches conversions on the routes that `createConversionHandler` serves, so that a page can resume a conversion by its id after a reload. (#2285)
+
+### 🪦 Removed
+
+- 🚨 **Breaking:** Removes the telefactor-backed conversion path from `codeassembly-agent-logic`: the `./contract` entry, the `createViewerServerPlugins`, `createPromptsApp`, prompt-directory, and viewer-contract exports of `./server`, and the `useAgentBridge`, `useAgentSync`, `useConversion`, `useHarnessList`, and `usePromptDirectory` hooks of `./react`, together with the `@williamthorsen/telefactor` peer dependency. (#2286)
+
+### 🧪 Tests
+
+- Replaces the `vi.waitFor` polls in `conversion-job-implementation.tool.test.ts` and `create-viewer-server-plugins.dev-server.tool.test.ts` with waits that end when the job ends, which only each test's own timeout limits, so that a slow fake-harness start no longer fails either test on a 1 s or 10 s limit. (#2277)
+
+### ⚙️ Tooling
+
+- Upgrade the lint and TypeScript config packages (#2280)
+
+  Upgrades `@williamthorsen/eslint-config-typescript` to 22.0.0, `@williamthorsen/strict-lint` to 15.0.0, and `@williamthorsen/tsconfig` to 0.13.0, and removes the TypeScript import resolver and its `eslint-import-resolver-typescript` dev dependency from the root lint setup.
+
 ## 0.2.1 — 2026-11-12
 
 ### Notes

@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.21.0 — 2026-11-16
+
+### 🎉 Features
+
+- Publishes a JSON Schema for every tier of the declaration (`codeassembly.yaml` and its `.local` override, in the project and in the home directory) as `codeassembly/schemas/codeassembly.v1.json`, with an `$id` that names the release on unpkg, though it does not check three rules that only `sync` enforces, which [Schema](docs/project-declaration.md#schema) lists. (#2273)
+- Makes `codeassembly init` and `codeassembly init --global` start the scaffolded `codeassembly.yaml` with a `yaml-language-server` modeline that names the schema of the running release. (#2273)
+- Adds the `--growth-ceiling-kib <n>` option to `codeassembly sync` and the `CODEASSEMBLY_GROWTH_CEILING_KIB` environment variable, which replace the fixed 5 KiB growth ceiling with a positive whole number of KiB, and the sync rejects any other value before it writes anything. (#2275)
+
+### ⚙️ Tooling
+
+- Upgrade the lint and TypeScript config packages (#2280)
+
+  Upgrades `@williamthorsen/eslint-config-typescript` to 22.0.0, `@williamthorsen/strict-lint` to 15.0.0, and `@williamthorsen/tsconfig` to 0.13.0, and removes the TypeScript import resolver and its `eslint-import-resolver-typescript` dev dependency from the root lint setup.
+
 ## 0.20.2 — 2026-11-12
 
 ### 📚 Documentation

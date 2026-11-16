@@ -1,5 +1,72 @@
 [
   {
+    "version": "0.3.0",
+    "date": "2026-11-16",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds the `codeassembly-agent-logic/agent` entry, whose `convertWithAgent` converts a prompt by directing an Agent Client Protocol (ACP) agent that can call only the `check_coverage` and `submit_draft` tools, and yields an event for each coverage check and draft submission, then a `result` event that contains the outcome of the last submission. (#2283)",
+            "hash": "37b7b1d22998e613e187200135f6c3f51a83ef3f",
+            "entry": 1
+          },
+          {
+            "description": "Adds the `agent-logic convert-with-agent --agent <profile> <prompt-file> [output-file]` command, which reports each coverage check and draft submission on stderr, writes the config only when it is valid, and exits 130 without writing any output file when Ctrl+C stops the conversion. (#2283)",
+            "hash": "37b7b1d22998e613e187200135f6c3f51a83ef3f",
+            "entry": 2
+          },
+          {
+            "description": "Adds `createConversionHandler` to `codeassembly-agent-logic/server`, a Fetch handler that starts, reads, and cancels conversions on an ACP agent under a base path, together with the `ConversionStore` interface and `createMemoryConversionStore`, which keeps conversions in process memory and drops each ended one after a retention period, one hour by default. (#2285)",
+            "hash": "2529cac0cf94ffc7298d50ccf4dd90b0b48e8b42",
+            "entry": 1
+          },
+          {
+            "description": "Adds the `codeassembly-agent-logic/client` entry, whose browser-safe `createConversionClient` starts, reads, cancels, and watches conversions on the routes that `createConversionHandler` serves, so that a page can resume a conversion by its id after a reload. (#2285)",
+            "hash": "2529cac0cf94ffc7298d50ccf4dd90b0b48e8b42",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "🪦 Removed",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Removes the telefactor-backed conversion path from `codeassembly-agent-logic`: the `./contract` entry, the `createViewerServerPlugins`, `createPromptsApp`, prompt-directory, and viewer-contract exports of `./server`, and the `useAgentBridge`, `useAgentSync`, `useConversion`, `useHarnessList`, and `usePromptDirectory` hooks of `./react`, together with the `@williamthorsen/telefactor` peer dependency. (#2286)",
+            "breaking": true,
+            "migration": "Serve conversions with `createConversionHandler` from `codeassembly-agent-logic/server` and call them from the browser with `createConversionClient` from `codeassembly-agent-logic/client`, then remove `@williamthorsen/telefactor`; the handler runs conversions on an ACP agent and needs the `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers, and the package no longer provides a replacement that serves a prompts directory.",
+            "hash": "9acb9605722bab87149159de3afc0d8ea580b984",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "🧪 Tests",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Replaces the `vi.waitFor` polls in `conversion-job-implementation.tool.test.ts` and `create-viewer-server-plugins.dev-server.tool.test.ts` with waits that end when the job ends, which only each test's own timeout limits, so that a slow fake-harness start no longer fails either test on a 1 s or 10 s limit. (#2277)",
+            "hash": "a5ab31fe194e633d9e665a7b51184a40ff6a71e7",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Upgrade the lint and TypeScript config packages (#2280)",
+            "body": "Upgrades `@williamthorsen/eslint-config-typescript` to 22.0.0, `@williamthorsen/strict-lint` to 15.0.0, and `@williamthorsen/tsconfig` to 0.13.0, and removes the TypeScript import resolver and its `eslint-import-resolver-typescript` dev dependency from the root lint setup.",
+            "hash": "a68dff407958bbc82b969e0edfdd58cfde9d861e"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.2.1",
     "date": "2026-11-12",
     "sections": [{ "title": "Notes", "audience": "dev", "items": [{ "description": "Forced version bump." }] }]

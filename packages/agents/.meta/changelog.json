@@ -1,5 +1,43 @@
 [
   {
+    "version": "0.21.0",
+    "date": "2026-11-16",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Publishes a JSON Schema for every tier of the declaration (`codeassembly.yaml` and its `.local` override, in the project and in the home directory) as `codeassembly/schemas/codeassembly.v1.json`, with an `$id` that names the release on unpkg, though it does not check three rules that only `sync` enforces, which [Schema](docs/project-declaration.md#schema) lists. (#2273)",
+            "hash": "59170d29a4cda786a91c1f6e0e3fa202bb833d53",
+            "entry": 1
+          },
+          {
+            "description": "Makes `codeassembly init` and `codeassembly init --global` start the scaffolded `codeassembly.yaml` with a `yaml-language-server` modeline that names the schema of the running release. (#2273)",
+            "hash": "59170d29a4cda786a91c1f6e0e3fa202bb833d53",
+            "entry": 2
+          },
+          {
+            "description": "Adds the `--growth-ceiling-kib <n>` option to `codeassembly sync` and the `CODEASSEMBLY_GROWTH_CEILING_KIB` environment variable, which replace the fixed 5 KiB growth ceiling with a positive whole number of KiB, and the sync rejects any other value before it writes anything. (#2275)",
+            "hash": "0cc1cd93013ac5df85f29df73d7d6932846a5bb9",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "⚙️ Tooling",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Upgrade the lint and TypeScript config packages (#2280)",
+            "body": "Upgrades `@williamthorsen/eslint-config-typescript` to 22.0.0, `@williamthorsen/strict-lint` to 15.0.0, and `@williamthorsen/tsconfig` to 0.13.0, and removes the TypeScript import resolver and its `eslint-import-resolver-typescript` dev dependency from the root lint setup.",
+            "hash": "a68dff407958bbc82b969e0edfdd58cfde9d861e"
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.20.2",
     "date": "2026-11-12",
     "sections": [
