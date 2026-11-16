@@ -37,9 +37,6 @@ Example:
   ${PROGRAM} prompts/refund-request.md "$TMPDIR/draft.json" prompts/refund-request.agent-logic.json
 `;
 
-/** The shape of the problems file that `--problems-file` writes for a draft that cannot be converted. */
-export const problemsFileSchema = z.object({ problems: z.array(z.object({ path: z.string(), message: z.string() })) });
-
 /** Runs `agent-logic convert`: converts a draft of a prompt's logic into a config and writes it. */
 export function runConvertCommand(args: readonly string[]): CommandOutput {
   const stdout: string[] = [];
@@ -47,6 +44,9 @@ export function runConvertCommand(args: readonly string[]): CommandOutput {
   const exitCode = runCli(args, stdout, stderr);
   return { exitCode, stderr: stderr.join(''), stdout: stdout.join('') };
 }
+
+/** The shape of the problems file that `--problems-file` writes for a draft that cannot be converted. */
+export const problemsFileSchema = z.object({ problems: z.array(z.object({ path: z.string(), message: z.string() })) });
 
 // region | Helpers
 /** Reads the arguments, does the work, and returns the exit code, collecting what it writes. */
