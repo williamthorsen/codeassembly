@@ -2,6 +2,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
+import { z } from 'zod';
 
 import { convertPrompt } from '../convert/convert-prompt.ts';
 import { readPackageVersion } from '../package-files/find-package-root.ts';
@@ -35,6 +36,9 @@ Exit codes:
 Example:
   ${PROGRAM} prompts/refund-request.md "$TMPDIR/draft.json" prompts/refund-request.agent-logic.json
 `;
+
+/** The shape of the problems file that `--problems-file` writes for a draft that cannot be converted. */
+export const problemsFileSchema = z.object({ problems: z.array(z.object({ path: z.string(), message: z.string() })) });
 
 /** Runs `agent-logic convert`: converts a draft of a prompt's logic into a config and writes it. */
 export function runConvertCommand(args: readonly string[]): CommandOutput {

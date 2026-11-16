@@ -11,11 +11,6 @@ export function describeLoaded(source: string, config: AgentLogicConfig): string
   return [`${source} loaded.`, ...countListed(config)].join(' ');
 }
 
-/** Returns the announcement of a chart that the agent loaded, with the same counts as `describeLoaded`. */
-export function describeLoadedByAgent(source: string, config: AgentLogicConfig): string {
-  return [`Agent loaded ${source}.`, ...countListed(config)].join(' ');
-}
-
 /** Returns the announcement of a failed load: its problem, or the count of its problems. */
 export function describeNotLoaded(source: string, problems: Problem[]): string {
   const [first, second] = problems;

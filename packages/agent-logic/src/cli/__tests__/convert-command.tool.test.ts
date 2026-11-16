@@ -6,8 +6,8 @@ import path from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { problemsFileSchema } from '../../contract/conversion-job.ts';
 import { outOfScopeSchema } from '../../convert/draft-schema.ts';
+import { problemsFileSchema } from '../convert-command.ts';
 
 const BIN_ENTRY = path.join(import.meta.dirname, '../index.ts');
 const PROMPT = 'Greet the user. Then finish.';
