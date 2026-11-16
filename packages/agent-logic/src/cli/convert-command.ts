@@ -2,6 +2,7 @@ import { readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 
 import { describeError } from '@williamthorsen/toolbelt.errors';
+import { z } from 'zod';
 
 import { convertPrompt } from '../convert/convert-prompt.ts';
 import { readPackageVersion } from '../package-files/find-package-root.ts';
@@ -43,6 +44,9 @@ export function runConvertCommand(args: readonly string[]): CommandOutput {
   const exitCode = runCli(args, stdout, stderr);
   return { exitCode, stderr: stderr.join(''), stdout: stdout.join('') };
 }
+
+/** The shape of the problems file that `--problems-file` writes for a draft that cannot be converted. */
+export const problemsFileSchema = z.object({ problems: z.array(z.object({ path: z.string(), message: z.string() })) });
 
 // region | Helpers
 /** Reads the arguments, does the work, and returns the exit code, collecting what it writes. */

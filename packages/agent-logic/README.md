@@ -22,18 +22,17 @@ if (result.ok) {
 
 ## Entries
 
-| Entry                                              | Exports                                                                                                                                                                                                                          |
-| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples.                                            |
-| `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                                                                    |
-| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.                                                                                         |
-| `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                                                           |
-| `codeassembly-agent-logic/server`                  | `createConversionHandler`, which serves conversions on an ACP agent, its stores, and `createViewerServerPlugins`, the Vite plugins that serve the prompts directory and run conversions through a harness that telefactor hosts. |
-| `codeassembly-agent-logic/client`                  | `createConversionClient`, the browser client of the routes that `createConversionHandler` serves.                                                                                                                                |
-| `codeassembly-agent-logic/contract`                | The contracts between a page and its server: the viewer contract, the conversion job, and the built-in harnesses.                                                                                                                |
-| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                                                                        |
+| Entry                                              | Exports                                                                                                                                                                               |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples. |
+| `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                         |
+| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.                                              |
+| `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                |
+| `codeassembly-agent-logic/server`                  | `createConversionHandler`, which serves conversions on an ACP agent, and its stores.                                                                                                  |
+| `codeassembly-agent-logic/client`                  | `createConversionClient`, the browser client of the routes that `createConversionHandler` serves.                                                                                     |
+| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                             |
 
-React 19 is a peer of `./react`, `@williamthorsen/telefactor` a peer of `./server` and `./contract`, and `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent` and `./server`.
+React 19 is a peer of `./react`, and `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent` and `./server`.
 
 ## Converting on an ACP agent
 
