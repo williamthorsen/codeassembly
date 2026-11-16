@@ -4,6 +4,7 @@ import path from 'node:path';
 import { findPackageRoot, readPackageVersion } from '../package-files/find-package-root.ts';
 import { runCheckCoverageCommand } from './check-coverage-command.ts';
 import { runConvertCommand } from './convert-command.ts';
+import { runConvertWithAgentCommand } from './convert-with-agent-command.ts';
 
 /** What a CLI invocation writes to each stream and the code with which it exits. */
 export interface CommandOutput {
@@ -15,9 +16,10 @@ export interface CommandOutput {
 const USAGE = `Usage: agent-logic <command> [arguments]
 
 Commands:
-  convert         convert a draft of a prompt's logic into an agent-logic config
-  check-coverage  check a coverage map of a prompt against the prompt
-  rules           print the extraction rules by which a model drafts a prompt's logic
+  convert             convert a draft of a prompt's logic into an agent-logic config
+  convert-with-agent  convert a prompt into an agent-logic config on an ACP agent
+  check-coverage      check a coverage map of a prompt against the prompt
+  rules               print the extraction rules by which a model drafts a prompt's logic
 
 Run agent-logic <command> --help for a command's arguments and options.
 
@@ -27,7 +29,7 @@ Options:
 `;
 
 /** Dispatches the bin's arguments to a command and returns its output without touching the process. */
-export function run(argv: readonly string[]): CommandOutput {
+export async function run(argv: readonly string[]): Promise<CommandOutput> {
   const [command, ...args] = argv;
   switch (command) {
     case undefined:
@@ -41,6 +43,8 @@ export function run(argv: readonly string[]): CommandOutput {
       return runCheckCoverageCommand(args);
     case 'convert':
       return runConvertCommand(args);
+    case 'convert-with-agent':
+      return runConvertWithAgentCommand(args);
     case 'rules':
       return runRulesCommand(args);
     default:
