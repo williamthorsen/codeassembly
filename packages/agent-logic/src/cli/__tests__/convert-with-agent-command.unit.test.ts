@@ -130,7 +130,11 @@ describe(runConvertWithAgentCommand, () => {
 
   it('reports a rejected run and exits 2', async () => {
     const output = await runConvertWithAgentCommand(['--agent', 'codex', promptFile], {
-      convert: () => rejectWith(new Error('The agent cannot convert a prompt.')),
+      convert: async function* () {
+        await Promise.resolve();
+        yield* [];
+        throw new Error('The agent cannot convert a prompt.');
+      },
       writeProgress: ignoreProgress,
     });
 
@@ -164,10 +168,4 @@ function failIfCalled(): AsyncGenerator<ConversionEvent> {
 /** Discards a progress line. */
 function ignoreProgress(): void {}
 
-/** Returns a conversion that rejects with `error` on its first step. */
-async function* rejectWith(error: Error): AsyncGenerator<ConversionEvent> {
-  await Promise.resolve();
-  yield* [];
-  throw error;
-}
 // endregion | Helpers

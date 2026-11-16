@@ -111,7 +111,10 @@ async function loadAgent(
   return { agent, convert: convert ?? (await import('../agent/convert-with-agent.ts')).convertWithAgent };
 }
 
-/** Writes the config of a successful result, or reports the problems or the out-of-scope verdict; returns the exit code. */
+/**
+ * Writes the config of a successful result, or reports the problems or the out-of-scope verdict; returns the exit
+ * code.
+ */
 function reportResult(result: ConvertResult, outputFile: string, stdout: string[], stderr: string[]): number {
   if ('outOfScope' in result) {
     stderr.push(`${PROGRAM}: the prompt is out of scope: ${result.outOfScope.reason}\n`);
