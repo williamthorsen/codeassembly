@@ -6,7 +6,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import { checkCoverage } from '../coverage-map/check-coverage.ts';
 import { coverageMapSchema } from '../coverage-map/coverage-map-schema.ts';
 import { formatCoverageResult } from '../coverage-map/format-coverage-result.ts';
-import { readPackageVersion } from './find-package-root.ts';
+import { readPackageVersion } from '../package-files/find-package-root.ts';
 import type { CommandOutput } from './run.ts';
 
 const PROGRAM = 'agent-logic check-coverage';

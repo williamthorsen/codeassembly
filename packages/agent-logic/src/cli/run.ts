@@ -1,9 +1,9 @@
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 
+import { findPackageRoot, readPackageVersion } from '../package-files/find-package-root.ts';
 import { runCheckCoverageCommand } from './check-coverage-command.ts';
 import { runConvertCommand } from './convert-command.ts';
-import { findPackageRoot, readPackageVersion } from './find-package-root.ts';
 
 /** What a CLI invocation writes to each stream and the code with which it exits. */
 export interface CommandOutput {

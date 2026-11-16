@@ -4,7 +4,7 @@ import { parseArgs } from 'node:util';
 import { describeError } from '@williamthorsen/toolbelt.errors';
 
 import { convertPrompt } from '../convert/convert-prompt.ts';
-import { readPackageVersion } from './find-package-root.ts';
+import { readPackageVersion } from '../package-files/find-package-root.ts';
 import type { CommandOutput } from './run.ts';
 
 const PROGRAM = 'agent-logic convert';
