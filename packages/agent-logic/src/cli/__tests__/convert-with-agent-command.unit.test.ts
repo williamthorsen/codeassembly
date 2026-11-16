@@ -128,6 +128,24 @@ describe(runConvertWithAgentCommand, () => {
     expect(output.stderr).toBe('agent-logic convert-with-agent: the prompt is out of scope: No steps.\n');
   });
 
+  it('aborts the conversion on SIGINT, writes nothing, and exits 130', async () => {
+    const listenersBefore = process.listenerCount('SIGINT');
+    const output = await runConvertWithAgentCommand(['--agent', 'claude-code', promptFile], {
+      convert: async function* ({ signal }) {
+        // The command's own SIGINT listener receives the emitted signal, so the test process keeps running.
+        process.emit('SIGINT');
+        await Promise.resolve();
+        yield* [];
+        signal?.throwIfAborted();
+      },
+      writeProgress: ignoreProgress,
+    });
+
+    expect(output.exitCode).toBe(130);
+    expect(output.stderr).toBe('agent-logic convert-with-agent: interrupted; wrote nothing\n');
+    expect(process.listenerCount('SIGINT')).toBe(listenersBefore);
+  });
+
   it('reports a rejected run and exits 2', async () => {
     const output = await runConvertWithAgentCommand(['--agent', 'codex', promptFile], {
       convert: async function* () {

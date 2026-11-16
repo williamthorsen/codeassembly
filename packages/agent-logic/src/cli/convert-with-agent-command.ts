@@ -16,6 +16,9 @@ const AGENT_NAMES = ['antigravity', 'claude-code', 'codex'] as const;
 
 type AgentName = (typeof AGENT_NAMES)[number];
 
+/** The exit code of a run that `SIGINT` interrupted: 128 plus the signal's number, as shells report it. */
+const INTERRUPTED_EXIT_CODE = 130;
+
 const HELP = `Converts an agent prompt into an agent-logic config by directing an ACP agent through the conversion.
 
 Usage: ${PROGRAM} [options] <prompt-file> [output-file]
@@ -35,10 +38,11 @@ The command needs the optional peers @williamthorsen/toolbelt.acp and
 It reports each coverage check and draft submission on stderr as it happens.
 
 Exit codes:
-  0  the config was written
-  1  the agent's last draft has problems, which are listed
-  2  the arguments or files are wrong, or the run failed
-  3  the agent reports the prompt out of scope
+  0    the config was written
+  1    the agent's last draft has problems, which are listed
+  2    the arguments or files are wrong, or the run failed
+  3    the agent reports the prompt out of scope
+  130  the run was interrupted, and the conversion stopped its agent
 
 Example:
   ${PROGRAM} --agent claude-code prompts/refund-request.md
@@ -192,28 +196,52 @@ async function runCli(
     return 2;
   }
 
+  const result = await runConversion({ agentName, prompt, name: path.basename(promptFile) }, dependencies, stderr);
+  return typeof result === 'number' ? result : reportResult(result, outputFile, stdout, stderr);
+}
+
+/**
+ * Runs the conversion, reporting each event as progress, and returns its result or, when it fails, the exit code.
+ * `SIGINT` aborts the run, so that the conversion removes its temporary directory before the process exits.
+ */
+async function runConversion(
+  { agentName, prompt, name }: { agentName: AgentName; prompt: string; name: string },
+  dependencies: ConvertWithAgentCommandDependencies,
+  stderr: string[],
+): Promise<ConvertResult | number> {
   const writeProgress =
     dependencies.writeProgress ??
     ((line: string) => {
       process.stderr.write(`${line}\n`);
     });
+  const controller = new AbortController();
+  function interrupt(): void {
+    controller.abort(new Error('Interrupted.'));
+  }
+  process.once('SIGINT', interrupt);
   let result: ConvertResult | undefined;
   try {
     const { agent, convert } = await loadAgent(agentName, dependencies.convert);
-    const events = convert({ prompt, name: path.basename(promptFile), agent });
+    const events = convert({ prompt, name, agent, signal: controller.signal });
     for await (const event of events) {
       const line = describeEvent(event);
       if (line !== undefined) writeProgress(`${PROGRAM}: ${line}`);
       if (event.type === 'result') result = event.result;
     }
   } catch (error) {
+    if (controller.signal.aborted) {
+      stderr.push(`${PROGRAM}: interrupted; wrote nothing\n`);
+      return INTERRUPTED_EXIT_CODE;
+    }
     stderr.push(`${PROGRAM}: ${describeError(error)}\n`);
     return 2;
+  } finally {
+    process.off('SIGINT', interrupt);
   }
   if (result === undefined) {
     stderr.push(`${PROGRAM}: the conversion ended without a result\n`);
     return 2;
   }
-  return reportResult(result, outputFile, stdout, stderr);
+  return result;
 }
 // endregion | Helpers
