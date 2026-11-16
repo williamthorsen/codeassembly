@@ -37,10 +37,6 @@
       "types": "./dist/esm/client/index.d.ts",
       "import": "./dist/esm/client/index.js"
     },
-    "./contract": {
-      "types": "./dist/esm/contract/index.d.ts",
-      "import": "./dist/esm/contract/index.js"
-    },
     "./react": {
       "types": "./dist/esm/react/index.d.ts",
       "import": "./dist/esm/react/index.js"
@@ -71,11 +67,9 @@
     "score-corpus": "node src/corpus/score-corpus-command.ts"
   },
   "dependencies": {
-    "@hono/node-server": "2.1.8",
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@xyflow/react": "12.12.1",
     "elkjs": "0.12.1",
-    "hono": "4.13.18",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -90,7 +84,6 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.3.0",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/telefactor": "0.4.1",
     "@williamthorsen/toolbelt.acp": "0.3.0",
     "eslint": "catalog:",
     "eslint-plugin-jest-dom": "5.10.2",
@@ -106,15 +99,11 @@
   },
   "peerDependencies": {
     "@modelcontextprotocol/server": "^2.4.0",
-    "@williamthorsen/telefactor": "^0.4.1",
     "@williamthorsen/toolbelt.acp": "^0.3.0",
     "react": "^19.0.0"
   },
   "peerDependenciesMeta": {
     "@modelcontextprotocol/server": {
-      "optional": true
-    },
-    "@williamthorsen/telefactor": {
       "optional": true
     },
     "@williamthorsen/toolbelt.acp": {
