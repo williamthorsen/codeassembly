@@ -22,17 +22,18 @@ if (result.ok) {
 
 ## Entries
 
-| Entry                                              | Exports                                                                                                                                                                               |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples. |
-| `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                         |
-| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.                                              |
-| `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                |
-| `codeassembly-agent-logic/server`                  | `createViewerServerPlugins`, the Vite plugins that serve the prompts directory and run conversions through a harness that telefactor hosts.                                           |
-| `codeassembly-agent-logic/contract`                | The contracts between a page and its server: the viewer contract, the conversion job, and the built-in harnesses.                                                                     |
-| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                             |
+| Entry                                              | Exports                                                                                                                                                                                                                          |
+| -------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples.                                            |
+| `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                                                                    |
+| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.                                                                                         |
+| `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                                                           |
+| `codeassembly-agent-logic/server`                  | `createConversionHandler`, which serves conversions on an ACP agent, its stores, and `createViewerServerPlugins`, the Vite plugins that serve the prompts directory and run conversions through a harness that telefactor hosts. |
+| `codeassembly-agent-logic/client`                  | `createConversionClient`, the browser client of the routes that `createConversionHandler` serves.                                                                                                                                |
+| `codeassembly-agent-logic/contract`                | The contracts between a page and its server: the viewer contract, the conversion job, and the built-in harnesses.                                                                                                                |
+| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                                                                        |
 
-React 19 is a peer of `./react`, `@williamthorsen/telefactor` a peer of `./server` and `./contract`, and `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent`.
+React 19 is a peer of `./react`, `@williamthorsen/telefactor` a peer of `./server` and `./contract`, and `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent` and `./server`.
 
 ## Converting on an ACP agent
 
@@ -55,9 +56,41 @@ The agent's harness must be installed and signed in. Each profile signs in as fo
 | `antigravityProfile` | The CLI's personal Google login                                                                               |
 | `codexProfile`       | Not supported: The profile cannot identify calls of the conversion's tools, so `convertWithAgent` rejects it. |
 
+## Serving conversions
+
+```ts
+import { createConversionHandler, createMemoryConversionStore } from 'codeassembly-agent-logic/server';
+import { claudeCodeProfile } from '@williamthorsen/toolbelt.acp/proposed';
+
+const handleConversion = createConversionHandler({
+  agent: claudeCodeProfile(),
+  store: createMemoryConversionStore(),
+  authorize: (request) => isSignedIn(request),
+  timeoutMs: 10 * 60_000,
+  basePath: '/api/conversions',
+});
+```
+
+```ts
+import { createConversionClient } from 'codeassembly-agent-logic/client';
+
+const client = createConversionClient({ url: '/api/conversions' });
+const started = await client.start({ prompt, name: 'refund-request.md' });
+if (started.ok) {
+  for await (const outcome of client.watch(started.conversion.id)) console.log(outcome);
+}
+```
+
+`createConversionHandler` is a Fetch handler (`Request → Response`) that starts a conversion with `POST {basePath}`, reads it with `GET {basePath}/{id}`, and cancels it with `DELETE {basePath}/{id}`, running each one through `convertWithAgent`. A page that reloads resumes by calling `watch` with the id that it kept. The doc comments of `createConversionHandler` and `ConversionClient` state the status codes and the edge cases. The host supplies:
+
+- Mounting: The host's server passes each request under `basePath` to the handler.
+- Authorization: `authorize` decides whether the handler serves a request.
+- Store: `createMemoryConversionStore` keeps conversions in one process and drops each ended one after an hour; a durable store implements `ConversionStore`.
+- Timeout: `timeoutMs` bounds each conversion, after which it fails.
+
 ## What the app supplies
 
-The package draws the chart; the page around it is the app's. The app renders the load controls, the inspector, the source pane, and the terminal in its own design system, and it renders the canvas's key: `StatechartCanvas` passes the marks that the chart draws to its `renderKey` prop, and `CANVAS_KEY_ENTRIES` gives each mark's name, gloss, and drawing. The app also supplies the conversion server's URL to `createConversionClient`.
+The package draws the chart; the page around it is the app's. The app renders the load controls, the inspector, the source pane, and the terminal in its own design system, and it renders the canvas's key: `StatechartCanvas` passes the marks that the chart draws to its `renderKey` prop, and `CANVAS_KEY_ENTRIES` gives each mark's name, gloss, and drawing. The app also supplies the URL of the conversions resource to `./client`'s `createConversionClient`.
 
 ## Styling and theming
 

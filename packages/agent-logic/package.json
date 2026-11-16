@@ -33,6 +33,10 @@
       "import": "./dist/esm/agent/index.js"
     },
     "./agent-logic.schema.json": "./schema/agent-logic.schema.json",
+    "./client": {
+      "types": "./dist/esm/client/index.d.ts",
+      "import": "./dist/esm/client/index.js"
+    },
     "./contract": {
       "types": "./dist/esm/contract/index.d.ts",
       "import": "./dist/esm/contract/index.js"
