@@ -25,13 +25,35 @@ if (result.ok) {
 | Entry                                              | Exports                                                                                                                                                                               |
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples. |
+| `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                         |
 | `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.                                              |
 | `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                |
 | `codeassembly-agent-logic/server`                  | `createViewerServerPlugins`, the Vite plugins that serve the prompts directory and run conversions through a harness that telefactor hosts.                                           |
 | `codeassembly-agent-logic/contract`                | The contracts between a page and its server: the viewer contract, the conversion job, and the built-in harnesses.                                                                     |
 | `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                             |
 
-React 19 is a peer of `./react`, and `@williamthorsen/telefactor` a peer of `./server` and `./contract`.
+React 19 is a peer of `./react`, `@williamthorsen/telefactor` a peer of `./server` and `./contract`, and `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent`.
+
+## Converting on an ACP agent
+
+```ts
+import { convertWithAgent } from 'codeassembly-agent-logic/agent';
+import { claudeCodeProfile } from '@williamthorsen/toolbelt.acp/proposed';
+
+for await (const event of convertWithAgent({ prompt, name: 'refund-request.md', agent: claudeCodeProfile() })) {
+  if (event.type === 'result') console.log(event.result);
+}
+```
+
+`convertWithAgent` runs the agent through [`@williamthorsen/toolbelt.acp`](https://github.com/williamthorsen/toolbelt/tree/main/packages/acp#readme) in an empty temporary directory and gives it two tools: `check_coverage`, which answers 3 checks of its coverage map, and `submit_draft`, which converts a draft and accepts 5. Every other request of the agent is refused. It yields the agent's message text and each check and submission, then a `result` event whose `ConvertResult` is the outcome of the last submission, with the usage and cost that the agent reports. The agent's instructions are [`docs/agent-instructions.md`](docs/agent-instructions.md) followed by the [extraction rules](docs/extraction-rules.md). The doc comment of `convertWithAgent` states when it rejects.
+
+The agent's harness must be installed and signed in. Each profile signs in as follows:
+
+| Profile              | Signs in with                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `claudeCodeProfile`  | The `claude` CLI's login, or `ANTHROPIC_API_KEY` in the environment                                           |
+| `antigravityProfile` | The CLI's personal Google login                                                                               |
+| `codexProfile`       | Not supported: The profile cannot identify calls of the conversion's tools, so `convertWithAgent` rejects it. |
 
 ## What the app supplies
 
@@ -64,6 +86,7 @@ The properties, whose defaults [`styles.css`](src/react/styles.css) declares:
 pnpm dlx codeassembly-agent-logic rules
 pnpm dlx codeassembly-agent-logic convert prompt.md draft.json prompt.agent-logic.json
 pnpm dlx codeassembly-agent-logic check-coverage prompt.md coverage-map.json
+pnpm dlx --package codeassembly-agent-logic --package @williamthorsen/toolbelt.acp --package @modelcontextprotocol/server agent-logic convert-with-agent --agent claude-code prompt.md
 ```
 
-`rules` prints the [extraction rules](docs/extraction-rules.md) by which a model drafts a prompt's logic; `convert` turns the draft into a config; `check-coverage` checks a map of the prompt's instructions against the prompt. `agent-logic <command> --help` describes each command's arguments. [Conversion agreement](docs/conversion-agreement.md) records how consistently a model converts the same prompt, and the [corpus](docs/corpus.md) measures conversions of real prompts.
+`rules` prints the [extraction rules](docs/extraction-rules.md) by which a model drafts a prompt's logic; `convert` turns the draft into a config; `check-coverage` checks a map of the prompt's instructions against the prompt; `convert-with-agent` converts a prompt on an ACP agent through `convertWithAgent`, which needs the optional peers. `agent-logic <command> --help` describes each command's arguments. [Conversion agreement](docs/conversion-agreement.md) records how consistently a model converts the same prompt, and the [corpus](docs/corpus.md) measures conversions of real prompts.
