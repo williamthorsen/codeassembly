@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import { describeError } from '@williamthorsen/toolbelt.errors';
 import type { core } from 'zod';
 
@@ -58,8 +56,10 @@ export function convertPrompt(prompt: string, draftText: string, promptFileName:
 
 /** Derives the root id from a prompt file's base name: its words in lowercase ASCII, joined by `_`. */
 export function deriveRootId(promptFileName: string): string {
-  const baseName = path.basename(promptFileName, path.extname(promptFileName));
-  const words = baseName.toLowerCase().match(/[a-z0-9]+/g) ?? [];
+  const words =
+    readBaseName(promptFileName)
+      .toLowerCase()
+      .match(/[a-z0-9]+/g) ?? [];
   const id = words.join('_');
   if (id === '') return 'agent';
   return /^[0-9]/.test(id) ? `a_${id}` : id;
@@ -81,7 +81,18 @@ function describeDraftIssue(issue: core.$ZodIssue, parentPath: PropertyKey[]): P
   return [{ path: formatPath(path), message: `${issue.message}.` }];
 }
 
+/** Returns the length of the longest path among the issues, or 0 when there are none. */
 function maxPathLength(issues: core.$ZodIssue[]): number {
   return Math.max(0, ...issues.map((issue) => issue.path.length));
+}
+
+/**
+ * Returns a POSIX path's last segment without its extension: the text from its last `.`, unless that `.` begins the
+ * segment.
+ */
+function readBaseName(filePath: string): string {
+  const segment = filePath.replace(/\/+$/, '').split('/').at(-1) ?? '';
+  const dot = segment.lastIndexOf('.');
+  return dot > 0 ? segment.slice(0, dot) : segment;
 }
 // endregion | Helpers

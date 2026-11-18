@@ -145,6 +145,13 @@ describe(deriveRootId, () => {
     ['prompts/refund-request.md', 'refund_request'],
     ['2024 Agent.txt', 'a_2024_agent'],
     ['---.md', 'agent'],
+    ['dir/notes.v2.md', 'notes_v2'],
+    ['README', 'readme'],
+    ['.md', 'md'],
+    ['draft.', 'draft'],
+    ['prompts/', 'prompts'],
+    ['a//b.md/', 'b'],
+    ['', 'agent'],
   ])('derives the root id of %j', (fileName, id) => {
     expect(deriveRootId(fileName)).toBe(id);
   });

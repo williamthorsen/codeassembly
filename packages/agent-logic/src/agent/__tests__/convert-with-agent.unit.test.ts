@@ -8,10 +8,10 @@ import {
 } from '@williamthorsen/toolbelt.acp/proposed';
 import { describe, expect, it } from 'vitest';
 
+import { MAX_SUBMISSIONS } from '../../conversion-session/create-conversion-session.ts';
+import { GREETER_DRAFT, GREETER_MAP, GREETER_PROMPT, MISQUOTED_GREETER_DRAFT } from '../../test-utils/greeter-draft.ts';
 import { type ConversionEvent, createConvertWithAgent } from '../convert-with-agent.ts';
-import { MAX_SUBMISSIONS } from '../create-conversion-session.ts';
 import { type AgentScript, createFakeRunPrompt } from '../test-utils/create-fake-run-prompt.ts';
-import { GREETER_DRAFT, GREETER_MAP, GREETER_PROMPT, MISQUOTED_GREETER_DRAFT } from '../test-utils/greeter-draft.ts';
 
 describe('convertWithAgent', () => {
   it('ends with the config that the agent submitted, after its checks and messages', async () => {

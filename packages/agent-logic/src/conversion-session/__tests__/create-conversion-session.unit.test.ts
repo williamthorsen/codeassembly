@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
+import { GREETER_DRAFT, GREETER_MAP, GREETER_PROMPT, MISQUOTED_GREETER_DRAFT } from '../../test-utils/greeter-draft.ts';
 import {
   createConversionSession,
   MAX_COVERAGE_CHECKS,
   MAX_SUBMISSIONS,
   type SessionEvent,
 } from '../create-conversion-session.ts';
-import { GREETER_DRAFT, GREETER_MAP, GREETER_PROMPT, MISQUOTED_GREETER_DRAFT } from '../test-utils/greeter-draft.ts';
 
 describe(createConversionSession, () => {
   describe('checkCoverage', () => {
@@ -108,6 +108,50 @@ describe(createConversionSession, () => {
       expect(refusal).toBe('No more drafts are accepted. End your turn.');
       expect(session.result).toMatchObject({ ok: false, problems: [{ path: 'states.done.meta.quote' }] });
       expect(events).toHaveLength(MAX_SUBMISSIONS);
+    });
+  });
+
+  describe('isFinished', () => {
+    it.each([
+      ['an accepted config', GREETER_DRAFT],
+      ['an out-of-scope verdict', { outOfScope: { reason: 'It states no steps.' } }],
+    ])('is true after %s', (_label, draft) => {
+      const { session } = startSession();
+
+      session.submitDraft(JSON.stringify(draft));
+
+      expect(session.isFinished).toBe(true);
+    });
+
+    it('stays false through coverage checks and rejected drafts with submissions left', () => {
+      const { session } = startSession();
+
+      session.checkCoverage(GREETER_MAP);
+      const states = Array.from({ length: MAX_SUBMISSIONS - 1 }, () => {
+        session.submitDraft(JSON.stringify(MISQUOTED_GREETER_DRAFT));
+        return session.isFinished;
+      });
+
+      expect(states).not.toContain(true);
+    });
+
+    it('stays true when a rejected draft follows an accepted config', () => {
+      const { session } = startSession();
+
+      session.submitDraft(JSON.stringify(GREETER_DRAFT));
+      session.submitDraft(JSON.stringify(MISQUOTED_GREETER_DRAFT));
+
+      expect(session.isFinished).toBe(true);
+    });
+
+    it('is true once the last submission is rejected', () => {
+      const { session } = startSession();
+
+      for (let index = 0; index < MAX_SUBMISSIONS; index += 1) {
+        session.submitDraft(JSON.stringify(MISQUOTED_GREETER_DRAFT));
+      }
+
+      expect(session.isFinished).toBe(true);
     });
   });
 });
