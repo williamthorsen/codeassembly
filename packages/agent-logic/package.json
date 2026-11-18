@@ -84,7 +84,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.3.0",
     "@williamthorsen/nmr": "catalog:",
-    "@williamthorsen/toolbelt.acp": "0.3.1",
+    "@williamthorsen/toolbelt.acp": "0.3.2",
     "eslint": "catalog:",
     "eslint-plugin-jest-dom": "5.10.2",
     "eslint-plugin-react": "7.37.5",
