@@ -37,6 +37,10 @@
       "types": "./dist/esm/client/index.d.ts",
       "import": "./dist/esm/client/index.js"
     },
+    "./job": {
+      "types": "./dist/esm/job/index.d.ts",
+      "import": "./dist/esm/job/index.js"
+    },
     "./react": {
       "types": "./dist/esm/react/index.d.ts",
       "import": "./dist/esm/react/index.js"
@@ -86,6 +90,7 @@
     "@vitejs/plugin-react": "6.3.0",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.acp": "0.3.2",
+    "@williamthorsen/toolbelt.llm": "0.2.0",
     "eslint": "catalog:",
     "eslint-plugin-jest-dom": "5.10.2",
     "eslint-plugin-react": "7.37.5",
@@ -101,6 +106,7 @@
   "peerDependencies": {
     "@modelcontextprotocol/server": "^2.4.0",
     "@williamthorsen/toolbelt.acp": "^0.3.0",
+    "@williamthorsen/toolbelt.llm": "^0.2.0",
     "react": "^19.0.0"
   },
   "peerDependenciesMeta": {
@@ -108,6 +114,9 @@
       "optional": true
     },
     "@williamthorsen/toolbelt.acp": {
+      "optional": true
+    },
+    "@williamthorsen/toolbelt.llm": {
       "optional": true
     },
     "react": {

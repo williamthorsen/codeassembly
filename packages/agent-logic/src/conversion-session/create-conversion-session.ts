@@ -26,6 +26,11 @@ export type SessionEvent =
 
 /** The state of one conversion behind its tools: Each method returns the text that the tool answers the agent with. */
 export interface ConversionSession {
+  /**
+   * Whether the conversion has ended: The config was accepted, the prompt was recorded as out of scope, or the last
+   * submission was taken.
+   */
+  readonly isFinished: boolean;
   /** The outcome of the last accepted submission, or `undefined` before the first. */
   readonly result: ConvertResult | undefined;
   checkCoverage(map: CoverageMap): string;
@@ -92,6 +97,10 @@ export function createConversionSession({
           ? 'That was the last submission: No more drafts are accepted. End your turn.'
           : `Correct every listed entry and submit the draft again. ${describeCount(left, 'submission')} left.`;
       return [...lines, next].join('\n');
+    },
+
+    get isFinished() {
+      return submissions >= MAX_SUBMISSIONS || result?.ok === true || (result !== undefined && 'outOfScope' in result);
     },
 
     get result() {

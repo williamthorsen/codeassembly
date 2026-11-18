@@ -110,6 +110,41 @@ describe(createConversionSession, () => {
       expect(events).toHaveLength(MAX_SUBMISSIONS);
     });
   });
+
+  describe('isFinished', () => {
+    it.each([
+      ['an accepted config', GREETER_DRAFT],
+      ['an out-of-scope verdict', { outOfScope: { reason: 'It states no steps.' } }],
+    ])('is true after %s', (_label, draft) => {
+      const { session } = startSession();
+
+      session.submitDraft(JSON.stringify(draft));
+
+      expect(session.isFinished).toBe(true);
+    });
+
+    it('stays false through coverage checks and rejected drafts with submissions left', () => {
+      const { session } = startSession();
+
+      session.checkCoverage(GREETER_MAP);
+      const states = Array.from({ length: MAX_SUBMISSIONS - 1 }, () => {
+        session.submitDraft(JSON.stringify(MISQUOTED_GREETER_DRAFT));
+        return session.isFinished;
+      });
+
+      expect(states).not.toContain(true);
+    });
+
+    it('is true once the last submission is rejected', () => {
+      const { session } = startSession();
+
+      for (let index = 0; index < MAX_SUBMISSIONS; index += 1) {
+        session.submitDraft(JSON.stringify(MISQUOTED_GREETER_DRAFT));
+      }
+
+      expect(session.isFinished).toBe(true);
+    });
+  });
 });
 
 // region | Helpers
