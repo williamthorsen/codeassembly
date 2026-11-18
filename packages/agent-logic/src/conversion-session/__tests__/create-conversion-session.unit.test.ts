@@ -135,6 +135,15 @@ describe(createConversionSession, () => {
       expect(states).not.toContain(true);
     });
 
+    it('stays true when a rejected draft follows an accepted config', () => {
+      const { session } = startSession();
+
+      session.submitDraft(JSON.stringify(GREETER_DRAFT));
+      session.submitDraft(JSON.stringify(MISQUOTED_GREETER_DRAFT));
+
+      expect(session.isFinished).toBe(true);
+    });
+
     it('is true once the last submission is rejected', () => {
       const { session } = startSession();
 
