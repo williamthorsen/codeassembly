@@ -40,7 +40,7 @@ async function bundleForBrowser(entry: string): Promise<string> {
     .join('\n');
 }
 
-/** Returns a plugin that rejects every import of a Node built-in, which Vite would otherwise externalize with a warning. */
+/** Returns a plugin that rejects each import of a Node built-in, which Vite otherwise externalizes with a warning. */
 function refuseNodeBuiltins(): Plugin {
   const builtins = new Set(builtinModules);
   return {
