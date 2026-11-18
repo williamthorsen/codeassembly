@@ -61,6 +61,7 @@
   ],
   "scripts": {
     "build:post": "cp src/react/styles.css dist/esm/react/styles.css",
+    "generate:instructions": "node src/instructions/write-conversion-instructions.ts",
     "generate:schema": "node src/schema/write-json-schema.ts",
     "prepublishOnly": "nmr build",
     "refresh-corpus": "node src/corpus/refresh-corpus.ts",

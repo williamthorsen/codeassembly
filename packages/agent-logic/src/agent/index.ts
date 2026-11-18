@@ -5,4 +5,8 @@ export {
   convertWithAgent,
   type ConvertWithAgentOptions,
 } from './convert-with-agent.ts';
-export { MAX_COVERAGE_CHECKS, MAX_SUBMISSIONS, type SessionEvent } from './create-conversion-session.ts';
+export {
+  MAX_COVERAGE_CHECKS,
+  MAX_SUBMISSIONS,
+  type SessionEvent,
+} from '../conversion-session/create-conversion-session.ts';

@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -7,9 +7,11 @@ import { type AgentProfile, AgentRunError, type RunEvent, runPrompt } from '@wil
 import { z } from 'zod';
 
 import type { ConvertResult } from '../convert/convert-prompt.ts';
+import { CHECK_COVERAGE_DESCRIPTION, SUBMIT_DRAFT_DESCRIPTION } from '../conversion-session/conversion-tools.ts';
+import { createConversionSession, type SessionEvent } from '../conversion-session/create-conversion-session.ts';
+import { formatConversionInput } from '../conversion-session/format-conversion-input.ts';
 import { coverageMapSchema } from '../coverage-map/coverage-map-schema.ts';
-import { findPackageRoot } from '../package-files/find-package-root.ts';
-import { createConversionSession, type SessionEvent } from './create-conversion-session.ts';
+import { CONVERSION_INSTRUCTIONS } from '../instructions/conversion-instructions.ts';
 
 /** The name of the MCP server through which the agent reaches the conversion's tools. */
 export const CONVERSION_SERVER_NAME = 'agent_logic';
@@ -80,7 +82,6 @@ export function createConvertWithAgent(
         pending.push(event);
       },
     });
-    const instructions = await readInstructions();
     const cwd = await mkdtemp(path.join(os.tmpdir(), 'agent-logic-conversion-'));
     try {
       let stopped: Extract<RunEvent, { type: 'stopped' }> | undefined;
@@ -88,8 +89,8 @@ export function createConvertWithAgent(
         const run = runPromptImpl({
           agent,
           cwd,
-          instructions,
-          prompt: `Prompt file: ${name}\n\n${prompt}`,
+          instructions: CONVERSION_INSTRUCTIONS,
+          prompt: formatConversionInput(prompt, name),
           tools: {
             name: CONVERSION_SERVER_NAME,
             createServer: () => createConversionServer(session),
@@ -141,7 +142,7 @@ function createConversionServer(session: ReturnType<typeof createConversionSessi
   server.registerTool(
     'check_coverage',
     {
-      description: 'Checks a coverage map of the prompt against the prompt.',
+      description: CHECK_COVERAGE_DESCRIPTION,
       inputSchema: z.object({ map: coverageMapSchema }),
     },
     ({ map }) => ({ content: [{ type: 'text', text: session.checkCoverage(map) }] }),
@@ -149,7 +150,7 @@ function createConversionServer(session: ReturnType<typeof createConversionSessi
   server.registerTool(
     'submit_draft',
     {
-      description: "Converts a draft of the prompt's logic into an agent-logic config, or reports its problems.",
+      description: SUBMIT_DRAFT_DESCRIPTION,
       inputSchema: z.object({ draft: z.string().describe("The draft's JSON text.") }),
     },
     ({ draft }) => ({ content: [{ type: 'text', text: session.submitDraft(draft) }] }),
@@ -167,14 +168,5 @@ function describeRunError(error: unknown): unknown {
   return new Error(`The agent \`${error.command}\` is not signed in: Sign in to its harness, then convert again.`, {
     cause: error,
   });
-}
-
-/** Reads the conversion's instructions followed by the extraction rules, from the package's `docs/`. */
-async function readInstructions(): Promise<string> {
-  const docs = path.join(findPackageRoot(), 'docs');
-  const parts = await Promise.all(
-    ['agent-instructions.md', 'extraction-rules.md'].map((file) => readFile(path.join(docs, file), 'utf8')),
-  );
-  return parts.join('\n');
 }
 // endregion | Helpers

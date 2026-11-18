@@ -6,7 +6,7 @@ import {
   MAX_SUBMISSIONS,
   type SessionEvent,
 } from '../create-conversion-session.ts';
-import { GREETER_DRAFT, GREETER_MAP, GREETER_PROMPT, MISQUOTED_GREETER_DRAFT } from '../test-utils/greeter-draft.ts';
+import { GREETER_DRAFT, GREETER_MAP, GREETER_PROMPT, MISQUOTED_GREETER_DRAFT } from '../../test-utils/greeter-draft.ts';
 
 describe(createConversionSession, () => {
   describe('checkCoverage', () => {
