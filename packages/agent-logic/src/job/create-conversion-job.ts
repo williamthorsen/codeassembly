@@ -1,7 +1,6 @@
 import type { Job, JobTool } from '@williamthorsen/toolbelt.llm/proposed';
 import { z } from 'zod';
 
-import type { ConvertResult } from '../convert/convert-prompt.ts';
 import { CHECK_COVERAGE_DESCRIPTION, SUBMIT_DRAFT_DESCRIPTION } from '../conversion-session/conversion-tools.ts';
 import {
   createConversionSession,
@@ -9,6 +8,7 @@ import {
   MAX_SUBMISSIONS,
 } from '../conversion-session/create-conversion-session.ts';
 import { formatConversionInput } from '../conversion-session/format-conversion-input.ts';
+import type { ConvertResult } from '../convert/convert-prompt.ts';
 import { coverageMapSchema } from '../coverage-map/coverage-map-schema.ts';
 import { CONVERSION_INSTRUCTIONS } from '../instructions/conversion-instructions.ts';
 

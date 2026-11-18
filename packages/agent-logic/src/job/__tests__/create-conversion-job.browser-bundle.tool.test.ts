@@ -30,7 +30,7 @@ async function bundleForBrowser(entry: string): Promise<string> {
     build: {
       lib: { entry, formats: ['es'], fileName: 'bundle' },
       write: false,
-      rollupOptions: { external: [/^@williamthorsen\/toolbelt\.llm(\/|$)/] },
+      rolldownOptions: { external: [/^@williamthorsen\/toolbelt\.llm(\/|$)/] },
     },
   });
   const outputs = Array.isArray(result) ? result : [result];
