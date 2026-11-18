@@ -30,9 +30,10 @@ if (result.ok) {
 | `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                |
 | `codeassembly-agent-logic/server`                  | `createConversionHandler`, which serves conversions on an ACP agent, and its stores.                                                                                                  |
 | `codeassembly-agent-logic/client`                  | `createConversionClient`, the browser client of the routes that `createConversionHandler` serves.                                                                                     |
+| `codeassembly-agent-logic/job`                     | `createConversionJob`, which converts a prompt as a job of `@williamthorsen/toolbelt.llm`, in a page or a function.                                                                   |
 | `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                             |
 
-React 19 is a peer of `./react`, and `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent` and `./server`.
+React 19 is a peer of `./react`, `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent` and `./server`, and `@williamthorsen/toolbelt.llm` a peer of `./job`.
 
 ## Converting on an ACP agent
 
@@ -45,7 +46,7 @@ for await (const event of convertWithAgent({ prompt, name: 'refund-request.md', 
 }
 ```
 
-`convertWithAgent` runs the agent through [`@williamthorsen/toolbelt.acp`](https://github.com/williamthorsen/toolbelt/tree/main/packages/acp#readme) in an empty temporary directory and gives it two tools: `check_coverage`, which answers 3 checks of its coverage map, and `submit_draft`, which converts a draft and accepts 5. Every other request of the agent is refused. It yields the agent's message text and each check and submission, then a `result` event whose `ConvertResult` is the outcome of the last submission, with the usage and cost that the agent reports. The agent's instructions are [`docs/agent-instructions.md`](docs/agent-instructions.md) followed by the [extraction rules](docs/extraction-rules.md). The doc comment of `convertWithAgent` states when it rejects.
+`convertWithAgent` runs the agent through [`@williamthorsen/toolbelt.acp`](https://github.com/williamthorsen/toolbelt/tree/main/packages/acp#readme) in an empty temporary directory and gives it two tools: `check_coverage`, which answers 3 checks of its coverage map, and `submit_draft`, which converts a draft and accepts 5. Every other request of the agent is refused. It yields the agent's message text and each check and submission, then a `result` event whose `ConvertResult` is the outcome of the last submission, with the usage and cost that the agent reports. The agent's instructions are [`docs/agent-instructions.md`](docs/agent-instructions.md) followed by the [extraction rules](docs/extraction-rules.md), the same text that a [conversion job](#converting-in-a-page-or-a-function) sends. The doc comment of `convertWithAgent` states when it rejects.
 
 The agent's harness must be installed and signed in. Each profile signs in as follows:
 
@@ -54,6 +55,22 @@ The agent's harness must be installed and signed in. Each profile signs in as fo
 | `claudeCodeProfile`  | The `claude` CLI's login, or `ANTHROPIC_API_KEY` in the environment                                           |
 | `antigravityProfile` | The CLI's personal Google login                                                                               |
 | `codexProfile`       | Not supported: The profile cannot identify calls of the conversion's tools, so `convertWithAgent` rejects it. |
+
+## Converting in a page or a function
+
+```ts
+import { createConversionJob } from 'codeassembly-agent-logic/job';
+import { runJob } from '@williamthorsen/toolbelt.llm/proposed';
+
+const outcome = await runJob(createConversionJob({ prompt, name: 'refund-request.md' }), {
+  provider: 'anthropic',
+  apiKey,
+  model: 'claude-sonnet-5-5',
+});
+if (outcome.status === 'completed') console.log(outcome.result);
+```
+
+`createConversionJob` returns a job for [`@williamthorsen/toolbelt.llm`](https://github.com/williamthorsen/toolbelt/tree/main/packages/llm#readme), which runs it in the page on a user's connection or at an operator's endpoint, without a harness. The job sends the instructions and the message that `convertWithAgent` sends, offers the same two tools with the same caps, and makes at most `MAX_ROUNDS` model requests. Its result is a `ConvertResult`, available once the conversion is finished: the config accepted, the prompt recorded out of scope, or the last of the 5 submissions rejected. A run that the model ends earlier is `unfinished`. Create a job for each run.
 
 ## Serving conversions
 
