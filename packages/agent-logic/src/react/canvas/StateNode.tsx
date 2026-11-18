@@ -1,4 +1,4 @@
-import { Handle, type NodeProps, NodeToolbar, Position, useStore } from '@xyflow/react';
+import { Handle, type NodeProps, NodeToolbar, Position, useViewportStore } from '@xyflow/react';
 import { type CSSProperties, type ReactElement, type RefObject, useContext, useEffect, useRef, useState } from 'react';
 
 import { MAX_ACTION_LINES, MAX_AMBIENT_LINES, MAX_CARD_ACTIONS, PREAMBLE_WIDTH } from '../../layout/card-limits.ts';
@@ -200,8 +200,8 @@ function useIsPointedAt(ref: RefObject<HTMLElement | null>): boolean {
 function useNamePlacement(data: StateNodeData): FlowNamePlacement {
   // Each selector returns a primitive that stays put while the name has room, so that a zoom re-renders the node only
   // while its name is crowded.
-  const shift = useStore((state) => findNamePlacement(data, state.transform[2])?.shift ?? 0);
-  const isShown = useStore((state) => findNamePlacement(data, state.transform[2])?.isShown ?? true);
+  const shift = useViewportStore((state) => findNamePlacement(data, state.transform[2])?.shift ?? 0);
+  const isShown = useViewportStore((state) => findNamePlacement(data, state.transform[2])?.isShown ?? true);
   return { shift, isShown };
 }
 // endregion | Helpers

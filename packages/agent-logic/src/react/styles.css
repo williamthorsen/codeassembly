@@ -3,7 +3,7 @@
  * a default here; a consumer overrides any of them on :root or on an ancestor of the canvas.
  */
 
-@import '@xyflow/react/dist/style.css';
+@import '@xyflow/react/style.css';
 
 :where(:root) {
   --agent-logic-ambient-background: #091e420f;

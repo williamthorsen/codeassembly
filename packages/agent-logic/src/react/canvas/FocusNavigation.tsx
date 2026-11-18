@@ -1,4 +1,4 @@
-import { useReactFlow, useStoreApi } from '@xyflow/react';
+import { useReactFlow, useReactFlowStoreApi } from '@xyflow/react';
 import { useEffect } from 'react';
 
 import type { StateFlowNode, TransitionFlowEdge } from '../../layout/to-flow-elements.ts';
@@ -11,14 +11,14 @@ import { findViewCentre, readView } from './find-view-centre.ts';
  * focuses into view, reporting that move to `onCentre`.
  */
 export function FocusNavigation({ onCentre }: { onCentre: () => void }): null {
-  const store = useStoreApi<StateFlowNode, TransitionFlowEdge>();
+  const { optionsStore, viewportStore } = useReactFlowStoreApi<StateFlowNode, TransitionFlowEdge>();
   const { getEdges, getInternalNode, getNodes, getViewport, setCenter } = useReactFlow<
     StateFlowNode,
     TransitionFlowEdge
   >();
 
   useEffect(() => {
-    const pane = store.getState().domNode;
+    const pane = optionsStore.getState().domNode;
     if (pane === null) return;
 
     function handleKeyDown(event: KeyboardEvent): void {
@@ -75,7 +75,7 @@ export function FocusNavigation({ onCentre }: { onCentre: () => void }): null {
 
       const box = findElementBox(path, nodes, getEdges(), getInternalNode);
       if (box === undefined) return;
-      const { width, height } = store.getState();
+      const { width, height } = viewportStore.getState();
       const viewport = getViewport();
       const centre = findViewCentre(box, readView(viewport, width, height));
       if (centre === undefined) return;
@@ -89,7 +89,7 @@ export function FocusNavigation({ onCentre }: { onCentre: () => void }): null {
       pane.removeEventListener('keydown', handleKeyDown);
       pane.removeEventListener('focusin', handleFocusIn);
     };
-  }, [getEdges, getInternalNode, getNodes, getViewport, onCentre, setCenter, store]);
+  }, [getEdges, getInternalNode, getNodes, getViewport, onCentre, optionsStore, setCenter, viewportStore]);
 
   return null;
 }

@@ -1,18 +1,18 @@
 import {
-  applyEdgeChanges,
-  applyNodeChanges,
   type AriaLabelConfig,
   Background,
   Controls,
   type EdgeChange,
+  EdgeChangeset,
   type FitViewOptions,
   getNodesBounds,
   type NodeChange,
+  NodeChangeset,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
-  useStore,
-  useStoreApi,
+  useReactFlowStoreApi,
+  useViewportStore,
 } from '@xyflow/react';
 import {
   type ReactElement,
@@ -95,10 +95,10 @@ export function StatechartCanvas({ elements, renderKey, ...props }: StatechartCa
  * as not panning, and reports the move to `onPan`. A press that does not move stays a click, which selects the edge.
  */
 function EdgeDragPan({ onPan }: { onPan: () => void }): null {
-  const store = useStoreApi<StateFlowNode, TransitionFlowEdge>();
+  const { optionsStore } = useReactFlowStoreApi<StateFlowNode, TransitionFlowEdge>();
 
   useEffect(() => {
-    const pane = store.getState().domNode;
+    const pane = optionsStore.getState().domNode;
     if (pane === null) return;
 
     function handlePointerDown(down: PointerEvent): void {
@@ -113,7 +113,7 @@ function EdgeDragPan({ onPan }: { onPan: () => void }): null {
           return;
         if (!isDragging) onPan();
         isDragging = true;
-        void store.getState().panBy({ x: move.clientX - last.x, y: move.clientY - last.y });
+        void optionsStore.getState().panBy({ x: move.clientX - last.x, y: move.clientY - last.y });
         last = { x: move.clientX, y: move.clientY };
       }
       function handlePointerUp(): void {
@@ -133,7 +133,7 @@ function EdgeDragPan({ onPan }: { onPan: () => void }): null {
     return () => {
       pane.removeEventListener('pointerdown', handlePointerDown);
     };
-  }, [onPan, store]);
+  }, [onPan, optionsStore]);
 
   return null;
 }
@@ -151,7 +151,7 @@ function SelectionSync({
   reportRef: RefObject<SelectionReport | undefined>;
   onCentre: () => void;
 }): null {
-  const store = useStoreApi<StateFlowNode, TransitionFlowEdge>();
+  const { viewportStore } = useReactFlowStoreApi<StateFlowNode, TransitionFlowEdge>();
   const { getNodes, getEdges, getInternalNode, getViewport, setCenter } = useReactFlow<
     StateFlowNode,
     TransitionFlowEdge
@@ -165,13 +165,13 @@ function SelectionSync({
 
     const box = findElementBox(selectedPath, getNodes(), getEdges(), getInternalNode);
     if (box === undefined) return;
-    const { width, height } = store.getState();
+    const { width, height } = viewportStore.getState();
     const viewport = getViewport();
     const centre = findViewCentre(box, readView(viewport, width, height));
     if (centre === undefined) return;
     onCentre();
     void setCenter(centre.x, centre.y, { zoom: viewport.zoom, duration: 300 });
-  }, [getEdges, getInternalNode, getNodes, getViewport, onCentre, reportRef, selectedPath, setCenter, store]);
+  }, [getEdges, getInternalNode, getNodes, getViewport, onCentre, reportRef, selectedPath, setCenter, viewportStore]);
 
   return null;
 }
@@ -182,15 +182,15 @@ function StatechartFlow({ elements, selectedPath, onSelect, onViewportChange }: 
     StateFlowNode,
     TransitionFlowEdge
   >();
-  const width = useStore((state) => state.width);
-  const height = useStore((state) => state.height);
+  const width = useViewportStore((state) => state.width);
+  const height = useViewportStore((state) => state.height);
   // The top-level states contain the rest, and their positions are absolute.
   const bounds = useMemo(
     () => getNodesBounds(elements.nodes.filter(({ parentId }) => parentId === undefined)),
     [elements.nodes],
   );
   const fitZoom = findFitZoom(bounds, width, height);
-  const detailLevel = useStore((state) => findDetailLevel(state.transform[2]));
+  const detailLevel = useViewportStore((state) => findDetailLevel(state.transform[2]));
 
   // Whether the view shows the whole chart as fitted: from the open view until the reader or a selection moves it, and
   // again after Fit View.
@@ -255,18 +255,18 @@ function StatechartFlow({ elements, selectedPath, onSelect, onViewportChange }: 
     [onSelect, selectedPath],
   );
   const handleNodesChange = useCallback(
-    (changes: Array<NodeChange<StateFlowNode>>) => {
-      reportSelectChanges(changes, (id) => nodes.find((node) => node.id === id)?.data.path);
-      const otherChanges = changes.filter(({ type }) => type !== 'select');
-      if (otherChanges.length > 0) setNodes((current) => applyNodeChanges(otherChanges, current));
+    (changes: NodeChangeset<StateFlowNode>) => {
+      reportSelectChanges(changes.getByType('select'), (id) => nodes.find((node) => node.id === id)?.data.path);
+      const otherChanges = new NodeChangeset([...changes].filter(({ type }) => type !== 'select'));
+      if (!otherChanges.isEmpty()) setNodes((current) => otherChanges.applyTo(current));
     },
     [nodes, reportSelectChanges],
   );
   const handleEdgesChange = useCallback(
-    (changes: Array<EdgeChange<TransitionFlowEdge>>) => {
-      reportSelectChanges(changes, (id) => edges.find((edge) => edge.id === id)?.data?.path);
-      const otherChanges = changes.filter(({ type }) => type !== 'select');
-      if (otherChanges.length > 0) setEdges((current) => applyEdgeChanges(otherChanges, current));
+    (changes: EdgeChangeset<TransitionFlowEdge>) => {
+      reportSelectChanges(changes.getByType('select'), (id) => edges.find((edge) => edge.id === id)?.data?.path);
+      const otherChanges = new EdgeChangeset([...changes].filter(({ type }) => type !== 'select'));
+      if (!otherChanges.isEmpty()) setEdges((current) => otherChanges.applyTo(current));
     },
     [edges, reportSelectChanges],
   );
@@ -310,7 +310,6 @@ function StatechartFlow({ elements, selectedPath, onSelect, onViewportChange }: 
           ariaLabelConfig={ariaLabelConfig}
           minZoom={fitZoom}
           maxZoom={MAX_ZOOM}
-          colorMode="system"
         >
           <Background />
           <ArrowheadDefs />
@@ -336,16 +335,16 @@ function StatechartFlow({ elements, selectedPath, onSelect, onViewportChange }: 
 
 /** Keeps the zoom in the canvas's `--canvas-zoom` property, for text that holds a fixed screen size. */
 function ZoomProperty(): null {
-  const store = useStoreApi<StateFlowNode, TransitionFlowEdge>();
+  const { optionsStore, viewportStore } = useReactFlowStoreApi<StateFlowNode, TransitionFlowEdge>();
 
   // Subscribe rather than select, so that a pan or zoom writes the property without rendering anything.
   useEffect(() => {
-    function applyZoom({ domNode, transform }: ReturnType<typeof store.getState>): void {
-      domNode?.style.setProperty('--canvas-zoom', String(transform[2]));
+    function applyZoom({ transform }: ReturnType<typeof viewportStore.getState>): void {
+      optionsStore.getState().domNode?.style.setProperty('--canvas-zoom', String(transform[2]));
     }
-    applyZoom(store.getState());
-    return store.subscribe(applyZoom);
-  }, [store]);
+    applyZoom(viewportStore.getState());
+    return viewportStore.subscribe(applyZoom);
+  }, [optionsStore, viewportStore]);
 
   return null;
 }
