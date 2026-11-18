@@ -1,5 +1,33 @@
 [
   {
+    "version": "0.4.0",
+    "date": "2026-11-18",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds the experimental `codeassembly-agent-logic/job` entry, whose `createConversionJob` returns a job that `runJob` of `@williamthorsen/toolbelt.llm` runs in a page or a hosted function to convert a prompt with the instructions, the `check_coverage` and `submit_draft` tools, and the caps that `convertWithAgent` uses. (#2290)",
+            "hash": "731cb417a800fbb51f2c04cd6dce503056ef53dd",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "📦 Dependencies",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Upgrades `@xyflow/react` in `codeassembly-agent-logic` from 12.12.1 to 13.0.1 and adapts the statechart canvas to the major version's separate viewport and options stores, its `NodeChangeset` and `EdgeChangeset` change handlers, and its stylesheet path `@xyflow/react/style.css`. (#2289)",
+            "hash": "d8b0c600d6ff7ae2eba0e4e428bf50e1247376ae",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.3.0",
     "date": "2026-11-16",
     "sections": [

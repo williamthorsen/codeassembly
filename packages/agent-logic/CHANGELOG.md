@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.4.0 — 2026-11-18
+
+### 🎉 Features
+
+- Adds the experimental `codeassembly-agent-logic/job` entry, whose `createConversionJob` returns a job that `runJob` of `@williamthorsen/toolbelt.llm` runs in a page or a hosted function to convert a prompt with the instructions, the `check_coverage` and `submit_draft` tools, and the caps that `convertWithAgent` uses. (#2290)
+
+### 📦 Dependencies
+
+- Upgrades `@xyflow/react` in `codeassembly-agent-logic` from 12.12.1 to 13.0.1 and adapts the statechart canvas to the major version's separate viewport and options stores, its `NodeChangeset` and `EdgeChangeset` change handlers, and its stylesheet path `@xyflow/react/style.css`. (#2289)
+
 ## 0.3.0 — 2026-11-16
 
 ### 🎉 Features
