@@ -1,29 +1,59 @@
 /*
- * Styles for the statechart canvas and the marks of its key. Colours and the code font are custom properties, each with
- * a default here; a consumer overrides any of them on :root or on an ancestor of the canvas.
+ * Styles for the statechart canvas and the marks of its key. The colours come in two tiers of custom properties: the
+ * seeds, declared on :root, and the component properties, each of which derives its default from the seeds. A consumer
+ * sets either tier on :root or on an ancestor of the canvas and its key.
  */
 
 @import '@xyflow/react/style.css';
 
 :where(:root) {
-  --agent-logic-ambient-background: #091e420f;
-  --agent-logic-border: #0b120e24;
-  --agent-logic-border-strong: #758195;
-  --agent-logic-compound-background: #f7f8f9;
-  --agent-logic-focus-ring: #2684ff;
+  --agent-logic-accent: #2346c4;
   --agent-logic-font-code: ui-monospace, monospace;
-  --agent-logic-global: #8270db;
-  --agent-logic-hover-background: #091e420f;
-  --agent-logic-node-background: #fff;
-  --agent-logic-selected: #0c66e4;
-  --agent-logic-selected-background: #e9f2ff;
-  --agent-logic-surface: #fff;
-  --agent-logic-text: #172b4d;
-  --agent-logic-text-subtle: #44546f;
-  --agent-logic-tooltip-background: #44546f;
-  --agent-logic-tooltip-text: #fff;
-  --agent-logic-waiting: #1d7afc;
-  --agent-logic-warning: #e06c00;
+  --agent-logic-global: #b0307f;
+  --agent-logic-surface: #ffffff;
+  --agent-logic-text: #1c1f24;
+  --agent-logic-waiting: #0e9f3c;
+  --agent-logic-warning: #c9520a;
+}
+
+/*
+ * Each component property resolves here, on the elements that read it, rather than on :root, so that seeds set on any
+ * ancestor of the canvas or of a key entry reach the derivation. Every rule below reads the private property.
+ */
+:where(.statechart-canvas, .arrowhead-defs, .canvas-key__swatch, .canvas-key__word, .mark-glyph) {
+  --_agent-logic-ambient-background: var(
+    --agent-logic-ambient-background,
+    color-mix(in srgb, var(--agent-logic-text) 7%, transparent)
+  );
+  --_agent-logic-border: var(
+    --agent-logic-border,
+    color-mix(in srgb, var(--agent-logic-text) 58%, var(--agent-logic-surface))
+  );
+  --_agent-logic-border-strong: var(
+    --agent-logic-border-strong,
+    color-mix(in srgb, var(--agent-logic-text) 63%, var(--agent-logic-surface))
+  );
+  --_agent-logic-compound-background: var(
+    --agent-logic-compound-background,
+    color-mix(in srgb, var(--agent-logic-text) 5%, var(--agent-logic-surface))
+  );
+  --_agent-logic-focus-ring: var(--agent-logic-focus-ring, var(--agent-logic-accent));
+  --_agent-logic-hover-background: var(
+    --agent-logic-hover-background,
+    color-mix(in srgb, var(--agent-logic-text) 12.5%, transparent)
+  );
+  --_agent-logic-node-background: var(--agent-logic-node-background, var(--agent-logic-surface));
+  --_agent-logic-selected: var(--agent-logic-selected, var(--agent-logic-accent));
+  --_agent-logic-selected-background: var(
+    --agent-logic-selected-background,
+    color-mix(in srgb, var(--agent-logic-accent) 13%, var(--agent-logic-surface))
+  );
+  --_agent-logic-text-subtle: var(
+    --agent-logic-text-subtle,
+    color-mix(in srgb, var(--agent-logic-text) 78%, var(--agent-logic-surface))
+  );
+  --_agent-logic-tooltip-background: var(--agent-logic-tooltip-background, var(--agent-logic-text));
+  --_agent-logic-tooltip-text: var(--agent-logic-tooltip-text, var(--agent-logic-surface));
 }
 
 .statechart-canvas {
@@ -59,7 +89,7 @@
 }
 
 .statechart-canvas .react-flow__node:focus-visible {
-  outline: 2px solid var(--agent-logic-focus-ring);
+  outline: 2px solid var(--_agent-logic-focus-ring);
   outline-offset: 2px;
 }
 
@@ -84,29 +114,29 @@
   max-inline-size: none;
   padding: 0;
   overflow: hidden;
-  background-color: var(--agent-logic-border-strong);
+  background-color: var(--_agent-logic-border-strong);
   color: transparent;
   font-size: 0;
   transform: none;
 }
 
 .statechart-canvas .state-node__flow-name--hidden:hover {
-  background-color: var(--agent-logic-selected);
+  background-color: var(--_agent-logic-selected);
 }
 
 /* A final state's outline is its mark, so pointing at or selecting it adds only the ring. */
 .statechart-canvas .react-flow__node:hover > .state-node:not(.state-node--final),
 .statechart-canvas .react-flow__node.selected > .state-node:not(.state-node--final) {
-  border-color: var(--agent-logic-border-strong);
+  border-color: var(--_agent-logic-border-strong);
 }
 
 .statechart-canvas .react-flow__node.selected > .state-node {
-  box-shadow: 0 0 0 1px var(--agent-logic-selected);
+  box-shadow: 0 0 0 1px var(--_agent-logic-selected);
 }
 
 .statechart-canvas .react-flow__edge:hover .transition-edge__path,
 .statechart-canvas .react-flow__edge.selected .transition-edge__path {
-  stroke: var(--agent-logic-selected);
+  stroke: var(--_agent-logic-selected);
   stroke-width: 2.5;
   marker-end: url('#arrowhead-selected');
 }
@@ -114,7 +144,7 @@
 .statechart-canvas .react-flow__edge:focus-visible .transition-edge__label,
 .statechart-canvas .react-flow__edge.selected .transition-edge__label {
   /* Inset, because the label's foreignObject clips anything outside it. */
-  outline: 2px solid var(--agent-logic-focus-ring);
+  outline: 2px solid var(--_agent-logic-focus-ring);
   outline-offset: -2px;
 }
 
@@ -124,7 +154,7 @@
 
 /* The lower levels of detail hide the label, so the route shows focus too. */
 .statechart-canvas .react-flow__edge:focus-visible .transition-edge__path {
-  stroke: var(--agent-logic-focus-ring);
+  stroke: var(--_agent-logic-focus-ring);
   stroke-width: 3;
   marker-end: url('#arrowhead-selected');
 }
@@ -152,7 +182,7 @@
 }
 
 .statechart-canvas__flow--shapes .state-node__ambient {
-  background: var(--agent-logic-ambient-background);
+  background: var(--_agent-logic-ambient-background);
   color: transparent;
 }
 
@@ -162,9 +192,9 @@
   block-size: 100%;
   box-sizing: border-box;
   padding: 8px 12px;
-  border: 1px solid var(--agent-logic-border);
+  border: 1px solid var(--_agent-logic-border);
   border-radius: 8px;
-  background: var(--agent-logic-node-background);
+  background: var(--_agent-logic-node-background);
   color: var(--agent-logic-text);
   font-size: 14px;
   line-height: 18px;
@@ -172,7 +202,7 @@
 }
 
 .state-node--compound {
-  background: var(--agent-logic-compound-background);
+  background: var(--_agent-logic-compound-background);
 }
 
 /* A thicker border takes its width from the padding, so the content keeps its place. */
@@ -183,7 +213,7 @@
 
 .state-node--inferred {
   padding: 7px 11px;
-  border: 2px dashed var(--agent-logic-text-subtle);
+  border: 2px dashed var(--_agent-logic-text-subtle);
 }
 
 /* An inferred final state keeps its dash and takes the final outline's colour. */
@@ -247,17 +277,17 @@
 }
 
 .mark-glyph__cutout {
-  fill: var(--agent-logic-node-background);
+  fill: var(--_agent-logic-node-background);
 }
 
 .state-node__inferred {
-  color: var(--agent-logic-text-subtle);
+  color: var(--_agent-logic-text-subtle);
   font-size: 12px;
   font-style: italic;
 }
 
 .state-node__gate {
-  color: var(--agent-logic-text-subtle);
+  color: var(--_agent-logic-text-subtle);
   font-size: 12px;
 }
 
@@ -277,7 +307,7 @@
 }
 
 .state-node__preamble-heading {
-  color: var(--agent-logic-text-subtle);
+  color: var(--_agent-logic-text-subtle);
   font-size: 12px;
   line-height: 16px;
 }
@@ -323,18 +353,18 @@
 }
 
 .state-node__ambient:hover {
-  background: var(--agent-logic-hover-background);
+  background: var(--_agent-logic-hover-background);
 }
 
 .state-node__ambient:focus-visible {
-  outline: 2px solid var(--agent-logic-focus-ring);
+  outline: 2px solid var(--_agent-logic-focus-ring);
   outline-offset: 1px;
 }
 
 .state-node__ambient--selected,
 .state-node__ambient--selected:hover {
-  background: var(--agent-logic-selected-background);
-  box-shadow: inset 2px 0 0 var(--agent-logic-selected);
+  background: var(--_agent-logic-selected-background);
+  box-shadow: inset 2px 0 0 var(--_agent-logic-selected);
 }
 
 .state-node__title {
@@ -348,7 +378,7 @@
 }
 
 .state-node__actions-heading {
-  color: var(--agent-logic-text-subtle);
+  color: var(--_agent-logic-text-subtle);
   font-size: 12px;
 }
 
@@ -373,7 +403,7 @@
 }
 
 .state-node__more {
-  color: var(--agent-logic-text-subtle);
+  color: var(--_agent-logic-text-subtle);
   font-size: 12px;
 }
 
@@ -398,8 +428,8 @@
   max-inline-size: 240px;
   padding: 2px 6px;
   border-radius: 3px;
-  background: var(--agent-logic-tooltip-background);
-  color: var(--agent-logic-tooltip-text);
+  background: var(--_agent-logic-tooltip-background);
+  color: var(--_agent-logic-tooltip-text);
   font-size: 12px;
   line-height: 16px;
   overflow-wrap: anywhere;
@@ -415,12 +445,12 @@
 }
 
 .transition-edge__word {
-  color: var(--agent-logic-text-subtle);
+  color: var(--_agent-logic-text-subtle);
   font-style: italic;
 }
 
 .transition-edge__path {
-  stroke: var(--agent-logic-border-strong);
+  stroke: var(--_agent-logic-border-strong);
   stroke-width: 1.5;
   marker-end: url('#arrowhead-ordinary');
 }
@@ -438,7 +468,7 @@
 }
 
 .arrowhead--arrowhead-ordinary {
-  fill: var(--agent-logic-border-strong);
+  fill: var(--_agent-logic-border-strong);
 }
 
 .arrowhead--arrowhead-global {
@@ -446,7 +476,7 @@
 }
 
 .arrowhead--arrowhead-selected {
-  fill: var(--agent-logic-selected);
+  fill: var(--_agent-logic-selected);
 }
 
 .transition-edge__path--inferred {
@@ -477,10 +507,10 @@
 
 .canvas-key__swatch--inferred {
   block-size: 12px;
-  border: 2px dashed var(--agent-logic-text-subtle);
+  border: 2px dashed var(--_agent-logic-text-subtle);
   border-radius: 2px;
 }
 
 .canvas-key__word {
-  color: var(--agent-logic-text-subtle);
+  color: var(--_agent-logic-text-subtle);
 }
