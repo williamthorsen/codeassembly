@@ -4,9 +4,59 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import {
+  composite,
+  measureContrast,
+  readDeclarations,
+  resolveColour,
+} from '../test-utils/resolve-stylesheet-colour.ts';
+
 const STYLESHEET = readFileSync(path.join(import.meta.dirname, '../styles.css'), 'utf8');
 
 const SEEDS = ['accent', 'global', 'surface', 'text', 'waiting', 'warning'];
+
+/** The seeds' values in the theme that williamthorsen/codeassembly-studio#50 chose. */
+const DEFAULT_SEEDS = {
+  accent: '#2346c4',
+  global: '#b0307f',
+  surface: '#ffffff',
+  text: '#1c1f24',
+  waiting: '#0e9f3c',
+  warning: '#c9520a',
+};
+
+/** The surfaces on which the canvas sets its colours, as the expressions that resolve them. */
+const SURFACES = {
+  compound: 'var(--_agent-logic-compound-background)',
+  ground: 'var(--xy-background-color-default)',
+  hover: 'var(--_agent-logic-hover-background)',
+  node: 'var(--_agent-logic-node-background)',
+  selected: 'var(--_agent-logic-selected-background)',
+  surface: 'var(--agent-logic-surface)',
+  tooltip: 'var(--_agent-logic-tooltip-background)',
+};
+
+/** Each colour that the canvas draws, with the surfaces on which it sits and the floor that it meets there. */
+const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; floor: number }[] = [
+  {
+    colour: 'var(--agent-logic-text)',
+    surfaces: ['compound', 'ground', 'hover', 'node', 'selected', 'surface'],
+    floor: 4.5,
+  },
+  {
+    colour: 'var(--_agent-logic-text-subtle)',
+    surfaces: ['compound', 'ground', 'node', 'selected', 'surface'],
+    floor: 4.5,
+  },
+  { colour: 'var(--_agent-logic-tooltip-text)', surfaces: ['tooltip'], floor: 4.5 },
+  { colour: 'var(--_agent-logic-border)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-border-strong)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-focus-ring)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-selected)', surfaces: ['compound', 'ground', 'node', 'selected'], floor: 3 },
+  { colour: 'var(--agent-logic-global)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--agent-logic-waiting)', surfaces: ['compound', 'node'], floor: 3 },
+  { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node'], floor: 3 },
+];
 
 const COMPONENT_PROPERTIES = [
   'ambient-background',
@@ -34,7 +84,10 @@ describe('styles.css', () => {
   });
 
   it('declares only the seeds and the code font on :root', () => {
-    const declared = [...readBlock(':where(:root)').matchAll(/(--agent-logic-[a-z-]+):/g)].map(([, name]) => name);
+    const declared = readBlock(':where(:root)')
+      .matchAll(/(--agent-logic-[a-z-]+):/g)
+      .map(([, name]) => name)
+      .toArray();
 
     expect(declared.toSorted()).toStrictEqual(
       [...SEEDS, 'font-code'].map((name) => `--agent-logic-${name}`).toSorted(),
@@ -51,7 +104,7 @@ describe('styles.css', () => {
 
   it('reads only seeds and private properties outside the private block', () => {
     const rest = STYLESHEET.replace(readBlock(':where(.statechart-canvas'), '');
-    const read = new Set([...rest.matchAll(/var\(--agent-logic-([a-z-]+)[,)]/g)].map(([, name]) => name));
+    const read = new Set(rest.matchAll(/var\(--agent-logic-([a-z-]+)[,)]/g).map(([, name = '']) => name));
 
     expect([...read].filter((name) => !SEEDS.includes(name) && name !== 'font-code')).toStrictEqual([]);
   });
@@ -99,6 +152,26 @@ describe('styles.css', () => {
     expect(style.getPropertyValue('text-decoration')).toBe('none');
   });
 
+  it('declares the seeds at the values of the chosen theme', () => {
+    const declarations = readThemeDeclarations();
+
+    expect(Object.fromEntries(SEEDS.map((name) => [name, declarations.get(`--agent-logic-${name}`)]))).toStrictEqual(
+      DEFAULT_SEEDS,
+    );
+  });
+
+  it('meets the WCAG 2.2 AA contrast floors with the default seeds', () => {
+    expect(findContrastFailures(readThemeDeclarations())).toStrictEqual([]);
+  });
+
+  it('reports a contrast failure when a seed breaks a pair', () => {
+    const declarations = readThemeDeclarations().set('--agent-logic-text', '#9a9a9a');
+
+    expect(findContrastFailures(declarations)).toStrictEqual(
+      expect.arrayContaining([expect.stringMatching(/^var\(--_agent-logic-text-subtle\) on surface /)]),
+    );
+  });
+
   it('draws a state in its default colour without any other stylesheet', () => {
     expect(readStateColour('')).toBe('#1c1f24');
   });
@@ -119,6 +192,19 @@ describe('styles.css', () => {
 });
 
 // region | Helpers
+/** Returns each pair of `CONTRAST_PAIRS` that falls below its floor under `declarations`, with its ratio. */
+function findContrastFailures(declarations: Map<string, string>): string[] {
+  return CONTRAST_PAIRS.flatMap(({ colour, surfaces, floor }) =>
+    surfaces
+      .map((surface) => ({
+        surface,
+        ratio: measureContrast(resolveColour(colour, declarations), resolveSurface(surface, declarations)),
+      }))
+      .filter(({ ratio }) => ratio < floor)
+      .map(({ surface, ratio }) => `${colour} on ${surface} (${ratio.toFixed(2)}:1)`),
+  );
+}
+
 interface ElementPlacement {
   ancestorStyle?: string;
   consumerCss?: string;
@@ -142,7 +228,8 @@ function readCanvasElementStyle(className: string, consumerCss: string, flowClas
 
 /**
  * Returns the computed style of an element of `className`, placed in a flow of `flowClassName` inside a canvas unless
- * `isInCanvas` is false, under an ancestor with the inline `ancestorStyle` and under the package stylesheet followed by `consumerCss`.
+ * `isInCanvas` is false, under an ancestor with the inline `ancestorStyle` and under the package stylesheet followed by
+ * `consumerCss`.
  */
 function readElementStyle(
   className: string,
@@ -170,6 +257,21 @@ function readElementStyle(
   }
   document.body.append(ancestor);
   return getComputedStyle(element);
+}
+
+/** Returns the custom properties that the default theme declares: the seeds, the private block, and the ground. */
+function readThemeDeclarations(): Map<string, string> {
+  return readDeclarations(STYLESHEET, [
+    ':where(:root)',
+    ':where(.statechart-canvas',
+    '.statechart-canvas .react-flow {',
+  ]);
+}
+
+/** Returns the opaque colour of `surface`, compositing a translucent surface over the node's background. */
+function resolveSurface(surface: keyof typeof SURFACES, declarations: Map<string, string>) {
+  const colour = resolveColour(SURFACES[surface], declarations);
+  return colour.a < 1 ? composite(colour, resolveColour(SURFACES.node, declarations)) : colour;
 }
 
 /** Returns the stylesheet's rule block whose selector starts with `selectorStart`, up to its closing brace. */
