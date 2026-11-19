@@ -76,6 +76,17 @@ describe('styles.css', () => {
     expect(style.getPropertyValue('--_agent-logic-border').trim()).toBe('rgb(4, 5, 6)');
   });
 
+  it('tints the ground and the dots from the seeds', () => {
+    const style = readElementStyle('react-flow', { ancestorStyle: '--agent-logic-accent: rgb(7, 8, 9)' });
+
+    expect(style.getPropertyValue('--xy-background-color-default')).toContain('rgb(7, 8, 9)');
+    expect(style.getPropertyValue('--xy-background-pattern-dots-color-default')).toContain('rgb(7, 8, 9)');
+  });
+
+  it("leaves React Flow's own ground and dot properties to the consumer", () => {
+    expect(STYLESHEET).not.toMatch(/--xy-background-(color|pattern-color):/);
+  });
+
   it('draws a state in its default colour without any other stylesheet', () => {
     expect(readStateColour('')).toBe('#1c1f24');
   });
