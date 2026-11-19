@@ -4,7 +4,74 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
+import {
+  composite,
+  measureContrast,
+  readDeclarations,
+  resolveColour,
+} from '../test-utils/resolve-stylesheet-colour.ts';
+
 const STYLESHEET = readFileSync(path.join(import.meta.dirname, '../styles.css'), 'utf8');
+
+const SEEDS = ['accent', 'global', 'surface', 'text', 'waiting', 'warning'];
+
+/** The seeds' values in the theme that williamthorsen/codeassembly-studio#50 chose. */
+const DEFAULT_SEEDS = {
+  accent: '#2346c4',
+  global: '#b0307f',
+  surface: '#ffffff',
+  text: '#1c1f24',
+  waiting: '#0e9f3c',
+  warning: '#c9520a',
+};
+
+/** The surfaces on which the canvas sets its colours, as the expressions that resolve them. */
+const SURFACES = {
+  compound: 'var(--_agent-logic-compound-background)',
+  ground: 'var(--xy-background-color-default)',
+  hover: 'var(--_agent-logic-hover-background)',
+  node: 'var(--_agent-logic-node-background)',
+  selected: 'var(--_agent-logic-selected-background)',
+  surface: 'var(--agent-logic-surface)',
+  tooltip: 'var(--_agent-logic-tooltip-background)',
+};
+
+/** Each colour that the canvas draws, with the surfaces on which it sits and the floor that it meets there. */
+const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; floor: number }[] = [
+  {
+    colour: 'var(--agent-logic-text)',
+    surfaces: ['compound', 'ground', 'hover', 'node', 'selected', 'surface'],
+    floor: 4.5,
+  },
+  {
+    colour: 'var(--_agent-logic-text-subtle)',
+    surfaces: ['compound', 'ground', 'node', 'selected', 'surface'],
+    floor: 4.5,
+  },
+  { colour: 'var(--_agent-logic-tooltip-text)', surfaces: ['tooltip'], floor: 4.5 },
+  { colour: 'var(--_agent-logic-border)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-border-strong)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-focus-ring)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-selected)', surfaces: ['compound', 'ground', 'node', 'selected'], floor: 3 },
+  { colour: 'var(--agent-logic-global)', surfaces: ['compound', 'ground', 'hover', 'node', 'selected'], floor: 3 },
+  { colour: 'var(--agent-logic-waiting)', surfaces: ['compound', 'node'], floor: 3 },
+  { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node'], floor: 3 },
+];
+
+const COMPONENT_PROPERTIES = [
+  'ambient-background',
+  'border',
+  'border-strong',
+  'compound-background',
+  'focus-ring',
+  'hover-background',
+  'node-background',
+  'selected',
+  'selected-background',
+  'text-subtle',
+  'tooltip-background',
+  'tooltip-text',
+];
 
 describe('styles.css', () => {
   afterEach(() => {
@@ -16,15 +83,97 @@ describe('styles.css', () => {
     expect(STYLESHEET).not.toMatch(/--ds-/);
   });
 
-  it('declares a default for every custom property that it reads', () => {
-    const declared = new Set(STYLESHEET.matchAll(/^\s+(--agent-logic-[a-z-]+):/gm).map(([, name]) => name));
-    const read = new Set(STYLESHEET.matchAll(/var\((--agent-logic-[a-z-]+)\)/g).map(([, name]) => name));
+  it('declares only the seeds and the code font on :root', () => {
+    const declared = readBlock(':where(:root)')
+      .matchAll(/(--agent-logic-[a-z-]+):/g)
+      .map(([, name]) => name)
+      .toArray();
 
-    expect([...read].filter((name) => !declared.has(name))).toStrictEqual([]);
+    expect(declared.toSorted()).toStrictEqual(
+      [...SEEDS, 'font-code'].map((name) => `--agent-logic-${name}`).toSorted(),
+    );
+  });
+
+  it('resolves every component property from its public property, in the private block', () => {
+    const block = readBlock(':where(.statechart-canvas').replaceAll(/\s+/g, ' ').replaceAll('( ', '(');
+
+    expect(
+      COMPONENT_PROPERTIES.filter((name) => !block.includes(`--_agent-logic-${name}: var(--agent-logic-${name},`)),
+    ).toStrictEqual([]);
+  });
+
+  it('reads only seeds and private properties outside the private block', () => {
+    const rest = STYLESHEET.replace(readBlock(':where(.statechart-canvas'), '');
+    const read = new Set(rest.matchAll(/var\(--agent-logic-([a-z-]+)[,)]/g).map(([, name = '']) => name));
+
+    expect([...read].filter((name) => !SEEDS.includes(name) && name !== 'font-code')).toStrictEqual([]);
+  });
+
+  // happy-dom does not inherit a custom property, so the canvas stands for the parts inside it, which inherit from it.
+  it.each([
+    ['the canvas', 'statechart-canvas', false],
+    ['a key swatch outside the canvas', 'canvas-key__swatch', false],
+    ['a mark glyph outside the canvas', 'mark-glyph', false],
+  ])('derives a component property of %s from seeds set on an ancestor', (_, className, isInCanvas) => {
+    const style = readElementStyle(className, { isInCanvas, ancestorStyle: '--agent-logic-text: rgb(1, 2, 3)' });
+
+    expect(style.getPropertyValue('--_agent-logic-border')).toContain('rgb(1, 2, 3)');
+  });
+
+  it('lets a component property set on an ancestor override its part', () => {
+    const style = readElementStyle('statechart-canvas', {
+      ancestorStyle: '--agent-logic-border: rgb(4, 5, 6)',
+      isInCanvas: false,
+    });
+
+    expect(style.getPropertyValue('--_agent-logic-border').trim()).toBe('rgb(4, 5, 6)');
+  });
+
+  it('tints the ground and the dots from the seeds', () => {
+    const style = readElementStyle('react-flow', { ancestorStyle: '--agent-logic-accent: rgb(7, 8, 9)' });
+
+    expect(style.getPropertyValue('--xy-background-color-default')).toContain('rgb(7, 8, 9)');
+    expect(style.getPropertyValue('--xy-background-pattern-dots-color-default')).toContain('rgb(7, 8, 9)');
+  });
+
+  it("leaves React Flow's own ground and dot properties to the consumer", () => {
+    expect(STYLESHEET).not.toMatch(/--xy-background-(color|pattern-color):/);
+  });
+
+  it('underlines an ambient instruction in the global colour', () => {
+    const style = readCanvasElementStyle('state-node__ambient', '');
+
+    expect(style.getPropertyValue('text-decoration')).toBe('underline dotted 2px #b0307f');
+  });
+
+  it('drops the ambient underline at the shapes level of detail', () => {
+    const style = readCanvasElementStyle('state-node__ambient', '', 'statechart-canvas__flow--shapes');
+
+    expect(style.getPropertyValue('text-decoration')).toBe('none');
+  });
+
+  it('declares the seeds at the values of the chosen theme', () => {
+    const declarations = readThemeDeclarations();
+
+    expect(Object.fromEntries(SEEDS.map((name) => [name, declarations.get(`--agent-logic-${name}`)]))).toStrictEqual(
+      DEFAULT_SEEDS,
+    );
+  });
+
+  it('meets the WCAG 2.2 AA contrast floors with the default seeds', () => {
+    expect(findContrastFailures(readThemeDeclarations())).toStrictEqual([]);
+  });
+
+  it('reports a contrast failure when a seed breaks a pair', () => {
+    const declarations = readThemeDeclarations().set('--agent-logic-text', '#9a9a9a');
+
+    expect(findContrastFailures(declarations)).toStrictEqual(
+      expect.arrayContaining([expect.stringMatching(/^var\(--_agent-logic-text-subtle\) on surface /)]),
+    );
   });
 
   it('draws a state in its default colour without any other stylesheet', () => {
-    expect(readStateColour('')).toBe('#172b4d');
+    expect(readStateColour('')).toBe('#1c1f24');
   });
 
   it("draws a state in the consumer's colour when the consumer overrides the property", () => {
@@ -43,33 +192,100 @@ describe('styles.css', () => {
 });
 
 // region | Helpers
+interface ElementPlacement {
+  ancestorStyle?: string;
+  consumerCss?: string;
+  flowClassName?: string;
+  isInCanvas?: boolean;
+}
+
+/** Returns each pair of `CONTRAST_PAIRS` that falls below its floor under `declarations`, with its ratio. */
+function findContrastFailures(declarations: Map<string, string>): string[] {
+  return CONTRAST_PAIRS.flatMap(({ colour, surfaces, floor }) =>
+    surfaces
+      .map((surface) => ({
+        surface,
+        ratio: measureContrast(resolveColour(colour, declarations), resolveSurface(surface, declarations)),
+      }))
+      .filter(({ ratio }) => ratio < floor)
+      .map(({ surface, ratio }) => `${colour} on ${surface} (${ratio.toFixed(2)}:1)`),
+  );
+}
+
 /** Returns the computed top, right, bottom, and left padding of the canvas's attribution. */
 function readAttributionPadding(consumerCss: string): string[] {
   const style = readCanvasElementStyle('react-flow__attribution', consumerCss);
   return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
 }
 
+/** Returns the stylesheet's rule block whose selector starts with `selectorStart`, up to its closing brace. */
+function readBlock(selectorStart: string): string {
+  const start = STYLESHEET.indexOf(selectorStart);
+  if (start === -1) throw new Error(`The stylesheet does not contain a block starting with ${selectorStart}`);
+  return STYLESHEET.slice(start, STYLESHEET.indexOf('}', start) + 1);
+}
+
 /**
- * Returns the computed style of an element of `className` inside a canvas, under the package stylesheet followed by
+ * Returns the computed style of an element of `className` inside a canvas, in a flow of `flowClassName`, under the
+ * package stylesheet followed by `consumerCss`.
+ */
+function readCanvasElementStyle(className: string, consumerCss: string, flowClassName = ''): CSSStyleDeclaration {
+  return readElementStyle(className, { consumerCss, flowClassName });
+}
+
+/**
+ * Returns the computed style of an element of `className`, placed in a flow of `flowClassName` inside a canvas unless
+ * `isInCanvas` is false, under an ancestor with the inline `ancestorStyle` and under the package stylesheet followed by
  * `consumerCss`.
  */
-function readCanvasElementStyle(className: string, consumerCss: string): CSSStyleDeclaration {
+function readElementStyle(
+  className: string,
+  { ancestorStyle = '', consumerCss = '', flowClassName = '', isInCanvas = true }: ElementPlacement,
+): CSSStyleDeclaration {
   for (const css of [STYLESHEET.replace(/^@import [^;]+;$/m, ''), consumerCss]) {
     const style = document.createElement('style');
     style.textContent = css;
     document.head.append(style);
   }
-  const canvas = document.createElement('div');
-  canvas.className = 'statechart-canvas';
+  const ancestor = document.createElement('div');
+  ancestor.setAttribute('style', ancestorStyle);
   const element = document.createElement('div');
   element.className = className;
-  canvas.append(element);
-  document.body.append(canvas);
+  if (isInCanvas) {
+    const canvas = document.createElement('div');
+    canvas.className = 'statechart-canvas';
+    const flow = document.createElement('div');
+    flow.className = flowClassName;
+    flow.append(element);
+    canvas.append(flow);
+    ancestor.append(canvas);
+  } else {
+    ancestor.append(element);
+  }
+  document.body.append(ancestor);
   return getComputedStyle(element);
 }
 
 /** Returns the computed text colour of a state. */
 function readStateColour(consumerCss: string): string {
   return readCanvasElementStyle('state-node', consumerCss).color;
+}
+
+/** Returns the custom properties that the default theme declares: the seeds, the private block, and the ground. */
+function readThemeDeclarations(): Map<string, string> {
+  return readDeclarations(STYLESHEET, [
+    ':where(:root)',
+    ':where(.statechart-canvas',
+    '.statechart-canvas .react-flow {',
+  ]);
+}
+
+/**
+ * Returns the opaque colour of `surface`, compositing a translucent surface over a compound state's background, on
+ * which the ambient instructions that take the hover background sit.
+ */
+function resolveSurface(surface: keyof typeof SURFACES, declarations: Map<string, string>) {
+  const colour = resolveColour(SURFACES[surface], declarations);
+  return colour.a < 1 ? composite(colour, resolveColour(SURFACES.compound, declarations)) : colour;
 }
 // endregion | Helpers
