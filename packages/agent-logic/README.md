@@ -26,8 +26,8 @@ if (result.ok) {
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples. |
 | `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                         |
-| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), and the hooks of a page that presents a chart.                                              |
-| `codeassembly-agent-logic/react/styles.css`        | The canvas stylesheet.                                                                                                                                                                |
+| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), `PromptPane` and its `PromptKey`, and the hooks of a page that presents a chart.            |
+| `codeassembly-agent-logic/react/styles.css`        | The stylesheet of the canvas and the prompt pane.                                                                                                                                     |
 | `codeassembly-agent-logic/server`                  | `createConversionHandler`, which serves conversions on an ACP agent, and its stores.                                                                                                  |
 | `codeassembly-agent-logic/client`                  | `createConversionClient`, the browser client of the routes that `createConversionHandler` serves.                                                                                     |
 | `codeassembly-agent-logic/job`                     | `createConversionJob`, which converts a prompt as a job of `@williamthorsen/toolbelt.llm`, in a page or a function.                                                                   |
@@ -106,7 +106,9 @@ if (started.ok) {
 
 ## What the app supplies
 
-The package draws the chart; the page around it is the app's. The app renders the load controls, the inspector, the source pane, and the terminal in its own design system, and it renders the canvas's key: `StatechartCanvas` passes the marks that the chart draws to its `renderKey` prop, and `CANVAS_KEY_ENTRIES` gives each mark's name, gloss, and drawing. The app also supplies the URL of the conversions resource to `./client`'s `createConversionClient`.
+The package draws the chart and the prompt; the page around them is the app's. The app renders the load controls, the inspector, and the terminal in its own design system, and it renders the canvas's key: `StatechartCanvas` passes the marks that the chart draws to its `renderKey` prop, and `CANVAS_KEY_ENTRIES` gives each mark's name, gloss, and drawing.
+
+`PromptPane` shows the whole prompt with its key, marking the text that the chart does not use and leaving used text unmarked. The app supplies its segments, from `buildPromptSegments`, the selected element, the passages to show, and the handler that receives a clicked passage's path. A line that the app draws from the canvas to the selected passage finds the pane's text by `data-prompt-text` and the passage by `data-passage-for`, whose value is the element's path; `PromptPane`'s doc comment lists its other attributes. `PromptKey` renders the key alone, for an app that places it outside the pane. The app also supplies the URL of the conversions resource to `./client`'s `createConversionClient`.
 
 ## Styling and theming
 
@@ -122,23 +124,24 @@ The colours come in two tiers of custom properties. The seeds are a few base col
 }
 ```
 
-Set the properties on `:root`, or on an ancestor of both the canvas and any key that the app renders outside it. The seeds, whose defaults [`styles.css`](src/react/styles.css) declares:
+Set the properties on `:root`, or on an ancestor of the canvas, the pane, and any key that the app renders outside them. The seeds, whose defaults [`styles.css`](src/react/styles.css) declares:
 
 - `--agent-logic-surface`: the background of a state and of a label
 - `--agent-logic-text`: the text
 - `--agent-logic-accent`: selection and focus
-- `--agent-logic-global`, `--agent-logic-waiting`, `--agent-logic-warning`: the marks for an any-time transition, a state that waits for the user, and an unreachable state
+- `--agent-logic-global`, `--agent-logic-waiting`, `--agent-logic-warning`: the marks for an any-time transition and ambient text, a state that waits for the user, and an unreachable state
 
 The component properties, which an app sets to override one part; `styles.css` states each derivation:
 
 - `--agent-logic-ambient-background`, `--agent-logic-compound-background`, `--agent-logic-hover-background`: backgrounds, from `text` (and `surface` for a compound state)
 - `--agent-logic-node-background`, `--agent-logic-tooltip-text`: from `surface`
-- `--agent-logic-selected-background`: from `accent` and `surface`
-- `--agent-logic-text-subtle`, `--agent-logic-border`, `--agent-logic-border-strong`: from `text` and `surface`
+- `--agent-logic-selected-background`, `--agent-logic-passage-background`: from `accent` and `surface`; the second fills the pane's selected and shown passages
+- `--agent-logic-text-subtle`, `--agent-logic-text-subtlest`, `--agent-logic-border`, `--agent-logic-border-strong`: from `text` and `surface`; the pane sets unused text in the first and comments in the second
+- `--agent-logic-unconverted`: the wavy line under unconverted text, from `warning` and `text`
 - `--agent-logic-tooltip-background`: from `text`
 - `--agent-logic-focus-ring`, `--agent-logic-selected`: from `accent`
 
-The canvas's ground and its dots also derive from the seeds; React Flow's `--xy-background-color` and `--xy-background-pattern-color` replace them. `--agent-logic-font-code` sets the code font.
+The canvas's ground and its dots also derive from the seeds; React Flow's `--xy-background-color` and `--xy-background-pattern-color` replace them. `--agent-logic-font-code` sets the code font, and `--agent-logic-font-prose` the face in which the pane and a flow's preamble quote the prompt.
 
 ## The bin
 

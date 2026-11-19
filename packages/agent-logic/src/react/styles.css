@@ -1,7 +1,7 @@
 /*
- * Styles for the statechart canvas and the marks of its key. The colours come in two tiers of custom properties: the
- * seeds, declared on :root, and the component properties, each of which derives its default from the seeds. A consumer
- * sets either tier on :root or on an ancestor of the canvas and its key.
+ * Styles for the statechart canvas, the prompt pane, and the marks of their keys. The colours come in two tiers of
+ * custom properties: the seeds, declared on :root, and the component properties, each of which derives its default from
+ * the seeds. A consumer sets either tier on :root or on an ancestor of the components that it renders.
  */
 
 @import '@xyflow/react/style.css';
@@ -9,6 +9,7 @@
 :where(:root) {
   --agent-logic-accent: #2346c4;
   --agent-logic-font-code: ui-monospace, monospace;
+  --agent-logic-font-prose: 'Iowan Old Style', Charter, 'Source Serif 4', Georgia, ui-serif, serif;
   --agent-logic-global: #b0307f;
   --agent-logic-surface: #ffffff;
   --agent-logic-text: #1c1f24;
@@ -18,9 +19,17 @@
 
 /*
  * Each component property resolves here, on the elements that read it, rather than on :root, so that seeds set on any
- * ancestor of the canvas or of a key entry reach the derivation. Every rule below reads the private property.
+ * ancestor of the canvas, the pane, or a key entry reach the derivation. Every rule below reads the private property.
  */
-:where(.statechart-canvas, .arrowhead-defs, .canvas-key__swatch, .canvas-key__word, .mark-glyph) {
+:where(
+  .statechart-canvas,
+  .arrowhead-defs,
+  .canvas-key__swatch,
+  .canvas-key__word,
+  .mark-glyph,
+  .prompt-pane,
+  .prompt-key
+) {
   --_agent-logic-ambient-background: var(
     --agent-logic-ambient-background,
     color-mix(in srgb, var(--agent-logic-text) 7%, transparent)
@@ -43,6 +52,10 @@
     color-mix(in srgb, var(--agent-logic-text) 12.5%, transparent)
   );
   --_agent-logic-node-background: var(--agent-logic-node-background, var(--agent-logic-surface));
+  --_agent-logic-passage-background: var(
+    --agent-logic-passage-background,
+    color-mix(in srgb, var(--agent-logic-accent) 22%, var(--agent-logic-surface))
+  );
   --_agent-logic-selected: var(--agent-logic-selected, var(--agent-logic-accent));
   --_agent-logic-selected-background: var(
     --agent-logic-selected-background,
@@ -52,8 +65,16 @@
     --agent-logic-text-subtle,
     color-mix(in srgb, var(--agent-logic-text) 78%, var(--agent-logic-surface))
   );
+  --_agent-logic-text-subtlest: var(
+    --agent-logic-text-subtlest,
+    color-mix(in srgb, var(--agent-logic-text) 72%, var(--agent-logic-surface))
+  );
   --_agent-logic-tooltip-background: var(--agent-logic-tooltip-background, var(--agent-logic-text));
   --_agent-logic-tooltip-text: var(--agent-logic-tooltip-text, var(--agent-logic-surface));
+  --_agent-logic-unconverted: var(
+    --agent-logic-unconverted,
+    color-mix(in srgb, var(--agent-logic-warning) 70%, var(--agent-logic-text))
+  );
 }
 
 .statechart-canvas {
@@ -356,8 +377,8 @@
   background: none;
   color: var(--agent-logic-text);
   cursor: pointer;
-  /* The serif face in which an app's prompt pane quotes the prompt. */
-  font-family: 'Iowan Old Style', Charter, 'Source Serif 4', Georgia, ui-serif, serif;
+  /* The prompt pane's face, in which the preamble quotes the prompt. */
+  font-family: var(--agent-logic-font-prose);
   font-size: 14px;
   line-height: 20px;
   text-align: start;
@@ -527,4 +548,118 @@
 
 .canvas-key__word {
   color: var(--_agent-logic-text-subtle);
+}
+
+/* -- Prompt pane: the prompt, with marks on the exceptions to used text -- */
+
+.prompt-pane {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  block-size: 100%;
+  min-block-size: 0;
+  background: var(--agent-logic-surface);
+  color: var(--agent-logic-text);
+}
+
+.prompt-pane__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  align-items: baseline;
+  padding: 12px 20px 4px;
+}
+
+.prompt-pane__heading {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+}
+
+.prompt-pane__text {
+  overflow: auto;
+  padding: 4px 20px 40px;
+  font-family: var(--agent-logic-font-prose);
+  font-size: 16px;
+  line-height: 26px;
+  white-space: pre-wrap;
+}
+
+/* Used text is unmarked, so that the marks set apart the exceptions; pointing at a passage shows that it selects. */
+.prompt-pane__passage--used,
+.prompt-pane__passage--ambient {
+  cursor: pointer;
+}
+
+.prompt-pane__passage--used:hover {
+  background: var(--_agent-logic-hover-background);
+  text-decoration: underline solid 1px var(--_agent-logic-border-strong);
+  text-underline-offset: 0.25em;
+}
+
+.prompt-pane__passage--ambient:hover {
+  background: var(--_agent-logic-hover-background);
+}
+
+/* Each mark pairs its colour with a line style or italic, and its key sample shares the rule. */
+.prompt-pane__passage--ambient,
+.prompt-key__sample--ambient {
+  text-decoration: underline dotted 2px var(--agent-logic-global);
+  text-underline-offset: 0.2em;
+}
+
+.prompt-pane__passage--unused,
+.prompt-key__sample--unused {
+  color: var(--_agent-logic-text-subtle);
+  text-decoration: underline dashed 1px var(--_agent-logic-border);
+  text-underline-offset: 0.25em;
+}
+
+.prompt-pane__passage--unconverted,
+.prompt-key__sample--unconverted {
+  text-decoration: underline wavy 1.5px var(--_agent-logic-unconverted);
+  text-underline-offset: 0.3em;
+}
+
+.prompt-pane__passage--comment,
+.prompt-key__sample--comment {
+  color: var(--_agent-logic-text-subtlest);
+  font-style: italic;
+}
+
+/* A selected or shown passage reads as the active text: a fill without a line of its own, over any hover. */
+.prompt-pane__passage--highlighted,
+.prompt-pane__passage--highlighted:hover {
+  background: var(--_agent-logic-passage-background);
+  color: var(--agent-logic-text);
+}
+
+/* An unconverted passage keeps its line, which tells the reader why the passage is shown. */
+.prompt-pane__passage--highlighted:not(.prompt-pane__passage--unconverted),
+.prompt-pane__passage--highlighted:not(.prompt-pane__passage--unconverted):hover {
+  text-decoration: none;
+}
+
+.prompt-pane__passage--highlighted.prompt-pane__passage--comment {
+  color: var(--_agent-logic-text-subtle);
+}
+
+.prompt-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  margin-inline-start: auto;
+  padding: 0;
+  font-size: 12px;
+  line-height: 16px;
+  list-style: none;
+}
+
+.prompt-key__entry {
+  margin: 0;
+}
+
+.prompt-key__sample {
+  font-family: var(--agent-logic-font-prose);
 }

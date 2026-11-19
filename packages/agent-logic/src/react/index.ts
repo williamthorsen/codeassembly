@@ -1,4 +1,4 @@
-/** `./react` entry: the statechart canvas, the data of its key, and the hooks of a page that presents a chart. */
+/** `./react` entry: the statechart canvas, the data of its key, the prompt pane, and the hooks of a chart's page. */
 export * from './canvas/canvas-key-entries.tsx';
 export * from './canvas/list-chart-marks.ts';
 export * from './canvas/marks.tsx';
@@ -15,3 +15,5 @@ export * from './hooks/useEscapeToClear.ts';
 export * from './hooks/useSelection.ts';
 export * from './hooks/useShowAmbient.ts';
 export * from './hooks/useUnknownExample.ts';
+export * from './source/PromptKey.tsx';
+export * from './source/PromptPane.tsx';
