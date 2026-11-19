@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 
 import { CANONICAL_TAXONOMY, deriveLabelMap } from '@williamthorsen/change-grammar';
-import { captureError } from '@williamthorsen/toolbelt.testing/candidate';
-import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest/candidate';
+import { captureError } from '@williamthorsen/toolbelt.testing';
+import { ProcessExitError, silenceConsole, throwOnProcessExit } from '@williamthorsen/toolbelt.vitest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { generateLabelMap, printGenerateUsage } from '../generate-label-map.ts';

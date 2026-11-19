@@ -1,4 +1,4 @@
-import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest';
 import { describe, expect, it, vi } from 'vitest';
 
 import { RunDataParseError } from '../../run-data-parse-error.ts';

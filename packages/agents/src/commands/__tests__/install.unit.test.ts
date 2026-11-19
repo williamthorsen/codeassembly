@@ -3,7 +3,7 @@ import { mkdir, readdir, readFile, rm, symlink, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 
-import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { NoContentSourceError } from '../../lib/declared-sources.ts';

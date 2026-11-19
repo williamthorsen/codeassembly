@@ -1,9 +1,9 @@
 import { join } from 'node:path';
 
-import { captureStdio } from '@williamthorsen/toolbelt.testing/candidate';
+import { captureStdio } from '@williamthorsen/toolbelt.testing';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { defaultKbConfig, type KbConfig } from '../../config/config-schema.ts';
+import { defaultKbConfig, type KbConfig } from '../../config/index.ts';
 import { makeFakeGit } from '../../test-utils/make-fake-git.ts';
 import { makeTree } from '../../test-utils/make-tree.ts';
 import { enumerateNotePaths, enumerateNotes } from '../enumerate.ts';

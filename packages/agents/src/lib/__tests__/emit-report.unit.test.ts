@@ -1,4 +1,4 @@
-import { silenceConsole } from '@williamthorsen/toolbelt.vitest/candidate';
+import { silenceConsole } from '@williamthorsen/toolbelt.vitest';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { configureOutputStyle, emitReport, renderReportLine } from '../emit-report.ts';
