@@ -1,4 +1,5 @@
-/* eslint-disable testing-library/no-container, testing-library/no-node-access -- The pane's contract with an app is its data attributes and the classes that draw its marks, which have no accessible query. */
+/* eslint-disable testing-library/no-container, testing-library/no-node-access -- The pane's contract with an app is
+its data attributes and the classes that draw its marks, which have no accessible query. */
 // @vitest-environment happy-dom
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';

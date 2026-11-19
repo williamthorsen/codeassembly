@@ -1,4 +1,5 @@
-/* eslint-disable testing-library/no-node-access -- Each sample's class draws its mark, which has no accessible query. */
+/* eslint-disable testing-library/no-node-access -- Each sample's class draws its mark, which has no accessible
+query. */
 // @vitest-environment happy-dom
 import { render, screen, within } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
