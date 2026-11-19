@@ -13,6 +13,9 @@ import {
 
 const STYLESHEET = readFileSync(path.join(import.meta.dirname, '../styles.css'), 'utf8');
 
+/** The start of the private block's selector, as the formatter wraps it. */
+const PRIVATE_BLOCK_START = ':where(\n  .statechart-canvas,';
+
 const SEEDS = ['accent', 'global', 'surface', 'text', 'waiting', 'warning'];
 
 /** The seeds' values in the theme that williamthorsen/codeassembly-studio#50 chose. */
@@ -31,6 +34,8 @@ const SURFACES = {
   ground: 'var(--xy-background-color-default)',
   hover: 'var(--_agent-logic-hover-background)',
   node: 'var(--_agent-logic-node-background)',
+  passage: 'var(--_agent-logic-passage-background)',
+  passageHover: 'var(--_agent-logic-hover-background)',
   selected: 'var(--_agent-logic-selected-background)',
   surface: 'var(--agent-logic-surface)',
   tooltip: 'var(--_agent-logic-tooltip-background)',
@@ -40,20 +45,26 @@ const SURFACES = {
 const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; floor: number }[] = [
   {
     colour: 'var(--agent-logic-text)',
-    surfaces: ['compound', 'ground', 'hover', 'node', 'selected', 'surface'],
+    surfaces: ['compound', 'ground', 'hover', 'node', 'passage', 'passageHover', 'selected', 'surface'],
     floor: 4.5,
   },
   {
     colour: 'var(--_agent-logic-text-subtle)',
-    surfaces: ['compound', 'ground', 'node', 'selected', 'surface'],
+    surfaces: ['compound', 'ground', 'node', 'passage', 'selected', 'surface'],
     floor: 4.5,
   },
+  { colour: 'var(--_agent-logic-text-subtlest)', surfaces: ['surface'], floor: 4.5 },
   { colour: 'var(--_agent-logic-tooltip-text)', surfaces: ['tooltip'], floor: 4.5 },
-  { colour: 'var(--_agent-logic-border)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
-  { colour: 'var(--_agent-logic-border-strong)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-border)', surfaces: ['compound', 'ground', 'node', 'surface'], floor: 3 },
+  { colour: 'var(--_agent-logic-border-strong)', surfaces: ['compound', 'ground', 'node', 'passageHover'], floor: 3 },
   { colour: 'var(--_agent-logic-focus-ring)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
   { colour: 'var(--_agent-logic-selected)', surfaces: ['compound', 'ground', 'node', 'selected'], floor: 3 },
-  { colour: 'var(--agent-logic-global)', surfaces: ['compound', 'ground', 'hover', 'node', 'selected'], floor: 3 },
+  {
+    colour: 'var(--agent-logic-global)',
+    surfaces: ['compound', 'ground', 'hover', 'node', 'passageHover', 'selected', 'surface'],
+    floor: 3,
+  },
+  { colour: 'var(--_agent-logic-unconverted)', surfaces: ['passage', 'surface'], floor: 3 },
   { colour: 'var(--agent-logic-waiting)', surfaces: ['compound', 'node'], floor: 3 },
   { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node'], floor: 3 },
 ];
@@ -66,12 +77,24 @@ const COMPONENT_PROPERTIES = [
   'focus-ring',
   'hover-background',
   'node-background',
+  'passage-background',
   'selected',
   'selected-background',
   'text-subtle',
+  'text-subtlest',
   'tooltip-background',
   'tooltip-text',
+  'unconverted',
 ];
+
+const FONTS = new Set(['font-code', 'font-prose']);
+
+/** The surfaces that are translucent, with the opaque surface over which each one is drawn. */
+const SURFACE_GROUNDS: Partial<Record<keyof typeof SURFACES, keyof typeof SURFACES>> = {
+  // The ambient instructions that take the hover background sit on a compound state.
+  hover: 'compound',
+  passageHover: 'surface',
+};
 
 describe('styles.css', () => {
   afterEach(() => {
@@ -83,19 +106,17 @@ describe('styles.css', () => {
     expect(STYLESHEET).not.toMatch(/--ds-/);
   });
 
-  it('declares only the seeds and the code font on :root', () => {
+  it('declares only the seeds and the fonts on :root', () => {
     const declared = readBlock(':where(:root)')
       .matchAll(/(--agent-logic-[a-z-]+):/g)
       .map(([, name]) => name)
       .toArray();
 
-    expect(declared.toSorted()).toStrictEqual(
-      [...SEEDS, 'font-code'].map((name) => `--agent-logic-${name}`).toSorted(),
-    );
+    expect(declared.toSorted()).toStrictEqual([...SEEDS, ...FONTS].map((name) => `--agent-logic-${name}`).toSorted());
   });
 
   it('resolves every component property from its public property, in the private block', () => {
-    const block = readBlock(':where(.statechart-canvas').replaceAll(/\s+/g, ' ').replaceAll('( ', '(');
+    const block = readBlock(PRIVATE_BLOCK_START).replaceAll(/\s+/g, ' ').replaceAll('( ', '(');
 
     expect(
       COMPONENT_PROPERTIES.filter((name) => !block.includes(`--_agent-logic-${name}: var(--agent-logic-${name},`)),
@@ -103,10 +124,10 @@ describe('styles.css', () => {
   });
 
   it('reads only seeds and private properties outside the private block', () => {
-    const rest = STYLESHEET.replace(readBlock(':where(.statechart-canvas'), '');
+    const rest = STYLESHEET.replace(readBlock(PRIVATE_BLOCK_START), '');
     const read = new Set(rest.matchAll(/var\(--agent-logic-([a-z-]+)[,)]/g).map(([, name = '']) => name));
 
-    expect([...read].filter((name) => !SEEDS.includes(name) && name !== 'font-code')).toStrictEqual([]);
+    expect([...read].filter((name) => !SEEDS.includes(name) && !FONTS.has(name))).toStrictEqual([]);
   });
 
   // happy-dom does not inherit a custom property, so the canvas stands for the parts inside it, which inherit from it.
@@ -114,6 +135,8 @@ describe('styles.css', () => {
     ['the canvas', 'statechart-canvas', false],
     ['a key swatch outside the canvas', 'canvas-key__swatch', false],
     ['a mark glyph outside the canvas', 'mark-glyph', false],
+    ['the prompt pane', 'prompt-pane', false],
+    ['a prompt key outside the pane', 'prompt-key', false],
   ])('derives a component property of %s from seeds set on an ancestor', (_, className, isInCanvas) => {
     const style = readElementStyle(className, { isInCanvas, ancestorStyle: '--agent-logic-text: rgb(1, 2, 3)' });
 
@@ -150,6 +173,38 @@ describe('styles.css', () => {
     const style = readCanvasElementStyle('state-node__ambient', '', 'statechart-canvas__flow--shapes');
 
     expect(style.getPropertyValue('text-decoration')).toBe('none');
+  });
+
+  it('leaves used text in the prompt pane unmarked at rest', () => {
+    const style = readElementStyle('prompt-pane__passage prompt-pane__passage--used', { isInCanvas: false });
+
+    expect([style.getPropertyValue('text-decoration'), style.backgroundColor]).toStrictEqual(['', '']);
+  });
+
+  it.each([
+    ['ambient', 'text-decoration', /^underline dotted 2px #b0307f$/],
+    ['comment', 'font-style', /^italic$/],
+    // happy-dom does not resolve `color-mix()`, so the line's colour is left to the contrast test.
+    ['unconverted', 'text-decoration', /^underline wavy 1\.5px/],
+    ['unused', 'text-decoration', /^underline dashed 1px/],
+  ])('marks %s text in the prompt pane and in its key alike', (coverage, property, pattern) => {
+    const passage = readElementStyle(`prompt-pane__passage--${coverage}`, { isInCanvas: false });
+    const sample = readElementStyle(`prompt-key__sample--${coverage}`, { isInCanvas: false });
+
+    expect(passage.getPropertyValue(property)).toMatch(pattern);
+    expect(sample.getPropertyValue(property)).toBe(passage.getPropertyValue(property));
+  });
+
+  it('drops the line of a highlighted passage, except an unconverted one', () => {
+    const ambient = readElementStyle('prompt-pane__passage--ambient prompt-pane__passage--highlighted', {
+      isInCanvas: false,
+    });
+    const unconverted = readElementStyle('prompt-pane__passage--unconverted prompt-pane__passage--highlighted', {
+      isInCanvas: false,
+    });
+
+    expect(ambient.getPropertyValue('text-decoration')).toBe('none');
+    expect(unconverted.getPropertyValue('text-decoration')).toMatch(/^underline wavy /);
   });
 
   it('declares the seeds at the values of the chosen theme', () => {
@@ -244,7 +299,8 @@ function readElementStyle(
 ): CSSStyleDeclaration {
   for (const css of [STYLESHEET.replace(/^@import [^;]+;$/m, ''), consumerCss]) {
     const style = document.createElement('style');
-    style.textContent = css;
+    // happy-dom does not match a `:where()` whose selector list spans lines.
+    style.textContent = css.replaceAll(/\s+/g, ' ');
     document.head.append(style);
   }
   const ancestor = document.createElement('div');
@@ -273,19 +329,13 @@ function readStateColour(consumerCss: string): string {
 
 /** Returns the custom properties that the default theme declares: the seeds, the private block, and the ground. */
 function readThemeDeclarations(): Map<string, string> {
-  return readDeclarations(STYLESHEET, [
-    ':where(:root)',
-    ':where(.statechart-canvas',
-    '.statechart-canvas .react-flow {',
-  ]);
+  return readDeclarations(STYLESHEET, [':where(:root)', PRIVATE_BLOCK_START, '.statechart-canvas .react-flow {']);
 }
 
-/**
- * Returns the opaque colour of `surface`, compositing a translucent surface over a compound state's background, on
- * which the ambient instructions that take the hover background sit.
- */
+/** Returns the opaque colour of `surface`, compositing a translucent surface over its ground. */
 function resolveSurface(surface: keyof typeof SURFACES, declarations: Map<string, string>) {
   const colour = resolveColour(SURFACES[surface], declarations);
-  return colour.a < 1 ? composite(colour, resolveColour(SURFACES.compound, declarations)) : colour;
+  const ground = SURFACE_GROUNDS[surface] ?? 'compound';
+  return colour.a < 1 ? composite(colour, resolveColour(SURFACES[ground], declarations)) : colour;
 }
 // endregion | Helpers
