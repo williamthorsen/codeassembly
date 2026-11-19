@@ -42,9 +42,13 @@
   block-size: auto;
 }
 
-/* Keep the library's attribution at the page's 12px text floor. */
+/*
+ * Keep the library's attribution at the page's 12px text floor, padded for that size. The library's own padding is in
+ * its cascade layer, which a consumer's layered reset, such as Tailwind's preflight, can override.
+ */
 .statechart-canvas .react-flow__attribution {
   font-size: 12px;
+  padding: 3px 6px;
 }
 
 /* -- Interaction states, shared by every node and edge -- */

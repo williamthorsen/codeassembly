@@ -30,19 +30,46 @@ describe('styles.css', () => {
   it("draws a state in the consumer's colour when the consumer overrides the property", () => {
     expect(readStateColour(':root { --agent-logic-text: rgb(1, 2, 3); }')).toBe('rgb(1, 2, 3)');
   });
+
+  it('pads the attribution on every side without any other stylesheet', () => {
+    expect(readAttributionPadding('')).toStrictEqual(['3px', '6px', '3px', '6px']);
+  });
+
+  it("pads the attribution on every side under a consumer's layered reset", () => {
+    const preflight = '@layer base { *, ::before, ::after { margin: 0; padding: 0; } }';
+
+    expect(readAttributionPadding(preflight)).toStrictEqual(['3px', '6px', '3px', '6px']);
+  });
 });
 
 // region | Helpers
-/** Returns the computed text colour of a state under the package stylesheet followed by `consumerCss`. */
-function readStateColour(consumerCss: string): string {
+/** Returns the computed top, right, bottom, and left padding of the canvas's attribution. */
+function readAttributionPadding(consumerCss: string): string[] {
+  const style = readCanvasElementStyle('react-flow__attribution', consumerCss);
+  return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
+}
+
+/**
+ * Returns the computed style of an element of `className` inside a canvas, under the package stylesheet followed by
+ * `consumerCss`.
+ */
+function readCanvasElementStyle(className: string, consumerCss: string): CSSStyleDeclaration {
   for (const css of [STYLESHEET.replace(/^@import [^;]+;$/m, ''), consumerCss]) {
     const style = document.createElement('style');
     style.textContent = css;
     document.head.append(style);
   }
-  const state = document.createElement('div');
-  state.className = 'state-node';
-  document.body.append(state);
-  return getComputedStyle(state).color;
+  const canvas = document.createElement('div');
+  canvas.className = 'statechart-canvas';
+  const element = document.createElement('div');
+  element.className = className;
+  canvas.append(element);
+  document.body.append(canvas);
+  return getComputedStyle(element);
+}
+
+/** Returns the computed text colour of a state. */
+function readStateColour(consumerCss: string): string {
+  return readCanvasElementStyle('state-node', consumerCss).color;
 }
 // endregion | Helpers
