@@ -2,7 +2,7 @@ import { type MouseEvent, type ReactElement, type ReactNode, useEffect, useId, u
 
 import type { ElementDescription } from '../../layout/describe-config.ts';
 import type { Span } from '../../schema/agent-logic-schema.ts';
-import { type Coverage, listElementWords, type PromptSegment } from '../../source/prompt-segments.ts';
+import { listElementWords, type PromptSegment } from '../../source/prompt-segments.ts';
 import { PromptKey } from './PromptKey.tsx';
 
 export interface PromptPaneProps {
@@ -70,7 +70,7 @@ export function PromptPane({ segments, selected, shownPassages = [], onSelect }:
           return (
             <span
               key={segment.start}
-              className={classifyPassage(segment.coverage, isSelected || isShown)}
+              className={classifyPassage(segment, isSelected || isShown)}
               data-coverage={segment.coverage}
               data-selected={isSelected ? '' : undefined}
               data-shown={isShown ? '' : undefined}
@@ -91,6 +91,9 @@ export function PromptPane({ segments, selected, shownPassages = [], onSelect }:
 // The path of an ambient instruction, which a passage in the prompt selects ahead of any element inside it.
 const AMBIENT_PATH = /(?:^|\.)meta\.ambient\[\d+\]$/;
 
+// A letter or a digit, which `boldSharedWords` also takes as part of a word.
+const WORD = /[A-Za-z0-9]/;
+
 /** Sets in bold each word of the text that the selected element also uses. */
 function boldSharedWords(text: string, words: Set<string>): ReactNode[] {
   return text
@@ -98,9 +101,14 @@ function boldSharedWords(text: string, words: Set<string>): ReactNode[] {
     .map((part, index) => (words.has(part.toLowerCase()) ? <b key={index}>{part}</b> : part));
 }
 
-/** Returns the classes of a passage by its coverage, highlighted when selected or shown. */
-function classifyPassage(coverage: Coverage, isHighlighted: boolean): string {
-  const classes = `prompt-pane__passage prompt-pane__passage--${coverage}`;
+/**
+ * Returns the classes of a passage by its coverage, highlighted when selected or shown. Unused text without a word,
+ * such as the space and punctuation between two used passages, is left unmarked, because it does not hold an
+ * instruction.
+ */
+function classifyPassage({ coverage, text }: PromptSegment, isHighlighted: boolean): string {
+  const isMarked = coverage !== 'unused' || WORD.test(text);
+  const classes = isMarked ? `prompt-pane__passage prompt-pane__passage--${coverage}` : 'prompt-pane__passage';
   return isHighlighted ? `${classes} prompt-pane__passage--highlighted` : classes;
 }
 // endregion | Helpers

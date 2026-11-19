@@ -72,16 +72,35 @@ describe(PromptPane, () => {
   });
 
   it('marks unused text and selects nothing when it is clicked', async () => {
+    const prompt = `${MINIMAL_PROMPT} Be kind.`;
+    const config = buildMinimalConfig();
+    config.meta.prompt = prompt;
     const onSelect = vi.fn();
-    const { container } = render(<PromptPane segments={SEGMENTS} selected={undefined} onSelect={onSelect} />);
+    render(
+      <PromptPane
+        segments={buildPromptSegments(prompt, describeConfig(config), [])}
+        selected={undefined}
+        onSelect={onSelect}
+      />,
+    );
 
-    const unused = container.querySelector('[data-coverage="unused"]');
-    if (unused === null) throw new Error('The unused passage is not marked.');
+    const unused = screen.getByText('. Be kind.');
+    expect(unused).toHaveAttribute('data-coverage', 'unused');
     expect(unused).toHaveClass('prompt-pane__passage--unused');
     expect(unused).not.toHaveAttribute('data-select-path');
     await userEvent.click(unused);
 
     expect(onSelect).not.toHaveBeenCalled();
+  });
+
+  it('leaves unmarked the unused space and punctuation between used passages', () => {
+    const { container } = render(<PromptPane segments={SEGMENTS} selected={undefined} onSelect={vi.fn()} />);
+
+    const separators = [...container.querySelectorAll('[data-coverage="unused"]')].filter(
+      ({ textContent }) => !/[A-Za-z0-9]/.test(textContent),
+    );
+    expect(separators.length).toBeGreaterThan(0);
+    expect(separators.filter((separator) => separator.classList.contains('prompt-pane__passage--unused'))).toEqual([]);
   });
 
   it('selects the element of a clicked passage, and ignores a click on an unconverted one', async () => {
