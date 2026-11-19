@@ -73,7 +73,7 @@
   },
   "dependencies": {
     "@williamthorsen/toolbelt.errors": "catalog:",
-    "@xyflow/react": "13.0.1",
+    "@xyflow/react": "13.0.2",
     "elkjs": "0.12.1",
     "zod": "catalog:"
   },

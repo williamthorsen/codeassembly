@@ -8,24 +8,11 @@
         "id": "1244623",
         "reason": "Added by v11y sync at 2026-11-05 07:28:55 UTC",
         "url": "https://github.com/advisories/GHSA-g3hv-75wg-m249"
-      },
-      {
-        "addedAt": "2026-11-18T08:52:28.604Z",
-        "id": "1247710",
-        "reason": "Added by v11y sync at 2026-11-18 08:52:28 UTC",
-        "url": "https://github.com/advisories/GHSA-fc5q-39xc-vjpf"
       }
     ]
   },
   "prod": {
     "severityThreshold": "low",
-    "allowlist": [
-      {
-        "addedAt": "2026-11-18T08:52:28.609Z",
-        "id": "1247710",
-        "reason": "Added by v11y sync at 2026-11-18 08:52:28 UTC",
-        "url": "https://github.com/advisories/GHSA-fc5q-39xc-vjpf"
-      }
-    ]
+    "allowlist": []
   }
 }
