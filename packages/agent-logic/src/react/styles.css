@@ -194,6 +194,7 @@
 .statechart-canvas__flow--shapes .state-node__ambient {
   background: var(--_agent-logic-ambient-background);
   color: transparent;
+  text-decoration: none;
 }
 
 /* -- States -- */
@@ -360,6 +361,9 @@
   font-size: 14px;
   line-height: 20px;
   text-align: start;
+  /* The prompt pane's mark for ambient text, beside the global colour. */
+  text-decoration: underline dotted 2px var(--agent-logic-global);
+  text-underline-offset: 3px;
 }
 
 .state-node__ambient:hover {

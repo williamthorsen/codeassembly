@@ -87,6 +87,18 @@ describe('styles.css', () => {
     expect(STYLESHEET).not.toMatch(/--xy-background-(color|pattern-color):/);
   });
 
+  it('underlines an ambient instruction in the global colour', () => {
+    const style = readCanvasElementStyle('state-node__ambient', '');
+
+    expect(style.getPropertyValue('text-decoration')).toBe('underline dotted 2px #b0307f');
+  });
+
+  it('drops the ambient underline at the shapes level of detail', () => {
+    const style = readCanvasElementStyle('state-node__ambient', '', 'statechart-canvas__flow--shapes');
+
+    expect(style.getPropertyValue('text-decoration')).toBe('none');
+  });
+
   it('draws a state in its default colour without any other stylesheet', () => {
     expect(readStateColour('')).toBe('#1c1f24');
   });
@@ -110,6 +122,7 @@ describe('styles.css', () => {
 interface ElementPlacement {
   ancestorStyle?: string;
   consumerCss?: string;
+  flowClassName?: string;
   isInCanvas?: boolean;
 }
 
@@ -120,20 +133,20 @@ function readAttributionPadding(consumerCss: string): string[] {
 }
 
 /**
- * Returns the computed style of an element of `className` inside a canvas, under the package stylesheet followed by
- * `consumerCss`.
+ * Returns the computed style of an element of `className` inside a canvas, in a flow of `flowClassName`, under the
+ * package stylesheet followed by `consumerCss`.
  */
-function readCanvasElementStyle(className: string, consumerCss: string): CSSStyleDeclaration {
-  return readElementStyle(className, { consumerCss });
+function readCanvasElementStyle(className: string, consumerCss: string, flowClassName = ''): CSSStyleDeclaration {
+  return readElementStyle(className, { consumerCss, flowClassName });
 }
 
 /**
- * Returns the computed style of an element of `className`, placed inside a canvas unless `isInCanvas` is false, under
- * an ancestor with the inline `ancestorStyle` and under the package stylesheet followed by `consumerCss`.
+ * Returns the computed style of an element of `className`, placed in a flow of `flowClassName` inside a canvas unless
+ * `isInCanvas` is false, under an ancestor with the inline `ancestorStyle` and under the package stylesheet followed by `consumerCss`.
  */
 function readElementStyle(
   className: string,
-  { ancestorStyle = '', consumerCss = '', isInCanvas = true }: ElementPlacement,
+  { ancestorStyle = '', consumerCss = '', flowClassName = '', isInCanvas = true }: ElementPlacement,
 ): CSSStyleDeclaration {
   for (const css of [STYLESHEET.replace(/^@import [^;]+;$/m, ''), consumerCss]) {
     const style = document.createElement('style');
@@ -147,7 +160,10 @@ function readElementStyle(
   if (isInCanvas) {
     const canvas = document.createElement('div');
     canvas.className = 'statechart-canvas';
-    canvas.append(element);
+    const flow = document.createElement('div');
+    flow.className = flowClassName;
+    flow.append(element);
+    canvas.append(flow);
     ancestor.append(canvas);
   } else {
     ancestor.append(element);
