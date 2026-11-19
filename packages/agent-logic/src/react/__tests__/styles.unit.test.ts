@@ -53,7 +53,7 @@ const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; flo
   { colour: 'var(--_agent-logic-border-strong)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
   { colour: 'var(--_agent-logic-focus-ring)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
   { colour: 'var(--_agent-logic-selected)', surfaces: ['compound', 'ground', 'node', 'selected'], floor: 3 },
-  { colour: 'var(--agent-logic-global)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--agent-logic-global)', surfaces: ['compound', 'ground', 'hover', 'node', 'selected'], floor: 3 },
   { colour: 'var(--agent-logic-waiting)', surfaces: ['compound', 'node'], floor: 3 },
   { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node'], floor: 3 },
 ];
@@ -192,6 +192,13 @@ describe('styles.css', () => {
 });
 
 // region | Helpers
+interface ElementPlacement {
+  ancestorStyle?: string;
+  consumerCss?: string;
+  flowClassName?: string;
+  isInCanvas?: boolean;
+}
+
 /** Returns each pair of `CONTRAST_PAIRS` that falls below its floor under `declarations`, with its ratio. */
 function findContrastFailures(declarations: Map<string, string>): string[] {
   return CONTRAST_PAIRS.flatMap(({ colour, surfaces, floor }) =>
@@ -205,17 +212,17 @@ function findContrastFailures(declarations: Map<string, string>): string[] {
   );
 }
 
-interface ElementPlacement {
-  ancestorStyle?: string;
-  consumerCss?: string;
-  flowClassName?: string;
-  isInCanvas?: boolean;
-}
-
 /** Returns the computed top, right, bottom, and left padding of the canvas's attribution. */
 function readAttributionPadding(consumerCss: string): string[] {
   const style = readCanvasElementStyle('react-flow__attribution', consumerCss);
   return [style.paddingTop, style.paddingRight, style.paddingBottom, style.paddingLeft];
+}
+
+/** Returns the stylesheet's rule block whose selector starts with `selectorStart`, up to its closing brace. */
+function readBlock(selectorStart: string): string {
+  const start = STYLESHEET.indexOf(selectorStart);
+  if (start === -1) throw new Error(`The stylesheet does not contain a block starting with ${selectorStart}`);
+  return STYLESHEET.slice(start, STYLESHEET.indexOf('}', start) + 1);
 }
 
 /**
@@ -259,6 +266,11 @@ function readElementStyle(
   return getComputedStyle(element);
 }
 
+/** Returns the computed text colour of a state. */
+function readStateColour(consumerCss: string): string {
+  return readCanvasElementStyle('state-node', consumerCss).color;
+}
+
 /** Returns the custom properties that the default theme declares: the seeds, the private block, and the ground. */
 function readThemeDeclarations(): Map<string, string> {
   return readDeclarations(STYLESHEET, [
@@ -268,21 +280,12 @@ function readThemeDeclarations(): Map<string, string> {
   ]);
 }
 
-/** Returns the opaque colour of `surface`, compositing a translucent surface over the node's background. */
+/**
+ * Returns the opaque colour of `surface`, compositing a translucent surface over a compound state's background, on
+ * which the ambient instructions that take the hover background sit.
+ */
 function resolveSurface(surface: keyof typeof SURFACES, declarations: Map<string, string>) {
   const colour = resolveColour(SURFACES[surface], declarations);
-  return colour.a < 1 ? composite(colour, resolveColour(SURFACES.node, declarations)) : colour;
-}
-
-/** Returns the stylesheet's rule block whose selector starts with `selectorStart`, up to its closing brace. */
-function readBlock(selectorStart: string): string {
-  const start = STYLESHEET.indexOf(selectorStart);
-  if (start === -1) throw new Error(`The stylesheet does not contain a block starting with ${selectorStart}`);
-  return STYLESHEET.slice(start, STYLESHEET.indexOf('}', start) + 1);
-}
-
-/** Returns the computed text colour of a state. */
-function readStateColour(consumerCss: string): string {
-  return readCanvasElementStyle('state-node', consumerCss).color;
+  return colour.a < 1 ? composite(colour, resolveColour(SURFACES.compound, declarations)) : colour;
 }
 // endregion | Helpers
