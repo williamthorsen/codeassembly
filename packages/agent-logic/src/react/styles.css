@@ -86,7 +86,7 @@
   --xy-background-color-default: color-mix(in srgb, var(--agent-logic-accent) 9%, var(--agent-logic-surface));
   --xy-background-pattern-dots-color-default: color-mix(
     in srgb,
-    var(--agent-logic-text) 40%,
+    color-mix(in srgb, var(--agent-logic-text), var(--agent-logic-accent)) 40%,
     var(--xy-background-color, var(--xy-background-color-default))
   );
 }
