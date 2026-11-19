@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.6.0 — 2026-11-19
+
+### 🎉 Features
+
+- Adds `PromptPane` and `PromptKey` to `codeassembly-agent-logic/react`, which show the whole prompt with a key and mark ambient, unused, unconverted, and comment text, leaving the text that the chart uses unmarked. (#2297)
+- Adds the custom properties `--agent-logic-passage-background`, `--agent-logic-text-subtlest`, and `--agent-logic-unconverted` to `codeassembly-agent-logic/react/styles.css` for theming the pane, and adds `--agent-logic-font-prose`, which replaces the serif face that was hard-coded for a flow's preamble. (#2297)
+
 ## 0.5.0 — 2026-11-19
 
 ### 🎉 Features
