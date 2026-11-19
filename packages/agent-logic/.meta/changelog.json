@@ -1,5 +1,43 @@
 [
   {
+    "version": "0.5.0",
+    "date": "2026-11-19",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds six seed colour properties to `codeassembly-agent-logic/react/styles.css` (`--agent-logic-surface`, `--agent-logic-text`, `--agent-logic-accent`, `--agent-logic-global`, `--agent-logic-waiting`, and `--agent-logic-warning`), from which each component property, such as `--agent-logic-border` or `--agent-logic-selected`, derives its default, and keeps each component property available to override one part. (#2296)",
+            "hash": "b499d2faed00b6a46a7a43b50da20299723d6694",
+            "entry": 1
+          },
+          {
+            "description": "Changes the default palette and tints the canvas ground with the accent seed, with dots coloured from the text and accent seeds, while React Flow's `--xy-background-color` and `--xy-background-pattern-color` still replace the ground and the dots. (#2296)",
+            "hash": "b499d2faed00b6a46a7a43b50da20299723d6694",
+            "entry": 2
+          },
+          {
+            "description": "Adds a dotted underline in the global colour to an ambient instruction on the canvas, the same mark that the prompt pane gives ambient text. (#2296)",
+            "hash": "b499d2faed00b6a46a7a43b50da20299723d6694",
+            "entry": 3
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that a consumer's layered reset, such as Tailwind's preflight, removed the padding that React Flow gives the canvas attribution, by setting that padding in the package's `styles.css` outside any cascade layer. (#2295)",
+            "hash": "34aa04421ed93d04a7eae0092f62fe30ed20ddae",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.4.0",
     "date": "2026-11-18",
     "sections": [

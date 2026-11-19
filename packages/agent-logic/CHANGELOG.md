@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.0 — 2026-11-19
+
+### 🎉 Features
+
+- Adds six seed colour properties to `codeassembly-agent-logic/react/styles.css` (`--agent-logic-surface`, `--agent-logic-text`, `--agent-logic-accent`, `--agent-logic-global`, `--agent-logic-waiting`, and `--agent-logic-warning`), from which each component property, such as `--agent-logic-border` or `--agent-logic-selected`, derives its default, and keeps each component property available to override one part. (#2296)
+- Changes the default palette and tints the canvas ground with the accent seed, with dots coloured from the text and accent seeds, while React Flow's `--xy-background-color` and `--xy-background-pattern-color` still replace the ground and the dots. (#2296)
+- Adds a dotted underline in the global colour to an ambient instruction on the canvas, the same mark that the prompt pane gives ambient text. (#2296)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that a consumer's layered reset, such as Tailwind's preflight, removed the padding that React Flow gives the canvas attribution, by setting that padding in the package's `styles.css` outside any cascade layer. (#2295)
+
 ## 0.4.0 — 2026-11-18
 
 ### 🎉 Features
