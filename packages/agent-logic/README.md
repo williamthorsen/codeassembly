@@ -110,22 +110,35 @@ The package draws the chart; the page around it is the app's. The app renders th
 
 ## Styling and theming
 
-Import `codeassembly-agent-logic/react/styles.css` once, through a bundler: It imports React Flow's base styles from this package's own dependency. It declares a default for each custom property on `:root` at zero specificity, so an app overrides any of them on `:root` or on an ancestor of the canvas, for example to map them to its design tokens:
+Import `codeassembly-agent-logic/react/styles.css` once, through a bundler: It imports React Flow's base styles from this package's own dependency. Its defaults form a finished light theme, which applies under any `color-scheme`.
+
+The colours come in two tiers of custom properties. The seeds are a few base colours, and every other colour derives from them, so an app sets the seeds alone to retheme the canvas and its key, for example to map them to its design tokens or to make a dark theme:
 
 ```css
 :root {
+  --agent-logic-surface: var(--ds-surface);
   --agent-logic-text: var(--ds-text);
-  --agent-logic-selected: var(--ds-border-selected);
+  --agent-logic-accent: var(--ds-border-selected);
 }
 ```
 
-The properties, whose defaults [`styles.css`](src/react/styles.css) declares:
+Set the properties on `:root`, or on an ancestor of both the canvas and any key that the app renders outside it. The seeds, whose defaults [`styles.css`](src/react/styles.css) declares:
 
-- `--agent-logic-ambient-background`, `--agent-logic-compound-background`, `--agent-logic-hover-background`, `--agent-logic-node-background`, `--agent-logic-selected-background`, `--agent-logic-surface`, `--agent-logic-tooltip-background`: backgrounds
-- `--agent-logic-text`, `--agent-logic-text-subtle`, `--agent-logic-tooltip-text`: text
-- `--agent-logic-border`, `--agent-logic-border-strong`, `--agent-logic-focus-ring`, `--agent-logic-selected`: borders and outlines
+- `--agent-logic-surface`: the background of a state and of a label
+- `--agent-logic-text`: the text
+- `--agent-logic-accent`: selection and focus
 - `--agent-logic-global`, `--agent-logic-waiting`, `--agent-logic-warning`: the marks for an any-time transition, a state that waits for the user, and an unreachable state
-- `--agent-logic-font-code`: the code font
+
+The component properties, which an app sets to override one part; `styles.css` states each derivation:
+
+- `--agent-logic-ambient-background`, `--agent-logic-compound-background`, `--agent-logic-hover-background`: backgrounds, from `text` (and `surface` for a compound state)
+- `--agent-logic-node-background`, `--agent-logic-tooltip-text`: from `surface`
+- `--agent-logic-selected-background`: from `accent` and `surface`
+- `--agent-logic-text-subtle`, `--agent-logic-border`, `--agent-logic-border-strong`: from `text` and `surface`
+- `--agent-logic-tooltip-background`: from `text`
+- `--agent-logic-focus-ring`, `--agent-logic-selected`: from `accent`
+
+The canvas's ground and its dots also derive from the seeds; React Flow's `--xy-background-color` and `--xy-background-pattern-color` replace them. `--agent-logic-font-code` sets the code font.
 
 ## The bin
 
