@@ -644,7 +644,19 @@
   color: var(--_agent-logic-text-subtle);
 }
 
-/* Each heading keeps the pane's line height, so that no line of the prompt moves. */
+/*
+ * A heading's larger text, set on the body text's baseline, would make its line taller; aligning it to the top keeps
+ * the line at the pane's line height, so that no line of the prompt moves.
+ */
+.prompt-pane__passage--h1,
+.prompt-pane__passage--h2,
+.prompt-pane__passage--h3,
+.prompt-pane__passage--h4,
+.prompt-pane__passage--h5,
+.prompt-pane__passage--h6 {
+  vertical-align: top;
+}
+
 .prompt-pane__passage--h1 {
   font-size: 22px;
   font-weight: 700;

@@ -195,6 +195,12 @@ describe('styles.css', () => {
     expect(sample.getPropertyValue(property)).toBe(passage.getPropertyValue(property));
   });
 
+  it.each(['h1', 'h2', 'h3', 'h4', 'h5', 'h6'])('aligns an %s passage to the top of its line', (level) => {
+    const heading = readElementStyle(`prompt-pane__passage prompt-pane__passage--${level}`, { isInCanvas: false });
+
+    expect(heading.verticalAlign).toBe('top');
+  });
+
   it("keeps a heading's marker muted when the heading is highlighted", () => {
     // happy-dom does not resolve the default's `color-mix()`, so the muted colour is set on the private property.
     const marker = readElementStyle(
