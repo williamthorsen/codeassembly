@@ -40,7 +40,7 @@
     "@williamthorsen/toolbelt.vitest": "catalog:",
     "@williamthorsen/tsconfig": "0.14.1",
     "codeassembly": "workspace:*",
-    "codeassembly-guidance": "0.7.0",
+    "codeassembly-guidance": "0.8.0",
     "dotenv": "18.0.10",
     "eslint": "catalog:",
     "eslint-plugin-pnpm": "1.9.1",
