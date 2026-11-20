@@ -644,6 +644,45 @@
   color: var(--_agent-logic-text-subtle);
 }
 
+/*
+ * A heading's larger text, set on the body text's baseline, would make its line taller; aligning it to the top keeps
+ * the line at the pane's line height, so that no line of the prompt moves.
+ */
+.prompt-pane__passage--h1,
+.prompt-pane__passage--h2,
+.prompt-pane__passage--h3,
+.prompt-pane__passage--h4,
+.prompt-pane__passage--h5,
+.prompt-pane__passage--h6 {
+  vertical-align: top;
+}
+
+.prompt-pane__passage--h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.prompt-pane__passage--h2 {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.prompt-pane__passage--h3 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.prompt-pane__passage--h4,
+.prompt-pane__passage--h5,
+.prompt-pane__passage--h6 {
+  font-weight: 600;
+}
+
+/* The marker is syntax, so it stays muted when its heading is selected or shown. */
+.prompt-pane__passage.prompt-pane__passage--heading-marker {
+  color: var(--_agent-logic-text-subtle);
+}
+
 .prompt-key {
   display: flex;
   flex-wrap: wrap;

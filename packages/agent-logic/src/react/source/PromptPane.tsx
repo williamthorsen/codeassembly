@@ -15,10 +15,11 @@ export interface PromptPaneProps {
 }
 
 /**
- * The whole prompt with its key, marking the text that the chart does not use, with the selected element's or the
- * shown passages highlighted. Its text region has `data-prompt-text`, and each passage `data-coverage`; a selected
- * passage has `data-selected`, the first of them `data-passage-for` with the element's path, a shown passage
- * `data-shown`, the earliest of them `data-shown-passage`, and a passage that selects an element `data-select-path`.
+ * The whole prompt with its key, marking the text that the chart does not use and setting each heading by its level,
+ * with the selected element's or the shown passages highlighted. Its text region has `data-prompt-text`, and each
+ * passage `data-coverage`; a selected passage has `data-selected`, the first of them `data-passage-for` with the
+ * element's path, a shown passage `data-shown`, the earliest of them `data-shown-passage`, and a passage that selects
+ * an element `data-select-path`.
  */
 export function PromptPane({ segments, selected, shownPassages = [], onSelect }: PromptPaneProps): ReactElement {
   const headingId = useId();
@@ -102,13 +103,17 @@ function boldSharedWords(text: string, words: Set<string>): ReactNode[] {
 }
 
 /**
- * Returns the classes of a passage by its coverage, highlighted when selected or shown. Unused text without a word,
- * such as the space and punctuation between two used passages, is left unmarked, because it does not hold an
- * instruction.
+ * Returns the classes of a passage by its coverage and its heading level, highlighted when selected or shown.
+ * Structure, and unused text without a word, such as the space and punctuation between two used passages, are left
+ * unmarked, because they do not hold an instruction.
  */
-function classifyPassage({ coverage, text }: PromptSegment, isHighlighted: boolean): string {
-  const isMarked = coverage !== 'unused' || WORD.test(text);
-  const classes = isMarked ? `prompt-pane__passage prompt-pane__passage--${coverage}` : 'prompt-pane__passage';
-  return isHighlighted ? `${classes} prompt-pane__passage--highlighted` : classes;
+function classifyPassage({ coverage, heading, text }: PromptSegment, isHighlighted: boolean): string {
+  const isMarked = coverage !== 'structure' && (coverage !== 'unused' || WORD.test(text));
+  const classes = ['prompt-pane__passage'];
+  if (isMarked) classes.push(`prompt-pane__passage--${coverage}`);
+  if (heading !== undefined) classes.push(`prompt-pane__passage--h${heading.level}`);
+  if (heading?.isMarker === true) classes.push('prompt-pane__passage--heading-marker');
+  if (isHighlighted) classes.push('prompt-pane__passage--highlighted');
+  return classes.join(' ');
 }
 // endregion | Helpers

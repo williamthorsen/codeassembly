@@ -156,3 +156,33 @@ describe(PromptPane, () => {
     expect(onSelect).toHaveBeenCalledWith('meta.ambient[0]');
   });
 });
+
+describe('PromptPane with Markdown structure', () => {
+  const PROMPT = '## Steps\n\n1. Greet the user.\n2. Wait.';
+  const config = buildMinimalConfig();
+  config.meta.prompt = PROMPT;
+  config.states = { greeting: { id: 'greeting', type: 'final', meta: { source: { start: 13, end: 28 } } } };
+  const segments = buildPromptSegments(PROMPT, describeConfig(config), []);
+
+  it('sets a heading by its level with its text unchanged and its marker apart', () => {
+    const { container } = render(<PromptPane segments={segments} selected={undefined} onSelect={vi.fn()} />);
+
+    const heading = [...container.querySelectorAll('.prompt-pane__passage--h2')];
+    expect(heading.map(({ textContent }) => textContent).join('')).toBe('## Steps');
+    expect(
+      heading
+        .filter((passage) => passage.classList.contains('prompt-pane__passage--heading-marker'))
+        .map(({ textContent }) => textContent),
+    ).toEqual(['##']);
+  });
+
+  it("leaves a heading line and a list marker unmarked, and keeps the coverage of each item's prose", () => {
+    const { container } = render(<PromptPane segments={segments} selected={undefined} onSelect={vi.fn()} />);
+
+    const structure = [...container.querySelectorAll('[data-coverage="structure"]')];
+    expect(structure.map(({ textContent }) => textContent)).toEqual(['##', ' Steps', '1.', '2.']);
+    expect(structure.filter(({ className }) => /--(?:structure|unused)\b/.test(className))).toEqual([]);
+    expect(screen.getByText('Greet the user.')).toHaveClass('prompt-pane__passage--used');
+    expect(screen.getByText('Wait.', { exact: false })).toHaveClass('prompt-pane__passage--unused');
+  });
+});

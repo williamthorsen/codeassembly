@@ -16,8 +16,8 @@ export function PromptKey(): ReactElement {
 }
 
 // region | Helpers
-// Used text is unmarked, so the key names only the exceptions.
-const KEY_ENTRIES: readonly { coverage: Exclude<Coverage, 'used'>; label: string }[] = [
+// Used text and structure are unmarked, so the key names only the exceptions.
+const KEY_ENTRIES: readonly { coverage: Exclude<Coverage, 'structure' | 'used'>; label: string }[] = [
   { coverage: 'ambient', label: 'Ambient' },
   { coverage: 'unused', label: 'Not used' },
   { coverage: 'unconverted', label: 'Not converted' },

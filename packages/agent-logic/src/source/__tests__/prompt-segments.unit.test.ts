@@ -99,6 +99,38 @@ describe('buildPromptSegments with a gated action', () => {
   });
 });
 
+describe('buildPromptSegments with Markdown structure', () => {
+  // Headings at 0 and 9, list markers at 19 and 38, and a comment at 47.
+  const PROMPT = '# Agent\n\n## Steps\n\n1. Greet the user.\n2. Wait. <!-- note -->\n';
+
+  it('marks unused structure as structure, keeping the coverage of list prose and every other character', () => {
+    const config = buildMinimalConfig();
+    config.meta.prompt = PROMPT;
+    config.states = {
+      steps: { id: 'steps', meta: { source: { start: 9, end: 17 } } },
+      waiting: { id: 'waiting', type: 'final', meta: { source: { start: 38, end: 46 } } },
+    };
+
+    const segments = buildPromptSegments(PROMPT, describeConfig(config), []);
+
+    expect(segments.map(({ text, coverage, heading }) => [text, coverage, heading])).toEqual([
+      ['#', 'structure', { level: 1, isMarker: true }],
+      [' Agent', 'structure', { level: 1, isMarker: false }],
+      ['\n\n', 'unused', undefined],
+      ['##', 'used', { level: 2, isMarker: true }],
+      [' Steps', 'used', { level: 2, isMarker: false }],
+      ['\n\n', 'unused', undefined],
+      ['1.', 'structure', undefined],
+      [' Greet the user.\n', 'unused', undefined],
+      ['2.', 'used', undefined],
+      [' Wait.', 'used', undefined],
+      [' ', 'unused', undefined],
+      ['<!-- note -->', 'comment', undefined],
+      ['\n', 'unused', undefined],
+    ]);
+  });
+});
+
 describe('buildPromptSegments with HTML comments', () => {
   const PROMPT = 'Greet. <!-- include: a.md / --> <!-- note --> Be warm.';
 

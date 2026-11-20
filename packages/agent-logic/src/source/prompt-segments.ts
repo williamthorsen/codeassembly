@@ -1,8 +1,10 @@
 import type { ConfigDescription, ElementDescription } from '../layout/describe-config.ts';
 import type { Span, UnconvertedSpan } from '../schema/agent-logic-schema.ts';
 import { findCommentSpans } from './find-comment-spans.ts';
+import { findStructureSpans } from './find-structure-spans.ts';
 
-export type Coverage = 'ambient' | 'comment' | 'used' | 'unused' | 'unconverted';
+/** How the chart uses a run of prompt text; `structure` is Markdown syntax, such as a heading line or a list marker. */
+export type Coverage = 'ambient' | 'comment' | 'structure' | 'used' | 'unused' | 'unconverted';
 
 /** A run of prompt text that the same element spans cover. */
 export interface PromptSegment {
@@ -12,11 +14,13 @@ export interface PromptSegment {
   coverage: Coverage;
   /** Paths of the elements whose spans cover the segment, narrowest span first. */
   paths: string[];
+  /** The level of the Markdown heading whose line contains the segment, and whether the segment is its `#` marker. */
+  heading?: { level: number; isMarker: boolean };
 }
 
 /**
- * Cuts the prompt at every span, comment, and shown-span boundary into contiguous segments, each with the elements
- * that cover it.
+ * Cuts the prompt at every span, comment, structure, and shown-span boundary into contiguous segments, each with the
+ * elements that cover it.
  */
 export function buildPromptSegments(
   prompt: string,
@@ -42,9 +46,11 @@ export function buildPromptSegments(
   ];
   const ambientSpans = description.ambient.map(({ source }) => source);
   const commentSpans = findCommentSpans(prompt);
+  const structureSpans = findStructureSpans(prompt);
+  const headings = structureSpans.filter((span) => span.kind === 'heading');
 
-  const cuts = new Set([0, prompt.length]);
-  for (const { start, end } of [...elementSpans, ...unconverted, ...commentSpans, ...shown]) {
+  const cuts = new Set([0, prompt.length, ...headings.map(({ markerEnd }) => markerEnd)]);
+  for (const { start, end } of [...elementSpans, ...unconverted, ...commentSpans, ...structureSpans, ...shown]) {
     cuts.add(start);
     cuts.add(end);
   }
@@ -57,12 +63,19 @@ export function buildPromptSegments(
     const covering = elementSpans.filter((span) => span.start <= start && span.end >= end);
     // A stable sort keeps the description's order between spans of equal width.
     const paths = covering.toSorted((a, b) => a.end - a.start - (b.end - b.start)).map(({ path }) => path);
+    const heading = headings.find((span) => span.start <= start && span.end >= end);
     segments.push({
       start,
       end,
       text: prompt.slice(start, end),
-      coverage: findCoverage(start, end, { unconverted, ambient: ambientSpans, comments: commentSpans }, paths),
+      coverage: findCoverage(
+        start,
+        end,
+        { unconverted, ambient: ambientSpans, comments: commentSpans, structure: structureSpans },
+        paths,
+      ),
       paths,
+      ...(heading !== undefined && { heading: { level: heading.level, isMarker: end <= heading.markerEnd } }),
     });
   }
   return segments;
@@ -88,17 +101,21 @@ export function splitWords(text: string): string[] {
 }
 
 // region | Helpers
-/** Returns a segment's coverage: unconverted before ambient, ambient before used, used before comment. */
+/**
+ * Returns a segment's coverage: unconverted before ambient, ambient before used, used before comment, and comment
+ * before structure.
+ */
 function findCoverage(
   start: number,
   end: number,
-  { unconverted, ambient, comments }: Record<'ambient' | 'comments' | 'unconverted', Span[]>,
+  { unconverted, ambient, comments, structure }: Record<'ambient' | 'comments' | 'structure' | 'unconverted', Span[]>,
   paths: string[],
 ): Coverage {
   if (unconverted.some(covers)) return 'unconverted';
   if (ambient.some(covers)) return 'ambient';
   if (paths.length > 0) return 'used';
-  return comments.some(covers) ? 'comment' : 'unused';
+  if (comments.some(covers)) return 'comment';
+  return structure.some(covers) ? 'structure' : 'unused';
 
   function covers(span: Span): boolean {
     return span.start <= start && span.end >= end;
