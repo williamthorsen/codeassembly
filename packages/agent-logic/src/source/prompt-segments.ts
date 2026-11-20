@@ -75,7 +75,7 @@ export function buildPromptSegments(
         paths,
       ),
       paths,
-      ...(heading === undefined ? {} : { heading: { level: heading.level, isMarker: end <= heading.markerEnd } }),
+      ...(heading !== undefined && { heading: { level: heading.level, isMarker: end <= heading.markerEnd } }),
     });
   }
   return segments;

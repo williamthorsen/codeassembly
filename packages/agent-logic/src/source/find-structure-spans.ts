@@ -31,20 +31,26 @@ export function findStructureSpans(prompt: string): StructureSpan[] {
   for (let index = first; index < lines.length; index++) {
     const line = lines[index];
     if (line === undefined) break;
-    const kind = classifyLine(lines, index);
     const start = line.start + indentOf(line.text);
-    if (kind === 'fence') {
-      index = findFenceClose(lines, index);
-    } else if (kind === 'skip') {
-      const markerLength = HEADING.exec(line.text)?.[1]?.length;
-      spans.push(
-        markerLength === undefined
-          ? { kind: 'line', start, end: line.end }
-          : { kind: 'heading', start, end: line.end, level: markerLength, markerEnd: start + markerLength },
-      );
-    } else if (kind === 'item') {
-      const markerLength = LIST_MARKER.exec(line.text.trimStart())?.[0].length ?? 0;
-      spans.push({ kind: 'list-marker', start, end: start + markerLength });
+    switch (classifyLine(lines, index)) {
+      case 'fence':
+        index = findFenceClose(lines, index);
+        break;
+      case 'item': {
+        const markerLength = LIST_MARKER.exec(line.text.trimStart())?.[0].length ?? 0;
+        spans.push({ kind: 'list-marker', start, end: start + markerLength });
+        break;
+      }
+      case 'skip': {
+        const markerLength = HEADING.exec(line.text)?.[1]?.length;
+        spans.push(
+          markerLength === undefined
+            ? { kind: 'line', start, end: line.end }
+            : { kind: 'heading', start, end: line.end, level: markerLength, markerEnd: start + markerLength },
+        );
+        break;
+      }
+      default:
     }
   }
   return spans;
