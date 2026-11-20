@@ -644,6 +644,33 @@
   color: var(--_agent-logic-text-subtle);
 }
 
+/* Each heading keeps the pane's line height, so that no line of the prompt moves. */
+.prompt-pane__passage--h1 {
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.prompt-pane__passage--h2 {
+  font-size: 19px;
+  font-weight: 700;
+}
+
+.prompt-pane__passage--h3 {
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.prompt-pane__passage--h4,
+.prompt-pane__passage--h5,
+.prompt-pane__passage--h6 {
+  font-weight: 600;
+}
+
+/* The marker is syntax, so it stays muted when its heading is selected or shown. */
+.prompt-pane__passage.prompt-pane__passage--heading-marker {
+  color: var(--_agent-logic-text-subtle);
+}
+
 .prompt-key {
   display: flex;
   flex-wrap: wrap;

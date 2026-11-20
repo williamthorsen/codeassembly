@@ -50,7 +50,7 @@ const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; flo
   },
   {
     colour: 'var(--_agent-logic-text-subtle)',
-    surfaces: ['compound', 'ground', 'node', 'passage', 'selected', 'surface'],
+    surfaces: ['compound', 'ground', 'node', 'passage', 'passageHover', 'selected', 'surface'],
     floor: 4.5,
   },
   { colour: 'var(--_agent-logic-text-subtlest)', surfaces: ['surface'], floor: 4.5 },
@@ -193,6 +193,16 @@ describe('styles.css', () => {
 
     expect(passage.getPropertyValue(property)).toMatch(pattern);
     expect(sample.getPropertyValue(property)).toBe(passage.getPropertyValue(property));
+  });
+
+  it("keeps a heading's marker muted when the heading is highlighted", () => {
+    // happy-dom does not resolve the default's `color-mix()`, so the muted colour is set on the private property.
+    const marker = readElementStyle(
+      'prompt-pane__passage prompt-pane__passage--h2 prompt-pane__passage--heading-marker prompt-pane__passage--highlighted',
+      { consumerCss: ':root { --_agent-logic-text-subtle: rgb(1, 2, 3); }', isInCanvas: false },
+    );
+
+    expect(marker.color).toBe('rgb(1, 2, 3)');
   });
 
   it('drops the line of a highlighted passage, except an unconverted one', () => {
