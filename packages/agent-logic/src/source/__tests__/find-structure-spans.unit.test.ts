@@ -8,7 +8,7 @@ describe(findStructureSpans, () => {
 
     expect(findStructureSpans(prompt)).toStrictEqual([
       { kind: 'heading', start: 0, end: 7, level: 1, markerEnd: 1 },
-      { kind: 'heading', start: 19, end: 28, level: 3, markerEnd: 22 },
+      { kind: 'heading', start: 17, end: 28, level: 3, markerEnd: 22 },
     ]);
   });
 
@@ -24,13 +24,13 @@ describe(findStructureSpans, () => {
     ]);
   });
 
-  it("finds the marker of each list item, without its indent, the space after it, or the item's prose", () => {
+  it("finds the marker of each list item with its indent, without the space after it or the item's prose", () => {
     const prompt = '1. Ask.\n2) Wait.\n   - Nested.\n* Star.';
 
     expect(findStructureSpans(prompt).map(({ kind, start, end }) => [kind, prompt.slice(start, end)])).toStrictEqual([
       ['list-marker', '1.'],
       ['list-marker', '2)'],
-      ['list-marker', '-'],
+      ['list-marker', '   -'],
       ['list-marker', '*'],
     ]);
   });

@@ -18,8 +18,9 @@ export type StructureSpan =
 
 /**
  * Finds, in order, the lines that `findPromptBlocks` does not take into any block, a leading YAML front matter as one
- * span, and the marker of each list item. A heading's `markerEnd` is the offset just past its run of `#`. Text inside
- * a fenced block or an HTML comment is never structure.
+ * span, and the marker of each list item. Each span starts with its line's indent, so that the indent is not left
+ * marked as unused text. A heading's `markerEnd` is the offset just past its run of `#`. Text inside a fenced block or
+ * an HTML comment is never structure.
  */
 export function findStructureSpans(prompt: string): StructureSpan[] {
   const spans: StructureSpan[] = [];
@@ -31,14 +32,15 @@ export function findStructureSpans(prompt: string): StructureSpan[] {
   for (let index = first; index < lines.length; index++) {
     const line = lines[index];
     if (line === undefined) break;
-    const start = line.start + indentOf(line.text);
+    const { start } = line;
+    const markerStart = start + indentOf(line.text);
     switch (classifyLine(lines, index)) {
       case 'fence':
         index = findFenceClose(lines, index);
         break;
       case 'item': {
         const markerLength = LIST_MARKER.exec(line.text.trimStart())?.[0].length ?? 0;
-        spans.push({ kind: 'list-marker', start, end: start + markerLength });
+        spans.push({ kind: 'list-marker', start, end: markerStart + markerLength });
         break;
       }
       case 'skip': {
@@ -46,7 +48,7 @@ export function findStructureSpans(prompt: string): StructureSpan[] {
         spans.push(
           markerLength === undefined
             ? { kind: 'line', start, end: line.end }
-            : { kind: 'heading', start, end: line.end, level: markerLength, markerEnd: start + markerLength },
+            : { kind: 'heading', start, end: line.end, level: markerLength, markerEnd: markerStart + markerLength },
         );
         break;
       }
