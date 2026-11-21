@@ -92,7 +92,7 @@
     "@williamthorsen/toolbelt.acp": "0.3.3",
     "@williamthorsen/toolbelt.llm": "0.2.1",
     "eslint": "catalog:",
-    "eslint-plugin-jest-dom": "5.10.2",
+    "eslint-plugin-jest-dom": "5.11.0",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
     "eslint-plugin-testing-library": "7.16.2",
