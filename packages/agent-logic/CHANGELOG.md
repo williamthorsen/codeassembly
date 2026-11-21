@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.8.0 — 2026-11-21
+
+### 🎉 Features
+
+- Changes the mouse wheel on the statechart canvas from zooming to panning, with Cmd+wheel on macOS, Ctrl+wheel elsewhere, and a trackpad pinch still zooming. (#2303)
+- Names the zoom shortcut in the labels and tooltips of the canvas's Zoom In and Zoom Out buttons: `Cmd+scroll` on macOS and `Ctrl+scroll` elsewhere. (#2303)
+
 ## 0.7.0 — 2026-11-21
 
 ### 🎉 Features

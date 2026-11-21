@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.8.0",
+    "date": "2026-11-21",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Changes the mouse wheel on the statechart canvas from zooming to panning, with Cmd+wheel on macOS, Ctrl+wheel elsewhere, and a trackpad pinch still zooming. (#2303)",
+            "hash": "0d95c949fa9683f2ce95d83a2141f3e9619f02b1",
+            "entry": 1
+          },
+          {
+            "description": "Names the zoom shortcut in the labels and tooltips of the canvas's Zoom In and Zoom Out buttons: `Cmd+scroll` on macOS and `Ctrl+scroll` elsewhere. (#2303)",
+            "hash": "0d95c949fa9683f2ce95d83a2141f3e9619f02b1",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.7.0",
     "date": "2026-11-21",
     "sections": [
