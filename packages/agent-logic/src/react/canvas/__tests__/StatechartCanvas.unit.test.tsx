@@ -226,6 +226,57 @@ describe(StatechartCanvas, () => {
       expect(readZoom(container)).toBeCloseTo(zoomedIn);
     });
 
+    it('pans without zooming when the wheel turns', async () => {
+      stubCanvasSize(150, 150);
+      const { container } = renderMinimalCanvas();
+      await waitFor(() => {
+        expect(readZoom(container)).toBeCloseTo(fitZoom);
+      });
+      const panBefore = readPan(container);
+
+      fireEvent.wheel(findPane(container), { deltaX: 20, deltaY: 40 });
+
+      await waitFor(() => {
+        expect(readPan(container)).not.toStrictEqual(panBefore);
+      });
+      const panAfter = readPan(container);
+      expect(panAfter.x).toBeLessThan(panBefore.x);
+      expect(panAfter.y).toBeLessThan(panBefore.y);
+      expect(readZoom(container)).toBeCloseTo(fitZoom);
+    });
+
+    it('zooms when the wheel turns with Cmd held on macOS', async () => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
+      stubCanvasSize(150, 150);
+      const { container } = renderMinimalCanvas();
+      await waitFor(() => {
+        expect(readZoom(container)).toBeCloseTo(fitZoom);
+      });
+
+      // React Flow tracks the zoom key through key events rather than the wheel event's modifiers.
+      fireEvent.keyDown(document, { key: 'Meta', code: 'MetaLeft' });
+      fireEvent.wheel(findPane(container), { deltaY: -40 });
+
+      await waitFor(() => {
+        expect(readZoom(container)).toBeGreaterThan(fitZoom);
+      });
+    });
+
+    it('zooms on a trackpad pinch', async () => {
+      stubCanvasSize(150, 150);
+      const { container } = renderMinimalCanvas();
+      await waitFor(() => {
+        expect(readZoom(container)).toBeCloseTo(fitZoom);
+      });
+
+      // A browser reports a pinch as a wheel event with `ctrlKey` set.
+      fireWheelWithCtrl(findPane(container), -40);
+
+      await waitFor(() => {
+        expect(readZoom(container)).toBeGreaterThan(fitZoom);
+      });
+    });
+
     it('does not zoom out past the whole chart', async () => {
       stubCanvasSize(150, 150);
       const { container } = renderMinimalCanvas();
@@ -355,6 +406,20 @@ describe(StatechartCanvas, () => {
 });
 
 // region | Helpers
+/** Dispatches a wheel event with `ctrlKey` set, which happy-dom's `WheelEvent` drops from its init. */
+function fireWheelWithCtrl(target: HTMLElement, deltaY: number): void {
+  const event = new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY });
+  Object.defineProperty(event, 'ctrlKey', { value: true });
+  fireEvent(target, event);
+}
+
+/** Returns the pane that receives the canvas's wheel events. */
+function findPane(container: HTMLElement): HTMLElement {
+  const pane = container.querySelector<HTMLElement>('.react-flow__pane');
+  if (pane === null) throw new Error('the canvas has no pane');
+  return pane;
+}
+
 /** Returns the transition on the canvas whose label names an event. */
 function findTransition(event: string): HTMLElement {
   return screen.getByRole('group', { name: new RegExp(`^Transition from .*: ${event}`) });

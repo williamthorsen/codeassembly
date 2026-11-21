@@ -304,6 +304,8 @@ function StatechartFlow({ elements, selectedPath, onSelect, onViewportChange }: 
           nodesDraggable={false}
           nodesConnectable={false}
           multiSelectionKeyCode={null}
+          // Pan with the wheel, and zoom with Cmd+wheel (Ctrl+wheel off macOS) or a pinch.
+          panOnScroll
           fitView
           fitViewOptions={fitViewOptions}
           autoPanOnNodeFocus={false}
