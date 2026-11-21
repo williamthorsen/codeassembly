@@ -1,5 +1,44 @@
 [
   {
+    "version": "0.7.0",
+    "date": "2026-11-21",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Sets each Markdown heading in `PromptPane` by its level, with its `#` marker muted even when the heading is selected, and adds a `heading` field to `PromptSegment` that records the level and whether the segment is the marker. (#2299)",
+            "hash": "86c0f6f48777f7941824ab216f12c85692db470c",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that `PromptPane` marked Markdown heading lines, list markers, and front matter as \"Not used\", by adding the `structure` value to the exported `Coverage` union, which `buildPromptSegments` assigns to that syntax and the pane leaves unmarked. (#2299)",
+            "hash": "86c0f6f48777f7941824ab216f12c85692db470c",
+            "entry": 1
+          }
+        ]
+      },
+      {
+        "title": "📦 Dependencies",
+        "audience": "dev",
+        "items": [
+          {
+            "description": "Upgrades `@testing-library/jest-dom` from 7.0.1 to 8.0.0, whose only breaking change drops support for Vitest versions below 5, which the repository's Vitest 5.1.1 meets. (#2301)",
+            "hash": "d2c434179d5faa5b3ec36ba91ef815c299c59b02",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.6.0",
     "date": "2026-11-19",
     "sections": [

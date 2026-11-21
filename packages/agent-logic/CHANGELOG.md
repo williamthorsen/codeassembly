@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.7.0 — 2026-11-21
+
+### 🎉 Features
+
+- Sets each Markdown heading in `PromptPane` by its level, with its `#` marker muted even when the heading is selected, and adds a `heading` field to `PromptSegment` that records the level and whether the segment is the marker. (#2299)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that `PromptPane` marked Markdown heading lines, list markers, and front matter as "Not used", by adding the `structure` value to the exported `Coverage` union, which `buildPromptSegments` assigns to that syntax and the pane leaves unmarked. (#2299)
+
+### 📦 Dependencies
+
+- Upgrades `@testing-library/jest-dom` from 7.0.1 to 8.0.0, whose only breaking change drops support for Vitest versions below 5, which the repository's Vitest 5.1.1 meets. (#2301)
+
 ## 0.6.0 — 2026-11-19
 
 ### 🎉 Features
