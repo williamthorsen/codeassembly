@@ -1,5 +1,4 @@
 import {
-  type AriaLabelConfig,
   Background,
   Controls,
   type EdgeChange,
@@ -27,6 +26,7 @@ import {
 
 import type { FlowElements, StateFlowNode, TransitionFlowEdge } from '../../layout/to-flow-elements.ts';
 import { AmbientSelectionContext } from './AmbientSelectionContext.ts';
+import { buildAriaLabelConfig } from './build-aria-label-config.ts';
 import { DetailLevelContext } from './DetailLevelContext.ts';
 import { findElementBox } from './find-element-box.ts';
 import { findViewCentre, readView } from './find-view-centre.ts';
@@ -63,16 +63,6 @@ const fitViewOptions: FitViewOptions<StateFlowNode> = {
   maxZoom: READING_ZOOM,
 };
 const MAX_ZOOM = 2;
-// The keys that the canvas offers on a focused element; React Flow's defaults name a Delete key that it does not.
-const STATE_DESCRIPTION =
-  "Press Enter or Space to select. Press Right arrow to move to the state's outgoing transitions, when it has any.";
-const ariaLabelConfig = {
-  'node.a11yDescription.default': STATE_DESCRIPTION,
-  // React Flow describes a node with this text while keyboard access is enabled.
-  'node.a11yDescription.keyboardDisabled': STATE_DESCRIPTION,
-  'edge.a11yDescription.default':
-    'Press Enter or Space to select. Press Up or Down arrow to move between transitions from the same state, or Left arrow to return to that state.',
-} satisfies Partial<AriaLabelConfig>;
 // How far, in screen pixels, a press on a transition moves before it pans rather than clicks.
 const DRAG_THRESHOLD = 3;
 
@@ -190,6 +180,7 @@ function StatechartFlow({ elements, selectedPath, onSelect, onViewportChange }: 
     [elements.nodes],
   );
   const fitZoom = findFitZoom(bounds, width, height);
+  const ariaLabelConfig = useMemo(() => buildAriaLabelConfig(), []);
   const detailLevel = useViewportStore((state) => findDetailLevel(state.transform[2]));
 
   // Whether the view shows the whole chart as fitted: from the open view until the reader or a selection moves it, and

@@ -196,7 +196,7 @@ describe(StatechartCanvas, () => {
         expect(readZoom(container)).toBeCloseTo(fitZoom);
       });
 
-      await userEvent.click(screen.getByRole('button', { name: 'Zoom In' }));
+      await userEvent.click(screen.getByRole('button', { name: /^Zoom In/ }));
       await waitFor(() => {
         expect(readZoom(container)).toBeGreaterThan(fitZoom);
       });
@@ -213,7 +213,7 @@ describe(StatechartCanvas, () => {
       await waitFor(() => {
         expect(readZoom(container)).toBeCloseTo(fitZoom);
       });
-      await userEvent.click(screen.getByRole('button', { name: 'Zoom In' }));
+      await userEvent.click(screen.getByRole('button', { name: /^Zoom In/ }));
       await waitFor(() => {
         expect(readZoom(container)).toBeGreaterThan(fitZoom);
       });
@@ -284,7 +284,29 @@ describe(StatechartCanvas, () => {
         expect(readZoom(container)).toBeCloseTo(fitZoom);
       });
 
-      expect(screen.getByRole('button', { name: 'Zoom Out' })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /^Zoom Out/ })).toBeDisabled();
+    });
+
+    it('names Cmd+scroll on the zoom buttons on macOS', () => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)');
+      renderMinimalCanvas();
+
+      expect(screen.getByRole('button', { name: 'Zoom In (Cmd+scroll)' })).toHaveAttribute(
+        'title',
+        'Zoom In (Cmd+scroll)',
+      );
+      expect(screen.getByRole('button', { name: 'Zoom Out (Cmd+scroll)' })).toBeInTheDocument();
+    });
+
+    it('names Ctrl+scroll on the zoom buttons off macOS', () => {
+      vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Windows NT 10.0; Win64; x64)');
+      renderMinimalCanvas();
+
+      expect(screen.getByRole('button', { name: 'Zoom In (Ctrl+scroll)' })).toHaveAttribute(
+        'title',
+        'Zoom In (Ctrl+scroll)',
+      );
+      expect(screen.getByRole('button', { name: 'Zoom Out (Ctrl+scroll)' })).toBeInTheDocument();
     });
 
     it('draws states as boxes at the fit level', async () => {
