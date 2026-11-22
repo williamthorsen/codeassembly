@@ -9,7 +9,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { type ConfigDescription, describeConfig, type ElementDescription } from '../../../layout/describe-config.ts';
 import type { AgentLogicConfig } from '../../../schema/agent-logic-schema.ts';
 import { buildMinimalConfig } from '../../../test-utils/minimal-config.ts';
-import { Inspector, type InspectorLinkProps } from '../Inspector.tsx';
+import type { LinkButtonProps } from '../../slots.ts';
+import { Inspector } from '../Inspector.tsx';
 
 const MINIMAL = describeConfig(buildMinimalConfig());
 
@@ -287,7 +288,7 @@ function findElement(description: ConfigDescription, path: string): ElementDescr
 }
 
 /** Stands in for the app's in-page link, marking each one so that a test can tell it from another button. */
-function TestLink({ children, onClick }: InspectorLinkProps): ReactElement {
+function TestLink({ children, onClick }: LinkButtonProps): ReactElement {
   return (
     <button type="button" data-test-link="" onClick={onClick}>
       {children}

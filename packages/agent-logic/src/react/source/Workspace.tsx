@@ -6,7 +6,8 @@ import { buildPromptSegments } from '../../source/prompt-segments.ts';
 import type { ChartMark } from '../canvas/list-chart-marks.ts';
 import { StatechartCanvas, type StatechartCanvasProps } from '../canvas/StatechartCanvas.tsx';
 import type { ChartLayout } from '../hooks/useChartLayout.ts';
-import { Inspector, type InspectorLinkProps } from '../inspector/Inspector.tsx';
+import { Inspector } from '../inspector/Inspector.tsx';
+import type { LinkButtonProps } from '../slots.ts';
 import { PromptPane } from './PromptPane.tsx';
 import { SourceLine } from './SourceLine.tsx';
 
@@ -26,7 +27,7 @@ export interface WorkspaceProps {
   /** The messages panel, docked at the canvas's bottom edge. */
   messages?: ReactNode;
   /** The app's in-page link, which the inspector renders for each state and transition that it names. */
-  LinkButton: ComponentType<InspectorLinkProps>;
+  LinkButton: ComponentType<LinkButtonProps>;
   /** The canvas to render, `StatechartCanvas` unless a test replaces it. */
   Canvas?: ComponentType<StatechartCanvasProps> | undefined;
 }

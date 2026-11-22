@@ -8,7 +8,7 @@ import { describeConfig } from '../../../layout/describe-config.ts';
 import { buildMinimalConfig } from '../../../test-utils/minimal-config.ts';
 import type { StatechartCanvasProps } from '../../canvas/StatechartCanvas.tsx';
 import type { ChartLayout } from '../../hooks/useChartLayout.ts';
-import type { InspectorLinkProps } from '../../inspector/Inspector.tsx';
+import type { LinkButtonProps } from '../../slots.ts';
 import { Workspace, type WorkspaceProps } from '../Workspace.tsx';
 
 const CONFIG = buildMinimalConfig();
@@ -82,7 +82,7 @@ function renderWorkspace(props: Partial<WorkspaceProps>): void {
 }
 
 /** Stands in for the app's in-page link, marking each one so that a test can tell it from another button. */
-function TestLink({ children, onClick }: InspectorLinkProps): ReactElement {
+function TestLink({ children, onClick }: LinkButtonProps): ReactElement {
   return (
     <button type="button" data-test-link="" onClick={onClick}>
       {children}

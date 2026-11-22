@@ -19,6 +19,7 @@ export * from './hooks/useSelection.ts';
 export * from './hooks/useShowAmbient.ts';
 export * from './hooks/useUnknownExample.ts';
 export * from './inspector/Inspector.tsx';
+export * from './slots.ts';
 export * from './source/PromptKey.tsx';
 export * from './source/PromptPane.tsx';
 export * from './source/SourceLine.tsx';
