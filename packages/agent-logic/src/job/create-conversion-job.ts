@@ -7,7 +7,7 @@ import {
   MAX_COVERAGE_CHECKS,
   MAX_SUBMISSIONS,
 } from '../conversion-session/create-conversion-session.ts';
-import { formatConversionInput } from '../conversion-session/format-conversion-input.ts';
+import { formatConversionInput, parseConversionInput } from '../conversion-session/format-conversion-input.ts';
 import type { ConvertResult } from '../convert/convert-prompt.ts';
 import { coverageMapSchema } from '../coverage-map/coverage-map-schema.ts';
 import { CONVERSION_INSTRUCTIONS } from '../instructions/conversion-instructions.ts';
@@ -66,4 +66,16 @@ export function createConversionJob({ prompt, name }: ConversionJobOptions): Job
     maxRounds: MAX_ROUNDS,
     readResult: () => finished,
   };
+}
+
+/**
+ * Creates the job that `createConversionJob` creates for a prompt, from that job's `input`: the string that `runJob`
+ * posts to an operator's endpoint, for the `createJob` of `createJobHandler`. Throws when `input` is not one that
+ * `createConversionJob` creates, including the input of a name that contains a newline.
+ *
+ * @stage proposed
+ * @experimental
+ */
+export function createConversionJobFromInput(input: string): Job<ConvertResult> {
+  return createConversionJob(parseConversionInput(input));
 }
