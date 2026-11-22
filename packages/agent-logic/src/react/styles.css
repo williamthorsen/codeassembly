@@ -30,7 +30,8 @@
   .prompt-pane,
   .prompt-key,
   .statechart-inspector,
-  .statechart-source-line
+  .statechart-source-line,
+  .statechart-workspace
 ) {
   --_agent-logic-ambient-background: var(
     --agent-logic-ambient-background,
@@ -47,6 +48,10 @@
   --_agent-logic-compound-background: var(
     --agent-logic-compound-background,
     color-mix(in srgb, var(--agent-logic-text) 5%, var(--agent-logic-surface))
+  );
+  --_agent-logic-danger-text: var(
+    --agent-logic-danger-text,
+    color-mix(in srgb, var(--agent-logic-warning) 70%, var(--agent-logic-text))
   );
   --_agent-logic-focus-ring: var(--agent-logic-focus-ring, var(--agent-logic-accent));
   --_agent-logic-hover-background: var(
@@ -823,4 +828,48 @@
   pointer-events: none;
   fill: var(--_agent-logic-source-line);
   stroke: var(--_agent-logic-source-line);
+}
+
+/* -- Workspace: the canvas beside the source pane, which holds the inspector above the prompt -- */
+
+.statechart-workspace {
+  position: relative;
+  display: grid;
+  flex: 1;
+  grid-template-columns: minmax(0, 1fr) clamp(392px, 35vw, 500px);
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--_agent-logic-border);
+  border-radius: 4px;
+}
+
+.statechart-workspace__chart {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.statechart-workspace__canvas {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+}
+
+.statechart-workspace__error {
+  margin: 0;
+  padding: 16px;
+  color: var(--_agent-logic-danger-text);
+}
+
+.statechart-workspace__source {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--_agent-logic-border);
+  background: var(--agent-logic-surface);
+}
+
+.statechart-workspace__prompt {
+  flex: 1;
+  min-height: 0;
 }
