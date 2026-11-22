@@ -1,6 +1,6 @@
 /*
- * Styles for the statechart canvas, the prompt pane, the marks of their keys, the inspector, the source line, and the
- * workspace. The colours come in two tiers of custom properties: the seeds, declared on :root, and the component
+ * Styles for the statechart canvas, its key, the prompt pane, the marks of their keys, the inspector, the source line,
+ * the workspace, and the messages panel. The colours come in two tiers of custom properties: the seeds, declared on :root, and the component
  * properties, each of which derives its default from the seeds. A consumer sets either tier on :root or on an ancestor
  * of the components that it renders.
  */
@@ -20,18 +20,21 @@
 
 /*
  * Each component property resolves here, on the elements that read it, rather than on :root, so that seeds set on any
- * ancestor of the canvas, the pane, a key entry, the inspector, the source line, or the workspace reach the derivation.
+ * ancestor of the canvas, the pane, a key, the inspector, the source line, the workspace, or the messages panel reach the
+ * derivation.
  * Every rule below reads the private property.
  */
 :where(
   .statechart-canvas,
   .arrowhead-defs,
+  .canvas-key,
   .canvas-key__swatch,
   .canvas-key__word,
   .mark-glyph,
   .prompt-pane,
   .prompt-key,
   .statechart-inspector,
+  .statechart-messages,
   .statechart-source-line,
   .statechart-workspace
 ) {
@@ -60,6 +63,10 @@
     --agent-logic-hover-background,
     color-mix(in srgb, var(--agent-logic-text) 12.5%, transparent)
   );
+  --_agent-logic-information-background: var(
+    --agent-logic-information-background,
+    color-mix(in srgb, var(--agent-logic-accent) 9%, var(--agent-logic-surface))
+  );
   --_agent-logic-node-background: var(--agent-logic-node-background, var(--agent-logic-surface));
   --_agent-logic-passage-background: var(
     --agent-logic-passage-background,
@@ -84,6 +91,10 @@
   --_agent-logic-unconverted: var(
     --agent-logic-unconverted,
     color-mix(in srgb, var(--agent-logic-warning) 70%, var(--agent-logic-text))
+  );
+  --_agent-logic-warning-background: var(
+    --agent-logic-warning-background,
+    color-mix(in srgb, var(--agent-logic-warning) 11%, var(--agent-logic-surface))
   );
 }
 
@@ -538,7 +549,142 @@
   line-height: 18px;
 }
 
-/* -- Key -- */
+/* -- Key: a strip below the canvas, with the marks that the chart draws and the canvas's toggles -- */
+
+.canvas-key {
+  display: flex;
+  flex: none;
+  align-items: center;
+  border-block-start: 1px solid var(--_agent-logic-border);
+  background: var(--agent-logic-surface);
+  color: var(--agent-logic-text);
+}
+
+.canvas-key__entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  line-height: 16px;
+  list-style: none;
+}
+
+.canvas-key__entry {
+  position: relative;
+  margin: 0;
+}
+
+/* An entry takes focus only so that a keyboard user reaches its gloss; it does not act on a click. */
+.canvas-key__entry-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.canvas-key__entry-label:hover {
+  background: var(--_agent-logic-hover-background);
+}
+
+.canvas-key__entry-label:focus-visible {
+  outline: 2px solid var(--_agent-logic-focus-ring);
+  outline-offset: 1px;
+}
+
+.canvas-key__tooltip {
+  position: absolute;
+  inset-block-end: 100%;
+  inset-inline-start: 0;
+  z-index: 10;
+  display: none;
+  inline-size: max-content;
+  max-inline-size: 256px;
+  margin-block-end: 4px;
+  padding: 4px 8px;
+  border-radius: 2px;
+  background: var(--_agent-logic-tooltip-background);
+  color: var(--_agent-logic-tooltip-text);
+  font-size: 12px;
+  line-height: 16px;
+  pointer-events: none;
+}
+
+.canvas-key__entry:hover .canvas-key__tooltip,
+.canvas-key__entry:focus-within .canvas-key__tooltip {
+  display: block;
+}
+
+.canvas-key__controls {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  margin-inline: auto 4px;
+  font-size: 14px;
+  line-height: 20px;
+}
+
+.canvas-key__ambient {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 6px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.canvas-key__ambient:hover {
+  background: var(--_agent-logic-hover-background);
+}
+
+.canvas-key__ambient > input,
+.canvas-key__ambient > label {
+  cursor: pointer;
+}
+
+.canvas-key__ambient > input {
+  inline-size: 16px;
+  block-size: 16px;
+  margin: 0;
+  accent-color: var(--agent-logic-accent);
+}
+
+.canvas-key__messages {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.canvas-key__counts {
+  color: var(--_agent-logic-text-subtle);
+  font-size: 12px;
+}
+
+/* The chevron of a disclosure, inside the app's button: right while closed, down while open. */
+.statechart-chevron {
+  flex: none;
+  inline-size: 16px;
+  block-size: 16px;
+  transition: transform 150ms ease-out;
+}
+
+.statechart-chevron--open {
+  transform: rotate(90deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statechart-chevron {
+    transition: none;
+  }
+}
+
+/* -- Marks of the key -- */
 
 .canvas-key__swatch {
   display: inline-block;
@@ -816,6 +962,127 @@
 
 .statechart-inspector__unnamed {
   font-size: 12px;
+}
+
+/* -- Messages panel: the gaps, the converter's findings, and the unconverted passages, below the canvas -- */
+
+.statechart-messages {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 6px;
+  block-size: 40%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  padding: 8px;
+  border-block-start: 1px solid var(--_agent-logic-border);
+  background: var(--agent-logic-surface);
+  color: var(--agent-logic-text);
+  font-size: 14px;
+  line-height: 20px;
+}
+
+/* A display set here would otherwise show a panel or a list that its `hidden` attribute hides. */
+.statechart-messages[hidden],
+.statechart-messages__details[hidden] {
+  display: none;
+}
+
+.statechart-messages__section {
+  display: flex;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: 6px;
+}
+
+.statechart-messages__section--information {
+  background: var(--_agent-logic-information-background);
+}
+
+.statechart-messages__section--information > .statechart-messages__icon {
+  color: var(--agent-logic-accent);
+}
+
+.statechart-messages__section--warning {
+  background: var(--_agent-logic-warning-background);
+}
+
+.statechart-messages__section--warning > .statechart-messages__icon {
+  color: var(--agent-logic-warning);
+}
+
+.statechart-messages__icon {
+  flex: none;
+  inline-size: 20px;
+  block-size: 20px;
+  margin-block-start: 2px;
+}
+
+.statechart-messages__icon-stroke {
+  stroke: var(--agent-logic-surface);
+}
+
+.statechart-messages__icon-fill {
+  fill: var(--agent-logic-surface);
+}
+
+.statechart-messages__section-body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 6px;
+  min-inline-size: 0;
+}
+
+.statechart-messages__section-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+}
+
+.statechart-messages__section-body p {
+  margin: 0;
+}
+
+.statechart-messages__list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-inline-start: 20px;
+  list-style: disc;
+}
+
+.statechart-messages__details,
+.statechart-messages__passages {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statechart-messages__passages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* A finding's kind classifies it, so it reads as a tag. */
+.statechart-messages__kind {
+  display: inline-block;
+  margin-inline-end: 6px;
+  padding: 0 5px;
+  border: 1px solid var(--_agent-logic-border);
+  border-radius: 3px;
+  color: var(--_agent-logic-text-subtle);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.statechart-messages__quote {
+  font-family: var(--agent-logic-font-prose);
 }
 
 /* -- Source line: drawn over the workspace from the selected element to its passage -- */
