@@ -82,6 +82,7 @@ export interface VisualizationRow<TKind extends string = never> {
   target: { kind: 'example'; example: Example } | { kind: 'file'; name: string };
 }
 
+/** Options of `buildVisualizationRows`. */
 export interface VisualizationRowOptions<TKind extends string> {
   /** Returns the kind and name of a stored file of a kind that the app defines, or `undefined` for a chart. */
   readKind?: ((fileName: string) => StoredFileKind<TKind> | undefined) | undefined;
@@ -93,6 +94,7 @@ export interface VisualizationSort {
   direction: 'ascending' | 'descending';
 }
 
+/** Options of `sortVisualizationRows`. */
 export interface VisualizationSortOptions<TKind extends string> {
   /** Returns the text that the Kind column shows for a kind. */
   labelKind?: ((kind: 'chart' | TKind) => string) | undefined;

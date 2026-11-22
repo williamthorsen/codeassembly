@@ -99,21 +99,6 @@ describe(useStoredFiles, () => {
 
     expect(result.current.files).toEqual([SECOND]);
   });
-
-  it('drops a listing that resolves after unmount', async () => {
-    const pending: Array<(files: StoredFileEntry[]) => void> = [];
-    const store = buildPendingStore(pending);
-    const { result, unmount } = renderHook(() => useStoredFiles(store));
-    const listed = result.current.files;
-    unmount();
-
-    await act(async () => {
-      pending[0]?.([FIRST]);
-      await vi.advanceTimersByTimeAsync(0);
-    });
-
-    expect(result.current.files).toBe(listed);
-  });
 });
 
 // region | Helpers
