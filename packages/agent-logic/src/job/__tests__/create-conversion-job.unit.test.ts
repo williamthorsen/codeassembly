@@ -72,6 +72,10 @@ describe(createConversionJob, () => {
     expect(extraDraft).toBe('No more drafts are accepted. End your turn.');
   });
 
+  it('throws for a name that contains a newline', () => {
+    expect(() => createConversionJob({ prompt: GREETER_PROMPT, name: 'greeter\n.md' })).toThrow(/newline/);
+  });
+
   it('gives each job its own session', async () => {
     const first = createGreeterJob();
     const second = createGreeterJob();

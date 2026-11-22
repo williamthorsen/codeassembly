@@ -52,9 +52,9 @@ export type ConversionEvent =
  * and submission, then a `result` event that contains the outcome of the last submission.
  *
  * Rejects before the agent starts when the profile cannot identify calls of the conversion's tools, which
- * `codexProfile` cannot; when the agent ends its turn without submitting a draft; with the signal's reason when the
- * signal aborts; and, when the agent fails, with an error that names the cause, such as a harness that is not signed
- * in.
+ * `codexProfile` cannot, or when the name contains a newline; when the agent ends its turn without submitting a draft;
+ * with the signal's reason when the signal aborts; and, when the agent fails, with an error that names the cause, such
+ * as a harness that is not signed in.
  *
  * @stage proposed
  * @experimental
@@ -72,6 +72,7 @@ export function createConvertWithAgent(
         `The agent \`${agent.command}\` cannot convert a prompt: Its profile cannot identify calls of the conversion's tools, so they would be refused.`,
       );
     }
+    const input = formatConversionInput(prompt, name);
     signal?.throwIfAborted();
 
     const pending: SessionEvent[] = [];
@@ -90,7 +91,7 @@ export function createConvertWithAgent(
           agent,
           cwd,
           instructions: CONVERSION_INSTRUCTIONS,
-          prompt: formatConversionInput(prompt, name),
+          prompt: input,
           tools: {
             name: CONVERSION_SERVER_NAME,
             createServer: () => createConversionServer(session),

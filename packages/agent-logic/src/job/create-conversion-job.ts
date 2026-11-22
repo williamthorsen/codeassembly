@@ -34,12 +34,13 @@ export interface ConversionJobOptions {
  * instructions and message as `convertWithAgent`, checks its coverage map through `check_coverage`, and submits each
  * draft through `submit_draft`, with the same caps. The job's result is the outcome of the submission that finished
  * the conversion: an accepted config, an out-of-scope verdict, or the problems of the last submission accepted. A run
- * that the model ends before then is unfinished. Create a job for each run.
+ * that the model ends before then is unfinished. Create a job for each run. Throws for a name that contains a newline.
  *
  * @stage proposed
  * @experimental
  */
 export function createConversionJob({ prompt, name }: ConversionJobOptions): Job<ConvertResult> {
+  const input = formatConversionInput(prompt, name);
   const session = createConversionSession({ prompt, name, onEvent: () => {} });
   let finished: ConvertResult | undefined;
 
@@ -61,7 +62,7 @@ export function createConversionJob({ prompt, name }: ConversionJobOptions): Job
 
   return {
     instructions: CONVERSION_INSTRUCTIONS,
-    input: formatConversionInput(prompt, name),
+    input,
     tools: { check_coverage: checkCoverage, submit_draft: submitDraft },
     maxRounds: MAX_ROUNDS,
     readResult: () => finished,
@@ -71,7 +72,7 @@ export function createConversionJob({ prompt, name }: ConversionJobOptions): Job
 /**
  * Creates the job that `createConversionJob` creates for a prompt, from that job's `input`: the string that `runJob`
  * posts to an operator's endpoint, for the `createJob` of `createJobHandler`. Throws when `input` is not one that
- * `createConversionJob` creates, including the input of a name that contains a newline.
+ * `createConversionJob` creates.
  *
  * @stage proposed
  * @experimental

@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest';
 
 import { formatConversionInput, parseConversionInput } from '../format-conversion-input.ts';
 
+describe(formatConversionInput, () => {
+  it('throws for a name that contains a newline', () => {
+    expect(() => formatConversionInput('Say hello.', 'a\n\nb.md')).toThrow(/cannot contain a newline/);
+  });
+});
+
 describe(parseConversionInput, () => {
   it.each([
     {
@@ -19,7 +25,7 @@ describe(parseConversionInput, () => {
     { case: 'lacks the header', input: 'Say hello.' },
     { case: 'has only the header line', input: 'Prompt file: a.md' },
     { case: 'does not follow the header with a blank line', input: 'Prompt file: a.md\nSay hello.' },
-    { case: 'formats a name that contains a newline', input: formatConversionInput('Say hello.', 'a\nb.md') },
+    { case: 'has a name that contains a newline', input: 'Prompt file: a\nb.md\n\nSay hello.' },
   ])('throws for input that $case', ({ input }) => {
     expect(() => parseConversionInput(input)).toThrow(/must start with a `Prompt file: \{name\}` line/);
   });

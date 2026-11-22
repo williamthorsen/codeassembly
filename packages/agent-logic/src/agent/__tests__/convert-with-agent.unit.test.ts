@@ -68,6 +68,15 @@ describe('convertWithAgent', () => {
     expect(runs).toHaveLength(0);
   });
 
+  it('rejects a name that contains a newline before the agent starts', async () => {
+    const { runPrompt, runs } = createFakeRunPrompt(() => Promise.resolve(undefined));
+
+    await expect(
+      collect(createConvertWithAgent(runPrompt)({ ...INPUT, name: 'greeter\n.md', agent: claudeCodeProfile() })),
+    ).rejects.toThrow(/cannot contain a newline/);
+    expect(runs).toHaveLength(0);
+  });
+
   it('runs in an empty temporary directory with the instructions, the prompt, and only its preapproved tools', async () => {
     const { runs } = await runConversion(async ({ callTool }) => {
       await callTool('submit_draft', { draft: JSON.stringify(GREETER_DRAFT) });
