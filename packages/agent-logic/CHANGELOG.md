@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.0 — 2026-11-22
+
+### 🎉 Features
+
+- Adds `Workspace` to `codeassembly-agent-logic/react`, which lays the statechart canvas beside a source pane that stacks the inspector above the `PromptPane`, and which takes the app's `LinkButton` component for the inspector's links. (#2309)
+- Adds `Inspector`, a panel that describes the selected state, transition, or ambient instruction and renders each state and transition that it names through the app's `LinkButton` component. (#2309)
+- Adds `SourceLine`, which draws a line from the selected chart element to its passage in the prompt pane while both are in view, in the color that the new `--agent-logic-source-line` property sets. (#2309)
+- Adds `CanvasKey`, which lists each kind of mark that the chart draws with its gloss, followed by a checkbox that shows and hides the ambient instructions and a toggle that opens the messages panel. (#2310)
+- Adds the `Messages` panel, which lists a converted document's gaps, the converter's findings, and its unconverted passages, together with `countMessages` and `hasMessages`, which report how many messages a document has. (#2310)
+- Exports `ButtonProps` and `LinkButtonProps`, the props of the app's button and in-page link, with an `isHeading` flag that gives a button titling a section the heading's text size and an `isInline` flag that keeps a link's underline at rest inside a sentence. (#2310)
+- Styles the canvas key and the messages panel in `styles.css` from the existing seeds, and adds `--agent-logic-information-background` and `--agent-logic-warning-background` for overriding the backgrounds of the panel's information and warning sections. (#2310)
+- Adds to `codeassembly-agent-logic/react` the `useDocumentState` hook, which opens an example or a file stored in a `FileStore` of `@williamthorsen/toolbelt.text-file-store`, keeps the open document in step with the URL and the browser's history, and opens and stores a document of a kind that the app defines through its `otherKind` option and its returned `prepareLoad` and `storeAndOpen`. (#2311)
+- Adds `AGENT_LOGIC_SUFFIX` and `isAgentLogicFileName` to the root entry of `codeassembly-agent-logic`, which lets server code, such as a file-store plugin, recognize an agent-logic file name without importing the `./react` entry. (#2311)
+
 ## 0.9.0 — 2026-11-22
 
 ### 🎉 Features
