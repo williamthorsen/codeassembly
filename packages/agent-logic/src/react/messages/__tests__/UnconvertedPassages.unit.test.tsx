@@ -18,6 +18,7 @@ describe(UnconvertedPassages, () => {
 
     expect(screen.getByRole('heading', { name: 'Unconverted passages (2)' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Unconverted passages (2)' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.getByRole('button', { name: 'Unconverted passages (2)' })).toHaveAttribute('data-test-heading');
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
   });
 

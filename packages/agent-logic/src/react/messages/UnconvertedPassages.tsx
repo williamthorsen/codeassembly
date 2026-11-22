@@ -31,7 +31,12 @@ export function UnconvertedPassages({
     <SectionMessage
       appearance="warning"
       title={
-        <Button aria-expanded={isOpen} aria-controls={detailsId} onClick={() => setIsOpen((wasOpen) => !wasOpen)}>
+        <Button
+          aria-expanded={isOpen}
+          aria-controls={detailsId}
+          isHeading
+          onClick={() => setIsOpen((wasOpen) => !wasOpen)}
+        >
           <ChevronIcon isOpen={isOpen} />
           Unconverted passages ({passages.length})
         </Button>

@@ -11,6 +11,11 @@ export interface ButtonProps {
   'aria-describedby'?: string | undefined;
   'aria-expanded'?: boolean | undefined;
   'aria-label'?: string | undefined;
+  /**
+   * Whether the button is the title of a section, as a disclosure that heads its list is, for which the button takes
+   * the heading's text size; otherwise it sits in a line of text or a toolbar, at the app's compact size.
+   */
+  isHeading?: boolean | undefined;
 }
 
 /**
