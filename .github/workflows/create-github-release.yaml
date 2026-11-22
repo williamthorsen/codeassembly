@@ -1,16 +1,18 @@
 # yaml-language-server: $schema=https://json.schemastore.org/github-workflow.json
-name: Create GitHub Release
+name: Create GitHub release
 
 on:
   push:
     tags:
       - '*-v[0-9]*.[0-9]*.[0-9]*'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
   create-github-release:
+    if: github.ref_type == 'tag'
     uses: williamthorsen/node-monorepo-tools/.github/workflows/create-github-release.reusable.yaml@workflow/create-github-release-v1
     with:
       tag: ${{ github.ref_name }}
