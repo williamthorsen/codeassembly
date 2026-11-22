@@ -1,7 +1,8 @@
 /**
  * `./react` entry: the statechart canvas and its key, the prompt pane, the inspector, the source line, the workspace
- * that composes them, the messages panel, the props of the app's button and link, the hooks of a chart's page, and the
- * document hooks that open an example or a stored file.
+ * that composes them, the messages panel, the props of the app's button and link, the hooks of a chart's page, the
+ * document hooks that open an example or a stored file, the listing of the stored files, and the Visualizations table's
+ * rows.
  */
 export * from './canvas/canvas-key-entries.tsx';
 export * from './canvas/CanvasKey.tsx';
@@ -26,6 +27,7 @@ export * from './hooks/useDocumentTitle.ts';
 export * from './hooks/useEscapeToClear.ts';
 export * from './hooks/useSelection.ts';
 export * from './hooks/useShowAmbient.ts';
+export * from './hooks/useStoredFiles.ts';
 export * from './hooks/useUnknownExample.ts';
 export * from './inspector/Inspector.tsx';
 export * from './messages/Messages.tsx';
@@ -34,3 +36,6 @@ export * from './source/PromptKey.tsx';
 export * from './source/PromptPane.tsx';
 export * from './source/SourceLine.tsx';
 export * from './source/Workspace.tsx';
+export * from './visualizations/match-name.ts';
+export * from './visualizations/stored-file-name.ts';
+export * from './visualizations/visualization-rows.ts';
