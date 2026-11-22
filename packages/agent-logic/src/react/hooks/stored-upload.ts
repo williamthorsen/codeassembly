@@ -1,5 +1,5 @@
+import { AGENT_LOGIC_SUFFIX } from '../../schema/agent-logic-file-name.ts';
 import type { AgentLogicConfig } from '../../schema/agent-logic-schema.ts';
-import { AGENT_LOGIC_SUFFIX } from './agent-logic-file-name.ts';
 import type { InputOrigin } from './document-types.ts';
 import { dropLastExtension, sanitizeStoredBase } from './stored-base.ts';
 

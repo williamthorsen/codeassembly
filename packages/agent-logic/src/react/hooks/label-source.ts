@@ -1,5 +1,5 @@
 import { sanitizeName } from '../../convert/sanitize-name.ts';
-import { AGENT_LOGIC_SUFFIX } from './agent-logic-file-name.ts';
+import { AGENT_LOGIC_SUFFIX } from '../../schema/agent-logic-file-name.ts';
 
 /** Where a chart came from. */
 export type LoadOrigin =

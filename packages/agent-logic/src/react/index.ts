@@ -8,7 +8,6 @@ export * from './canvas/CanvasKey.tsx';
 export * from './canvas/list-chart-marks.ts';
 export * from './canvas/marks.tsx';
 export * from './canvas/StatechartCanvas.tsx';
-export * from './hooks/agent-logic-file-name.ts';
 export * from './hooks/describe-load-outcome.ts';
 export * from './hooks/document-types.ts';
 export * from './hooks/download-config.ts';
