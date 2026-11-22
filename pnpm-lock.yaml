@@ -316,6 +316,9 @@ importers:
       '@williamthorsen/toolbelt.errors':
         specifier: 'catalog:'
         version: 0.11.4
+      '@williamthorsen/toolbelt.text-file-store':
+        specifier: 0.2.0
+        version: 0.2.0
       '@xyflow/react':
         specifier: 13.0.2
         version: 13.0.2(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -1644,6 +1647,10 @@ packages:
 
   '@williamthorsen/toolbelt.testing@0.9.0':
     resolution: {integrity: sha512-W1jOan95DqMvcQk4KwYO/a0hy+ihZNww79X8V9MC2vhX1cNHw9sI4oCljli/8u3h5G8WAY6Opv3r7U58i+0q3A==}
+    engines: {node: '>=24.0.0'}
+
+  '@williamthorsen/toolbelt.text-file-store@0.2.0':
+    resolution: {integrity: sha512-PygQuUw69gq4qVxW32TOC9Lz95h2HaRFLjYdYsQ25e9m02M/GmWomEO6NPrjh8tuH/IIEx9b+9QDjvYpR/oqWQ==}
     engines: {node: '>=24.0.0'}
 
   '@williamthorsen/toolbelt.vitest@0.14.0':
@@ -4725,6 +4732,10 @@ snapshots:
   '@williamthorsen/toolbelt.testing@0.9.0':
     dependencies:
       '@williamthorsen/toolbelt.errors': 0.11.4
+      '@williamthorsen/toolbelt.objects': 5.0.0
+
+  '@williamthorsen/toolbelt.text-file-store@0.2.0':
+    dependencies:
       '@williamthorsen/toolbelt.objects': 5.0.0
 
   '@williamthorsen/toolbelt.vitest@0.14.0(vitest@5.1.1)':
