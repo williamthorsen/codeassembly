@@ -7,7 +7,7 @@ import {
   MAX_COVERAGE_CHECKS,
   MAX_SUBMISSIONS,
 } from '../conversion-session/create-conversion-session.ts';
-import { formatConversionInput } from '../conversion-session/format-conversion-input.ts';
+import { formatConversionInput, parseConversionInput } from '../conversion-session/format-conversion-input.ts';
 import type { ConvertResult } from '../convert/convert-prompt.ts';
 import { coverageMapSchema } from '../coverage-map/coverage-map-schema.ts';
 import { CONVERSION_INSTRUCTIONS } from '../instructions/conversion-instructions.ts';
@@ -34,12 +34,13 @@ export interface ConversionJobOptions {
  * instructions and message as `convertWithAgent`, checks its coverage map through `check_coverage`, and submits each
  * draft through `submit_draft`, with the same caps. The job's result is the outcome of the submission that finished
  * the conversion: an accepted config, an out-of-scope verdict, or the problems of the last submission accepted. A run
- * that the model ends before then is unfinished. Create a job for each run.
+ * that the model ends before then is unfinished. Create a job for each run. Throws for a name that contains a newline.
  *
  * @stage proposed
  * @experimental
  */
 export function createConversionJob({ prompt, name }: ConversionJobOptions): Job<ConvertResult> {
+  const input = formatConversionInput(prompt, name);
   const session = createConversionSession({ prompt, name, onEvent: () => {} });
   let finished: ConvertResult | undefined;
 
@@ -61,9 +62,21 @@ export function createConversionJob({ prompt, name }: ConversionJobOptions): Job
 
   return {
     instructions: CONVERSION_INSTRUCTIONS,
-    input: formatConversionInput(prompt, name),
+    input,
     tools: { check_coverage: checkCoverage, submit_draft: submitDraft },
     maxRounds: MAX_ROUNDS,
     readResult: () => finished,
   };
+}
+
+/**
+ * Creates the job that `createConversionJob` creates for a prompt, from that job's `input`: the string that `runJob`
+ * posts to an operator's endpoint, for the `createJob` of `createJobHandler`. Throws when `input` is not one that
+ * `createConversionJob` creates.
+ *
+ * @stage proposed
+ * @experimental
+ */
+export function createConversionJobFromInput(input: string): Job<ConvertResult> {
+  return createConversionJob(parseConversionInput(input));
 }

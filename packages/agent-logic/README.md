@@ -22,16 +22,16 @@ if (result.ok) {
 
 ## Entries
 
-| Entry                                              | Exports                                                                                                                                                                               |
-| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples. |
-| `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                         |
-| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), `PromptPane` and its `PromptKey`, and the hooks of a page that presents a chart.            |
-| `codeassembly-agent-logic/react/styles.css`        | The stylesheet of the canvas and the prompt pane.                                                                                                                                     |
-| `codeassembly-agent-logic/server`                  | `createConversionHandler`, which serves conversions on an ACP agent, and its stores.                                                                                                  |
-| `codeassembly-agent-logic/client`                  | `createConversionClient`, the browser client of the routes that `createConversionHandler` serves.                                                                                     |
-| `codeassembly-agent-logic/job`                     | `createConversionJob`, which converts a prompt as a job of `@williamthorsen/toolbelt.llm`, in a page or a function.                                                                   |
-| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                             |
+| Entry                                              | Exports                                                                                                                                                                                       |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `codeassembly-agent-logic`                         | The config schema and its validation, the converter and coverage check, the chart description, its ELK graph (`buildElkGraph`), its layout, source marking, and the bundled examples.         |
+| `codeassembly-agent-logic/agent`                   | `convertWithAgent`, which converts a prompt by directing an ACP agent through the conversion.                                                                                                 |
+| `codeassembly-agent-logic/react`                   | `StatechartCanvas`, the key's entries as data (`CANVAS_KEY_ENTRIES` and the mark glyphs), `PromptPane` and its `PromptKey`, and the hooks of a page that presents a chart.                    |
+| `codeassembly-agent-logic/react/styles.css`        | The stylesheet of the canvas and the prompt pane.                                                                                                                                             |
+| `codeassembly-agent-logic/server`                  | `createConversionHandler`, which serves conversions on an ACP agent, and its stores.                                                                                                          |
+| `codeassembly-agent-logic/client`                  | `createConversionClient`, the browser client of the routes that `createConversionHandler` serves.                                                                                             |
+| `codeassembly-agent-logic/job`                     | `createConversionJob`, which converts a prompt as a job of `@williamthorsen/toolbelt.llm`, in a page or a function, and `createConversionJobFromInput`, which creates the job at an endpoint. |
+| `codeassembly-agent-logic/agent-logic.schema.json` | The config's JSON Schema.                                                                                                                                                                     |
 
 React 19 is a peer of `./react`, `@williamthorsen/toolbelt.acp` and `@modelcontextprotocol/server` peers of `./agent` and `./server`, and `@williamthorsen/toolbelt.llm` a peer of `./job`.
 
@@ -71,6 +71,19 @@ if (outcome.status === 'completed') console.log(outcome.result);
 ```
 
 `createConversionJob` returns a job for [`@williamthorsen/toolbelt.llm`](https://github.com/williamthorsen/toolbelt/tree/main/packages/llm#readme), which runs it in the page on a user's connection or at an operator's endpoint, without a harness. The job sends the instructions and the message that `convertWithAgent` sends, offers the same two tools with the same caps, and makes at most `MAX_ROUNDS` model requests. Its result is a `ConvertResult`, available once the conversion is finished: the config accepted, the prompt recorded out of scope, or the last of the 5 submissions rejected. A run that the model ends earlier is `unfinished`. Create a job for each run.
+
+When the page runs the job at an operator's endpoint, `runJob` posts only the job's input, and the endpoint's `createJobHandler` creates the job from it. `createConversionJobFromInput` creates the job that `createConversionJob` created for that input, and throws for input that `createConversionJob` does not create:
+
+```ts
+import { createConversionJobFromInput } from 'codeassembly-agent-logic/job';
+import { createJobHandler } from '@williamthorsen/toolbelt.llm/proposed';
+
+export const POST = createJobHandler({
+  createJob: createConversionJobFromInput,
+  connection: { provider: 'anthropic', model: 'claude-sonnet-5-5', apiKey: operatorKey },
+  maxInputLength: 100_000,
+});
+```
 
 ## Serving conversions
 

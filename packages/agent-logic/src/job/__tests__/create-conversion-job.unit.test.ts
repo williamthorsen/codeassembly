@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { MAX_COVERAGE_CHECKS, MAX_SUBMISSIONS } from '../../conversion-session/create-conversion-session.ts';
 import { CONVERSION_INSTRUCTIONS } from '../../instructions/conversion-instructions.ts';
 import { GREETER_DRAFT, GREETER_MAP, GREETER_PROMPT, MISQUOTED_GREETER_DRAFT } from '../../test-utils/greeter-draft.ts';
-import { createConversionJob, MAX_ROUNDS } from '../create-conversion-job.ts';
+import { createConversionJob, createConversionJobFromInput, MAX_ROUNDS } from '../create-conversion-job.ts';
 
 describe(createConversionJob, () => {
   it('sends the conversion instructions and the prompt under its file name, with a round for every allowed call', () => {
@@ -72,6 +72,10 @@ describe(createConversionJob, () => {
     expect(extraDraft).toBe('No more drafts are accepted. End your turn.');
   });
 
+  it('throws for a name that contains a newline', () => {
+    expect(() => createConversionJob({ prompt: GREETER_PROMPT, name: 'greeter\n.md' })).toThrow(/newline/);
+  });
+
   it('gives each job its own session', async () => {
     const first = createGreeterJob();
     const second = createGreeterJob();
@@ -80,6 +84,26 @@ describe(createConversionJob, () => {
 
     expect(first.readResult()).toMatchObject({ ok: true });
     expect(second.readResult()).toBeUndefined();
+  });
+});
+
+describe(createConversionJobFromInput, () => {
+  it('creates the job whose input it receives, which converts the same prompt', async () => {
+    const original = createGreeterJob();
+    const job = createConversionJobFromInput(original.input);
+
+    expect(job.input).toBe(original.input);
+    expect(job.instructions).toBe(original.instructions);
+    expect(Object.keys(job.tools)).toStrictEqual(Object.keys(original.tools));
+    expect(job.maxRounds).toBe(original.maxRounds);
+
+    await callTool(job, 'submit_draft', { draft: JSON.stringify(GREETER_DRAFT) });
+
+    expect(job.readResult()).toMatchObject({ ok: true, config: { id: 'greeter' } });
+  });
+
+  it('throws for input that a conversion job does not send', () => {
+    expect(() => createConversionJobFromInput(GREETER_PROMPT)).toThrow(/Prompt file:/);
   });
 });
 
