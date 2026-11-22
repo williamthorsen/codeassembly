@@ -54,11 +54,17 @@ const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; flo
     floor: 4.5,
   },
   { colour: 'var(--_agent-logic-text-subtlest)', surfaces: ['surface'], floor: 4.5 },
+  { colour: 'var(--_agent-logic-danger-text)', surfaces: ['surface'], floor: 4.5 },
   { colour: 'var(--_agent-logic-tooltip-text)', surfaces: ['tooltip'], floor: 4.5 },
   { colour: 'var(--_agent-logic-border)', surfaces: ['compound', 'ground', 'node', 'surface'], floor: 3 },
-  { colour: 'var(--_agent-logic-border-strong)', surfaces: ['compound', 'ground', 'node', 'passageHover'], floor: 3 },
+  {
+    colour: 'var(--_agent-logic-border-strong)',
+    surfaces: ['compound', 'ground', 'node', 'passageHover', 'surface'],
+    floor: 3,
+  },
   { colour: 'var(--_agent-logic-focus-ring)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
   { colour: 'var(--_agent-logic-selected)', surfaces: ['compound', 'ground', 'node', 'selected'], floor: 3 },
+  { colour: 'var(--_agent-logic-source-line)', surfaces: ['ground', 'surface'], floor: 3 },
   {
     colour: 'var(--agent-logic-global)',
     surfaces: ['compound', 'ground', 'hover', 'node', 'passageHover', 'selected', 'surface'],
@@ -74,12 +80,14 @@ const COMPONENT_PROPERTIES = [
   'border',
   'border-strong',
   'compound-background',
+  'danger-text',
   'focus-ring',
   'hover-background',
   'node-background',
   'passage-background',
   'selected',
   'selected-background',
+  'source-line',
   'text-subtle',
   'text-subtlest',
   'tooltip-background',
@@ -137,6 +145,9 @@ describe('styles.css', () => {
     ['a mark glyph outside the canvas', 'mark-glyph', false],
     ['the prompt pane', 'prompt-pane', false],
     ['a prompt key outside the pane', 'prompt-key', false],
+    ['the inspector', 'statechart-inspector', false],
+    ['the source line', 'statechart-source-line', false],
+    ['the workspace', 'statechart-workspace', false],
   ])('derives a component property of %s from seeds set on an ancestor', (_, className, isInCanvas) => {
     const style = readElementStyle(className, { isInCanvas, ancestorStyle: '--agent-logic-text: rgb(1, 2, 3)' });
 
