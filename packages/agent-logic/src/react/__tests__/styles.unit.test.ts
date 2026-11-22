@@ -33,36 +33,63 @@ const SURFACES = {
   compound: 'var(--_agent-logic-compound-background)',
   ground: 'var(--xy-background-color-default)',
   hover: 'var(--_agent-logic-hover-background)',
+  information: 'var(--_agent-logic-information-background)',
   node: 'var(--_agent-logic-node-background)',
   passage: 'var(--_agent-logic-passage-background)',
   passageHover: 'var(--_agent-logic-hover-background)',
   selected: 'var(--_agent-logic-selected-background)',
   surface: 'var(--agent-logic-surface)',
   tooltip: 'var(--_agent-logic-tooltip-background)',
+  warningSection: 'var(--_agent-logic-warning-background)',
 };
 
 /** Each colour that the canvas draws, with the surfaces on which it sits and the floor that it meets there. */
 const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; floor: number }[] = [
   {
     colour: 'var(--agent-logic-text)',
-    surfaces: ['compound', 'ground', 'hover', 'node', 'passage', 'passageHover', 'selected', 'surface'],
+    surfaces: [
+      'compound',
+      'ground',
+      'hover',
+      'information',
+      'node',
+      'passage',
+      'passageHover',
+      'selected',
+      'surface',
+      'warningSection',
+    ],
     floor: 4.5,
   },
   {
     colour: 'var(--_agent-logic-text-subtle)',
-    surfaces: ['compound', 'ground', 'node', 'passage', 'passageHover', 'selected', 'surface'],
+    surfaces: [
+      'compound',
+      'ground',
+      'information',
+      'node',
+      'passage',
+      'passageHover',
+      'selected',
+      'surface',
+      'warningSection',
+    ],
     floor: 4.5,
   },
   { colour: 'var(--_agent-logic-text-subtlest)', surfaces: ['surface'], floor: 4.5 },
   { colour: 'var(--_agent-logic-danger-text)', surfaces: ['surface'], floor: 4.5 },
   { colour: 'var(--_agent-logic-tooltip-text)', surfaces: ['tooltip'], floor: 4.5 },
-  { colour: 'var(--_agent-logic-border)', surfaces: ['compound', 'ground', 'node', 'surface'], floor: 3 },
+  {
+    colour: 'var(--_agent-logic-border)',
+    surfaces: ['compound', 'ground', 'information', 'node', 'surface'],
+    floor: 3,
+  },
   {
     colour: 'var(--_agent-logic-border-strong)',
     surfaces: ['compound', 'ground', 'node', 'passageHover', 'surface'],
     floor: 3,
   },
-  { colour: 'var(--_agent-logic-focus-ring)', surfaces: ['compound', 'ground', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-focus-ring)', surfaces: ['compound', 'ground', 'node', 'surface'], floor: 3 },
   { colour: 'var(--_agent-logic-selected)', surfaces: ['compound', 'ground', 'node', 'selected'], floor: 3 },
   { colour: 'var(--_agent-logic-source-line)', surfaces: ['ground', 'surface'], floor: 3 },
   {
@@ -72,7 +99,9 @@ const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; flo
   },
   { colour: 'var(--_agent-logic-unconverted)', surfaces: ['passage', 'surface'], floor: 3 },
   { colour: 'var(--agent-logic-waiting)', surfaces: ['compound', 'node'], floor: 3 },
-  { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node'], floor: 3 },
+  { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node', 'warningSection'], floor: 3 },
+  // The information section's icon.
+  { colour: 'var(--agent-logic-accent)', surfaces: ['information'], floor: 3 },
 ];
 
 const COMPONENT_PROPERTIES = [
@@ -83,6 +112,7 @@ const COMPONENT_PROPERTIES = [
   'danger-text',
   'focus-ring',
   'hover-background',
+  'information-background',
   'node-background',
   'passage-background',
   'selected',
@@ -93,6 +123,7 @@ const COMPONENT_PROPERTIES = [
   'tooltip-background',
   'tooltip-text',
   'unconverted',
+  'warning-background',
 ];
 
 const FONTS = new Set(['font-code', 'font-prose']);
@@ -141,11 +172,13 @@ describe('styles.css', () => {
   // happy-dom does not inherit a custom property, so the canvas stands for the parts inside it, which inherit from it.
   it.each([
     ['the canvas', 'statechart-canvas', false],
+    ['the canvas key', 'canvas-key', false],
     ['a key swatch outside the canvas', 'canvas-key__swatch', false],
     ['a mark glyph outside the canvas', 'mark-glyph', false],
     ['the prompt pane', 'prompt-pane', false],
     ['a prompt key outside the pane', 'prompt-key', false],
     ['the inspector', 'statechart-inspector', false],
+    ['the messages panel', 'statechart-messages', false],
     ['the source line', 'statechart-source-line', false],
     ['the workspace', 'statechart-workspace', false],
   ])('derives a component property of %s from seeds set on an ancestor', (_, className, isInCanvas) => {

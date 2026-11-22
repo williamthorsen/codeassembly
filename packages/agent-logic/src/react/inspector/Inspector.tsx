@@ -10,6 +10,7 @@ import {
   type StateDescription,
   type TransitionDescription,
 } from '../../layout/describe-config.ts';
+import type { LinkButtonProps } from '../slots.ts';
 
 export interface InspectorProps {
   element: ElementDescription | undefined;
@@ -17,16 +18,7 @@ export interface InspectorProps {
   /** Receives the path of a state or transition named in the inspector when it is clicked. */
   onSelect: (path: string) => void;
   /** The app's in-page link, through which the inspector renders each state and transition that it names. */
-  LinkButton: ComponentType<InspectorLinkProps>;
-}
-
-/**
- * The props of the app's in-page link. The component renders a `<button type="button">` that looks like a link and
- * shows the pointer, hover, and focus states; `children` is the name of the state or transition that it selects.
- */
-export interface InspectorLinkProps {
-  children: ReactNode;
-  onClick: () => void;
+  LinkButton: ComponentType<LinkButtonProps>;
 }
 
 /** The panel that describes the selected state, transition, or ambient instruction and the states that it connects. */
@@ -52,7 +44,7 @@ export function Inspector({ element, description, onSelect, LinkButton }: Inspec
 interface InspectorContext {
   description: ConfigDescription;
   onSelect: (path: string) => void;
-  LinkButton: ComponentType<InspectorLinkProps>;
+  LinkButton: ComponentType<LinkButtonProps>;
 }
 
 /** A labelled list of actions in converted prose. */
