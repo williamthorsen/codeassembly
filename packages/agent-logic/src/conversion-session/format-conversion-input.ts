@@ -14,7 +14,7 @@ export function formatConversionInput(prompt: string, name: string): string {
 export function parseConversionInput(input: string): { prompt: string; name: string } {
   const headerEnd = input.indexOf('\n');
   if (!input.startsWith(HEADER_PREFIX) || headerEnd === -1 || input[headerEnd + 1] !== '\n') {
-    throw new Error(`Conversion input must start with a \`${HEADER_PREFIX}{name}\` line followed by a blank line.`);
+    throw new Error('Conversion input must start with a `' + HEADER_PREFIX + '{name}` line followed by a blank line.');
   }
   return { prompt: input.slice(headerEnd + 2), name: input.slice(HEADER_PREFIX.length, headerEnd) };
 }
