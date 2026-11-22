@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.9.0 — 2026-11-22
+
+### 🎉 Features
+
+- Adds `createConversionJobFromInput` to `codeassembly-agent-logic/job`, which recreates the job that `createConversionJob` created from the input that `runJob` posts, for use as the `createJob` option of `createJobHandler` at an operator's endpoint. (#2305)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that `createConversionJob` and `convertWithAgent` accepted a prompt file name containing a newline and sent part of the name to the model as the prompt; both now throw for such a name before the conversion starts. (#2305)
+
 ## 0.8.0 — 2026-11-21
 
 ### 🎉 Features
