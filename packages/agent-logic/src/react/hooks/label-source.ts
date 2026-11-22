@@ -1,4 +1,5 @@
 import { sanitizeName } from '../../convert/sanitize-name.ts';
+import { AGENT_LOGIC_SUFFIX } from './agent-logic-file-name.ts';
 
 /** Where a chart came from. */
 export type LoadOrigin =
@@ -16,7 +17,7 @@ export interface SourceLabel {
 /** Returns the source line and the saved file's name, `{base}.agent-logic.json`, of a chart from the origin given. */
 export function labelSource(origin: LoadOrigin): SourceLabel {
   const [source, base] = describe(origin);
-  return { source, downloadName: `${base}.agent-logic.json` };
+  return { source, downloadName: `${base}${AGENT_LOGIC_SUFFIX}` };
 }
 
 // region | Helpers
