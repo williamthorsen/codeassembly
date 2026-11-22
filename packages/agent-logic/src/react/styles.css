@@ -1,7 +1,8 @@
 /*
- * Styles for the statechart canvas, the prompt pane, and the marks of their keys. The colours come in two tiers of
- * custom properties: the seeds, declared on :root, and the component properties, each of which derives its default from
- * the seeds. A consumer sets either tier on :root or on an ancestor of the components that it renders.
+ * Styles for the statechart canvas, the prompt pane, the marks of their keys, the inspector, the source line, and the
+ * workspace. The colours come in two tiers of custom properties: the seeds, declared on :root, and the component
+ * properties, each of which derives its default from the seeds. A consumer sets either tier on :root or on an ancestor
+ * of the components that it renders.
  */
 
 @import '@xyflow/react/style.css';
@@ -19,7 +20,8 @@
 
 /*
  * Each component property resolves here, on the elements that read it, rather than on :root, so that seeds set on any
- * ancestor of the canvas, the pane, or a key entry reach the derivation. Every rule below reads the private property.
+ * ancestor of the canvas, the pane, a key entry, the inspector, the source line, or the workspace reach the derivation.
+ * Every rule below reads the private property.
  */
 :where(
   .statechart-canvas,
