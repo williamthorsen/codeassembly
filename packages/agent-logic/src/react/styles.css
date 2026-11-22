@@ -29,6 +29,7 @@
   .mark-glyph,
   .prompt-pane,
   .prompt-key,
+  .statechart-inspector,
   .statechart-source-line
 ) {
   --_agent-logic-ambient-background: var(
@@ -703,6 +704,111 @@
 
 .prompt-key__sample {
   font-family: var(--agent-logic-font-prose);
+}
+
+/* -- Inspector: the selected element's facts, above the prompt -- */
+
+.statechart-inspector {
+  flex: none;
+  max-height: 50%;
+  overflow-y: auto;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--_agent-logic-border);
+  background: var(--agent-logic-surface);
+  color: var(--agent-logic-text);
+}
+
+.statechart-inspector__empty {
+  margin: 0;
+  color: var(--_agent-logic-text-subtle);
+}
+
+.statechart-inspector__details {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.statechart-inspector__heading {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 20px;
+  overflow-wrap: anywhere;
+}
+
+.statechart-inspector__fact {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Labels and the connecting words between links: secondary text. */
+.statechart-inspector__aside {
+  color: var(--_agent-logic-text-subtle);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.statechart-inspector__none {
+  color: var(--_agent-logic-text-subtle);
+}
+
+.statechart-inspector__actions {
+  margin: 0;
+  padding-inline-start: 16px;
+  list-style: disc;
+}
+
+.statechart-inspector__actions > li + li,
+.statechart-inspector__transitions > li + li {
+  margin-top: 4px;
+}
+
+.statechart-inspector__kinds {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.statechart-inspector__kind {
+  padding: 0 8px;
+  border: 1px solid var(--_agent-logic-border-strong);
+  border-radius: 9999px;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.statechart-inspector__quote {
+  margin: 0;
+  font-family: var(--agent-logic-font-prose);
+  font-size: 16px;
+  line-height: 24px;
+  white-space: pre-wrap;
+}
+
+.statechart-inspector__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.statechart-inspector__transitions {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.statechart-inspector__code {
+  font-family: var(--agent-logic-font-code);
+}
+
+.statechart-inspector__unnamed {
+  font-size: 12px;
 }
 
 /* -- Source line: drawn over the workspace from the selected element to its passage -- */
