@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.10.1",
+    "date": "2026-11-22",
+    "sections": [
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that `codeassembly-agent-logic` declared its `@williamthorsen/toolbelt.llm` peer as `^0.2.0`, a range that excludes 0.3.0 and made pnpm report an unmet peer dependency to a consumer on toolbelt.llm 0.3.0. (#2313)",
+            "hash": "8f1f55ccde28c532e2fb58967343a02a08e26a6d",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.10.0",
     "date": "2026-11-22",
     "sections": [

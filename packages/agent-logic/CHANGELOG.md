@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.10.1 — 2026-11-22
+
+### 🐛 Bug fixes
+
+- Fixes the issue that `codeassembly-agent-logic` declared its `@williamthorsen/toolbelt.llm` peer as `^0.2.0`, a range that excludes 0.3.0 and made pnpm report an unmet peer dependency to a consumer on toolbelt.llm 0.3.0. (#2313)
+
 ## 0.10.0 — 2026-11-22
 
 ### 🎉 Features
