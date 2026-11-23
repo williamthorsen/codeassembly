@@ -155,6 +155,7 @@ The component properties, which an app sets to override one part; `styles.css` s
 - `--agent-logic-ambient-background`, `--agent-logic-compound-background`, `--agent-logic-hover-background`: backgrounds, from `text` (and `surface` for a compound state)
 - `--agent-logic-danger-text`: the message of a failed layout, from `warning` and `text`
 - `--agent-logic-information-background`, `--agent-logic-warning-background`: the information and warning sections of the messages panel, from `accent` and `warning` with `surface`
+- `--agent-logic-information-icon`, `--agent-logic-warning-icon`: the icons of those sections, from `accent` and `warning`
 - `--agent-logic-node-background`, `--agent-logic-tooltip-text`: from `surface`
 - `--agent-logic-selected-background`, `--agent-logic-passage-background`: from `accent` and `surface`; the second fills the pane's selected and shown passages
 - `--agent-logic-text-subtle`, `--agent-logic-text-subtlest`, `--agent-logic-border`, `--agent-logic-border-strong`: from `text` and `surface`; the pane sets unused text in the first and comments in the second
@@ -162,6 +163,7 @@ The component properties, which an app sets to override one part; `styles.css` s
 - `--agent-logic-tooltip-background`: from `text`
 - `--agent-logic-focus-ring`, `--agent-logic-selected`: from `accent`
 - `--agent-logic-source-line`: the source line, from `selected`
+- `--agent-logic-workspace-border`: the workspace's frame and the dividers between its regions, from `border`, which outlines a state
 
 The canvas's ground and its dots also derive from the seeds; React Flow's `--xy-background-color` and `--xy-background-pattern-color` replace them. `--agent-logic-font-code` sets the code font, and `--agent-logic-font-prose` the face in which the pane, a flow's preamble, and the messages panel quote the prompt.
 

@@ -99,9 +99,10 @@ const CONTRAST_PAIRS: { colour: string; surfaces: (keyof typeof SURFACES)[]; flo
   },
   { colour: 'var(--_agent-logic-unconverted)', surfaces: ['passage', 'surface'], floor: 3 },
   { colour: 'var(--agent-logic-waiting)', surfaces: ['compound', 'node'], floor: 3 },
-  { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node', 'warningSection'], floor: 3 },
-  // The information section's icon.
-  { colour: 'var(--agent-logic-accent)', surfaces: ['information'], floor: 3 },
+  { colour: 'var(--agent-logic-warning)', surfaces: ['compound', 'node'], floor: 3 },
+  { colour: 'var(--_agent-logic-information-icon)', surfaces: ['information'], floor: 3 },
+  { colour: 'var(--_agent-logic-warning-icon)', surfaces: ['warningSection'], floor: 3 },
+  { colour: 'var(--_agent-logic-workspace-border)', surfaces: ['information', 'surface'], floor: 3 },
 ];
 
 const COMPONENT_PROPERTIES = [
@@ -113,6 +114,7 @@ const COMPONENT_PROPERTIES = [
   'focus-ring',
   'hover-background',
   'information-background',
+  'information-icon',
   'node-background',
   'passage-background',
   'selected',
@@ -124,7 +126,18 @@ const COMPONENT_PROPERTIES = [
   'tooltip-text',
   'unconverted',
   'warning-background',
+  'warning-icon',
+  'workspace-border',
 ];
+
+/** The workspace's regions, each with the border property in which it draws the workspace's border. */
+const WORKSPACE_EDGES = [
+  ['canvas-key', 'border-block-start'],
+  ['statechart-inspector', 'border-bottom'],
+  ['statechart-messages', 'border-block-start'],
+  ['statechart-workspace', 'border'],
+  ['statechart-workspace__source', 'border-left'],
+] as const;
 
 const FONTS = new Set(['font-code', 'font-prose']);
 
@@ -194,6 +207,43 @@ describe('styles.css', () => {
     });
 
     expect(style.getPropertyValue('--_agent-logic-border').trim()).toBe('rgb(4, 5, 6)');
+  });
+
+  // happy-dom drops a logical border property, so the regions' rules are read from the stylesheet.
+  it.each(WORKSPACE_EDGES)("draws the %s's edge in the workspace border", (className, property) => {
+    expect(readBlock(`\n.${className} {`)).toContain(`${property}: 1px solid var(--_agent-logic-workspace-border);`);
+  });
+
+  it.each([
+    ['a state', '\n.state-node {', 'border'],
+    ["a finding's kind", '\n.statechart-messages__kind {', 'border'],
+  ])('outlines %s in the outline border', (_, selector, property) => {
+    expect(readBlock(selector)).toContain(`${property}: 1px solid var(--_agent-logic-border);`);
+  });
+
+  it('sets the workspace border apart from the outline', () => {
+    const style = getComputedStyle(mountWorkspace('--agent-logic-workspace-border: rgb(7, 8, 9)'));
+
+    expect(style.getPropertyValue('--_agent-logic-workspace-border')).toBe('rgb(7, 8, 9)');
+    expect(style.getPropertyValue('--_agent-logic-border')).not.toContain('rgb(7, 8, 9)');
+  });
+
+  it('derives the workspace border from the outline when only the outline is set', () => {
+    const style = getComputedStyle(mountWorkspace('--agent-logic-border: rgb(4, 5, 6)'));
+
+    expect(style.getPropertyValue('--_agent-logic-workspace-border')).toBe('rgb(4, 5, 6)');
+  });
+
+  it("colours the messages panel's section icons from the seeds without their own properties", () => {
+    expect(readSectionIconColours(mountWorkspace(''))).toStrictEqual(['#2346c4', '#c9520a']);
+  });
+
+  it('colours each section icon from its own property, apart from the seeds', () => {
+    const workspace = mountWorkspace(
+      '--agent-logic-information-icon: rgb(1, 2, 3); --agent-logic-warning-icon: rgb(3, 2, 1)',
+    );
+
+    expect(readSectionIconColours(workspace)).toStrictEqual(['rgb(1, 2, 3)', 'rgb(3, 2, 1)']);
   });
 
   it('tints the ground and the dots from the seeds', () => {
@@ -314,6 +364,13 @@ interface ElementPlacement {
   isInCanvas?: boolean;
 }
 
+/** Returns a `div` of `className`. */
+function createElement(className: string): HTMLElement {
+  const element = document.createElement('div');
+  element.className = className;
+  return element;
+}
+
 /** Returns each pair of `CONTRAST_PAIRS` that falls below its floor under `declarations`, with its ratio. */
 function findContrastFailures(declarations: Map<string, string>): string[] {
   return CONTRAST_PAIRS.flatMap(({ colour, surfaces, floor }) =>
@@ -325,6 +382,37 @@ function findContrastFailures(declarations: Map<string, string>): string[] {
       .filter(({ ratio }) => ratio < floor)
       .map(({ surface, ratio }) => `${colour} on ${surface} (${ratio.toFixed(2)}:1)`),
   );
+}
+
+/** Appends the package stylesheet, followed by `consumerCss`, to the document. */
+function loadStylesheets(consumerCss = ''): void {
+  for (const css of [STYLESHEET.replace(/^@import [^;]+;$/m, ''), consumerCss]) {
+    const style = document.createElement('style');
+    // happy-dom does not match a `:where()` whose selector list spans lines.
+    style.textContent = css.replaceAll(/\s+/g, ' ');
+    document.head.append(style);
+  }
+}
+
+/**
+ * Mounts a workspace whose messages panel has an information and a warning section, in that order, under an ancestor
+ * with the inline `ancestorStyle`, and returns the workspace.
+ */
+function mountWorkspace(ancestorStyle: string): HTMLElement {
+  loadStylesheets();
+  const messages = createElement('statechart-messages');
+  for (const kind of ['information', 'warning']) {
+    const section = createElement(`statechart-messages__section--${kind}`);
+    section.append(createElement('statechart-messages__icon'));
+    messages.append(section);
+  }
+  const workspace = createElement('statechart-workspace');
+  workspace.append(messages);
+  const ancestor = document.createElement('div');
+  ancestor.setAttribute('style', ancestorStyle);
+  ancestor.append(workspace);
+  document.body.append(ancestor);
+  return workspace;
 }
 
 /** Returns the computed top, right, bottom, and left padding of the canvas's attribution. */
@@ -357,12 +445,7 @@ function readElementStyle(
   className: string,
   { ancestorStyle = '', consumerCss = '', flowClassName = '', isInCanvas = true }: ElementPlacement,
 ): CSSStyleDeclaration {
-  for (const css of [STYLESHEET.replace(/^@import [^;]+;$/m, ''), consumerCss]) {
-    const style = document.createElement('style');
-    // happy-dom does not match a `:where()` whose selector list spans lines.
-    style.textContent = css.replaceAll(/\s+/g, ' ');
-    document.head.append(style);
-  }
+  loadStylesheets(consumerCss);
   const ancestor = document.createElement('div');
   ancestor.setAttribute('style', ancestorStyle);
   const element = document.createElement('div');
@@ -380,6 +463,11 @@ function readElementStyle(
   }
   document.body.append(ancestor);
   return getComputedStyle(element);
+}
+
+/** Returns the computed colours of the section icons in `workspace`, in document order. */
+function readSectionIconColours(workspace: HTMLElement): string[] {
+  return [...workspace.querySelectorAll('.statechart-messages__icon')].map((icon) => getComputedStyle(icon).color);
 }
 
 /** Returns the computed text colour of a state. */
