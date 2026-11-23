@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.11.0",
+    "date": "2026-11-23",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds the `useStoredFiles` hook to `codeassembly-agent-logic/react`, which returns `{ files, refresh }` and lists a `FileStore` on mount, every 3 seconds while the page is visible, when the page becomes visible, and on `refresh`. (#2315)",
+            "hash": "48889e21b656d92996d069125057841998a2991e",
+            "entry": 1
+          },
+          {
+            "description": "Adds `buildVisualizationRows` and `sortVisualizationRows` to `codeassembly-agent-logic/react`, which build and sort the Visualizations table's rows from the stored files and the examples, together with `matchesName` for a case-insensitive name search and `nameStoredFile` for the display name of a stored file. (#2315)",
+            "hash": "48889e21b656d92996d069125057841998a2991e",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.10.1",
     "date": "2026-11-22",
     "sections": [

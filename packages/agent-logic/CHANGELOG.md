@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.0 — 2026-11-23
+
+### 🎉 Features
+
+- Adds the `useStoredFiles` hook to `codeassembly-agent-logic/react`, which returns `{ files, refresh }` and lists a `FileStore` on mount, every 3 seconds while the page is visible, when the page becomes visible, and on `refresh`. (#2315)
+- Adds `buildVisualizationRows` and `sortVisualizationRows` to `codeassembly-agent-logic/react`, which build and sort the Visualizations table's rows from the stored files and the examples, together with `matchesName` for a case-insensitive name search and `nameStoredFile` for the display name of a stored file. (#2315)
+
 ## 0.10.1 — 2026-11-22
 
 ### 🐛 Bug fixes
