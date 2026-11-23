@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.13.0 — 2026-11-23
+
+### 🎉 Features
+
+- Adds the `CHART_TOUR_STEP`, `PROMPT_TOUR_STEP`, and `FINDINGS_TOUR_STEP` tour slides and the `buildSelectionTourStep` builder to the `./react` entry, typed as `ChartTourStep`, which is assignable to the `TourStep` that the `Tour` of `@williamthorsen/tour-react` takes. (#2321)
+- Adds the `ChartTourSample`, `PromptTourSample`, and `FindingsTourSample` components, which draw each slide's visual in the canvas's start and end marks, the prompt's underline styles, and the messages panel's finding tags, and which the colour seeds of `styles.css` retheme like the other components. (#2321)
+
 ## 0.12.0 — 2026-11-23
 
 ### 🎉 Features

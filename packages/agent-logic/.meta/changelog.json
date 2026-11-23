@@ -1,5 +1,27 @@
 [
   {
+    "version": "0.13.0",
+    "date": "2026-11-23",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds the `CHART_TOUR_STEP`, `PROMPT_TOUR_STEP`, and `FINDINGS_TOUR_STEP` tour slides and the `buildSelectionTourStep` builder to the `./react` entry, typed as `ChartTourStep`, which is assignable to the `TourStep` that the `Tour` of `@williamthorsen/tour-react` takes. (#2321)",
+            "hash": "b8e62d716886e06a021ae0574ef8f3cc3e49429b",
+            "entry": 1
+          },
+          {
+            "description": "Adds the `ChartTourSample`, `PromptTourSample`, and `FindingsTourSample` components, which draw each slide's visual in the canvas's start and end marks, the prompt's underline styles, and the messages panel's finding tags, and which the colour seeds of `styles.css` retheme like the other components. (#2321)",
+            "hash": "b8e62d716886e06a021ae0574ef8f3cc3e49429b",
+            "entry": 2
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.12.0",
     "date": "2026-11-23",
     "sections": [
