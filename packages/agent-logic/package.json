@@ -91,7 +91,7 @@
     "@vitejs/plugin-react": "6.3.0",
     "@williamthorsen/nmr": "catalog:",
     "@williamthorsen/toolbelt.acp": "0.3.3",
-    "@williamthorsen/toolbelt.llm": "0.3.0",
+    "@williamthorsen/toolbelt.llm": "0.4.0",
     "eslint": "catalog:",
     "eslint-plugin-jest-dom": "5.11.0",
     "eslint-plugin-react": "7.37.5",
@@ -107,7 +107,7 @@
   "peerDependencies": {
     "@modelcontextprotocol/server": "^2.4.0",
     "@williamthorsen/toolbelt.acp": "^0.3.0",
-    "@williamthorsen/toolbelt.llm": "^0.2.0 || ^0.3.0",
+    "@williamthorsen/toolbelt.llm": ">=0.1.0 <1.0.0",
     "react": "^19.0.0"
   },
   "peerDependenciesMeta": {
