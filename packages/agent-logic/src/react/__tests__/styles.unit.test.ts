@@ -194,6 +194,9 @@ describe('styles.css', () => {
     ['the messages panel', 'statechart-messages', false],
     ['the source line', 'statechart-source-line', false],
     ['the workspace', 'statechart-workspace', false],
+    ['the chart tour sample', 'chart-tour-sample', false],
+    ['the findings tour sample', 'findings-tour-sample', false],
+    ['the prompt tour sample', 'prompt-tour-sample', false],
   ])('derives a component property of %s from seeds set on an ancestor', (_, className, isInCanvas) => {
     const style = readElementStyle(className, { isInCanvas, ancestorStyle: '--agent-logic-text: rgb(1, 2, 3)' });
 
@@ -216,7 +219,7 @@ describe('styles.css', () => {
 
   it.each([
     ['a state', '\n.state-node {', 'border'],
-    ["a finding's kind", '\n.statechart-messages__kind {', 'border'],
+    ["a finding's kind", '\n.statechart-messages__kind,\n.findings-tour-sample__kind {', 'border'],
   ])('outlines %s in the outline border', (_, selector, property) => {
     expect(readBlock(selector)).toContain(`${property}: 1px solid var(--_agent-logic-border);`);
   });

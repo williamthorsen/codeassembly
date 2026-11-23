@@ -129,11 +129,26 @@ The package draws the chart and its key, the prompt, the inspector of the select
 
 `useDocumentState` owns what the document region shows, the start page, the Visualizations table, or one document, and keeps it in step with the URL and the browser's history. The app supplies the `FileStore` of `@williamthorsen/toolbelt.text-file-store` (its `./proposed` entry) from which a stored file is read and into which the Upload card's text is written, and the `announce` function of its status region; it renders the region and sets the tab title from the state that the hook returns. An app that stores a document of its own kind, such as an unconverted prompt, reads it through the `otherKind` option and writes it through the returned `prepareLoad` and `storeAndOpen`. The hook's doc comment states its options and fields. The app passes the same `FileStore` to `useStoredFiles`, which lists its files, and those files and the examples to `buildVisualizationRows`, which returns the Visualizations table's rows; an app that stores a file of its own kind names it through the `readKind` option, and labels the kinds for `sortVisualizationRows` through `labelKind`. Their doc comments state the order and the sort.
 
+## Tour slides
+
+The `./react` entry also exports the slides that teach a reader how to read a chart, as `ChartTourStep`s, which fit `@williamthorsen/tour-react`'s `Tour` without this package depending on it: `CHART_TOUR_STEP`, `PROMPT_TOUR_STEP`, `FINDINGS_TOUR_STEP`, and `buildSelectionTourStep`, which takes the app's visual of its own page. Each step's visual is one of the exported samples, `ChartTourSample`, `PromptTourSample`, and `FindingsTourSample`, drawn in the marks that the canvas and the pane draw. The app adds its own opening and closing slides around them:
+
+```tsx
+const steps = [
+  overviewStep,
+  CHART_TOUR_STEP,
+  buildSelectionTourStep(<PageSchematic />),
+  PROMPT_TOUR_STEP,
+  FINDINGS_TOUR_STEP,
+  startStep,
+];
+```
+
 ## Styling and theming
 
 Import `codeassembly-agent-logic/react/styles.css` once, through a bundler: It imports React Flow's base styles from this package's own dependency. Its defaults form a finished light theme, which applies under any `color-scheme`.
 
-The colours come in two tiers of custom properties. The seeds are a few base colours, and every other colour derives from them, so an app sets the seeds alone to retheme the canvas, its key, the pane, the workspace, and the messages panel, for example to map them to its design tokens or to make a dark theme:
+The colours come in two tiers of custom properties. The seeds are a few base colours, and every other colour derives from them, so an app sets the seeds alone to retheme the canvas, its key, the pane, the workspace, the messages panel, and the tour samples, for example to map them to its design tokens or to make a dark theme:
 
 ```css
 :root {
