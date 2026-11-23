@@ -71,9 +71,10 @@ function State({
         {label}
       </text>
       {isFinal && (
-        <g transform={`translate(${x + STATE_WIDTH - 20} ${y + 4})`}>
+        // An SVG nested in an SVG takes its size from attributes alone, so the glyph sits in HTML to keep its own size.
+        <foreignObject x={x + STATE_WIDTH - 20} y={y + 4} width="16" height="16">
           <FinalGlyph hasTitle={false} />
-        </g>
+        </foreignObject>
       )}
     </g>
   );
