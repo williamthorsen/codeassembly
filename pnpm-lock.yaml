@@ -366,8 +366,8 @@ importers:
         specifier: 0.3.3
         version: 0.3.3(@modelcontextprotocol/server@2.4.0)(zod@4.6.7)
       '@williamthorsen/toolbelt.llm':
-        specifier: 0.3.0
-        version: 0.3.0(zod@4.6.7)
+        specifier: 0.4.0
+        version: 0.4.0(zod@4.6.7)
       eslint:
         specifier: 'catalog:'
         version: 10.15.0(jiti@2.7.0)
@@ -1599,8 +1599,8 @@ packages:
     resolution: {integrity: sha512-zonnfNXeFYOsOf95NXFp/fMROSYp7Wgo9mw86zMkl1VfZtiVNiQTf/cYgFdl7dqknlzjwTMqOhgP8IvhhFLtAw==}
     engines: {node: '>=24.0.0'}
 
-  '@williamthorsen/toolbelt.llm@0.3.0':
-    resolution: {integrity: sha512-dZ5c+C+0cpaDm/EPBxkrp/plV63sI6GcGAtYhh/WC7o7MK50yNK74wqcXN5NP7xnhwfO3+1UmlvQklU+INGP1A==}
+  '@williamthorsen/toolbelt.llm@0.4.0':
+    resolution: {integrity: sha512-YMX1vlFpN2Lhu/NCGlbHWjuJ0Kt38yh4JCw2WFtV4US9DSycOt4Sxzyi9XGhWKv/8VFcOVCeuj62hTrvHHaVyw==}
     engines: {node: '>=24.0.0'}
     peerDependencies:
       zod: ^4.1.8
@@ -4679,7 +4679,7 @@ snapshots:
 
   '@williamthorsen/toolbelt.guards@4.2.7': {}
 
-  '@williamthorsen/toolbelt.llm@0.3.0(zod@4.6.7)':
+  '@williamthorsen/toolbelt.llm@0.4.0(zod@4.6.7)':
     dependencies:
       '@ai-sdk/anthropic': 4.0.107(zod@4.6.7)
       '@ai-sdk/google': 4.0.124(zod@4.6.7)
