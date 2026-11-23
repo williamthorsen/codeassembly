@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.12.0 — 2026-11-23
+
+### 🎉 Features
+
+- Adds the `--agent-logic-workspace-border` component property, which sets the colour of the workspace's frame and of the dividers between its regions independently of `--agent-logic-border`, which outlines each state. (#2319)
+- Adds the `--agent-logic-information-icon` and `--agent-logic-warning-icon` component properties, which set the colour of the icons in the messages panel's information and warning sections independently of the `accent` and `warning` seeds. (#2319)
+
 ## 0.11.1 — 2026-11-23
 
 ### 🐛 Bug fixes
