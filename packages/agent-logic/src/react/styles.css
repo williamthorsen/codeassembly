@@ -1,8 +1,8 @@
 /*
  * Styles for the statechart canvas, its key, the prompt pane, the marks of their keys, the inspector, the source line,
- * the workspace, and the messages panel. The colours come in two tiers of custom properties: the seeds, declared on
- * :root, and the component properties, each of which derives its default from the seeds. A consumer sets either tier on
- * :root or on an ancestor of the components that it renders.
+ * the workspace, the messages panel, and the tour samples. The colours come in two tiers of custom properties: the
+ * seeds, declared on :root, and the component properties, each of which derives its default from the seeds. A consumer
+ * sets either tier on :root or on an ancestor of the components that it renders.
  */
 
 @import '@xyflow/react/style.css';
@@ -20,8 +20,8 @@
 
 /*
  * Each component property resolves here, on the elements that read it, rather than on :root, so that seeds set on any
- * ancestor of the canvas, the pane, a key, the inspector, the source line, the workspace, or the messages panel reach
- * the derivation. Every rule below reads the private property.
+ * ancestor of the canvas, the pane, a key, the inspector, the source line, the workspace, the messages panel, or a tour
+ * sample reach the derivation. Every rule below reads the private property.
  */
 :where(
   .statechart-canvas,
@@ -29,9 +29,12 @@
   .canvas-key,
   .canvas-key__swatch,
   .canvas-key__word,
+  .chart-tour-sample,
+  .findings-tour-sample,
   .mark-glyph,
   .prompt-pane,
   .prompt-key,
+  .prompt-tour-sample,
   .statechart-inspector,
   .statechart-messages,
   .statechart-source-line,
@@ -1069,8 +1072,9 @@
   list-style: none;
 }
 
-/* A finding's kind classifies it, so it reads as a tag. */
-.statechart-messages__kind {
+/* A finding's kind classifies it, so it reads as a tag, in the panel and in its tour sample. */
+.statechart-messages__kind,
+.findings-tour-sample__kind {
   display: inline-block;
   margin-inline-end: 6px;
   padding: 0 5px;
@@ -1143,4 +1147,96 @@
 .statechart-workspace__prompt {
   flex: 1;
   min-height: 0;
+}
+
+/* -- Tour samples: the visuals of the tour steps that explain a chart, in the marks of the parts that they show -- */
+
+.chart-tour-sample {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 448px;
+  font-size: 12px;
+}
+
+.chart-tour-sample__state {
+  fill: var(--_agent-logic-node-background);
+  stroke: var(--_agent-logic-border);
+}
+
+.chart-tour-sample__name {
+  fill: var(--agent-logic-text);
+}
+
+.chart-tour-sample__condition {
+  fill: var(--_agent-logic-text-subtle);
+}
+
+.chart-tour-sample__transition {
+  fill: none;
+  stroke: var(--_agent-logic-border-strong);
+  stroke-width: 1.5;
+}
+
+.chart-tour-sample__arrowhead {
+  fill: var(--_agent-logic-border-strong);
+}
+
+.chart-tour-sample__initial {
+  color: var(--agent-logic-text);
+}
+
+.prompt-tour-sample {
+  flex-direction: column;
+  gap: 12px;
+  margin-inline-start: 0;
+  color: var(--agent-logic-text);
+  font-size: 16px;
+  line-height: 26px;
+}
+
+.prompt-tour-sample__entry {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.prompt-tour-sample__label {
+  color: var(--_agent-logic-text-subtle);
+  font-size: 12px;
+  line-height: 16px;
+}
+
+.findings-tour-sample {
+  box-sizing: border-box;
+  inline-size: 100%;
+  max-inline-size: 448px;
+  border: 1px solid var(--_agent-logic-border-strong);
+  border-radius: 4px;
+  background: var(--agent-logic-surface);
+  color: var(--agent-logic-text);
+  font-size: 14px;
+  line-height: 20px;
+  text-align: start;
+}
+
+.findings-tour-sample__heading {
+  margin: 0;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--_agent-logic-border);
+  font-weight: 600;
+}
+
+.findings-tour-sample__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.findings-tour-sample__finding {
+  padding: 8px 12px;
+}
+
+.findings-tour-sample__finding + .findings-tour-sample__finding {
+  border-top: 1px solid var(--_agent-logic-border);
 }
