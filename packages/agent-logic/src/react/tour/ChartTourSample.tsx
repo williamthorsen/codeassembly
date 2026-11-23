@@ -60,7 +60,14 @@ function State({
 }): ReactElement {
   return (
     <g>
-      <rect x={x} y={y} width={STATE_WIDTH} height={STATE_HEIGHT} rx="4" className="chart-tour-sample__state" />
+      <rect
+        x={x}
+        y={y}
+        width={STATE_WIDTH}
+        height={STATE_HEIGHT}
+        rx="4"
+        className={isFinal ? 'chart-tour-sample__state chart-tour-sample__state--final' : 'chart-tour-sample__state'}
+      />
       <text
         x={x + STATE_WIDTH / 2}
         y={y + STATE_HEIGHT / 2}

@@ -1163,6 +1163,12 @@
   stroke: var(--_agent-logic-border);
 }
 
+/* An end state takes the heavier border that the canvas gives a final state. */
+.chart-tour-sample__state--final {
+  stroke: var(--agent-logic-text);
+  stroke-width: 2;
+}
+
 .chart-tour-sample__name {
   fill: var(--agent-logic-text);
 }
