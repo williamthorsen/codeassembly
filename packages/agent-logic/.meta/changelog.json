@@ -1,5 +1,22 @@
 [
   {
+    "version": "0.11.1",
+    "date": "2026-11-23",
+    "sections": [
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that the `@williamthorsen/toolbelt.llm` peer range of `codeassembly-agent-logic`, `^0.2.0 || ^0.3.0`, rejected toolbelt.llm 0.4.0 and every later minor release, by widening it to `>=0.1.0 <1.0.0`. (#2317)",
+            "hash": "a17f4d60cac5ec8eacfae59e0894dfdaeb16c7cf",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.11.0",
     "date": "2026-11-23",
     "sections": [

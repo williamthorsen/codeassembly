@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.11.1 — 2026-11-23
+
+### 🐛 Bug fixes
+
+- Fixes the issue that the `@williamthorsen/toolbelt.llm` peer range of `codeassembly-agent-logic`, `^0.2.0 || ^0.3.0`, rejected toolbelt.llm 0.4.0 and every later minor release, by widening it to `>=0.1.0 <1.0.0`. (#2317)
+
 ## 0.11.0 — 2026-11-23
 
 ### 🎉 Features
