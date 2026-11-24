@@ -882,6 +882,11 @@ as apart from the prompt rather than as its first paragraph. */
   margin: 0;
 }
 
+/* The key sits at the pane's end edge, so each gloss opens toward the pane rather than past its edge. */
+.prompt-key__entry > .gloss > .gloss__tooltip {
+  inset-inline: auto 0;
+}
+
 .prompt-key__sample {
   font-family: var(--agent-logic-font-prose);
 }
