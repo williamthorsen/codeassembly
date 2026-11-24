@@ -25,7 +25,7 @@ describe(runConvertCommand, () => {
       path.join(root, 'missing', 'problems.json'),
       path.join(root, 'prompt.md'),
       path.join(root, 'draft.json'),
-      path.join(root, 'prompt.agent-logic.json'),
+      path.join(root, 'prompt.prompt-logic.json'),
     ]);
 
     expect(output.exitCode).toBe(2);

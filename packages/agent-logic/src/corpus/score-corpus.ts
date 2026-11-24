@@ -68,7 +68,7 @@ const CRITERION_LABELS: Record<Gap['criterion'], string> = {
 };
 
 /**
- * Reads every `<name>.md` prompt in the directory with its `<name>.agent-logic.json` or out-of-scope
+ * Reads every `<name>.md` prompt in the directory with its `<name>.prompt-logic.json` or out-of-scope
  * `<name>.problems.json`, and its `<name>.review.json` and `run.json` from the records directory. Throws on any file
  * that is missing or invalid, on a review whose failing verdict names no gap or whose gap names a passing criterion,
  * and on a result produced under older sources that no recheck carries to the current ones.
@@ -249,16 +249,16 @@ function readJson(file: string): unknown {
 
 /** Reads a prompt's chart or its out-of-scope verdict; throws when neither exists or the file is invalid. */
 function readOutput(directory: string, name: string): CorpusEntry['output'] {
-  const configPath = path.join(directory, `${name}.agent-logic.json`);
+  const configPath = path.join(directory, `${name}.prompt-logic.json`);
   const verdictPath = path.join(directory, RECORDS_DIRECTORY, `${name}.problems.json`);
   if (existsSync(configPath)) {
     const validated = validateConfig(readJson(configPath));
-    if (!validated.ok) throw new Error(`${name}: ${configPath} is not a valid agent-logic file`);
+    if (!validated.ok) throw new Error(`${name}: ${configPath} is not a valid prompt-logic file`);
     return { config: validated.config };
   }
   if (existsSync(verdictPath)) return { outOfScope: outOfScopeSchema.parse(readJson(verdictPath)).outOfScope };
   throw new Error(
-    `${name}: neither ${name}.agent-logic.json nor an out-of-scope ${RECORDS_DIRECTORY}/${name}.problems.json exists`,
+    `${name}: neither ${name}.prompt-logic.json nor an out-of-scope ${RECORDS_DIRECTORY}/${name}.problems.json exists`,
   );
 }
 

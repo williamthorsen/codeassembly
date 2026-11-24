@@ -40,11 +40,11 @@ describe('agent-logic convert --problems-file', () => {
     expect(status).toBe(1);
     const { problems } = problemsFileSchema.parse(JSON.parse(await readFile(path.join(root, 'problems.json'), 'utf8')));
     expect(problems.map((problem) => problem.path)).toContain('states.done.meta.quote');
-    expect(existsSync(path.join(root, 'greeter.agent-logic.json'))).toBe(false);
+    expect(existsSync(path.join(root, 'greeter.prompt-logic.json'))).toBe(false);
   });
 
   it('writes the verdict of an out-of-scope draft, exits 3, and leaves the output path alone', async () => {
-    const outputPath = path.join(root, 'greeter.agent-logic.json');
+    const outputPath = path.join(root, 'greeter.prompt-logic.json');
     await writeFile(outputPath, 'earlier');
 
     const status = runConvert(root, { outOfScope: { reason: 'It states no steps.' } });
@@ -62,7 +62,7 @@ describe('agent-logic convert --problems-file', () => {
 
     expect(status).toBe(0);
     expect(existsSync(path.join(root, 'problems.json'))).toBe(false);
-    expect(existsSync(path.join(root, 'greeter.agent-logic.json'))).toBe(true);
+    expect(existsSync(path.join(root, 'greeter.prompt-logic.json'))).toBe(true);
   });
 });
 
@@ -80,7 +80,7 @@ function runConvert(root: string, draft: unknown): number | null {
       path.join(root, 'problems.json'),
       path.join(root, 'greeter.md'),
       draftPath,
-      path.join(root, 'greeter.agent-logic.json'),
+      path.join(root, 'greeter.prompt-logic.json'),
     ],
     { encoding: 'utf8' },
   ).status;

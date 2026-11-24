@@ -16,8 +16,8 @@ export interface CommandOutput {
 const USAGE = `Usage: agent-logic <command> [arguments]
 
 Commands:
-  convert             convert a draft of a prompt's logic into an agent-logic config
-  convert-with-agent  convert a prompt into an agent-logic config on an ACP agent
+  convert             convert a draft of a prompt's logic into a prompt-logic file
+  convert-with-agent  convert a prompt into a prompt-logic file on an ACP agent
   check-coverage      check a coverage map of a prompt against the prompt
   rules               print the extraction rules by which a model drafts a prompt's logic
 

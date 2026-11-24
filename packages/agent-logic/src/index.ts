@@ -1,5 +1,5 @@
 /**
- * Root entry of `codeassembly-agent-logic`: the agent-logic schema, its file name, validation, coverage, layout, source
+ * Root entry of `codeassembly-agent-logic`: the prompt-logic schema, its file name, validation, coverage, layout, source
  * marking, and examples.
  */
 export * from './convert/convert-prompt.ts';
@@ -11,8 +11,8 @@ export { buildElkGraph, type ElkGraphOptions } from './layout/build-elk-graph.ts
 export * from './layout/describe-config.ts';
 export * from './layout/layout-config.ts';
 export * from './layout/to-flow-elements.ts';
-export * from './schema/agent-logic-file-name.ts';
 export * from './schema/agent-logic-schema.ts';
 export * from './schema/config-traversal.ts';
+export * from './schema/prompt-logic-file-name.ts';
 export * from './schema/validate-config.ts';
 export * from './source/prompt-segments.ts';

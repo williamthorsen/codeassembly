@@ -142,7 +142,7 @@ export const agentLogicConfigSchema = z
       findings: findingsSchema,
     }),
   })
-  .meta({ title: 'Agent logic config' });
+  .meta({ title: 'Prompt logic' });
 
 export type Action = z.output<typeof actionSchema>;
 export type AmbientSpan = z.output<typeof ambientSpanSchema>;

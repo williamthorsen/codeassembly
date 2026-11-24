@@ -10,7 +10,7 @@ import type { CommandOutput } from './run.ts';
 
 const PROGRAM = 'agent-logic convert';
 
-const HELP = `Converts a draft of an agent prompt's logic into an agent-logic config.
+const HELP = `Converts a draft of an agent prompt's logic into a prompt-logic file.
 
 Usage: ${PROGRAM} [options] <prompt-file> <draft-file> <output-file>
 
@@ -34,7 +34,7 @@ Exit codes:
   3  the draft reports the prompt out of scope; the problems file contains the draft
 
 Example:
-  ${PROGRAM} prompts/refund-request.md "$TMPDIR/draft.json" prompts/refund-request.agent-logic.json
+  ${PROGRAM} prompts/refund-request.md "$TMPDIR/draft.json" prompts/refund-request.prompt-logic.json
 `;
 
 /** Runs `agent-logic convert`: converts a draft of a prompt's logic into a config and writes it. */

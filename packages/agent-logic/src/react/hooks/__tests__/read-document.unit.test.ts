@@ -8,8 +8,13 @@ const CHART_TEXT = JSON.stringify(buildMinimalConfig());
 
 describe(readStoredFile, () => {
   it('opens stored config text as a chart named after the file', () => {
-    const { document } = readStoredFile('greeting.agent-logic.json', { ok: true, text: CHART_TEXT }, 1);
-    expect(document).toMatchObject({ kind: 'chart', name: 'greeting.agent-logic.json', origin: 'File', key: 1 });
+    const { document } = readStoredFile('greeting.prompt-logic.json', { ok: true, text: CHART_TEXT }, 1);
+    expect(document).toMatchObject({
+      kind: 'chart',
+      name: 'greeting.prompt-logic.json',
+      typeLabel: 'Prompt logic',
+      key: 1,
+    });
   });
 
   it('reports stored text that is not a config', () => {
@@ -22,7 +27,7 @@ describe(readStoredFile, () => {
     ['missing', 'File not found'],
     ['unavailable', 'File not opened'],
   ] as const)('reports a %s file as %j', (reason, title) => {
-    const { report } = readStoredFile('a.agent-logic.json', { ok: false, reason, message: 'No.' }, 1);
+    const { report } = readStoredFile('a.prompt-logic.json', { ok: false, reason, message: 'No.' }, 1);
     expect(report?.title).toBe(title);
   });
 
@@ -32,7 +37,7 @@ describe(readStoredFile, () => {
   });
 
   it('when the app does not read the text as its own kind, opens it as a chart', () => {
-    const { document } = readStoredFile('greeting.agent-logic.json', { ok: true, text: CHART_TEXT }, 1, NOTE_KIND);
+    const { document } = readStoredFile('greeting.prompt-logic.json', { ok: true, text: CHART_TEXT }, 1, NOTE_KIND);
     expect(document?.kind).toBe('chart');
   });
 });

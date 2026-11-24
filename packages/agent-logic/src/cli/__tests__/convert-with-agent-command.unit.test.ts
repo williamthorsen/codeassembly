@@ -80,7 +80,7 @@ describe(runConvertWithAgentCommand, () => {
       },
     });
 
-    const outputFile = path.join(root, 'greeter.agent-logic.json');
+    const outputFile = path.join(root, 'greeter.prompt-logic.json');
     expect(output).toStrictEqual({
       exitCode: 0,
       stderr: '',
@@ -115,7 +115,7 @@ describe(runConvertWithAgentCommand, () => {
 
     expect(output.exitCode).toBe(1);
     expect(output.stderr).toContain('agent-logic convert-with-agent: states.done.meta.quote: Not in the prompt.\n');
-    expect(existsSync(path.join(root, 'greeter.agent-logic.json'))).toBe(false);
+    expect(existsSync(path.join(root, 'greeter.prompt-logic.json'))).toBe(false);
   });
 
   it('reports an out-of-scope verdict and exits 3', async () => {

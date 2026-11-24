@@ -1,5 +1,5 @@
 import { sanitizeName } from '../../convert/sanitize-name.ts';
-import { AGENT_LOGIC_SUFFIX } from '../../schema/agent-logic-file-name.ts';
+import { dropPromptLogicSuffix, PROMPT_LOGIC_SUFFIX } from '../../schema/prompt-logic-file-name.ts';
 
 /** Where a chart came from. */
 export type LoadOrigin =
@@ -8,16 +8,16 @@ export type LoadOrigin =
   | { kind: 'paste' }
   | { kind: 'prompt'; name: string };
 
-/** The line that names a chart's source on the page, and the name of the agent-logic file that saves the chart. */
+/** The line that names a chart's source on the page, and the name of the prompt-logic file that saves the chart. */
 export interface SourceLabel {
   source: string;
   downloadName: string;
 }
 
-/** Returns the source line and the saved file's name, `{base}.agent-logic.json`, of a chart from the origin given. */
+/** Returns the source line and the saved file's name, `{base}.prompt-logic.json`, of a chart from the origin given. */
 export function labelSource(origin: LoadOrigin): SourceLabel {
   const [source, base] = describe(origin);
-  return { source, downloadName: `${base}${AGENT_LOGIC_SUFFIX}` };
+  return { source, downloadName: `${base}${PROMPT_LOGIC_SUFFIX}` };
 }
 
 // region | Helpers
@@ -27,9 +27,10 @@ function describe(origin: LoadOrigin): [string, string] {
     case 'example':
       return [`Example: ${origin.name}`, origin.slug];
     case 'file': {
-      // Drop `.agent-logic` with the extension, so that saving an opened agent-logic file keeps its name.
-      const base = origin.fileName.replace(/(?:\.agent-logic)?\.[^.]*$/, '');
-      return [`File: ${origin.fileName}`, base === '' ? 'agent-logic' : base];
+      // Drop a prompt-logic suffix whole, so that saving an opened prompt-logic file keeps its base.
+      const withoutSuffix = dropPromptLogicSuffix(origin.fileName);
+      const base = withoutSuffix === origin.fileName ? origin.fileName.replace(/\.[^.]*$/, '') : withoutSuffix;
+      return [`File: ${origin.fileName}`, base === '' ? 'prompt' : base];
     }
     case 'paste':
       return ['Pasted JSON', 'pasted'];
