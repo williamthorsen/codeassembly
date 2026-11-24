@@ -921,6 +921,12 @@
   gap: 4px;
 }
 
+/* The label's hover padding sits outside the fact's edge, so that the label's text aligns with the fact's content. */
+.statechart-inspector__fact > .gloss {
+  align-self: flex-start;
+  margin-inline-start: -4px;
+}
+
 /* Labels and the connecting words between links: secondary text. */
 .statechart-inspector__aside {
   color: var(--_agent-logic-text-subtle);
