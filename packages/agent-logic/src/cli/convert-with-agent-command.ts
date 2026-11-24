@@ -7,6 +7,7 @@ import { describeError } from '@williamthorsen/toolbelt.errors';
 import type { ConversionEvent, ConvertWithAgentOptions } from '../agent/convert-with-agent.ts';
 import type { ConvertResult } from '../convert/convert-prompt.ts';
 import { readPackageVersion } from '../package-files/find-package-root.ts';
+import { PROMPT_LOGIC_SUFFIX } from '../schema/prompt-logic-file-name.ts';
 import type { CommandOutput } from './run.ts';
 
 const PROGRAM = 'agent-logic convert-with-agent';
@@ -19,14 +20,14 @@ type AgentName = (typeof AGENT_NAMES)[number];
 /** The exit code of a run that `SIGINT` interrupted: 128 plus the signal's number, as shells report it. */
 const INTERRUPTED_EXIT_CODE = 130;
 
-const HELP = `Converts an agent prompt into an agent-logic config by directing an ACP agent through the conversion.
+const HELP = `Converts an agent prompt into a prompt-logic file by directing an ACP agent through the conversion.
 
 Usage: ${PROGRAM} [options] <prompt-file> [output-file]
 
 Arguments:
   prompt-file   the prompt, read verbatim
   output-file   where to write the config; written only when the config is valid.
-                Default: <base>.agent-logic.json beside the prompt
+                Default: <base>.prompt-logic.json beside the prompt
 
 Options:
   --agent <name>  the agent profile: ${AGENT_NAMES.join(', ')} (required)
@@ -68,10 +69,10 @@ export async function runConvertWithAgentCommand(
 }
 
 // region | Helpers
-/** Returns `<base>.agent-logic.json` in the prompt's directory, where `<base>` is its name without the extension. */
+/** Returns `<base>.prompt-logic.json` in the prompt's directory, where `<base>` is its name without the extension. */
 function deriveOutputPath(promptFile: string): string {
   const base = path.basename(promptFile, path.extname(promptFile));
-  return path.join(path.dirname(promptFile), `${base}.agent-logic.json`);
+  return path.join(path.dirname(promptFile), `${base}${PROMPT_LOGIC_SUFFIX}`);
 }
 
 /** Describes an event as a progress line, or returns `undefined` for an event that the command does not report. */
