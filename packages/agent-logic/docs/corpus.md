@@ -4,7 +4,7 @@ The corpus measures the converter (the `convert-agent-prompt` skill, the [extrac
 
 ## Contents
 
-`corpus/` contains each prompt verbatim as `<name>.md` and its chart as `<name>.agent-logic.json`. Each prompt is the deployed skill that Claude Code loads, in which every partial and rulebook is expanded, not the skill's source. `corpus/records/` contains an out-of-scope prompt's `<name>.problems.json`, each reviewer's `<name>.review.json`, and `run.json`, which records where each prompt came from, the build or plugin version that produced it, and the run. [`src/corpus/corpus-schemas.ts`](https://github.com/williamthorsen/codeassembly/blob/main/packages/agent-logic/src/corpus/corpus-schemas.ts) defines the review file and `run.json`.
+`corpus/` contains each prompt verbatim as `<name>.md` and its chart as a prompt-logic file, `<name>.prompt-logic.json`. Each prompt is the deployed skill that Claude Code loads, in which every partial and rulebook is expanded, not the skill's source. `corpus/records/` contains an out-of-scope prompt's `<name>.problems.json`, each reviewer's `<name>.review.json`, and `run.json`, which records where each prompt came from, the build or plugin version that produced it, and the run. [`src/corpus/corpus-schemas.ts`](https://github.com/williamthorsen/codeassembly/blob/main/packages/agent-logic/src/corpus/corpus-schemas.ts) defines the review file and `run.json`.
 
 Each chart quotes its prompt by character offset, so the formatter does not touch `corpus/`.
 
