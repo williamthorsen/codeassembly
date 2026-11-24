@@ -51,7 +51,7 @@ describe(parseConfigText, () => {
         {
           path: '',
           message:
-            'The pasted text is not JSON, so it is not an agent-logic file. To chart a prompt, convert it first.',
+            'The pasted text is not JSON, so it is not a prompt-logic file. To chart a prompt, convert it first.',
         },
       ],
     });

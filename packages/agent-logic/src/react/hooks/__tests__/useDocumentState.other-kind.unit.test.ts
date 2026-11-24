@@ -14,7 +14,7 @@ import type { LoadFailure, OtherKindHandlers } from '../document-types.ts';
 import { buildChartDocument, readConfigText } from '../read-document.ts';
 import { useDocumentState } from '../useDocumentState.ts';
 
-const CHART = 'notes.agent-logic.json';
+const CHART = 'notes.prompt-logic.json';
 const CONFIG = buildMinimalConfig();
 const CHART_TEXT = JSON.stringify(CONFIG);
 const NOTE_TEXT = '# Notes\n\nGreet the user.\n';

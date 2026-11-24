@@ -21,7 +21,7 @@ describe(useDocumentState, () => {
 
     const { result } = renderDocumentState();
 
-    expect(result.current.document).toMatchObject({ name: 'Password reset', origin: 'Example' });
+    expect(result.current.document).toMatchObject({ name: 'Password reset', typeLabel: 'Example' });
     expect(result.current.currentSlug).toBe('password-reset');
   });
 
@@ -51,16 +51,16 @@ describe(useDocumentState, () => {
         result.current.loadText(MINIMAL_TEXT, { kind: 'file', fileName: 'chart.json' }),
       ).resolves.toBeUndefined();
     });
-    expect(result.current.document).toMatchObject({ name: 'chart.agent-logic.json', origin: 'File' });
+    expect(result.current.document).toMatchObject({ name: 'chart.prompt-logic.json', typeLabel: 'Prompt logic' });
     expect(result.current.currentSlug).toBeUndefined();
-    expect(result.current.currentFileName).toBe('chart.agent-logic.json');
-    expect(globalThis.location.search).toBe('?file=chart.agent-logic.json');
-    expect(await store.read('chart.agent-logic.json')).toMatchObject({ ok: true });
+    expect(result.current.currentFileName).toBe('chart.prompt-logic.json');
+    expect(globalThis.location.search).toBe('?file=chart.prompt-logic.json');
+    expect(await store.read('chart.prompt-logic.json')).toMatchObject({ ok: true });
 
     await act(async () => {
       await result.current.loadText(MINIMAL_TEXT, { kind: 'paste' });
     });
-    expect(result.current.document).toMatchObject({ name: 'agent.agent-logic.json' });
+    expect(result.current.document).toMatchObject({ name: 'agent.prompt-logic.json' });
   });
 
   it.each([
@@ -92,7 +92,7 @@ describe(useDocumentState, () => {
   });
 
   it('reports a name that the store holds, and replaces the file on request', async () => {
-    const store = createMemoryFileStore({ 'chart.agent-logic.json': '{}' });
+    const store = createMemoryFileStore({ 'chart.prompt-logic.json': '{}' });
     const { result } = renderDocumentState(store);
     const origin = { kind: 'file', fileName: 'chart.json' } as const;
 
@@ -100,32 +100,32 @@ describe(useDocumentState, () => {
     await act(async () => {
       failure = await result.current.loadText(MINIMAL_TEXT, origin);
     });
-    expect(failure).toMatchObject({ kind: 'conflict', name: 'chart.agent-logic.json' });
+    expect(failure).toMatchObject({ kind: 'conflict', name: 'chart.prompt-logic.json' });
     expect(result.current.document).toBeUndefined();
 
     await act(async () => {
       failure = await result.current.loadText(MINIMAL_TEXT, origin, { replace: true });
     });
     expect(failure).toBeUndefined();
-    expect(result.current.document?.name).toBe('chart.agent-logic.json');
+    expect(result.current.document?.name).toBe('chart.prompt-logic.json');
   });
 
   it('opens the stored file that the URL names once the store returns it', async () => {
-    globalThis.history.replaceState(null, '', '/?file=chart.agent-logic.json');
-    const { result } = renderDocumentState(createMemoryFileStore({ 'chart.agent-logic.json': MINIMAL_TEXT }));
+    globalThis.history.replaceState(null, '', '/?file=chart.prompt-logic.json');
+    const { result } = renderDocumentState(createMemoryFileStore({ 'chart.prompt-logic.json': MINIMAL_TEXT }));
 
     expect(result.current.isOpening).toBe(true);
-    await waitFor(() => expect(result.current.document?.name).toBe('chart.agent-logic.json'));
+    await waitFor(() => expect(result.current.document?.name).toBe('chart.prompt-logic.json'));
     expect(result.current.isOpening).toBe(false);
   });
 
   it('reports a stored file that the store does not hold', async () => {
     const { result } = renderDocumentState();
 
-    act(() => result.current.chooseStoredFile('gone.agent-logic.json'));
+    act(() => result.current.chooseStoredFile('gone.prompt-logic.json'));
 
     await waitFor(() => expect(result.current.report?.title).toBe('File not found'));
-    expect(globalThis.location.search).toBe('?file=gone.agent-logic.json');
+    expect(globalThis.location.search).toBe('?file=gone.prompt-logic.json');
   });
 
   it('returns from a document to the start page, and back to the document', async () => {
@@ -159,10 +159,10 @@ describe(useDocumentState, () => {
       await waitFor(() => expect(result.current.isOpening).toBe(false));
       names.push(result.current.document?.name);
     }
-    expect(names).toEqual([undefined, 'first.agent-logic.json', undefined, 'Password reset', 'Change approval']);
+    expect(names).toEqual([undefined, 'first.prompt-logic.json', undefined, 'Password reset', 'Change approval']);
 
     await navigateHistory(3);
-    await waitFor(() => expect(result.current.document?.name).toBe('first.agent-logic.json'));
+    await waitFor(() => expect(result.current.document?.name).toBe('first.prompt-logic.json'));
     expect(result.current.currentSlug).toBeUndefined();
   });
 

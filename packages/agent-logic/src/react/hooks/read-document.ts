@@ -18,10 +18,10 @@ import { findFileInSearch, isVisualizationsSearch } from './file-location.ts';
 import { labelSource, type LoadOrigin } from './label-source.ts';
 import { parseConfigText, type TextOrigin } from './parse-config-text.ts';
 
-/** Returns the document of a stored agent-logic file. */
+/** Returns the document of a stored prompt-logic file. */
 export function buildChartDocument(fileName: string, config: AgentLogicConfig, key: number): ChartDocument {
   const label = labelSource({ kind: 'file', fileName });
-  return { ...label, kind: 'chart', key, name: fileName, origin: 'File', fileName, config };
+  return { ...label, kind: 'chart', key, name: fileName, typeLabel: 'Prompt logic', fileName, config };
 }
 
 /** Returns the announcement of a document that opened: a chart's description, or that of the app's own kind. */
@@ -86,7 +86,7 @@ export function readExample(example: Example | undefined, key: number): Shown {
           kind: 'chart',
           key,
           name: example.name,
-          origin: 'Example',
+          typeLabel: 'Example',
           slug: example.slug,
           config: result.config,
         },

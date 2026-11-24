@@ -9,8 +9,8 @@ export interface ChartDocument extends SourceLabel {
   key: number;
   /** The example's name or the stored file's name. */
   name: string;
-  /** Where the document came from, as a word for the app bar. */
-  origin: 'Example' | 'File';
+  /** The document's kind, as a label for the app bar. */
+  typeLabel: 'Example' | 'Prompt logic';
   /** The example's slug, which the sidebar marks as current; absent for any other document. */
   slug?: string | undefined;
   /** The stored file's name, which the sidebar marks as current; absent for an example. */

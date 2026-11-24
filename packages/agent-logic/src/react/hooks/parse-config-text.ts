@@ -8,7 +8,7 @@ export type ParseResult = { ok: true; value: unknown } | { ok: false; isNotJson:
 export type TextOrigin = 'conversion' | 'file' | 'paste';
 
 /**
- * Parses an agent-logic file's text as JSON, removing a Markdown code fence that encloses all of it. Text that begins
+ * Parses a prompt-logic file's text as JSON, removing a Markdown code fence that encloses all of it. Text that begins
  * like JSON and does not parse is reported as a syntax error; any other unparseable text, as text that is not JSON.
  */
 export function parseConfigText(text: string, origin: TextOrigin): ParseResult {
@@ -25,7 +25,7 @@ export function parseConfigText(text: string, origin: TextOrigin): ParseResult {
         problems: [
           {
             path: '',
-            message: `${subject} is not JSON, so it is not an agent-logic file. To chart a prompt, convert it first.`,
+            message: `${subject} is not JSON, so it is not a prompt-logic file. To chart a prompt, convert it first.`,
           },
         ],
       };

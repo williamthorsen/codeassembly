@@ -8,7 +8,7 @@ import {
 } from '../file-location.ts';
 
 describe(findFileInSearch, () => {
-  it.each(['greeting.agent-logic.json', 'a b&c.md'])('finds %j in the search string built for it', (name) => {
+  it.each(['greeting.prompt-logic.json', 'a b&c.md'])('finds %j in the search string built for it', (name) => {
     expect(findFileInSearch(buildFileSearch(name))).toBe(name);
   });
 

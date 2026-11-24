@@ -11,8 +11,8 @@ import {
 
 const STORED_FILES = [
   { name: 'Reset passwords.md', modifiedAt: '2026-03-03T00:00:00.000Z' },
-  { name: 'onboarding.agent-logic.json', modifiedAt: '2026-02-02T00:00:00.000Z' },
-  { name: 'Expense claims.agent-logic.json', modifiedAt: '2026-01-01T00:00:00.000Z' },
+  { name: 'onboarding.prompt-logic.json', modifiedAt: '2026-02-02T00:00:00.000Z' },
+  { name: 'Expense claims.prompt-logic.json', modifiedAt: '2026-01-01T00:00:00.000Z' },
 ];
 
 const EXAMPLES: Example[] = [
@@ -35,16 +35,16 @@ describe(buildVisualizationRows, () => {
       {
         name: 'onboarding',
         kind: 'chart',
-        file: 'onboarding.agent-logic.json',
+        file: 'onboarding.prompt-logic.json',
         modifiedAt: '2026-02-02T00:00:00.000Z',
-        href: '?file=onboarding.agent-logic.json',
+        href: '?file=onboarding.prompt-logic.json',
       },
       {
         name: 'Expense claims',
         kind: 'chart',
-        file: 'Expense claims.agent-logic.json',
+        file: 'Expense claims.prompt-logic.json',
         modifiedAt: '2026-01-01T00:00:00.000Z',
-        href: '?file=Expense+claims.agent-logic.json',
+        href: '?file=Expense+claims.prompt-logic.json',
       },
       {
         name: 'Change approval',
@@ -77,7 +77,7 @@ describe(buildVisualizationRows, () => {
     const rows = buildVisualizationRows(STORED_FILES.slice(1, 2), EXAMPLES.slice(0, 1));
 
     expect(rows.map(({ target }) => target)).toEqual([
-      { kind: 'file', name: 'onboarding.agent-logic.json' },
+      { kind: 'file', name: 'onboarding.prompt-logic.json' },
       { kind: 'example', example: EXAMPLES[0] },
     ]);
   });

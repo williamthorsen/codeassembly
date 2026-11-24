@@ -5,8 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { STORED_FILES_POLL_MS, useStoredFiles } from '../useStoredFiles.ts';
 
-const FIRST = { name: 'first.agent-logic.json', modifiedAt: '2026-11-16T00:00:00.000Z' };
-const SECOND = { name: 'second.agent-logic.json', modifiedAt: '2026-11-16T00:01:00.000Z' };
+const FIRST = { name: 'first.prompt-logic.json', modifiedAt: '2026-11-16T00:00:00.000Z' };
+const SECOND = { name: 'second.prompt-logic.json', modifiedAt: '2026-11-16T00:01:00.000Z' };
 
 describe(useStoredFiles, () => {
   beforeEach(() => {

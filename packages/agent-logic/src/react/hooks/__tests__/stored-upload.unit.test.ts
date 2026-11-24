@@ -7,29 +7,30 @@ const CONFIG = buildMinimalConfig();
 
 describe(buildStoredUploadName, () => {
   it.each([
-    ['greeting.agent-logic.json', 'greeting.agent-logic.json'],
-    ['chart.json', 'chart.agent-logic.json'],
-    ['a.b.json', 'a.b.agent-logic.json'],
-    ['chart', 'chart.agent-logic.json'],
-    ['.json', 'json.agent-logic.json'],
-    ['my  first (draft).json', 'my-first-draft-.agent-logic.json'],
-    ['.hidden.agent-logic.json', 'hidden.agent-logic.json'],
-    ['.agent-logic.json', 'agent.agent-logic.json'],
+    ['greeting.prompt-logic.json', 'greeting.prompt-logic.json'],
+    ['chart.json', 'chart.prompt-logic.json'],
+    ['a.b.json', 'a.b.prompt-logic.json'],
+    ['chart', 'chart.prompt-logic.json'],
+    ['.json', 'json.prompt-logic.json'],
+    ['my  first (draft).json', 'my-first-draft-.prompt-logic.json'],
+    ['.hidden.prompt-logic.json', 'hidden.prompt-logic.json'],
+    ['.prompt-logic.json', 'prompt.prompt-logic.json'],
+    ['greeting.agent-logic.json', 'greeting.prompt-logic.json'],
   ])('stores the file %j as %j', (fileName, expected) => {
     expect(buildStoredUploadName({ kind: 'file', fileName }, CONFIG)).toBe(expected);
   });
 
   it('stores pasted text under its config’s id, without doubling the suffix', () => {
     expect(buildStoredUploadName({ kind: 'paste' }, { ...CONFIG, id: 'support agent' })).toBe(
-      'support-agent.agent-logic.json',
+      'support-agent.prompt-logic.json',
     );
-    expect(buildStoredUploadName({ kind: 'paste' }, { ...CONFIG, id: 'support.agent-logic.json' })).toBe(
-      'support.agent-logic.json',
+    expect(buildStoredUploadName({ kind: 'paste' }, { ...CONFIG, id: 'support.prompt-logic.json' })).toBe(
+      'support.prompt-logic.json',
     );
   });
 
-  it('falls back to `agent` for an id that sanitizes to nothing', () => {
-    expect(buildStoredUploadName({ kind: 'paste' }, { ...CONFIG, id: '…' })).toBe('agent.agent-logic.json');
+  it('falls back to `prompt` for an id that sanitizes to nothing', () => {
+    expect(buildStoredUploadName({ kind: 'paste' }, { ...CONFIG, id: '…' })).toBe('prompt.prompt-logic.json');
   });
 });
 
