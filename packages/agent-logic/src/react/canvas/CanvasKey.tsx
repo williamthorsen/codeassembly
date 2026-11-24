@@ -1,5 +1,6 @@
 import { type ComponentType, type ReactElement, useId } from 'react';
 
+import { GlossedLabel } from '../gloss/GlossedLabel.tsx';
 import { ChevronIcon } from '../messages/icons.tsx';
 import type { ButtonProps } from '../slots.ts';
 import { CANVAS_KEY_ENTRIES, type CanvasKeyEntry } from './canvas-key-entries.tsx';
@@ -95,18 +96,19 @@ function formatCounts({ gaps, findings, unconverted }: MessageCounts): string {
     .join(' · ');
 }
 
-/** One entry of the key, focusable so that a keyboard user reaches its gloss. */
+/** One entry of the key: its mark and name, glossed. */
 function KeyEntry({ entry: { name, gloss, mark } }: { entry: CanvasKeyEntry }): ReactElement {
-  const glossId = useId();
   return (
     <li className="canvas-key__entry">
-      <span tabIndex={0} aria-describedby={glossId} className="canvas-key__entry-label">
-        {mark}
-        {name}
-      </span>
-      <span id={glossId} role="tooltip" className="canvas-key__tooltip">
-        {gloss}
-      </span>
+      <GlossedLabel
+        label={
+          <>
+            {mark}
+            {name}
+          </>
+        }
+        gloss={gloss}
+      />
     </li>
   );
 }
