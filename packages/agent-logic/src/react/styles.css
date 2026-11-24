@@ -742,12 +742,14 @@
   color: var(--agent-logic-text);
 }
 
+/* The space under the header exceeds the blank line between two of the prompt's paragraphs, so that the header reads
+as apart from the prompt rather than as its first paragraph. */
 .prompt-pane__header {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
   align-items: baseline;
-  padding: 12px 20px 4px;
+  padding: 12px 20px 28px;
 }
 
 .prompt-pane__heading {
