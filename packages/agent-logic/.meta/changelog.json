@@ -1,5 +1,69 @@
 [
   {
+    "version": "0.14.0",
+    "date": "2026-11-24",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Renames the `Inspector` step panel's labels to the words that the chart's chips and `CanvasKey` use (Actions, Actions on leaving, Exits, Any-time exits, Entrances, Condition, Flow, and Prompt text), glosses each label on hover and focus, and omits the Exits and Entrances rows when they are empty. (#2324)",
+            "hash": "a8f97beb884cc4b19a580db266cc263b4b8526d3",
+            "entry": 1
+          },
+          {
+            "description": "Adds a gloss to each entry of the `PromptKey` (Ambient, Not used, Not converted, and Comment), shown on hover and focus, that states what the mark means. (#2324)",
+            "hash": "a8f97beb884cc4b19a580db266cc263b4b8526d3",
+            "entry": 2
+          },
+          {
+            "description": "Lets a reader close a `CanvasKey` gloss with Escape without clearing the chart's selection, and keeps a gloss open while the pointer is over it. (#2324)",
+            "hash": "a8f97beb884cc4b19a580db266cc263b4b8526d3",
+            "entry": 3
+          },
+          {
+            "description": "Names the file a prompt-logic file, so that the app, the `convert-with-agent` command, and the saved downloads write `<name>.prompt-logic.json`, while the package still reads a file named `<name>.agent-logic.json`. (#2325)",
+            "breaking": true,
+            "migration": "Look for the output of `convert-with-agent`, and for a saved or downloaded chart, under `<base>.prompt-logic.json` rather than `<base>.agent-logic.json`.",
+            "hash": "3058515952a3c9ac9c03128c6d254264edf06ab3",
+            "entry": 1
+          },
+          {
+            "description": "Replaces the root exports `AGENT_LOGIC_SUFFIX` and `isAgentLogicFileName` with `PROMPT_LOGIC_SUFFIX` and `isPromptLogicFileName`, and adds `dropPromptLogicSuffix`, which removes either the new or the legacy suffix from a name. (#2325)",
+            "breaking": true,
+            "migration": "Replace `AGENT_LOGIC_SUFFIX` with `PROMPT_LOGIC_SUFFIX` and `isAgentLogicFileName` with `isPromptLogicFileName`, and strip the suffix with `dropPromptLogicSuffix` rather than by the length of `PROMPT_LOGIC_SUFFIX`, because `isPromptLogicFileName` also accepts a name that ends in `.agent-logic.json`.",
+            "hash": "3058515952a3c9ac9c03128c6d254264edf06ab3",
+            "entry": 2
+          },
+          {
+            "description": "Replaces the `origin` field of `ChartDocument` (`'Example' | 'File'`) with `typeLabel` (`'Example' | 'Prompt logic'`), so that the app bar labels an opened file by its kind rather than by where it came from. (#2325)",
+            "breaking": true,
+            "migration": "Read `typeLabel` in place of `origin`, and compare it with `'Prompt logic'` where the code compared `origin` with `'File'`.",
+            "hash": "3058515952a3c9ac9c03128c6d254264edf06ab3",
+            "entry": 3
+          },
+          {
+            "description": "Titles the JSON Schema of the file \"Prompt logic\" in place of \"Agent logic config\", which an editor that validates the file shows, and titles the app's page \"Prompt logic\". (#2325)",
+            "hash": "3058515952a3c9ac9c03128c6d254264edf06ab3",
+            "entry": 4
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that the `PromptPane` header read as the prompt's first paragraph, because the space below it was narrower than the space between the prompt's paragraphs. (#2324)",
+            "hash": "a8f97beb884cc4b19a580db266cc263b4b8526d3",
+            "entry": 4
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.13.0",
     "date": "2026-11-23",
     "sections": [

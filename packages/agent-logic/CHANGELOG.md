@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.14.0 — 2026-11-24
+
+### 🎉 Features
+
+- Renames the `Inspector` step panel's labels to the words that the chart's chips and `CanvasKey` use (Actions, Actions on leaving, Exits, Any-time exits, Entrances, Condition, Flow, and Prompt text), glosses each label on hover and focus, and omits the Exits and Entrances rows when they are empty. (#2324)
+- Adds a gloss to each entry of the `PromptKey` (Ambient, Not used, Not converted, and Comment), shown on hover and focus, that states what the mark means. (#2324)
+- Lets a reader close a `CanvasKey` gloss with Escape without clearing the chart's selection, and keeps a gloss open while the pointer is over it. (#2324)
+- 🚨 **Breaking:** Names the file a prompt-logic file, so that the app, the `convert-with-agent` command, and the saved downloads write `<name>.prompt-logic.json`, while the package still reads a file named `<name>.agent-logic.json`. (#2325)
+- 🚨 **Breaking:** Replaces the root exports `AGENT_LOGIC_SUFFIX` and `isAgentLogicFileName` with `PROMPT_LOGIC_SUFFIX` and `isPromptLogicFileName`, and adds `dropPromptLogicSuffix`, which removes either the new or the legacy suffix from a name. (#2325)
+- 🚨 **Breaking:** Replaces the `origin` field of `ChartDocument` (`'Example' | 'File'`) with `typeLabel` (`'Example' | 'Prompt logic'`), so that the app bar labels an opened file by its kind rather than by where it came from. (#2325)
+- Titles the JSON Schema of the file "Prompt logic" in place of "Agent logic config", which an editor that validates the file shows, and titles the app's page "Prompt logic". (#2325)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that the `PromptPane` header read as the prompt's first paragraph, because the space below it was narrower than the space between the prompt's paragraphs. (#2324)
+
 ## 0.13.0 — 2026-11-23
 
 ### 🎉 Features
