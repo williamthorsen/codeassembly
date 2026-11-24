@@ -554,6 +554,70 @@
   line-height: 18px;
 }
 
+/* -- Gloss: a label that explains itself on hover and focus -- */
+
+.gloss {
+  position: relative;
+  display: inline-block;
+}
+
+/* A label takes focus only so that a keyboard user reaches its gloss; it does not act on a click. */
+.gloss__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.gloss__label:hover {
+  background: var(--_agent-logic-hover-background);
+}
+
+.gloss__label:focus-visible {
+  outline: 2px solid var(--_agent-logic-focus-ring);
+  outline-offset: 1px;
+}
+
+/* The tooltip's padding on the label's side bridges the gap, so that the pointer can move onto the gloss. */
+.gloss__tooltip {
+  position: absolute;
+  inset-inline-start: 0;
+  z-index: 10;
+  display: none;
+  inline-size: max-content;
+  max-inline-size: 256px;
+}
+
+.gloss--above > .gloss__tooltip {
+  inset-block-end: 100%;
+  padding-block-end: 4px;
+}
+
+.gloss--below > .gloss__tooltip {
+  inset-block-start: 100%;
+  padding-block-start: 4px;
+}
+
+.gloss__text {
+  display: block;
+  padding: 4px 8px;
+  border-radius: 2px;
+  background: var(--_agent-logic-tooltip-background);
+  color: var(--_agent-logic-tooltip-text);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  white-space: normal;
+}
+
+.gloss:not([data-dismissed]):hover > .gloss__tooltip,
+.gloss:not([data-dismissed]):focus-within > .gloss__tooltip {
+  display: block;
+}
+
 /* -- Key: a strip below the canvas, with the marks that the chart draws and the canvas's toggles -- */
 
 .canvas-key {
@@ -577,51 +641,7 @@
 }
 
 .canvas-key__entry {
-  position: relative;
   margin: 0;
-}
-
-/* An entry takes focus only so that a keyboard user reaches its gloss; it does not act on a click. */
-.canvas-key__entry-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 4px;
-  border-radius: 3px;
-  white-space: nowrap;
-  cursor: help;
-}
-
-.canvas-key__entry-label:hover {
-  background: var(--_agent-logic-hover-background);
-}
-
-.canvas-key__entry-label:focus-visible {
-  outline: 2px solid var(--_agent-logic-focus-ring);
-  outline-offset: 1px;
-}
-
-.canvas-key__tooltip {
-  position: absolute;
-  inset-block-end: 100%;
-  inset-inline-start: 0;
-  z-index: 10;
-  display: none;
-  inline-size: max-content;
-  max-inline-size: 256px;
-  margin-block-end: 4px;
-  padding: 4px 8px;
-  border-radius: 2px;
-  background: var(--_agent-logic-tooltip-background);
-  color: var(--_agent-logic-tooltip-text);
-  font-size: 12px;
-  line-height: 16px;
-  pointer-events: none;
-}
-
-.canvas-key__entry:hover .canvas-key__tooltip,
-.canvas-key__entry:focus-within .canvas-key__tooltip {
-  display: block;
 }
 
 .canvas-key__controls {
@@ -722,12 +742,14 @@
   color: var(--agent-logic-text);
 }
 
+/* The space under the header exceeds the blank line between two of the prompt's paragraphs, so that the header reads
+as apart from the prompt rather than as its first paragraph. */
 .prompt-pane__header {
   display: flex;
   flex-wrap: wrap;
   gap: 4px 12px;
   align-items: baseline;
-  padding: 12px 20px 4px;
+  padding: 12px 20px 28px;
 }
 
 .prompt-pane__heading {
@@ -860,6 +882,11 @@
   margin: 0;
 }
 
+/* The key sits at the pane's end edge, so each gloss opens toward the pane rather than past its edge. */
+.prompt-key__entry > .gloss > .gloss__tooltip {
+  inset-inline: auto 0;
+}
+
 .prompt-key__sample {
   font-family: var(--agent-logic-font-prose);
 }
@@ -899,6 +926,12 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+/* The label's hover padding sits outside the fact's edge, so that the label's text aligns with the fact's content. */
+.statechart-inspector__fact > .gloss {
+  align-self: flex-start;
+  margin-inline-start: -4px;
 }
 
 /* Labels and the connecting words between links: secondary text. */

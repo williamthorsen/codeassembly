@@ -1,5 +1,5 @@
 /* eslint-disable testing-library/no-node-access -- A fact's label and its value have no accessible relation, so a test
-reads the fact through its label's parent. */
+reads the fact through its label's ancestor. */
 // @vitest-environment happy-dom
 import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
@@ -29,7 +29,7 @@ describe(Inspector, () => {
     );
   });
 
-  it('names a state in its kinds and actions, and lists where it leads and where it comes from', () => {
+  it('names a state in its kinds and actions, lists its exits, and omits the entrances that it lacks', () => {
     render(
       <Inspector
         LinkButton={TestLink}
@@ -42,14 +42,29 @@ describe(Inspector, () => {
     expect(screen.getByRole('heading', { name: 'greeting' })).toBeInTheDocument();
     expect(screen.getByText('Waits for user')).toBeInTheDocument();
     expect(screen.getByText('greet the user')).toBeInTheDocument();
-    const leadsTo = screen.getByText('Leads to').parentElement;
-    if (leadsTo === null) throw new Error('The inspector lacks "Leads to".');
     expect(
-      within(leadsTo)
+      within(findFact('Exits'))
         .getAllByRole('button')
         .map(({ textContent }) => textContent),
     ).toEqual(['user.replied', 'done']);
-    expect(screen.getByText('Comes from').parentElement).toHaveTextContent('Comes fromNone');
+    expect(screen.queryByText('Entrances')).not.toBeInTheDocument();
+    expectGloss('Actions', 'What the agent does on reaching this state');
+    expectGloss('Exits', 'Transitions out of this state');
+  });
+
+  it('lists the entrances of a state and omits the exits that it lacks', () => {
+    render(
+      <Inspector
+        LinkButton={TestLink}
+        element={findElement(MINIMAL, 'states.done')}
+        description={MINIMAL}
+        onSelect={vi.fn()}
+      />,
+    );
+
+    expect(within(findFact('Entrances')).getByRole('button', { name: 'greeting' })).toBeInTheDocument();
+    expect(screen.queryByText('Exits')).not.toBeInTheDocument();
+    expectGloss('Entrances', 'Transitions into this state');
   });
 
   it('names an ambient instruction, quotes its passage, and selects its container from a button', async () => {
@@ -68,11 +83,13 @@ describe(Inspector, () => {
 
     expect(screen.getByRole('heading', { name: 'Ambient instruction' })).toBeInTheDocument();
     expect(screen.getByText('Greet the user')).toBeInTheDocument();
+    expectGloss('Flow', 'The flow throughout which this instruction applies');
+    expectGloss('Prompt text', 'The instruction as the prompt states it');
     await userEvent.click(screen.getByRole('button', { name: 'agent' }));
     expect(onSelect).toHaveBeenCalledWith('');
   });
 
-  it('names a transition by its trigger and its ends, and reports a missing guard as none', () => {
+  it('names a transition by its trigger and its ends, and reports a missing condition as none', () => {
     render(
       <Inspector
         LinkButton={TestLink}
@@ -85,7 +102,9 @@ describe(Inspector, () => {
     expect(screen.getByRole('heading', { name: 'user.replied' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'greeting' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'done' })).toBeInTheDocument();
-    expect(screen.getByText('Guard').parentElement).toHaveTextContent('GuardNone');
+    expect(within(findFact('Condition')).getByText('None')).toBeInTheDocument();
+    expectGloss('Condition', 'What must hold for the agent to take this transition');
+    expectGloss('Actions', 'What the agent does on taking this transition');
   });
 
   it('names a gated transition and ambient instruction by the kind "Gate", and marks a gated action "gate"', () => {
@@ -107,7 +126,7 @@ describe(Inspector, () => {
         onSelect={vi.fn()}
       />,
     );
-    expect(screen.getByText('Does').parentElement).toHaveTextContent('gate greet the user');
+    expect(findFact('Actions')).toHaveTextContent('gate greet the user');
     expect(screen.getByText('Has a gate')).toBeInTheDocument();
 
     rerender(
@@ -182,9 +201,7 @@ describe(Inspector, () => {
 
     expect(screen.getByRole('heading', { name: 'otherwise' })).toBeInTheDocument();
     expect(screen.getByText('Fallback')).toBeInTheDocument();
-    expect(screen.getByText('Guard').parentElement).toHaveTextContent(
-      'Otherwise: none of the guarded siblings applies',
-    );
+    expect(within(findFact('Condition')).getByText("Otherwise: no sibling's condition holds")).toBeInTheDocument();
   });
 
   it("names a state, and the states that it links to, by each state's name", () => {
@@ -224,7 +241,7 @@ describe(Inspector, () => {
     expect(onSelect).toHaveBeenCalledWith('states.done');
   });
 
-  it("lists a nested state's flow-wide transitions under Any time", () => {
+  it("lists a nested state's flow-wide transitions under Any-time exits", () => {
     const description = describeConfig(buildFlowConfig());
 
     render(
@@ -236,9 +253,8 @@ describe(Inspector, () => {
       />,
     );
 
-    const anyTime = screen.getByText('Any time').parentElement;
-    if (anyTime === null) throw new Error('The inspector lacks "Any time".');
-    expect(anyTime).toHaveTextContent('user.asks_for_humantohanded_off');
+    expect(findFact('Any-time exits')).toHaveTextContent('user.asks_for_humantohanded_off');
+    expectGloss('Any-time exits', 'Transitions out of the flow, from any of its states');
   });
 
   it("renders each state and transition that it names through the app's link", async () => {
@@ -277,6 +293,11 @@ function buildFlowConfig(): AgentLogicConfig {
   return config;
 }
 
+/** Asserts that a fact's label is described by its gloss. */
+function expectGloss(label: string, gloss: string): void {
+  expect(screen.getByText(label).closest('[aria-describedby]')).toHaveAccessibleDescription(gloss);
+}
+
 /** Returns the described element at a path, failing the test when it is absent. */
 function findElement(description: ConfigDescription, path: string): ElementDescription {
   const element = [...description.states, ...description.transitions, ...description.ambient].find(
@@ -284,5 +305,12 @@ function findElement(description: ConfigDescription, path: string): ElementDescr
   );
   if (element === undefined) throw new Error(`The description lacks "${path}".`);
   return element;
+}
+
+/** Returns the fact under a label. */
+function findFact(label: string): HTMLElement {
+  const fact = screen.getByText(label).closest<HTMLElement>('.statechart-inspector__fact');
+  if (fact === null) throw new Error(`The inspector lacks "${label}".`);
+  return fact;
 }
 // endregion | Helpers

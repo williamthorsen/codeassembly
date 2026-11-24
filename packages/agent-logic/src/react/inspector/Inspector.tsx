@@ -10,6 +10,7 @@ import {
   type StateDescription,
   type TransitionDescription,
 } from '../../layout/describe-config.ts';
+import { GlossedLabel } from '../gloss/GlossedLabel.tsx';
 import type { LinkButtonProps } from '../slots.ts';
 
 export interface InspectorProps {
@@ -40,6 +41,25 @@ export function Inspector({ element, description, onSelect, LinkButton }: Inspec
 }
 
 // region | Helpers
+/** A fact's label and the gloss that explains it. */
+interface FactLabel {
+  label: string;
+  gloss: string;
+}
+
+/** The label and gloss of each fact that the inspector shows. */
+const FACTS = {
+  anyTimeExits: { label: 'Any-time exits', gloss: 'Transitions out of the flow, from any of its states' },
+  condition: { label: 'Condition', gloss: 'What must hold for the agent to take this transition' },
+  entrances: { label: 'Entrances', gloss: 'Transitions into this state' },
+  exitActions: { label: 'Actions on leaving', gloss: 'What the agent does on leaving this state' },
+  exits: { label: 'Exits', gloss: 'Transitions out of this state' },
+  flow: { label: 'Flow', gloss: 'The flow throughout which this instruction applies' },
+  promptText: { label: 'Prompt text', gloss: 'The instruction as the prompt states it' },
+  stateActions: { label: 'Actions', gloss: 'What the agent does on reaching this state' },
+  transitionActions: { label: 'Actions', gloss: 'What the agent does on taking this transition' },
+} satisfies Record<string, FactLabel>;
+
 /** What every part of the inspector reads besides its own element. */
 interface InspectorContext {
   description: ConfigDescription;
@@ -48,9 +68,9 @@ interface InspectorContext {
 }
 
 /** A labelled list of actions in converted prose. */
-function ActionList({ label, actions }: { label: string; actions: ActionDescription[] }): ReactElement {
+function ActionList({ fact, actions }: { fact: FactLabel; actions: ActionDescription[] }): ReactElement {
   return (
-    <Fact label={label}>
+    <Fact fact={fact}>
       {actions.length === 0 ? (
         <span className="statechart-inspector__none">None</span>
       ) : (
@@ -84,7 +104,7 @@ function AmbientDetails({
   return (
     <Details heading="Ambient instruction">
       <KindList kinds={ambient.gate ? ['Gate'] : []} />
-      <Fact label="Applies throughout">
+      <Fact fact={FACTS.flow}>
         {container === undefined ? (
           <span>{ambient.containerName}</span>
         ) : (
@@ -93,7 +113,7 @@ function AmbientDetails({
           </span>
         )}
       </Fact>
-      <Fact label="Says">
+      <Fact fact={FACTS.promptText}>
         <p className="statechart-inspector__quote">{ambient.text}</p>
       </Fact>
     </Details>
@@ -110,11 +130,15 @@ function Details({ heading, children }: { heading: ReactNode; children: ReactNod
   );
 }
 
-/** A labelled fact of the selected element. */
-function Fact({ label, children }: { label: string; children: ReactNode }): ReactElement {
+/** A fact of the selected element under its glossed label. */
+function Fact({ fact: { label, gloss }, children }: { fact: FactLabel; children: ReactNode }): ReactElement {
   return (
     <div className="statechart-inspector__fact">
-      <span className="statechart-inspector__aside">{label}</span>
+      <GlossedLabel
+        label={<span className="statechart-inspector__aside">{label}</span>}
+        gloss={gloss}
+        placement="below"
+      />
       {children}
     </div>
   );
@@ -153,8 +177,8 @@ function nameTrigger(transition: TransitionDescription): string {
 /** The details of a selected state. */
 function StateDetails({ state, context }: { state: StateDescription; context: InspectorContext }): ReactElement {
   const { description } = context;
-  const leadsTo = state.isCompound ? [] : description.transitions.filter(({ sourceId }) => sourceId === state.id);
-  const comesFrom = description.transitions.filter(
+  const exits = state.isCompound ? [] : description.transitions.filter(({ sourceId }) => sourceId === state.id);
+  const entrances = description.transitions.filter(
     ({ targetId, sourceId }) => targetId === state.id && sourceId !== state.id,
   );
   const flowWide = listFlowWideTransitions(state, description);
@@ -162,21 +186,23 @@ function StateDetails({ state, context }: { state: StateDescription; context: In
   return (
     <Details heading={state.name}>
       <KindList kinds={listStateKinds(state)} />
-      {state.entry.length > 0 ? <ActionList label="Does" actions={state.entry} /> : undefined}
-      {state.exit.length > 0 ? <ActionList label="On exit" actions={state.exit} /> : undefined}
-      {state.isCompound ? undefined : (
-        <Fact label="Leads to">
-          <TransitionList transitions={leadsTo} direction="to" context={context} />
+      {state.entry.length > 0 ? <ActionList fact={FACTS.stateActions} actions={state.entry} /> : undefined}
+      {state.exit.length > 0 ? <ActionList fact={FACTS.exitActions} actions={state.exit} /> : undefined}
+      {exits.length > 0 ? (
+        <Fact fact={FACTS.exits}>
+          <TransitionList transitions={exits} direction="to" context={context} />
         </Fact>
-      )}
+      ) : undefined}
       {flowWide.length > 0 ? (
-        <Fact label="Any time">
+        <Fact fact={FACTS.anyTimeExits}>
           <TransitionList transitions={flowWide} direction="to" context={context} />
         </Fact>
       ) : undefined}
-      <Fact label="Comes from">
-        <TransitionList transitions={comesFrom} direction="from" context={context} />
-      </Fact>
+      {entrances.length > 0 ? (
+        <Fact fact={FACTS.entrances}>
+          <TransitionList transitions={entrances} direction="from" context={context} />
+        </Fact>
+      ) : undefined}
     </Details>
   );
 }
@@ -204,16 +230,16 @@ function TransitionDetails({
         )}
       </div>
       <KindList kinds={listTransitionKinds(transition)} />
-      <Fact label="Guard">
+      <Fact fact={FACTS.condition}>
         {transition.guard === undefined ? (
           <span className="statechart-inspector__none">
-            {transition.isFallback ? 'Otherwise: none of the guarded siblings applies' : 'None'}
+            {transition.isFallback ? "Otherwise: no sibling's condition holds" : 'None'}
           </span>
         ) : (
           <span>{transition.guard}</span>
         )}
       </Fact>
-      <ActionList label="Does" actions={transition.actions} />
+      <ActionList fact={FACTS.transitionActions} actions={transition.actions} />
     </Details>
   );
 }

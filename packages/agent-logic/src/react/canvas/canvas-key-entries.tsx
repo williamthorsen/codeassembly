@@ -53,7 +53,7 @@ export const CANVAS_KEY_ENTRIES: readonly CanvasKeyEntry[] = [
   {
     id: 'fallback',
     name: 'Fallback',
-    gloss: 'Taken when no guarded sibling applies',
+    gloss: "Taken when no sibling's condition holds",
     mark: <i className="canvas-key__word">otherwise</i>,
   },
   {
