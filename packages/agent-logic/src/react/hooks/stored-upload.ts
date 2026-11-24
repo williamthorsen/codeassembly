@@ -1,5 +1,5 @@
-import { dropPromptLogicSuffix, PROMPT_LOGIC_SUFFIX } from '../../schema/prompt-logic-file-name.ts';
 import type { AgentLogicConfig } from '../../schema/agent-logic-schema.ts';
+import { dropPromptLogicSuffix, PROMPT_LOGIC_SUFFIX } from '../../schema/prompt-logic-file-name.ts';
 import type { InputOrigin } from './document-types.ts';
 import { dropLastExtension, sanitizeStoredBase } from './stored-base.ts';
 
