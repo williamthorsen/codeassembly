@@ -1,7 +1,7 @@
 /* eslint-disable testing-library/no-container, testing-library/no-node-access -- The pane's contract with an app is
 its data attributes and the classes that draw its marks, which have no accessible query. */
 // @vitest-environment happy-dom
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -18,7 +18,13 @@ describe(PromptPane, () => {
     const { container } = render(<PromptPane segments={SEGMENTS} selected={undefined} onSelect={vi.fn()} />);
 
     expect(container.querySelector('[data-prompt-text]')).toHaveTextContent(MINIMAL_PROMPT);
-    expect(screen.getByRole('list', { name: 'Prompt marks' })).toHaveTextContent('AmbientNot usedNot convertedComment');
+    const entries = within(screen.getByRole('list', { name: 'Prompt marks' })).getAllByRole('listitem');
+    expect(entries.map((entry) => entry.querySelector('.gloss__label')?.textContent)).toStrictEqual([
+      'Ambient',
+      'Not used',
+      'Not converted',
+      'Comment',
+    ]);
   });
 
   it('labels the pane by its heading', () => {
