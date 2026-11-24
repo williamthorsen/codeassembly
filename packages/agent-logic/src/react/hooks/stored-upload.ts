@@ -5,7 +5,8 @@ import { dropLastExtension, sanitizeStoredBase } from './stored-base.ts';
 
 /**
  * Returns the name under which an upload is stored: a dropped or picked file's name, with `.prompt-logic.json` in place
- * of its last extension or of a prompt-logic suffix, or a pasted config's `id`, each with its base sanitized into a name that the store accepts.
+ * of its last extension or of a prompt-logic suffix, or a pasted config's `id`, each with its base sanitized into a
+ * name that the store accepts.
  */
 export function buildStoredUploadName(origin: InputOrigin, config: AgentLogicConfig): string {
   const base = origin.kind === 'file' ? findFileBase(origin.fileName) : dropPromptLogicSuffix(config.id);
