@@ -2,7 +2,7 @@
 
 # codeassembly-agent-logic
 
-The agent-logic model: a schema for an agent prompt's states and transitions, the tools that convert a prompt into it, and the React canvas and server glue for apps that present it as a statechart.
+The prompt-logic model: a schema for an agent prompt's states and transitions, the tools that convert a prompt into it, and the React canvas and server glue for apps that present it as a statechart.
 
 A prompt-logic file, `<name>.prompt-logic.json`, contains one prompt's logic. The package writes that name and also reads a file written as `<name>.agent-logic.json`.
 

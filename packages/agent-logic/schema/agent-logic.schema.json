@@ -137,7 +137,7 @@
     "meta"
   ],
   "additionalProperties": false,
-  "title": "Agent logic config",
+  "title": "Prompt logic",
   "$defs": {
     "Transition": {
       "type": "object",
