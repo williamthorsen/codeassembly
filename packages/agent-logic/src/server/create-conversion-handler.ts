@@ -64,6 +64,8 @@ export function createConversionHandlerWith(
     const base = basePath.replace(/\/+$/, '');
     const runs = new Map<string, { controller: AbortController; timer: ReturnType<typeof setTimeout> }>();
 
+    type RunningConversionState = Extract<ConversionState, { status: 'running' }>;
+
     /** Ends a conversion with the timeout's failure at its deadline, then stops its run when this process holds it. */
     async function endByTimeout(state: RunningConversionState): Promise<void> {
       const { id, name, startedAt, deadline } = state;
@@ -96,16 +98,21 @@ export function createConversionHandlerWith(
     async function run(state: RunningConversionState, prompt: string, signal: AbortSignal): Promise<void> {
       const { id, name, startedAt } = state;
       try {
-        let ended: Settlement = { status: 'failed', reason: 'The conversion ended without a result.' };
+        let ended: EndedConversionState = {
+          status: 'failed',
+          id,
+          name,
+          reason: 'The conversion ended without a result.',
+        };
         try {
           const events = convert({ prompt, name, agent, signal });
           for await (const event of events) {
-            if (event.type === 'result') ended = { status: 'done', result: toConversionResult(event.result) };
+            if (event.type === 'result') ended = { status: 'done', id, name, result: toConversionResult(event.result) };
           }
         } catch (error) {
-          ended = { status: 'failed', reason: describeError(error) };
+          ended = { status: 'failed', id, name, reason: describeError(error) };
         }
-        await store.finish(id, { ...ended, id, name, startedAt, endedAt: new Date().toISOString() });
+        await store.finish(id, { ...ended, startedAt, endedAt: new Date().toISOString() });
       } catch {
         // A failed write leaves the conversion running, which a read reports as timed out once its deadline passes.
       } finally {
@@ -199,13 +206,6 @@ export function createConversionHandlerWith(
 }
 
 // region | Helpers
-type RunningConversionState = Extract<ConversionState, { status: 'running' }>;
-
-/** How a run settled, before the members that every ended state shares are added. */
-type Settlement =
-  | Pick<Extract<EndedConversionState, { status: 'done' }>, 'status' | 'result'>
-  | Pick<Extract<EndedConversionState, { status: 'failed' }>, 'status' | 'reason'>;
-
 /** Formats a duration in whole minutes when it has a whole number of them, and in seconds otherwise. */
 function formatDuration(durationMs: number): string {
   const minutes = durationMs / 60_000;
