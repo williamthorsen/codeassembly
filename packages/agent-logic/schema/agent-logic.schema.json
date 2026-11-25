@@ -120,6 +120,9 @@
           "items": {
             "$ref": "#/$defs/Finding"
           }
+        },
+        "conversion": {
+          "$ref": "#/$defs/Conversion"
         }
       },
       "required": [
@@ -470,6 +473,27 @@
         "source"
       ],
       "additionalProperties": false
+    },
+    "Conversion": {
+      "type": "object",
+      "properties": {
+        "startedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        },
+        "endedAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z))$"
+        }
+      },
+      "required": [
+        "startedAt",
+        "endedAt"
+      ],
+      "additionalProperties": false,
+      "description": "When the conversion that produced this file started and ended, in ISO 8601. The client that writes the file sets it."
     }
   }
 }

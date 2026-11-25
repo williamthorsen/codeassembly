@@ -112,7 +112,7 @@ if (started.ok) {
 }
 ```
 
-`createConversionHandler` is a Fetch handler (`Request → Response`) that starts a conversion with `POST {basePath}`, reads it with `GET {basePath}/{id}`, and cancels it with `DELETE {basePath}/{id}`, running each one through `convertWithAgent`. A page that reloads resumes by calling `watch` with the id that it kept. The doc comments of `createConversionHandler` and `ConversionClient` state the status codes and the edge cases. The host supplies:
+`createConversionHandler` is a Fetch handler (`Request → Response`) that starts a conversion with `POST {basePath}`, reads it with `GET {basePath}/{id}`, and cancels it with `DELETE {basePath}/{id}`, running each one through `convertWithAgent`. A page that reloads resumes by calling `watch` with the id that it kept. An ended conversion reports its `startedAt` and `endedAt`, so a client measures its duration even when it ended unwatched. The doc comments of `createConversionHandler` and `ConversionClient` state the status codes and the edge cases. The host supplies:
 
 - Mounting: The host's server passes each request under `basePath` to the handler.
 - Authorization: `authorize` decides whether the handler serves a request.

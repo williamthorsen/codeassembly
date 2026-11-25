@@ -201,6 +201,38 @@ describe(validateConfig, () => {
     ]);
   });
 
+  it('accepts a config with the record of the conversion that produced it', () => {
+    const config = buildMinimalConfig();
+    config.meta.conversion = { startedAt: '2026-11-16T12:00:00.000Z', endedAt: '2026-11-16T12:01:30.000Z' };
+
+    expect(validateConfig(config)).toStrictEqual({ ok: true, config });
+  });
+
+  it.each<[condition: string, conversion: unknown, path: string]>([
+    ['lacks its end', { startedAt: '2026-11-16T12:00:00.000Z' }, 'meta.conversion.endedAt'],
+    [
+      'contains an unknown key',
+      { startedAt: '2026-11-16T12:00:00.000Z', endedAt: '2026-11-16T12:01:30.000Z', model: 'x' },
+      'meta.conversion',
+    ],
+    [
+      'states a time that is not ISO 8601',
+      { startedAt: '16 Nov 2026', endedAt: '2026-11-16T12:01:30.000Z' },
+      'meta.conversion.startedAt',
+    ],
+    [
+      'ends before it starts',
+      { startedAt: '2026-11-16T12:01:30.000Z', endedAt: '2026-11-16T12:00:00.000Z' },
+      'meta.conversion.endedAt',
+    ],
+  ])('reports a conversion record that %s', (_condition, conversion, path) => {
+    const config = buildMinimalConfig();
+
+    const result = validateConfig({ ...config, meta: { ...config.meta, conversion } });
+
+    expect(result.ok ? [] : result.problems.map((problem) => problem.path)).toStrictEqual([path]);
+  });
+
   it('accepts an inferred-resolution finding on an inferred element', () => {
     const config = buildMinimalConfig();
     const { greeting } = config.states;

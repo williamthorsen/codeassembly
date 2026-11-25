@@ -44,7 +44,7 @@ export type ConvertFunction = (options: ConvertWithAgentOptions) => AsyncIterabl
  * `DELETE {basePath}/{id}` cancels it, answering `200` with the `cancelled` state, or `409` with the ended state when
  * it had already ended. Every conversion runs in this process through `convertWithAgent` and fails once `timeoutMs`
  * elapses; a read of a `running` conversion past its deadline reports it failed even when another process holds the
- * run.
+ * run. Every ended state reports the conversion's `startedAt` and its `endedAt`, which is the deadline for a timeout.
  *
  * Every error body is `{ problems }`: `400` for a body that is not a valid start request, `403` for a request that
  * `authorize` refuses, `404` for an unknown path or conversion, `405` for a method that the path does not serve, `413`
@@ -64,18 +64,21 @@ export function createConversionHandlerWith(
     const base = basePath.replace(/\/+$/, '');
     const runs = new Map<string, { controller: AbortController; timer: ReturnType<typeof setTimeout> }>();
 
-    /** Ends a conversion with the timeout's failure, then stops its run when this process holds it. */
-    async function endByTimeout(state: { id: string; name: string }): Promise<void> {
+    type RunningConversionState = Extract<ConversionState, { status: 'running' }>;
+
+    /** Ends a conversion with the timeout's failure at its deadline, then stops its run when this process holds it. */
+    async function endByTimeout(state: RunningConversionState): Promise<void> {
+      const { id, name, startedAt, deadline } = state;
       const reason = `The conversion did not finish within ${formatDuration(timeoutMs)}.`;
       try {
-        await store.finish(state.id, { status: 'failed', id: state.id, name: state.name, reason });
+        await store.finish(id, { status: 'failed', id, name, startedAt, endedAt: deadline, reason });
       } finally {
-        runs.get(state.id)?.controller.abort();
+        runs.get(id)?.controller.abort();
       }
     }
 
     /** Ends a conversion whose timer fired, as `endByTimeout` does, without rejecting. */
-    async function endTimedOutRun(state: { id: string; name: string }): Promise<void> {
+    async function endTimedOutRun(state: RunningConversionState): Promise<void> {
       try {
         await endByTimeout(state);
       } catch {
@@ -92,8 +95,8 @@ export function createConversionHandlerWith(
     }
 
     /** Runs the conversion to its end and writes its ended state, unless a cancel or a timeout wrote one first. */
-    async function run(request: { id: string; name: string; prompt: string }, signal: AbortSignal): Promise<void> {
-      const { id, name, prompt } = request;
+    async function run(state: RunningConversionState, prompt: string, signal: AbortSignal): Promise<void> {
+      const { id, name, startedAt } = state;
       try {
         let ended: EndedConversionState = {
           status: 'failed',
@@ -109,7 +112,7 @@ export function createConversionHandlerWith(
         } catch (error) {
           ended = { status: 'failed', id, name, reason: describeError(error) };
         }
-        await store.finish(id, ended);
+        await store.finish(id, { ...ended, startedAt, endedAt: new Date().toISOString() });
       } catch {
         // A failed write leaves the conversion running, which a read reports as timed out once its deadline passes.
       } finally {
@@ -139,7 +142,7 @@ export function createConversionHandlerWith(
       const { prompt, name } = parsed.data;
       const id = randomUUID();
       const startedAt = Date.now();
-      const state: ConversionState = {
+      const state: RunningConversionState = {
         status: 'running',
         id,
         name,
@@ -150,7 +153,7 @@ export function createConversionHandlerWith(
       const controller = new AbortController();
       const timer = setTimeout(() => void endTimedOutRun(state), timeoutMs);
       runs.set(id, { controller, timer });
-      void run({ id, name, prompt }, controller.signal);
+      void run(state, prompt, controller.signal);
       return Response.json(state, { status: 201, headers: { Location: `${base}/${encodeURIComponent(id)}` } });
     }
 
@@ -159,7 +162,14 @@ export function createConversionHandlerWith(
       const state = await readCurrent(id);
       if (state === undefined) return respondWithNotFound();
       if (state.status === 'running') {
-        const cancelled: EndedConversionState = { status: 'cancelled', id, name: state.name };
+        const { name, startedAt } = state;
+        const cancelled: EndedConversionState = {
+          status: 'cancelled',
+          id,
+          name,
+          startedAt,
+          endedAt: new Date().toISOString(),
+        };
         if (await store.finish(id, cancelled)) {
           runs.get(id)?.controller.abort();
           return Response.json(cancelled, { status: 200 });

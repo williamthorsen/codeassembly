@@ -125,6 +125,18 @@ export const stateSchema: z.ZodType<StateConfig> = z
   })
   .meta({ id: 'State' });
 
+/** When the conversion that produced the file started and ended, in ISO 8601. */
+export const conversionRecordSchema = z
+  .strictObject({
+    startedAt: z.iso.datetime(),
+    endedAt: z.iso.datetime(),
+  })
+  .meta({
+    id: 'Conversion',
+    description:
+      'When the conversion that produced this file started and ended, in ISO 8601. The client that writes the file sets it.',
+  });
+
 export const unconvertedSpanSchema = spanSchema.extend({ reason: z.string().min(1).optional() });
 
 /** The agent-logic representation: an XState v5 machine config whose root contains the prompt that it describes. */
@@ -140,6 +152,7 @@ export const agentLogicConfigSchema = z
       unconverted: z.array(unconvertedSpanSchema),
       ambient: ambientSchema,
       findings: findingsSchema,
+      conversion: conversionRecordSchema.optional(),
     }),
   })
   .meta({ title: 'Prompt logic' });
@@ -150,6 +163,7 @@ export type ElementMeta = z.output<typeof elementMetaSchema>;
 export type Finding = z.output<typeof findingSchema>;
 export type FindingKind = z.output<typeof findingKindSchema>;
 export type AgentLogicConfig = z.output<typeof agentLogicConfigSchema>;
+export type ConversionRecord = z.output<typeof conversionRecordSchema>;
 export type NlEntry = z.output<typeof nlEntrySchema>;
 export type Span = z.output<typeof spanSchema>;
 export type StateMeta = z.output<typeof stateMetaSchema>;

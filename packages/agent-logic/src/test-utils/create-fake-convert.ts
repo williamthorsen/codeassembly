@@ -9,6 +9,8 @@ export interface FakeConvertCall {
   resolve(result: ConvertResult): void;
   /** Ends the run by throwing the error. */
   reject(error: unknown): void;
+  /** Ends the run without a `result` event. */
+  end(): void;
 }
 
 /**
@@ -17,13 +19,13 @@ export interface FakeConvertCall {
 export function createFakeConvert(): { convert: ConvertFunction; calls: FakeConvertCall[] } {
   const calls: FakeConvertCall[] = [];
   async function* convert(options: ConvertWithAgentOptions): AsyncGenerator<{ type: 'result'; result: ConvertResult }> {
-    const result = await new Promise<ConvertResult>((resolve, reject) => {
-      calls.push({ options, resolve, reject });
+    const result = await new Promise<ConvertResult | undefined>((resolve, reject) => {
+      calls.push({ options, resolve, reject, end: () => resolve(undefined) });
       options.signal?.addEventListener('abort', () => {
         reject(new Error('The run was aborted.', { cause: options.signal?.reason }));
       });
     });
-    yield { type: 'result', result };
+    if (result !== undefined) yield { type: 'result', result };
   }
   return { convert, calls };
 }

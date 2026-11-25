@@ -4,6 +4,7 @@ import {
   type Action,
   type AgentLogicConfig,
   agentLogicConfigSchema,
+  type ConversionRecord,
   type Finding,
   type Span,
 } from './agent-logic-schema.ts';
@@ -102,6 +103,15 @@ function checkAmbient(config: AgentLogicConfig, states: StateEntry[], problems: 
   }
 }
 
+/** Checks that the conversion record, when present, does not end before it starts. */
+function checkConversion(conversion: ConversionRecord | undefined, problems: Problem[]): void {
+  if (conversion === undefined || Date.parse(conversion.endedAt) >= Date.parse(conversion.startedAt)) return;
+  problems.push({
+    path: formatPath(['meta', 'conversion', 'endedAt']),
+    message: 'The conversion cannot end before it starts. Set "endedAt" to a time no earlier than "startedAt".',
+  });
+}
+
 /**
  * Checks that each finding's spans lie in the prompt and that an `inferred-resolution` finding sits on an inferred
  * element, which the root never is.
@@ -198,6 +208,7 @@ function findSemanticProblems(config: AgentLogicConfig): Problem[] {
   }
 
   checkAmbient(config, states, problems);
+  checkConversion(config.meta.conversion, problems);
 
   for (const { path, state } of states) {
     checkSpan(state.meta.source, promptLength, [...path, 'meta', 'source'], problems);
