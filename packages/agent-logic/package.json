@@ -74,7 +74,7 @@
   "dependencies": {
     "@williamthorsen/toolbelt.errors": "catalog:",
     "@williamthorsen/toolbelt.text-file-store": "0.2.0",
-    "@xyflow/react": "13.0.2",
+    "@xyflow/react": "13.0.3",
     "elkjs": "0.12.1",
     "zod": "catalog:"
   },
@@ -97,7 +97,7 @@
     "eslint-plugin-jest-dom": "5.11.0",
     "eslint-plugin-react": "7.37.5",
     "eslint-plugin-react-hooks": "7.1.1",
-    "eslint-plugin-testing-library": "7.16.2",
+    "eslint-plugin-testing-library": "7.16.3",
     "happy-dom": "21.0.4",
     "react": "19.3.1",
     "react-dom": "19.3.1",
