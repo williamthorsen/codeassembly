@@ -37,6 +37,17 @@ export const conversionResultSchema = z.union([
   z.object({ ok: z.literal(false), outOfScope: z.object({ reason: z.string() }) }),
 ]);
 
+/**
+ * Members of every ended state: the `startedAt` of its running state and the `endedAt` at which it settled, which is
+ * the deadline for a conversion that timed out. Both are optional because states stored before they existed lack them.
+ */
+const endedMembers = {
+  id: z.string(),
+  name: z.string(),
+  startedAt: z.iso.datetime().optional(),
+  endedAt: z.iso.datetime().optional(),
+};
+
 /** A conversion's state: `running` until its deadline, then one of the ended states, which never change. */
 export const conversionStateSchema = z.discriminatedUnion('status', [
   z.object({
@@ -46,9 +57,9 @@ export const conversionStateSchema = z.discriminatedUnion('status', [
     startedAt: z.iso.datetime(),
     deadline: z.iso.datetime(),
   }),
-  z.object({ status: z.literal('done'), id: z.string(), name: z.string(), result: conversionResultSchema }),
-  z.object({ status: z.literal('failed'), id: z.string(), name: z.string(), reason: z.string() }),
-  z.object({ status: z.literal('cancelled'), id: z.string(), name: z.string() }),
+  z.object({ status: z.literal('done'), ...endedMembers, result: conversionResultSchema }),
+  z.object({ status: z.literal('failed'), ...endedMembers, reason: z.string() }),
+  z.object({ status: z.literal('cancelled'), ...endedMembers }),
 ]);
 
 export type ConversionResult = z.output<typeof conversionResultSchema>;

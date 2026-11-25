@@ -50,6 +50,7 @@ describe(createConversionHandlerWith, () => {
     });
     expect(calls[0]?.options).toMatchObject({ prompt: 'Greet.', name: 'greeter.md' });
 
+    await vi.advanceTimersByTimeAsync(90_000);
     getCall(calls).resolve(result);
     await flush();
 
@@ -59,6 +60,8 @@ describe(createConversionHandlerWith, () => {
       status: 'done',
       id: state.id,
       name: 'greeter.md',
+      startedAt: '2026-11-16T12:00:00.000Z',
+      endedAt: '2026-11-16T12:01:30.000Z',
       result: expected,
     });
   });
@@ -67,6 +70,7 @@ describe(createConversionHandlerWith, () => {
     const { handle, calls } = setUpHandler();
     const { id } = await readJson(await handle('POST', '/', { prompt: 'Greet.', name: 'greeter.md' }));
 
+    await vi.advanceTimersByTimeAsync(5000);
     getCall(calls).reject(new Error('The agent is not signed in.'));
     await flush();
 
@@ -74,7 +78,26 @@ describe(createConversionHandlerWith, () => {
       status: 'failed',
       id,
       name: 'greeter.md',
+      startedAt: '2026-11-16T12:00:00.000Z',
+      endedAt: '2026-11-16T12:00:05.000Z',
       reason: 'The agent is not signed in.',
+    });
+  });
+
+  it('fails a run that ends without a result', async () => {
+    const { handle, calls } = setUpHandler();
+    const { id } = await readJson(await handle('POST', '/', { prompt: 'Greet.', name: 'greeter.md' }));
+
+    getCall(calls).end();
+    await flush();
+
+    await expect((await handle('GET', `/${id}`)).json()).resolves.toStrictEqual({
+      status: 'failed',
+      id,
+      name: 'greeter.md',
+      startedAt: '2026-11-16T12:00:00.000Z',
+      endedAt: '2026-11-16T12:00:00.000Z',
+      reason: 'The conversion ended without a result.',
     });
   });
 
@@ -82,11 +105,18 @@ describe(createConversionHandlerWith, () => {
     const { handle, calls } = setUpHandler();
     const { id } = await readJson(await handle('POST', '/', { prompt: 'Greet.', name: 'greeter.md' }));
 
+    await vi.advanceTimersByTimeAsync(2000);
     const cancelled = await handle('DELETE', `/${id}`);
     await flush();
 
     expect(cancelled.status).toBe(200);
-    await expect(cancelled.json()).resolves.toStrictEqual({ status: 'cancelled', id, name: 'greeter.md' });
+    await expect(cancelled.json()).resolves.toStrictEqual({
+      status: 'cancelled',
+      id,
+      name: 'greeter.md',
+      startedAt: '2026-11-16T12:00:00.000Z',
+      endedAt: '2026-11-16T12:00:02.000Z',
+    });
     expect(getCall(calls).options.signal?.aborted).toBe(true);
     await expect((await handle('GET', `/${id}`)).json()).resolves.toMatchObject({ status: 'cancelled' });
   });
@@ -115,6 +145,8 @@ describe(createConversionHandlerWith, () => {
       status: 'failed',
       id,
       name: 'greeter.md',
+      startedAt: '2026-11-16T12:00:00.000Z',
+      endedAt: '2026-11-16T12:10:00.000Z',
       reason: 'The conversion did not finish within 10 minutes.',
     });
   });
@@ -148,6 +180,8 @@ describe(createConversionHandlerWith, () => {
       status: 'failed',
       id: 'elsewhere',
       name: 'greeter.md',
+      startedAt: '2026-11-16T11:00:00.000Z',
+      endedAt: '2026-11-16T11:10:00.000Z',
       reason: 'The conversion did not finish within 10 minutes.',
     });
   });

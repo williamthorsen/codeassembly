@@ -7,6 +7,8 @@ import {
   startConversionRequestSchema,
 } from '../conversion-schemas.ts';
 
+const TIMES = { startedAt: '2026-11-16T12:00:00.000Z', endedAt: '2026-11-16T12:01:30.000Z' };
+
 describe('startConversionRequestSchema', () => {
   it('accepts a prompt of exactly the byte cap', () => {
     expect(startConversionRequestSchema.safeParse({ prompt: 'a'.repeat(MAX_PROMPT_BYTES), name: 'a.md' }).success).toBe(
@@ -51,7 +53,16 @@ describe('conversionStateSchema', () => {
     { status: 'done', id: 'c1', name: 'a.md', result: { ok: false, outOfScope: { reason: 'No steps.' } } },
     { status: 'failed', id: 'c1', name: 'a.md', reason: 'Boom.' },
     { status: 'cancelled', id: 'c1', name: 'a.md' },
+    { status: 'cancelled', id: 'c1', name: 'a.md', ...TIMES },
+    { status: 'done', id: 'c1', name: 'a.md', ...TIMES, result: { ok: true, text: '{}\n' } },
+    { status: 'failed', id: 'c1', name: 'a.md', ...TIMES, reason: 'Boom.' },
   ])('accepts a $status state', (state) => {
     expect(conversionStateSchema.parse(state)).toStrictEqual(state);
+  });
+
+  it.each(['startedAt', 'endedAt'])('refuses an ended state whose %s is not an ISO 8601 time', (field) => {
+    const state = { status: 'cancelled', id: 'c1', name: 'a.md', ...TIMES, [field]: '16 Nov 2026' };
+
+    expect(conversionStateSchema.safeParse(state).success).toBe(false);
   });
 });

@@ -9,6 +9,7 @@ import { type ConversionClient, type ConversionOutcome, createConversionClient }
 const ORIGIN = 'http://localhost';
 const URL_PATH = '/api/conversions';
 const REQUEST = { prompt: 'Greet.', name: 'greeter.md' };
+const ANY_TIMES = { startedAt: expect.any(String), endedAt: expect.any(String) };
 
 describe(createConversionClient, () => {
   it('starts a conversion that a second client resumes by id and watches to its end', async () => {
@@ -31,6 +32,7 @@ describe(createConversionClient, () => {
         status: 'done',
         id,
         name: 'greeter.md',
+        ...ANY_TIMES,
         result: { ok: false, outOfScope: { reason: 'No steps.' } },
       },
     });
@@ -43,7 +45,7 @@ describe(createConversionClient, () => {
 
     await expect(client.cancel(id)).resolves.toStrictEqual({
       ok: true,
-      conversion: { status: 'cancelled', id, name: 'greeter.md' },
+      conversion: { status: 'cancelled', id, name: 'greeter.md', ...ANY_TIMES },
     });
   });
 
@@ -56,7 +58,7 @@ describe(createConversionClient, () => {
 
     await expect(client.cancel(id)).resolves.toStrictEqual({
       ok: true,
-      conversion: { status: 'failed', id, name: 'greeter.md', reason: 'Boom.' },
+      conversion: { status: 'failed', id, name: 'greeter.md', ...ANY_TIMES, reason: 'Boom.' },
     });
   });
 
