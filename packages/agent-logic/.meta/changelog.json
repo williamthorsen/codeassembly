@@ -1,5 +1,38 @@
 [
   {
+    "version": "0.15.0",
+    "date": "2026-11-25",
+    "sections": [
+      {
+        "title": "🎉 Features",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Adds `startedAt` and `endedAt` to the `done`, `failed`, and `cancelled` states that `createConversionHandler` reports, with `endedAt` set to the deadline for a conversion that timed out, and makes both fields optional in `conversionStateSchema` so that states stored before this change still parse. (#2329)",
+            "hash": "cff1d59f3264fe7d1bd478eb2d6d346fd549579d",
+            "entry": 1
+          },
+          {
+            "description": "Adds an optional `conversion` record, `{ startedAt, endedAt }` in ISO 8601, to an agent-logic file's root `meta` and to the published JSON Schema, and makes `validateConfig` report a record that ends before it starts. (#2329)",
+            "hash": "cff1d59f3264fe7d1bd478eb2d6d346fd549579d",
+            "entry": 2
+          }
+        ]
+      },
+      {
+        "title": "🐛 Bug fixes",
+        "audience": "all",
+        "items": [
+          {
+            "description": "Fixes the issue that the controls of `CanvasKey` (the ambient-instructions toggle, the Messages toggle, and the message counts) overflowed a narrow canvas over the neighboring pane, by letting the key wrap its controls below its entries. (#2328)",
+            "hash": "16c00413e74471301067350232c5f7df6681cee0",
+            "entry": 1
+          }
+        ]
+      }
+    ]
+  },
+  {
     "version": "0.14.0",
     "date": "2026-11-24",
     "sections": [

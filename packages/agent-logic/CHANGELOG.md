@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.15.0 — 2026-11-25
+
+### 🎉 Features
+
+- Adds `startedAt` and `endedAt` to the `done`, `failed`, and `cancelled` states that `createConversionHandler` reports, with `endedAt` set to the deadline for a conversion that timed out, and makes both fields optional in `conversionStateSchema` so that states stored before this change still parse. (#2329)
+- Adds an optional `conversion` record, `{ startedAt, endedAt }` in ISO 8601, to an agent-logic file's root `meta` and to the published JSON Schema, and makes `validateConfig` report a record that ends before it starts. (#2329)
+
+### 🐛 Bug fixes
+
+- Fixes the issue that the controls of `CanvasKey` (the ambient-instructions toggle, the Messages toggle, and the message counts) overflowed a narrow canvas over the neighboring pane, by letting the key wrap its controls below its entries. (#2328)
+
 ## 0.14.0 — 2026-11-24
 
 ### 🎉 Features
