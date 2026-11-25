@@ -620,9 +620,14 @@
 
 /* -- Key: a strip below the canvas, with the marks that the chart draws and the canvas's toggles -- */
 
+/*
+ * The key wraps rather than overflow a narrow canvas: The entries shrink beside the controls down to their basis, then
+ * the controls drop below them, then the controls wrap within their group.
+ */
 .canvas-key {
   display: flex;
   flex: none;
+  flex-wrap: wrap;
   align-items: center;
   border-block-start: 1px solid var(--_agent-logic-workspace-border);
   background: var(--agent-logic-surface);
@@ -635,6 +640,8 @@
   gap: 4px 12px;
   margin: 0;
   padding: 6px 10px;
+  flex: 1 1 320px;
+  min-inline-size: 0;
   font-size: 12px;
   line-height: 16px;
   list-style: none;
@@ -646,10 +653,14 @@
 
 .canvas-key__controls {
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
+  gap: 4px 8px;
+  min-inline-size: 0;
   margin-inline: auto 4px;
+  /* No taller than one line of entries, so that a key on one line keeps its height. */
+  padding: 1px 0 1px 4px;
   font-size: 14px;
   line-height: 20px;
 }
@@ -660,7 +671,6 @@
   gap: 6px;
   padding: 2px 6px;
   border-radius: 2px;
-  white-space: nowrap;
 }
 
 .canvas-key__ambient:hover {
@@ -673,6 +683,7 @@
 }
 
 .canvas-key__ambient > input {
+  flex: none;
   inline-size: 16px;
   block-size: 16px;
   margin: 0;
@@ -681,9 +692,9 @@
 
 .canvas-key__messages {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 8px;
-  white-space: nowrap;
+  gap: 4px 8px;
 }
 
 .canvas-key__counts {
